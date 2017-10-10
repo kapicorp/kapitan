@@ -18,12 +18,10 @@ your local machine so you can start using and developing it.
 
 ### Prerequisites
 
-Kapitan needs Python 2.7+ and the libraries in requirements.txt.
-
-Run setup.py to build and install in your env:
+Kapitan needs Python 2.7+ and can be installed with pip.
 
 ```
-$ python setup.py install
+$ pip install https://github.com/deepmind/kapitan.git@v0.9.14
 
 ```
 
