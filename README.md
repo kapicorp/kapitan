@@ -1,5 +1,7 @@
 # Kapitan: A generic jsonnet based configuration deployment system
 
+[![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
+
 Kapitan is a command line tool for declaring, instrumenting and documenting
 infrastructure with the goal of writing reusable components in Kubernetes whilst avoiding
 duplication and promoting conventions and patterns for extensibility.
