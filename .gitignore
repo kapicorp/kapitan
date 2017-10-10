@@ -1,0 +1,5 @@
+*.pyc
+*.swp
+build/
+dist/
+kapitan.egg-info/

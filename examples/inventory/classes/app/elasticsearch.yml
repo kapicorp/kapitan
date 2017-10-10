@@ -1,0 +1,27 @@
+parameters:
+  elasticsearch:
+    image: "quay.io/pires/docker-elasticsearch-kubernetes:5.5.0"
+    java_opts: "-Xms512m -Xmx512m"
+    replicas: 1
+    masters: 1
+    roles:
+      master:
+        image: ${elasticsearch:image}
+        java_opts: ${elasticsearch:java_opts}
+        replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}
+      data:
+        image: ${elasticsearch:image}
+        java_opts: ${elasticsearch:java_opts}
+        replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}
+      client:
+        image: ${elasticsearch:image}
+        java_opts: ${elasticsearch:java_opts}
+        replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}
+      ingest:
+        image: ${elasticsearch:image}
+        java_opts: ${elasticsearch:java_opts}
+        replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}

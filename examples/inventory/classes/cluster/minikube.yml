@@ -1,0 +1,13 @@
+# class for all targets deployed on minikube
+#
+classes:
+  - cluster.common
+
+parameters:
+  cluster:
+    name: minikube
+    user: minikube
+  vault:
+    address: https://localhost:8200
+  mysql:
+    hostname: localhost

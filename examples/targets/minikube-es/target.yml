@@ -1,0 +1,16 @@
+---
+version: 1
+vars:
+  target: minikube-es
+  namespace: minikube-es
+compile:
+  - name: manifests
+    type: jsonnet
+    path: targets/minikube-es/main.jsonnet
+    output: yaml
+  - name: scripts
+    type: jinja2
+    path: scripts
+  - name: docs
+    type: jinja2
+    path: targets/minikube-es/docs

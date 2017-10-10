@@ -1,0 +1,6 @@
+classes:
+  - cluster.minikube
+  - app.elasticsearch
+
+parameters:
+  namespace: minikube-es
