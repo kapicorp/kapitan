@@ -29,6 +29,7 @@ from kapitan.utils import render_jinja2_file, memoize
 
 logger = logging.getLogger(__name__)
 
+
 def resource_callbacks(search_path):
     """
     Returns a dict with all the functions to be used
@@ -61,6 +62,7 @@ def jinja2_render_file(search_path, name, ctx):
     # default IOError if we reach here
     raise IOError("Could not find file %s" % name)
 
+
 def read_file(search_path, name):
     "return content of file in name"
     full_path = os.path.join(search_path, name)
@@ -70,6 +72,7 @@ def read_file(search_path, name):
         with open(full_path) as f:
             return f.read()
     raise IOError("Could not find file %s" % name)
+
 
 def search_imports(cwd, import_str, search_path):
     """
@@ -98,6 +101,7 @@ def search_imports(cwd, import_str, search_path):
                  cwd, import_str, basename, normalised_path)
 
     return normalised_path, open(normalised_path).read()
+
 
 def inventory(search_path, target, inventory_path="inventory/"):
     """
@@ -146,7 +150,7 @@ def inventory_reclass(inventory_path):
 
     storage = reclass.get_storage(reclass_config['storage_type'], reclass_config['nodes_uri'],
                                   reclass_config['classes_uri'], default_environment='base')
-    class_mappings = reclass_config.get('class_mappings') # this defaults to None (disabled)
+    class_mappings = reclass_config.get('class_mappings')  # this defaults to None (disabled)
     _reclass = reclass.core.Core(storage, class_mappings)
 
     inv = _reclass.inventory()
