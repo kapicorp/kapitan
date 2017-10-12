@@ -30,6 +30,7 @@ from kapitan.utils import jsonnet_file, jsonnet_prune, render_jinja2_dir, Pretty
 
 logger = logging.getLogger(__name__)
 
+
 def compile_target_file(target_file, search_path, output_path, **kwargs):
     """
     Loads target file, compiles file (by scanning search_path)
@@ -64,6 +65,7 @@ def compile_target_file(target_file, search_path, output_path, **kwargs):
             else:
                 raise IOError("Path not found in search_path: %s" % obj["path"])
 
+
 def compile_jinja2(path, context, output_path):
     """
     Write items in path as jinja2 rendered files to output_path.
@@ -82,12 +84,13 @@ def compile_jinja2(path, context, output_path):
             os.chmod(full_item_path, mode)
             logger.info("Wrote %s with mode %.4o", full_item_path, mode)
 
+
 def compile_jsonnet(file_path, output_path, search_path, ext_vars, **kwargs):
     """
     Write file_path (jsonnet evaluated) items as files to output_path.
     Set output to write as json or yaml
     search_path and ext_vars will be passed as paramenters to jsonnet_file()
-    kwargs: 
+    kwargs:
         output: default 'yaml', accepts 'json'
         prune: default True, accepts False
     """
@@ -116,6 +119,7 @@ def compile_jsonnet(file_path, output_path, search_path, ext_vars, **kwargs):
                 logger.info("Wrote %s", file_path)
         else:
             raise ValueError('output is neither "json" or "yaml"')
+
 
 def update_output_path_dirs(output_path):
     """

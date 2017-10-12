@@ -28,6 +28,7 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+
 def normalise_join_path(dirname, path):
     "Join dirname with path and return in normalised form"
     logger.debug(os.path.normpath(os.path.join(dirname, path)))
@@ -38,9 +39,11 @@ def render_jinja2_template(content, context):
     "Render jinja2 content with context"
     return jinja2.Template(content, undefined=jinja2.StrictUndefined).render(context)
 
+
 def jinja2_sha256_hex_filter(string):
     "Returns hex digest for string"
     return sha256(string).hexdigest()
+
 
 def render_jinja2_file(name, context):
     "Render jinja2 file name with context"
@@ -81,6 +84,7 @@ def file_mode(name):
     st = os.stat(name)
     return stat.S_IMODE(st.st_mode)
 
+
 def jsonnet_file(file_path, **kwargs):
     """
     Evaluate file_path jsonnet file.
@@ -88,9 +92,11 @@ def jsonnet_file(file_path, **kwargs):
     """
     return jsonnet.evaluate_file(file_path, **kwargs)
 
+
 def jsonnet_prune(jsonnet_str):
     "Returns a pruned jsonnet_str"
     return jsonnet.evaluate_snippet("snippet", "std.prune(%s)" % jsonnet_str)
+
 
 def memoize(obj):
     """
@@ -166,4 +172,3 @@ def searchvar(flat_var, inventory_path):
                 fd.close()
     for i in output:
         print('{0!s:{l}} {1!s}'.format(*i, l=maxlenght + 2))
-
