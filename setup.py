@@ -49,7 +49,7 @@ setup(
     py_modules=["kapitan"],
     packages=find_packages(),
     install_requires=[
-        'jsonnet>=0.9.4',
+        'jsonnet>=0.9.5',
         'PyYAML>=3.12',
         'Jinja2>=2.9.4',
         'reclass>=1.4.1',
