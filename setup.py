@@ -19,20 +19,13 @@ Kapitan setup.py for PIP install
 """
 
 from setuptools import setup, find_packages
-from codecs import open
-from os import path
-
-here = path.abspath(path.dirname(__file__))
-
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
-          long_description = f.read()
 
 setup(
     name='kapitan',
     version='0.9.14',
 
-    description='A generic jsonnet based configuration deployment system',
-    long_description=long_description,
+    description='Kapitan is a tool to manage kubernetes configuration using jsonnet templates',
+    long_description='https://github.com/deepmind/kapitan',
 
     author='Ricardo Amaro',
     author_email='ramaro@google.com',
@@ -50,7 +43,7 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
 
-    keywords='jsonnet kubernetes reclass jinja vault',
+    keywords='jsonnet kubernetes reclass jinja',
     py_modules=["kapitan"],
     packages=find_packages(),
     install_requires=[
