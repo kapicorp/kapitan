@@ -19,25 +19,27 @@ Kapitan setup.py for PIP install
 """
 
 from setuptools import setup, find_packages
+from kapitan.version import PROJECT_NAME, VERSION, DESCRIPTION, URL, AUTHOR, AUTHOR_EMAIL, LICENCE
 
 setup(
-    name='kapitan',
-    version='0.9.14',
+    name=PROJECT_NAME,
+    version=VERSION,
 
-    description='Kapitan is a tool to manage kubernetes configuration using jsonnet templates',
-    long_description='https://github.com/deepmind/kapitan',
+    description=DESCRIPTION,
+    long_description=URL,
+    url=URL,
 
-    author='Ricardo Amaro',
-    author_email='ramaro@google.com',
-    license='MIT',
+    author=AUTHOR,
+    author_email=AUTHOR_EMAIL,
+    license=LICENCE,
 
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
 
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: Apache Software License',
 
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
