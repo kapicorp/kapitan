@@ -28,14 +28,16 @@ from functools import partial
 from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar
 from kapitan.targets import compile_target_file
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
+from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
 
 logger = logging.getLogger(__name__)
 
 
 def main():
     "main function for command line usage"
-    parser = argparse.ArgumentParser(prog='kapitan',
-                                     description="Define and deploy apps into Kubernetes")
+    parser = argparse.ArgumentParser(prog=PROJECT_NAME,
+                                     description=DESCRIPTION)
+    parser.add_argument('--version', action='version', version=VERSION)
     subparser = parser.add_subparsers(help="commands")
 
     eval_parser = subparser.add_parser('eval', help='evaluate jsonnet file')

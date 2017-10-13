@@ -1,4 +1,4 @@
-# Kapitan: A generic jsonnet based configuration deployment system
+# Kapitan: tool to manage kubernetes configuration using jsonnet templates
 
 [![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
 
@@ -95,8 +95,8 @@ Get this target's pods:
 $ ./compiled/minikube-es/scripts/kubectl.sh get pods -w
 NAME               READY     STATUS    RESTARTS   AGE
 cluster-client-0   1/1       Running   0          50s
-cluster-data-0   1/1       Running   0         20s
-cluster-master-0   1/1       Running   0         59s
+cluster-data-0     1/1       Running   0          20s
+cluster-master-0   1/1       Running   0          59s
 ```
 
 ## Feature Overview

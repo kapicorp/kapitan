@@ -19,42 +19,37 @@ Kapitan setup.py for PIP install
 """
 
 from setuptools import setup, find_packages
-from codecs import open
-from os import path
-
-here = path.abspath(path.dirname(__file__))
-
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
-          long_description = f.read()
+from kapitan.version import PROJECT_NAME, VERSION, DESCRIPTION, URL, AUTHOR, AUTHOR_EMAIL, LICENCE
 
 setup(
-    name='kapitan',
-    version='0.9.14',
+    name=PROJECT_NAME,
+    version=VERSION,
 
-    description='A generic jsonnet based configuration deployment system',
-    long_description=long_description,
+    description=DESCRIPTION,
+    long_description=URL,
+    url=URL,
 
-    author='Ricardo Amaro',
-    author_email='ramaro@google.com',
-    license='MIT',
+    author=AUTHOR,
+    author_email=AUTHOR_EMAIL,
+    license=LICENCE,
 
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
 
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: Apache Software License',
 
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
     ],
 
-    keywords='jsonnet kubernetes reclass jinja vault',
+    keywords='jsonnet kubernetes reclass jinja',
     py_modules=["kapitan"],
     packages=find_packages(),
     install_requires=[
-        'jsonnet>=0.9.4',
+        'jsonnet>=0.9.5',
         'PyYAML>=3.12',
         'Jinja2>=2.9.4',
         'reclass>=1.4.1',
