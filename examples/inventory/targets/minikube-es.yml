@@ -1,6 +1,9 @@
 classes:
   - cluster.minikube
-  - app.elasticsearch
+  - component.elasticsearch
 
 parameters:
   namespace: minikube-es
+
+  elasticsearch:
+    replicas: 2
