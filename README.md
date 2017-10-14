@@ -2,11 +2,11 @@
 
 [![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
 
-a tool to manage kubernetes configuration using jsonnet templates
+A tool to manage kubernetes configuration using jsonnet templates
 
 Kapitan is a command line tool for declaring, instrumenting and documenting
 infrastructure with the goal of writing reusable components in Kubernetes whilst avoiding
-duplication and promoting conventions and patterns for extensibility.
+duplication and promoting patterns for extensibility.
 
 
 
@@ -107,8 +107,8 @@ compile:
 
 ### Components
 
-A component is an aplication that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (Statefull set, services, configmaps) defined in jsonnet.
-It may also include scripts, config files and dinamically generated documentation defined using Jinja templates.
+A component is an aplication that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (StatefulSet, Services, ConfigMaps) defined in jsonnet.
+It may also include scripts, config files and dynamically generated documentation defined using Jinja templates.
 
 
 ### Inventory
@@ -148,7 +148,7 @@ parameters:
 
 #### Inventory Targets
 
-Inside the inventory target files you can include classes and define new values or override any values inherited from the inncluded classes. For example:
+Inside the inventory target files you can include classes and define new values or override any values inherited from the included classes. For example:
 
 ```
 $ cat inventory/targets/minikube-es.yml
@@ -272,16 +272,7 @@ and returns the java_opts for the elasticsearch data role:
 
 ```
 local kap = import "lib/kapitan.libjsonnet";
-inventory = kap.inventory();
-
-{
-    "data_java_opts": inventory.parameters.elasticsearch.roles.data.java_opts,
-}
-```
-
-```
-local kap = import "lib/kapitan.libjsonnet";
-inventory = kap.inventory();
+local inventory = kap.inventory();
 
 {
     "data_java_opts": inventory.parameters.elasticsearch.roles.data.java_opts,
