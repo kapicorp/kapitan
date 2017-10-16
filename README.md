@@ -8,6 +8,7 @@ Kapitan is a command line tool for declaring, instrumenting and documenting
 infrastructure with the goal of writing reusable components in Kubernetes whilst avoiding
 duplication and promoting patterns for extensibility.
 
+How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](#FAQ)!
 
 
 # Table of Contents
@@ -22,6 +23,7 @@ duplication and promoting patterns for extensibility.
 * [Usage](#usage)
 * [Modes of operation](#modes-of-operation)
 * [Credits](#credits)
+* [FAQ](#FAQ)
 * [Related projects](#related-projects)
 
 
@@ -353,6 +355,31 @@ parameters:
 * [Jinja2](http://jinja.pocoo.org/docs/2.9/)
 * [reclass](https://github.com/madduck/reclass)
 
+# FAQ
+
+## Why do we prefer Kapitan to `Helm`?
+
+Before developing Kapitan, we turned to [`Helm`](https://github.com/kubernetes/helm) in an attempt to improve from our old Jinja based templating system.
+
+We quickly discovered that `Helm` did not fit well with our workflow, for the following reasons (which were true at the time of the evaluation):
+* `Helm` uses Go templates to define Kubernetes (yaml) manifests. We were already unsatisfied by using Jinja and we did not see a huge improvement from our previous system, the main reason being: YAML files are not suitable to be managed by text templating frameworks.
+* `Helm` does not have a solution for sharing values across charts, if not through subcharts. We wanted to be able to have one single place to define all values for all our templates. Sharing data between charts felt awkward and complicated.
+* `Helm` is component/chart based. We wanted to have something that would treat the whole of our deployments as a whole.
+* We did not fancy the dependency on the tiller.
+
+In short, we feel `Helm` is trying to be `apt-get` for Kubernetes charts, while we are trying to take you further than that.
+
+## Why do I need Kapitan?
+With Kapitan, we worked to de-compose several problems that most of the other solutions are treating as one.
+
+1) ***Kubernetes manifests***: We like the jsonnet approach of using json as the working language. jsonnet allows us to use inheritance and composition, and hide complexity at higher levels. 
+2) ***Configuration files***: Most solutions will assume this problem is solved somewhere else. We feel Jinja (or your template engine of choice) have the upper hand here.
+3) ***Hierarchical inventory***: This is the feature that sets us apart from other solutions. We use the inventory (based on [reclass](https://github.com/madduck/reclass)) to define variables and properties that can be reused across different projects/deployments. This allows us to limit repetition, but also to define a nicer interface with developers (or CI tools) which will only need to understand YAML to operate changes.
+4) ***Canned scripts***: We treat scripts as text templates, so that we can craft pre-canned scripts for the specific target we are working on. This can be used for instance to define scripts that setup clusters, contexts or allow to run kubectl with all the correct settings. Most other solutions require you to define contexts and call kubectl with the correct settings. We take care of that for you. Less ambiguity, less mistakes.
+5) ***Documentation***: We also use templates to create documentation for the targets we deploy. Documentation lived alongside everything else and it is treated as a first class citizen.
+We feel most other solutions are pushing the limits of their capacity in order to provide for the above problems.
+Helm treats everything as a text template, while jsonnet tries to do everything as json.
+We believe that these approaches can be blended in a powerful new way, glued together by the inventory.
 
 
 # Related projects
