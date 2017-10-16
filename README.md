@@ -23,7 +23,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 * [Usage](#usage)
 * [Modes of operation](#modes-of-operation)
 * [Credits](#credits)
-* [FAQ](#FAQ)
+* [FAQ](#faq)
 * [Related projects](#related-projects)
 
 
