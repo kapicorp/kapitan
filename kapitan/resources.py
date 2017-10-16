@@ -107,13 +107,16 @@ def inventory(search_path, target, inventory_path="inventory/"):
     """
     Reads inventory (set by inventory_path) in search_path.
     set nodes_uri to change reclass nodes_uri the default value
+    set target to None to return all target in the inventory
     Returns a dictionary with the inventory for target
     """
     full_inv_path = os.path.join(search_path, inventory_path)
 
-    inv_target = inventory_reclass(full_inv_path)["nodes"][target]
+    if target is None:
+        return inventory_reclass(full_inv_path)["nodes"]
 
-    return inv_target
+    return inventory_reclass(full_inv_path)["nodes"][target]
+
 
 
 @memoize

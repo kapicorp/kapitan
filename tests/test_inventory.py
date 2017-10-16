@@ -14,16 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"jinja2 filter tests"
+"inventory tests"
 import unittest
-import tempfile
-from kapitan.utils import render_jinja2_file
+from kapitan.resources import inventory
 
-class Jinja2FiltersTest(unittest.TestCase):
-    def test_sha256(self):
-        with tempfile.NamedTemporaryFile() as f:
-            f.write("{{text|sha256}}")
-            f.seek(0)
-            context = {"text":"this and that"}
-            digest = 'e863c1ac42619a2b429a08775a6acd89ff4c2c6b8dae12e3461a5fa63b2f92f5'
-            self.assertEqual(render_jinja2_file(f.name, context), digest)
+class InventoryTargetTest(unittest.TestCase):
+    def test_inventory_target(self):
+        inv = inventory("examples", "minikube-es")
+        self.assertEqual(inv["parameters"]["cluster"]["name"], "minikube")
+
+    def test_inventory_all_targets(self):
+        inv = inventory("examples", None)
+        self.assertNotEqual(inv.get("minikube-es"), None)
