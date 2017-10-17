@@ -8,7 +8,7 @@ Kapitan is a command line tool for declaring, instrumenting and documenting
 infrastructure with the goal of writing reusable components in Kubernetes whilst avoiding
 duplication and promoting patterns for extensibility.
 
-How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](#FAQ)!
+How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](#faq)!
 
 
 # Table of Contents
