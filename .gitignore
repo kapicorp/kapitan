@@ -3,3 +3,5 @@
 build/
 dist/
 kapitan.egg-info/
+tags
+.python-version
