@@ -26,6 +26,7 @@ import reclass.core
 import yaml
 
 from kapitan.utils import render_jinja2_file, memoize
+from kapitan import __file__ as kapitan_install_path
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +74,10 @@ def read_file(search_path, name):
             return f.read()
     raise IOError("Could not find file %s" % name)
 
+def kapitan_path():
+    "return kapitan install path"
+    return os.path.dirname(kapitan_install_path)
+
 
 def search_imports(cwd, import_str, search_path):
     """
@@ -88,13 +93,18 @@ def search_imports(cwd, import_str, search_path):
 
     # if import_str not found, search in search_path
     if not os.path.exists(full_import_path):
-        _full_import_path = os.path.join(search_path, import_str)
-        # if found, set as full_import_path
-        if os.path.exists(_full_import_path):
-            full_import_path = _full_import_path
-            logger.debug("import_str: %s found in search_path: %s",
-                         import_str, search_path)
+        install_path = kapitan_path()
+        for path in (install_path, search_path):
+            _full_import_path = os.path.join(path, import_str)
+            # if found, set as full_import_path
+            if os.path.exists(_full_import_path):
+                full_import_path = _full_import_path
+                logger.debug("import_str: %s found in search_path: %s",
+                             import_str, path)
+                break
 
+    # if the above search did not find anything, let jsonnet error
+    # with a non existent import
     normalised_path = os.path.normpath(full_import_path)
 
     logger.debug("cwd:%s import_str:%s basename:%s -> norm:%s",
