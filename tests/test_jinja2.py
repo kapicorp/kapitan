@@ -14,10 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"jinja2 filter tests"
+"jinja2 tests"
 import unittest
 import tempfile
 from kapitan.utils import render_jinja2_file
+from kapitan.resources import inventory
 
 class Jinja2FiltersTest(unittest.TestCase):
     def test_sha256(self):
@@ -27,3 +28,24 @@ class Jinja2FiltersTest(unittest.TestCase):
             context = {"text":"this and that"}
             digest = 'e863c1ac42619a2b429a08775a6acd89ff4c2c6b8dae12e3461a5fa63b2f92f5'
             self.assertEqual(render_jinja2_file(f.name, context), digest)
+
+class Jinja2ContextVars(unittest.TestCase):
+    def test_inventory_context(self):
+        with tempfile.NamedTemporaryFile() as f:
+            f.write("{{inventory.parameters.cluster.name}}")
+            cluster_name = "minikube"
+            target_name = "minikube-es"
+            inv = inventory("examples", target_name)
+            context = {"inventory": inv}
+            f.seek(0)
+            self.assertEqual(render_jinja2_file(f.name, context), cluster_name)
+
+    def test_inventory_global_context(self):
+        with tempfile.NamedTemporaryFile() as f:
+            target_name = "minikube-es"
+            f.write("{{inventory_global[\"%s\"].parameters.cluster.name}}" % target_name)
+            cluster_name = "minikube"
+            inv_global = inventory("examples", None)
+            context = {"inventory_global": inv_global}
+            f.seek(0)
+            self.assertEqual(render_jinja2_file(f.name, context), cluster_name)

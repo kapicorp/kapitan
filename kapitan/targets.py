@@ -61,6 +61,7 @@ def compile_target_file(target_file, search_path, output_path, **kwargs):
                 # copy ext_vars to dedicated jinja2 context so we can update it
                 ctx = ext_vars.copy()
                 ctx["inventory"] = inventory(search_path, target_name)
+                ctx["inventory_global"] = inventory(search_path, None)
                 compile_jinja2(compile_path_sp, ctx, _output_path)
             else:
                 raise IOError("Path not found in search_path: %s" % obj["path"])
