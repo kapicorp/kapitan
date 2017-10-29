@@ -16,33 +16,78 @@
 
 "secrets module"
 
+import base64
 import errno
+from functools import partial
 import logging
 import os
 import re
+import sys
 import gnupg
+import yaml
 
 logger = logging.getLogger(__name__)
 
-SECRET_TOKEN_PATTERN = r"(\?\([\w-\/]+\)\?)"
-SECRET_PATTERN = r"[\w-\/]+"
+SECRET_TOKEN_PATTERN = r"(\?{([\w\-\:]+)})" # e.g. ${this:is:a:secret}
+
+class GPGError(Exception):
+    "Generic GPG errors"
+    pass
+
+class TokenError(Exception):
+    "Generic Token errors"
+    pass
 
 def secret_gpg_backend():
     "return gpg secret backend"
     return gnupg.GPG()
 
 def secret_gpg_encrypt(gpg_obj, data, recipients):
-    return gpg_obj.encrypt(data, recipients)
+    "encrypt data with recipients keys"
+    assert isinstance(recipients, list)
+    return gpg_obj.encrypt(data, recipients, sign=True, armor=False)
 
 def secret_gpg_decrypt(gpg_obj, data):
+    "decrypt data"
     return gpg_obj.decrypt(data)
 
-def secret_gpg_read(gpg_obj, secrets_path, secret_id):
-    pass
+def secret_gpg_read(gpg_obj, secrets_path, token):
+    "decrypt and read data for token in secrets_path"
+    token_path = secret_token_path(token)
+    full_secret_path = os.path.join(secrets_path, token_path)
+    try:
+        with open(full_secret_path) as fp:
+            secret_obj = yaml.safe_load(fp)
+            data_decoded = base64.b64decode(secret_obj['data'])
+            dec = secret_gpg_decrypt(gpg_obj, data_decoded)
+            logger.debug("Read secret %s at %s", token, full_secret_path)
+            if dec.ok:
+                return dec.data
+            else:
+                raise GPGError(dec.status)
+    except IOError as ex:
+        if ex.errno == errno.ENOENT:
+            raise ValueError("Could not read secret '%s' at %s" %
+                             (token, full_secret_path))
 
-def secret_gpg_write(gpg_obj, secrets_path, secret_id, data, recipients):
-    full_secret_path = os.path.join(secrets_path, secret_id)
-    secret_filename = os.path.basename(secret_id)
+def secret_token_path(token):
+    "returns filesystem path for token"
+    if token.startswith(":") or token.endswith(":"):
+        raise TokenError("Token must not start/end with ':' %s" % token)
+    split_path = os.path.join(*token.split(":"))
+    return split_path
+
+def gpg_fingerprint(gpg_obj, recipient):
+    "returns (first) key fingerprint for recipient"
+    try:
+        return gpg_obj.list_keys(keys=(recipient,))[0]["fingerprint"]
+    except IndexError as iexp:
+        raise iexp
+
+def secret_gpg_write(gpg_obj, secrets_path, token, data, recipients):
+    "encrypt and write data for token in secrets_path"
+    token_path = secret_token_path(token)
+    full_secret_path = os.path.join(secrets_path, token_path)
     try:
         os.makedirs(os.path.dirname(full_secret_path))
     except OSError as ex:
@@ -51,5 +96,32 @@ def secret_gpg_write(gpg_obj, secrets_path, secret_id, data, recipients):
             pass
     with open(full_secret_path, "w") as fp:
         enc = secret_gpg_encrypt(gpg_obj, data, recipients)
-        fp.write(enc.data)
-        logger.debug("Wrote secret %s at %s", secret_id, secrets_path)
+        if enc.ok:
+            b64data = base64.b64encode(enc.data)
+            fingerprints = [gpg_fingerprint(gpg_obj, r) for r in recipients]
+            secret_obj = {"data": b64data, "recipients": fingerprints}
+            yaml.safe_dump(secret_obj, stream=fp, default_flow_style=False)
+            logger.debug("Wrote secret %s for fingerprints %s at %s", token,
+                         fingerprints, full_secret_path)
+        else:
+            raise GPGError(enc.status)
+
+def reveal_gpg_replace(gpg_obj, secrets_path, match_obj):
+    "returns decrypted secret from token in match_obj"
+    token_tag, token = match_obj.groups()
+    logger.debug("Revealing %s", token_tag)
+    return secret_gpg_read(gpg_obj, secrets_path, token)
+
+def secret_gpg_reveal(gpg_obj, secrets_path, filename):
+    """
+    read filename and reveal content with secrets to stdout
+    set filename=None to read stdin
+    """
+    _reveal_gpg_replace = partial(reveal_gpg_replace, gpg_obj, secrets_path)
+    if filename is None:
+        for line in sys.stdin:
+            print re.sub(SECRET_TOKEN_PATTERN, _reveal_gpg_replace, line),
+    else:
+        with open(filename) as fp:
+            for line in fp:
+                print re.sub(SECRET_TOKEN_PATTERN, reveal_gpg_replace, line),
