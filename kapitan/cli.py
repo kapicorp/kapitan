@@ -21,14 +21,15 @@ import json
 import logging
 import os
 import sys
-import yaml
-import multiprocessing
 from functools import partial
+import multiprocessing
+import yaml
 
 from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar
 from kapitan.targets import compile_target_file
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
+from kapitan.secrets import secret_gpg_backend, secret_gpg_write, secret_gpg_reveal
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,26 @@ def main():
     searchvar_parser.add_argument('--inventory-path', default='./inventory',
                                   help='set inventory path, default is "./inventory"')
 
+    secrets_parser = subparser.add_parser('secrets', help='manage secrets')
+    secrets_parser.add_argument('--write', '-w', help='write secret token',
+                                metavar='TOKENNAME',)
+    secrets_parser.add_argument('--reveal', '-r', help='reveal secrets',
+                                action='store_true', default=False)
+    secrets_parser.add_argument('--file', '-f', help='read file, set "-" for stdin',
+                                required=True, metavar='FILENAME')
+    secrets_parser.add_argument('--target-name', '-t', help='grab recipients from target name')
+    secrets_parser.add_argument('--inventory-path', default='./inventory',
+                                help='set inventory path, default is "./inventory"')
+    secrets_parser.add_argument('--recipients', '-R', help='set recipients',
+                                type=str, nargs='+', default=[], metavar='RECIPIENT')
+    secrets_parser.add_argument('--secrets-path', help='set secrets path, default is "./secrets"',
+                                default='./secrets',)
+    secrets_parser.add_argument('--backend', help='set secrets backend, default is "gpg"',
+                                type=str, choices=('gpg',), default='gpg')
+    secrets_parser.add_argument('--verbose', '-v',
+                                help='set verbose mode (warning: this will show sensitive data)',
+                                action='store_true', default=False)
+
     args = parser.parse_args()
 
     logger.debug('Running with args: %s', args)
@@ -126,7 +147,7 @@ def main():
                              prune=(not args.no_prune))
             try:
                 pool.map(worker, args.target_file)
-            except RuntimeError as e:
+            except RuntimeError:
                 # if compile worker fails, terminate immediately
                 pool.terminate()
                 raise
@@ -143,3 +164,31 @@ def main():
             print yaml.dump(inv, Dumper=PrettyDumper, default_flow_style=False)
     elif cmd == 'searchvar':
         searchvar(args.searchvar, args.inventory_path)
+    elif cmd == 'secrets':
+        if args.verbose:
+            logging.basicConfig(level=logging.DEBUG,
+                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        else:
+            logging.basicConfig(level=logging.INFO, format="%(message)s")
+        gpg_obj = secret_gpg_backend()
+        if args.write is not None:
+            data = None
+            recipients = args.recipients
+            if args.target_name:
+                inv = inventory_reclass(args.inventory_path)
+                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
+            if args.file == '-':
+                data = ''
+                for line in sys.stdin:
+                    data += line
+            else:
+                with open(args.file) as fp:
+                    data = fp.read()
+            secret_gpg_write(gpg_obj, args.secrets_path, args.write, data, recipients)
+        elif args.reveal:
+            if args.file == '-':
+                secret_gpg_reveal(gpg_obj, args.secrets_path, None)
+            elif args.file:
+                # TODO if it is a directory, reveal every file there
+                with open(args.file) as fp:
+                    secret_gpg_reveal(gpg_obj, args.secrets_path, args.file)

@@ -3,6 +3,10 @@ classes:
   - component.elasticsearch
 
 parameters:
+  kapitan:
+    secrets:
+      recipients:
+        - dummy@recipient
   namespace: minikube-es
 
   elasticsearch:

@@ -28,7 +28,7 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-SECRET_TOKEN_PATTERN = r"(\?{([\w\-\:]+)})" # e.g. ${this:is:a:secret}
+SECRET_TOKEN_PATTERN = r"(\?{([\w\-\/]+)})" # e.g. ?{my/secret/token}
 
 class GPGError(Exception):
     "Generic GPG errors"
@@ -72,9 +72,9 @@ def secret_gpg_read(gpg_obj, secrets_path, token):
 
 def secret_token_path(token):
     "returns filesystem path for token"
-    if token.startswith(":") or token.endswith(":"):
-        raise TokenError("Token must not start/end with ':' %s" % token)
-    split_path = os.path.join(*token.split(":"))
+    if token.startswith("/") or token.endswith("/"):
+        raise TokenError("Token must not start/end with '/' %s" % token)
+    split_path = os.path.join(*token.split("/"))
     return split_path
 
 def gpg_fingerprint(gpg_obj, recipient):
@@ -99,10 +99,11 @@ def secret_gpg_write(gpg_obj, secrets_path, token, data, recipients):
         if enc.ok:
             b64data = base64.b64encode(enc.data)
             fingerprints = [gpg_fingerprint(gpg_obj, r) for r in recipients]
-            secret_obj = {"data": b64data, "recipients": fingerprints}
+            secret_obj = {"data": b64data,
+                          "recipients": [{'fingerprint': f} for f in fingerprints]}
             yaml.safe_dump(secret_obj, stream=fp, default_flow_style=False)
-            logger.debug("Wrote secret %s for fingerprints %s at %s", token,
-                         fingerprints, full_secret_path)
+            logger.info("Wrote secret %s for fingerprints %s at %s", token,
+                    ','.join([f[:8] for f in fingerprints]), full_secret_path)
         else:
             raise GPGError(enc.status)
 
@@ -120,8 +121,8 @@ def secret_gpg_reveal(gpg_obj, secrets_path, filename):
     _reveal_gpg_replace = partial(reveal_gpg_replace, gpg_obj, secrets_path)
     if filename is None:
         for line in sys.stdin:
-            print re.sub(SECRET_TOKEN_PATTERN, _reveal_gpg_replace, line),
+            sys.stdout.write(re.sub(SECRET_TOKEN_PATTERN, _reveal_gpg_replace, line))
     else:
         with open(filename) as fp:
             for line in fp:
-                print re.sub(SECRET_TOKEN_PATTERN, reveal_gpg_replace, line),
+                sys.stdout.write(re.sub(SECRET_TOKEN_PATTERN, _reveal_gpg_replace, line))
