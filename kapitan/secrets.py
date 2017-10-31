@@ -50,7 +50,6 @@ def secret_gpg_encrypt(gpg_obj, data, recipients, **kwargs):
 
 def secret_gpg_decrypt(gpg_obj, data, **kwargs):
     "decrypt data"
-    print kwargs
     return gpg_obj.decrypt(data, **kwargs)
 
 def secret_gpg_read(gpg_obj, secrets_path, token, **kwargs):
