@@ -28,7 +28,8 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-SECRET_TOKEN_PATTERN = r"(\?{([\w\-\/]+)})" # e.g. ?{my/secret/token}
+SECRET_TOKEN_PATTERN = r"(\?{([\w\:\-\/]+)})" # e.g. ?{gpg:my/secret/token}
+SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\-\/]+)" # e.g. gpg:my/secret/token
 
 class GPGError(Exception):
     "Generic GPG errors"
@@ -53,7 +54,7 @@ def secret_gpg_decrypt(gpg_obj, data):
 
 def secret_gpg_read(gpg_obj, secrets_path, token):
     "decrypt and read data for token in secrets_path"
-    token_path = secret_token_path(token)
+    b, token_path = secret_token_attributes(token)
     full_secret_path = os.path.join(secrets_path, token_path)
     try:
         with open(full_secret_path) as fp:
@@ -70,12 +71,22 @@ def secret_gpg_read(gpg_obj, secrets_path, token):
             raise ValueError("Could not read secret '%s' at %s" %
                              (token, full_secret_path))
 
-def secret_token_path(token):
-    "returns filesystem path for token"
-    if token.startswith("/") or token.endswith("/"):
-        raise TokenError("Token must not start/end with '/' %s" % token)
-    split_path = os.path.join(*token.split("/"))
-    return split_path
+def secret_token_attributes(token):
+    "returns backend and path from token"
+    match = re.match(SECRET_TOKEN_ATTR_PATTERN, token)
+    if match:
+        backend, token_path = match.groups()
+        logger.debug("Got token attributes %s %s", backend, token_path)
+
+        if token_path.startswith("/") or token_path.endswith("/"):
+            raise TokenError("Token path must not start/end with '/' %s" % token_path)
+        split_path = os.path.join(*token_path.split("/"))
+        if backend != 'gpg':
+            raise TokenError('Secret backend is not "gpg": %s' % token)
+
+        return backend, split_path
+    else:
+        raise ValueError('Token not valid: %s' % token)
 
 def gpg_fingerprint(gpg_obj, recipient):
     "returns (first) key fingerprint for recipient"
@@ -86,7 +97,7 @@ def gpg_fingerprint(gpg_obj, recipient):
 
 def secret_gpg_write(gpg_obj, secrets_path, token, data, recipients):
     "encrypt and write data for token in secrets_path"
-    token_path = secret_token_path(token)
+    _, token_path = secret_token_attributes("gpg:%s" % token)
     full_secret_path = os.path.join(secrets_path, token_path)
     try:
         os.makedirs(os.path.dirname(full_secret_path))
@@ -103,7 +114,7 @@ def secret_gpg_write(gpg_obj, secrets_path, token, data, recipients):
                           "recipients": [{'fingerprint': f} for f in fingerprints]}
             yaml.safe_dump(secret_obj, stream=fp, default_flow_style=False)
             logger.info("Wrote secret %s for fingerprints %s at %s", token,
-                    ','.join([f[:8] for f in fingerprints]), full_secret_path)
+                        ','.join([f[:8] for f in fingerprints]), full_secret_path)
         else:
             raise GPGError(enc.status)
 
