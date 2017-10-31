@@ -52,6 +52,6 @@ class SecretsTest(unittest.TestCase):
             fp.write('I am a file with a ?{gpg:secret/sauce}')
         with open(file_revealed, 'w') as fp:
             secret_gpg_reveal(GPG_OBJ, SECRETS_HOME, file_with_secret_tags,
-                              output=fp)
+                              output=fp, passphrase="testphrase")
         with open(file_revealed) as fp:
             self.assertEqual("I am a file with a super secret value", fp.read())
