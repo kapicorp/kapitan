@@ -28,7 +28,7 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-SECRET_TOKEN_PATTERN = r"(\?{([\w\:\-\/]+)})" # e.g. ?{gpg:my/secret/token}
+SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\-\/]+)})" # e.g. ?{gpg:my/secret/token}
 SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\-\/]+)" # e.g. gpg:my/secret/token
 
 class GPGError(Exception):
@@ -43,10 +43,10 @@ def secret_gpg_backend():
     "return gpg secret backend"
     return gnupg.GPG()
 
-def secret_gpg_encrypt(gpg_obj, data, recipients):
+def secret_gpg_encrypt(gpg_obj, data, recipients, **kwargs):
     "encrypt data with recipients keys"
     assert isinstance(recipients, list)
-    return gpg_obj.encrypt(data, recipients, sign=True, armor=False)
+    return gpg_obj.encrypt(data, recipients, sign=True, armor=False, **kwargs)
 
 def secret_gpg_decrypt(gpg_obj, data):
     "decrypt data"
@@ -95,7 +95,7 @@ def gpg_fingerprint(gpg_obj, recipient):
     except IndexError as iexp:
         raise iexp
 
-def secret_gpg_write(gpg_obj, secrets_path, token, data, recipients):
+def secret_gpg_write(gpg_obj, secrets_path, token, data, recipients, **kwargs):
     "encrypt and write data for token in secrets_path"
     _, token_path = secret_token_attributes("gpg:%s" % token)
     full_secret_path = os.path.join(secrets_path, token_path)
@@ -106,7 +106,7 @@ def secret_gpg_write(gpg_obj, secrets_path, token, data, recipients):
         if ex.errno == errno.EEXIST:
             pass
     with open(full_secret_path, "w") as fp:
-        enc = secret_gpg_encrypt(gpg_obj, data, recipients)
+        enc = secret_gpg_encrypt(gpg_obj, data, recipients, **kwargs)
         if enc.ok:
             b64data = base64.b64encode(enc.data)
             fingerprints = [gpg_fingerprint(gpg_obj, r) for r in recipients]
@@ -124,16 +124,25 @@ def reveal_gpg_replace(gpg_obj, secrets_path, match_obj):
     logger.debug("Revealing %s", token_tag)
     return secret_gpg_read(gpg_obj, secrets_path, token)
 
-def secret_gpg_reveal(gpg_obj, secrets_path, filename):
+def secret_gpg_reveal(gpg_obj, secrets_path, filename, output=None):
     """
     read filename and reveal content with secrets to stdout
     set filename=None to read stdin
+    set output to filename to write to file object, default is stdout
     """
     _reveal_gpg_replace = partial(reveal_gpg_replace, gpg_obj, secrets_path)
     if filename is None:
         for line in sys.stdin:
-            sys.stdout.write(re.sub(SECRET_TOKEN_PATTERN, _reveal_gpg_replace, line))
+            revealed = re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_gpg_replace, line)
+            if output:
+                output.write(revealed)
+            else:
+                sys.stdout.write(revealed)
     else:
         with open(filename) as fp:
             for line in fp:
-                sys.stdout.write(re.sub(SECRET_TOKEN_PATTERN, _reveal_gpg_replace, line))
+                revealed = re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_gpg_replace, line)
+                if output:
+                    output.write(revealed)
+                else:
+                    sys.stdout.write(revealed)
