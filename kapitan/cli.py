@@ -71,6 +71,8 @@ def main():
     compile_parser.add_argument('--parallelism', '-p', type=int,
                                 default=4, metavar='INT',
                                 help='Number of concurrent compile processes, default is 4')
+    compile_parser.add_argument('--secrets-path', help='set secrets path, default is "./secrets"',
+                                default='./secrets',)
 
     inventory_parser = subparser.add_parser('inventory', help='show inventory')
     inventory_parser.add_argument('--target-name', '-t', default='',
@@ -144,7 +146,8 @@ def main():
             worker = partial(compile_target_file,
                              search_path=search_path,
                              output_path=args.output_path,
-                             prune=(not args.no_prune))
+                             prune=(not args.no_prune),
+                             secrets_path=args.secrets_path)
             try:
                 pool.map(worker, args.target_file)
             except RuntimeError:
