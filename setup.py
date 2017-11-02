@@ -55,7 +55,8 @@ setup(
         'PyYAML>=3.12',
         'Jinja2>=2.9.4',
         'reclass>=1.4.1',
-        'jsonschema>=2.5.1'
+        'jsonschema>=2.5.1',
+        'python-gnupg==0.4.1'
     ],
 
     entry_points={
