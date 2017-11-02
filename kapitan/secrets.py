@@ -19,6 +19,7 @@
 import base64
 import errno
 from functools import partial
+import hashlib
 import logging
 import os
 import re
@@ -30,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\-\/]+)})" # e.g. ?{gpg:my/secret/token}
 SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\-\/]+)" # e.g. gpg:my/secret/token
+SECRET_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\-\/]+):(\w+)" # e.g. gpg:my/secret/token:1deadbeef
 
 class GPGError(Exception):
     "Generic GPG errors"
@@ -54,7 +56,7 @@ def secret_gpg_decrypt(gpg_obj, data, **kwargs):
 
 def secret_gpg_read(gpg_obj, secrets_path, token, **kwargs):
     "decrypt and read data for token in secrets_path"
-    b, token_path = secret_token_attributes(token)
+    _, token_path = secret_token_attributes(token)
     full_secret_path = os.path.join(secrets_path, token_path)
     try:
         with open(full_secret_path) as fp:
@@ -71,6 +73,15 @@ def secret_gpg_read(gpg_obj, secrets_path, token, **kwargs):
             raise ValueError("Could not read secret '%s' at %s" %
                              (token, full_secret_path))
 
+def secret_token_from_tag(token_tag):
+    "returns token from token_tag"
+    match = re.match(SECRET_TOKEN_TAG_PATTERN, token_tag)
+    if match:
+        _, token = match.groups()
+        return token
+    else:
+        raise ValueError('Token tag not valid: %s' % token_tag)
+
 def secret_token_attributes(token):
     "returns backend and path from token"
     match = re.match(SECRET_TOKEN_ATTR_PATTERN, token)
@@ -85,6 +96,23 @@ def secret_token_attributes(token):
             raise TokenError('Secret backend is not "gpg": %s' % token)
 
         return backend, split_path
+    else:
+        raise ValueError('Token not valid: %s' % token)
+
+def secret_token_compiled_attributes(token):
+    "validates and returns backend, path and hash from token"
+    match = re.match(SECRET_TOKEN_COMPILED_ATTR_PATTERN, token)
+    if match:
+        backend, token_path, token_hash = match.groups()
+        logger.debug("Got token attributes %s %s %s", backend, token_path, token_hash)
+
+        if token_path.startswith("/") or token_path.endswith("/"):
+            raise TokenError("Token path must not start/end with '/' %s" % token_path)
+        split_path = os.path.join(*token_path.split("/"))
+        if backend != 'gpg':
+            raise TokenError('Secret backend is not "gpg": %s' % token)
+
+        return backend, split_path, token_hash
     else:
         raise ValueError('Token not valid: %s' % token)
 
@@ -118,9 +146,30 @@ def secret_gpg_write(gpg_obj, secrets_path, token, data, recipients, **kwargs):
         else:
             raise GPGError(enc.status)
 
+def secret_gpg_raw_read(secrets_path, token):
+    "load (yaml) and return the content of the secret file for token"
+    _, token_path = secret_token_attributes(token)
+    full_secret_path = os.path.join(secrets_path, token_path)
+    try:
+        with open(full_secret_path) as fp:
+            secret_obj = yaml.safe_load(fp)
+            logger.debug("Read raw secret %s at %s", token, full_secret_path)
+            return secret_obj
+    except IOError as ex:
+        if ex.errno == errno.ENOENT:
+            raise ValueError("Could not read raw secret '%s' at %s" %
+                             (token, full_secret_path))
+
 def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, **kwargs):
-    "returns decrypted secret from token in match_obj"
+    "returns and verifies hash for decrypted secret from token in match_obj"
     token_tag, token = match_obj.groups()
+    _, token_path, token_hash = secret_token_compiled_attributes(token)
+    secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
+    secret_hash = hashlib.sha256("%s%s" % (token_path, secret_raw_obj["data"])).hexdigest()
+    logger.debug("Attempting to reveal token %s with secret hash %s", token, token_hash)
+    if secret_hash != token_hash:
+        raise ValueError("Currently stored secret hash: %s does not match compiled secret: %s" %
+                         (secret_hash, token))
     logger.debug("Revealing %s", token_tag)
     return secret_gpg_read(gpg_obj, secrets_path, token, **kwargs)
 

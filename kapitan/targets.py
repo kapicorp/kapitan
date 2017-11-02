@@ -19,6 +19,7 @@
 import logging
 import os
 import errno
+import hashlib
 import json
 import re
 import shutil
@@ -27,6 +28,8 @@ import yaml
 
 from kapitan.resources import search_imports, resource_callbacks, inventory
 from kapitan.utils import jsonnet_file, jsonnet_prune, render_jinja2_dir, PrettyDumper
+from kapitan.secrets import secret_gpg_raw_read, secret_token_from_tag, secret_token_attributes
+from kapitan.secrets import SECRET_TOKEN_TAG_PATTERN
 
 logger = logging.getLogger(__name__)
 
@@ -62,15 +65,19 @@ def compile_target_file(target_file, search_path, output_path, **kwargs):
                 ctx = ext_vars.copy()
                 ctx["inventory"] = inventory(search_path, target_name)
                 ctx["inventory_global"] = inventory(search_path, None)
-                compile_jinja2(compile_path_sp, ctx, _output_path)
+                compile_jinja2(compile_path_sp, ctx, _output_path, **kwargs)
             else:
                 raise IOError("Path not found in search_path: %s" % obj["path"])
 
 
-def compile_jinja2(path, context, output_path):
+def compile_jinja2(path, context, output_path, **kwargs):
     """
     Write items in path as jinja2 rendered files to output_path.
+    kwargs:
+        secrets_path: default None, set to access secrets backend
     """
+    secrets_path = kwargs.get('secrets_path', None)
+
     for item_key, item_value in render_jinja2_dir(path, context).iteritems():
         full_item_path = os.path.join(output_path, item_key)
         try:
@@ -79,7 +86,7 @@ def compile_jinja2(path, context, output_path):
             # If directory exists, pass
             if ex.errno == errno.EEXIST:
                 pass
-        with open(full_item_path, 'w') as fp:
+        with CompiledFile(full_item_path, mode="w", secrets_path=secrets_path) as fp:
             fp.write(item_value["content"])
             mode = item_value["mode"]
             os.chmod(full_item_path, mode)
@@ -94,6 +101,7 @@ def compile_jsonnet(file_path, output_path, search_path, ext_vars, **kwargs):
     kwargs:
         output: default 'yaml', accepts 'json'
         prune: default True, accepts False
+        secrets_path: default None, set to access secrets backend
     """
     _search_imports = lambda cwd, imp: search_imports(cwd, imp, search_path)
     json_output = jsonnet_file(file_path, import_callback=_search_imports,
@@ -102,6 +110,7 @@ def compile_jsonnet(file_path, output_path, search_path, ext_vars, **kwargs):
 
     output = kwargs.get('output', 'yaml')
     prune = kwargs.get('prune', True)
+    secrets_path = kwargs.get('secrets_path', None)
 
     if prune:
         json_output = jsonnet_prune(json_output)
@@ -110,12 +119,12 @@ def compile_jsonnet(file_path, output_path, search_path, ext_vars, **kwargs):
         # write each item to disk
         if output == 'json':
             file_path = os.path.join(output_path, '%s.%s' % (item_key, output))
-            with open(file_path, 'w') as fp:
+            with CompiledFile(file_path, mode="w", secrets_path=secrets_path) as fp:
                 json.dump(item_value, fp, indent=4, sort_keys=True)
                 logger.info("Wrote %s", file_path)
         elif output == 'yaml':
             file_path = os.path.join(output_path, '%s.%s' % (item_key, "yml"))
-            with open(file_path, 'w') as fp:
+            with CompiledFile(file_path, mode="w", secrets_path=secrets_path) as fp:
                 yaml.dump(item_value, stream=fp, Dumper=PrettyDumper, default_flow_style=False)
                 logger.info("Wrote %s", file_path)
         else:
@@ -183,3 +192,47 @@ def load_target(target_file):
             logger.debug("Target file %s is valid", target_file)
 
             return target_obj
+
+class CompilingFile(object):
+    def __init__(self, context, fp, **kwargs):
+        self.fp = fp
+        self.kwargs = kwargs
+
+    def hash_token_tag(self, token_tag):
+        """
+        suffixes a secret's hash to its tag:
+        e.g:
+        ?{gpg:app1/secret/1} gets replaced with
+        ?{gpg:app1/secret/1:7a5a9a67efbccff7a7b4764067833e1105f1e5f6779b4bf601f9c7b31b3b18c4}
+        """
+        secrets_path = self.kwargs.get("secrets_path", None)
+        token = secret_token_from_tag(token_tag)
+        secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
+        backend, token_path = secret_token_attributes(token)
+        sha256 = hashlib.sha256("%s%s" % (token_path, secret_raw_obj["data"])).hexdigest()
+        return "?{%s:%s:%s}" % (backend, token_path, sha256)
+
+    def sub_token_compiled(self, data):
+        "find and replace tokens with hashed tokens in data"
+        def _hash_token_tag(match_obj):
+            token_tag, token = match_obj.groups()
+            return self.hash_token_tag(token_tag)
+
+        return re.sub(SECRET_TOKEN_TAG_PATTERN, _hash_token_tag, data)
+
+    def write(self, data):
+        self.fp.write(self.sub_token_compiled(data))
+
+class CompiledFile(object):
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.kwargs = kwargs
+        self.fp = None
+
+    def __enter__(self):
+        mode = self.kwargs.get("mode", "r")
+        self.fp = open(self.name, mode)
+        return CompilingFile(self, self.fp, **self.kwargs)
+
+    def __exit__(self, *args):
+        self.fp.close()
