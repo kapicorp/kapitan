@@ -3,4 +3,5 @@
   file_read(name):: std.native("file_read")(name),
   inventory(target=std.extVar("target"), inv_path="inventory/"):: std.native("inventory")(target, inv_path),
   inventory_global(target=null, inv_path="inventory/"):: std.native("inventory")(target, inv_path),
+  yaml_dump(obj):: std.native("yaml_dump")(std.toString(obj)),
 }

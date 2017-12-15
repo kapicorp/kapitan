@@ -44,8 +44,13 @@ def resource_callbacks(search_path):
                           partial(inventory, search_path)),
             "file_read": (("name",),
                           partial(read_file, search_path)),
+            "yaml_dump": (("obj",), yaml_dump),
            }
 
+def yaml_dump(obj):
+    "Dumps jsonnet obj as yaml"
+    _obj = json.loads(obj)
+    return yaml.safe_dump(_obj, default_flow_style=False)
 
 def jinja2_render_file(search_path, name, ctx):
     """
