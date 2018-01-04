@@ -160,26 +160,30 @@ def secret_gpg_raw_read(secrets_path, token):
             raise ValueError("Could not read raw secret '%s' at %s" %
                              (token, full_secret_path))
 
-def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, **kwargs):
+def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
     "returns and verifies hash for decrypted secret from token in match_obj"
     token_tag, token = match_obj.groups()
-    _, token_path, token_hash = secret_token_compiled_attributes(token)
-    secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
-    secret_hash = hashlib.sha256("%s%s" % (token_path, secret_raw_obj["data"])).hexdigest()
-    logger.debug("Attempting to reveal token %s with secret hash %s", token, token_hash)
-    if secret_hash != token_hash:
-        raise ValueError("Currently stored secret hash: %s does not match compiled secret: %s" %
-                         (secret_hash, token))
+    if verify:
+        _, token_path, token_hash = secret_token_compiled_attributes(token)
+        secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
+        secret_hash = hashlib.sha256("%s%s" % (token_path, secret_raw_obj["data"])).hexdigest()
+        secret_hash = secret_hash[:8]
+        logger.debug("Attempting to reveal token %s with secret hash %s", token, token_hash)
+        if secret_hash != token_hash:
+            raise ValueError("Currently stored secret hash: %s does not match compiled secret: %s" %
+                             (secret_hash, token))
     logger.debug("Revealing %s", token_tag)
     return secret_gpg_read(gpg_obj, secrets_path, token, **kwargs)
 
-def secret_gpg_reveal(gpg_obj, secrets_path, filename, output=None, **kwargs):
+def secret_gpg_reveal(gpg_obj, secrets_path, filename, verify=True, output=None, **kwargs):
     """
     read filename and reveal content with secrets to stdout
     set filename=None to read stdin
+    set verify=False to skip secret hash verification
     set output to filename to write to file object, default is stdout
     """
-    _reveal_gpg_replace = partial(reveal_gpg_replace, gpg_obj, secrets_path, **kwargs)
+    _reveal_gpg_replace = partial(reveal_gpg_replace, gpg_obj, secrets_path,
+                                  verify=verify, **kwargs)
     if filename is None:
         for line in sys.stdin:
             revealed = re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_gpg_replace, line)

@@ -30,6 +30,7 @@ KEY = GPG_OBJ.gen_key(GPG_OBJ.gen_key_input(key_type="RSA",
                                             key_length=2048,
                                             passphrase="testphrase"))
 class SecretsTest(unittest.TestCase):
+    "Test secrets"
     def test_secret_token_attributes(self):
         "grab attributes and compare to values"
         token_tag = '?{gpg:secret/sauce}'
@@ -49,9 +50,9 @@ class SecretsTest(unittest.TestCase):
         file_with_secret_tags = tempfile.mktemp()
         file_revealed = tempfile.mktemp()
         with open(file_with_secret_tags, 'w') as fp:
-            fp.write('I am a file with a ?{gpg:secret/sauce}')
+            fp.write('I am a file with a ?{gpg:secret/sauce:deadbeef}')
         with open(file_revealed, 'w') as fp:
             secret_gpg_reveal(GPG_OBJ, SECRETS_HOME, file_with_secret_tags,
-                              output=fp, passphrase="testphrase")
+                              verify=False, output=fp, passphrase="testphrase")
         with open(file_revealed) as fp:
             self.assertEqual("I am a file with a super secret value", fp.read())
