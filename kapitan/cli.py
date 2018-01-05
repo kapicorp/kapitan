@@ -71,6 +71,11 @@ def main():
     compile_parser.add_argument('--parallelism', '-p', type=int,
                                 default=4, metavar='INT',
                                 help='Number of concurrent compile processes, default is 4')
+    compile_parser.add_argument('--secrets-path', help='set secrets path, default is "./secrets"',
+                                default='./secrets',)
+    compile_parser.add_argument('--reveal',
+                                help='reveal secrets (warning: this will write sensitive data)',
+                                action='store_true', default=False)
 
     inventory_parser = subparser.add_parser('inventory', help='show inventory')
     inventory_parser.add_argument('--target-name', '-t', default='',
@@ -107,6 +112,8 @@ def main():
     secrets_parser.add_argument('--verbose', '-v',
                                 help='set verbose mode (warning: this will show sensitive data)',
                                 action='store_true', default=False)
+    secrets_parser.add_argument('--no-verify', help='do not verify secret hashes on reveal',
+                                action='store_true', default=False)
 
     args = parser.parse_args()
 
@@ -139,12 +146,16 @@ def main():
         else:
             logging.basicConfig(level=logging.INFO, format="%(message)s")
         search_path = os.path.abspath(args.search_path)
+        gpg_obj = secret_gpg_backend()
         if args.target_file:
             pool = multiprocessing.Pool(args.parallelism)
             worker = partial(compile_target_file,
                              search_path=search_path,
                              output_path=args.output_path,
-                             prune=(not args.no_prune))
+                             prune=(not args.no_prune),
+                             secrets_path=args.secrets_path,
+                             secrets_reveal=args.reveal,
+                             gpg_obj=gpg_obj)
             try:
                 pool.map(worker, args.target_file)
             except RuntimeError:
@@ -187,8 +198,9 @@ def main():
             secret_gpg_write(gpg_obj, args.secrets_path, args.write, data, recipients)
         elif args.reveal:
             if args.file == '-':
-                secret_gpg_reveal(gpg_obj, args.secrets_path, None)
+                secret_gpg_reveal(gpg_obj, args.secrets_path, None, verify=(not args.no_verify))
             elif args.file:
                 # TODO if it is a directory, reveal every file there
                 with open(args.file) as fp:
-                    secret_gpg_reveal(gpg_obj, args.secrets_path, args.file)
+                    secret_gpg_reveal(gpg_obj, args.secrets_path, args.file,
+                                      verify=(not args.no_verify))
