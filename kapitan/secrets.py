@@ -29,9 +29,9 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\-\/]+)})" # e.g. ?{gpg:my/secret/token}
-SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\-\/]+)" # e.g. gpg:my/secret/token
-SECRET_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\-\/]+):(\w+)" # e.g. gpg:my/secret/token:1deadbeef
+SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)})" # e.g. ?{gpg:my/secret/token}
+SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)" # e.g. gpg:my/secret/token
+SECRET_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)" # e.g. gpg:my/secret/token:1deadbeef
 
 class GPGError(Exception):
     "Generic GPG errors"
