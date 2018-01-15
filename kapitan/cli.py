@@ -21,15 +21,15 @@ import json
 import logging
 import os
 import sys
-from functools import partial
-import multiprocessing
+import traceback
 import yaml
 
 from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar
-from kapitan.targets import compile_target_file
+from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
 from kapitan.secrets import secret_gpg_backend, secret_gpg_write, secret_gpg_reveal
+from kapitan.errors import KapitanError
 
 logger = logging.getLogger(__name__)
 
@@ -133,8 +133,7 @@ def main():
                                    ext_vars=ext_vars)
         if args.output == 'yaml':
             json_obj = json.loads(json_output)
-            yaml_output = yaml.safe_dump(json_obj, default_flow_style=False)
-            print yaml_output
+            yaml.safe_dump(json_obj, sys.stdout, default_flow_style=False)
         elif json_output:
             print json_output
     elif cmd == 'compile':
@@ -148,31 +147,26 @@ def main():
         search_path = os.path.abspath(args.search_path)
         gpg_obj = secret_gpg_backend()
         if args.target_file:
-            pool = multiprocessing.Pool(args.parallelism)
-            worker = partial(compile_target_file,
-                             search_path=search_path,
-                             output_path=args.output_path,
-                             prune=(not args.no_prune),
-                             secrets_path=args.secrets_path,
-                             secrets_reveal=args.reveal,
-                             gpg_obj=gpg_obj)
-            try:
-                pool.map(worker, args.target_file)
-            except RuntimeError:
-                # if compile worker fails, terminate immediately
-                pool.terminate()
-                raise
+            compile_targets(args.target_file, search_path, args.output_path, args.parallelism,
+                            prune=(not args.no_prune), secrets_path=args.secrets_path,
+                            secrets_reveal=args.reveal, gpg_obj=gpg_obj)
         else:
-            logger.error("Nothing to compile")
+            logger.error("Error: Nothing to compile")
     elif cmd == 'inventory':
-        inv = inventory_reclass(args.inventory_path)
-        if args.target_name != '':
-            inv = inv['nodes'][args.target_name]
-        if args.flat:
-            inv = flatten_dict(inv)
-            print yaml.dump(inv, width=10000)
-        else:
-            print yaml.dump(inv, Dumper=PrettyDumper, default_flow_style=False)
+        try:
+            logging.basicConfig(level=logging.INFO, format="%(message)s")
+            inv = inventory_reclass(args.inventory_path)
+            if args.target_name != '':
+                inv = inv['nodes'][args.target_name]
+            if args.flat:
+                inv = flatten_dict(inv)
+                yaml.dump(inv, sys.stdout, width=10000)
+            else:
+                yaml.dump(inv, sys.stdout, Dumper=PrettyDumper, default_flow_style=False)
+        except Exception as e:
+            if not isinstance(e, KapitanError):
+                logger.error("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                traceback.print_exc()
     elif cmd == 'searchvar':
         searchvar(args.searchvar, args.inventory_path)
     elif cmd == 'secrets':
