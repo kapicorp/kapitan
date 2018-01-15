@@ -23,6 +23,10 @@ import hashlib
 import json
 import re
 import shutil
+from functools import partial
+import multiprocessing
+import traceback
+import tempfile
 import jsonschema
 import yaml
 
@@ -30,9 +34,39 @@ from kapitan.resources import search_imports, resource_callbacks, inventory
 from kapitan.utils import jsonnet_file, jsonnet_prune, render_jinja2_dir, PrettyDumper
 from kapitan.secrets import secret_gpg_raw_read, secret_token_from_tag, secret_token_attributes
 from kapitan.secrets import SECRET_TOKEN_TAG_PATTERN, secret_gpg_read
+from kapitan.errors import KapitanError
 
 logger = logging.getLogger(__name__)
 
+def compile_targets(target_files, search_path, output_path, parallel, **kwargs):
+    """
+    Loads files in target_files and runs compile_target_file() on a
+    multiprocessing pool with parallel number of processes.
+    kwargs are passed to compile_target_file()
+    """
+    # temp_path will hold compiled items
+    temp_path = tempfile.mkdtemp(suffix='.kapitan')
+    pool = multiprocessing.Pool(parallel)
+    worker = partial(compile_target_file, search_path=search_path, output_path=temp_path, **kwargs)
+    try:
+        pool.map(worker, target_files)
+        if os.path.exists(output_path):
+            shutil.rmtree(output_path)
+        # on success, copy temp_path into output_path
+        shutil.copytree(temp_path, output_path)
+        logger.debug("Copied %s into %s", temp_path, output_path)
+    except Exception as e:
+        # if compile worker fails, terminate immediately
+        pool.terminate()
+        pool.join()
+        logger.debug("Compile pool terminated")
+        # only print traceback for errors we don't know about
+        if not isinstance(e, KapitanError):
+            logger.error("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            traceback.print_exc()
+    finally:
+        shutil.rmtree(temp_path)
+        logger.debug("Removed %s", temp_path)
 
 def compile_target_file(target_file, search_path, output_path, **kwargs):
     """
@@ -68,6 +102,7 @@ def compile_target_file(target_file, search_path, output_path, **kwargs):
                 compile_jinja2(compile_path_sp, ctx, _output_path, **kwargs)
             else:
                 raise IOError("Path not found in search_path: %s" % obj["path"])
+    logger.info("Compiled %s", target_file)
 
 
 def compile_jinja2(path, context, output_path, **kwargs):
@@ -95,7 +130,7 @@ def compile_jinja2(path, context, output_path, **kwargs):
             fp.write(item_value["content"])
             mode = item_value["mode"]
             os.chmod(full_item_path, mode)
-            logger.info("Wrote %s with mode %.4o", full_item_path, mode)
+            logger.debug("Wrote %s with mode %.4o", full_item_path, mode)
 
 
 def compile_jsonnet(file_path, output_path, search_path, ext_vars, **kwargs):
@@ -123,7 +158,7 @@ def compile_jsonnet(file_path, output_path, search_path, ext_vars, **kwargs):
 
     if prune:
         json_output = jsonnet_prune(json_output)
-        logger.debug("Pruned output")
+        logger.debug("Pruned output for: %s", file_path)
     for item_key, item_value in json.loads(json_output).iteritems():
         # write each item to disk
         if output == 'json':
@@ -131,13 +166,13 @@ def compile_jsonnet(file_path, output_path, search_path, ext_vars, **kwargs):
             with CompiledFile(file_path, mode="w", secrets_path=secrets_path,
                               secrets_reveal=secrets_reveal, gpg_obj=gpg_obj) as fp:
                 json.dump(item_value, fp, indent=4, sort_keys=True)
-                logger.info("Wrote %s", file_path)
+                logger.debug("Wrote %s", file_path)
         elif output == 'yaml':
             file_path = os.path.join(output_path, '%s.%s' % (item_key, "yml"))
             with CompiledFile(file_path, mode="w", secrets_path=secrets_path,
                               secrets_reveal=secrets_reveal, gpg_obj=gpg_obj) as fp:
                 yaml.dump(item_value, stream=fp, Dumper=PrettyDumper, default_flow_style=False)
-                logger.info("Wrote %s", file_path)
+                logger.debug("Wrote %s", file_path)
         else:
             raise ValueError('output is neither "json" or "yaml"')
 

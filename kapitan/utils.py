@@ -20,10 +20,12 @@ from hashlib import sha256
 import logging
 import os
 import stat
+import collections
 import jinja2
 import _jsonnet as jsonnet
-import collections
 import yaml
+
+from kapitan.errors import CompileError
 
 
 logger = logging.getLogger(__name__)
@@ -64,18 +66,25 @@ def render_jinja2_dir(path, context):
     Returns a dict where the is key is the filename (with subpath)
     and value is a dict with content and mode
     Empty paths will not be rendered
+    Ignores hidden files (.filename)
     """
     rendered = {}
     for root, _, files in os.walk(path):
         for f in files:
+            if f.startswith('.'):
+                logger.debug('render_jinja2_dir: ignoring file %s', f)
+                continue
             render_path = os.path.join(root, f)
-            logger.debug("render_jinja2_dir rendering %s with context %s",
-                         render_path, context)
+            logger.debug("render_jinja2_dir rendering %s", render_path)
             # get subpath and filename, strip any leading/trailing /
             name = render_path[len(os.path.commonprefix([root, path])):].strip('/')
-            rendered[name] = {"content": render_jinja2_file(render_path, context),
-                              "mode": file_mode(render_path)
-                             }
+            try:
+                rendered[name] = {"content": render_jinja2_file(render_path, context),
+                                  "mode": file_mode(render_path)
+                                 }
+            except Exception as e:
+                logger.error("Jinja2 error: failed to render %s: %s", render_path, str(e))
+                raise CompileError(e)
     return rendered
 
 
@@ -90,8 +99,11 @@ def jsonnet_file(file_path, **kwargs):
     Evaluate file_path jsonnet file.
     kwargs are documented in http://jsonnet.org/implementation/bindings.html
     """
-    return jsonnet.evaluate_file(file_path, **kwargs)
-
+    try:
+        return jsonnet.evaluate_file(file_path, **kwargs)
+    except Exception as e:
+        logger.error("Jsonnet error: failed to compile %s:\n %s", file_path, str(e))
+        raise CompileError(e)
 
 def jsonnet_prune(jsonnet_str):
     "Returns a pruned jsonnet_str"

@@ -23,10 +23,12 @@ import logging
 import os
 import reclass
 import reclass.core
+from reclass.errors import ReclassException, NotFoundError
 import yaml
 
 from kapitan.utils import render_jinja2_file, memoize
 from kapitan import __file__ as kapitan_install_path
+from kapitan.errors import CompileError, InventoryError
 
 logger = logging.getLogger(__name__)
 
@@ -62,12 +64,15 @@ def jinja2_render_file(search_path, name, ctx):
     ctx = json.loads(ctx)
     _full_path = os.path.join(search_path, name)
     logger.debug("jinja2_render_file trying file %s", _full_path)
-    if os.path.exists(_full_path):
-        logger.debug("jinja2_render_file found file at %s", _full_path)
-        return render_jinja2_file(_full_path, ctx)
-    # default IOError if we reach here
-    raise IOError("Could not find file %s" % name)
-
+    try:
+        if os.path.exists(_full_path):
+            logger.debug("jinja2_render_file found file at %s", _full_path)
+            return render_jinja2_file(_full_path, ctx)
+        else:
+            raise IOError("Could not find file %s" % name)
+    except Exception as e:
+        logger.error("Jsonnet jinja2 failed to render %s: %s", _full_path, str(e))
+        raise CompileError(e)
 
 def read_file(search_path, name):
     "return content of file in name"
@@ -166,12 +171,16 @@ def inventory_reclass(inventory_path):
         if ex.errno == errno.ENOENT:
             logger.debug("Using reclass inventory config defaults")
 
-    storage = reclass.get_storage(reclass_config['storage_type'], reclass_config['nodes_uri'],
-                                  reclass_config['classes_uri'], default_environment='base')
-    class_mappings = reclass_config.get('class_mappings')  # this defaults to None (disabled)
-    _reclass = reclass.core.Core(storage, class_mappings)
+    try:
+        storage = reclass.get_storage(reclass_config['storage_type'], reclass_config['nodes_uri'],
+                                      reclass_config['classes_uri'], default_environment='base')
+        class_mappings = reclass_config.get('class_mappings')  # this defaults to None (disabled)
+        _reclass = reclass.core.Core(storage, class_mappings)
 
-    inv = _reclass.inventory()
-
-    logger.debug("reclass inventory: %s", inv)
-    return inv
+        return _reclass.inventory()
+    except ReclassException as e:
+        if isinstance(e, NotFoundError):
+            logger.error("Inventory reclass error: inventory not found")
+        else:
+            logger.error("Inventory reclass error: %s", e.message)
+        raise InventoryError(e.message)
