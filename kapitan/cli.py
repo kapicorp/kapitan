@@ -53,9 +53,7 @@ def main():
                              metavar='JPATH',
                              help='set search path, default is "."')
 
-    compile_parser = subparser.add_parser('compile', help='compile target files')
-    compile_parser.add_argument('--target-file', '-f', type=str, nargs='+', default=[],
-                                metavar='TARGET', help='target files')
+    compile_parser = subparser.add_parser('compile', help='compile targets')
     compile_parser.add_argument('--search-path', '-J', type=str, default='.',
                                 metavar='JPATH',
                                 help='set search path, default is "."')
@@ -68,6 +66,9 @@ def main():
     compile_parser.add_argument('--output-path', type=str, default='compiled',
                                 metavar='PATH',
                                 help='set output path, default is "./compiled"')
+    compile_parser.add_argument('--target-path', type=str, default='targets',
+                                metavar='PATH',
+                                help='set target path, default is "./targets"')
     compile_parser.add_argument('--parallelism', '-p', type=int,
                                 default=4, metavar='INT',
                                 help='Number of concurrent compile processes, default is 4')
@@ -146,8 +147,8 @@ def main():
             logging.basicConfig(level=logging.INFO, format="%(message)s")
         search_path = os.path.abspath(args.search_path)
         gpg_obj = secret_gpg_backend()
-        if args.target_file:
-            compile_targets(args.target_file, search_path, args.output_path, args.parallelism,
+        if args.target_path:
+            compile_targets(args.target_path, search_path, args.output_path, args.parallelism,
                             prune=(not args.no_prune), secrets_path=args.secrets_path,
                             secrets_reveal=args.reveal, gpg_obj=gpg_obj)
         else:
@@ -167,6 +168,8 @@ def main():
             if not isinstance(e, KapitanError):
                 logger.error("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                 traceback.print_exc()
+            sys.exit(1)
+
     elif cmd == 'searchvar':
         searchvar(args.searchvar, args.inventory_path)
     elif cmd == 'secrets':
