@@ -23,6 +23,7 @@ import hashlib
 import json
 import re
 import shutil
+import sys
 from functools import partial
 import multiprocessing
 import traceback
@@ -38,9 +39,9 @@ from kapitan.errors import KapitanError
 
 logger = logging.getLogger(__name__)
 
-def compile_targets(target_files, search_path, output_path, parallel, **kwargs):
+def compile_targets(target_path, search_path, output_path, parallel, **kwargs):
     """
-    Loads files in target_files and runs compile_target_file() on a
+    Searches and loads target files in target_path and runs compile_target_file() on a
     multiprocessing pool with parallel number of processes.
     kwargs are passed to compile_target_file()
     """
@@ -48,7 +49,11 @@ def compile_targets(target_files, search_path, output_path, parallel, **kwargs):
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
     pool = multiprocessing.Pool(parallel)
     worker = partial(compile_target_file, search_path=search_path, output_path=temp_path, **kwargs)
+    target_files = search_target_files(target_path)
     try:
+        if target_files == []:
+            logger.error("Error: no target files found")
+            raise KapitanError("Error: no target files found")
         pool.map(worker, target_files)
         if os.path.exists(output_path):
             shutil.rmtree(output_path)
@@ -64,9 +69,20 @@ def compile_targets(target_files, search_path, output_path, parallel, **kwargs):
         if not isinstance(e, KapitanError):
             logger.error("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             traceback.print_exc()
+        sys.exit(1)
     finally:
         shutil.rmtree(temp_path)
         logger.debug("Removed %s", temp_path)
+
+def search_target_files(target_path):
+    target_files = []
+    for root, _, files in os.walk(target_path):
+        for f in files:
+            if f == 'target.json':
+                full_path = os.path.join(root, f)
+                logger.debug('search_target_files: found %s',full_path)
+                target_files.append(full_path)
+    return target_files
 
 def compile_target_file(target_file, search_path, output_path, **kwargs):
     """
