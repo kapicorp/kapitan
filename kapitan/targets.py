@@ -48,18 +48,20 @@ def compile_targets(target_path, search_path, output_path, parallel, **kwargs):
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
     pool = multiprocessing.Pool(parallel)
-    worker = partial(compile_target_file, search_path=search_path, output_path=temp_path, **kwargs)
+    # append "compiled" to output_path so we can safely overwrite it
+    compile_path = os.path.join(output_path, "compiled")
+    worker = partial(compile_target_file, search_path=search_path, compile_path=temp_path, **kwargs)
     target_files = search_target_files(target_path)
     try:
         if target_files == []:
             logger.error("Error: no target files found")
             raise KapitanError("Error: no target files found")
         pool.map(worker, target_files)
-        if os.path.exists(output_path):
-            shutil.rmtree(output_path)
-        # on success, copy temp_path into output_path
-        shutil.copytree(temp_path, output_path)
-        logger.debug("Copied %s into %s", temp_path, output_path)
+        if os.path.exists(compile_path):
+            shutil.rmtree(compile_path)
+        # on success, copy temp_path into compile_path
+        shutil.copytree(temp_path, compile_path)
+        logger.debug("Copied %s into %s", temp_path, compile_path)
     except Exception as e:
         # if compile worker fails, terminate immediately
         pool.terminate()
@@ -78,16 +80,16 @@ def search_target_files(target_path):
     target_files = []
     for root, _, files in os.walk(target_path):
         for f in files:
-            if f == 'target.json':
+            if f in ('target.json', 'target.yml'):
                 full_path = os.path.join(root, f)
                 logger.debug('search_target_files: found %s',full_path)
                 target_files.append(full_path)
     return target_files
 
-def compile_target_file(target_file, search_path, output_path, **kwargs):
+def compile_target_file(target_file, search_path, compile_path, **kwargs):
     """
     Loads target file, compiles file (by scanning search_path)
-    and writes to output_path
+    and writes to compile_path
     """
     target_obj = load_target(target_file)
     target_name = target_obj["vars"]["target"]
@@ -98,10 +100,10 @@ def compile_target_file(target_file, search_path, output_path, **kwargs):
         if obj["type"] == "jsonnet":
             compile_file_sp = os.path.join(search_path, obj["path"])
             if os.path.exists(compile_file_sp):
-                _output_path = os.path.join(output_path, target_name, obj["name"])
-                update_output_path_dirs(_output_path)
+                _compile_path = os.path.join(compile_path, target_name, obj["name"])
+                os.makedirs(_compile_path)
                 logger.debug("Compiling %s", compile_file_sp)
-                compile_jsonnet(compile_file_sp, _output_path, search_path,
+                compile_jsonnet(compile_file_sp, _compile_path, search_path,
                                 ext_vars, output=obj["output"], **kwargs)
             else:
                 raise IOError("Path not found in search_path: %s" % obj["path"])
@@ -109,21 +111,21 @@ def compile_target_file(target_file, search_path, output_path, **kwargs):
         if obj["type"] == "jinja2":
             compile_path_sp = os.path.join(search_path, obj["path"])
             if os.path.exists(compile_path_sp):
-                _output_path = os.path.join(output_path, target_name, obj["name"])
-                update_output_path_dirs(_output_path)
+                _compile_path = os.path.join(compile_path, target_name, obj["name"])
+                os.makedirs(_compile_path)
                 # copy ext_vars to dedicated jinja2 context so we can update it
                 ctx = ext_vars.copy()
                 ctx["inventory"] = inventory(search_path, target_name)
                 ctx["inventory_global"] = inventory(search_path, None)
-                compile_jinja2(compile_path_sp, ctx, _output_path, **kwargs)
+                compile_jinja2(compile_path_sp, ctx, _compile_path, **kwargs)
             else:
                 raise IOError("Path not found in search_path: %s" % obj["path"])
     logger.info("Compiled %s", target_file)
 
 
-def compile_jinja2(path, context, output_path, **kwargs):
+def compile_jinja2(path, context, compile_path, **kwargs):
     """
-    Write items in path as jinja2 rendered files to output_path.
+    Write items in path as jinja2 rendered files to compile_path.
     kwargs:
         secrets_path: default None, set to access secrets backend
         secrets_reveal: default False, set to reveal secrets on compile
@@ -134,7 +136,7 @@ def compile_jinja2(path, context, output_path, **kwargs):
     gpg_obj = kwargs.get('gpg_obj', None)
 
     for item_key, item_value in render_jinja2_dir(path, context).iteritems():
-        full_item_path = os.path.join(output_path, item_key)
+        full_item_path = os.path.join(compile_path, item_key)
         try:
             os.makedirs(os.path.dirname(full_item_path))
         except OSError as ex:
@@ -149,9 +151,9 @@ def compile_jinja2(path, context, output_path, **kwargs):
             logger.debug("Wrote %s with mode %.4o", full_item_path, mode)
 
 
-def compile_jsonnet(file_path, output_path, search_path, ext_vars, **kwargs):
+def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
     """
-    Write file_path (jsonnet evaluated) items as files to output_path.
+    Write file_path (jsonnet evaluated) items as files to compile_path.
     Set output to write as json or yaml
     search_path and ext_vars will be passed as paramenters to jsonnet_file()
     kwargs:
@@ -178,35 +180,19 @@ def compile_jsonnet(file_path, output_path, search_path, ext_vars, **kwargs):
     for item_key, item_value in json.loads(json_output).iteritems():
         # write each item to disk
         if output == 'json':
-            file_path = os.path.join(output_path, '%s.%s' % (item_key, output))
+            file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
             with CompiledFile(file_path, mode="w", secrets_path=secrets_path,
                               secrets_reveal=secrets_reveal, gpg_obj=gpg_obj) as fp:
                 json.dump(item_value, fp, indent=4, sort_keys=True)
                 logger.debug("Wrote %s", file_path)
         elif output == 'yaml':
-            file_path = os.path.join(output_path, '%s.%s' % (item_key, "yml"))
+            file_path = os.path.join(compile_path, '%s.%s' % (item_key, "yml"))
             with CompiledFile(file_path, mode="w", secrets_path=secrets_path,
                               secrets_reveal=secrets_reveal, gpg_obj=gpg_obj) as fp:
                 yaml.dump(item_value, stream=fp, Dumper=PrettyDumper, default_flow_style=False)
                 logger.debug("Wrote %s", file_path)
         else:
             raise ValueError('output is neither "json" or "yaml"')
-
-
-def update_output_path_dirs(output_path):
-    """
-    Attempt to re/create (nested) directories
-    """
-    try:
-        os.makedirs(output_path)
-    except OSError as ex:
-        # If directory exists, remove and recreate
-        if ex.errno == errno.EEXIST:
-            shutil.rmtree(output_path)
-            logger.debug("Deleted %s", output_path)
-            os.makedirs(output_path)
-            logger.debug("Re-created %s", output_path)
-
 
 def load_target(target_file):
     """

@@ -63,9 +63,9 @@ def main():
                                 action='store_true', default=False)
     compile_parser.add_argument('--quiet', help='set quiet mode, only critical output',
                                 action='store_true', default=False)
-    compile_parser.add_argument('--output-path', type=str, default='compiled',
+    compile_parser.add_argument('--output-path', type=str, default='.',
                                 metavar='PATH',
-                                help='set output path, default is "./compiled"')
+                                help='set output path, default is "."')
     compile_parser.add_argument('--target-path', type=str, default='targets',
                                 metavar='PATH',
                                 help='set target path, default is "./targets"')
