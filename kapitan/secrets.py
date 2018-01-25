@@ -24,6 +24,7 @@ import logging
 import os
 import re
 import sys
+import time
 import gnupg
 import yaml
 
@@ -117,9 +118,20 @@ def secret_token_compiled_attributes(token):
         raise ValueError('Token not valid: %s' % token)
 
 def gpg_fingerprint(gpg_obj, recipient):
-    "returns (first) key fingerprint for recipient"
+    "returns first non-expired key fingerprint for recipient"
     try:
-        return gpg_obj.list_keys(keys=(recipient,))[0]["fingerprint"]
+        keys = gpg_obj.list_keys(keys=(recipient,))
+        for key in keys:
+            # if 'expires' key is set and time in the future, return
+            if key['expires'] and (time.time() < int(key['expires'])):
+                return key['fingerprint']
+            # if 'expires' key not set, return
+            elif not key['expires']:
+                return key['fingerprint']
+            else:
+                logger.info("Key for recipient: %s with fingerprint: %s is expired, skipping",
+                             recipient, key['fingerprint'])
+        raise GPGError("Could not find valid key for recipient: %s" % recipient)
     except IndexError as iexp:
         raise iexp
 
