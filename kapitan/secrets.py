@@ -120,7 +120,6 @@ def secret_token_compiled_attributes(token):
 def gpg_fingerprint(gpg_obj, recipient):
     "returns first non-expired key fingerprint for recipient"
     try:
-        # gpg_obj.list_keys(keys=(recipient,))[0]["fingerprint"]
         keys = gpg_obj.list_keys(keys=(recipient,))
         for key in keys:
             # if 'expires' key is set and time in the future, return
