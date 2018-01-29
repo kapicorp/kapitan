@@ -44,7 +44,7 @@ class SecretsTest(unittest.TestCase):
         "write secret, confirm secret file exists, reveal and compare content"
         token = 'secret/sauce'
         secret_gpg_write(GPG_OBJ, SECRETS_HOME, token, "super secret value",
-                         [KEY.fingerprint], passphrase="testphrase")
+                         False, [KEY.fingerprint], passphrase="testphrase")
         self.assertTrue(os.path.isfile(os.path.join(SECRETS_HOME, token)))
 
         file_with_secret_tags = tempfile.mktemp()
@@ -56,3 +56,23 @@ class SecretsTest(unittest.TestCase):
                               verify=False, output=fp, passphrase="testphrase")
         with open(file_revealed) as fp:
             self.assertEqual("I am a file with a super secret value", fp.read())
+
+    def test_gpg_secret_base64_write_reveal(self):
+        """
+        write secret for base64 encoded content, confirm secret file exists,
+        reveal and compare content
+        """
+        token = 'secret/sauce'
+        secret_gpg_write(GPG_OBJ, SECRETS_HOME, token, "super secret value",
+                         True, [KEY.fingerprint], passphrase="testphrase")
+        self.assertTrue(os.path.isfile(os.path.join(SECRETS_HOME, token)))
+
+        file_with_secret_tags = tempfile.mktemp()
+        file_revealed = tempfile.mktemp()
+        with open(file_with_secret_tags, 'w') as fp:
+            fp.write('I am a file with a ?{gpg:secret/sauce:deadbeef}')
+        with open(file_revealed, 'w') as fp:
+            secret_gpg_reveal(GPG_OBJ, SECRETS_HOME, file_with_secret_tags,
+                              verify=False, output=fp, passphrase="testphrase")
+        with open(file_revealed) as fp:
+            self.assertEqual("I am a file with a c3VwZXIgc2VjcmV0IHZhbHVl", fp.read())

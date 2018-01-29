@@ -135,8 +135,11 @@ def gpg_fingerprint(gpg_obj, recipient):
     except IndexError as iexp:
         raise iexp
 
-def secret_gpg_write(gpg_obj, secrets_path, token, data, recipients, **kwargs):
-    "encrypt and write data for token in secrets_path"
+def secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipients, **kwargs):
+    """
+    encrypt and write data for token in secrets_path
+    set encode_base64 to True to base64 encode data before writing
+    """
     _, token_path = secret_token_attributes("gpg:%s" % token)
     full_secret_path = os.path.join(secrets_path, token_path)
     try:
@@ -146,11 +149,17 @@ def secret_gpg_write(gpg_obj, secrets_path, token, data, recipients, **kwargs):
         if ex.errno == errno.EEXIST:
             pass
     with open(full_secret_path, "w") as fp:
-        enc = secret_gpg_encrypt(gpg_obj, data, recipients, **kwargs)
+        encoding = "original"
+        _data = data
+        if encode_base64:
+            _data = base64.b64encode(data)
+            encoding = "base64"
+        enc = secret_gpg_encrypt(gpg_obj, _data, recipients, **kwargs)
         if enc.ok:
             b64data = base64.b64encode(enc.data)
             fingerprints = [gpg_fingerprint(gpg_obj, r) for r in recipients]
             secret_obj = {"data": b64data,
+                          "encoding": encoding,
                           "recipients": [{'fingerprint': f} for f in fingerprints]}
             yaml.safe_dump(secret_obj, stream=fp, default_flow_style=False)
             logger.info("Wrote secret %s for fingerprints %s at %s", token,
