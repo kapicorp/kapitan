@@ -97,6 +97,8 @@ def main():
     secrets_parser = subparser.add_parser('secrets', help='manage secrets')
     secrets_parser.add_argument('--write', '-w', help='write secret token',
                                 metavar='TOKENNAME',)
+    secrets_parser.add_argument('--base64', '-b64', help='base64 encode file content',
+                                action='store_true', default=False)
     secrets_parser.add_argument('--reveal', '-r', help='reveal secrets',
                                 action='store_true', default=False)
     secrets_parser.add_argument('--file', '-f', help='read file, set "-" for stdin',
@@ -192,7 +194,7 @@ def main():
             else:
                 with open(args.file) as fp:
                     data = fp.read()
-            secret_gpg_write(gpg_obj, args.secrets_path, args.write, data, recipients)
+            secret_gpg_write(gpg_obj, args.secrets_path, args.write, data, args.base64, recipients)
         elif args.reveal:
             if args.file == '-':
                 secret_gpg_reveal(gpg_obj, args.secrets_path, None, verify=(not args.no_verify))
