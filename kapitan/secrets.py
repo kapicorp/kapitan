@@ -20,6 +20,7 @@ import base64
 import errno
 from functools import partial
 import hashlib
+import json
 import logging
 import os
 import re
@@ -27,6 +28,8 @@ import sys
 import time
 import gnupg
 import yaml
+
+from kapitan.utils import PrettyDumper
 
 logger = logging.getLogger(__name__)
 
@@ -196,20 +199,23 @@ def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
     logger.debug("Revealing %s", token_tag)
     return secret_gpg_read(gpg_obj, secrets_path, token, **kwargs)
 
-def secret_gpg_reveal(gpg_obj, secrets_path, filename, verify=True, output=None, **kwargs):
+def secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, verify=True, output=None, **kwargs):
     """
-    read filename and reveal content with secrets to stdout
+    read filename and reveal content (per line search and replace) with secrets to stdout
     set filename=None to read stdin
     set verify=False to skip secret hash verification
     set output to filename to write to file object, default is stdout
+    returns string with revealed content when output is not stdout
     """
     _reveal_gpg_replace = partial(reveal_gpg_replace, gpg_obj, secrets_path,
                                   verify=verify, **kwargs)
+    out_raw = ''
     if filename is None:
         for line in sys.stdin:
             revealed = re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_gpg_replace, line)
             if output:
                 output.write(revealed)
+                out_raw += revealed
             else:
                 sys.stdout.write(revealed)
     else:
@@ -218,5 +224,76 @@ def secret_gpg_reveal(gpg_obj, secrets_path, filename, verify=True, output=None,
                 revealed = re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_gpg_replace, line)
                 if output:
                     output.write(revealed)
+                    out_raw += revealed
                 else:
                     sys.stdout.write(revealed)
+
+    return out_raw
+
+def secret_gpg_reveal_obj(gpg_obj, secrets_path, obj, verify=True, **kwargs):
+    "recursively updates obj with revealed secrets"
+    def sub_reveal_data(data):
+        _reveal_gpg_replace = partial(reveal_gpg_replace, gpg_obj, secrets_path,
+                                      verify=verify, **kwargs)
+        return re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_gpg_replace, data)
+
+    if isinstance(obj, dict):
+        for k, v in obj.iteritems():
+            obj[k] = secret_gpg_reveal_obj(gpg_obj, secrets_path, v, verify, **kwargs)
+    elif isinstance(obj, list):
+        obj = [secret_gpg_reveal_obj(gpg_obj, secrets_path, item, verify, **kwargs) for item in obj]
+    elif isinstance(obj, basestring): # XXX this is python 2 specific
+        obj = sub_reveal_data(obj)
+
+    return obj
+
+def secret_gpg_reveal_dir(gpg_obj, secrets_path, dirname, verify=True, **kwargs):
+    "prints grouped output for revealed file types"
+    out_json = ''
+    out_yaml = ''
+    out_raw = ''
+    # find yaml/json/raw files and group their outputs
+    for f in os.listdir(dirname):
+        full_path = os.path.join(dirname, f)
+        if not os.path.isfile(full_path):
+            pass
+        if f.endswith('.json'):
+            out_json += secret_gpg_reveal_file(gpg_obj, secrets_path, full_path,
+                                               verify=verify, **kwargs)
+        elif f.endswith('.yml'):
+            out_yaml += secret_gpg_reveal_file(gpg_obj, secrets_path, full_path,
+                                               verify=verify, **kwargs)
+        else:
+            out_raw += secret_gpg_reveal_file(gpg_obj, secrets_path, full_path,
+                                              verify=verify, **kwargs)
+    if out_json:
+        sys.stdout.write(out_json)
+    if out_yaml:
+        sys.stdout.write(out_yaml)
+    if out_raw:
+        sys.stdout.write(out_raw)
+
+def secret_gpg_reveal_file(gpg_obj, secrets_path, filename, verify=True, **kwargs):
+    "detects type and reveals file, returns revealed output string"
+    out = None
+    if filename.endswith('.json'):
+        logger.debug("secret_gpg_reveal_file: revealing json file: %s", filename)
+        with open(filename) as fp:
+            obj = json.load(fp)
+            rev_obj = secret_gpg_reveal_obj(gpg_obj, secrets_path, obj,
+                                            verify=verify, **kwargs)
+            out = json.dumps(rev_obj, indent=4, sort_keys=True)
+    elif filename.endswith('.yml'):
+        logger.debug("secret_gpg_reveal_file: revealing yml file: %s", filename)
+        with open(filename) as fp:
+            obj = yaml.safe_load(fp)
+            rev_obj = secret_gpg_reveal_obj(gpg_obj, secrets_path, obj,
+                                            verify=verify, **kwargs)
+            out = yaml.dump(rev_obj, Dumper=PrettyDumper,
+                            default_flow_style=False, explicit_start=True)
+    else:
+        logger.debug("secret_gpg_reveal_file: revealing raw file: %s", filename)
+        devnull = open(os.devnull, 'w')
+        out = secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, output=devnull,
+                                    verify=verify, **kwargs)
+    return out

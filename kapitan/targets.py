@@ -183,13 +183,13 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
             file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
             with CompiledFile(file_path, mode="w", secrets_path=secrets_path,
                               secrets_reveal=secrets_reveal, gpg_obj=gpg_obj) as fp:
-                json.dump(item_value, fp, indent=4, sort_keys=True)
+                fp.write_json(item_value)
                 logger.debug("Wrote %s", file_path)
         elif output == 'yaml':
             file_path = os.path.join(compile_path, '%s.%s' % (item_key, "yml"))
             with CompiledFile(file_path, mode="w", secrets_path=secrets_path,
                               secrets_reveal=secrets_reveal, gpg_obj=gpg_obj) as fp:
-                yaml.dump(item_value, stream=fp, Dumper=PrettyDumper, default_flow_style=False)
+                fp.write_yaml(item_value)
                 logger.debug("Wrote %s", file_path)
         else:
             raise ValueError('output is neither "json" or "yaml"')
@@ -246,6 +246,56 @@ class CompilingFile(object):
         self.fp = fp
         self.kwargs = kwargs
 
+    def write(self, data):
+        "write data into file"
+        secrets_reveal = self.kwargs.get('secrets_reveal', False)
+        if secrets_reveal:
+            self.fp.write(self.sub_token_reveal_data(data))
+        else:
+            self.fp.write(self.sub_token_compiled_data(data))
+
+    def write_yaml(self, obj):
+        "recursively hash or reveal secrets and convert obj to yaml and write to file"
+        secrets_reveal = self.kwargs.get('secrets_reveal', False)
+        if secrets_reveal:
+            self.sub_token_reveal_obj(obj)
+        else:
+            self.sub_token_compiled_obj(obj)
+        yaml.dump(obj, stream=self.fp, Dumper=PrettyDumper, default_flow_style=False)
+
+    def write_json(self, obj):
+        "recursively hash or reveal secrets and convert obj to json and write to file"
+        secrets_reveal = self.kwargs.get('secrets_reveal', False)
+        if secrets_reveal:
+            self.sub_token_reveal_obj(obj)
+        else:
+            self.sub_token_compiled_obj(obj)
+        json.dump(obj, self.fp, indent=4, sort_keys=True)
+
+    def sub_token_compiled_obj(self, obj):
+        "recursively find and replace tokens with hashed tokens in obj"
+        if isinstance(obj, dict):
+            for k, v in obj.iteritems():
+                obj[k] = self.sub_token_compiled_obj(v)
+        elif isinstance(obj, list):
+            obj = map(self.sub_token_compiled_obj, obj)
+        elif isinstance(obj, basestring): # XXX this is python 2 specific
+            obj = self.sub_token_compiled_data(obj)
+
+        return obj
+
+    def sub_token_reveal_obj(self, obj):
+        "recursively find and reveal token tags in data"
+        if isinstance(obj, dict):
+            for k, v in obj.iteritems():
+                obj[k] = self.sub_token_reveal_obj(v)
+        elif isinstance(obj, list):
+            obj = map(self.sub_token_reveal_obj, obj)
+        elif isinstance(obj, basestring): # XXX this is python 2 specific
+            obj = self.sub_token_reveal_data(obj)
+
+        return obj
+
     def hash_token_tag(self, token_tag):
         """
         suffixes a secret's hash to its tag:
@@ -276,7 +326,7 @@ class CompilingFile(object):
         return secret_gpg_read(gpg_obj, secrets_path, token)
 
 
-    def sub_token_compiled(self, data):
+    def sub_token_compiled_data(self, data):
         "find and replace tokens with hashed tokens in data"
         def _hash_token_tag(match_obj):
             token_tag, _ = match_obj.groups()
@@ -284,20 +334,13 @@ class CompilingFile(object):
 
         return re.sub(SECRET_TOKEN_TAG_PATTERN, _hash_token_tag, data)
 
-    def sub_token_reveal(self, data):
+    def sub_token_reveal_data(self, data):
         "find and reveal token tags in data"
         def _reveal_token_tag(match_obj):
             token_tag, _ = match_obj.groups()
             return self.reveal_token_tag(token_tag)
 
         return re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_token_tag, data)
-
-    def write(self, data):
-        secrets_reveal = self.kwargs.get('secrets_reveal', False)
-        if secrets_reveal:
-            self.fp.write(self.sub_token_reveal(data))
-        else:
-            self.fp.write(self.sub_token_compiled(data))
 
 class CompiledFile(object):
     def __init__(self, name, **kwargs):
