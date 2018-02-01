@@ -17,7 +17,7 @@
 "Project description variables"
 
 PROJECT_NAME = 'kapitan'
-VERSION = '0.9.18'
+VERSION = '0.9.19'
 DESCRIPTION = 'Kapitan is a tool to manage kubernetes configuration using jsonnet templates'
 AUTHOR = 'Ricardo Amaro'
 AUTHOR_EMAIL = 'ramaro@google.com'
