@@ -21,7 +21,7 @@ import re
 import tempfile
 import gnupg
 from kapitan.secrets import secret_token_attributes, SECRET_TOKEN_TAG_PATTERN
-from kapitan.secrets import secret_gpg_write, secret_gpg_reveal
+from kapitan.secrets import secret_gpg_write, secret_gpg_reveal_raw
 
 GPG_HOME = tempfile.mkdtemp()
 GPG_OBJ = gnupg.GPG(gnupghome=GPG_HOME)
@@ -52,7 +52,7 @@ class SecretsTest(unittest.TestCase):
         with open(file_with_secret_tags, 'w') as fp:
             fp.write('I am a file with a ?{gpg:secret/sauce:deadbeef}')
         with open(file_revealed, 'w') as fp:
-            secret_gpg_reveal(GPG_OBJ, SECRETS_HOME, file_with_secret_tags,
+            secret_gpg_reveal_raw(GPG_OBJ, SECRETS_HOME, file_with_secret_tags,
                               verify=False, output=fp, passphrase="testphrase")
         with open(file_revealed) as fp:
             self.assertEqual("I am a file with a super secret value", fp.read())
@@ -72,7 +72,7 @@ class SecretsTest(unittest.TestCase):
         with open(file_with_secret_tags, 'w') as fp:
             fp.write('I am a file with a ?{gpg:secret/sauce:deadbeef}')
         with open(file_revealed, 'w') as fp:
-            secret_gpg_reveal(GPG_OBJ, SECRETS_HOME, file_with_secret_tags,
+            secret_gpg_reveal_raw(GPG_OBJ, SECRETS_HOME, file_with_secret_tags,
                               verify=False, output=fp, passphrase="testphrase")
         with open(file_revealed) as fp:
             self.assertEqual("I am a file with a c3VwZXIgc2VjcmV0IHZhbHVl", fp.read())

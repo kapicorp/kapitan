@@ -28,7 +28,8 @@ from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar
 from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
-from kapitan.secrets import secret_gpg_backend, secret_gpg_write, secret_gpg_reveal
+from kapitan.secrets import secret_gpg_backend, secret_gpg_write, secret_gpg_reveal_file
+from kapitan.secrets import secret_gpg_reveal_dir, secret_gpg_reveal_raw
 from kapitan.errors import KapitanError
 
 logger = logging.getLogger(__name__)
@@ -101,7 +102,7 @@ def main():
                                 action='store_true', default=False)
     secrets_parser.add_argument('--reveal', '-r', help='reveal secrets',
                                 action='store_true', default=False)
-    secrets_parser.add_argument('--file', '-f', help='read file, set "-" for stdin',
+    secrets_parser.add_argument('--file', '-f', help='read file or directory, set "-" for stdin',
                                 required=True, metavar='FILENAME')
     secrets_parser.add_argument('--target-name', '-t', help='grab recipients from target name')
     secrets_parser.add_argument('--inventory-path', default='./inventory',
@@ -197,9 +198,12 @@ def main():
             secret_gpg_write(gpg_obj, args.secrets_path, args.write, data, args.base64, recipients)
         elif args.reveal:
             if args.file == '-':
-                secret_gpg_reveal(gpg_obj, args.secrets_path, None, verify=(not args.no_verify))
+                secret_gpg_reveal_raw(gpg_obj, args.secrets_path, None, verify=(not args.no_verify))
             elif args.file:
-                # TODO if it is a directory, reveal every file there
-                with open(args.file) as fp:
-                    secret_gpg_reveal(gpg_obj, args.secrets_path, args.file,
-                                      verify=(not args.no_verify))
+                if os.path.isfile(args.file):
+                    out = secret_gpg_reveal_file(gpg_obj, args.secrets_path, args.file,
+                                                 verify=(not args.no_verify))
+                    sys.stdout.write(out)
+                elif os.path.isdir(args.file):
+                    secret_gpg_reveal_dir(gpg_obj, args.secrets_path, args.file,
+                                          verify=(not args.no_verify))
