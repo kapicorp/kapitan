@@ -4,6 +4,6 @@ local inventory = kap.inventory();
 local p = inventory.parameters;
 
 {
-    "namespace": kube.Namespace(p.namespace),
-    "serviceaccount": kube.ServiceAccount("default")
+    "00_namespace": kube.Namespace(p.namespace),
+    "10_serviceaccount": kube.ServiceAccount("default")
 }
