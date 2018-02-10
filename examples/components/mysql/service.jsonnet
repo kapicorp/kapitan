@@ -7,13 +7,13 @@
       ports: [ 
         { name: "mysql", port: 3306 }, 
       ],
-      selector: { app: name },
+      selector: { name: name },
       clusterIP: "None"
     },
 
     metadata: {
       name: name,
-      labels: { app: name },
+      labels: { name: name },
     },
 
   },

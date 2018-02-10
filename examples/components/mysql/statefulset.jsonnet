@@ -18,7 +18,8 @@ local mysql_container = kube.Container("mysql") {
         # Some things best hardcoded until a real need comes. In that case, as simple as injecting the inventory field.
         mysql: { containerPort: 3306 },
     },
-    env_+: inv.parameters.mysql.envs
+
+    env_+: if ("env" in inv.parameters.mysql) then inv.parameters.mysql.env else {}
 };
 
 local claim = { 
@@ -29,13 +30,13 @@ local claim = {
       };
 
 {
-    MySQLStatefulSet(name): kube.StatefulSet(name) {
+    MySQLStatefulSet(name, secret): kube.StatefulSet(name) {
         spec+: {
             volumeClaimTemplates_:: claim,
             template+: {
                 spec+: {
                     containers_+: {
-                        mysql: mysql_container
+                        mysql: mysql_container + { env_+: { MYSQL_ROOT_PASSWORD: kube.SecretKeyRef(secret, "MYSQL_ROOT_PASSWORD")} }
                     },
                 },
             },

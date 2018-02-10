@@ -34,5 +34,5 @@ parameters:
   namespace: ${target_name}
 
   mysql:
-    instance: test
+    instance_name: example-mysql
     replicas: 1
