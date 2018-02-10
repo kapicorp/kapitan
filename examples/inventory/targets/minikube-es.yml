@@ -3,7 +3,30 @@ classes:
   - component.elasticsearch
 
 parameters:
-  namespace: minikube-es
+  target_name: minikube-es
+  kapitan:
+    vars:
+      target: ${target_name}
+      namespace: ${target_name}
+    compile:
+    - output_path: manifests
+      input_type: jsonnet
+      input_paths:
+        - components/elasticsearch/main.jsonnet
+      output_type: yaml
+    - output_path: scripts
+      input_type: jinja2
+      input_paths:
+        - scripts
+    - output_path: .
+      input_type: jinja2
+      input_paths:
+        - docs/elasticsearch/README.md
+
+    secrets:
+      recipients:
+        - dummy@recipient
+  namespace: ${target_name}
 
   elasticsearch:
     replicas: 2

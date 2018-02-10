@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-KUBECTL="kubectl --context {{inventory.parameters.target_name}} --insecure-skip-tls-verify={{inventory.parameters.kubectl.insecure_skip_tls_verify}} "
-
-${KUBECTL} $@
-
+{% set minikube = inventory.parameters.minikube %}
+eval $(minikube docker-env)
+minikube start --insecure-registry https://quay.io --memory={{minikube.memory}} --cpus={{minikube.cpus}}
+minikube ssh "sudo ip link set docker0 promisc on"

@@ -3,15 +3,16 @@ classes:
   - component.elasticsearch
 
 parameters:
+  target_name: minikube-es-2
   kapitan:
     vars:
-      target: minikube-es-2
-      namespace: minikube-es-2
+      target: ${target_name}
+      namespace: ${target_name}
     compile:
       - output_path: manifests
         input_type: jsonnet
         input_paths:
-          - targets/minikube-es/main.jsonnet
+          - components/elasticsearch/main.jsonnet
         output_type: yaml
       - output_path: scripts
         input_type: jinja2
@@ -20,7 +21,7 @@ parameters:
       - output_path: .
         input_type: jinja2
         input_paths:
-          - targets/minikube-es/docs/README.md
+          - docs/elasticsearch/README.md
   namespace: minikube-es
 
   elasticsearch:
