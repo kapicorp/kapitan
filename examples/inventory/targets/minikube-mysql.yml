@@ -1,0 +1,14 @@
+classes:
+  - cluster.minikube
+  - component.mysql
+
+parameters:
+  target_name: minikube-mysql
+  kapitan:
+    secrets:
+      recipients:
+        - example@kapitan.dev
+  namespace: ${target_name}
+
+  mysql:
+    replicas: 1

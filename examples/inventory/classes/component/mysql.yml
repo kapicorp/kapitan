@@ -1,0 +1,7 @@
+parameters:
+  mysql:
+    storage: 10G
+    storage_class: standard
+    image: mysql:latest
+    envs: 
+      MYSQL_ROOT_PASSWORD: ?{gpg:mysql/root/password}
