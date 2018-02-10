@@ -1,4 +1,3 @@
-
 {
   MySQLService(name): {
     apiVersion: "v1",
