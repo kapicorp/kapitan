@@ -1,5 +1,4 @@
 ---
-version: 1
 vars:
   target: minikube-es
   namespace: minikube-es
@@ -13,7 +12,7 @@ compile:
     input_type: jinja2
     input_paths:
       - scripts
-  - output_path: docs
+  - output_path: .
     input_type: jinja2
     input_paths:
-      - targets/minikube-es/docs
+      - targets/minikube-es/docs/README.md

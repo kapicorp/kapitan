@@ -4,7 +4,6 @@ classes:
 
 parameters:
   kapitan:
-    version: 1
     vars:
       target: minikube-es-2
       namespace: minikube-es-2
