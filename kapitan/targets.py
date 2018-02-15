@@ -268,7 +268,7 @@ def valid_target_obj(target_obj):
                 }
             },
         },
-        "required": ["version", "compile"],
+        "required": ["compile"],
     }
 
     return jsonschema.validate(target_obj, schema)
