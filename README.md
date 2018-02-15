@@ -1,4 +1,4 @@
-# Kapitan: Generic templating broker for Kubernetes, Terraform and other things
+# Kapitan: Generic templated configuration management for Kubernetes, Terraform and other things
 
 [![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
 
