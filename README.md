@@ -49,7 +49,7 @@ $ pip install git+https://github.com/deepmind/kapitan.git
 
 # Example
 
-The example below _compiles_ a target inside the `examples` folder called `minikube-es` `minikue-es-2`.
+The example below _compiles_ a target inside the `examples` folder called `minikube-es` `minikube-es-2`.
 These targets generate the following resources:
 
 * Kubernetes `StatefulSet` for ElasticSearch Master node
