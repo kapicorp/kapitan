@@ -60,22 +60,31 @@ def render_jinja2_file(name, context):
     return env.get_template(filename).render(context)
 
 
-def render_jinja2_dir(path, context):
+def render_jinja2(path, context):
     """
     Render files in path with context
     Returns a dict where the is key is the filename (with subpath)
     and value is a dict with content and mode
     Empty paths will not be rendered
+    Path can be a single file or directory
     Ignores hidden files (.filename)
     """
     rendered = {}
-    for root, _, files in os.walk(path):
+    walk_root_files = []
+    if os.path.isfile(path):
+        dirname = os.path.dirname(path)
+        basename = os.path.basename(path)
+        walk_root_files = [(dirname, None, [basename])]
+    else:
+        walk_root_files = os.walk(path)
+
+    for root, _, files in walk_root_files:
         for f in files:
             if f.startswith('.'):
-                logger.debug('render_jinja2_dir: ignoring file %s', f)
+                logger.debug('render_jinja2: ignoring file %s', f)
                 continue
             render_path = os.path.join(root, f)
-            logger.debug("render_jinja2_dir rendering %s", render_path)
+            logger.debug("render_jinja2 rendering %s", render_path)
             # get subpath and filename, strip any leading/trailing /
             name = render_path[len(os.path.commonprefix([root, path])):].strip('/')
             try:

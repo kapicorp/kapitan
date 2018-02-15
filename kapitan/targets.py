@@ -31,32 +31,33 @@ import tempfile
 import jsonschema
 import yaml
 
-from kapitan.resources import search_imports, resource_callbacks, inventory
-from kapitan.utils import jsonnet_file, jsonnet_prune, render_jinja2_dir, PrettyDumper
+from kapitan.resources import search_imports, resource_callbacks, inventory, inventory_reclass
+from kapitan.utils import jsonnet_file, jsonnet_prune, render_jinja2, PrettyDumper
 from kapitan.secrets import secret_gpg_raw_read, secret_token_from_tag, secret_token_attributes
 from kapitan.secrets import SECRET_TOKEN_TAG_PATTERN, secret_gpg_read
-from kapitan.errors import KapitanError
+from kapitan.errors import KapitanError, CompileError
 
 logger = logging.getLogger(__name__)
 
-def compile_targets(target_path, search_path, output_path, parallel, **kwargs):
+def compile_targets(target_path, inventory_path, search_path, output_path, parallel, **kwargs):
     """
     Searches and loads target files in target_path and runs compile_target_file() on a
     multiprocessing pool with parallel number of processes.
-    kwargs are passed to compile_target_file()
+    kwargs are passed to compile_target()
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
     pool = multiprocessing.Pool(parallel)
     # append "compiled" to output_path so we can safely overwrite it
     compile_path = os.path.join(output_path, "compiled")
-    worker = partial(compile_target_file, search_path=search_path, compile_path=temp_path, **kwargs)
-    target_files = search_target_files(target_path)
+    worker = partial(compile_target, search_path=search_path, compile_path=temp_path, **kwargs)
+    target_objs = load_target_files(target_path)
+    target_objs.extend(load_target_inventory(inventory_path))
     try:
-        if target_files == []:
-            logger.error("Error: no target files found")
-            raise KapitanError("Error: no target files found")
-        pool.map(worker, target_files)
+        if target_objs == []:
+            logger.error("Error: no targets found")
+            raise KapitanError("Error: no targets found")
+        pool.map(worker, target_objs)
         if os.path.exists(compile_path):
             shutil.rmtree(compile_path)
         # on success, copy temp_path into compile_path
@@ -77,55 +78,101 @@ def compile_targets(target_path, search_path, output_path, parallel, **kwargs):
         logger.debug("Removed %s", temp_path)
 
 def search_target_files(target_path):
+    """
+    Searches for any target.json or target.yml filenames in target_path
+    Returns a list of target objs
+    """
     target_files = []
     for root, _, files in os.walk(target_path):
         for f in files:
             if f in ('target.json', 'target.yml'):
                 full_path = os.path.join(root, f)
-                logger.debug('search_target_files: found %s',full_path)
+                logger.debug('search_target_files: found %s', full_path)
                 target_files.append(full_path)
     return target_files
 
-def compile_target_file(target_file, search_path, compile_path, **kwargs):
+def load_target_files(target_path):
+    "return a list of target objects from target_files"
+    target_files = search_target_files(target_path)
+    return map(load_target_file, target_files)
+
+def load_target_inventory(inventory_path):
+    "retuns a list of target objects from the inventory"
+    target_objs = []
+    inv = inventory_reclass(inventory_path)
+    for target_name in inv['nodes']:
+        try:
+            target_obj = inv['nodes'][target_name]['parameters']['kapitan']
+            valid_target_obj(target_obj)
+            logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
+            target_objs.append(target_obj)
+        except KeyError:
+            logger.debug("load_target_inventory: target %s has no kapitan compile obj", target_name)
+            pass
+
+    return target_objs
+
+def compile_target(target_obj, search_path, compile_path, **kwargs):
     """
-    Loads target file, compiles file (by scanning search_path)
-    and writes to compile_path
+    Compiles target_obj and writes to compile_path
     """
-    target_obj = load_target(target_file)
-    target_name = target_obj["vars"]["target"]
-    compile_obj = target_obj["compile"]
     ext_vars = target_obj["vars"]
+    target_name = ext_vars["target"]
+    compile_obj = target_obj["compile"]
 
     for obj in compile_obj:
-        if obj["type"] == "jsonnet":
-            compile_file_sp = os.path.join(search_path, obj["path"])
-            if os.path.exists(compile_file_sp):
-                _compile_path = os.path.join(compile_path, target_name, obj["name"])
+        input_type = obj["input_type"]
+        input_paths = obj["input_paths"]
+        output_path = obj["output_path"]
+        if input_type == "jsonnet":
+            _compile_path = os.path.join(compile_path, target_name, output_path)
+            # support writing to an already existent dir
+            try:
                 os.makedirs(_compile_path)
-                logger.debug("Compiling %s", compile_file_sp)
-                compile_jsonnet(compile_file_sp, _compile_path, search_path,
-                                ext_vars, output=obj["output"], **kwargs)
-            else:
-                raise IOError("Path not found in search_path: %s" % obj["path"])
+            except OSError as ex:
+                # If directory exists, pass
+                if ex.errno == errno.EEXIST:
+                    pass
+            output_type = obj["output_type"] # output_type is mandatory in jsonnet
+            for input_path in input_paths:
+                compile_file_sp = os.path.join(search_path, input_path)
+                if os.path.exists(compile_file_sp):
+                    logger.debug("Compiling %s", compile_file_sp)
+                    compile_jsonnet(compile_file_sp, _compile_path, search_path,
+                                    ext_vars, output=output_type, **kwargs)
+                else:
+                    logger.error("Compile error: input_path for target: %s not found in search_path: %s",
+                                 target_name, input_path)
+                    raise CompileError()
 
-        if obj["type"] == "jinja2":
-            compile_path_sp = os.path.join(search_path, obj["path"])
-            if os.path.exists(compile_path_sp):
-                _compile_path = os.path.join(compile_path, target_name, obj["name"])
+        if input_type == "jinja2":
+            _compile_path = os.path.join(compile_path, target_name, output_path)
+            # support writing to an already existent dir
+            try:
                 os.makedirs(_compile_path)
-                # copy ext_vars to dedicated jinja2 context so we can update it
-                ctx = ext_vars.copy()
-                ctx["inventory"] = inventory(search_path, target_name)
-                ctx["inventory_global"] = inventory(search_path, None)
-                compile_jinja2(compile_path_sp, ctx, _compile_path, **kwargs)
-            else:
-                raise IOError("Path not found in search_path: %s" % obj["path"])
-    logger.info("Compiled %s", target_file)
+            except OSError as ex:
+                # If directory exists, pass
+                if ex.errno == errno.EEXIST:
+                    pass
+            for input_path in input_paths:
+                compile_path_sp = os.path.join(search_path, input_path)
+                if os.path.exists(compile_path_sp):
+                    # copy ext_vars to dedicated jinja2 context so we can update it
+                    ctx = ext_vars.copy()
+                    ctx["inventory"] = inventory(search_path, target_name)
+                    ctx["inventory_global"] = inventory(search_path, None)
+                    compile_jinja2(compile_path_sp, ctx, _compile_path, **kwargs)
+                else:
+                    logger.error("Compile error: input_path for target: %s not found in search_path: %s",
+                                 target_name, input_path)
+                    raise CompileError()
+    logger.info("Compiled %s", target_name)
 
 
 def compile_jinja2(path, context, compile_path, **kwargs):
     """
     Write items in path as jinja2 rendered files to compile_path.
+    path can be either a file or directory.
     kwargs:
         secrets_path: default None, set to access secrets backend
         secrets_reveal: default False, set to reveal secrets on compile
@@ -135,7 +182,7 @@ def compile_jinja2(path, context, compile_path, **kwargs):
     secrets_reveal = kwargs.get('secrets_reveal', False)
     gpg_obj = kwargs.get('gpg_obj', None)
 
-    for item_key, item_value in render_jinja2_dir(path, context).iteritems():
+    for item_key, item_value in render_jinja2(path, context).iteritems():
         full_item_path = os.path.join(compile_path, item_key)
         try:
             os.makedirs(os.path.dirname(full_item_path))
@@ -194,29 +241,29 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
         else:
             raise ValueError('output is neither "json" or "yaml"')
 
-def load_target(target_file):
+def valid_target_obj(target_obj):
     """
-    Loads and validates a target_file name
-    Format of the target file is determined by its extention (.json, .yml, .yaml)
+    Validates a target_obj
     Returns a dict object if target is valid
     Otherwise raises ValidationError
     """
+
     schema = {
         "type": "object",
         "properties": {
-            "version": {"type": "number"},
             "vars": {"type": "object"},
+            "secrets": {"type": "object"},
             "compile": {
                 "type": "array",
                 "items": {
                     "type": "object",
                     "properties": {
-                        "name": {"type": "string"},
-                        "type": {"type": "string"},
-                        "path": {"type": "string"},
-                        "output": {"type": "string"},
+                        "input_paths": {"type": "array"},
+                        "input_type": {"type": "string"},
+                        "output_path": {"type": "string"},
+                        "output_type": {"type": "string"},
                     },
-                    "required": ["type", "name"],
+                    "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
                 }
             },
@@ -224,19 +271,27 @@ def load_target(target_file):
         "required": ["version", "compile"],
     }
 
+    return jsonschema.validate(target_obj, schema)
+
+def load_target_file(target_file):
+    """
+    Loads target_file and returns a target obj
+    Format of the target file is determined by its extention (.json, .yml, .yaml)
+    """
+
     bname = os.path.basename(target_file)
 
     if re.match(r".+\.json$", bname):
         with open(target_file) as fp:
             target_obj = json.load(fp)
-            jsonschema.validate(target_obj, schema)
+            valid_target_obj(target_obj)
             logger.debug("Target file %s is valid", target_file)
 
             return target_obj
     if re.match(r".+\.(yaml|yml)$", bname):
         with open(target_file) as fp:
             target_obj = yaml.safe_load(fp)
-            jsonschema.validate(target_obj, schema)
+            valid_target_obj(target_obj)
             logger.debug("Target file %s is valid", target_file)
 
             return target_obj

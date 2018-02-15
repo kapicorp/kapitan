@@ -78,6 +78,8 @@ def main():
     compile_parser.add_argument('--reveal',
                                 help='reveal secrets (warning: this will write sensitive data)',
                                 action='store_true', default=False)
+    compile_parser.add_argument('--inventory-path', default='./inventory',
+                                help='set inventory path, default is "./inventory"')
 
     inventory_parser = subparser.add_parser('inventory', help='show inventory')
     inventory_parser.add_argument('--target-name', '-t', default='',
@@ -151,7 +153,8 @@ def main():
         search_path = os.path.abspath(args.search_path)
         gpg_obj = secret_gpg_backend()
         if args.target_path:
-            compile_targets(args.target_path, search_path, args.output_path, args.parallelism,
+            compile_targets(args.target_path, args.inventory_path, search_path,
+                            args.output_path, args.parallelism,
                             prune=(not args.no_prune), secrets_path=args.secrets_path,
                             secrets_reveal=args.reveal, gpg_obj=gpg_obj)
         else:
