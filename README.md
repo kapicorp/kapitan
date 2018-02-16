@@ -49,8 +49,8 @@ $ pip install git+https://github.com/deepmind/kapitan.git
 
 # Example
 
-The example below _compiles_ a target inside the `examples` folder called `minikube-es`.
-This target generates the following resources:
+The example below _compiles_ a target inside the `examples` folder called `minikube-es` `minikube-es-2`.
+These targets generate the following resources:
 
 * Kubernetes `StatefulSet` for ElasticSearch Master node
 * Kubernetes `StatefulSet` for ElasticSearch Client node
@@ -66,15 +66,9 @@ This target generates the following resources:
 ```
 $ cd examples/
 
-$ kapitan compile -f targets/minikube-es/target.json
-Wrote compiled/minikube-es/manifests/es-master.yml
-Wrote compiled/minikube-es/manifests/es-elasticsearch-svc.yml
-Wrote compiled/minikube-es/manifests/es-discovery-svc.yml
-Wrote compiled/minikube-es/manifests/es-client.yml
-Wrote compiled/minikube-es/manifests/es-data.yml
-Wrote compiled/minikube-es/scripts/setup.sh with mode 0740
-Wrote compiled/minikube-es/scripts/kubectl.sh with mode 0740
-Wrote compiled/minikube-es/docs/README.md with mode 0640
+$ kapitan compile
+Compiled minikube-es
+Compiled minikube-es-2
 ```
 
 
@@ -90,21 +84,23 @@ Kapitan requires a target file to compile a target and its parameters. Example:
 ```
 $ cat examples/targets/minikube-es/target.yml
 ---
-version: 1
 vars:
   target: minikube-es
   namespace: minikube-es
 compile:
-  - name: manifests
-    type: jsonnet
-    path: targets/minikube-es/main.jsonnet
-    output: yaml
-  - name: scripts
-    type: jinja2
-    path: scripts
-  - name: docs
-    type: jinja2
-    path: targets/minikube-es/docs
+  - output_path: manifests
+    input_type: jsonnet
+    input_paths:
+      - targets/minikube-es/main.jsonnet
+    output_type: yaml
+  - output_path: scripts
+    input_type: jinja2
+    input_paths:
+      - scripts
+  - output_path: .
+    input_type: jinja2
+    input_paths:
+      - targets/minikube-es/docs/README.md
 ```
 
 ### Components
@@ -238,22 +234,28 @@ Additional parameters are available for each positional argument. For example:
 
 ```
 $ kapitan compile -h
-usage: kapitan compile [-h] [--target-file TARGET [TARGET ...]]
-                       [--search-path JPATH] [--verbose] [--no-prune]
-                       [--quiet] [--output-path PATH] [--parallelism INT]
+usage: kapitan compile [-h] [--search-path JPATH] [--verbose] [--no-prune]
+                       [--quiet] [--output-path PATH] [--target-path PATH]
+                       [--parallelism INT] [--secrets-path SECRETS_PATH]
+                       [--reveal] [--inventory-path INVENTORY_PATH]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --target-file TARGET [TARGET ...], -f TARGET [TARGET ...]
-                        target files
   --search-path JPATH, -J JPATH
                         set search path, default is "."
   --verbose, -v         set verbose mode
   --no-prune            do not prune jsonnet output
   --quiet               set quiet mode, only critical output
-  --output-path PATH    set output path, default is "./compiled"
+  --output-path PATH    set output path, default is "."
+  --target-path PATH    set target path, default is "./targets"
   --parallelism INT, -p INT
                         Number of concurrent compile processes, default is 4
+  --secrets-path SECRETS_PATH
+                        set secrets path, default is "./secrets"
+  --reveal              reveal secrets (warning: this will write sensitive
+                        data)
+  --inventory-path INVENTORY_PATH
+                        set inventory path, default is "./inventory"
 ```
 
 
