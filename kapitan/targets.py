@@ -39,6 +39,7 @@ from kapitan.errors import KapitanError, CompileError
 
 logger = logging.getLogger(__name__)
 
+
 def compile_targets(target_path, inventory_path, search_path, output_path, parallel, **kwargs):
     """
     Searches and loads target files in target_path and runs compile_target_file() on a
@@ -77,6 +78,7 @@ def compile_targets(target_path, inventory_path, search_path, output_path, paral
         shutil.rmtree(temp_path)
         logger.debug("Removed %s", temp_path)
 
+
 def search_target_files(target_path):
     """
     Searches for any target.json or target.yml filenames in target_path
@@ -91,10 +93,12 @@ def search_target_files(target_path):
                 target_files.append(full_path)
     return target_files
 
+
 def load_target_files(target_path):
     "return a list of target objects from target_files"
     target_files = search_target_files(target_path)
     return map(load_target_file, target_files)
+
 
 def load_target_inventory(inventory_path):
     "retuns a list of target objects from the inventory"
@@ -111,6 +115,7 @@ def load_target_inventory(inventory_path):
             pass
 
     return target_objs
+
 
 def compile_target(target_obj, search_path, compile_path, **kwargs):
     """
@@ -133,7 +138,7 @@ def compile_target(target_obj, search_path, compile_path, **kwargs):
                 # If directory exists, pass
                 if ex.errno == errno.EEXIST:
                     pass
-            output_type = obj["output_type"] # output_type is mandatory in jsonnet
+            output_type = obj["output_type"]  # output_type is mandatory in jsonnet
             for input_path in input_paths:
                 compile_file_sp = os.path.join(search_path, input_path)
                 if os.path.exists(compile_file_sp):
@@ -241,6 +246,7 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
         else:
             raise ValueError('output is neither "json" or "yaml"')
 
+
 def valid_target_obj(target_obj):
     """
     Validates a target_obj
@@ -273,6 +279,7 @@ def valid_target_obj(target_obj):
 
     return jsonschema.validate(target_obj, schema)
 
+
 def load_target_file(target_file):
     """
     Loads target_file and returns a target obj
@@ -295,6 +302,7 @@ def load_target_file(target_file):
             logger.debug("Target file %s is valid", target_file)
 
             return target_obj
+
 
 class CompilingFile(object):
     def __init__(self, context, fp, **kwargs):
@@ -334,7 +342,7 @@ class CompilingFile(object):
                 obj[k] = self.sub_token_compiled_obj(v)
         elif isinstance(obj, list):
             obj = map(self.sub_token_compiled_obj, obj)
-        elif isinstance(obj, basestring): # XXX this is python 2 specific
+        elif isinstance(obj, basestring):  # XXX this is python 2 specific
             obj = self.sub_token_compiled_data(obj)
 
         return obj
@@ -346,7 +354,7 @@ class CompilingFile(object):
                 obj[k] = self.sub_token_reveal_obj(v)
         elif isinstance(obj, list):
             obj = map(self.sub_token_reveal_obj, obj)
-        elif isinstance(obj, basestring): # XXX this is python 2 specific
+        elif isinstance(obj, basestring):  # XXX this is python 2 specific
             obj = self.sub_token_reveal_data(obj)
 
         return obj
@@ -380,7 +388,6 @@ class CompilingFile(object):
         token = secret_token_from_tag(token_tag)
         return secret_gpg_read(gpg_obj, secrets_path, token)
 
-
     def sub_token_compiled_data(self, data):
         "find and replace tokens with hashed tokens in data"
         def _hash_token_tag(match_obj):
@@ -396,6 +403,7 @@ class CompilingFile(object):
             return self.reveal_token_tag(token_tag)
 
         return re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_token_tag, data)
+
 
 class CompiledFile(object):
     def __init__(self, name, **kwargs):

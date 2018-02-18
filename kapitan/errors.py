@@ -14,13 +14,16 @@
 
 "kapitan error classes"
 
+
 class KapitanError(Exception):
     "generic kapitan error"
     pass
 
+
 class CompileError(KapitanError):
     "compile error"
     pass
+
 
 class InventoryError(KapitanError):
     "inventory error"

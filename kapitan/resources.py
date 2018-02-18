@@ -49,10 +49,12 @@ def resource_callbacks(search_path):
             "yaml_dump": (("obj",), yaml_dump),
            }
 
+
 def yaml_dump(obj):
     "Dumps jsonnet obj as yaml"
     _obj = json.loads(obj)
     return yaml.safe_dump(_obj, default_flow_style=False)
+
 
 def jinja2_render_file(search_path, name, ctx):
     """
@@ -74,6 +76,7 @@ def jinja2_render_file(search_path, name, ctx):
         logger.error("Jsonnet jinja2 failed to render %s: %s", _full_path, str(e))
         raise CompileError(e)
 
+
 def read_file(search_path, name):
     "return content of file in name"
     full_path = os.path.join(search_path, name)
@@ -83,6 +86,7 @@ def read_file(search_path, name):
         with open(full_path) as f:
             return f.read()
     raise IOError("Could not find file %s" % name)
+
 
 def kapitan_path():
     "return kapitan install path"
@@ -136,7 +140,6 @@ def inventory(search_path, target, inventory_path="inventory/"):
         return inventory_reclass(full_inv_path)["nodes"]
 
     return inventory_reclass(full_inv_path)["nodes"][target]
-
 
 
 @memoize

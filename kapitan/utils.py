@@ -114,6 +114,7 @@ def jsonnet_file(file_path, **kwargs):
         logger.error("Jsonnet error: failed to compile %s:\n %s", file_path, str(e))
         raise CompileError(e)
 
+
 def jsonnet_prune(jsonnet_str):
     "Returns a pruned jsonnet_str"
     return jsonnet.evaluate_snippet("snippet", "std.prune(%s)" % jsonnet_str)

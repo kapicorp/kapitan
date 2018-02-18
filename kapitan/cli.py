@@ -126,6 +126,7 @@ def main():
     logger.debug('Running with args: %s', args)
 
     cmd = sys.argv[1]
+
     if cmd == 'eval':
         file_path = args.jsonnet_file
         search_path = os.path.abspath(args.search_path)
@@ -142,6 +143,7 @@ def main():
             yaml.safe_dump(json_obj, sys.stdout, default_flow_style=False)
         elif json_output:
             print json_output
+
     elif cmd == 'compile':
         if args.verbose:
             logging.basicConfig(level=logging.DEBUG,
@@ -159,6 +161,7 @@ def main():
                             secrets_reveal=args.reveal, gpg_obj=gpg_obj)
         else:
             logger.error("Error: Nothing to compile")
+
     elif cmd == 'inventory':
         try:
             logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -178,6 +181,7 @@ def main():
 
     elif cmd == 'searchvar':
         searchvar(args.searchvar, args.inventory_path)
+
     elif cmd == 'secrets':
         if args.verbose:
             logging.basicConfig(level=logging.DEBUG,

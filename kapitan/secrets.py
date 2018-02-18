@@ -33,30 +33,36 @@ from kapitan.utils import PrettyDumper
 
 logger = logging.getLogger(__name__)
 
-SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)})" # e.g. ?{gpg:my/secret/token}
-SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)" # e.g. gpg:my/secret/token
-SECRET_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)" # e.g. gpg:my/secret/token:1deadbeef
+SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)})"  # e.g. ?{gpg:my/secret/token}
+SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)"  # e.g. gpg:my/secret/token
+SECRET_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)"  # e.g. gpg:my/secret/token:1deadbeef
+
 
 class GPGError(Exception):
     "Generic GPG errors"
     pass
 
+
 class TokenError(Exception):
     "Generic Token errors"
     pass
 
+
 def secret_gpg_backend():
     "return gpg secret backend"
     return gnupg.GPG()
+
 
 def secret_gpg_encrypt(gpg_obj, data, recipients, **kwargs):
     "encrypt data with recipients keys"
     assert isinstance(recipients, list)
     return gpg_obj.encrypt(data, recipients, sign=True, armor=False, **kwargs)
 
+
 def secret_gpg_decrypt(gpg_obj, data, **kwargs):
     "decrypt data"
     return gpg_obj.decrypt(data, **kwargs)
+
 
 def secret_gpg_read(gpg_obj, secrets_path, token, **kwargs):
     "decrypt and read data for token in secrets_path"
@@ -77,6 +83,7 @@ def secret_gpg_read(gpg_obj, secrets_path, token, **kwargs):
             raise ValueError("Could not read secret '%s' at %s" %
                              (token, full_secret_path))
 
+
 def secret_token_from_tag(token_tag):
     "returns token from token_tag"
     match = re.match(SECRET_TOKEN_TAG_PATTERN, token_tag)
@@ -85,6 +92,7 @@ def secret_token_from_tag(token_tag):
         return token
     else:
         raise ValueError('Token tag not valid: %s' % token_tag)
+
 
 def secret_token_attributes(token):
     "returns backend and path from token"
@@ -103,6 +111,7 @@ def secret_token_attributes(token):
     else:
         raise ValueError('Token not valid: %s' % token)
 
+
 def secret_token_compiled_attributes(token):
     "validates and returns backend, path and hash from token"
     match = re.match(SECRET_TOKEN_COMPILED_ATTR_PATTERN, token)
@@ -120,6 +129,7 @@ def secret_token_compiled_attributes(token):
     else:
         raise ValueError('Token not valid: %s' % token)
 
+
 def gpg_fingerprint(gpg_obj, recipient):
     "returns first non-expired key fingerprint for recipient"
     try:
@@ -133,10 +143,11 @@ def gpg_fingerprint(gpg_obj, recipient):
                 return key['fingerprint']
             else:
                 logger.info("Key for recipient: %s with fingerprint: %s is expired, skipping",
-                             recipient, key['fingerprint'])
+                            recipient, key['fingerprint'])
         raise GPGError("Could not find valid key for recipient: %s" % recipient)
     except IndexError as iexp:
         raise iexp
+
 
 def secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipients, **kwargs):
     """
@@ -170,6 +181,7 @@ def secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipien
         else:
             raise GPGError(enc.status)
 
+
 def secret_gpg_raw_read(secrets_path, token):
     "load (yaml) and return the content of the secret file for token"
     _, token_path = secret_token_attributes(token)
@@ -183,6 +195,7 @@ def secret_gpg_raw_read(secrets_path, token):
         if ex.errno == errno.ENOENT:
             raise ValueError("Could not read raw secret '%s' at %s" %
                              (token, full_secret_path))
+
 
 def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
     "returns and verifies hash for decrypted secret from token in match_obj"
@@ -198,6 +211,7 @@ def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
                              (secret_hash, token))
     logger.debug("Revealing %s", token_tag)
     return secret_gpg_read(gpg_obj, secrets_path, token, **kwargs)
+
 
 def secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, verify=True, output=None, **kwargs):
     """
@@ -230,6 +244,7 @@ def secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, verify=True, output=N
 
     return out_raw
 
+
 def secret_gpg_reveal_obj(gpg_obj, secrets_path, obj, verify=True, **kwargs):
     "recursively updates obj with revealed secrets"
     def sub_reveal_data(data):
@@ -242,10 +257,11 @@ def secret_gpg_reveal_obj(gpg_obj, secrets_path, obj, verify=True, **kwargs):
             obj[k] = secret_gpg_reveal_obj(gpg_obj, secrets_path, v, verify, **kwargs)
     elif isinstance(obj, list):
         obj = [secret_gpg_reveal_obj(gpg_obj, secrets_path, item, verify, **kwargs) for item in obj]
-    elif isinstance(obj, basestring): # XXX this is python 2 specific
+    elif isinstance(obj, basestring):  # XXX this is python 2 specific
         obj = sub_reveal_data(obj)
 
     return obj
+
 
 def secret_gpg_reveal_dir(gpg_obj, secrets_path, dirname, verify=True, **kwargs):
     "prints grouped output for revealed file types"
@@ -272,6 +288,7 @@ def secret_gpg_reveal_dir(gpg_obj, secrets_path, dirname, verify=True, **kwargs)
         sys.stdout.write(out_yaml)
     if out_raw:
         sys.stdout.write(out_raw)
+
 
 def secret_gpg_reveal_file(gpg_obj, secrets_path, filename, verify=True, **kwargs):
     "detects type and reveals file, returns revealed output string"
