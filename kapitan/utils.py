@@ -115,9 +115,20 @@ def jsonnet_file(file_path, **kwargs):
         raise CompileError(e)
 
 
-def jsonnet_prune(jsonnet_str):
-    "Returns a pruned jsonnet_str"
-    return jsonnet.evaluate_snippet("snippet", "std.prune(%s)" % jsonnet_str)
+def prune_empty(d):
+    '''Remove empty lists and empty dictionaries from x.
+    (similar to jsonnet std.prune but faster)
+    '''
+    if not isinstance(d, (dict, list)):
+        return d
+
+    if isinstance(d, list):
+        if len(d) > 0:
+            return [v for v in (prune_empty(v) for v in d) if v is not None]
+
+    if isinstance(d, dict):
+        if len(d) > 0:
+            return {k: v for k, v in ((k, prune_empty(v)) for k, v in d.items()) if v is not None}
 
 
 def memoize(obj):

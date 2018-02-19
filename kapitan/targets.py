@@ -32,7 +32,7 @@ import jsonschema
 import yaml
 
 from kapitan.resources import search_imports, resource_callbacks, inventory, inventory_reclass
-from kapitan.utils import jsonnet_file, jsonnet_prune, render_jinja2, PrettyDumper
+from kapitan.utils import jsonnet_file, prune_empty, render_jinja2, PrettyDumper
 from kapitan.secrets import secret_gpg_raw_read, secret_token_from_tag, secret_token_attributes
 from kapitan.secrets import SECRET_TOKEN_TAG_PATTERN, secret_gpg_read
 from kapitan.errors import KapitanError, CompileError
@@ -219,6 +219,7 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
     json_output = jsonnet_file(file_path, import_callback=_search_imports,
                                native_callbacks=resource_callbacks(search_path),
                                ext_vars=ext_vars)
+    json_output = json.loads(json_output)
 
     output = kwargs.get('output', 'yaml')
     prune = kwargs.get('prune', True)
@@ -227,9 +228,10 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
     gpg_obj = kwargs.get('gpg_obj', None)
 
     if prune:
-        json_output = jsonnet_prune(json_output)
+        json_output = prune_empty(json_output)
         logger.debug("Pruned output for: %s", file_path)
-    for item_key, item_value in json.loads(json_output).iteritems():
+
+    for item_key, item_value in json_output.iteritems():
         # write each item to disk
         if output == 'json':
             file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
