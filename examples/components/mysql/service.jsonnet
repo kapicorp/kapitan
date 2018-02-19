@@ -1,19 +1,25 @@
+local kap = import "lib/kapitan.libjsonnet";
+local inventory = kap.inventory();
+
+local namespace = inventory.parameters.namespace;
+local instance_name = inventory.parameters.mysql.instance_name;
+
+
 {
-  MySQLService(name): {
-    apiVersion: "v1",
-    kind: "Service",
-    spec: {
-      ports: [ 
-        { name: "mysql", port: 3306 }, 
-      ],
-      selector: { name: name },
-      clusterIP: "None"
-    },
+  apiVersion: "v1",
+  kind: "Service",
+  spec: {
+    ports: [
+      { name: "mysql", port: 3306, target_port: "mysql" },
+    ],
+    selector: { name: instance_name },
+    clusterIP: "None",
+    type: "ClusterIP"
+  },
 
-    metadata: {
-      name: name,
-      labels: { name: name },
-    },
-
+  metadata: {
+    name: instance_name,
+    namespace: namespace,
+    labels: { name: instance_name },
   },
 }
