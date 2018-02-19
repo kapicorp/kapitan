@@ -1,15 +1,12 @@
-# Kapitan
+# Kapitan: Generic templated configuration management for Kubernetes, Terraform and other things
 
 [![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
 
-A tool to manage kubernetes configuration using jsonnet templates
+Kapitan is a tool to manage complex deployments using mixed templating frameworks.
 
-Kapitan is a command line tool for declaring, instrumenting and documenting
-infrastructure with the goal of writing reusable components in Kubernetes whilst avoiding
-duplication and promoting patterns for extensibility.
+Use your template of choice to manage your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
 
 How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](#faq)!
-
 
 # Table of Contents
 
@@ -30,11 +27,11 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 
 # Main Features
 
-* Create kubernetes manifests templates using [Jsonnet](https://github.com/google/jsonnet)
-* Create templates for scripts and documentation using [Jinja2](http://jinja.pocoo.org/docs/2.9/)
-* Designed to work with multiple targets / environments
-* Define variables in a hierarchical tree using [reclass](https://github.com/madduck/reclass)
-
+* Use [reclass](https://github.com/madduck/reclass) to build an inventory of data/variables for all your deployments as a whole, avoiding dangerous duplications, and improving readibility.
+* Use [Jsonnet](https://github.com/google/jsonnet) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
+* Use [Jinja2](http://jinja.pocoo.org/docs/2.9/) to create text based templates for scripts and documentation;
+* Manage secrets by defining who can see them, without compromising collaboration with other users.
+* Create dynamically generated documentation about a single deployment (i.e. ad-hoc instructions) or all deployments at once (i.e. global state of deployments)
 
 
 # Installation

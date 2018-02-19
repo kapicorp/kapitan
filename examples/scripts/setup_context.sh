@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-KUBECTL="kubectl --context {{inventory.parameters.target_name}} --insecure-skip-tls-verify={{inventory.parameters.kubectl.insecure_skip_tls_verify}} "
-
-${KUBECTL} $@
-
+{% set i = inventory.parameters %}
+{% set cluster = i.cluster %}
+kubectl config set-context {{i.target_name}} --cluster {{cluster.id}} --user {{cluster.user}} --namespace {{i.namespace}}
+kubectl config use-context {{i.target_name}}

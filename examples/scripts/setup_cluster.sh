@@ -14,10 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-#!/bin/bash
 {% set i = inventory.parameters %}
 {% set cluster = i.cluster %}
 
-kubectl config set-context {{i.namespace}} --cluster {{cluster.name}} --user {{cluster.user}} --namespace {{i.namespace}}
-kubectl --context {{i.namespace}} create namespace {{i.namespace}}
+{% if cluster.type == "gke" %}
+gcloud container clusters get-credentials {{cluster.name}} --zone {{cluster.zone}} --project {{i.project}}
+{% elif cluster.type == "self-hosted" %}
+
+kubectl config set-credentials $USER --client-certificate=$HOME/volta_credentials/$USER.crt --client-key=$HOME/volta_credentials/$USER.key
+kubectl config set-cluster {{cluster.id}} --server={{cluster.kubernetes.master.api}} --certificate-authority={{cluster.kubernetes.master.ca}} --embed-certs={{cluster.kubernetes.master.embed}}
+
+{% elif cluster.type == "minikube" %}
+
+{% endif %}

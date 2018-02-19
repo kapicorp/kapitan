@@ -14,7 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-KUBECTL="kubectl --context {{inventory.parameters.target_name}} --insecure-skip-tls-verify={{inventory.parameters.kubectl.insecure_skip_tls_verify}} "
+case "$(uname -s)" in
+    Linux*)     MINIKUBE_BINARY=minikube-linux-amd64;;
+    Darwin*)    MINIKUBE_BINARY=minikube-darwin-amd64;;
+    *)          exit 1
+esac
 
-${KUBECTL} $@
+MINIKUBE_VERSION=${MINIKUBE_VERSION:-{{inventory.parameters.minikube.version}}}
+URL=https://storage.googleapis.com/minikube/releases/${MINIKUBE_VERSION}/${MINIKUBE_BINARY}
 
+
+echo Downloading minikube release ${MINIKUBE_VERSION} to /usr/local/bin/minikube
+pause
+sudo curl --progress-bar -o /usr/local/bin/minikube ${URL}
+sudo chmod +x /usr/local/bin/minikube

@@ -1,32 +1,38 @@
 classes:
   - cluster.minikube
-  - component.elasticsearch
+  - component.mysql
 
 parameters:
-  target_name: minikube-es
+  target_name: minikube-mysql
   kapitan:
     vars:
       target: ${target_name}
       namespace: ${target_name}
     compile:
+    - output_path: pre-deploy
+      input_type: jsonnet
+      output_type: yaml
+      input_paths:
+        - components/namespace/main.jsonnet
     - output_path: manifests
       input_type: jsonnet
       input_paths:
-        - components/elasticsearch/main.jsonnet
+        - components/mysql/main.jsonnet
       output_type: yaml
     - output_path: scripts
       input_type: jinja2
       input_paths:
         - scripts
     - output_path: .
+      output_type: yaml
       input_type: jinja2
       input_paths:
-        - docs/elasticsearch/README.md
-
+        - docs/mysql/README.md
     secrets:
       recipients:
-        - dummy@recipient
+        - example@kapitan.dev
   namespace: ${target_name}
 
-  elasticsearch:
-    replicas: 2
+  mysql:
+    instance_name: example-mysql
+    replicas: 1

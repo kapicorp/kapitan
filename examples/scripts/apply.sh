@@ -14,7 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-KUBECTL="kubectl --context {{inventory.parameters.target_name}} --insecure-skip-tls-verify={{inventory.parameters.kubectl.insecure_skip_tls_verify}} "
+{% set i = inventory.parameters %}
+DIR=$(dirname ${BASH_SOURCE[0]})
 
-${KUBECTL} $@
-
+for SECTION in pre-deploy manifests
+do
+  echo "## run kubectl apply for ${SECTION}"
+  kapitan secrets --reveal -f ${DIR}/../${SECTION}/ | ${DIR}/kubectl.sh apply -f - | column -t
+done
