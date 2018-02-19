@@ -1,7 +1,7 @@
-all: kapitan status
+all: compile status
 
-.PHONY: kapitan
-kapitan:
+.PHONY: compile
+compile:
 	@echo compiling kapitan templates...
 	kapitan compile
 
