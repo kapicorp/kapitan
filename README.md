@@ -31,7 +31,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 * Use [Jsonnet](https://github.com/google/jsonnet) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
 * Use [Jinja2](http://jinja.pocoo.org/docs/2.9/) to create text based templates for scripts and documentation;
 * Manage secrets by defining who can see them, without compromising collaboration with other users.
-* Create dinamically generated documentation about a single deployment (i.e. ad-hoc instructions) or all deployments at once (i.e. global state of deployments)
+* Create dynamically generated documentation about a single deployment (i.e. ad-hoc instructions) or all deployments at once (i.e. global state of deployments)
 
 
 # Installation
