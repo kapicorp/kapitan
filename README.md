@@ -8,6 +8,8 @@ Use your template of choice to manage your Kubernetes manifests, your documentat
 
 How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](#faq)!
 
+<img src="https://raw.githubusercontent.com/deepmind/kapitan/master/docs/kapitan_logo.png" width="250">
+
 # Table of Contents
 
 * [Main Features](#main-features)
