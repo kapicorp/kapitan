@@ -35,7 +35,7 @@ class Jinja2ContextVars(unittest.TestCase):
             f.write("{{inventory.parameters.cluster.name}}")
             cluster_name = "minikube"
             target_name = "minikube-es"
-            inv = inventory("examples", target_name)
+            inv = inventory("examples/kubernetes", target_name)
             context = {"inventory": inv}
             f.seek(0)
             self.assertEqual(render_jinja2_file(f.name, context), cluster_name)
@@ -45,7 +45,7 @@ class Jinja2ContextVars(unittest.TestCase):
             target_name = "minikube-es"
             f.write("{{inventory_global[\"%s\"].parameters.cluster.name}}" % target_name)
             cluster_name = "minikube"
-            inv_global = inventory("examples", None)
+            inv_global = inventory("examples/kubernetes", None)
             context = {"inventory_global": inv_global}
             f.seek(0)
             self.assertEqual(render_jinja2_file(f.name, context), cluster_name)

@@ -20,9 +20,9 @@ from kapitan.resources import inventory
 
 class InventoryTargetTest(unittest.TestCase):
     def test_inventory_target(self):
-        inv = inventory("examples", "minikube-es")
+        inv = inventory("examples/kubernetes", "minikube-es")
         self.assertEqual(inv["parameters"]["cluster"]["name"], "minikube")
 
     def test_inventory_all_targets(self):
-        inv = inventory("examples", None)
+        inv = inventory("examples/kubernetes", None)
         self.assertNotEqual(inv.get("minikube-es"), None)
