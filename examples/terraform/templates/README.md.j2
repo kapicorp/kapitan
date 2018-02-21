@@ -1,0 +1,29 @@
+# {{parameters.name}}
+|   |   |
+| - | - |
+| **main_region** | {{parameters.main_region}} |
+| **main_zone**   | {{parameters.main_zone}} |
+| **url**         | https://console.cloud.google.com/home/dashboard?project={{parameters.name}} |
+
+Resources managed by terraform in this project:
+
+{% for item in parameters.resources %}
+  * {{ item }}
+{% endfor %}
+
+
+{% if parameters.resources.container is defined %}
+## CONTAINER
+{% for item in parameters.resources.container %}
+  * {{item}}
+    * endpoint: ${google_container_cluster.{{item}}.endpoint}
+    * setup command: `gcloud container clusters get-credentials {{item}} --zone europe-west2-a --project {{parameters.name}}`
+{% endfor %}
+{% endif %}
+
+{% if parameters.resources.dns is defined %}
+## DNS
+{% for zone in parameters.resources.dns %}
+  * {{zone}}
+{% endfor %}
+{% endif %}

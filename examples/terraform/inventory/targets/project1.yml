@@ -1,0 +1,40 @@
+########################################
+# Classes to include in this target
+########################################
+classes:
+  - common
+
+########################################
+# override variables defined in any of
+# the classes above
+########################################
+parameters:
+  name: project1
+  main_region: europe-west2
+  main_zone: europe-west2-a
+
+  dns_default_ttl: 300
+
+  resources:
+    dns:
+
+      google.com:
+        - name: www
+          type: A
+          ttl: ${dns_default_ttl}
+          rrdatas:
+            - 1.1.1.1
+            - 2.2.2.2
+
+        - name: images
+          type: A
+          ttl: 60
+          rrdatas:
+            - 3.3.3.3
+
+      google.co.uk:
+        - name: www
+          type: A
+          ttl: ${dns_default_ttl}
+          rrdatas:
+            - 4.4.4.4
