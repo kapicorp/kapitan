@@ -1,13 +1,14 @@
-FROM python:2
+FROM alpine
 
-WORKDIR /usr/src/app
-
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-
+RUN apk --update add --virtual build-dependencies build-base python-dev py-pip && \ 
+    apk --update add python libstdc++ gnupg && mkdir /kapitan
+WORKDIR /kapitan
 COPY kapitan/ kapitan/
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt && apk del build-dependencies
 
-ENV PYTHONPATH="/usr/src/app"
+
+ENV PYTHONPATH="/kapitan/"
 ENV SEARCHPATH="/src"
 VOLUME ${SEARCHPATH}
 WORKDIR ${SEARCHPATH}
