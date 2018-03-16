@@ -40,30 +40,44 @@ from kapitan.errors import KapitanError, CompileError
 logger = logging.getLogger(__name__)
 
 
-def compile_targets(target_path, inventory_path, search_path, output_path, parallel, **kwargs):
+def compile_targets(inventory_path, search_path, output_path, parallel, targets, **kwargs):
     """
-    Searches and loads target files in target_path and runs compile_target_file() on a
+    Searches and loads target files, and runs compile_target_file() on a
     multiprocessing pool with parallel number of processes.
     kwargs are passed to compile_target()
     """
+    target_path = "targets"
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
     pool = multiprocessing.Pool(parallel)
     # append "compiled" to output_path so we can safely overwrite it
     compile_path = os.path.join(output_path, "compiled")
     worker = partial(compile_target, search_path=search_path, compile_path=temp_path, **kwargs)
-    target_objs = load_target_files(target_path)
-    target_objs.extend(load_target_inventory(inventory_path))
+
+    target_objs = load_target_inventory(inventory_path, targets)
+
     try:
         if target_objs == []:
             logger.error("Error: no targets found")
             raise KapitanError("Error: no targets found")
         pool.map(worker, target_objs)
+
         if os.path.exists(compile_path):
-            shutil.rmtree(compile_path)
-        # on success, copy temp_path into compile_path
-        shutil.copytree(temp_path, compile_path)
-        logger.debug("Copied %s into %s", temp_path, compile_path)
+            # if '-t' is set on compile, only override selected targets
+            if targets:
+                for target in targets:
+                    compile_path_target = os.path.join(compile_path, target)
+                    temp_path_target = os.path.join(temp_path, target)
+
+                    shutil.rmtree(compile_path_target)
+                    shutil.copytree(temp_path_target, compile_path_target)
+                    logger.debug("Copied %s into %s", temp_path_target, compile_path_target)
+            # otherwise override all targets
+            else:
+                shutil.rmtree(compile_path)
+                shutil.copytree(temp_path, compile_path)
+                logger.debug("Copied %s into %s", temp_path, compile_path)
+
     except Exception as e:
         # if compile worker fails, terminate immediately
         pool.terminate()
@@ -79,32 +93,17 @@ def compile_targets(target_path, inventory_path, search_path, output_path, paral
         logger.debug("Removed %s", temp_path)
 
 
-def search_target_files(target_path):
-    """
-    Searches for any target.json or target.yml filenames in target_path
-    Returns a list of target objs
-    """
-    target_files = []
-    for root, _, files in os.walk(target_path):
-        for f in files:
-            if f in ('target.json', 'target.yml'):
-                full_path = os.path.join(root, f)
-                logger.debug('search_target_files: found %s', full_path)
-                target_files.append(full_path)
-    return target_files
-
-
-def load_target_files(target_path):
-    "return a list of target objects from target_files"
-    target_files = search_target_files(target_path)
-    return map(load_target_file, target_files)
-
-
-def load_target_inventory(inventory_path):
+def load_target_inventory(inventory_path, targets):
     "retuns a list of target objects from the inventory"
     target_objs = []
     inv = inventory_reclass(inventory_path)
-    for target_name in inv['nodes']:
+
+    targets_list = inv['nodes']
+    # if '-t' is set on compile, only loop through selected targets
+    if targets:
+        targets_list = targets
+
+    for target_name in targets_list:
         try:
             target_obj = inv['nodes'][target_name]['parameters']['kapitan']
             valid_target_obj(target_obj)
