@@ -53,9 +53,9 @@ setup(
     install_requires=[
         'jsonnet>=0.9.5',
         'PyYAML>=3.12',
-        'Jinja2>=2.9.4',
+        'Jinja2>=2.10',
         'reclass>=1.4.1',
-        'jsonschema>=2.5.1',
+        'jsonschema>=2.6.0',
         'python-gnupg==0.4.1'
     ],
 
