@@ -255,6 +255,8 @@ optional arguments:
   --quiet               set quiet mode, only critical output
   --output-path PATH    set output path, default is "."
   --target-path PATH    set target path, default is "./targets"
+  --targets TARGETS [TARGETS ...], -t TARGETS [TARGETS ...]
+                        targets to compile, default is all
   --parallelism INT, -p INT
                         Number of concurrent compile processes, default is 4
   --secrets-path SECRETS_PATH
