@@ -40,12 +40,13 @@ from kapitan.errors import KapitanError, CompileError
 logger = logging.getLogger(__name__)
 
 
-def compile_targets(target_path, inventory_path, search_path, output_path, parallel, targets, **kwargs):
+def compile_targets(inventory_path, search_path, output_path, parallel, targets, **kwargs):
     """
-    Searches and loads target files in target_path and runs compile_target_file() on a
+    Searches and loads target files, and runs compile_target_file() on a
     multiprocessing pool with parallel number of processes.
     kwargs are passed to compile_target()
     """
+    target_path = "targets"
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
     pool = multiprocessing.Pool(parallel)
@@ -54,8 +55,6 @@ def compile_targets(target_path, inventory_path, search_path, output_path, paral
     worker = partial(compile_target, search_path=search_path, compile_path=temp_path, **kwargs)
 
     target_objs = load_target_inventory(inventory_path, targets)
-    if not targets:
-        target_objs.extend(load_target_files(target_path))
 
     try:
         if target_objs == []:
@@ -92,27 +91,6 @@ def compile_targets(target_path, inventory_path, search_path, output_path, paral
     finally:
         shutil.rmtree(temp_path)
         logger.debug("Removed %s", temp_path)
-
-
-def search_target_files(target_path):
-    """
-    Searches for any target.json or target.yml filenames in target_path
-    Returns a list of target objs
-    """
-    target_files = []
-    for root, _, files in os.walk(target_path):
-        for f in files:
-            if f in ('target.json', 'target.yml'):
-                full_path = os.path.join(root, f)
-                logger.debug('search_target_files: found %s', full_path)
-                target_files.append(full_path)
-    return target_files
-
-
-def load_target_files(target_path):
-    "return a list of target objects from target_files"
-    target_files = search_target_files(target_path)
-    return map(load_target_file, target_files)
 
 
 def load_target_inventory(inventory_path, targets):

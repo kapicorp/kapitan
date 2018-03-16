@@ -67,9 +67,6 @@ def main():
     compile_parser.add_argument('--output-path', type=str, default='.',
                                 metavar='PATH',
                                 help='set output path, default is "."')
-    compile_parser.add_argument('--target-path', type=str, default='targets',
-                                metavar='PATH',
-                                help='set target path, default is "./targets"')
     compile_parser.add_argument('--targets', '-t', help='targets to compile, default is all',
                                 type=str, nargs='+', default=[], metavar='TARGET')
     compile_parser.add_argument('--parallelism', '-p', type=int,
@@ -156,13 +153,11 @@ def main():
             logging.basicConfig(level=logging.INFO, format="%(message)s")
         search_path = os.path.abspath(args.search_path)
         gpg_obj = secret_gpg_backend()
-        if args.target_path:
-            compile_targets(args.target_path, args.inventory_path, search_path,
-                            args.output_path, args.parallelism, args.targets,
-                            prune=(not args.no_prune), secrets_path=args.secrets_path,
-                            secrets_reveal=args.reveal, gpg_obj=gpg_obj)
-        else:
-            logger.error("Error: Nothing to compile")
+
+        compile_targets(args.inventory_path, search_path, args.output_path,
+                        args.parallelism, args.targets,
+                        prune=(not args.no_prune), secrets_path=args.secrets_path,
+                        secrets_reveal=args.reveal, gpg_obj=gpg_obj)
 
     elif cmd == 'inventory':
         try:

@@ -79,37 +79,6 @@ Compiled minikube-es-2
 
 # Main concepts
 
-### Targets
-
-A target usually represents a single namespace in a kubernetes cluster and defines all components, scripts and documentation that will be generated for that target.
-
-Kapitan requires a target file to compile a target and its parameters. Example:
-
-```
-$ cat examples/targets/minikube-es/target.yml
----
-vars:
-  target: minikube-es
-  namespace: minikube-es
-compile:
-
-  - output_path: manifests
-    input_type: jsonnet
-    input_paths:
-      - targets/minikube-es/main.jsonnet
-    output_type: yaml
-
-  - output_path: scripts
-    input_type: jinja2
-    input_paths:
-      - scripts
-
-  - output_path: .
-    input_type: jinja2
-    input_paths:
-      - targets/minikube-es/docs/README.md
-```
-
 ### Components
 
 A component is an aplication that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (StatefulSet, Services, ConfigMaps) defined in jsonnet.
@@ -153,6 +122,8 @@ parameters:
 
 #### Inventory Targets
 
+A target usually represents a single namespace in a kubernetes cluster and defines all components, scripts and documentation that will be generated for that target.
+
 Inside the inventory target files you can include classes and define new values or override any values inherited from the included classes.
 For example:
 
@@ -163,7 +134,30 @@ classes:
   - component.elasticsearch
 
 parameters:
-  namespace: minikube-es
+  target_name: minikube-es
+  kapitan:
+    vars:
+      target: ${target_name}
+      namespace: ${target_name}
+    compile:
+    - output_path: manifests
+      input_type: jsonnet
+      input_paths:
+        - components/elasticsearch/main.jsonnet
+      output_type: yaml
+    - output_path: scripts
+      input_type: jinja2
+      input_paths:
+        - scripts
+    - output_path: .
+      input_type: jinja2
+      input_paths:
+        - docs/elasticsearch/README.md
+
+    secrets:
+      recipients:
+        - dummy@recipient
+  namespace: ${target_name}
 
   elasticsearch:
     replicas: 2
@@ -254,7 +248,6 @@ optional arguments:
   --no-prune            do not prune jsonnet output
   --quiet               set quiet mode, only critical output
   --output-path PATH    set output path, default is "."
-  --target-path PATH    set target path, default is "./targets"
   --targets TARGETS [TARGETS ...], -t TARGETS [TARGETS ...]
                         targets to compile, default is all
   --parallelism INT, -p INT
@@ -330,6 +323,7 @@ classes:
   - cluster.common
   - cluster.minikube
   - component.elasticsearch
+environment: base
 parameters:
   cluster:
     id: minikube
@@ -445,5 +439,5 @@ We believe that these approaches can be blended in a powerful new way, glued tog
 
 # Related projects
 
-* [sublime-jsonnet-syntax](https://github.com/gburiola/sublime-jsonnet-syntax) - Jsonnet syntax highlighting for sublime text Edit
-
+* [sublime-jsonnet-syntax](https://github.com/gburiola/sublime-jsonnet-syntax) - Jsonnet syntax highlighting for Sublime Text
+* [language-jsonnet](https://github.com/google/language-jsonnet) - Jsonnet syntax highlighting for Atom
