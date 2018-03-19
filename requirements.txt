@@ -1,4 +1,4 @@
-jsonnet==0.9.5
+jsonnet==0.10.0
 PyYAML==3.12
 Jinja2==2.9.4
 jsonschema==2.5.1
