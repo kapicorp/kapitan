@@ -40,7 +40,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 Kapitan needs Python 3.6+ (it still works with Python 2.7 but support has been removed in v0.12.0).
 
 Install Python 3:
-<br>Linux: `sudo apt-get install python3.6`
+<br>Linux: `sudo apt-get update && sudo apt-get install -y python3.6-dev`
 <br>Mac: `brew install python3`
 
 Install Kapitan via pip:
