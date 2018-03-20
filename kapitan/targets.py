@@ -30,6 +30,7 @@ import traceback
 import tempfile
 import jsonschema
 import yaml
+import time
 
 from kapitan.resources import search_imports, resource_callbacks, inventory, inventory_reclass
 from kapitan.utils import jsonnet_file, prune_empty, render_jinja2, PrettyDumper
@@ -38,7 +39,6 @@ from kapitan.secrets import SECRET_TOKEN_TAG_PATTERN, secret_gpg_read
 from kapitan.errors import KapitanError, CompileError
 
 logger = logging.getLogger(__name__)
-
 
 def compile_targets(inventory_path, search_path, output_path, parallel, targets, **kwargs):
     """
@@ -120,6 +120,8 @@ def compile_target(target_obj, search_path, compile_path, **kwargs):
     """
     Compiles target_obj and writes to compile_path
     """
+    start = time.time()
+
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
     compile_obj = target_obj["compile"]
@@ -170,7 +172,8 @@ def compile_target(target_obj, search_path, compile_path, **kwargs):
                     logger.error("Compile error: input_path for target: %s not found in search_path: %s",
                                  target_name, input_path)
                     raise CompileError()
-    logger.info("Compiled %s", target_name)
+
+    logger.info("Compiled %s (%.2fs)", target_name, time.time() - start)
 
 
 def compile_jinja2(path, context, compile_path, **kwargs):
