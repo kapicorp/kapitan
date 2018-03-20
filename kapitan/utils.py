@@ -49,6 +49,9 @@ def jinja2_sha256_hex_filter(string):
     "Returns hex digest for string"
     return sha256(string.encode("UTF-8")).hexdigest()
 
+def jinja2_yaml_filter(obj):
+    "Returns yaml for object"
+    return yaml.safe_dump(obj, default_flow_style=False)
 
 def render_jinja2_file(name, context):
     "Render jinja2 file name with context"
@@ -60,6 +63,7 @@ def render_jinja2_file(name, context):
         lstrip_blocks=True,
     )
     env.filters['sha256'] = jinja2_sha256_hex_filter
+    env.filters['yaml'] = jinja2_yaml_filter
     return env.get_template(filename).render(context)
 
 
