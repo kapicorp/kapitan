@@ -56,12 +56,8 @@ setup(
         'jsonnet==0.10.0',
         'PyYAML==3.12',
         'Jinja2>=2.10',
-        # Latest commit from salt-formulas/reclass - python3 branch
-        # TODO: Change commit hash to release tag, once python3 branch is merged in
         'git+git://github.com/salt-formulas/reclass@31770c6#egg=reclass',
         'jsonschema>=2.6.0',
-        # Closest commit to official python-gnupg==0.4.1 + fix for https://bitbucket.org/vinay.sajip/python-gnupg/issues/84/on-osx-version-detection-fails-then-raises
-        # TODO: Change to python-gnupg==0.4.2 once released
         'git+git://github.com/vsajip/python-gnupg@73b5d8d#egg=python-gnupg',
         'six>=1.11.0'
     ],
