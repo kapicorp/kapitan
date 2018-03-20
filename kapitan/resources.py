@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Copyright 2017 The Kapitan Authors
 #
@@ -21,6 +21,7 @@ from functools import partial
 import json
 import logging
 import os
+import io
 import reclass
 import reclass.core
 from reclass.errors import ReclassException, NotFoundError
@@ -83,7 +84,7 @@ def read_file(search_path, name):
     logger.debug("read_file trying file %s", full_path)
     if os.path.exists(full_path):
         logger.debug("read_file found file at %s", full_path)
-        with open(full_path) as f:
+        with io.open(full_path, newline='') as f:
             return f.read()
     raise IOError("Could not find file %s" % name)
 

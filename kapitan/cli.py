@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Copyright 2017 The Kapitan Authors
 #
@@ -13,6 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from __future__ import print_function
 
 "command line module"
 
@@ -141,7 +143,7 @@ def main():
             json_obj = json.loads(json_output)
             yaml.safe_dump(json_obj, sys.stdout, default_flow_style=False)
         elif json_output:
-            print json_output
+            print(json_output)
 
     elif cmd == 'compile':
         if args.verbose:

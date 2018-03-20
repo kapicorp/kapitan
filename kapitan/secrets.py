@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Copyright 2017 The Kapitan Authors
 #
@@ -15,6 +15,8 @@
 # limitations under the License.
 
 "secrets module"
+
+from six import string_types
 
 import base64
 import errno
@@ -75,7 +77,7 @@ def secret_gpg_read(gpg_obj, secrets_path, token, **kwargs):
             dec = secret_gpg_decrypt(gpg_obj, data_decoded, **kwargs)
             logger.debug("Read secret %s at %s", token, full_secret_path)
             if dec.ok:
-                return dec.data
+                return dec.data.decode("UTF-8")
             else:
                 raise GPGError(dec.status)
     except IOError as ex:
@@ -166,7 +168,7 @@ def secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipien
         encoding = "original"
         _data = data
         if encode_base64:
-            _data = base64.b64encode(data)
+            _data = base64.b64encode(data.encode("UTF-8"))
             encoding = "base64"
         enc = secret_gpg_encrypt(gpg_obj, _data, recipients, **kwargs)
         if enc.ok:
@@ -203,7 +205,7 @@ def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
     if verify:
         _, token_path, token_hash = secret_token_compiled_attributes(token)
         secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
-        secret_hash = hashlib.sha256("%s%s" % (token_path, secret_raw_obj["data"])).hexdigest()
+        secret_hash = hashlib.sha256("%s%s".encode("UTF-8") % (token_path, secret_raw_obj["data"])).hexdigest()
         secret_hash = secret_hash[:8]
         logger.debug("Attempting to reveal token %s with secret hash %s", token, token_hash)
         if secret_hash != token_hash:
@@ -253,11 +255,11 @@ def secret_gpg_reveal_obj(gpg_obj, secrets_path, obj, verify=True, **kwargs):
         return re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_gpg_replace, data)
 
     if isinstance(obj, dict):
-        for k, v in obj.iteritems():
+        for k, v in obj.items():
             obj[k] = secret_gpg_reveal_obj(gpg_obj, secrets_path, v, verify, **kwargs)
     elif isinstance(obj, list):
         obj = [secret_gpg_reveal_obj(gpg_obj, secrets_path, item, verify, **kwargs) for item in obj]
-    elif isinstance(obj, basestring):  # XXX this is python 2 specific
+    elif isinstance(obj, string_types):
         obj = sub_reveal_data(obj)
 
     return obj

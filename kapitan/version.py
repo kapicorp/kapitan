@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Copyright 2017 The Kapitan Authors
 #
@@ -17,7 +17,7 @@
 "Project description variables"
 
 PROJECT_NAME = 'kapitan'
-VERSION = '0.11.0'
+VERSION = '0.12.0'
 DESCRIPTION = 'Kapitan is a tool to manage kubernetes configuration using jsonnet templates'
 AUTHOR = 'Ricardo Amaro'
 AUTHOR_EMAIL = 'ramaro@google.com'

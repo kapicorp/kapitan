@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Copyright 2017 The Kapitan Authors
 #
@@ -20,6 +20,41 @@ Kapitan setup.py for PIP install
 
 from setuptools import setup, find_packages
 from kapitan.version import PROJECT_NAME, VERSION, DESCRIPTION, URL, AUTHOR, AUTHOR_EMAIL, LICENCE
+
+# From https://github.com/pypa/pip/issues/3610#issuecomment-356687173
+def install_deps():
+    """Reads requirements.txt and preprocess it
+    to be feed into setuptools.
+
+    This is the only possible way (we found)
+    how requirements.txt can be reused in setup.py
+    using dependencies from private github repositories.
+
+    Links must be appendend by `-{StringWithAtLeastOneNumber}`
+    or something like that, so e.g. `-9231` works as well as
+    `1.1.0`. This is ignored by the setuptools, but has to be there.
+
+    Warnings:
+        to make pip respect the links, you have to use
+        `--process-dependency-links` switch. So e.g.:
+        `pip install --process-dependency-links {git-url}`
+
+    Returns:
+         list of packages and dependency links.
+    """
+    default = open('requirements.txt', 'r').readlines()
+    new_pkgs = []
+    links = []
+    for resource in default:
+        if 'git+https' in resource:
+            pkg = resource.split('#')[-1]
+            links.append(resource.strip() + '-9876543210')
+            new_pkgs.append(pkg.replace('egg=', '').rstrip())
+        else:
+            new_pkgs.append(resource.strip())
+    return new_pkgs, links
+
+pkgs, new_links = install_deps()
 
 setup(
     name=PROJECT_NAME,
@@ -43,6 +78,8 @@ setup(
 
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6'
     ],
 
     keywords='jsonnet kubernetes reclass jinja',
@@ -50,15 +87,8 @@ setup(
     packages=find_packages(),
     package_data={"": ["lib/*"]},
     include_package_data=True,
-    install_requires=[
-        'jsonnet>=0.9.5',
-        'PyYAML>=3.12',
-        'Jinja2>=2.10',
-        'reclass>=1.4.1',
-        'jsonschema>=2.6.0',
-        'python-gnupg==0.4.1'
-    ],
-
+    dependency_links=new_links,
+    install_requires=pkgs,
     entry_points={
         'console_scripts': [
             'kapitan=kapitan.cli:main',
