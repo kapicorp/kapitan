@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Copyright 2017 The Kapitan Authors
 #
@@ -23,7 +23,7 @@ from kapitan.resources import inventory
 class Jinja2FiltersTest(unittest.TestCase):
     def test_sha256(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{text|sha256}}")
+            f.write("{{text|sha256}}".encode("UTF-8"))
             f.seek(0)
             context = {"text":"this and that"}
             digest = 'e863c1ac42619a2b429a08775a6acd89ff4c2c6b8dae12e3461a5fa63b2f92f5'
@@ -32,7 +32,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 class Jinja2ContextVars(unittest.TestCase):
     def test_inventory_context(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{inventory.parameters.cluster.name}}")
+            f.write("{{inventory.parameters.cluster.name}}".encode("UTF-8"))
             cluster_name = "minikube"
             target_name = "minikube-es"
             inv = inventory("examples/kubernetes", target_name)
@@ -43,7 +43,7 @@ class Jinja2ContextVars(unittest.TestCase):
     def test_inventory_global_context(self):
         with tempfile.NamedTemporaryFile() as f:
             target_name = "minikube-es"
-            f.write("{{inventory_global[\"%s\"].parameters.cluster.name}}" % target_name)
+            f.write("{{inventory_global[\"%s\"].parameters.cluster.name}}".encode("UTF-8") % target_name.encode("UTF-8"))
             cluster_name = "minikube"
             inv_global = inventory("examples/kubernetes", None)
             context = {"inventory_global": inv_global}

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Copyright 2017 The Kapitan Authors
 #
@@ -15,6 +15,8 @@
 # limitations under the License.
 
 "kapitan targets"
+
+from six import string_types
 
 import logging
 import os
@@ -186,7 +188,7 @@ def compile_jinja2(path, context, compile_path, **kwargs):
     secrets_reveal = kwargs.get('secrets_reveal', False)
     gpg_obj = kwargs.get('gpg_obj', None)
 
-    for item_key, item_value in render_jinja2(path, context).iteritems():
+    for item_key, item_value in render_jinja2(path, context).items():
         full_item_path = os.path.join(compile_path, item_key)
         try:
             os.makedirs(os.path.dirname(full_item_path))
@@ -230,7 +232,7 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
         json_output = prune_empty(json_output)
         logger.debug("Pruned output for: %s", file_path)
 
-    for item_key, item_value in json_output.iteritems():
+    for item_key, item_value in json_output.items():
         # write each item to disk
         if output == 'json':
             file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
@@ -339,11 +341,11 @@ class CompilingFile(object):
     def sub_token_compiled_obj(self, obj):
         "recursively find and replace tokens with hashed tokens in obj"
         if isinstance(obj, dict):
-            for k, v in obj.iteritems():
+            for k, v in obj.items():
                 obj[k] = self.sub_token_compiled_obj(v)
         elif isinstance(obj, list):
-            obj = map(self.sub_token_compiled_obj, obj)
-        elif isinstance(obj, basestring):  # XXX this is python 2 specific
+            obj = list(map(self.sub_token_compiled_obj, obj))
+        elif isinstance(obj, string_types):
             obj = self.sub_token_compiled_data(obj)
 
         return obj
@@ -351,11 +353,11 @@ class CompilingFile(object):
     def sub_token_reveal_obj(self, obj):
         "recursively find and reveal token tags in data"
         if isinstance(obj, dict):
-            for k, v in obj.iteritems():
+            for k, v in obj.items():
                 obj[k] = self.sub_token_reveal_obj(v)
         elif isinstance(obj, list):
             obj = map(self.sub_token_reveal_obj, obj)
-        elif isinstance(obj, basestring):  # XXX this is python 2 specific
+        elif isinstance(obj, string_types):
             obj = self.sub_token_reveal_data(obj)
 
         return obj
@@ -373,7 +375,7 @@ class CompilingFile(object):
         token = secret_token_from_tag(token_tag)
         secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
         backend, token_path = secret_token_attributes(token)
-        sha256 = hashlib.sha256("%s%s" % (token_path, secret_raw_obj["data"])).hexdigest()
+        sha256 = hashlib.sha256("%s%s".encode("UTF-8") % (token_path.encode("UTF-8"), secret_raw_obj["data"].encode("UTF-8"))).hexdigest()
         sha256 = sha256[:8]
         return "?{%s:%s:%s}" % (backend, token_path, sha256)
 

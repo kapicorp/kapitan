@@ -1,4 +1,4 @@
 #!/bin/bash
 
 BINPATH=`dirname $0`
-PYTHONPATH="$BINPATH/../:$PYTHONPATH" python -m kapitan $@
+PYTHONPATH="$BINPATH/../:$PYTHONPATH" python3 -m kapitan $@

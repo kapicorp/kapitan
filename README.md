@@ -27,7 +27,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 
 # Main Features
 
-* Use [reclass](https://github.com/madduck/reclass) to build an inventory of data/variables for all your deployments as a whole, avoiding dangerous duplications, and improving readibility.
+* Use [reclass](https://github.com/salt-formulas/reclass) to build an inventory of data/variables for all your deployments as a whole, avoiding dangerous duplications, and improving readibility.
 * Use [Jsonnet](https://github.com/google/jsonnet) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
 * Use [Jinja2](http://jinja.pocoo.org/docs/2.9/) to create text based templates for scripts and documentation;
 * Manage secrets by defining who can see them, without compromising collaboration with other users.
@@ -37,12 +37,16 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 
 # Installation
 
-Kapitan needs Python 2.7+ and can be installed with pip.
+Kapitan needs Python 3.6+ (it still works with Python 2.7 but support has been removed in v0.12.0).
 
-```
-$ pip install git+https://github.com/deepmind/kapitan.git
-```
+Install Python 3:
+<br>Linux: `sudo apt-get install python3.6`
+<br>Mac: `brew install python3`
 
+Install Kapitan via pip:
+```
+$ pip3 install git+https://github.com/deepmind/kapitan.git
+```
 
 
 # Example
@@ -408,7 +412,7 @@ $ kapitan searchvar parameters.elasticsearch.replicas
 
 * [Jsonnet](https://github.com/google/jsonnet)
 * [Jinja2](http://jinja.pocoo.org/docs/2.9/)
-* [reclass](https://github.com/madduck/reclass)
+* [reclass](https://github.com/salt-formulas/reclass)
 
 # FAQ
 
@@ -429,7 +433,7 @@ With Kapitan, we worked to de-compose several problems that most of the other so
 
 1) ***Kubernetes manifests***: We like the jsonnet approach of using json as the working language. Jsonnet allows us to use inheritance and composition, and hide complexity at higher levels.
 2) ***Configuration files***: Most solutions will assume this problem is solved somewhere else. We feel Jinja (or your template engine of choice) have the upper hand here.
-3) ***Hierarchical inventory***: This is the feature that sets us apart from other solutions. We use the inventory (based on [reclass](https://github.com/madduck/reclass)) to define variables and properties that can be reused across different projects/deployments. This allows us to limit repetition, but also to define a nicer interface with developers (or CI tools) which will only need to understand YAML to operate changes.
+3) ***Hierarchical inventory***: This is the feature that sets us apart from other solutions. We use the inventory (based on [reclass](https://github.com/salt-formulas/reclass)) to define variables and properties that can be reused across different projects/deployments. This allows us to limit repetition, but also to define a nicer interface with developers (or CI tools) which will only need to understand YAML to operate changes.
 4) ***Canned scripts***: We treat scripts as text templates, so that we can craft pre-canned scripts for the specific target we are working on. This can be used for instance to define scripts that setup clusters, contexts or allow to run kubectl with all the correct settings. Most other solutions require you to define contexts and call kubectl with the correct settings. We take care of that for you. Less ambiguity, less mistakes.
 5) ***Documentation***: We also use templates to create documentation for the targets we deploy. Documentation lived alongside everything else and it is treated as a first class citizen.
 We feel most other solutions are pushing the limits of their capacity in order to provide for the above problems.

@@ -1,7 +1,7 @@
 language: python
 
 python:
-  - "2.7"
+  - "3.6"
 
 branches:
   only:
@@ -12,6 +12,7 @@ notifications:
     - buriola@google.com
     - ramaro@google.com
     - ademaria@google.com
+    - chifor@google.com
   email:
     on_success: change
     on_failure: always

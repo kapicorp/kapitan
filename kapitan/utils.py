@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Copyright 2017 The Kapitan Authors
 #
@@ -14,7 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import print_function
+
 "random utils"
+
 import functools
 from hashlib import sha256
 import logging
@@ -44,7 +47,7 @@ def render_jinja2_template(content, context):
 
 def jinja2_sha256_hex_filter(string):
     "Returns hex digest for string"
-    return sha256(string).hexdigest()
+    return sha256(string.encode("UTF-8")).hexdigest()
 
 
 def render_jinja2_file(name, context):
