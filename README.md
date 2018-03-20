@@ -45,7 +45,7 @@ Install Python 3:
 
 Install Kapitan via pip:
 ```
-$ pip3 install git+https://github.com/deepmind/kapitan.git
+$ pip3 install git+https://github.com/deepmind/kapitan.git --process-dependency-links
 ```
 
 

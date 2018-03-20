@@ -52,13 +52,18 @@ setup(
     packages=find_packages(),
     package_data={"": ["lib/*"]},
     include_package_data=True,
+    dependency_links=[
+        'git+git://github.com/salt-formulas/reclass@31770c6#egg=reclass-1.4.1',
+        'git+git://github.com/vsajip/python-gnupg@73b5d8d#egg=python-gnupg-0.4.2.dev0'
+    ],
+
     install_requires=[
         'jsonnet==0.10.0',
         'PyYAML==3.12',
         'Jinja2>=2.10',
-        'git+git://github.com/salt-formulas/reclass@31770c6#egg=reclass',
+        'reclass==1.4.1',
         'jsonschema>=2.6.0',
-        'git+git://github.com/vsajip/python-gnupg@73b5d8d#egg=python-gnupg',
+        'python-gnupg==0.4.2.dev0',
         'six>=1.11.0'
     ],
 
