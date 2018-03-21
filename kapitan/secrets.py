@@ -205,7 +205,8 @@ def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
     if verify:
         _, token_path, token_hash = secret_token_compiled_attributes(token)
         secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
-        secret_hash = hashlib.sha256("%s%s".encode("UTF-8") % (token_path, secret_raw_obj["data"])).hexdigest()
+        secret_tag = "%s%s" % (token_path, secret_raw_obj["data"])
+        secret_hash = hashlib.sha256(secret_tag.encode("UTF-8")).hexdigest()
         secret_hash = secret_hash[:8]
         logger.debug("Attempting to reveal token %s with secret hash %s", token, token_hash)
         if secret_hash != token_hash:
