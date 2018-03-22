@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2017 The Kapitan Authors
+# Copyright 2018 The Kapitan Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -212,3 +212,29 @@ def searchvar(flat_var, inventory_path):
                 fd.close()
     for i in output:
         print('{0!s:{l}} {1!s}'.format(*i, l=maxlenght + 2))
+
+def get_directory_hash(directory):
+    '''
+    Compute a sha256 hash for the file contents of a directory
+    '''
+    if not os.path.exists(directory):
+        logger.error("utils.get_directory_hash failed, %s dir doesn't exist", directory)
+        return -1
+
+    try:
+        hash = sha256()
+        for root, _, files in os.walk(directory):
+            for names in files:
+                file_path = os.path.join(root, names)
+                try:
+                    with open(file_path, 'r') as f:
+                        hash.update(sha256(f.read().encode("UTF-8")).hexdigest().encode("UTF-8"))
+                except Exception as e:
+                    logger.error("utils.get_directory_hash failed to open %s: %s", file_path, str(e))
+                    return -2
+
+    except Exception as e:
+        logger.error("utils.get_directory_hash failed: %s", str(e))
+        return -2
+
+    return hash.hexdigest()

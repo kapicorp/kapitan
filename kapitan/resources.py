@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2017 The Kapitan Authors
+# Copyright 2018 The Kapitan Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -125,7 +125,11 @@ def search_imports(cwd, import_str, search_path):
     logger.debug("cwd:%s import_str:%s basename:%s -> norm:%s",
                  cwd, import_str, basename, normalised_path)
 
-    return normalised_path, open(normalised_path).read()
+    normalised_path_content = ""
+    with open(normalised_path) as f:
+        normalised_path_content = f.read()
+
+    return normalised_path, normalised_path_content
 
 
 def inventory(search_path, target, inventory_path="inventory/"):

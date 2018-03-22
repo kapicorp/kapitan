@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2017 The Kapitan Authors
+# Copyright 2018 The Kapitan Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,14 @@ class Jinja2FiltersTest(unittest.TestCase):
             context = {"text":"this and that"}
             digest = 'e863c1ac42619a2b429a08775a6acd89ff4c2c6b8dae12e3461a5fa63b2f92f5'
             self.assertEqual(render_jinja2_file(f.name, context), digest)
+
+    def test_yaml(self):
+        with tempfile.NamedTemporaryFile() as f:
+            f.write("{{text|yaml}}".encode("UTF-8"))
+            f.seek(0)
+            context = {"text":["this", "that"]}
+            yaml = '- this\n- that\n'
+            self.assertEqual(render_jinja2_file(f.name, context), yaml)
 
 class Jinja2ContextVars(unittest.TestCase):
     def test_inventory_context(self):
