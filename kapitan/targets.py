@@ -64,21 +64,23 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
             raise KapitanError("Error: no targets found")
         pool.map(worker, target_objs)
 
-        if os.path.exists(compile_path):
-            # if '-t' is set on compile, only override selected targets
-            if targets:
-                for target in targets:
-                    compile_path_target = os.path.join(compile_path, target)
-                    temp_path_target = os.path.join(temp_path, target)
+        if not os.path.exists(compile_path):
+            os.makedirs(compile_path)
 
-                    shutil.rmtree(compile_path_target)
-                    shutil.copytree(temp_path_target, compile_path_target)
-                    logger.debug("Copied %s into %s", temp_path_target, compile_path_target)
-            # otherwise override all targets
-            else:
-                shutil.rmtree(compile_path)
-                shutil.copytree(temp_path, compile_path)
-                logger.debug("Copied %s into %s", temp_path, compile_path)
+        # if '-t' is set on compile, only override selected targets
+        if targets:
+            for target in targets:
+                compile_path_target = os.path.join(compile_path, target)
+                temp_path_target = os.path.join(temp_path, target)
+
+                shutil.rmtree(compile_path_target)
+                shutil.copytree(temp_path_target, compile_path_target)
+                logger.debug("Copied %s into %s", temp_path_target, compile_path_target)
+        # otherwise override all targets
+        else:
+            shutil.rmtree(compile_path)
+            shutil.copytree(temp_path, compile_path)
+            logger.debug("Copied %s into %s", temp_path, compile_path)
 
     except Exception as e:
         # if compile worker fails, terminate immediately
