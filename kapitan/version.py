@@ -18,7 +18,8 @@
 
 PROJECT_NAME = 'kapitan'
 VERSION = '0.12.0'
-DESCRIPTION = 'Kapitan is a tool to manage kubernetes configuration using jsonnet templates'
+DESCRIPTION = ('Generic templated configuration management for Kubernetes,'
+               'Terraform and other things')
 AUTHOR = 'Ricardo Amaro'
 AUTHOR_EMAIL = 'ramaro@google.com'
 LICENCE = 'Apache License 2.0'
