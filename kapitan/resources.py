@@ -125,7 +125,11 @@ def search_imports(cwd, import_str, search_path):
     logger.debug("cwd:%s import_str:%s basename:%s -> norm:%s",
                  cwd, import_str, basename, normalised_path)
 
-    return normalised_path, open(normalised_path).read()
+    normalised_path_content = ""
+    with open(normalised_path) as f:
+        normalised_path_content = f.read()
+
+    return normalised_path, normalised_path_content
 
 
 def inventory(search_path, target, inventory_path="inventory/"):
