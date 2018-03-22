@@ -213,6 +213,7 @@ def searchvar(flat_var, inventory_path):
     for i in output:
         print('{0!s:{l}} {1!s}'.format(*i, l=maxlenght + 2))
 
+
 def get_directory_hash(directory):
     '''
     Compute a sha256 hash for the file contents of a directory
@@ -231,10 +232,10 @@ def get_directory_hash(directory):
                         hash.update(sha256(f.read().encode("UTF-8")).hexdigest().encode("UTF-8"))
                 except Exception as e:
                     logger.error("utils.get_directory_hash failed to open %s: %s", file_path, str(e))
-                    return -2
+                    raise
 
     except Exception as e:
         logger.error("utils.get_directory_hash failed: %s", str(e))
-        return -2
+        raise
 
     return hash.hexdigest()
