@@ -29,6 +29,14 @@ class Jinja2FiltersTest(unittest.TestCase):
             digest = 'e863c1ac42619a2b429a08775a6acd89ff4c2c6b8dae12e3461a5fa63b2f92f5'
             self.assertEqual(render_jinja2_file(f.name, context), digest)
 
+    def test_yaml(self):
+        with tempfile.NamedTemporaryFile() as f:
+            f.write("{{text|yaml}}".encode("UTF-8"))
+            f.seek(0)
+            context = {"text":["this", "that"]}
+            yaml = '- this\n- that\n'
+            self.assertEqual(render_jinja2_file(f.name, context), yaml)
+
 class Jinja2ContextVars(unittest.TestCase):
     def test_inventory_context(self):
         with tempfile.NamedTemporaryFile() as f:

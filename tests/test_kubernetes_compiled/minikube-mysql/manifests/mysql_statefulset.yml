@@ -1,0 +1,44 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  labels:
+    name: example-mysql
+  name: example-mysql
+  namespace: minikube-mysql
+spec:
+  replicas: 1
+  serviceName: example-mysql
+  template:
+    metadata:
+      labels:
+        name: example-mysql
+    spec:
+      containers:
+        - env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: MYSQL_ROOT_PASSWORD
+                  name: example-mysql
+          image: mysql:latest
+          imagePullPolicy: Always
+          name: mysql
+          ports:
+            - containerPort: 3306
+              name: mysql
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        annotations:
+          volume.beta.kubernetes.io/storage-class: standard
+        labels:
+          name: data
+        name: data
+        namespace: minikube-mysql
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10G
