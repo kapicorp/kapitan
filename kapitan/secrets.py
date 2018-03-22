@@ -16,9 +16,9 @@
 
 "secrets module"
 
-from six import string_types
 
 import base64
+from collections import defaultdict
 import errno
 from functools import partial
 import hashlib
@@ -31,6 +31,7 @@ import time
 import gnupg
 import yaml
 
+from six import string_types
 from kapitan.utils import PrettyDumper
 
 logger = logging.getLogger(__name__)
@@ -55,10 +56,10 @@ def secret_gpg_backend():
     return gnupg.GPG()
 
 
-def secret_gpg_encrypt(gpg_obj, data, recipients, **kwargs):
-    "encrypt data with recipients keys"
-    assert isinstance(recipients, list)
-    return gpg_obj.encrypt(data, recipients, sign=True, armor=False, **kwargs)
+def secret_gpg_encrypt(gpg_obj, data, fingerprints, **kwargs):
+    "encrypt data with fingerprints keys"
+    assert isinstance(fingerprints, list)
+    return gpg_obj.encrypt(data, fingerprints, sign=True, armor=False, **kwargs)
 
 
 def secret_gpg_decrypt(gpg_obj, data, **kwargs):
@@ -132,21 +133,21 @@ def secret_token_compiled_attributes(token):
         raise ValueError('Token not valid: %s' % token)
 
 
-def gpg_fingerprint(gpg_obj, recipient):
-    "returns first non-expired key fingerprint for recipient"
+def gpg_fingerprint_non_expired(gpg_obj, recipient_name):
+    "returns first non-expired key fingerprint for recipient_name"
     try:
-        keys = gpg_obj.list_keys(keys=(recipient,))
+        keys = gpg_obj.list_keys(keys=(recipient_name,))
         for key in keys:
             # if 'expires' key is set and time in the future, return
-            if key['expires'] and (time.time() < int(key['expires'])):
+            if key.get('expires') and (time.time() < int(key['expires'])):
                 return key['fingerprint']
             # if 'expires' key not set, return
-            elif not key['expires']:
+            elif key.get('expires') is None:
                 return key['fingerprint']
             else:
-                logger.info("Key for recipient: %s with fingerprint: %s is expired, skipping",
-                            recipient, key['fingerprint'])
-        raise GPGError("Could not find valid key for recipient: %s" % recipient)
+                logger.debug("Key for recipient: %s with fingerprint: %s is expired, skipping",
+                             recipient_name, key['fingerprint'])
+        raise GPGError("Could not find valid key for recipient: %s" % recipient_name)
     except IndexError as iexp:
         raise iexp
 
@@ -155,6 +156,9 @@ def secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipien
     """
     encrypt and write data for token in secrets_path
     set encode_base64 to True to base64 encode data before writing
+    recipients is a list of dictionaries with keys: name(required) fingerprint(optional)
+    if fingerprint key is not set in recipients, the first non-expired fingerprint will be used
+    if fingerprint is set, there will be no name based lookup
     """
     _, token_path = secret_token_attributes("gpg:%s" % token)
     full_secret_path = os.path.join(secrets_path, token_path)
@@ -170,10 +174,10 @@ def secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipien
         if encode_base64:
             _data = base64.b64encode(data.encode("UTF-8"))
             encoding = "base64"
-        enc = secret_gpg_encrypt(gpg_obj, _data, recipients, **kwargs)
+        fingerprints = lookup_fingerprints(gpg_obj, recipients)
+        enc = secret_gpg_encrypt(gpg_obj, _data, fingerprints, **kwargs)
         if enc.ok:
-            b64data = base64.b64encode(enc.data)
-            fingerprints = [gpg_fingerprint(gpg_obj, r) for r in recipients]
+            b64data = base64.b64encode(enc.data).decode("UTF-8")
             secret_obj = {"data": b64data,
                           "encoding": encoding,
                           "recipients": [{'fingerprint': f} for f in fingerprints]}
@@ -205,7 +209,8 @@ def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
     if verify:
         _, token_path, token_hash = secret_token_compiled_attributes(token)
         secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
-        secret_hash = hashlib.sha256("%s%s".encode("UTF-8") % (token_path, secret_raw_obj["data"])).hexdigest()
+        secret_tag = "%s%s" % (token_path, secret_raw_obj["data"])
+        secret_hash = hashlib.sha256(secret_tag.encode("UTF-8")).hexdigest()
         secret_hash = secret_hash[:8]
         logger.debug("Attempting to reveal token %s with secret hash %s", token, token_hash)
         if secret_hash != token_hash:
@@ -214,6 +219,19 @@ def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
     logger.debug("Revealing %s", token_tag)
     return secret_gpg_read(gpg_obj, secrets_path, token, **kwargs)
 
+def secret_gpg_update_recipients(gpg_obj, secrets_path, token_path, recipients, **kwargs):
+    "updates the recipient list for secret in token_path"
+    token = "gpg:%s" % token_path
+    secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
+    data_dec = secret_gpg_read(gpg_obj, secrets_path, token, **kwargs)
+    encoding = secret_raw_obj.get('encoding', None)
+    encode_base64 = (encoding == 'base64')
+
+    if encode_base64:
+        data_dec = base64.b64decode(data_dec).decode('UTF-8')
+
+    secret_gpg_write(gpg_obj, secrets_path, token_path, data_dec, encode_base64,
+                     recipients, **kwargs)
 
 def secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, verify=True, output=None, **kwargs):
     """
@@ -316,3 +334,41 @@ def secret_gpg_reveal_file(gpg_obj, secrets_path, filename, verify=True, **kwarg
         out = secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, output=devnull,
                                     verify=verify, **kwargs)
     return out
+
+def search_target_token_paths(target_secrets_path, targets):
+    """
+    returns dict of target and their secret token paths in target_secrets_path
+    targets is a set of target names used to lookup targets in target_secrets_path
+    """
+    target_files = defaultdict(list)
+    for root, _, files in os.walk(target_secrets_path):
+        for f in files:
+            full_path = os.path.join(root, f)
+            full_path = full_path[len(target_secrets_path)+1:]
+            target_name = full_path.split("/")[0]
+            if target_name in targets:
+                logger.debug('search_target_token_paths: found %s', full_path)
+                target_files[target_name].append(full_path)
+    return target_files
+
+def lookup_fingerprints(gpg_obj, recipients):
+    "returns a list of fingerprints for recipients obj"
+    lookedup = []
+    for recipient in recipients:
+        fingerprint = recipient.get('fingerprint')
+        name = recipient.get('name')
+        if fingerprint is None:
+            lookedup_fingerprint = gpg_fingerprint_non_expired(gpg_obj, name)
+            lookedup.append(lookedup_fingerprint)
+        else:
+            # If fingerprint already set, don't lookup and reuse
+            lookedup.append(fingerprint)
+
+    return lookedup
+
+def secret_gpg_raw_read_fingerprints(secrets_path, token_path):
+    "returns fingerprint list in raw secret for token_path"
+    token = "gpg:%s" % token_path
+    secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
+    secret_raw_obj_fingerprints = [r['fingerprint'] for r in secret_raw_obj['recipients']]
+    return secret_raw_obj_fingerprints

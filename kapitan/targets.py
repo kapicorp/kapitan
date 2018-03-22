@@ -361,7 +361,7 @@ class CompilingFile(object):
             for k, v in obj.items():
                 obj[k] = self.sub_token_reveal_obj(v)
         elif isinstance(obj, list):
-            obj = map(self.sub_token_reveal_obj, obj)
+            obj = list(map(self.sub_token_reveal_obj, obj))
         elif isinstance(obj, string_types):
             obj = self.sub_token_reveal_data(obj)
 
