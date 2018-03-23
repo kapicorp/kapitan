@@ -17,7 +17,7 @@
 "kapitan resources"
 
 import errno
-from functools import partial
+from functools import partial, lru_cache
 import json
 import logging
 import os
@@ -27,7 +27,7 @@ import reclass.core
 from reclass.errors import ReclassException, NotFoundError
 import yaml
 
-from kapitan.utils import render_jinja2_file, memoize
+from kapitan.utils import render_jinja2_file
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError
 
@@ -147,7 +147,7 @@ def inventory(search_path, target, inventory_path="inventory/"):
     return inventory_reclass(full_inv_path)["nodes"][target]
 
 
-@memoize
+@lru_cache(maxsize=32)
 def inventory_reclass(inventory_path):
     """
     Runs a reclass inventory in inventory_path
