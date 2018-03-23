@@ -138,22 +138,6 @@ def prune_empty(d):
             return {k: v for k, v in ((k, prune_empty(v)) for k, v in d.items()) if v is not None}
 
 
-def memoize(obj):
-    """
-    Decorator that will cache a function's return value should it be called
-    with the same arguments.
-    """
-    cache = obj.cache = {}
-
-    @functools.wraps(obj)
-    def memoizer(*args, **kwargs):
-        "checks if args are memoizible"
-        if args not in cache:
-            cache[args] = obj(*args, **kwargs)
-        return cache[args]
-    return memoizer
-
-
 class PrettyDumper(yaml.SafeDumper):
     '''
     Increases indent of nested lists.
