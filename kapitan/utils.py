@@ -178,38 +178,32 @@ def flatten_dict(d, parent_key='', sep='.'):
     return dict(items)
 
 
+def deep_get(dictionary, keys):
+    '''
+    Return (keys) values from dictionary
+    '''
+    return functools.reduce(lambda d, key: d.get(key, None) if isinstance(d, dict) else None, keys, dictionary)
+
+
 def searchvar(flat_var, inventory_path):
     '''
     show all inventory files where a given reclass variable is declared
     '''
 
-    def deep_get(x, keys):
-        if type(x) is dict:
-            try:
-                return deep_get(x[keys[0]], keys[1:])
-            except (IndexError, KeyError):
-                pass
-        else:
-            if len(keys) == 0:
-                return x
-            else:
-                return None
-
     output = []
     maxlenght = 0
     keys = flat_var.split(".")
-    for root, dirs, files in os.walk(inventory_path):
+    for root, _, files in os.walk(inventory_path):
         for file in files:
             if file.endswith(".yml"):
                 filename = os.path.join(root, file)
-                fd = open(filename, 'r')
-                data = yaml.safe_load(fd)
-                value = deep_get(data, keys)
-                if value is not None:
-                    output.append((filename, value))
-                    if len(filename) > maxlenght:
-                        maxlenght = len(filename)
-                fd.close()
+                with open(filename, 'r') as fd:
+                    data = yaml.safe_load(fd)
+                    value = deep_get(data, keys)
+                    if value is not None:
+                        output.append((filename, value))
+                        if len(filename) > maxlenght:
+                            maxlenght = len(filename)
     for i in output:
         print('{0!s:{l}} {1!s}'.format(*i, l=maxlenght + 2))
 
