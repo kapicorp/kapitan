@@ -26,7 +26,7 @@ import sys
 import traceback
 import yaml
 
-from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar
+from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar, deep_get
 from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
@@ -91,6 +91,8 @@ def main():
                                   help='set inventory path, default is "./inventory"')
     inventory_parser.add_argument('--flat', '-F', help='flatten nested inventory variables',
                                   action='store_true', default=False)
+    inventory_parser.add_argument('--pattern', '-p', default='',
+                                  help='filter pattern (e.g. parameters.mysql), default is ""')
 
     searchvar_parser = subparser.add_parser('searchvar',
                                             help='show all inventory files where var is declared')
@@ -179,6 +181,9 @@ def main():
             inv = inventory_reclass(args.inventory_path)
             if args.target_name != '':
                 inv = inv['nodes'][args.target_name]
+                if args.pattern != '':
+                    pattern = args.pattern.split(".")
+                    inv = deep_get(inv, pattern)
             if args.flat:
                 inv = flatten_dict(inv)
                 yaml.dump(inv, sys.stdout, width=10000)
