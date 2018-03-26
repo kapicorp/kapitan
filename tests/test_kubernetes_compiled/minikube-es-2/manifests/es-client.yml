@@ -1,0 +1,67 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  labels:
+    name: cluster-client
+    role: client
+  name: cluster-client
+  namespace: minikube-es-2
+spec:
+  replicas: 2
+  serviceName: cluster-client
+  template:
+    metadata:
+      labels:
+        name: cluster-client
+        role: client
+    spec:
+      containers:
+        - env:
+            - name: CLUSTER_NAME
+              value: cluster
+            - name: ES_JAVA_OPTS
+              value: -Xms512m -Xmx512m
+            - name: HTTP_ENABLE
+              value: 'true'
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_DATA
+              value: 'false'
+            - name: NODE_INGEST
+              value: 'false'
+            - name: NODE_MASTER
+              value: 'false'
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NUMBER_OF_MASTERS
+              value: '1'
+          image: quay.io/pires/docker-elasticsearch-kubernetes:5.5.0
+          imagePullPolicy: Always
+          name: client
+          ports:
+            - containerPort: 9200
+              name: client
+              protocol: TCP
+            - containerPort: 9300
+              name: transport
+              protocol: TCP
+          securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
+                - SYS_RESOURCE
+            privileged: false
+      initContainers:
+        - command:
+            - sysctl
+            - -w
+            - vm.max_map_count=262144
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          name: sysctl
+          securityContext:
+            privileged: true

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2017 The Kapitan Authors
+# Copyright 2018 The Kapitan Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@
 "Project description variables"
 
 PROJECT_NAME = 'kapitan'
-VERSION = '0.12.0'
-DESCRIPTION = 'Kapitan is a tool to manage kubernetes configuration using jsonnet templates'
+VERSION = '0.13.0'
+DESCRIPTION = ('Generic templated configuration management for Kubernetes,'
+               'Terraform and other things')
 AUTHOR = 'Ricardo Amaro'
 AUTHOR_EMAIL = 'ramaro@google.com'
 LICENCE = 'Apache License 2.0'

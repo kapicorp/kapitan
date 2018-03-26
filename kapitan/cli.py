@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2017 The Kapitan Authors
+# Copyright 2018 The Kapitan Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function
-
 "command line module"
+
+from __future__ import print_function
 
 import argparse
 import json
@@ -26,12 +26,14 @@ import sys
 import traceback
 import yaml
 
-from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar
+from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar, deep_get
 from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
 from kapitan.secrets import secret_gpg_backend, secret_gpg_write, secret_gpg_reveal_file
-from kapitan.secrets import secret_gpg_reveal_dir, secret_gpg_reveal_raw
+from kapitan.secrets import secret_gpg_reveal_dir, secret_gpg_reveal_raw, secret_gpg_update_recipients
+from kapitan.secrets import search_target_token_paths, secret_gpg_raw_read_fingerprints
+from kapitan.secrets import lookup_fingerprints
 from kapitan.errors import KapitanError
 
 logger = logging.getLogger(__name__)
@@ -89,6 +91,8 @@ def main():
                                   help='set inventory path, default is "./inventory"')
     inventory_parser.add_argument('--flat', '-F', help='flatten nested inventory variables',
                                   action='store_true', default=False)
+    inventory_parser.add_argument('--pattern', '-p', default='',
+                                  help='filter pattern (e.g. parameters.mysql), default is ""')
 
     searchvar_parser = subparser.add_parser('searchvar',
                                             help='show all inventory files where var is declared')
@@ -101,12 +105,18 @@ def main():
     secrets_parser = subparser.add_parser('secrets', help='manage secrets')
     secrets_parser.add_argument('--write', '-w', help='write secret token',
                                 metavar='TOKENNAME',)
+    secrets_parser.add_argument('--update', help='update recipients for secret token',
+                                metavar='TOKENNAME',)
+    secrets_parser.add_argument('--update-targets', action='store_true', default=False,
+                                help='update target secrets')
+    secrets_parser.add_argument('--validate-targets', action='store_true', default=False,
+                                help='validate target secrets')
     secrets_parser.add_argument('--base64', '-b64', help='base64 encode file content',
                                 action='store_true', default=False)
     secrets_parser.add_argument('--reveal', '-r', help='reveal secrets',
                                 action='store_true', default=False)
     secrets_parser.add_argument('--file', '-f', help='read file or directory, set "-" for stdin',
-                                required=True, metavar='FILENAME')
+                                metavar='FILENAME')
     secrets_parser.add_argument('--target-name', '-t', help='grab recipients from target name')
     secrets_parser.add_argument('--inventory-path', default='./inventory',
                                 help='set inventory path, default is "./inventory"')
@@ -126,7 +136,11 @@ def main():
 
     logger.debug('Running with args: %s', args)
 
-    cmd = sys.argv[1]
+    try:
+        cmd = sys.argv[1]
+    except IndexError:
+        parser.print_help()
+        sys.exit(1)
 
     if cmd == 'eval':
         file_path = args.jsonnet_file
@@ -167,6 +181,9 @@ def main():
             inv = inventory_reclass(args.inventory_path)
             if args.target_name != '':
                 inv = inv['nodes'][args.target_name]
+                if args.pattern != '':
+                    pattern = args.pattern.split(".")
+                    inv = deep_get(inv, pattern)
             if args.flat:
                 inv = flatten_dict(inv)
                 yaml.dump(inv, sys.stdout, width=10000)
@@ -189,8 +206,10 @@ def main():
             logging.basicConfig(level=logging.INFO, format="%(message)s")
         gpg_obj = secret_gpg_backend()
         if args.write is not None:
+            if args.file is None:
+                parser.error('--file is required with --write')
             data = None
-            recipients = args.recipients
+            recipients = [dict((("name", name),)) for name in args.recipients]
             if args.target_name:
                 inv = inventory_reclass(args.inventory_path)
                 recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
@@ -203,6 +222,8 @@ def main():
                     data = fp.read()
             secret_gpg_write(gpg_obj, args.secrets_path, args.write, data, args.base64, recipients)
         elif args.reveal:
+            if args.file is None:
+                parser.error('--file is required with --reveal')
             if args.file == '-':
                 secret_gpg_reveal_raw(gpg_obj, args.secrets_path, None, verify=(not args.no_verify))
             elif args.file:
@@ -213,3 +234,35 @@ def main():
                 elif os.path.isdir(args.file):
                     secret_gpg_reveal_dir(gpg_obj, args.secrets_path, args.file,
                                           verify=(not args.no_verify))
+        elif args.update:
+            # update recipients for secret tag
+            recipients = [dict([("name", name),]) for name in args.recipients]
+            if args.target_name:
+                inv = inventory_reclass(args.inventory_path)
+                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
+            secret_gpg_update_recipients(gpg_obj, args.secrets_path, args.update, recipients)
+        elif args.update_targets or args.validate_targets:
+            # update recipients for all secrets in secrets_path
+            # use --secrets-path to set scanning path
+            inv = inventory_reclass(args.inventory_path)
+            targets = set(inv['nodes'].keys())
+            secrets_path = os.path.abspath(args.secrets_path)
+            target_token_paths = search_target_token_paths(secrets_path, targets)
+            ret_code = 0
+            for target_name, token_paths in target_token_paths.items():
+                try:
+                    recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['recipients']
+                    for token_path in token_paths:
+                        target_fingerprints = set(lookup_fingerprints(gpg_obj, recipients))
+                        secret_fingerprints = set(secret_gpg_raw_read_fingerprints(secrets_path, token_path))
+                        if target_fingerprints != secret_fingerprints:
+                            if args.validate_targets:
+                                logger.info("%s recipient mismatch", token_path)
+                                ret_code = 1
+                            else:
+                                new_recipients = [dict([("fingerprint", f),]) for f in target_fingerprints]
+                                secret_gpg_update_recipients(gpg_obj, secrets_path, token_path, new_recipients)
+                except KeyError:
+                    logger.debug("secret_gpg_update_target: target: %s has no inventory recipients, skipping",
+                                 target_name)
+            sys.exit(ret_code)

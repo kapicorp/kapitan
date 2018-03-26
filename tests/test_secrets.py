@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2017 The Kapitan Authors
+# Copyright 2018 The Kapitan Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,11 +22,15 @@ import tempfile
 import gnupg
 from kapitan.secrets import secret_token_attributes, SECRET_TOKEN_TAG_PATTERN
 from kapitan.secrets import secret_gpg_write, secret_gpg_reveal_raw
+from kapitan.secrets import secret_gpg_update_recipients, secret_gpg_raw_read_fingerprints
 
 GPG_HOME = tempfile.mkdtemp()
 GPG_OBJ = gnupg.GPG(gnupghome=GPG_HOME)
 SECRETS_HOME = tempfile.mkdtemp()
 KEY = GPG_OBJ.gen_key(GPG_OBJ.gen_key_input(key_type="RSA",
+                                            key_length=2048,
+                                            passphrase="testphrase"))
+KEY2 = GPG_OBJ.gen_key(GPG_OBJ.gen_key_input(key_type="RSA",
                                             key_length=2048,
                                             passphrase="testphrase"))
 class SecretsTest(unittest.TestCase):
@@ -44,7 +48,8 @@ class SecretsTest(unittest.TestCase):
         "write secret, confirm secret file exists, reveal and compare content"
         token = 'secret/sauce'
         secret_gpg_write(GPG_OBJ, SECRETS_HOME, token, "super secret value",
-                         False, [KEY.fingerprint], passphrase="testphrase")
+                         False, [{'fingerprint': KEY.fingerprint}],
+                         passphrase="testphrase")
         self.assertTrue(os.path.isfile(os.path.join(SECRETS_HOME, token)))
 
         file_with_secret_tags = tempfile.mktemp()
@@ -64,13 +69,41 @@ class SecretsTest(unittest.TestCase):
         """
         token = 'secret/sauce'
         secret_gpg_write(GPG_OBJ, SECRETS_HOME, token, "super secret value",
-                         True, [KEY.fingerprint], passphrase="testphrase")
+                         True, [{'fingerprint': KEY.fingerprint}],
+                         passphrase="testphrase")
         self.assertTrue(os.path.isfile(os.path.join(SECRETS_HOME, token)))
 
         file_with_secret_tags = tempfile.mktemp()
         file_revealed = tempfile.mktemp()
         with open(file_with_secret_tags, 'w') as fp:
             fp.write('I am a file with a ?{gpg:secret/sauce:deadbeef}')
+        with open(file_revealed, 'w') as fp:
+            secret_gpg_reveal_raw(GPG_OBJ, SECRETS_HOME, file_with_secret_tags,
+                              verify=False, output=fp, passphrase="testphrase")
+        with open(file_revealed) as fp:
+            self.assertEqual("I am a file with a c3VwZXIgc2VjcmV0IHZhbHVl", fp.read())
+
+    def test_gpg_secret_update_recipients(self):
+        """
+        update existing secret with another recipient, confirm content is the same
+        """
+        token = 'secret/sauce'
+        secret_gpg_write(GPG_OBJ, SECRETS_HOME, token, "super secret value",
+                         True, [{'fingerprint': KEY.fingerprint}],
+                         passphrase="testphrase")
+        self.assertTrue(os.path.isfile(os.path.join(SECRETS_HOME, token)))
+        self.assertTrue(len(secret_gpg_raw_read_fingerprints(SECRETS_HOME, token)), 1)
+
+        file_with_secret_tags = tempfile.mktemp()
+        file_revealed = tempfile.mktemp()
+        with open(file_with_secret_tags, 'w') as fp:
+            fp.write('I am a file with a ?{gpg:secret/sauce:deadbeef}')
+
+        new_recipients = [{'fingerprint': KEY.fingerprint},
+                          {'fingerprint': KEY2.fingerprint}]
+        secret_gpg_update_recipients(GPG_OBJ, SECRETS_HOME, token, new_recipients,
+                                     passphrase="testphrase")
+        self.assertTrue(len(secret_gpg_raw_read_fingerprints(SECRETS_HOME, token)), 2)
         with open(file_revealed, 'w') as fp:
             secret_gpg_reveal_raw(GPG_OBJ, SECRETS_HOME, file_with_secret_tags,
                               verify=False, output=fp, passphrase="testphrase")

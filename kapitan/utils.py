@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2017 The Kapitan Authors
+# Copyright 2018 The Kapitan Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -138,22 +138,6 @@ def prune_empty(d):
             return {k: v for k, v in ((k, prune_empty(v)) for k, v in d.items()) if v is not None}
 
 
-def memoize(obj):
-    """
-    Decorator that will cache a function's return value should it be called
-    with the same arguments.
-    """
-    cache = obj.cache = {}
-
-    @functools.wraps(obj)
-    def memoizer(*args, **kwargs):
-        "checks if args are memoizible"
-        if args not in cache:
-            cache[args] = obj(*args, **kwargs)
-        return cache[args]
-    return memoizer
-
-
 class PrettyDumper(yaml.SafeDumper):
     '''
     Increases indent of nested lists.
@@ -178,37 +162,58 @@ def flatten_dict(d, parent_key='', sep='.'):
     return dict(items)
 
 
+def deep_get(dictionary, keys):
+    '''
+    Return (keys) values from dictionary
+    '''
+    return functools.reduce(lambda d, key: d.get(key, None) if isinstance(d, dict) else None, keys, dictionary)
+
+
 def searchvar(flat_var, inventory_path):
     '''
     show all inventory files where a given reclass variable is declared
     '''
 
-    def deep_get(x, keys):
-        if type(x) is dict:
-            try:
-                return deep_get(x[keys[0]], keys[1:])
-            except (IndexError, KeyError):
-                pass
-        else:
-            if len(keys) == 0:
-                return x
-            else:
-                return None
-
     output = []
     maxlenght = 0
     keys = flat_var.split(".")
-    for root, dirs, files in os.walk(inventory_path):
+    for root, _, files in os.walk(inventory_path):
         for file in files:
             if file.endswith(".yml"):
                 filename = os.path.join(root, file)
-                fd = open(filename, 'r')
-                data = yaml.safe_load(fd)
-                value = deep_get(data, keys)
-                if value is not None:
-                    output.append((filename, value))
-                    if len(filename) > maxlenght:
-                        maxlenght = len(filename)
-                fd.close()
+                with open(filename, 'r') as fd:
+                    data = yaml.safe_load(fd)
+                    value = deep_get(data, keys)
+                    if value is not None:
+                        output.append((filename, value))
+                        if len(filename) > maxlenght:
+                            maxlenght = len(filename)
     for i in output:
         print('{0!s:{l}} {1!s}'.format(*i, l=maxlenght + 2))
+
+
+def get_directory_hash(directory):
+    '''
+    Compute a sha256 hash for the file contents of a directory
+    '''
+    if not os.path.exists(directory):
+        logger.error("utils.get_directory_hash failed, %s dir doesn't exist", directory)
+        return -1
+
+    try:
+        hash = sha256()
+        for root, _, files in os.walk(directory):
+            for names in files:
+                file_path = os.path.join(root, names)
+                try:
+                    with open(file_path, 'r') as f:
+                        hash.update(sha256(f.read().encode("UTF-8")).hexdigest().encode("UTF-8"))
+                except Exception as e:
+                    logger.error("utils.get_directory_hash failed to open %s: %s", file_path, str(e))
+                    raise
+
+    except Exception as e:
+        logger.error("utils.get_directory_hash failed: %s", str(e))
+        raise
+
+    return hash.hexdigest()
