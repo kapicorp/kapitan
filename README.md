@@ -39,7 +39,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 
 #### Docker (recommended)
 ```
-docker run -v $(pwd):/src deepmindhealth/kapitan -h
+docker run -v $(pwd):/src deepmind/kapitan -h
 ```
 
 #### Pip
