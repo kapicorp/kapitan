@@ -13,7 +13,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 # Table of Contents
 
 * [Main Features](#main-features)
-* [Installation](#installation)
+* [Quickstart](#quickstart)
 * [Example](#example)
 * [Main concepts](#main-concepts)
 * [Typical folder structure](#typical-folder-structure)
@@ -35,15 +35,21 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 
 
 
-# Installation
+# Quickstart
 
+#### Docker (recommended)
+```
+docker run -v $(pwd):/src deepmind/kapitan -h
+```
+
+#### Pip
 Kapitan needs Python 3.6+ (it still works with Python 2.7 but support has been removed in v0.12.0).
 
 Install Python 3:
 <br>Linux: `sudo apt-get update && sudo apt-get install -y python3.6-dev`
 <br>Mac: `brew install python3`
 
-Install Kapitan via pip:
+Install Kapitan:
 ```
 $ pip3 install git+https://github.com/deepmind/kapitan.git --process-dependency-links
 ```
