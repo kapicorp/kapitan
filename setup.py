@@ -21,6 +21,7 @@ Kapitan setup.py for PIP install
 from setuptools import setup, find_packages
 from kapitan.version import PROJECT_NAME, VERSION, DESCRIPTION, URL, AUTHOR, AUTHOR_EMAIL, LICENCE
 
+
 # From https://github.com/pypa/pip/issues/3610#issuecomment-356687173
 def install_deps():
     """Reads requirements.txt and preprocess it
@@ -42,17 +43,19 @@ def install_deps():
     Returns:
          list of packages and dependency links.
     """
-    default = open('requirements.txt', 'r').readlines()
-    new_pkgs = []
-    links = []
-    for resource in default:
-        if 'git+https' in resource:
-            pkg = resource.split('#')[-1]
-            links.append(resource.strip() + '-9876543210')
-            new_pkgs.append(pkg.replace('egg=', '').rstrip())
-        else:
-            new_pkgs.append(resource.strip())
-    return new_pkgs, links
+    with open('requirements.txt', 'r') as f:
+        packages = f.readlines()
+        new_pkgs = []
+        links = []
+        for resource in packages:
+            if 'git+https' in resource:
+                pkg = resource.split('#')[-1]
+                links.append(resource.strip() + '-9876543210')
+                new_pkgs.append(pkg.replace('egg=', '').rstrip())
+            else:
+                new_pkgs.append(resource.strip())
+        return new_pkgs, links
+
 
 pkgs, new_links = install_deps()
 

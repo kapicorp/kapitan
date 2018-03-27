@@ -330,9 +330,9 @@ def secret_gpg_reveal_file(gpg_obj, secrets_path, filename, verify=True, **kwarg
                             default_flow_style=False, explicit_start=True)
     else:
         logger.debug("secret_gpg_reveal_file: revealing raw file: %s", filename)
-        devnull = open(os.devnull, 'w')
-        out = secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, output=devnull,
-                                    verify=verify, **kwargs)
+        with open(os.devnull, 'w') as devnull:
+            out = secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, output=devnull,
+                                        verify=verify, **kwargs)
     return out
 
 def search_target_token_paths(target_secrets_path, targets):
