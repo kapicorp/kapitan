@@ -39,8 +39,10 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 
 #### Docker (recommended)
 ```
-docker run -v $(pwd):/src deepmind/kapitan -h
+docker run -t --rm -v $(pwd):/src deepmind/kapitan -h
 ```
+
+On Linux you can add `-u $(id -u)` on `docker run` in order for kapitan to not change file permissions.
 
 #### Pip
 Kapitan needs Python 3.6+ (it still works with Python 2.7 but support has been removed in v0.12.0).
