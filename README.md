@@ -47,7 +47,7 @@ On Linux you can add `-u $(id -u)` on `docker run` in order for kapitan to not c
 For CI/CD usage, check out [ci/](https://github.com/deepmind/kapitan/tree/master/ci)
 
 #### Pip
-Kapitan needs Python 3.6+ (it still works with Python 2.7 but support has been removed in v0.12.0).
+Kapitan needs Python 3.6 (it still works with Python 2.7 but support has been removed in v0.12.0).
 
 **Install Python 3:**
 <br>Linux: `sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip`
