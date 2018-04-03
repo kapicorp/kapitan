@@ -39,7 +39,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 
 #### Docker (recommended)
 ```
-docker run -t --rm -v $(pwd):/src deepmind/kapitan -h
+docker run -t --rm -v $(pwd):/src:delegated deepmind/kapitan -h
 ```
 
 On Linux you can add `-u $(id -u)` on `docker run` in order for kapitan to not change file permissions.
