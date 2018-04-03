@@ -38,11 +38,16 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 # Quickstart
 
 #### Docker (recommended)
+
+**Mac:** ([docker-mac/](https://github.com/deepmind/kapitan/tree/master/docker-mac))
 ```
-docker run -t --rm -v $(pwd):/src deepmind/kapitan -h
+docker run -t --rm -v $(pwd):/src deepmind/kapitan:mac -h
 ```
 
-On Linux you can add `-u $(id -u)` on `docker run` in order for kapitan to not change file permissions.
+**Linux:**
+```
+docker run -t --rm -v $(pwd):/src -u $(id -u) deepmind/kapitan:latest -h
+```
 
 For CI/CD usage, check out [docker-ci/](https://github.com/deepmind/kapitan/tree/master/docker-ci).
 
