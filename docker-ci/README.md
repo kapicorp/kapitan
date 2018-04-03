@@ -1,6 +1,6 @@
 ## Kapitan: CI/CD usage
 
-The [Docker image](https://hub.docker.com/r/deepmind/kapitan/tags/) (`deepmind/kapitan:ci`) ([Dockerfile](https://github.com/deepmind/kapitan/tree/master/ci/Dockerfile)) comes pre-packages with `gcloud`, `gsutil`, `bq`, `kubectl` and `kapitan`.
+The [Docker image](https://hub.docker.com/r/deepmind/kapitan/tags/) (`deepmind/kapitan:ci`) ([Dockerfile](https://github.com/deepmind/kapitan/tree/master/docker-ci/Dockerfile)) comes pre-packages with `gcloud`, `gsutil`, `bq`, `kubectl` and `kapitan`.
 
 ### Example workflow - Deploy to GKE
 
