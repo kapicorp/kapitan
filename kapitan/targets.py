@@ -73,6 +73,9 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
                 compile_path_target = os.path.join(compile_path, target)
                 temp_path_target = os.path.join(temp_path, target)
 
+                if not os.path.exists(compile_path_target):
+                    os.makedirs(compile_path_target)
+
                 shutil.rmtree(compile_path_target)
                 shutil.copytree(temp_path_target, compile_path_target)
                 logger.debug("Copied %s into %s", temp_path_target, compile_path_target)
