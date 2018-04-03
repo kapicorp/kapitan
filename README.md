@@ -44,7 +44,7 @@ docker run -t --rm -v $(pwd):/src deepmind/kapitan -h
 
 On Linux you can add `-u $(id -u)` on `docker run` in order for kapitan to not change file permissions.
 
-For CI/CD usage, check out [ci/](https://github.com/deepmind/kapitan/tree/master/ci)
+For CI/CD usage, check out [docker-ci/](https://github.com/deepmind/kapitan/tree/master/docker-ci).
 
 #### Pip
 Kapitan needs Python 3.6 (it still works with Python 2.7 but support has been removed in v0.12.0).
