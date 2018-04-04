@@ -28,7 +28,7 @@ class CompileTest(unittest.TestCase):
         os.chdir(os.getcwd() + '/examples/kubernetes/')
 
     def test_compile(self):
-        sys.argv[1] = "compile"
+        sys.argv = ["kapitan", "compile"]
         main()
         compiled_dir_hash = get_directory_hash(os.getcwd() + '/compiled')
         test_compiled_dir_hash = get_directory_hash(os.getcwd() + '/../../tests/test_kubernetes_compiled')
