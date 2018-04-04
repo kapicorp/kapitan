@@ -27,4 +27,4 @@ install:
 
 # command to run tests
 script:
-  - python -m unittest discover
+  - python run_tests.py
