@@ -1,6 +1,6 @@
 FROM google/cloud-sdk:alpine
 
-RUN apk add --update --no-cache python3-dev git g++ make libstdc++ gnupg musl-dev && \
+RUN apk add --update --no-cache python3-dev git g++ make libstdc++ gnupg musl-dev util-linux && \
     python3 -m ensurepip && \
     rm -r /usr/lib/python*/ensurepip && \
     pip3 install --upgrade --no-cache-dir pip setuptools && \
