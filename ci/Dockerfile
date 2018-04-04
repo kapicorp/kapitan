@@ -8,6 +8,6 @@ RUN apk add --update --no-cache python3-dev git g++ make libstdc++ gnupg musl-de
     if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
     rm -r /root/.cache
 
-RUN pip3 install --no-cache-dir git+https://github.com/deepmind/kapitan.git --process-dependency-links
+RUN pip3 install --upgrade --no-cache-dir git+https://github.com/deepmind/kapitan.git --process-dependency-links
 
 RUN gcloud components install kubectl
