@@ -62,7 +62,9 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
         if target_objs == []:
             logger.error("Error: no targets found")
             raise KapitanError("Error: no targets found")
-        pool.map(worker, target_objs)
+        # compile_target() returns None on success
+        # so p is only not None when raising an exception
+        [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
         if not os.path.exists(compile_path):
             os.makedirs(compile_path)
@@ -151,8 +153,13 @@ def compile_target(target_obj, search_path, compile_path, **kwargs):
                 compile_file_sp = os.path.join(search_path, input_path)
                 if os.path.exists(compile_file_sp):
                     logger.debug("Compiling %s", compile_file_sp)
-                    compile_jsonnet(compile_file_sp, _compile_path, search_path,
-                                    ext_vars, output=output_type, **kwargs)
+                    try:
+                        compile_jsonnet(compile_file_sp, _compile_path, search_path,
+                                        ext_vars, output=output_type, **kwargs)
+                    except CompileError as e:
+                        logger.error("Compile error: failed to compile target: %s",
+                                     target_name)
+                        raise e
                 else:
                     logger.error("Compile error: input_path for target: %s not found in search_path: %s",
                                  target_name, input_path)
@@ -174,7 +181,12 @@ def compile_target(target_obj, search_path, compile_path, **kwargs):
                     ctx = ext_vars.copy()
                     ctx["inventory"] = inventory(search_path, target_name)
                     ctx["inventory_global"] = inventory(search_path, None)
-                    compile_jinja2(compile_path_sp, ctx, _compile_path, **kwargs)
+                    try:
+                        compile_jinja2(compile_path_sp, ctx, _compile_path, **kwargs)
+                    except CompileError as e:
+                        logger.error("Compile error: failed to compile target: %s",
+                                     target_name)
+                        raise e
                 else:
                     logger.error("Compile error: input_path for target: %s not found in search_path: %s",
                                  target_name, input_path)
@@ -216,7 +228,7 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
     """
     Write file_path (jsonnet evaluated) items as files to compile_path.
     Set output to write as json or yaml
-    search_path and ext_vars will be passed as paramenters to jsonnet_file()
+    search_path and ext_vars will be passed as parameters to jsonnet_file()
     kwargs:
         output: default 'yaml', accepts 'json'
         prune: default True, accepts False
