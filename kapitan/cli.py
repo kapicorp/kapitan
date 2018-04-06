@@ -176,6 +176,8 @@ def main():
                         secrets_reveal=args.reveal, gpg_obj=gpg_obj)
 
     elif cmd == 'inventory':
+        if args.pattern and args.target_name == '':
+            parser.error("--pattern requires --target_name")
         try:
             logging.basicConfig(level=logging.INFO, format="%(message)s")
             inv = inventory_reclass(args.inventory_path)
