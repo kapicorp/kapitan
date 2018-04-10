@@ -364,7 +364,8 @@ def lookup_fingerprints(gpg_obj, recipients):
             # If fingerprint already set, don't lookup and reuse
             lookedup.append(fingerprint)
 
-    return lookedup
+    # Remove duplicates, sort and return fingerprints list
+    return sorted(list(set(lookedup)))
 
 def secret_gpg_raw_read_fingerprints(secrets_path, token_path):
     "returns fingerprint list in raw secret for token_path"
