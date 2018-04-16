@@ -48,15 +48,15 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
     multiprocessing pool with parallel number of processes.
     kwargs are passed to compile_target()
     """
-    target_path = "targets"
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
+
+    target_objs = load_target_inventory(inventory_path, targets)
+
     pool = multiprocessing.Pool(parallel)
     # append "compiled" to output_path so we can safely overwrite it
     compile_path = os.path.join(output_path, "compiled")
     worker = partial(compile_target, search_path=search_path, compile_path=temp_path, **kwargs)
-
-    target_objs = load_target_inventory(inventory_path, targets)
 
     try:
         if target_objs == []:

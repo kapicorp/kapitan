@@ -17,7 +17,7 @@
 "kapitan resources"
 
 import errno
-from functools import partial, lru_cache
+from functools import partial
 import json
 import logging
 import os
@@ -30,6 +30,7 @@ import yaml
 from kapitan.utils import render_jinja2_file
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError
+import kapitan.cached as cached
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +148,6 @@ def inventory(search_path, target, inventory_path="inventory/"):
     return inventory_reclass(full_inv_path)["nodes"][target]
 
 
-@lru_cache(maxsize=32)
 def inventory_reclass(inventory_path):
     """
     Runs a reclass inventory in inventory_path
@@ -157,38 +157,42 @@ def inventory_reclass(inventory_path):
     Returns a reclass style dictionary
     """
 
-    reclass_config = {'storage_type': 'yaml_fs',
-                      'inventory_base_uri': inventory_path,
-                      'nodes_uri': os.path.join(inventory_path, 'targets'),
-                      'classes_uri': os.path.join(inventory_path, 'classes')
-                     }
+    if not cached.inv:
+        reclass_config = {'storage_type': 'yaml_fs',
+                          'inventory_base_uri': inventory_path,
+                          'nodes_uri': os.path.join(inventory_path, 'targets'),
+                          'classes_uri': os.path.join(inventory_path, 'classes')
+                         }
 
-    try:
-        cfg_file = os.path.join(inventory_path, 'reclass-config.yml')
-        with open(cfg_file) as reclass_cfg:
-            reclass_config = yaml.safe_load(reclass_cfg)
-            # normalise relative nodes_uri and classes_uri paths
-            for uri in ('nodes_uri', 'classes_uri'):
-                uri_val = reclass_config.get(uri)
-                uri_path = os.path.join(inventory_path, uri_val)
-                normalised_path = os.path.normpath(uri_path)
-                reclass_config.update({uri: normalised_path})
-            logger.debug("Using reclass inventory config at: %s", cfg_file)
-    except IOError as ex:
-        # If file does not exist, ignore
-        if ex.errno == errno.ENOENT:
-            logger.debug("Using reclass inventory config defaults")
+        try:
+            cfg_file = os.path.join(inventory_path, 'reclass-config.yml')
+            with open(cfg_file) as reclass_cfg:
+                reclass_config = yaml.safe_load(reclass_cfg)
+                # normalise relative nodes_uri and classes_uri paths
+                for uri in ('nodes_uri', 'classes_uri'):
+                    uri_val = reclass_config.get(uri)
+                    uri_path = os.path.join(inventory_path, uri_val)
+                    normalised_path = os.path.normpath(uri_path)
+                    reclass_config.update({uri: normalised_path})
+                logger.debug("Using reclass inventory config at: %s", cfg_file)
+        except IOError as ex:
+            # If file does not exist, ignore
+            if ex.errno == errno.ENOENT:
+                logger.debug("Using reclass inventory config defaults")
 
-    try:
-        storage = reclass.get_storage(reclass_config['storage_type'], reclass_config['nodes_uri'],
-                                      reclass_config['classes_uri'], default_environment='base')
-        class_mappings = reclass_config.get('class_mappings')  # this defaults to None (disabled)
-        _reclass = reclass.core.Core(storage, class_mappings)
+        try:
+            storage = reclass.get_storage(reclass_config['storage_type'], reclass_config['nodes_uri'],
+                                          reclass_config['classes_uri'], default_environment='base')
+            class_mappings = reclass_config.get('class_mappings')  # this defaults to None (disabled)
+            _reclass = reclass.core.Core(storage, class_mappings)
 
-        return _reclass.inventory()
-    except ReclassException as e:
-        if isinstance(e, NotFoundError):
-            logger.error("Inventory reclass error: inventory not found")
-        else:
-            logger.error("Inventory reclass error: %s", e.message)
-        raise InventoryError(e.message)
+            cached.inv = _reclass.inventory()
+            return cached.inv
+        except ReclassException as e:
+            if isinstance(e, NotFoundError):
+                logger.error("Inventory reclass error: inventory not found")
+            else:
+                logger.error("Inventory reclass error: %s", e.message)
+            raise InventoryError(e.message)
+    else:
+        return cached.inv
