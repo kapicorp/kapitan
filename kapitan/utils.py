@@ -236,19 +236,16 @@ def get_directory_hash(directory):
     return hash.hexdigest()
 
 
-def enforce_version():
+def check_version():
     '''
-    Enforces that the last version of kapitan used is at least smaller or equal to current version.
+    Checks that the last version of kapitan used is at least smaller or equal to current version.
     If the last version of kapitan used is bigger, it will give instructions on how to upgrade and exit(1).
     '''
     if os.path.exists('.kapitan'):
         with open('.kapitan', 'r') as f:
             dot_kapitan = yaml.safe_load(f)
-            # If 'version is not saved' or 'saved version is smaller or equal than current version'
-            if not dot_kapitan['version'] or StrictVersion(dot_kapitan['version']) <= StrictVersion(VERSION):
-                save_version()
             # If 'saved version is bigger than current version'
-            else:
+            if dot_kapitan['version'] and StrictVersion(dot_kapitan['version']) > StrictVersion(VERSION):
                 print(f'{termcolor.WARNING}Current version: {VERSION}')
                 print(f'Last used version (in .kapitan): {dot_kapitan["version"]}{termcolor.ENDC}\n')
                 print(f'Please upgrade kapitan to at least "{dot_kapitan["version"]}" in order to keep results consistent:\n')
@@ -256,8 +253,6 @@ def enforce_version():
                 print('Pip (user): pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links')
                 print('Pip (system): sudo pip3 install --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links')
                 sys.exit(1)
-    else:
-        save_version()
 
 
 def save_version():
