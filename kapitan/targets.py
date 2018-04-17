@@ -35,7 +35,7 @@ import yaml
 import time
 
 from kapitan.resources import search_imports, resource_callbacks, inventory, inventory_reclass
-from kapitan.utils import jsonnet_file, prune_empty, render_jinja2, PrettyDumper
+from kapitan.utils import jsonnet_file, prune_empty, render_jinja2, PrettyDumper, enforce_version
 from kapitan.secrets import secret_gpg_raw_read, secret_token_from_tag, secret_token_attributes
 from kapitan.secrets import SECRET_TOKEN_TAG_PATTERN, secret_gpg_read
 from kapitan.errors import KapitanError, CompileError
@@ -52,6 +52,8 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
 
     target_objs = load_target_inventory(inventory_path, targets)
+
+    enforce_version()
 
     pool = multiprocessing.Pool(parallel)
     # append "compiled" to output_path so we can safely overwrite it
