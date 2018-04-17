@@ -22,16 +22,30 @@ import functools
 from hashlib import sha256
 import logging
 import os
+import sys
 import stat
 import collections
 import jinja2
 import _jsonnet as jsonnet
 import yaml
+from distutils.version import StrictVersion
 
+from kapitan.version import VERSION
 from kapitan.errors import CompileError
 
 
 logger = logging.getLogger(__name__)
+
+
+class termcolor:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 
 def normalise_join_path(dirname, path):
@@ -49,9 +63,11 @@ def jinja2_sha256_hex_filter(string):
     "Returns hex digest for string"
     return sha256(string.encode("UTF-8")).hexdigest()
 
+
 def jinja2_yaml_filter(obj):
     "Returns yaml for object"
     return yaml.safe_dump(obj, default_flow_style=False)
+
 
 def render_jinja2_file(name, context):
     "Render jinja2 file name with context"
@@ -95,9 +111,10 @@ def render_jinja2(path, context):
             # get subpath and filename, strip any leading/trailing /
             name = render_path[len(os.path.commonprefix([root, path])):].strip('/')
             try:
-                rendered[name] = {"content": render_jinja2_file(render_path, context),
-                                  "mode": file_mode(render_path)
-                                 }
+                rendered[name] = {
+                    "content": render_jinja2_file(render_path, context),
+                    "mode": file_mode(render_path)
+                }
             except Exception as e:
                 logger.error("Jinja2 error: failed to render %s: %s", render_path, str(e))
                 raise CompileError(e)
@@ -217,3 +234,31 @@ def get_directory_hash(directory):
         raise
 
     return hash.hexdigest()
+
+
+def check_version():
+    '''
+    Checks that the last version of kapitan used is at least smaller or equal to current version.
+    If the last version of kapitan used is bigger, it will give instructions on how to upgrade and exit(1).
+    '''
+    if os.path.exists('.kapitan'):
+        with open('.kapitan', 'r') as f:
+            dot_kapitan = yaml.safe_load(f)
+            # If 'saved version is bigger than current version'
+            if dot_kapitan['version'] and StrictVersion(dot_kapitan['version']) > StrictVersion(VERSION):
+                print(f'{termcolor.WARNING}Current version: {VERSION}')
+                print(f'Last used version (in .kapitan): {dot_kapitan["version"]}{termcolor.ENDC}\n')
+                print(f'Please upgrade kapitan to at least "{dot_kapitan["version"]}" in order to keep results consistent:\n')
+                print('Docker: docker pull deepmind/kapitan')
+                print('Pip (user): pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links')
+                print('Pip (system): sudo pip3 install --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links')
+                sys.exit(1)
+
+
+def save_version():
+    '''
+    Saves the current kapitan version to a local .kapitan file
+    '''
+    with open('.kapitan', 'w') as f:
+        dot_kapitan = {'version': VERSION}
+        yaml.safe_dump(dot_kapitan, stream=f, default_flow_style=False)
