@@ -42,7 +42,7 @@ from kapitan.errors import KapitanError, CompileError
 
 logger = logging.getLogger(__name__)
 
-def compile_targets(inventory_path, search_path, output_path, parallel, targets, **kwargs):
+def compile_targets(inventory_path, search_path, output_path, parallel, targets, ignore_version_check, **kwargs):
     """
     Searches and loads target files, and runs compile_target_file() on a
     multiprocessing pool with parallel number of processes.
@@ -53,7 +53,8 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
 
     target_objs = load_target_inventory(inventory_path, targets)
 
-    enforce_version()
+    if not ignore_version_check:
+        enforce_version()
 
     pool = multiprocessing.Pool(parallel)
     # append "compiled" to output_path so we can safely overwrite it

@@ -83,6 +83,9 @@ def main():
                                 action='store_true', default=False)
     compile_parser.add_argument('--inventory-path', default='./inventory',
                                 help='set inventory path, default is "./inventory"')
+    compile_parser.add_argument('--ignore-version-check',
+                                help='ignore the last kapitan version used to compile (from .kapitan)',
+                                action='store_true', default=False)
 
     inventory_parser = subparser.add_parser('inventory', help='show inventory')
     inventory_parser.add_argument('--target-name', '-t', default='',
@@ -171,7 +174,7 @@ def main():
         gpg_obj = secret_gpg_backend()
 
         compile_targets(args.inventory_path, search_path, args.output_path,
-                        args.parallelism, args.targets,
+                        args.parallelism, args.targets, args.ignore_version_check,
                         prune=(not args.no_prune), secrets_path=args.secrets_path,
                         secrets_reveal=args.reveal, gpg_obj=gpg_obj)
 
