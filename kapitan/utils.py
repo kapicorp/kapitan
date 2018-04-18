@@ -250,8 +250,8 @@ def check_version():
                 print(f'Last used version (in .kapitan): {dot_kapitan["version"]}{termcolor.ENDC}\n')
                 print(f'Please upgrade kapitan to at least "{dot_kapitan["version"]}" in order to keep results consistent:\n')
                 print('Docker: docker pull deepmind/kapitan')
-                print('Pip (user): pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links')
-                print('Pip (system): sudo pip3 install --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links')
+                print('Pip (user): pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links\n')
+                print('Check https://github.com/deepmind/kapitan#quickstart for more info.')
                 sys.exit(1)
 
 
