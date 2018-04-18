@@ -196,7 +196,7 @@ def searchvar(flat_var, inventory_path):
     keys = flat_var.split(".")
     for root, _, files in os.walk(inventory_path):
         for file in files:
-            if file.endswith(".yml"):
+            if file.endswith(".yml") or file.endswith(".yaml"):
                 filename = os.path.join(root, file)
                 with open(filename, 'r') as fd:
                     data = yaml.safe_load(fd)
@@ -250,8 +250,8 @@ def check_version():
                 print(f'Last used version (in .kapitan): {dot_kapitan["version"]}{termcolor.ENDC}\n')
                 print(f'Please upgrade kapitan to at least "{dot_kapitan["version"]}" in order to keep results consistent:\n')
                 print('Docker: docker pull deepmind/kapitan')
-                print('Pip (user): pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links')
-                print('Pip (system): sudo pip3 install --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links')
+                print('Pip (user): pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links\n')
+                print('Check https://github.com/deepmind/kapitan#quickstart for more info.')
                 sys.exit(1)
 
 

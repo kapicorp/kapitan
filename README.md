@@ -60,9 +60,9 @@ User (`$HOME/.local/lib/python3.6/bin` on Linux or `$HOME/Library/Python/3.6/bin
 pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git  --process-dependency-links
 ```
 
-System-wide:
+System-wide (not recommended):
 ```
-sudo pip3 install --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links
+sudo pip3 install --upgrade --prefix=/usr/local git+https://github.com/deepmind/kapitan.git --process-dependency-links
 ```
 
 # Example
@@ -278,6 +278,8 @@ optional arguments:
                         data)
   --inventory-path INVENTORY_PATH
                         set inventory path, default is "./inventory"
+  --ignore-version-check
+                        ignore the last kapitan version used to compile (from .kapitan)
 ```
 
 
