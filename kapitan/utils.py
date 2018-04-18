@@ -196,7 +196,7 @@ def searchvar(flat_var, inventory_path):
     keys = flat_var.split(".")
     for root, _, files in os.walk(inventory_path):
         for file in files:
-            if file.endswith(".yml"):
+            if file.endswith(".yml") or file.endswith(".yaml"):
                 filename = os.path.join(root, file)
                 with open(filename, 'r') as fd:
                     data = yaml.safe_load(fd)
