@@ -182,9 +182,9 @@ def inventory_reclass(inventory_path):
 
         try:
             storage = reclass.get_storage(reclass_config['storage_type'], reclass_config['nodes_uri'],
-                                          reclass_config['classes_uri'], default_environment='base')
+                                          reclass_config['classes_uri'])
             class_mappings = reclass_config.get('class_mappings')  # this defaults to None (disabled)
-            _reclass = reclass.core.Core(storage, class_mappings)
+            _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings())
 
             cached.inv = _reclass.inventory()
             return cached.inv

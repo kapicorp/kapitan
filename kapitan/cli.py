@@ -247,7 +247,7 @@ def main():
                                           verify=(not args.no_verify))
         elif args.update:
             # update recipients for secret tag
-            recipients = [dict([("name", name),]) for name in args.recipients]
+            recipients = [dict([("name", name), ]) for name in args.recipients]
             if args.target_name:
                 inv = inventory_reclass(args.inventory_path)
                 recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
@@ -271,7 +271,7 @@ def main():
                                 logger.info("%s recipient mismatch", token_path)
                                 ret_code = 1
                             else:
-                                new_recipients = [dict([("fingerprint", f),]) for f in target_fingerprints]
+                                new_recipients = [dict([("fingerprint", f), ]) for f in target_fingerprints]
                                 secret_gpg_update_recipients(gpg_obj, secrets_path, token_path, new_recipients)
                 except KeyError:
                     logger.debug("secret_gpg_update_target: target: %s has no inventory recipients, skipping",
