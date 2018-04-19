@@ -23,8 +23,7 @@ before_install:
 
 # command to install dependencies
 install:
-  # TODO: Remove 'sudo' once https://github.com/salt-formulas/reclass/pull/28 is merged
-  - sudo pip install -r requirements.txt
+  - pip install -r requirements.txt
 
 # command to run tests
 script:
