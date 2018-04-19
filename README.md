@@ -62,7 +62,7 @@ pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git  --pro
 
 System-wide (not recommended):
 ```
-sudo pip3 install --upgrade --prefix=/usr/local git+https://github.com/deepmind/kapitan.git --process-dependency-links
+sudo pip3 install --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links
 ```
 
 # Example
