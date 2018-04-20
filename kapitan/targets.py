@@ -37,8 +37,10 @@ import time
 from kapitan.resources import search_imports, resource_callbacks, inventory, inventory_reclass
 from kapitan.utils import jsonnet_file, prune_empty, render_jinja2, PrettyDumper
 from kapitan.secrets import secret_gpg_raw_read, secret_token_from_tag, secret_token_attributes
-from kapitan.secrets import SECRET_TOKEN_TAG_PATTERN, secret_gpg_read
-from kapitan.errors import KapitanError, CompileError
+from kapitan.secrets import SECRET_TOKEN_TAG_PATTERN, secret_gpg_read, secret_gpg_write
+from kapitan.secrets import secret_gpg_exists, secret_gpg_write_function
+from kapitan.errors import KapitanError, CompileError, SecretError
+from kapitan import cached
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +157,8 @@ def compile_target(target_obj, search_path, compile_path, **kwargs):
                     logger.debug("Compiling %s", compile_file_sp)
                     try:
                         compile_jsonnet(compile_file_sp, _compile_path, search_path,
-                                        ext_vars, output=output_type, **kwargs)
+                                        ext_vars, output=output_type, target_name=target_name,
+                                        **kwargs)
                     except CompileError as e:
                         logger.error("Compile error: failed to compile target: %s",
                                      target_name)
@@ -182,7 +185,8 @@ def compile_target(target_obj, search_path, compile_path, **kwargs):
                     ctx["inventory"] = inventory(search_path, target_name)
                     ctx["inventory_global"] = inventory(search_path, None)
                     try:
-                        compile_jinja2(compile_path_sp, ctx, _compile_path, **kwargs)
+                        compile_jinja2(compile_path_sp, ctx, _compile_path,
+                                       target_name=target_name, **kwargs)
                     except CompileError as e:
                         logger.error("Compile error: failed to compile target: %s",
                                      target_name)
@@ -203,10 +207,12 @@ def compile_jinja2(path, context, compile_path, **kwargs):
         secrets_path: default None, set to access secrets backend
         secrets_reveal: default False, set to reveal secrets on compile
         gpg_obj: default None
+        target_name: default None, set to current target being compiled
     """
     secrets_path = kwargs.get('secrets_path', None)
     secrets_reveal = kwargs.get('secrets_reveal', False)
     gpg_obj = kwargs.get('gpg_obj', None)
+    target_name = kwargs.get('target_name', None)
 
     for item_key, item_value in render_jinja2(path, context).items():
         full_item_path = os.path.join(compile_path, item_key)
@@ -217,7 +223,8 @@ def compile_jinja2(path, context, compile_path, **kwargs):
             if ex.errno == errno.EEXIST:
                 pass
         with CompiledFile(full_item_path, mode="w", secrets_path=secrets_path,
-                          secrets_reveal=secrets_reveal, gpg_obj=gpg_obj) as fp:
+                          secrets_reveal=secrets_reveal, gpg_obj=gpg_obj,
+                          target_name=target_name) as fp:
             fp.write(item_value["content"])
             mode = item_value["mode"]
             os.chmod(full_item_path, mode)
@@ -234,6 +241,7 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
         prune: default True, accepts False
         secrets_path: default None, set to access secrets backend
         secrets_reveal: default False, set to reveal secrets on compile
+        target_name: default None, set to current target being compiled
         gpg_obj: default None
     """
     _search_imports = lambda cwd, imp: search_imports(cwd, imp, search_path)
@@ -247,6 +255,7 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
     secrets_path = kwargs.get('secrets_path', None)
     secrets_reveal = kwargs.get('secrets_reveal', False)
     gpg_obj = kwargs.get('gpg_obj', None)
+    target_name = kwargs.get('target_name', None)
 
     if prune:
         json_output = prune_empty(json_output)
@@ -257,13 +266,15 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
         if output == 'json':
             file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
             with CompiledFile(file_path, mode="w", secrets_path=secrets_path,
-                              secrets_reveal=secrets_reveal, gpg_obj=gpg_obj) as fp:
+                              secrets_reveal=secrets_reveal, gpg_obj=gpg_obj,
+                              target_name=target_name) as fp:
                 fp.write_json(item_value)
                 logger.debug("Wrote %s", file_path)
         elif output == 'yaml':
             file_path = os.path.join(compile_path, '%s.%s' % (item_key, "yml"))
             with CompiledFile(file_path, mode="w", secrets_path=secrets_path,
-                              secrets_reveal=secrets_reveal, gpg_obj=gpg_obj) as fp:
+                              secrets_reveal=secrets_reveal, gpg_obj=gpg_obj,
+                              target_name=target_name) as fp:
                 fp.write_yaml(item_value)
                 logger.debug("Wrote %s", file_path)
         else:
@@ -392,10 +403,11 @@ class CompilingFile(object):
         secrets_path = self.kwargs.get("secrets_path", None)
         if secrets_path is None:
             raise ValueError("secrets_path not set")
-        token = secret_token_from_tag(token_tag)
+        token, func = secret_token_from_tag(token_tag)
         secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
         backend, token_path = secret_token_attributes(token)
-        sha256 = hashlib.sha256("%s%s".encode("UTF-8") % (token_path.encode("UTF-8"), secret_raw_obj["data"].encode("UTF-8"))).hexdigest()
+        sha256 = hashlib.sha256("%s%s".encode("UTF-8") % (token_path.encode("UTF-8"),
+                                                          secret_raw_obj["data"].encode("UTF-8"))).hexdigest()
         sha256 = sha256[:8]
         return "?{%s:%s:%s}" % (backend, token_path, sha256)
 
@@ -408,13 +420,24 @@ class CompilingFile(object):
         if gpg_obj is None:
             raise ValueError("secrets_path not set")
 
-        token = secret_token_from_tag(token_tag)
+        token, func = secret_token_from_tag(token_tag)
         return secret_gpg_read(gpg_obj, secrets_path, token)
 
     def sub_token_compiled_data(self, data):
         "find and replace tokens with hashed tokens in data"
         def _hash_token_tag(match_obj):
-            token_tag, _ = match_obj.groups()
+            token_tag, token, func = match_obj.groups()
+            _, token_path = secret_token_attributes(token)
+            secrets_path = self.kwargs.get("secrets_path", None)
+            if secrets_path is None:
+                raise ValueError('secrets_path not set')
+
+            # if token secret func is defined and secret does not exist
+            # write secret from func eval
+            if func and not secret_gpg_exists(secrets_path, token_path):
+                logger.info("Creating secret for %s:%s ...", token_path, func)
+                self.target_secret_func_write(token_path, func)
+
             return self.hash_token_tag(token_tag)
 
         return re.sub(SECRET_TOKEN_TAG_PATTERN, _hash_token_tag, data)
@@ -426,6 +449,24 @@ class CompilingFile(object):
             return self.reveal_token_tag(token_tag)
 
         return re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_token_tag, data)
+
+    def target_secret_func_write(self, token_path, func):
+        "write a target secret for token with data from func"
+        target_name = self.kwargs.get('target_name', None)
+        gpg_obj = self.kwargs.get("gpg_obj", None)
+        secrets_path = self.kwargs.get("secrets_path", None)
+        target_inv = cached.inv['nodes'].get(target_name, None)
+        if target_name is None:
+            raise ValueError('target_name not set')
+        if gpg_obj is None:
+            raise ValueError('gpg_obj not set')
+        if target_inv is None:
+            raise ValueError('target_inv not set')
+        if secrets_path is None:
+            raise ValueError('secrets_path not set')
+        recipients = target_inv['parameters']['kapitan']['secrets']['recipients']
+
+        secret_gpg_write_function(gpg_obj, secrets_path, token_path, func, recipients)
 
 
 class CompiledFile(object):
