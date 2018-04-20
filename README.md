@@ -50,8 +50,8 @@ For CI/CD usage, check out [ci/](https://github.com/deepmind/kapitan/tree/master
 Kapitan needs Python 3.6.
 
 **Install Python 3:**
-<br>Linux: `sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip`
-<br>Mac: `brew install python3`
+<br>Linux: `sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip python3-yaml`
+<br>Mac: `brew install python3 libyaml`
 
 **Install Kapitan:**
 
