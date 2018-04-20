@@ -18,7 +18,7 @@ from __future__ import print_function
 
 "random utils"
 
-import functools
+from functools import reduce
 from hashlib import sha256
 import logging
 import os
@@ -33,8 +33,14 @@ from distutils.version import StrictVersion
 from kapitan.version import VERSION
 from kapitan.errors import CompileError
 
-
 logger = logging.getLogger(__name__)
+
+try:
+    print("Using yaml C bindings")
+    from yaml import CLoader as YamlLoader
+except ImportError:
+    print("No yaml C bindings found, using yaml standard")
+    from yaml import Loader as YamlLoader
 
 
 class termcolor:
@@ -155,7 +161,7 @@ def prune_empty(d):
             return {k: v for k, v in ((k, prune_empty(v)) for k, v in d.items()) if v is not None}
 
 
-class PrettyDumper(yaml.SafeDumper):
+class PrettyDumper(yaml.Dumper):
     '''
     Increases indent of nested lists.
     By default, they are indendented at the same level as the key on the previous line
@@ -183,7 +189,7 @@ def deep_get(dictionary, keys):
     '''
     Return (keys) values from dictionary
     '''
-    return functools.reduce(lambda d, key: d.get(key, None) if isinstance(d, dict) else None, keys, dictionary)
+    return reduce(lambda d, key: d.get(key, None) if isinstance(d, dict) else None, keys, dictionary)
 
 
 def searchvar(flat_var, inventory_path):
@@ -199,7 +205,7 @@ def searchvar(flat_var, inventory_path):
             if file.endswith(".yml") or file.endswith(".yaml"):
                 filename = os.path.join(root, file)
                 with open(filename, 'r') as fd:
-                    data = yaml.safe_load(fd)
+                    data = yaml.load(fd, Loader=YamlLoader)
                     value = deep_get(data, keys)
                     if value is not None:
                         output.append((filename, value))

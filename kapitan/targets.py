@@ -22,7 +22,7 @@ import logging
 import os
 import errno
 import hashlib
-import json
+import ujson as json
 import re
 import shutil
 import sys
@@ -41,6 +41,7 @@ from kapitan.secrets import SECRET_TOKEN_TAG_PATTERN, secret_gpg_read
 from kapitan.errors import KapitanError, CompileError
 
 logger = logging.getLogger(__name__)
+
 
 def compile_targets(inventory_path, search_path, output_path, parallel, targets, **kwargs):
     """
@@ -301,30 +302,6 @@ def valid_target_obj(target_obj):
     }
 
     return jsonschema.validate(target_obj, schema)
-
-
-def load_target_file(target_file):
-    """
-    Loads target_file and returns a target obj
-    Format of the target file is determined by its extention (.json, .yml, .yaml)
-    """
-
-    bname = os.path.basename(target_file)
-
-    if re.match(r".+\.json$", bname):
-        with open(target_file) as fp:
-            target_obj = json.load(fp)
-            valid_target_obj(target_obj)
-            logger.debug("Target file %s is valid", target_file)
-
-            return target_obj
-    if re.match(r".+\.(yaml|yml)$", bname):
-        with open(target_file) as fp:
-            target_obj = yaml.safe_load(fp)
-            valid_target_obj(target_obj)
-            logger.debug("Target file %s is valid", target_file)
-
-            return target_obj
 
 
 class CompilingFile(object):
