@@ -252,9 +252,9 @@ def check_version():
             dot_kapitan = yaml.safe_load(f)
             # If 'saved version is bigger than current version'
             if dot_kapitan['version'] and StrictVersion(dot_kapitan['version']) > StrictVersion(VERSION):
-                print(f'{termcolor.WARNING}Current version: {VERSION}')
-                print(f'Last used version (in .kapitan): {dot_kapitan["version"]}{termcolor.ENDC}\n')
-                print(f'Please upgrade kapitan to at least "{dot_kapitan["version"]}" in order to keep results consistent:\n')
+                print('{}Current version: {}'.format(termcolor.WARNING, VERSION))
+                print('Last used version (in .kapitan): {}{}\n'.format(dot_kapitan["version"], termcolor.ENDC))
+                print('Please upgrade kapitan to at least "{}" in order to keep results consistent:\n'.format(dot_kapitan["version"]))
                 print('Docker: docker pull deepmind/kapitan')
                 print('Pip (user): pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links\n')
                 print('Check https://github.com/deepmind/kapitan#quickstart for more info.')
