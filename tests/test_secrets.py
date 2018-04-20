@@ -38,8 +38,8 @@ class SecretsTest(unittest.TestCase):
     def test_secret_token_attributes(self):
         "grab attributes and compare to values"
         token_tag = '?{gpg:secret/sauce}'
-        _token_tag, token = re.match(SECRET_TOKEN_TAG_PATTERN,
-                                     token_tag).groups()
+        _token_tag, token, func = re.match(SECRET_TOKEN_TAG_PATTERN,
+                                           token_tag).groups()
         self.assertEqual(_token_tag, token_tag)
         backend, token_path = secret_token_attributes(token)
         self.assertEqual((backend, token_path), ('gpg', 'secret/sauce'))

@@ -26,6 +26,7 @@ import json
 import logging
 import os
 import re
+import secrets
 import sys
 import time
 import gnupg
@@ -33,10 +34,12 @@ import yaml
 
 from six import string_types
 from kapitan.utils import PrettyDumper
+from kapitan.errors import SecretError
 
 logger = logging.getLogger(__name__)
 
-SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)})"  # e.g. ?{gpg:my/secret/token}
+# e.g. ?{gpg:my/secret/token} or ?{gpg:my/secret/token|func:param1:param2}
+SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)(\|[\w\:]+)?})" 
 SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)"  # e.g. gpg:my/secret/token
 SECRET_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)"  # e.g. gpg:my/secret/token:1deadbeef
 
@@ -83,18 +86,20 @@ def secret_gpg_read(gpg_obj, secrets_path, token, **kwargs):
                 raise GPGError(dec.status)
     except IOError as ex:
         if ex.errno == errno.ENOENT:
-            raise ValueError("Could not read secret '%s' at %s" %
-                             (token, full_secret_path))
+            logger.error('Secret error: Could not read secret %s at %s',
+                         token, full_secret_path)
+            raise SecretError()
 
 
 def secret_token_from_tag(token_tag):
     "returns token from token_tag"
     match = re.match(SECRET_TOKEN_TAG_PATTERN, token_tag)
     if match:
-        _, token = match.groups()
-        return token
+        _, token, func = match.groups()
+        return token, func
     else:
-        raise ValueError('Token tag not valid: %s' % token_tag)
+        logger.error('Secret error: token tag not valid: %s', token_tag)
+        raise SecretError()
 
 
 def secret_token_attributes(token):
@@ -112,7 +117,8 @@ def secret_token_attributes(token):
 
         return backend, split_path
     else:
-        raise ValueError('Token not valid: %s' % token)
+        logger.error('Secret error: token not valid: %s', token)
+        raise SecretError()
 
 
 def secret_token_compiled_attributes(token):
@@ -130,7 +136,8 @@ def secret_token_compiled_attributes(token):
 
         return backend, split_path, token_hash
     else:
-        raise ValueError('Token not valid: %s' % token)
+        logger.error('Secret error: token not valid: %s', token)
+        raise SecretError()
 
 
 def gpg_fingerprint_non_expired(gpg_obj, recipient_name):
@@ -199,13 +206,14 @@ def secret_gpg_raw_read(secrets_path, token):
             return secret_obj
     except IOError as ex:
         if ex.errno == errno.ENOENT:
-            raise ValueError("Could not read raw secret '%s' at %s" %
-                             (token, full_secret_path))
+            logger.error('Secret error: could not read raw secret %s at %s',
+                         token, full_secret_path)
+            raise SecretError()
 
 
 def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
     "returns and verifies hash for decrypted secret from token in match_obj"
-    token_tag, token = match_obj.groups()
+    token_tag, token, func = match_obj.groups()
     if verify:
         _, token_path, token_hash = secret_token_compiled_attributes(token)
         secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
@@ -214,8 +222,10 @@ def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
         secret_hash = secret_hash[:8]
         logger.debug("Attempting to reveal token %s with secret hash %s", token, token_hash)
         if secret_hash != token_hash:
-            raise ValueError("Currently stored secret hash: %s does not match compiled secret: %s" %
-                             (secret_hash, token))
+            logger.error("Secret error: currently stored secret hash: %s does not match compiled secret: %s",
+                         secret_hash, token)
+            raise SecretError()
+
     logger.debug("Revealing %s", token_tag)
     return secret_gpg_read(gpg_obj, secrets_path, token, **kwargs)
 
@@ -373,3 +383,37 @@ def secret_gpg_raw_read_fingerprints(secrets_path, token_path):
     secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
     secret_raw_obj_fingerprints = [r['fingerprint'] for r in secret_raw_obj['recipients']]
     return secret_raw_obj_fingerprints
+
+def secret_gpg_exists(secrets_path, token_path):
+    "checks if a secret with token exists in secrets_path"
+    full_secret_path = os.path.join(secrets_path, token_path)
+
+    return os.path.exists(full_secret_path)
+
+def secret_gpg_write_function(gpg_obj, secrets_path, token, func, recipients, **kwargs):
+    """
+    encrypt and write data returned by func for token in secrets_path
+    essentially runs secret_gpg_write() where data is the evaluation of func
+    """
+    # func params are splitted by ':'. e.g. |randomstr:12
+    func_name, *func_params = func.split(':')
+    data = None
+    encode_base64 = False
+
+    def randomstr(nbytes=''):
+        if nbytes:
+            nbytes = int(nbytes)
+            return secrets.token_urlsafe(nbytes)
+        return secrets.token_urlsafe()
+
+    if func_name == '|randomstr':
+        data = randomstr(*func_params)
+
+    elif func_name == '|randomstrb64':
+        data = randomstr(*func_params)
+        encode_base64 = True
+    else:
+        logger.error("Secret error: secret_gpg_write_function: unknown func: %s", func)
+        raise SecretError
+
+    secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipients, **kwargs)
