@@ -35,10 +35,8 @@ import kapitan.cached as cached
 logger = logging.getLogger(__name__)
 
 try:
-    print("Using yaml C bindings")
     from yaml import CLoader as YamlLoader
 except ImportError:
-    print("No yaml C bindings found, using yaml standard")
     from yaml import Loader as YamlLoader
 
 

@@ -41,10 +41,8 @@ SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)"  # e.g. gpg:my/secret/token
 SECRET_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)"  # e.g. gpg:my/secret/token:1deadbeef
 
 try:
-    print("Using yaml C bindings")
     from yaml import CLoader as YamlLoader
 except ImportError:
-    print("No yaml C bindings found, using yaml standard")
     from yaml import Loader as YamlLoader
 
 
