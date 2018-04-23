@@ -35,9 +35,9 @@ import kapitan.cached as cached
 logger = logging.getLogger(__name__)
 
 try:
-    from yaml import CLoader as YamlLoader
+    from yaml import CSafeLoader as YamlLoader
 except ImportError:
-    from yaml import Loader as YamlLoader
+    from yaml import SafeLoader as YamlLoader
 
 
 def resource_callbacks(search_path):

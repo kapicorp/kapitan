@@ -41,9 +41,9 @@ SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)"  # e.g. gpg:my/secret/token
 SECRET_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)"  # e.g. gpg:my/secret/token:1deadbeef
 
 try:
-    from yaml import CLoader as YamlLoader
+    from yaml import CSafeLoader as YamlLoader
 except ImportError:
-    from yaml import Loader as YamlLoader
+    from yaml import SafeLoader as YamlLoader
 
 
 class GPGError(Exception):
