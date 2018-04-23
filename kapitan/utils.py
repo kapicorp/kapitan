@@ -159,7 +159,7 @@ def prune_empty(d):
             return {k: v for k, v in ((k, prune_empty(v)) for k, v in d.items()) if v is not None}
 
 
-class PrettyDumper(yaml.Dumper):
+class PrettyDumper(yaml.SafeDumper):
     '''
     Increases indent of nested lists.
     By default, they are indendented at the same level as the key on the previous line
