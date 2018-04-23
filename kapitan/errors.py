@@ -28,3 +28,8 @@ class CompileError(KapitanError):
 class InventoryError(KapitanError):
     "inventory error"
     pass
+
+
+class SecretError(KapitanError):
+    "secrets error"
+    pass
