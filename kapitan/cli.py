@@ -19,7 +19,7 @@
 from __future__ import print_function
 
 import argparse
-import json
+import ujson as json
 import logging
 import os
 import sys

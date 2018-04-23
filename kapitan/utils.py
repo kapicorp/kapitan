@@ -18,7 +18,7 @@ from __future__ import print_function
 
 "random utils"
 
-import functools
+from functools import reduce
 from hashlib import sha256
 import logging
 import os
@@ -33,8 +33,12 @@ from distutils.version import StrictVersion
 from kapitan.version import VERSION
 from kapitan.errors import CompileError
 
-
 logger = logging.getLogger(__name__)
+
+try:
+    from yaml import CSafeLoader as YamlLoader
+except ImportError:
+    from yaml import SafeLoader as YamlLoader
 
 
 class termcolor:
@@ -183,7 +187,7 @@ def deep_get(dictionary, keys):
     '''
     Return (keys) values from dictionary
     '''
-    return functools.reduce(lambda d, key: d.get(key, None) if isinstance(d, dict) else None, keys, dictionary)
+    return reduce(lambda d, key: d.get(key, None) if isinstance(d, dict) else None, keys, dictionary)
 
 
 def searchvar(flat_var, inventory_path):
@@ -199,7 +203,7 @@ def searchvar(flat_var, inventory_path):
             if file.endswith(".yml") or file.endswith(".yaml"):
                 filename = os.path.join(root, file)
                 with open(filename, 'r') as fd:
-                    data = yaml.safe_load(fd)
+                    data = yaml.load(fd, Loader=YamlLoader)
                     value = deep_get(data, keys)
                     if value is not None:
                         output.append((filename, value))
@@ -246,9 +250,9 @@ def check_version():
             dot_kapitan = yaml.safe_load(f)
             # If 'saved version is bigger than current version'
             if dot_kapitan['version'] and StrictVersion(dot_kapitan['version']) > StrictVersion(VERSION):
-                print(f'{termcolor.WARNING}Current version: {VERSION}')
-                print(f'Last used version (in .kapitan): {dot_kapitan["version"]}{termcolor.ENDC}\n')
-                print(f'Please upgrade kapitan to at least "{dot_kapitan["version"]}" in order to keep results consistent:\n')
+                print('{}Current version: {}'.format(termcolor.WARNING, VERSION))
+                print('Last used version (in .kapitan): {}{}\n'.format(dot_kapitan["version"], termcolor.ENDC))
+                print('Please upgrade kapitan to at least "{}" in order to keep results consistent:\n'.format(dot_kapitan["version"]))
                 print('Docker: docker pull deepmind/kapitan')
                 print('Pip (user): pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links\n')
                 print('Check https://github.com/deepmind/kapitan#quickstart for more info.')

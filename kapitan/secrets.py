@@ -22,7 +22,7 @@ from collections import defaultdict
 import errno
 from functools import partial
 import hashlib
-import json
+import ujson as json
 import logging
 import os
 import re
@@ -42,6 +42,11 @@ logger = logging.getLogger(__name__)
 SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)(\|[\w\:]+)?})" 
 SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)"  # e.g. gpg:my/secret/token
 SECRET_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)"  # e.g. gpg:my/secret/token:1deadbeef
+
+try:
+    from yaml import CSafeLoader as YamlLoader
+except ImportError:
+    from yaml import SafeLoader as YamlLoader
 
 
 class GPGError(Exception):
@@ -76,7 +81,7 @@ def secret_gpg_read(gpg_obj, secrets_path, token, **kwargs):
     full_secret_path = os.path.join(secrets_path, token_path)
     try:
         with open(full_secret_path) as fp:
-            secret_obj = yaml.safe_load(fp)
+            secret_obj = yaml.load(fp, Loader=YamlLoader)
             data_decoded = base64.b64decode(secret_obj['data'])
             dec = secret_gpg_decrypt(gpg_obj, data_decoded, **kwargs)
             logger.debug("Read secret %s at %s", token, full_secret_path)
@@ -201,7 +206,7 @@ def secret_gpg_raw_read(secrets_path, token):
     full_secret_path = os.path.join(secrets_path, token_path)
     try:
         with open(full_secret_path) as fp:
-            secret_obj = yaml.safe_load(fp)
+            secret_obj = yaml.load(fp, Loader=YamlLoader)
             logger.debug("Read raw secret %s at %s", token, full_secret_path)
             return secret_obj
     except IOError as ex:
@@ -229,6 +234,7 @@ def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
     logger.debug("Revealing %s", token_tag)
     return secret_gpg_read(gpg_obj, secrets_path, token, **kwargs)
 
+
 def secret_gpg_update_recipients(gpg_obj, secrets_path, token_path, recipients, **kwargs):
     "updates the recipient list for secret in token_path"
     token = "gpg:%s" % token_path
@@ -242,6 +248,7 @@ def secret_gpg_update_recipients(gpg_obj, secrets_path, token_path, recipients, 
 
     secret_gpg_write(gpg_obj, secrets_path, token_path, data_dec, encode_base64,
                      recipients, **kwargs)
+
 
 def secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, verify=True, output=None, **kwargs):
     """
@@ -333,7 +340,7 @@ def secret_gpg_reveal_file(gpg_obj, secrets_path, filename, verify=True, **kwarg
     elif filename.endswith('.yml'):
         logger.debug("secret_gpg_reveal_file: revealing yml file: %s", filename)
         with open(filename) as fp:
-            obj = yaml.safe_load(fp)
+            obj = yaml.load(fp, Loader=YamlLoader)
             rev_obj = secret_gpg_reveal_obj(gpg_obj, secrets_path, obj,
                                             verify=verify, **kwargs)
             out = yaml.dump(rev_obj, Dumper=PrettyDumper,
@@ -344,6 +351,7 @@ def secret_gpg_reveal_file(gpg_obj, secrets_path, filename, verify=True, **kwarg
             out = secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, output=devnull,
                                         verify=verify, **kwargs)
     return out
+
 
 def search_target_token_paths(target_secrets_path, targets):
     """
@@ -361,6 +369,7 @@ def search_target_token_paths(target_secrets_path, targets):
                 target_files[target_name].append(full_path)
     return target_files
 
+
 def lookup_fingerprints(gpg_obj, recipients):
     "returns a list of fingerprints for recipients obj"
     lookedup = []
@@ -376,6 +385,7 @@ def lookup_fingerprints(gpg_obj, recipients):
 
     # Remove duplicates, sort and return fingerprints list
     return sorted(set(lookedup))
+
 
 def secret_gpg_raw_read_fingerprints(secrets_path, token_path):
     "returns fingerprint list in raw secret for token_path"

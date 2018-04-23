@@ -18,7 +18,7 @@
 
 import errno
 from functools import partial
-import json
+import ujson as json
 import logging
 import os
 import io
@@ -33,6 +33,11 @@ from kapitan.errors import CompileError, InventoryError
 import kapitan.cached as cached
 
 logger = logging.getLogger(__name__)
+
+try:
+    from yaml import CSafeLoader as YamlLoader
+except ImportError:
+    from yaml import SafeLoader as YamlLoader
 
 
 def resource_callbacks(search_path):
@@ -90,11 +95,6 @@ def read_file(search_path, name):
     raise IOError("Could not find file %s" % name)
 
 
-def kapitan_path():
-    "return kapitan install path"
-    return os.path.dirname(kapitan_install_path)
-
-
 def search_imports(cwd, import_str, search_path):
     """
     This is only to be used as a callback for the jsonnet API!
@@ -109,7 +109,7 @@ def search_imports(cwd, import_str, search_path):
 
     # if import_str not found, search in search_path
     if not os.path.exists(full_import_path):
-        install_path = kapitan_path()
+        install_path = os.path.dirname(kapitan_install_path)
         for path in (install_path, search_path):
             _full_import_path = os.path.join(path, import_str)
             # if found, set as full_import_path
@@ -167,7 +167,7 @@ def inventory_reclass(inventory_path):
         try:
             cfg_file = os.path.join(inventory_path, 'reclass-config.yml')
             with open(cfg_file) as reclass_cfg:
-                reclass_config = yaml.safe_load(reclass_cfg)
+                reclass_config = yaml.load(reclass_cfg, Loader=YamlLoader)
                 # normalise relative nodes_uri and classes_uri paths
                 for uri in ('nodes_uri', 'classes_uri'):
                     uri_val = reclass_config.get(uri)
