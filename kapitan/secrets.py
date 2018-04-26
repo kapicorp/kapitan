@@ -180,24 +180,25 @@ def secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipien
         # If directory exists, pass
         if ex.errno == errno.EEXIST:
             pass
-    with open(full_secret_path, "w") as fp:
-        encoding = "original"
-        _data = data
-        if encode_base64:
-            _data = base64.b64encode(data.encode("UTF-8"))
-            encoding = "base64"
-        fingerprints = lookup_fingerprints(gpg_obj, recipients)
-        enc = secret_gpg_encrypt(gpg_obj, _data, fingerprints, **kwargs)
-        if enc.ok:
-            b64data = base64.b64encode(enc.data).decode("UTF-8")
-            secret_obj = {"data": b64data,
-                          "encoding": encoding,
-                          "recipients": [{'fingerprint': f} for f in fingerprints]}
+
+    encoding = "original"
+    _data = data
+    if encode_base64:
+        _data = base64.b64encode(data.encode("UTF-8"))
+        encoding = "base64"
+    fingerprints = lookup_fingerprints(gpg_obj, recipients)
+    enc = secret_gpg_encrypt(gpg_obj, _data, fingerprints, **kwargs)
+    if enc.ok:
+        b64data = base64.b64encode(enc.data).decode("UTF-8")
+        secret_obj = {"data": b64data,
+                      "encoding": encoding,
+                      "recipients": [{'fingerprint': f} for f in fingerprints]}
+        with open(full_secret_path, "w") as fp:
             yaml.safe_dump(secret_obj, stream=fp, default_flow_style=False)
             logger.info("Wrote secret %s for fingerprints %s at %s", token,
                         ','.join([f[:8] for f in fingerprints]), full_secret_path)
-        else:
-            raise GPGError(enc.status)
+    else:
+        raise GPGError(enc.status)
 
 
 def secret_gpg_raw_read(secrets_path, token):
