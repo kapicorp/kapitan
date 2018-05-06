@@ -1,0 +1,10 @@
+parameters:
+  namespace: ${target_name}
+  kapitan:
+    compile:
+    - output_path: pre-deploy
+      input_type: jsonnet
+      output_type: yaml
+      input_paths:
+        - components/namespace/main.jsonnet
+

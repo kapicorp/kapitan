@@ -1,0 +1,12 @@
+classes:
+- component.namespace 
+
+parameters:
+  kapitan:
+    vars:
+      target: ${target_name}
+      namespace: ${target_name}
+    secrets:
+      recipients:
+        - name: example@kapitan.dev
+          fingerprint: D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C

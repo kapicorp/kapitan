@@ -25,3 +25,22 @@ parameters:
         java_opts: ${elasticsearch:java_opts}
         replicas: ${elasticsearch:replicas}
         masters: ${elasticsearch:masters}
+
+  kapitan:
+    vars:
+      target: ${target_name}
+      namespace: ${target_name}
+    compile:
+    - output_path: manifests
+      input_type: jsonnet
+      input_paths:
+        - components/elasticsearch/main.jsonnet
+      output_type: yaml
+    - output_path: scripts
+      input_type: jinja2
+      input_paths:
+        - scripts
+    - output_path: .
+      input_type: jinja2
+      input_paths:
+        - docs/elasticsearch/README.md
