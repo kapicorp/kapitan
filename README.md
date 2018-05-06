@@ -27,7 +27,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 
 # Main Features
 
-* Use the Inventory as single source of truth to tie together deployments, resources and documentation. [based on reclass](https://github.com/salt-formulas/reclass)
+* Use the Inventory as the single source of truth to tie together deployments, resources and documentation. [based on reclass](https://github.com/salt-formulas/reclass)
 * Use [Jsonnet](https://jsonnet.org/) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
 * Use [Jinja2](http://jinja.pocoo.org/) to create text based templates for scripts and documentation;
 * Manage secrets by defining who can see them, without compromising collaboration with other users.
