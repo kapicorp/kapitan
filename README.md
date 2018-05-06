@@ -2,9 +2,9 @@
 
 [![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
 
-Kapitan is a tool to manage complex deployments using mixed templating frameworks.
+Kapitan is a tool to manage complex deployments using jsonnet and jinja.
 
-Use your template of choice to manage your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
+Use Kapitan to manage your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
 
 How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](#faq)!
 
@@ -27,9 +27,9 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 
 # Main Features
 
-* Use [reclass](https://github.com/salt-formulas/reclass) to build an inventory of data/variables for all your deployments as a whole, avoiding dangerous duplications, and improving readibility.
-* Use [Jsonnet](https://github.com/google/jsonnet) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
-* Use [Jinja2](http://jinja.pocoo.org/docs/2.9/) to create text based templates for scripts and documentation;
+* Use the Inventory as single source of truth to tie together deployments, resources and documentation. [based on reclass](https://github.com/salt-formulas/reclass)
+* Use [Jsonnet](https://jsonnet.org/) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
+* Use [Jinja2](http://jinja.pocoo.org/) to create text based templates for scripts and documentation;
 * Manage secrets by defining who can see them, without compromising collaboration with other users.
 * Create dynamically generated documentation about a single deployment (i.e. ad-hoc instructions) or all deployments at once (i.e. global state of deployments)
 
