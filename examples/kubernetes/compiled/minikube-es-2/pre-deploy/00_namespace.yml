@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    name: minikube-es-2
+  name: minikube-es-2
+  namespace: minikube-es-2

@@ -1,33 +1,10 @@
 classes:
+  - common
   - cluster.minikube
   - component.elasticsearch
 
 parameters:
   target_name: minikube-es
-  kapitan:
-    vars:
-      target: ${target_name}
-      namespace: ${target_name}
-    compile:
-    - output_path: manifests
-      input_type: jsonnet
-      input_paths:
-        - components/elasticsearch/main.jsonnet
-      output_type: yaml
-    - output_path: scripts
-      input_type: jinja2
-      input_paths:
-        - scripts
-    - output_path: .
-      input_type: jinja2
-      input_paths:
-        - docs/elasticsearch/README.md
-
-    secrets:
-      recipients:
-        - name: example@kapitan.dev
-          fingerprint: D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C
-  namespace: ${target_name}
 
   elasticsearch:
     replicas: 2
