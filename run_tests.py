@@ -15,5 +15,7 @@
 # limitations under the License.
 
 import unittest
+import sys
 
-unittest.TextTestRunner(verbosity=1).run(unittest.TestLoader().discover('tests'))
+result = unittest.TextTestRunner(verbosity=1).run(unittest.TestLoader().discover('tests'))
+sys.exit(not result.wasSuccessful())
