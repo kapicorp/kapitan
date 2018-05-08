@@ -14,5 +14,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-kubectl config set-context minikube-es-2 --cluster minikube --user minikube --namespace minikube-es
+kubectl config set-context minikube-es-2 --cluster minikube --user minikube --namespace minikube-es-2
 kubectl config use-context minikube-es-2

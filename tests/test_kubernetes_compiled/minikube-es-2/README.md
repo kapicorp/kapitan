@@ -45,7 +45,7 @@ $ scripts/kubectl.sh get pods -w
 List the elasticsearch service endpoints running in the cluster:
 
 ```
-$ minikube service -n minikube-es  elasticsearch --url
+$ minikube service -n minikube-es-2  elasticsearch --url
 ```
 
 and curl the health endpoint, i.e.: 
