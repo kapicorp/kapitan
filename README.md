@@ -6,6 +6,9 @@ Kapitan is a tool to manage complex deployments using jsonnet and jinja.
 
 Use Kapitan to manage your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
 
+Join our community on [`#kapitan`](https://kubernetes.slack.com) or visit [**`https://kapitan.dev`**](https://kapitan.dev)
+
+
 How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](#faq)!
 
 <img src="https://raw.githubusercontent.com/deepmind/kapitan/master/docs/kapitan_logo.png" width="250">
