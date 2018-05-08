@@ -81,6 +81,7 @@ def render_jinja2_file(name, context):
         loader=jinja2.FileSystemLoader(path or './'),
         trim_blocks=True,
         lstrip_blocks=True,
+        extensions=['jinja2.ext.do'],
     )
     env.filters['sha256'] = jinja2_sha256_hex_filter
     env.filters['yaml'] = jinja2_yaml_filter
