@@ -344,7 +344,7 @@ class CompilingFile(object):
             self.sub_token_reveal_obj(obj)
         else:
             self.sub_token_compiled_obj(obj)
-        json.dump(obj, self.fp, indent=4, sort_keys=True)
+        json.dump(obj, self.fp, indent=4, escape_forward_slashes=False)
 
     def sub_token_compiled_obj(self, obj):
         "recursively find and replace tokens with hashed tokens in obj"
