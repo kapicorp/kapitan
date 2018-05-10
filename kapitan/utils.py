@@ -63,8 +63,8 @@ def render_jinja2_template(content, context):
     return jinja2.Template(content, undefined=jinja2.StrictUndefined).render(context)
 
 
-def jinja2_sha256_hex_filter(string):
-    "Returns hex digest for string"
+def sha256_string(string):
+    "Returns sha256 hex digest for string"
     return sha256(string.encode("UTF-8")).hexdigest()
 
 
@@ -83,7 +83,7 @@ def render_jinja2_file(name, context):
         lstrip_blocks=True,
         extensions=['jinja2.ext.do'],
     )
-    env.filters['sha256'] = jinja2_sha256_hex_filter
+    env.filters['sha256'] = sha256_string
     env.filters['yaml'] = jinja2_yaml_filter
     return env.get_template(filename).render(context)
 
