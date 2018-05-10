@@ -27,7 +27,7 @@ import reclass.core
 from reclass.errors import ReclassException, NotFoundError
 import yaml
 
-from kapitan.utils import render_jinja2_file
+from kapitan.utils import render_jinja2_file, sha256_string
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError
 import kapitan.cached as cached
@@ -54,6 +54,7 @@ def resource_callbacks(search_path):
             "file_read": (("name",),
                           partial(read_file, search_path)),
             "yaml_dump": (("obj",), yaml_dump),
+            "sha256_string": (("obj",), sha256_string),
            }
 
 
