@@ -186,7 +186,7 @@ def flatten_dict(d, parent_key='', sep='.'):
 
 def deep_get(dictionary, keys):
     '''
-    Search recursevely for 'keys' in 'dictionary' and return value, otherwise return None
+    Search recursively for 'keys' in 'dictionary' and return value, otherwise return None
     '''
     value = reduce(lambda d, key: d.get(key, None) if isinstance(d, dict) else None, keys, dictionary)
 
