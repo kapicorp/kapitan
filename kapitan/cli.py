@@ -95,13 +95,13 @@ def main():
     inventory_parser.add_argument('--flat', '-F', help='flatten nested inventory variables',
                                   action='store_true', default=False)
     inventory_parser.add_argument('--pattern', '-p', default='',
-                                  help='filter pattern (e.g. parameters.mysql), default is ""')
+                                  help='filter pattern (e.g. parameters.mysql.storage_class, or storage_class,' +
+                                  ' or storage_*), default is ""')
 
     searchvar_parser = subparser.add_parser('searchvar',
                                             help='show all inventory files where var is declared')
     searchvar_parser.add_argument('searchvar', type=str, metavar='VARNAME',
-                                  help='flattened full variable name. Example: ' +
-                                  'parameters.cluster.type')
+                                  help='e.g. parameters.mysql.storage_class, or storage_class, or storage_*')
     searchvar_parser.add_argument('--inventory-path', default='./inventory',
                                   help='set inventory path, default is "./inventory"')
 

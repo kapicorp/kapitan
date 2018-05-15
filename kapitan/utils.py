@@ -186,9 +186,31 @@ def flatten_dict(d, parent_key='', sep='.'):
 
 def deep_get(dictionary, keys):
     '''
-    Return (keys) values from dictionary
+    Search recursively for 'keys' in 'dictionary' and return value, otherwise return None
     '''
-    return reduce(lambda d, key: d.get(key, None) if isinstance(d, dict) else None, keys, dictionary)
+    value = reduce(lambda d, key: d.get(key, None) if isinstance(d, dict) else None, keys, dictionary)
+
+    if value is None:
+        # Remove first key (if >1 in list), as we haven't found anything yet
+        if len(keys) > 1:
+            del keys[0]
+
+        # Move down the dictionary
+        for v in dictionary.values():
+            if isinstance(v, dict):
+                # Recurse with new dict and fewer keys (if we had >1 in list)
+                item = deep_get(v, keys)
+                if item is not None:
+                    return item
+                else:
+                    # If we find nothing, check for globbing in last key, loop and match with dict keys
+                    if '*' in keys[-1]:
+                        last_key_lower = keys[-1].replace('*', '').lower()
+                        for v_key in v.keys():
+                            if last_key_lower in v_key.lower():
+                                return v[v_key]
+
+    return value
 
 
 def searchvar(flat_var, inventory_path):
