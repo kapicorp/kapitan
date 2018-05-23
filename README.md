@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
 
-Kapitan is a tool to manage complex deployments using jsonnet and jinja.
+Kapitan is a tool to manage complex deployments using jsonnet and jinja2.
 
 Use Kapitan to manage your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
 
@@ -75,16 +75,16 @@ Each target represents a different namespace in a minikube cluster
 
 These targets generate the following resources:
 
+* Kubernetes `Namespace` for the targets
 * Kubernetes `StatefulSet` for ElasticSearch Master node
 * Kubernetes `StatefulSet` for ElasticSearch Client node
 * Kubernetes `StatefulSet` for ElasticSearch Data node
 * Kubernetes `Service` to expose ElasticSearch discovery port
 * Kubernetes `Service` to expose ElasticSearch service port
-* Kubernetes `StatefulSet` for mySQL
-* Kubernetes `Service` to expose mySQL service port
-* Kubernetes `Secret` for mySQL
-* Script `setup.sh` to configure kubectl context for this target
-* Script `kubectl.sh` to control this target
+* Kubernetes `StatefulSet` for MySQL
+* Kubernetes `Service` to expose MySQL service port
+* Kubernetes `Secret` for MySQL
+* Scripts to configure kubectl context to control the targets and helpers to apply/delete objects.
 * Documentation
 
 ![demo](https://raw.githubusercontent.com/deepmind/kapitan/master/docs/demo.gif)
@@ -223,13 +223,6 @@ Targets can also be defined inside the `inventory`.
 ├── lib
 │   ├── kapitan.libjsonnet
 │   └── kube.libjsonnet
-└── targets
-    ├── dev-cluster1-elasticsearch
-    │   └── target.yaml
-    ├── prod-cluster1-elasticsearch
-    │   └── target.yaml
-    └── prod-cluster2-frontend
-        └── target.yaml
 ```
 
 # Usage
