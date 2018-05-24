@@ -9,6 +9,7 @@ spec:
   ports:
     - name: transport
       port: 9300
+      protocol: TCP
       targetPort: transport
   selector:
     name: cluster-master
