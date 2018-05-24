@@ -35,7 +35,4 @@ class CompileTest(unittest.TestCase):
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def tearDown(self):
-        compile_path = os.getcwd() + '/compiled'
-        if os.path.exists(compile_path):
-            shutil.rmtree(compile_path)
         os.chdir(os.getcwd() + '/../../')
