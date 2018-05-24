@@ -31,6 +31,9 @@ import sys
 import time
 import gnupg
 import yaml
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 from six import string_types
 from kapitan.utils import PrettyDumper
@@ -39,7 +42,7 @@ from kapitan.errors import SecretError
 logger = logging.getLogger(__name__)
 
 # e.g. ?{gpg:my/secret/token} or ?{gpg:my/secret/token|func:param1:param2}
-SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)(\|[\w\:]+)?})" 
+SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)([\|\w\:]+)*})"
 SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)"  # e.g. gpg:my/secret/token
 SECRET_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)"  # e.g. gpg:my/secret/token:1deadbeef
 
@@ -395,36 +398,85 @@ def secret_gpg_raw_read_fingerprints(secrets_path, token_path):
     secret_raw_obj_fingerprints = [r['fingerprint'] for r in secret_raw_obj['recipients']]
     return secret_raw_obj_fingerprints
 
+
 def secret_gpg_exists(secrets_path, token_path):
     "checks if a secret with token exists in secrets_path"
     full_secret_path = os.path.join(secrets_path, token_path)
 
     return os.path.exists(full_secret_path)
 
+
+def randomstr(nbytes=''):
+    "generates a URL-safe text string, containing nbytes random bytes"
+    if nbytes:
+        nbytes = int(nbytes)
+        return secrets.token_urlsafe(nbytes)
+    return secrets.token_urlsafe()
+
+
+def rsa_private_key(key_size=''):
+    "generates an RSA private key of key_size, default 4096"
+    rsa_key_size = 4096
+    if key_size:
+        rsa_key_size = int(key_size)
+
+    key = rsa.generate_private_key(public_exponent=65537, key_size=rsa_key_size, backend=default_backend())
+
+    return str(key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption()
+    ), "UTF-8")
+
+
 def secret_gpg_write_function(gpg_obj, secrets_path, token, func, recipients, **kwargs):
     """
     encrypt and write data returned by func for token in secrets_path
     essentially runs secret_gpg_write() where data is the evaluation of func
     """
-    # func params are splitted by ':'. e.g. |randomstr:12
-    func_name, *func_params = func.split(':')
+
+    # support for pipes. e.g |randomstr|base64
+    functions = func.split('|')
+    # Remove first element as it's not a function, just emtpy space
+    del functions[0]
+
     data = None
     encode_base64 = False
 
-    def randomstr(nbytes=''):
-        if nbytes:
-            nbytes = int(nbytes)
-            return secrets.token_urlsafe(nbytes)
-        return secrets.token_urlsafe()
+    for function in functions:
+        # func params are split by ':'. e.g. randomstr:12
+        func_name, *func_params = function.strip().split(':')
 
-    if func_name == '|randomstr':
-        data = randomstr(*func_params)
+        if func_name == 'randomstr':
+            data = randomstr(*func_params)
 
-    elif func_name == '|randomstrb64':
-        data = randomstr(*func_params)
-        encode_base64 = True
-    else:
-        logger.error("Secret error: secret_gpg_write_function: unknown func: %s", func)
-        raise SecretError
+        elif func_name == 'rsa':
+            data = rsa_private_key(*func_params)
+
+        elif func_name == 'base64':
+            if data:
+                encode_base64 = True
+            else:
+                logger.error("Secret error: secret_gpg_write_function: nothing to base64 encode; try " +
+                    "something like 'randomstr|base64'", func)
+                raise SecretError
+
+        elif func_name == 'sha256':
+            if data:
+                salt = ''
+                if len(func_params) > 0:
+                    salt = func_params[0]
+                    salt += ":"
+
+                salted_data = salt + data
+                data = hashlib.sha256(salted_data.encode("UTF-8")).hexdigest()
+            else:
+                logger.error("Secret error: secret_gpg_write_function: nothing to sha256 hash; try " +
+                    "something like 'randomstr|sha256'", func)
+                raise SecretError
+
+        else:
+            logger.error("Secret error: secret_gpg_write_function: unknown func: %s", func)
+            raise SecretError
 
     secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipients, **kwargs)
