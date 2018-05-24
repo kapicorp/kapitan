@@ -125,7 +125,7 @@ You can always override values further up the tree (i.e. in the inventory target
 
 Classifying almost anything will help you avoid repetition (DRY) and will force you to organise parameters hierarchically.
 
-For example, the snipppet below, taken from the example elasticsearch class, declares
+For example, the snippet below, taken from the example `elasticsearch` class, declares
 what parameters are needed for the elasticsearch component:
 
 ```
@@ -332,7 +332,7 @@ It's up to you to decide what the output is.
 
 ### kapitan inventory
 
-Rendering the inventory for the _minikube-es_ target:
+Rendering the inventory for the `minikube-es` target:
 
 ```
 $ kapitan inventory -t minikube-es
@@ -411,7 +411,7 @@ parameters:
 
 ### kapitan searchvar
 
-show all inventory files where var is declared
+Show all inventory files where variable is declared:
 
 ```
 $ kapitan searchvar parameters.elasticsearch.replicas
