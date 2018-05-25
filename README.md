@@ -402,6 +402,27 @@ users:
 ```
 kapitan secrets --reveal -f examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml
 ```
+To setup GPG for the kubernetes examples you can run:
+```
+gpg --import examples/kubernetes/secrets/example\@kapitan.dev.pub
+gpg --import examples/kubernetes/secrets/example\@kapitan.dev.key
+```
+And to trust the GPG example key:
+```
+gpg --edit-key example@kapitan.dev
+gpg> trust
+Please decide how far you trust this user to correctly verify other users' keys
+(by looking at passports, checking fingerprints from different sources, etc.)
+1 = I don't know or won't say
+2 = I do NOT trust
+3 = I trust marginally
+4 = I trust fully
+5 = I trust ultimately
+m = back to the main menu
+Your decision? 5
+Do you really want to set this key to ultimate trust? (y/N) y
+gpg> quit
+```
 
 ### kapitan inventory
 
@@ -535,7 +556,7 @@ With Kapitan, we worked to de-compose several problems that most of the other so
 1) ***Kubernetes manifests***: We like the jsonnet approach of using json as the working language. Jsonnet allows us to use inheritance and composition, and hide complexity at higher levels.
 2) ***Configuration files***: Most solutions will assume this problem is solved somewhere else. We feel Jinja (or your template engine of choice) have the upper hand here.
 3) ***Hierarchical inventory***: This is the feature that sets us apart from other solutions. We use the inventory (based on [reclass](https://github.com/salt-formulas/reclass)) to define variables and properties that can be reused across different projects/deployments. This allows us to limit repetition, but also to define a nicer interface with developers (or CI tools) which will only need to understand YAML to operate changes.
-4) ***Secrets***: We manage most of our secrets with kapitan using the GPG integration. They can be revealed at any stage of your development or deployment process by the select few or CI. They can also be dynamically generated on compilation, if you don't feel like generating random passwords or RSA private keys, and they can be referenced in the inventory like any other variables. The secrets backend can be expanded to support other providers such as KMS (GCP/AWS) or Vault, in addition to GPG.
+4) ***Secrets***: We manage most of our secrets with kapitan using the GPG integration. Keys can be setup per class, per target or shared so you can easily and flexibly manage access per environment. They can also be dynamically generated on compilation, if you don't feel like generating random passwords or RSA private keys, and they can be referenced in the inventory like any other variables. The secrets backend can be expanded to support other providers such as KMS (GCP/AWS) or Vault, in addition to GPG.
 5) ***Canned scripts***: We treat scripts as text templates, so that we can craft pre-canned scripts for the specific target we are working on. This can be used for instance to define scripts that setup clusters, contexts or allow to run kubectl with all the correct settings. Most other solutions require you to define contexts and call kubectl with the correct settings. We take care of that for you. Less ambiguity, less mistakes.
 6) ***Documentation***: We also use templates to create documentation for the targets we deploy. Documentation lived alongside everything else and it is treated as a first class citizen.
 We feel most other solutions are pushing the limits of their capacity in order to provide for the above problems.
