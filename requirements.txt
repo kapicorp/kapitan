@@ -9,3 +9,4 @@ jsonschema>=2.6.0
 python-gnupg==0.4.2
 six>=1.11.0
 cryptography==2.2.2
+requests>=2.18.4
