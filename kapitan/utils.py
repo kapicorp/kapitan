@@ -188,27 +188,41 @@ def deep_get(dictionary, keys):
     '''
     Search recursively for 'keys' in 'dictionary' and return value, otherwise return None
     '''
-    value = reduce(lambda d, key: d.get(key, None) if isinstance(d, dict) else None, keys, dictionary)
+    value = None
+    if len(keys) > 0:
+        value = dictionary.get(keys[0], None) if isinstance(dictionary, dict) else None
 
-    if value is None:
-        # Remove first key (if >1 in list), as we haven't found anything yet
-        if len(keys) > 1:
-            del keys[0]
+        if value:
+            # If we are at the last key and we have a value, we are done
+            if len(keys) == 1:
+                return value
 
-        # Move down the dictionary
-        for v in dictionary.values():
-            if isinstance(v, dict):
-                # Recurse with new dict and fewer keys (if we had >1 in list)
-                item = deep_get(v, keys)
-                if item is not None:
-                    return item
-                else:
-                    # If we find nothing, check for globbing in last key, loop and match with dict keys
-                    if '*' in keys[-1]:
-                        last_key_lower = keys[-1].replace('*', '').lower()
-                        for v_key in v.keys():
-                            if last_key_lower in v_key.lower():
-                                return v[v_key]
+            # If we have more variables in the search chain and we don't have a dict, return not found
+            if not isinstance(value, dict):
+                return None
+
+            # Recurse with next keys in the chain on the dict
+            return deep_get(value, keys[1:])
+        else:
+            if isinstance(dictionary, dict):
+                # If we find nothing, check for globbing, loop and match with dict keys
+                if '*' in keys[0]:
+                    key_lower = keys[0].replace('*', '').lower()
+                    for dict_key in dictionary.keys():
+                        if key_lower in dict_key.lower():
+                            # If we're at the last key in the chain, return matched value
+                            if len(keys) == 1:
+                                return dictionary[dict_key]
+
+                            # If we have more variables in the chain, continue recursion
+                            return deep_get(dictionary[dict_key], keys[1:])
+
+                # No globbing, move down the dictionary and recurse
+                for v in dictionary.values():
+                    if isinstance(v, dict):
+                        item = deep_get(v, keys)
+                        if item:
+                            return item
 
     return value
 
