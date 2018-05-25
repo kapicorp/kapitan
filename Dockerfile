@@ -1,6 +1,6 @@
 FROM python:3.6-alpine
 
-RUN apk add --no-cache git g++ make libstdc++ gnupg musl-dev yaml-dev && \
+RUN apk add --no-cache git g++ make libstdc++ gnupg musl-dev yaml-dev libffi-dev openssl-dev && \
     mkdir /kapitan
 
 WORKDIR /kapitan

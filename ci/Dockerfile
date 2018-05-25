@@ -2,7 +2,7 @@ FROM sparkprime/jsonnet AS jsonnet
 
 FROM google/cloud-sdk:alpine
 
-RUN apk add --no-cache python3-dev git g++ make libstdc++ gnupg musl-dev util-linux openssl coreutils yaml-dev jq ncurses terraform && \
+RUN apk add --no-cache python3-dev git g++ make libstdc++ gnupg musl-dev util-linux openssl-dev libffi-dev coreutils yaml-dev jq ncurses terraform && \
     python3 -m ensurepip && \
     rm -rf /usr/lib/python*/ensurepip && \
     pip3 install --upgrade --no-cache-dir pip setuptools && \
