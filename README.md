@@ -135,12 +135,63 @@ parameters:
     image: "quay.io/pires/docker-elasticsearch-kubernetes:5.5.0"
     java_opts: "-Xms512m -Xmx512m"
     replicas: 1
+    masters: 1
     roles:
       master:
         image: ${elasticsearch:image}
         java_opts: ${elasticsearch:java_opts}
         replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}
+      data:
+        image: ${elasticsearch:image}
+        java_opts: ${elasticsearch:java_opts}
+        replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}
+      client:
+        image: ${elasticsearch:image}
+        java_opts: ${elasticsearch:java_opts}
+        replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}
+      ingest:
+        image: ${elasticsearch:image}
+        java_opts: ${elasticsearch:java_opts}
+        replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}
 ...
+```
+
+Or in the `mysql` class example, we declare the generic variables that will be shared by all targets that import the component and what to compile.
+
+We include a secret that is referencing a GPG encrypted value in `secrets/mysql/root/password`, or if the file doesn't exist, it will dynamically generate a random b64-encoded password, encrypt it and save it into the file.
+
+```
+$ cat inventory/classes/component/mysql.yml
+parameters:
+  mysql:
+    storage: 10G
+    storage_class: standard
+    image: mysql:latest
+    users:
+      root:
+        # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
+        password: ?{gpg:mysql/root/password|randomstr|base64}
+
+  kapitan:
+    compile:
+    - output_path: manifests
+      input_type: jsonnet
+      input_paths:
+        - components/mysql/main.jsonnet
+      output_type: yaml
+    - output_path: scripts
+      input_type: jinja2
+      input_paths:
+        - scripts
+    - output_path: .
+      output_type: yaml
+      input_type: jinja2
+      input_paths:
+        - docs/mysql/README.md
 ```
 
 #### Inventory Targets
@@ -153,34 +204,12 @@ For example:
 ```
 $ cat inventory/targets/minikube-es.yml
 classes:
+  - common
   - cluster.minikube
   - component.elasticsearch
 
 parameters:
   target_name: minikube-es
-  kapitan:
-    vars:
-      target: ${target_name}
-      namespace: ${target_name}
-    compile:
-    - output_path: manifests
-      input_type: jsonnet
-      input_paths:
-        - components/elasticsearch/main.jsonnet
-      output_type: yaml
-    - output_path: scripts
-      input_type: jinja2
-      input_paths:
-        - scripts
-    - output_path: .
-      input_type: jinja2
-      input_paths:
-        - docs/elasticsearch/README.md
-
-    secrets:
-      recipients:
-        - dummy@recipient
-  namespace: ${target_name}
 
   elasticsearch:
     replicas: 2
@@ -220,6 +249,12 @@ Targets can also be defined inside the `inventory`.
 │       ├── dev-cluster1-elasticsearch.yml
 │       ├── prod-cluster1-elasticsearch.yml
 │       └── prod-cluster2-frontend.yml
+├── secrets
+│   ├── targets
+│   │   ├── prod-cluster1-elasticsearch
+│   │   │   └── password
+│   ├── common
+│   │   └── example-com-tls.key
 ├── lib
 │   ├── kapitan.libjsonnet
 │   └── kube.libjsonnet
@@ -329,6 +364,67 @@ local kap = import "lib/kapitan.libjsonnet";
 
 It's up to you to decide what the output is.
 
+### kapitan secrets
+
+Manages your secrets with GPG (with plans to support GCP/AWS KMS and Vault).
+
+The usual flow of creating and using an encrypted secret with kapitan is:
+
+- Define your GPG recipients (keys who can encrypt and decrypt the secret), see [common.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/common.yml), `parameters.kapitan.secrets`. You can also define these per target.
+
+- Create your secret:
+  - manually:
+```
+kapitan secrets --write mysql/root/password -t minikube-mysql -f <password file>
+OR
+echo -n '<password>' | kapitan secrets --write mysql/root/password -t minikube-mysql -f -
+```
+  This will encrypt and save your password into `secrets/mysql/root/password`, see `examples/kubernetes`.
+
+  - automatically:
+  See [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml). When referencing your secret, you can use the following functions to automatically generate, encrypt and save your secret:
+```
+randomstr - Generates a random string. You can optionally pass the length you want i.e. randomstr:32
+rsa - Generates an RSA 4096 private key. You can optinally pass the key size i.e. rsa:2048
+base64 - base64 encodes your secret; to be used as a secondary function i.e. randomstr|base64
+sha256 - sha256 hashes your secret; to be used as a secondary function i.e. randomstr|sha256. You can optionally pass a salt i.e randomstr|sha256:salt -> becomes sha256("salt:<generated random string>")
+```
+
+- Use your secret in your classes/targets, like in the [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml):
+```
+users:
+  root:
+    # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
+    password: ?{gpg:mysql/root/password|randomstr|base64}
+```
+
+- After `kapitan compile`, this will compile to the [mysql_secret.yml k8s secret](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml). If you are part of the GPG recipients, you can see the secret by running:
+```
+kapitan secrets --reveal -f examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml
+```
+
+To setup GPG for the kubernetes examples you can run:
+```
+gpg --import examples/kubernetes/secrets/example\@kapitan.dev.pub
+gpg --import examples/kubernetes/secrets/example\@kapitan.dev.key
+```
+
+And to trust the GPG example key:
+```
+gpg --edit-key example@kapitan.dev
+gpg> trust
+Please decide how far you trust this user to correctly verify other users' keys
+(by looking at passports, checking fingerprints from different sources, etc.)
+1 = I don't know or won't say
+2 = I do NOT trust
+3 = I trust marginally
+4 = I trust fully
+5 = I trust ultimately
+m = back to the main menu
+Your decision? 5
+Do you really want to set this key to ultimate trust? (y/N) y
+gpg> quit
+```
 
 ### kapitan inventory
 
@@ -338,11 +434,19 @@ Rendering the inventory for the `minikube-es` target:
 $ kapitan inventory -t minikube-es
 ...
 classes:
+  - component.namespace
   - cluster.common
+  - common
   - cluster.minikube
   - component.elasticsearch
 environment: base
+exports: {}
 parameters:
+  _reclass_:
+    environment: base
+    name:
+      full: minikube-es
+      short: minikube-es
   cluster:
     id: minikube
     name: minikube
@@ -377,6 +481,11 @@ parameters:
   kapitan:
     compile:
       - input_paths:
+          - components/namespace/main.jsonnet
+        input_type: jsonnet
+        output_path: pre-deploy
+        output_type: yaml
+      - input_paths:
           - components/elasticsearch/main.jsonnet
         input_type: jsonnet
         output_path: manifests
@@ -391,7 +500,8 @@ parameters:
         output_path: .
     secrets:
       recipients:
-        - dummy@recipient
+        - fingerprint: D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C
+          name: example@kapitan.dev
     vars:
       namespace: minikube-es
       target: minikube-es
@@ -448,8 +558,9 @@ With Kapitan, we worked to de-compose several problems that most of the other so
 1) ***Kubernetes manifests***: We like the jsonnet approach of using json as the working language. Jsonnet allows us to use inheritance and composition, and hide complexity at higher levels.
 2) ***Configuration files***: Most solutions will assume this problem is solved somewhere else. We feel Jinja (or your template engine of choice) have the upper hand here.
 3) ***Hierarchical inventory***: This is the feature that sets us apart from other solutions. We use the inventory (based on [reclass](https://github.com/salt-formulas/reclass)) to define variables and properties that can be reused across different projects/deployments. This allows us to limit repetition, but also to define a nicer interface with developers (or CI tools) which will only need to understand YAML to operate changes.
-4) ***Canned scripts***: We treat scripts as text templates, so that we can craft pre-canned scripts for the specific target we are working on. This can be used for instance to define scripts that setup clusters, contexts or allow to run kubectl with all the correct settings. Most other solutions require you to define contexts and call kubectl with the correct settings. We take care of that for you. Less ambiguity, less mistakes.
-5) ***Documentation***: We also use templates to create documentation for the targets we deploy. Documentation lived alongside everything else and it is treated as a first class citizen.
+4) ***Secrets***: We manage most of our secrets with kapitan using the GPG integration. Keys can be setup per class, per target or shared so you can easily and flexibly manage access per environment. They can also be dynamically generated on compilation, if you don't feel like generating random passwords or RSA private keys, and they can be referenced in the inventory like any other variables. The secrets backend can be expanded to support other providers such as KMS (GCP/AWS) or Vault, in addition to GPG.
+5) ***Canned scripts***: We treat scripts as text templates, so that we can craft pre-canned scripts for the specific target we are working on. This can be used for instance to define scripts that setup clusters, contexts or allow to run kubectl with all the correct settings. Most other solutions require you to define contexts and call kubectl with the correct settings. We take care of that for you. Less ambiguity, less mistakes.
+6) ***Documentation***: We also use templates to create documentation for the targets we deploy. Documentation lived alongside everything else and it is treated as a first class citizen.
 We feel most other solutions are pushing the limits of their capacity in order to provide for the above problems.
 Helm treats everything as a text template, while jsonnet tries to do everything as json.
 We believe that these approaches can be blended in a powerful new way, glued together by the inventory.

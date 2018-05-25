@@ -21,4 +21,5 @@ parameters:
     image: mysql:latest
     users:
       root:
-        password: ?{gpg:mysql/root/password}
+        # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
+        password: ?{gpg:mysql/root/password|randomstr|base64}
