@@ -98,15 +98,12 @@ Compiled minikube-es
 Compiled minikube-es-2
 ```
 
-
-
 # Main concepts
 
 ### Components
 
 A component is an aplication that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (StatefulSet, Services, ConfigMaps) defined in jsonnet.
 It may also include scripts, config files and dynamically generated documentation defined using Jinja templates.
-
 
 ### Inventory
 
@@ -115,7 +112,6 @@ This is a hierarchical database of variables that are passed to the targets duri
 By default, Kapitan will look for an `inventory/` directory to render the inventory from.
 
 There are 2 types of objects inside the inventory:
-
 
 #### Inventory Classes
 
@@ -313,8 +309,6 @@ optional arguments:
                         ignore the last kapitan version used to compile (from .kapitan)
 ```
 
-
-
 # Modes of operation
 
 ### kapitan compile
@@ -374,23 +368,22 @@ The usual flow of creating and using an encrypted secret with kapitan is:
 
 - Create your secret:
 
-**Manually**:
-```
-kapitan secrets --write mysql/root/password -t minikube-mysql -f <password file>
-OR
-echo -n '<password>' | kapitan secrets --write mysql/root/password -t minikube-mysql -f -
-```
-This will encrypt and save your password into `secrets/mysql/root/password`, see `examples/kubernetes`.
+  - Manually:
+    ```
+    kapitan secrets --write mysql/root/password -t minikube-mysql -f <password file>
+    OR
+    echo -n '<password>' | kapitan secrets --write mysql/root/password -t minikube-mysql -f -
+    ```
+    This will encrypt and save your password into `secrets/mysql/root/password`, see `examples/kubernetes`.
 
-**Automatically**:
-
-See [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml). When referencing your secret, you can use the following functions to automatically generate, encrypt and save your secret:
-```
-randomstr - Generates a random string. You can optionally pass the length you want i.e. randomstr:32
-rsa - Generates an RSA 4096 private key. You can optinally pass the key size i.e. rsa:2048
-base64 - base64 encodes your secret; to be used as a secondary function i.e. randomstr|base64
-sha256 - sha256 hashes your secret; to be used as a secondary function i.e. randomstr|sha256. You can optionally pass a salt i.e randomstr|sha256:salt -> becomes sha256("salt:<generated random string>")
-```
+  - Automatically:<br>
+    See [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml). When referencing your secret, you can use the following functions to automatically generate, encrypt and save your secret:
+    ```
+    randomstr - Generates a random string. You can optionally pass the length you want i.e. randomstr:32
+    rsa - Generates an RSA 4096 private key. You can optionally pass the key size i.e. rsa:2048
+    base64 - base64 encodes your secret; to be used as a secondary function i.e. randomstr|base64
+    sha256 - sha256 hashes your secret; to be used as a secondary function i.e. randomstr|sha256. You can optionally pass a salt i.e randomstr|sha256:salt -> becomes sha256("salt:<generated random string>")
+    ```
 
 - Use your secret in your classes/targets, like in the [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml):
 ```
@@ -532,8 +525,6 @@ $ kapitan searchvar parameters.elasticsearch.replicas
 ./inventory/classes/component/elasticsearch.yml   1
 ```
 
-
-
 # Credits
 
 * [Jsonnet](https://github.com/google/jsonnet)
@@ -558,10 +549,15 @@ In short, we feel `Helm` is trying to be `apt-get` for Kubernetes charts, while 
 With Kapitan, we worked to de-compose several problems that most of the other solutions are treating as one.
 
 1) ***Kubernetes manifests***: We like the jsonnet approach of using json as the working language. Jsonnet allows us to use inheritance and composition, and hide complexity at higher levels.
+
 2) ***Configuration files***: Most solutions will assume this problem is solved somewhere else. We feel Jinja (or your template engine of choice) have the upper hand here.
+
 3) ***Hierarchical inventory***: This is the feature that sets us apart from other solutions. We use the inventory (based on [reclass](https://github.com/salt-formulas/reclass)) to define variables and properties that can be reused across different projects/deployments. This allows us to limit repetition, but also to define a nicer interface with developers (or CI tools) which will only need to understand YAML to operate changes.
+
 4) ***Secrets***: We manage most of our secrets with kapitan using the GPG integration. Keys can be setup per class, per target or shared so you can easily and flexibly manage access per environment. They can also be dynamically generated on compilation, if you don't feel like generating random passwords or RSA private keys, and they can be referenced in the inventory like any other variables. The secrets backend can be expanded to support other providers such as KMS (GCP/AWS) or Vault, in addition to GPG.
+
 5) ***Canned scripts***: We treat scripts as text templates, so that we can craft pre-canned scripts for the specific target we are working on. This can be used for instance to define scripts that setup clusters, contexts or allow to run kubectl with all the correct settings. Most other solutions require you to define contexts and call kubectl with the correct settings. We take care of that for you. Less ambiguity, less mistakes.
+
 6) ***Documentation***: We also use templates to create documentation for the targets we deploy. Documentation lived alongside everything else and it is treated as a first class citizen.
 We feel most other solutions are pushing the limits of their capacity in order to provide for the above problems.
 Helm treats everything as a text template, while jsonnet tries to do everything as json.
