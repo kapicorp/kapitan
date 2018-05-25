@@ -7,6 +7,9 @@
 // reference them.  In addition, jsonnet validation is more useful
 // (client-side, and gives better line information).
 
+local kap = import "lib/kapitan.libjsonnet";
+local inv = kap.inventory();
+
 {
   // Returns array of values from given object.  Does not include hidden fields.
   objectValues(o):: [o[field] for field in std.objectFields(o)],
@@ -47,7 +50,7 @@
     metadata: {
       name: name,
       labels: { name: name },
-      namespace: std.extVar("namespace"),
+      namespace: inv.parameters.namespace,
       annotations: {},
     },
   },
@@ -59,20 +62,21 @@
     subsets: [],
   },
 
-  Service(name): $._Object("v1", "Service", name) {
+  Service(name, kapitan_inventory_override={}): $._Object("v1", "Service", name) {
     local service = self,
 
     target_pod:: error "service target_pod required",
     target_container_name:: error "service target_container_name required",
     target_container:: [c for c in self.target_pod.spec.containers if c["name"] == self.target_container_name][0],
-    type:: "ClusterIP",
     ports_:: [
       {
         name: p["name"],
         port: p["containerPort"],
         targetPort: p["name"],
+        [if "protocol" in p then "protocol"]: p["protocol"],
       } for p in self.target_container.ports
     ],
+    type:: if "type" in kapitan_inventory_override then kapitan_inventory_override.type else "ClusterIP",
 
     // Helpers that format host:port in various ways
     http_url:: "http://%s.%s:%s/" % [
@@ -81,11 +85,13 @@
     proxy_urlpath:: "/api/v1/proxy/namespaces/%s/services/%s/" % [
       self.metadata.namespace, self.metadata.name,
     ],
+    load_balancer_source_ranges:: if self.type == "LoadBalancer" && "load_balancer_source_ranges" in kapitan_inventory_override then kapitan_inventory_override.load_balancer_source_ranges else [],
 
     spec: {
       selector: service.target_pod.metadata.labels,
       ports: service.ports_,
-      type: service.type
+      type: service.type,
+      loadBalancerSourceRanges: service.load_balancer_source_ranges,
     },
 
   },
@@ -215,6 +221,44 @@
   ServiceAccount(name): $._Object("v1", "ServiceAccount", name) {
   },
 
+  # kubernetes versions before 1.8.0 should use rbac.authorization.k8s.io/v1beta1
+  ClusterRole(name): $._Object("rbac.authorization.k8s.io/v1", "ClusterRole", name) {
+    rules: error "rules required",
+  },
+
+  # kubernetes versions before 1.8.0 should use rbac.authorization.k8s.io/v1beta1
+  Role(name): $._Object("rbac.authorization.k8s.io/v1", "Role", name) {
+    rules: error "rules required",
+  },
+
+  # kubernetes versions before 1.8.0 should use rbac.authorization.k8s.io/v1beta1
+  ClusterRoleBinding(name): $._Object("rbac.authorization.k8s.io/v1", "ClusterRoleBinding", name) {
+    roleRef: {
+      apiGroup: "rbac.authorization.k8s.io",
+      kind: "ClusterRole",
+      name: name,
+    },
+    subjects: [{
+      kind: "ServiceAccount",
+      name: name,
+      namespace: inv.parameters.namespace,
+    }],
+  },
+
+  # kubernetes versions before 1.8.0 should use rbac.authorization.k8s.io/v1beta1
+  RoleBinding(name): $._Object("rbac.authorization.k8s.io/v1", "RoleBinding", name) {
+    roleRef: {
+      apiGroup: "rbac.authorization.k8s.io",
+      kind: "Role",
+      name: name,
+    },
+    subjects: [{
+      kind: "ServiceAccount",
+      name: name,
+      namespace: inv.parameters.namespace,
+    }],
+  },
+
   Secret(name): $._Object("v1", "Secret", name) {
     local secret = self,
 
@@ -264,12 +308,6 @@
           annotations: {},
         },
       },
-/*  COMMENT temp removed (ramaro)
-COMMENTING THE NEXT 25 LINES WHILE WE MIGRATE
-kube-templates to health-templates.
-This makes it easier to compare current jinja manifests that don't have the blocks below
-with kapitan compiled manifests that do
-*/
       strategy: {
         type: "RollingUpdate",
 
@@ -295,7 +333,7 @@ with kapitan compiled manifests that do
 
       // NB: Regular k8s default is to keep all revisions
       revisionHistoryLimit: 10,
-// PREV COMMENT
+
       replicas: 1,
       assert self.replicas >= 1,
     },
@@ -362,6 +400,23 @@ with kapitan compiled manifests that do
 
       completions: 1,
       parallelism: 1,
+    },
+  },
+
+  CronJob(name): $._Object("batch/v2alpha1", "CronJob", name) {
+    local cronjob = self,
+
+    spec: {
+      jobTemplate: {
+        spec: {
+          template: {
+            metadata: {
+              labels: cronjob.metadata.labels,
+            },
+            spec: $.PodSpec,
+          },
+        },
+      },
     },
   },
 
