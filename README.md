@@ -373,7 +373,8 @@ The usual flow of creating and using an encrypted secret with kapitan is:
 - Define your GPG recipients (keys who can encrypt and decrypt the secret), see [common.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/common.yml), `parameters.kapitan.secrets`. You can also define these per target.
 
 - Create your secret:
-Manually:
+
+**Manually**:
 ```
 kapitan secrets --write mysql/root/password -t minikube-mysql -f <password file>
 OR
@@ -381,7 +382,8 @@ echo -n '<password>' | kapitan secrets --write mysql/root/password -t minikube-m
 ```
 This will encrypt and save your password into `secrets/mysql/root/password`, see `examples/kubernetes`.
 
-Automatically:
+**Automatically**:
+
 See [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml). When referencing your secret, you can use the following functions to automatically generate, encrypt and save your secret:
 ```
 randomstr - Generates a random string. You can optionally pass the length you want i.e. randomstr:32
