@@ -402,11 +402,13 @@ users:
 ```
 kapitan secrets --reveal -f examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml
 ```
+
 To setup GPG for the kubernetes examples you can run:
 ```
 gpg --import examples/kubernetes/secrets/example\@kapitan.dev.pub
 gpg --import examples/kubernetes/secrets/example\@kapitan.dev.key
 ```
+
 And to trust the GPG example key:
 ```
 gpg --edit-key example@kapitan.dev
