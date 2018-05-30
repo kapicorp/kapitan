@@ -299,6 +299,7 @@ optional arguments:
                         targets to compile, default is all
   --parallelism INT, -p INT
                         Number of concurrent compile processes, default is 4
+  --indent INT, -i INT  Indentation spaces for YAML/JSON, default is 2
   --secrets-path SECRETS_PATH
                         set secrets path, default is "./secrets"
   --reveal              reveal secrets (warning: this will write sensitive

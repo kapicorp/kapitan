@@ -244,6 +244,7 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
         secrets_reveal: default False, set to reveal secrets on compile
         target_name: default None, set to current target being compiled
         gpg_obj: default None
+        indent: default 2
     """
     _search_imports = lambda cwd, imp: search_imports(cwd, imp, search_path)
     json_output = jsonnet_file(file_path, import_callback=_search_imports,
@@ -257,6 +258,7 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
     secrets_reveal = kwargs.get('secrets_reveal', False)
     gpg_obj = kwargs.get('gpg_obj', None)
     target_name = kwargs.get('target_name', None)
+    indent = kwargs.get('indent', 2)
 
     if prune:
         json_output = prune_empty(json_output)
@@ -268,14 +270,14 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
             file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
             with CompiledFile(file_path, mode="w", secrets_path=secrets_path,
                               secrets_reveal=secrets_reveal, gpg_obj=gpg_obj,
-                              target_name=target_name) as fp:
+                              target_name=target_name, indent=indent) as fp:
                 fp.write_json(item_value)
                 logger.debug("Wrote %s", file_path)
         elif output == 'yaml':
             file_path = os.path.join(compile_path, '%s.%s' % (item_key, "yml"))
             with CompiledFile(file_path, mode="w", secrets_path=secrets_path,
                               secrets_reveal=secrets_reveal, gpg_obj=gpg_obj,
-                              target_name=target_name) as fp:
+                              target_name=target_name, indent=indent) as fp:
                 fp.write_yaml(item_value)
                 logger.debug("Wrote %s", file_path)
         else:
@@ -330,21 +332,23 @@ class CompilingFile(object):
 
     def write_yaml(self, obj):
         "recursively hash or reveal secrets and convert obj to yaml and write to file"
+        indent = self.kwargs.get('indent', 2)
         secrets_reveal = self.kwargs.get('secrets_reveal', False)
         if secrets_reveal:
             self.sub_token_reveal_obj(obj)
         else:
             self.sub_token_compiled_obj(obj)
-        yaml.dump(obj, stream=self.fp, Dumper=PrettyDumper, default_flow_style=False)
+        yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
 
     def write_json(self, obj):
         "recursively hash or reveal secrets and convert obj to json and write to file"
+        indent = self.kwargs.get('indent', 2)
         secrets_reveal = self.kwargs.get('secrets_reveal', False)
         if secrets_reveal:
             self.sub_token_reveal_obj(obj)
         else:
             self.sub_token_compiled_obj(obj)
-        json.dump(obj, self.fp, indent=4, escape_forward_slashes=False)
+        json.dump(obj, self.fp, indent=indent, escape_forward_slashes=False)
 
     def sub_token_compiled_obj(self, obj):
         "recursively find and replace tokens with hashed tokens in obj"

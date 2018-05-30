@@ -76,6 +76,9 @@ def main():
     compile_parser.add_argument('--parallelism', '-p', type=int,
                                 default=4, metavar='INT',
                                 help='Number of concurrent compile processes, default is 4')
+    compile_parser.add_argument('--indent', '-i', type=int,
+                                default=2, metavar='INT',
+                                help='Indentation spaces for YAML/JSON, default is 2')
     compile_parser.add_argument('--secrets-path', help='set secrets path, default is "./secrets"',
                                 default='./secrets',)
     compile_parser.add_argument('--reveal',
@@ -179,7 +182,7 @@ def main():
         compile_targets(args.inventory_path, search_path, args.output_path,
                         args.parallelism, args.targets,
                         prune=(not args.no_prune), secrets_path=args.secrets_path,
-                        secrets_reveal=args.reveal, gpg_obj=gpg_obj)
+                        secrets_reveal=args.reveal, gpg_obj=gpg_obj, indent=args.indent)
 
         if not args.ignore_version_check:
             save_version()
