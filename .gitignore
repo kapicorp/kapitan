@@ -1,5 +1,6 @@
 *.pyc
 *.swp
+*.bak
 build/
 dist/
 kapitan.egg-info/
