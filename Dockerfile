@@ -5,6 +5,7 @@ RUN apk add --no-cache git g++ make libstdc++ gnupg musl-dev yaml-dev libffi-dev
 
 WORKDIR /kapitan
 COPY kapitan/ kapitan/
+COPY reclass ./
 COPY requirements.txt ./
 
 RUN pip install --upgrade --no-cache-dir pip && \
