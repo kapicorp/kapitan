@@ -35,11 +35,6 @@ def install_deps():
     or something like that, so e.g. `-9231` works as well as
     `1.1.0`. This is ignored by the setuptools, but has to be there.
 
-    Warnings:
-        to make pip respect the links, you have to use
-        `--process-dependency-links` switch. So e.g.:
-        `pip install --process-dependency-links {git-url}`
-
     Returns:
          list of packages and dependency links.
     """
@@ -79,9 +74,6 @@ setup(
 
         'License :: OSI Approved :: Apache Software License',
 
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6'
     ],
 

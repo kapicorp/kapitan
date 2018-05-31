@@ -19,7 +19,7 @@ notifications:
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y gnupg2 git
+  - sudo apt-get install -y gnupg2
 
 # command to install dependencies
 install:

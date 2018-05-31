@@ -15,8 +15,10 @@
 # limitations under the License.
 
 "inventory tests"
+
 import unittest
 from kapitan.resources import inventory
+
 
 class InventoryTargetTest(unittest.TestCase):
     def test_inventory_target(self):

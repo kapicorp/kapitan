@@ -15,10 +15,12 @@
 # limitations under the License.
 
 "jinja2 tests"
+
 import unittest
 import tempfile
 from kapitan.utils import render_jinja2_file
 from kapitan.resources import inventory
+
 
 class Jinja2FiltersTest(unittest.TestCase):
     def test_sha256(self):
@@ -36,6 +38,7 @@ class Jinja2FiltersTest(unittest.TestCase):
             context = {"text":["this", "that"]}
             yaml = '- this\n- that\n'
             self.assertEqual(render_jinja2_file(f.name, context), yaml)
+
 
 class Jinja2ContextVars(unittest.TestCase):
     def test_inventory_context(self):

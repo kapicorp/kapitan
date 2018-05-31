@@ -15,8 +15,10 @@
 # limitations under the License.
 
 "jsonnet tests"
+
 import unittest
 from kapitan.resources import yaml_dump
+
 
 class JsonnetNativeFuncsTest(unittest.TestCase):
     def test_yaml_dump(self):
