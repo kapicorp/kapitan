@@ -40,7 +40,7 @@ pip3 install --user --upgrade setuptools wheel twine
 rm -r dist/ build/
 python3 setup.py sdist bdist_wheel
 # Upload kapitan to PyPi
-twine upload --repository-url https://pypi.org/ dist/*
+twine upload dist/*
 
 echo "Done"
 echo
