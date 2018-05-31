@@ -1,3 +1,3 @@
 [submodule "reclass"]
   path = reclass
-  url = git://github.com/salt-formulas/reclass.git
+  url = https://github.com/salt-formulas/reclass.git

@@ -1,3 +1,6 @@
+## 0.16.5:
+- Reclass update (#112)
+
 ## 0.16.4:
 - Fixed deep_get recursion and search (#108)
 - Customizable indentation of yaml/json (#110)

@@ -18,7 +18,7 @@
 
 PROJECT_NAME = 'kapitan'
 VERSION = '0.16.5'
-DESCRIPTION = ('Generic templated configuration management for Kubernetes,'
+DESCRIPTION = ('Generic templated configuration management for Kubernetes, '
                'Terraform and other things')
 AUTHOR = 'Ricardo Amaro'
 AUTHOR_EMAIL = 'ramaro@google.com'
