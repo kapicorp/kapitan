@@ -19,9 +19,9 @@
 import unittest
 import os
 import sys
-import shutil
 from kapitan.cli import main
 from kapitan.utils import get_directory_hash
+
 
 class CompileTest(unittest.TestCase):
     def setUp(self):

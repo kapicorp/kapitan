@@ -15,6 +15,7 @@
 # limitations under the License.
 
 "secrets tests"
+
 import os
 import unittest
 import re
@@ -33,6 +34,8 @@ KEY = GPG_OBJ.gen_key(GPG_OBJ.gen_key_input(key_type="RSA",
 KEY2 = GPG_OBJ.gen_key(GPG_OBJ.gen_key_input(key_type="RSA",
                                             key_length=2048,
                                             passphrase="testphrase"))
+
+
 class SecretsTest(unittest.TestCase):
     "Test secrets"
     def test_secret_token_attributes(self):
