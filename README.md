@@ -52,7 +52,7 @@ For CI/CD usage, check out [ci/](https://github.com/deepmind/kapitan/tree/master
 #### Pip
 Kapitan needs Python 3.6.
 
-**Install Python 3:**
+**Install Python 3.6:**
 <br>Linux: `sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip python3-yaml`
 <br>Mac: `brew install python3 libyaml`
 
@@ -60,12 +60,12 @@ Kapitan needs Python 3.6.
 
 User (`$HOME/.local/lib/python3.6/bin` on Linux or `$HOME/Library/Python/3.6/bin` on macOS):
 ```
-pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git
+pip3 install --user --upgrade kapitan
 ```
 
 System-wide (not recommended):
 ```
-sudo pip3 install --upgrade git+https://github.com/deepmind/kapitan.git
+sudo pip3 install --upgrade kapitan
 ```
 
 # Example

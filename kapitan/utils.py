@@ -291,7 +291,7 @@ def check_version():
                 print('Last used version (in .kapitan): {}{}\n'.format(dot_kapitan["version"], termcolor.ENDC))
                 print('Please upgrade kapitan to at least "{}" in order to keep results consistent:\n'.format(dot_kapitan["version"]))
                 print('Docker: docker pull deepmind/kapitan')
-                print('Pip (user): pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git\n')
+                print('Pip (user): pip3 install --user --upgrade kapitan\n')
                 print('Check https://github.com/deepmind/kapitan#quickstart for more info.\n')
                 print('If you know what you\'re doing, you can skip this check by adding \'--ignore-version-check\'.')
                 sys.exit(1)
