@@ -18,4 +18,4 @@ import os
 import sys
 
 # Adding reclass to PYTHONPATH
-sys.path.insert(0, os.path.dirname(__file__) + "/../reclass")
+sys.path.insert(0, os.path.dirname(__file__) + "/reclass")
