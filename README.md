@@ -60,12 +60,12 @@ Kapitan needs Python 3.6.
 
 User (`$HOME/.local/lib/python3.6/bin` on Linux or `$HOME/Library/Python/3.6/bin` on macOS):
 ```
-pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git  --process-dependency-links
+pip3 install --user --upgrade git+https://github.com/deepmind/kapitan.git
 ```
 
 System-wide (not recommended):
 ```
-sudo pip3 install --upgrade git+https://github.com/deepmind/kapitan.git --process-dependency-links
+sudo pip3 install --upgrade git+https://github.com/deepmind/kapitan.git
 ```
 
 # Example
