@@ -1,3 +1,6 @@
+## 0.16.8:
+- Reclass submodule integration fixes
+
 ## 0.16.5:
 - Reclass update (#112)
 
