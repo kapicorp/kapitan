@@ -2,7 +2,7 @@ all: clean package
 
 .PHONY: test
 test:
-	python3 scripts/run_tests.py
+	python3 -m unittest discover
 
 .PHONY: release
 release:

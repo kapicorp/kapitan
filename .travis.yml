@@ -22,7 +22,7 @@ before_install:
   - sudo apt-get install -y gnupg2
 
 install:
-  - pip install -r requirements.txt
+  - pip3 install -r requirements.txt
 
 script:
   - make test
