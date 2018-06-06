@@ -184,7 +184,7 @@ def flatten_dict(d, parent_key='', sep='.'):
     return dict(items)
 
 
-def deep_get(dictionary, keys):
+def deep_get(dictionary, keys, previousKey=None):
     '''
     Search recursively for 'keys' in 'dictionary' and return value, otherwise return None
     '''
@@ -202,7 +202,7 @@ def deep_get(dictionary, keys):
                 return None
 
             # Recurse with next keys in the chain on the dict
-            return deep_get(value, keys[1:])
+            return deep_get(value, keys[1:], previousKey=keys[0])
         else:
             if isinstance(dictionary, dict):
                 # If we find nothing, check for globbing, loop and match with dict keys
@@ -215,14 +215,20 @@ def deep_get(dictionary, keys):
                                 return dictionary[dict_key]
 
                             # If we have more variables in the chain, continue recursion
-                            return deep_get(dictionary[dict_key], keys[1:])
+                            return deep_get(dictionary[dict_key], keys[1:], previousKey=keys[0])
 
-                # No globbing, move down the dictionary and recurse
-                for v in dictionary.values():
-                    if isinstance(v, dict):
-                        item = deep_get(v, keys)
-                        if item:
-                            return item
+                if not previousKey:
+                    # No previous keys in chain and no globbing, move down the dictionary and recurse
+                    for v in dictionary.values():
+                        if isinstance(v, dict):
+                            item = None
+                            if len(keys) > 1:
+                                item = deep_get(v, keys, previousKey=keys[0])
+                            else:
+                                item = deep_get(v, keys)
+
+                            if item:
+                                return item
 
     return value
 
