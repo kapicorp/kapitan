@@ -1,3 +1,6 @@
+## 0.16.9:
+- Fixed bug with searchvar keys chain (#115)
+
 ## 0.16.8:
 - Reclass submodule integration fixes
 
