@@ -37,7 +37,7 @@ echo "Making release to PyPi..."
 # Install deps
 pip3 install --user --upgrade setuptools wheel twine
 # Package kapitan
-rm -r dist/ build/ kapitan.egg-info/
+rm -rf dist/ build/ kapitan.egg-info/
 python3 setup.py sdist bdist_wheel
 # Upload kapitan to PyPi
 twine upload dist/*
