@@ -35,7 +35,7 @@ import yaml
 import time
 
 from kapitan.resources import search_imports, resource_callbacks, inventory, inventory_reclass
-from kapitan.utils import jsonnet_file, prune_empty, render_jinja2, PrettyDumper
+from kapitan.utils import jsonnet_file, prune_empty, render_jinja2, PrettyDumper, hashable_lru_cache
 from kapitan.secrets import secret_gpg_raw_read, secret_token_from_tag, secret_token_attributes
 from kapitan.secrets import SECRET_TOKEN_TAG_PATTERN, secret_gpg_read, secret_gpg_write
 from kapitan.secrets import secret_gpg_exists, secret_gpg_write_function
@@ -284,6 +284,7 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
             raise ValueError('output is neither "json" or "yaml"')
 
 
+@hashable_lru_cache
 def valid_target_obj(target_obj):
     """
     Validates a target_obj
