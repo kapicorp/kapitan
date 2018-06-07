@@ -188,12 +188,11 @@ def inventory_reclass(inventory_path):
             _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings())
 
             cached.inv = _reclass.inventory()
-            return cached.inv
         except ReclassException as e:
             if isinstance(e, NotFoundError):
                 logger.error("Inventory reclass error: inventory not found")
             else:
                 logger.error("Inventory reclass error: %s", e.message)
             raise InventoryError(e.message)
-    else:
-        return cached.inv
+
+    return cached.inv

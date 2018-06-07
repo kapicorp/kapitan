@@ -30,7 +30,7 @@ from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar, d
 from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
-from kapitan.secrets import secret_gpg_backend, secret_gpg_write, secret_gpg_reveal_file
+from kapitan.secrets import secret_gpg_write, secret_gpg_reveal_file
 from kapitan.secrets import secret_gpg_reveal_dir, secret_gpg_reveal_raw, secret_gpg_update_recipients
 from kapitan.secrets import search_target_token_paths, secret_gpg_raw_read_fingerprints
 from kapitan.secrets import lookup_fingerprints
@@ -174,7 +174,6 @@ def main():
         else:
             logging.basicConfig(level=logging.INFO, format="%(message)s")
         search_path = os.path.abspath(args.search_path)
-        gpg_obj = secret_gpg_backend()
 
         if not args.ignore_version_check:
             check_version()
@@ -182,7 +181,7 @@ def main():
         compile_targets(args.inventory_path, search_path, args.output_path,
                         args.parallelism, args.targets,
                         prune=(not args.no_prune), secrets_path=args.secrets_path,
-                        secrets_reveal=args.reveal, gpg_obj=gpg_obj, indent=args.indent)
+                        secrets_reveal=args.reveal, indent=args.indent)
 
         if not args.ignore_version_check:
             save_version()
@@ -218,7 +217,7 @@ def main():
                                 format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
         else:
             logging.basicConfig(level=logging.INFO, format="%(message)s")
-        gpg_obj = secret_gpg_backend()
+
         if args.write is not None:
             if args.file is None:
                 parser.error('--file is required with --write')
@@ -234,19 +233,19 @@ def main():
             else:
                 with open(args.file) as fp:
                     data = fp.read()
-            secret_gpg_write(gpg_obj, args.secrets_path, args.write, data, args.base64, recipients)
+            secret_gpg_write(args.secrets_path, args.write, data, args.base64, recipients)
         elif args.reveal:
             if args.file is None:
                 parser.error('--file is required with --reveal')
             if args.file == '-':
-                secret_gpg_reveal_raw(gpg_obj, args.secrets_path, None, verify=(not args.no_verify))
+                secret_gpg_reveal_raw(args.secrets_path, None, verify=(not args.no_verify))
             elif args.file:
                 if os.path.isfile(args.file):
-                    out = secret_gpg_reveal_file(gpg_obj, args.secrets_path, args.file,
+                    out = secret_gpg_reveal_file(args.secrets_path, args.file,
                                                  verify=(not args.no_verify))
                     sys.stdout.write(out)
                 elif os.path.isdir(args.file):
-                    secret_gpg_reveal_dir(gpg_obj, args.secrets_path, args.file,
+                    secret_gpg_reveal_dir(args.secrets_path, args.file,
                                           verify=(not args.no_verify))
         elif args.update:
             # update recipients for secret tag
@@ -254,7 +253,7 @@ def main():
             if args.target_name:
                 inv = inventory_reclass(args.inventory_path)
                 recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
-            secret_gpg_update_recipients(gpg_obj, args.secrets_path, args.update, recipients)
+            secret_gpg_update_recipients(args.secrets_path, args.update, recipients)
         elif args.update_targets or args.validate_targets:
             # update recipients for all secrets in secrets_path
             # use --secrets-path to set scanning path
@@ -267,7 +266,7 @@ def main():
                 try:
                     recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['recipients']
                     for token_path in token_paths:
-                        target_fingerprints = set(lookup_fingerprints(gpg_obj, recipients))
+                        target_fingerprints = set(lookup_fingerprints(recipients))
                         secret_fingerprints = set(secret_gpg_raw_read_fingerprints(secrets_path, token_path))
                         if target_fingerprints != secret_fingerprints:
                             if args.validate_targets:
@@ -275,7 +274,7 @@ def main():
                                 ret_code = 1
                             else:
                                 new_recipients = [dict([("fingerprint", f), ]) for f in target_fingerprints]
-                                secret_gpg_update_recipients(gpg_obj, secrets_path, token_path, new_recipients)
+                                secret_gpg_update_recipients(secrets_path, token_path, new_recipients)
                 except KeyError:
                     logger.debug("secret_gpg_update_target: target: %s has no inventory recipients, skipping",
                                  target_name)
