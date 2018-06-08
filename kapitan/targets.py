@@ -239,7 +239,7 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
     search_path and ext_vars will be passed as parameters to jsonnet_file()
     kwargs:
         output: default 'yaml', accepts 'json'
-        prune: default True, accepts False
+        prune: default False, accepts True
         secrets_path: default None, set to access secrets backend
         secrets_reveal: default False, set to reveal secrets on compile
         target_name: default None, set to current target being compiled
@@ -253,7 +253,7 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
     json_output = json.loads(json_output)
 
     output = kwargs.get('output', 'yaml')
-    prune = kwargs.get('prune', True)
+    prune = kwargs.get('prune', False)
     secrets_path = kwargs.get('secrets_path', None)
     secrets_reveal = kwargs.get('secrets_reveal', False)
     gpg_obj = kwargs.get('gpg_obj', None)

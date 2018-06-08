@@ -64,7 +64,7 @@ def main():
                                 help='set search path, default is "."')
     compile_parser.add_argument('--verbose', '-v', help='set verbose mode',
                                 action='store_true', default=False)
-    compile_parser.add_argument('--no-prune', help='do not prune jsonnet output',
+    compile_parser.add_argument('--prune', help='prune jsonnet output',
                                 action='store_true', default=False)
     compile_parser.add_argument('--quiet', help='set quiet mode, only critical output',
                                 action='store_true', default=False)
@@ -181,7 +181,7 @@ def main():
 
         compile_targets(args.inventory_path, search_path, args.output_path,
                         args.parallelism, args.targets,
-                        prune=(not args.no_prune), secrets_path=args.secrets_path,
+                        prune=(args.prune), secrets_path=args.secrets_path,
                         secrets_reveal=args.reveal, gpg_obj=gpg_obj, indent=args.indent)
 
         if not args.ignore_version_check:
