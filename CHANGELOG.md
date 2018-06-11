@@ -1,3 +1,8 @@
+## 0.16.10:
+- GPG backend cleanup (no change in usage or cli) (#116)
+- Improved caching (#117)
+- Verbose options for `inventory` and `searchvar` commands (#119)
+
 ## 0.16.9:
 - Fixed bug with searchvar keys chain (#115)
 
