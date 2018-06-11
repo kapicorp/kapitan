@@ -17,3 +17,4 @@
 "cached module"
 
 inv = {}
+gpg_backend = None
