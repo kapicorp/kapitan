@@ -100,6 +100,8 @@ def main():
     inventory_parser.add_argument('--pattern', '-p', default='',
                                   help='filter pattern (e.g. parameters.mysql.storage_class, or storage_class,' +
                                   ' or storage_*), default is ""')
+    inventory_parser.add_argument('--verbose', '-v', help='set verbose mode',
+                                  action='store_true', default=False)
 
     searchvar_parser = subparser.add_parser('searchvar',
                                             help='show all inventory files where var is declared')
@@ -107,6 +109,8 @@ def main():
                                   help='e.g. parameters.mysql.storage_class, or storage_class, or storage_*')
     searchvar_parser.add_argument('--inventory-path', default='./inventory',
                                   help='set inventory path, default is "./inventory"')
+    searchvar_parser.add_argument('--verbose', '-v', help='set verbose mode',
+                                  action='store_true', default=False)
 
     secrets_parser = subparser.add_parser('secrets', help='manage secrets')
     secrets_parser.add_argument('--write', '-w', help='write secret token',
@@ -188,10 +192,15 @@ def main():
             save_version()
 
     elif cmd == 'inventory':
+        if args.verbose:
+            logging.basicConfig(level=logging.DEBUG,
+                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        else:
+            logging.basicConfig(level=logging.INFO, format="%(message)s")
+
         if args.pattern and args.target_name == '':
             parser.error("--pattern requires --target_name")
         try:
-            logging.basicConfig(level=logging.INFO, format="%(message)s")
             inv = inventory_reclass(args.inventory_path)
             if args.target_name != '':
                 inv = inv['nodes'][args.target_name]
@@ -210,6 +219,12 @@ def main():
             sys.exit(1)
 
     elif cmd == 'searchvar':
+        if args.verbose:
+            logging.basicConfig(level=logging.DEBUG,
+                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        else:
+            logging.basicConfig(level=logging.INFO, format="%(message)s")
+
         searchvar(args.searchvar, args.inventory_path)
 
     elif cmd == 'secrets':

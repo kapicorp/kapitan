@@ -51,6 +51,7 @@ def hashable_lru_cache(func):
         try:
             return json.loads(value)
         except Exception:
+            logger.debug("hashable_lru_cache: %s not serialiseable, using generic lru_cache instead", value)
             return value
 
     def func_with_serialized_params(*args, **kwargs):
