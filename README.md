@@ -381,7 +381,7 @@ The usual flow of creating and using an encrypted secret with kapitan is:
     See [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml). When referencing your secret, you can use the following functions to automatically generate, encrypt and save your secret:
     ```
     randomstr - Generates a random string. You can optionally pass the length you want i.e. randomstr:32
-    rsa - Generates an RSA 4096 private key. You can optionally pass the key size i.e. rsa:2048
+    rsa - Generates an RSA 4096 private key (PKCS#8). You can optionally pass the key size i.e. rsa:2048
     base64 - base64 encodes your secret; to be used as a secondary function i.e. randomstr|base64
     sha256 - sha256 hashes your secret; to be used as a secondary function i.e. randomstr|sha256. You can optionally pass a salt i.e randomstr|sha256:salt -> becomes sha256("salt:<generated random string>")
     ```
