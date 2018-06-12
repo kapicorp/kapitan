@@ -1,3 +1,6 @@
+## 0.16.11:
+- Updated RSA key format to PKCS#8 (#120)
+
 ## 0.16.10:
 - GPG backend cleanup (no change in usage or cli) (#116)
 - Improved caching (#117)
