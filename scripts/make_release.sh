@@ -25,7 +25,7 @@ git pull
 
 echo "Committing..."
 git add ./kapitan/version.py
-git commit -m "Version incremenet $VERSION"
+git commit -m "Version increment $VERSION"
 
 echo "Tagging..."
 git tag "v$VERSION" master
