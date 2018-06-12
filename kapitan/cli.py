@@ -111,6 +111,8 @@ def main():
                                   help='set inventory path, default is "./inventory"')
     searchvar_parser.add_argument('--verbose', '-v', help='set verbose mode',
                                   action='store_true', default=False)
+    searchvar_parser.add_argument('--pretty_print', '-p', help='Pretty print content of var',
+                                  action='store_true', default=False)
 
     secrets_parser = subparser.add_parser('secrets', help='manage secrets')
     secrets_parser.add_argument('--write', '-w', help='write secret token',
@@ -224,7 +226,7 @@ def main():
         else:
             logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-        searchvar(args.searchvar, args.inventory_path)
+        searchvar(args.searchvar, args.inventory_path, args.pretty_print)
 
     elif cmd == 'secrets':
         if args.verbose:

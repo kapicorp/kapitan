@@ -269,7 +269,7 @@ def deep_get(dictionary, keys, previousKey=None):
     return value
 
 
-def searchvar(flat_var, inventory_path):
+def searchvar(flat_var, inventory_path, pretty_print):
     '''
     show all inventory files where a given reclass variable is declared
     '''
@@ -288,8 +288,15 @@ def searchvar(flat_var, inventory_path):
                         output.append((filename, value))
                         if len(filename) > maxlenght:
                             maxlenght = len(filename)
-    for i in output:
-        print('{0!s:{l}} {1!s}'.format(*i, l=maxlenght + 2))
+    if pretty_print:
+        for i in output:
+            print(i[0])
+            for line in yaml.dump(i[1], default_flow_style=False).splitlines():
+                print("    ", line)
+            print()
+    else:
+        for i in output:
+            print('{0!s:{l}} {1!s}'.format(*i, l=maxlenght + 2))
 
 
 def get_directory_hash(directory):
