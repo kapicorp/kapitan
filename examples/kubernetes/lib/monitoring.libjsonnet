@@ -1,0 +1,45 @@
+local kap = import "lib/kapitan.libjsonnet";
+local kube = import "lib/kube.libjsonnet";
+
+{
+  // Based on https://prometheus.io/docs/prometheus/2.0/configuration/alerting_rules/
+  Alert(name): {
+    alert: name,
+    expr: error "expr required",
+    for_:: error "for required",
+    labels: error "labels (hash) required",
+    annotations: {
+      summary: error "annotations.summary required",
+      description: error "annotations.description required",
+      documentation: error "annotations.documentation required",
+   },
+   'for': self.for_,
+  },
+
+  // Same as Alert() but without "for:"
+  // Usecase: alert if something _just_ happened
+  AlertSpontaneous(name): {
+    alert: name,
+    expr: error "expr required",
+    labels: error "labels (hash) required",
+    annotations: {
+      summary: error "annotations.summary required",
+      description: error "annotations.description required",
+      documentation: error "annotations.documentation required",
+   },
+  },
+
+  // Based on https://prometheus.io/docs/prometheus/2.0/configuration/recording_rules/
+  Record(name): {
+    record: name,
+    expr: error "expr required",
+  },
+
+  // rules = list of Rule objs
+  // Set 'ignore' key to skip rules group
+  RulesGroup(rulesObj): {
+    groups: [
+      {name: rulesObj.name, rules:[r for r in rulesObj.rules if !(std.objectHas(r, 'ignore'))]  }
+    ],
+  },
+}
