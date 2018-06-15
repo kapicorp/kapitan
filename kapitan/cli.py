@@ -275,7 +275,10 @@ def main():
             # update recipients for all secrets in secrets_path
             # use --secrets-path to set scanning path
             inv = inventory_reclass(args.inventory_path)
-            targets = set(inv['nodes'].keys())
+            if args.target_name:
+                targets = set(args.target_name.split(','))
+            else:
+                targets = set(inv['nodes'].keys())
             secrets_path = os.path.abspath(args.secrets_path)
             target_token_paths = search_target_token_paths(secrets_path, targets)
             ret_code = 0

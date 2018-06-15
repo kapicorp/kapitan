@@ -371,7 +371,7 @@ def search_target_token_paths(target_secrets_path, targets):
         for f in files:
             full_path = os.path.join(root, f)
             full_path = full_path[len(target_secrets_path)+1:]
-            target_name = full_path.split("/")[0]
+            target_name = full_path.split("/")[1]
             if target_name in targets:
                 logger.debug('search_target_token_paths: found %s', full_path)
                 target_files[target_name].append(full_path)
