@@ -123,6 +123,7 @@ def main():
                                 help='update target secrets')
     secrets_parser.add_argument('--validate-targets', action='store_true', default=False,
                                 help='validate target secrets')
+    secrets_parser.add_argument('--targets', '-T', help='targets to validate/update, default is all')
     secrets_parser.add_argument('--base64', '-b64', help='base64 encode file content',
                                 action='store_true', default=False)
     secrets_parser.add_argument('--reveal', '-r', help='reveal secrets',
@@ -275,8 +276,8 @@ def main():
             # update recipients for all secrets in secrets_path
             # use --secrets-path to set scanning path
             inv = inventory_reclass(args.inventory_path)
-            if args.target_name:
-                targets = set(args.target_name.split(','))
+            if args.targets:
+                targets = set(args.targets.split(','))
             else:
                 targets = set(inv['nodes'].keys())
             secrets_path = os.path.abspath(args.secrets_path)
