@@ -95,7 +95,6 @@ $ cd examples/kubernetes
 $ kapitan compile
 Compiled minikube-mysql
 Compiled minikube-es
-Compiled minikube-es-2
 ```
 
 # Main concepts
@@ -521,7 +520,6 @@ Show all inventory files where variable is declared:
 
 ```
 $ kapitan searchvar parameters.elasticsearch.replicas
-./inventory/targets/minikube-es-2.yml             2
 ./inventory/targets/minikube-es.yml               2
 ./inventory/classes/component/elasticsearch.yml   1
 ```
