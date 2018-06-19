@@ -18,13 +18,14 @@ from __future__ import print_function
 
 "random utils"
 
-from functools import reduce
+from functools import lru_cache, wraps
 from hashlib import sha256
 import logging
 import os
 import sys
 import stat
 import collections
+import ujson as json
 import jinja2
 import _jsonnet as jsonnet
 import yaml
@@ -39,6 +40,36 @@ try:
     from yaml import CSafeLoader as YamlLoader
 except ImportError:
     from yaml import SafeLoader as YamlLoader
+
+
+def hashable_lru_cache(func):
+    "Usable instead of lru_cache for functions using unhashable objects"
+
+    cache = lru_cache(maxsize=256)
+
+    def deserialise(value):
+        try:
+            return json.loads(value)
+        except Exception:
+            logger.debug("hashable_lru_cache: %s not serialiseable, using generic lru_cache instead", value)
+            return value
+
+    def func_with_serialized_params(*args, **kwargs):
+        _args = tuple([deserialise(arg) for arg in args])
+        _kwargs = {k: deserialise(v) for k, v in kwargs.items()}
+        return func(*_args, **_kwargs)
+
+    cached_function = cache(func_with_serialized_params)
+
+    @wraps(func)
+    def lru_decorator(*args, **kwargs):
+        _args = tuple([json.dumps(arg, sort_keys=True) if type(arg) in (list, dict) else arg for arg in args])
+        _kwargs = {k: json.dumps(v, sort_keys=True) if type(v) in (list, dict) else v for k, v in kwargs.items()}
+        return cached_function(*_args, **_kwargs)
+
+    lru_decorator.cache_info = cached_function.cache_info
+    lru_decorator.cache_clear = cached_function.cache_clear
+    return lru_decorator
 
 
 class termcolor:
@@ -58,11 +89,13 @@ def normalise_join_path(dirname, path):
     return os.path.normpath(os.path.join(dirname, path))
 
 
+@lru_cache(maxsize=256)
 def render_jinja2_template(content, context):
     "Render jinja2 content with context"
     return jinja2.Template(content, undefined=jinja2.StrictUndefined).render(context)
 
 
+@lru_cache(maxsize=256)
 def sha256_string(string):
     "Returns sha256 hex digest for string"
     return sha256(string.encode("UTF-8")).hexdigest()
@@ -145,7 +178,8 @@ def jsonnet_file(file_path, **kwargs):
 
 
 def prune_empty(d):
-    '''Remove empty lists and empty dictionaries from x.
+    '''
+    Remove empty lists and empty dictionaries from d
     (similar to jsonnet std.prune but faster)
     '''
     if not isinstance(d, (dict, list)):
@@ -166,6 +200,7 @@ class PrettyDumper(yaml.SafeDumper):
     By default, they are indendented at the same level as the key on the previous line
     More info on https://stackoverflow.com/questions/25108581/python-yaml-dump-bad-indentation
     '''
+
     def increase_indent(self, flow=False, indentless=False):
         return super(PrettyDumper, self).increase_indent(flow, False)
 
@@ -184,6 +219,7 @@ def flatten_dict(d, parent_key='', sep='.'):
     return dict(items)
 
 
+@hashable_lru_cache
 def deep_get(dictionary, keys, previousKey=None):
     '''
     Search recursively for 'keys' in 'dictionary' and return value, otherwise return None
@@ -233,7 +269,7 @@ def deep_get(dictionary, keys, previousKey=None):
     return value
 
 
-def searchvar(flat_var, inventory_path):
+def searchvar(flat_var, inventory_path, pretty_print):
     '''
     show all inventory files where a given reclass variable is declared
     '''
@@ -252,8 +288,15 @@ def searchvar(flat_var, inventory_path):
                         output.append((filename, value))
                         if len(filename) > maxlenght:
                             maxlenght = len(filename)
-    for i in output:
-        print('{0!s:{l}} {1!s}'.format(*i, l=maxlenght + 2))
+    if pretty_print:
+        for i in output:
+            print(i[0])
+            for line in yaml.dump(i[1], default_flow_style=False).splitlines():
+                print("    ", line)
+            print()
+    else:
+        for i in output:
+            print('{0!s:{l}} {1!s}'.format(*i, l=maxlenght + 2))
 
 
 def get_directory_hash(directory):

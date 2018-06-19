@@ -430,6 +430,8 @@ local inv = kap.inventory();
         },
         spec: $.PodSpec,
       },
+
+      tolerations: {},
     },
   },
 

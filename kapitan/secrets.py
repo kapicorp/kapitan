@@ -38,6 +38,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from six import string_types
 from kapitan.utils import PrettyDumper
 from kapitan.errors import SecretError
+import kapitan.cached as cached
 
 logger = logging.getLogger(__name__)
 
@@ -64,21 +65,24 @@ class TokenError(Exception):
 
 def secret_gpg_backend():
     "return gpg secret backend"
-    return gnupg.GPG()
+    if not cached.gpg_backend:
+        cached.gpg_backend = gnupg.GPG()
+
+    return cached.gpg_backend
 
 
-def secret_gpg_encrypt(gpg_obj, data, fingerprints, **kwargs):
+def secret_gpg_encrypt(data, fingerprints, **kwargs):
     "encrypt data with fingerprints keys"
     assert isinstance(fingerprints, list)
-    return gpg_obj.encrypt(data, fingerprints, sign=True, armor=False, **kwargs)
+    return secret_gpg_backend().encrypt(data, fingerprints, sign=True, armor=False, **kwargs)
 
 
-def secret_gpg_decrypt(gpg_obj, data, **kwargs):
+def secret_gpg_decrypt(data, **kwargs):
     "decrypt data"
-    return gpg_obj.decrypt(data, **kwargs)
+    return secret_gpg_backend().decrypt(data, **kwargs)
 
 
-def secret_gpg_read(gpg_obj, secrets_path, token, **kwargs):
+def secret_gpg_read(secrets_path, token, **kwargs):
     "decrypt and read data for token in secrets_path"
     _, token_path = secret_token_attributes(token)
     full_secret_path = os.path.join(secrets_path, token_path)
@@ -86,7 +90,7 @@ def secret_gpg_read(gpg_obj, secrets_path, token, **kwargs):
         with open(full_secret_path) as fp:
             secret_obj = yaml.load(fp, Loader=YamlLoader)
             data_decoded = base64.b64decode(secret_obj['data'])
-            dec = secret_gpg_decrypt(gpg_obj, data_decoded, **kwargs)
+            dec = secret_gpg_decrypt(data_decoded, **kwargs)
             logger.debug("Read secret %s at %s", token, full_secret_path)
             if dec.ok:
                 return dec.data.decode("UTF-8")
@@ -148,10 +152,10 @@ def secret_token_compiled_attributes(token):
         raise SecretError()
 
 
-def gpg_fingerprint_non_expired(gpg_obj, recipient_name):
+def gpg_fingerprint_non_expired(recipient_name):
     "returns first non-expired key fingerprint for recipient_name"
     try:
-        keys = gpg_obj.list_keys(keys=(recipient_name,))
+        keys = secret_gpg_backend().list_keys(keys=(recipient_name,))
         for key in keys:
             # if 'expires' key is set and time in the future, return
             if key.get('expires') and (time.time() < int(key['expires'])):
@@ -167,7 +171,7 @@ def gpg_fingerprint_non_expired(gpg_obj, recipient_name):
         raise iexp
 
 
-def secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipients, **kwargs):
+def secret_gpg_write(secrets_path, token, data, encode_base64, recipients, **kwargs):
     """
     encrypt and write data for token in secrets_path
     set encode_base64 to True to base64 encode data before writing
@@ -189,8 +193,8 @@ def secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipien
     if encode_base64:
         _data = base64.b64encode(data.encode("UTF-8"))
         encoding = "base64"
-    fingerprints = lookup_fingerprints(gpg_obj, recipients)
-    enc = secret_gpg_encrypt(gpg_obj, _data, fingerprints, **kwargs)
+    fingerprints = lookup_fingerprints(recipients)
+    enc = secret_gpg_encrypt(_data, fingerprints, **kwargs)
     if enc.ok:
         b64data = base64.b64encode(enc.data).decode("UTF-8")
         secret_obj = {"data": b64data,
@@ -220,7 +224,7 @@ def secret_gpg_raw_read(secrets_path, token):
             raise SecretError()
 
 
-def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
+def reveal_gpg_replace(secrets_path, match_obj, verify=True, **kwargs):
     "returns and verifies hash for decrypted secret from token in match_obj"
     token_tag, token, func = match_obj.groups()
     if verify:
@@ -236,25 +240,25 @@ def reveal_gpg_replace(gpg_obj, secrets_path, match_obj, verify=True, **kwargs):
             raise SecretError()
 
     logger.debug("Revealing %s", token_tag)
-    return secret_gpg_read(gpg_obj, secrets_path, token, **kwargs)
+    return secret_gpg_read(secrets_path, token, **kwargs)
 
 
-def secret_gpg_update_recipients(gpg_obj, secrets_path, token_path, recipients, **kwargs):
+def secret_gpg_update_recipients(secrets_path, token_path, recipients, **kwargs):
     "updates the recipient list for secret in token_path"
     token = "gpg:%s" % token_path
     secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
-    data_dec = secret_gpg_read(gpg_obj, secrets_path, token, **kwargs)
+    data_dec = secret_gpg_read(secrets_path, token, **kwargs)
     encoding = secret_raw_obj.get('encoding', None)
     encode_base64 = (encoding == 'base64')
 
     if encode_base64:
         data_dec = base64.b64decode(data_dec).decode('UTF-8')
 
-    secret_gpg_write(gpg_obj, secrets_path, token_path, data_dec, encode_base64,
+    secret_gpg_write(secrets_path, token_path, data_dec, encode_base64,
                      recipients, **kwargs)
 
 
-def secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, verify=True, output=None, **kwargs):
+def secret_gpg_reveal_raw(secrets_path, filename, verify=True, output=None, **kwargs):
     """
     read filename and reveal content (per line search and replace) with secrets to stdout
     set filename=None to read stdin
@@ -262,7 +266,7 @@ def secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, verify=True, output=N
     set output to filename to write to file object, default is stdout
     returns string with revealed content when output is not stdout
     """
-    _reveal_gpg_replace = partial(reveal_gpg_replace, gpg_obj, secrets_path,
+    _reveal_gpg_replace = partial(reveal_gpg_replace, secrets_path,
                                   verify=verify, **kwargs)
     out_raw = ''
     if filename is None:
@@ -286,25 +290,25 @@ def secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, verify=True, output=N
     return out_raw
 
 
-def secret_gpg_reveal_obj(gpg_obj, secrets_path, obj, verify=True, **kwargs):
+def secret_gpg_reveal_obj(secrets_path, obj, verify=True, **kwargs):
     "recursively updates obj with revealed secrets"
     def sub_reveal_data(data):
-        _reveal_gpg_replace = partial(reveal_gpg_replace, gpg_obj, secrets_path,
+        _reveal_gpg_replace = partial(reveal_gpg_replace, secrets_path,
                                       verify=verify, **kwargs)
         return re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_gpg_replace, data)
 
     if isinstance(obj, dict):
         for k, v in obj.items():
-            obj[k] = secret_gpg_reveal_obj(gpg_obj, secrets_path, v, verify, **kwargs)
+            obj[k] = secret_gpg_reveal_obj(secrets_path, v, verify, **kwargs)
     elif isinstance(obj, list):
-        obj = [secret_gpg_reveal_obj(gpg_obj, secrets_path, item, verify, **kwargs) for item in obj]
+        obj = [secret_gpg_reveal_obj(secrets_path, item, verify, **kwargs) for item in obj]
     elif isinstance(obj, string_types):
         obj = sub_reveal_data(obj)
 
     return obj
 
 
-def secret_gpg_reveal_dir(gpg_obj, secrets_path, dirname, verify=True, **kwargs):
+def secret_gpg_reveal_dir(secrets_path, dirname, verify=True, **kwargs):
     "prints grouped output for revealed file types"
     out_json = ''
     out_yaml = ''
@@ -315,13 +319,13 @@ def secret_gpg_reveal_dir(gpg_obj, secrets_path, dirname, verify=True, **kwargs)
         if not os.path.isfile(full_path):
             pass
         if f.endswith('.json'):
-            out_json += secret_gpg_reveal_file(gpg_obj, secrets_path, full_path,
+            out_json += secret_gpg_reveal_file(secrets_path, full_path,
                                                verify=verify, **kwargs)
         elif f.endswith('.yml'):
-            out_yaml += secret_gpg_reveal_file(gpg_obj, secrets_path, full_path,
+            out_yaml += secret_gpg_reveal_file(secrets_path, full_path,
                                                verify=verify, **kwargs)
         else:
-            out_raw += secret_gpg_reveal_file(gpg_obj, secrets_path, full_path,
+            out_raw += secret_gpg_reveal_file(secrets_path, full_path,
                                               verify=verify, **kwargs)
     if out_json:
         sys.stdout.write(out_json)
@@ -331,28 +335,28 @@ def secret_gpg_reveal_dir(gpg_obj, secrets_path, dirname, verify=True, **kwargs)
         sys.stdout.write(out_raw)
 
 
-def secret_gpg_reveal_file(gpg_obj, secrets_path, filename, verify=True, **kwargs):
+def secret_gpg_reveal_file(secrets_path, filename, verify=True, **kwargs):
     "detects type and reveals file, returns revealed output string"
     out = None
     if filename.endswith('.json'):
         logger.debug("secret_gpg_reveal_file: revealing json file: %s", filename)
         with open(filename) as fp:
             obj = json.load(fp)
-            rev_obj = secret_gpg_reveal_obj(gpg_obj, secrets_path, obj,
+            rev_obj = secret_gpg_reveal_obj(secrets_path, obj,
                                             verify=verify, **kwargs)
             out = json.dumps(rev_obj, indent=4, sort_keys=True)
     elif filename.endswith('.yml'):
         logger.debug("secret_gpg_reveal_file: revealing yml file: %s", filename)
         with open(filename) as fp:
             obj = yaml.load(fp, Loader=YamlLoader)
-            rev_obj = secret_gpg_reveal_obj(gpg_obj, secrets_path, obj,
+            rev_obj = secret_gpg_reveal_obj(secrets_path, obj,
                                             verify=verify, **kwargs)
             out = yaml.dump(rev_obj, Dumper=PrettyDumper,
                             default_flow_style=False, explicit_start=True)
     else:
         logger.debug("secret_gpg_reveal_file: revealing raw file: %s", filename)
         with open(os.devnull, 'w') as devnull:
-            out = secret_gpg_reveal_raw(gpg_obj, secrets_path, filename, output=devnull,
+            out = secret_gpg_reveal_raw(secrets_path, filename, output=devnull,
                                         verify=verify, **kwargs)
     return out
 
@@ -374,14 +378,14 @@ def search_target_token_paths(target_secrets_path, targets):
     return target_files
 
 
-def lookup_fingerprints(gpg_obj, recipients):
+def lookup_fingerprints(recipients):
     "returns a list of fingerprints for recipients obj"
     lookedup = []
     for recipient in recipients:
         fingerprint = recipient.get('fingerprint')
         name = recipient.get('name')
         if fingerprint is None:
-            lookedup_fingerprint = gpg_fingerprint_non_expired(gpg_obj, name)
+            lookedup_fingerprint = gpg_fingerprint_non_expired(name)
             lookedup.append(lookedup_fingerprint)
         else:
             # If fingerprint already set, don't lookup and reuse
@@ -424,12 +428,12 @@ def rsa_private_key(key_size=''):
 
     return str(key.private_bytes(
         encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption()
     ), "UTF-8")
 
 
-def secret_gpg_write_function(gpg_obj, secrets_path, token, func, recipients, **kwargs):
+def secret_gpg_write_function(secrets_path, token, func, recipients, **kwargs):
     """
     encrypt and write data returned by func for token in secrets_path
     essentially runs secret_gpg_write() where data is the evaluation of func
@@ -479,4 +483,4 @@ def secret_gpg_write_function(gpg_obj, secrets_path, token, func, recipients, **
             logger.error("Secret error: secret_gpg_write_function: unknown func: %s", func)
             raise SecretError
 
-    secret_gpg_write(gpg_obj, secrets_path, token, data, encode_base64, recipients, **kwargs)
+    secret_gpg_write(secrets_path, token, data, encode_base64, recipients, **kwargs)
