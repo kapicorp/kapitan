@@ -1,3 +1,12 @@
+## 0.17.0:
+#### Breaking:
+- `kapitan compile` does not prune jsonnet output anymore by default (#118). `--no-prune` flag has been removed and replaced with `--prune`. If you want to keep jsonnet output consistent with <0.17.0, you can do `kapitan compile --prune`.
+
+#### Updates:
+- Add pretty printer (`-p`) option to searchvar (#121)
+- Cleaned up examples (#123)
+- Updated requests to 2.19.1 (#124)
+
 ## 0.16.11:
 - Updated RSA key format to PKCS#8 (#120)
 
