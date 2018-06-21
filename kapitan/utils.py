@@ -356,11 +356,11 @@ def check_version():
         if kapitan_config and kapitan_config["version"] and StrictVersion(kapitan_config["version"]) > StrictVersion(VERSION):
             print("{}Current version: {}".format(termcolor.WARNING, VERSION))
             print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
-            print("Please upgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
+            print("Upgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
             print("Docker: docker pull deepmind/kapitan:{}".format(kapitan_config["version"]))
             print("Pip (user): pip3 install --user --upgrade kapitan=={}\n".format(kapitan_config["version"]))
             print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
-            print("If you know what you\"re doing, you can skip this check by adding \"--ignore-version-check\".")
+            print("If you know what you're doing, you can skip this check by adding '--ignore-version-check'.")
             sys.exit(1)
         elif kapitan_config and kapitan_config["version"] and StrictVersion(kapitan_config["version"]) < StrictVersion(VERSION):
             print("{}Current version: {}".format(termcolor.WARNING, VERSION))
@@ -370,7 +370,7 @@ def check_version():
             print("Docker: docker pull deepmind/kapitan:{}".format(kapitan_config["version"]))
             print("Pip (user): pip3 install --user --upgrade kapitan=={}\n".format(kapitan_config["version"]))
             print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
-            print("If you know what you\"re doing, you can skip this check by adding \"--ignore-version-check\".")
+            print("If you know what you're doing, you can skip this check by adding '--ignore-version-check'.")
             sys.exit(1)
     except KeyError:
         pass
