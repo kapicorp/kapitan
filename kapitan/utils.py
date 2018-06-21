@@ -351,7 +351,7 @@ def check_version():
     """
     kapitan_config = dot_kapitan_config()
     # If "saved version is bigger than current version"
-    if kapitan_config["version"] and StrictVersion(kapitan_config["version"]) > StrictVersion(VERSION):
+    if kapitan_config and kapitan_config["version"] and StrictVersion(kapitan_config["version"]) > StrictVersion(VERSION):
         print("{}Current version: {}".format(termcolor.WARNING, VERSION))
         print("Last used version (in .kapitan): {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
         print("Please upgrade kapitan to at least '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
@@ -366,5 +366,8 @@ def save_version():
     """Saves the current kapitan version to a local .kapitan file"""
     with open(".kapitan", "w") as f:
         kapitan_config = dot_kapitan_config()
+        if not kapitan_config:
+            kapitan_config = {}
+
         kapitan_config["version"] = VERSION
         yaml.safe_dump(kapitan_config, stream=f, default_flow_style=False)
