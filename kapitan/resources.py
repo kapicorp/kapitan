@@ -59,7 +59,7 @@ def resource_callbacks(search_path):
 
 
 def yaml_dump(obj):
-    "Dumps jsonnet obj as yaml"
+    """Dumps jsonnet obj as yaml"""
     _obj = json.loads(obj)
     return yaml.safe_dump(_obj, default_flow_style=False)
 
@@ -86,7 +86,7 @@ def jinja2_render_file(search_path, name, ctx):
 
 
 def read_file(search_path, name):
-    "return content of file in name"
+    """return content of file in name"""
     full_path = os.path.join(search_path, name)
     logger.debug("read_file trying file %s", full_path)
     if os.path.exists(full_path):

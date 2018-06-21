@@ -106,7 +106,7 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
 
 
 def load_target_inventory(inventory_path, targets):
-    "retuns a list of target objects from the inventory"
+    """retuns a list of target objects from the inventory"""
     target_objs = []
     inv = inventory_reclass(inventory_path)
 
@@ -129,9 +129,7 @@ def load_target_inventory(inventory_path, targets):
 
 
 def compile_target(target_obj, search_path, compile_path, **kwargs):
-    """
-    Compiles target_obj and writes to compile_path
-    """
+    """Compiles target_obj and writes to compile_path"""
     start = time.time()
 
     ext_vars = target_obj["vars"]
@@ -319,7 +317,7 @@ class CompilingFile(object):
         self.kwargs = kwargs
 
     def write(self, data):
-        "write data into file"
+        """write data into file"""
         secrets_reveal = self.kwargs.get('secrets_reveal', False)
         if secrets_reveal:
             self.fp.write(self.sub_token_reveal_data(data))
@@ -327,7 +325,7 @@ class CompilingFile(object):
             self.fp.write(self.sub_token_compiled_data(data))
 
     def write_yaml(self, obj):
-        "recursively hash or reveal secrets and convert obj to yaml and write to file"
+        """recursively hash or reveal secrets and convert obj to yaml and write to file"""
         indent = self.kwargs.get('indent', 2)
         secrets_reveal = self.kwargs.get('secrets_reveal', False)
         if secrets_reveal:
@@ -337,7 +335,7 @@ class CompilingFile(object):
         yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
 
     def write_json(self, obj):
-        "recursively hash or reveal secrets and convert obj to json and write to file"
+        """recursively hash or reveal secrets and convert obj to json and write to file"""
         indent = self.kwargs.get('indent', 2)
         secrets_reveal = self.kwargs.get('secrets_reveal', False)
         if secrets_reveal:
@@ -347,7 +345,7 @@ class CompilingFile(object):
         json.dump(obj, self.fp, indent=indent, escape_forward_slashes=False)
 
     def sub_token_compiled_obj(self, obj):
-        "recursively find and replace tokens with hashed tokens in obj"
+        """recursively find and replace tokens with hashed tokens in obj"""
         if isinstance(obj, dict):
             for k, v in obj.items():
                 obj[k] = self.sub_token_compiled_obj(v)
@@ -359,7 +357,7 @@ class CompilingFile(object):
         return obj
 
     def sub_token_reveal_obj(self, obj):
-        "recursively find and reveal token tags in data"
+        """recursively find and reveal token tags in data"""
         if isinstance(obj, dict):
             for k, v in obj.items():
                 obj[k] = self.sub_token_reveal_obj(v)
@@ -389,7 +387,7 @@ class CompilingFile(object):
         return "?{%s:%s:%s}" % (backend, token_path, sha256)
 
     def reveal_token_tag(self, token_tag):
-        "reveal token_tag"
+        """reveal token_tag"""
         secrets_path = self.kwargs.get("secrets_path", None)
         if secrets_path is None:
             raise ValueError("secrets_path not set")
@@ -398,7 +396,7 @@ class CompilingFile(object):
         return secret_gpg_read(secrets_path, token)
 
     def sub_token_compiled_data(self, data):
-        "find and replace tokens with hashed tokens in data"
+        """find and replace tokens with hashed tokens in data"""
         def _hash_token_tag(match_obj):
             token_tag, token, func = match_obj.groups()
             _, token_path = secret_token_attributes(token)
@@ -417,7 +415,7 @@ class CompilingFile(object):
         return re.sub(SECRET_TOKEN_TAG_PATTERN, _hash_token_tag, data)
 
     def sub_token_reveal_data(self, data):
-        "find and reveal token tags in data"
+        """find and reveal token tags in data"""
         def _reveal_token_tag(match_obj):
             token_tag, _ = match_obj.groups()
             return self.reveal_token_tag(token_tag)
@@ -425,9 +423,9 @@ class CompilingFile(object):
         return re.sub(SECRET_TOKEN_TAG_PATTERN, _reveal_token_tag, data)
 
     def target_secret_func_write(self, token_path, func):
-        "write a target secret for token with data from func"
+        """write a target secret for token with data from func"""
         target_name = self.kwargs.get('target_name', None)
-        secrets_path = self.kwargs.get("secrets_path", None)
+        secrets_path = self.kwargs.get('secrets_path', None)
         target_inv = cached.inv['nodes'].get(target_name, None)
         if target_name is None:
             raise ValueError('target_name not set')

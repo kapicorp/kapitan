@@ -43,7 +43,7 @@ except ImportError:
 
 
 def hashable_lru_cache(func):
-    "Usable instead of lru_cache for functions using unhashable objects"
+    """Usable instead of lru_cache for functions using unhashable objects"""
 
     cache = lru_cache(maxsize=256)
 
@@ -84,30 +84,30 @@ class termcolor:
 
 
 def normalise_join_path(dirname, path):
-    "Join dirname with path and return in normalised form"
+    """Join dirname with path and return in normalised form"""
     logger.debug(os.path.normpath(os.path.join(dirname, path)))
     return os.path.normpath(os.path.join(dirname, path))
 
 
 @lru_cache(maxsize=256)
 def render_jinja2_template(content, context):
-    "Render jinja2 content with context"
+    """Render jinja2 content with context"""
     return jinja2.Template(content, undefined=jinja2.StrictUndefined).render(context)
 
 
 @lru_cache(maxsize=256)
 def sha256_string(string):
-    "Returns sha256 hex digest for string"
+    """Returns sha256 hex digest for string"""
     return sha256(string.encode("UTF-8")).hexdigest()
 
 
 def jinja2_yaml_filter(obj):
-    "Returns yaml for object"
+    """Returns yaml for object"""
     return yaml.safe_dump(obj, default_flow_style=False)
 
 
 def render_jinja2_file(name, context):
-    "Render jinja2 file name with context"
+    """Render jinja2 file name with context"""
     path, filename = os.path.split(name)
     env = jinja2.Environment(
         undefined=jinja2.StrictUndefined,
@@ -160,7 +160,7 @@ def render_jinja2(path, context):
 
 
 def file_mode(name):
-    "Returns mode for file name"
+    """Returns mode for file name"""
     st = os.stat(name)
     return stat.S_IMODE(st.st_mode)
 
@@ -178,10 +178,10 @@ def jsonnet_file(file_path, **kwargs):
 
 
 def prune_empty(d):
-    '''
+    """
     Remove empty lists and empty dictionaries from d
     (similar to jsonnet std.prune but faster)
-    '''
+    """
     if not isinstance(d, (dict, list)):
         return d
 
@@ -195,20 +195,17 @@ def prune_empty(d):
 
 
 class PrettyDumper(yaml.SafeDumper):
-    '''
+    """
     Increases indent of nested lists.
     By default, they are indendented at the same level as the key on the previous line
     More info on https://stackoverflow.com/questions/25108581/python-yaml-dump-bad-indentation
-    '''
-
+    """
     def increase_indent(self, flow=False, indentless=False):
         return super(PrettyDumper, self).increase_indent(flow, False)
 
 
 def flatten_dict(d, parent_key='', sep='.'):
-    '''
-    Flatten nested elements in a dictionary
-    '''
+    """Flatten nested elements in a dictionary"""
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
@@ -221,9 +218,7 @@ def flatten_dict(d, parent_key='', sep='.'):
 
 @hashable_lru_cache
 def deep_get(dictionary, keys, previousKey=None):
-    '''
-    Search recursively for 'keys' in 'dictionary' and return value, otherwise return None
-    '''
+    """Search recursively for 'keys' in 'dictionary' and return value, otherwise return None"""
     value = None
     if len(keys) > 0:
         value = dictionary.get(keys[0], None) if isinstance(dictionary, dict) else None
@@ -270,10 +265,7 @@ def deep_get(dictionary, keys, previousKey=None):
 
 
 def searchvar(flat_var, inventory_path, pretty_print):
-    '''
-    show all inventory files where a given reclass variable is declared
-    '''
-
+    """Show all inventory files where a given reclass variable is declared"""
     output = []
     maxlenght = 0
     keys = flat_var.split(".")
@@ -300,9 +292,7 @@ def searchvar(flat_var, inventory_path, pretty_print):
 
 
 def get_directory_hash(directory):
-    '''
-    Compute a sha256 hash for the file contents of a directory
-    '''
+    """Compute a sha256 hash for the file contents of a directory"""
     if not os.path.exists(directory):
         logger.error("utils.get_directory_hash failed, %s dir doesn't exist", directory)
         return -1

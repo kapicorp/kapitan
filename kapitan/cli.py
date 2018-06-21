@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    "main function for command line usage"
+    """main function for command line usage"""
     parser = argparse.ArgumentParser(prog=PROJECT_NAME,
                                      description=DESCRIPTION)
     parser.add_argument('--version', action='version', version=VERSION)
