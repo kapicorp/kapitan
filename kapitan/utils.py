@@ -338,7 +338,7 @@ def from_dot_kapitan(command, flag, default):
             flag_value = kapitan_config[command][flag]
             if flag_value:
                 return flag_value
-    except:
+    except KeyError:
         pass
 
     return default
@@ -346,28 +346,31 @@ def from_dot_kapitan(command, flag, default):
 
 def check_version():
     """
-    Checks that the last version of kapitan used is at least smaller or equal to current version.
-    If the last version of kapitan used is bigger, it will give instructions on how to upgrade and exit(1).
+    Checks the version in .kapitan is the same as the current version.
+    If the last version of kapitan used is bigger, it will prompt to upgrade.
+    If the last version of kapitan used is smaller, it will prompt to update .kapitan or downgrade.
     """
     kapitan_config = dot_kapitan_config()
-    # If "saved version is bigger than current version"
-    if kapitan_config and kapitan_config["version"] and StrictVersion(kapitan_config["version"]) > StrictVersion(VERSION):
-        print("{}Current version: {}".format(termcolor.WARNING, VERSION))
-        print("Last used version (in .kapitan): {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
-        print("Please upgrade kapitan to at least '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
-        print("Docker: docker pull deepmind/kapitan")
-        print("Pip (user): pip3 install --user --upgrade kapitan\n")
-        print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
-        print("If you know what you\"re doing, you can skip this check by adding \"--ignore-version-check\".")
-        sys.exit(1)
-
-
-def save_version():
-    """Saves the current kapitan version to a local .kapitan file"""
-    with open(".kapitan", "w") as f:
-        kapitan_config = dot_kapitan_config()
-        if not kapitan_config:
-            kapitan_config = {}
-
-        kapitan_config["version"] = VERSION
-        yaml.safe_dump(kapitan_config, stream=f, default_flow_style=False)
+    try:
+        # If "saved version is bigger than current version"
+        if kapitan_config and kapitan_config["version"] and StrictVersion(kapitan_config["version"]) > StrictVersion(VERSION):
+            print("{}Current version: {}".format(termcolor.WARNING, VERSION))
+            print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
+            print("Please upgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
+            print("Docker: docker pull deepmind/kapitan:{}".format(kapitan_config["version"]))
+            print("Pip (user): pip3 install --user --upgrade kapitan=={}\n".format(kapitan_config["version"]))
+            print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
+            print("If you know what you\"re doing, you can skip this check by adding \"--ignore-version-check\".")
+            sys.exit(1)
+        elif kapitan_config and kapitan_config["version"] and StrictVersion(kapitan_config["version"]) < StrictVersion(VERSION):
+            print("{}Current version: {}".format(termcolor.WARNING, VERSION))
+            print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
+            print("Option 1: You can update the version in .kapitan to '{}' and recompile\n".format(VERSION))
+            print("Option 2: Downgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
+            print("Docker: docker pull deepmind/kapitan:{}".format(kapitan_config["version"]))
+            print("Pip (user): pip3 install --user --upgrade kapitan=={}\n".format(kapitan_config["version"]))
+            print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
+            print("If you know what you\"re doing, you can skip this check by adding \"--ignore-version-check\".")
+            sys.exit(1)
+    except KeyError:
+        pass

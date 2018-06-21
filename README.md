@@ -306,7 +306,7 @@ optional arguments:
   --inventory-path INVENTORY_PATH
                         set inventory path, default is "./inventory"
   --ignore-version-check
-                        ignore the last kapitan version used to compile (from .kapitan)
+                        ignore the version from .kapitan
 ```
 
 # Modes of operation

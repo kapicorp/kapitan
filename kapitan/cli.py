@@ -26,7 +26,7 @@ import sys
 import traceback
 import yaml
 
-from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar, deep_get, from_dot_kapitan, check_version, save_version
+from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar, deep_get, from_dot_kapitan, check_version
 from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
@@ -102,7 +102,7 @@ def main():
                                 default=from_dot_kapitan('compile', 'inventory-path', './inventory'),
                                 help='set inventory path, default is "./inventory"')
     compile_parser.add_argument('--ignore-version-check',
-                                help='ignore the last kapitan version used to compile (from .kapitan)',
+                                help='ignore the version from .kapitan',
                                 action='store_true',
                                 default=from_dot_kapitan('compile', 'ignore-version-check', False))
 
@@ -222,9 +222,6 @@ def main():
                         args.parallelism, args.targets,
                         prune=(args.prune), secrets_path=args.secrets_path,
                         secrets_reveal=args.reveal, indent=args.indent)
-
-        if not args.ignore_version_check:
-            save_version()
 
     elif cmd == 'inventory':
         if args.verbose:
