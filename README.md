@@ -253,6 +253,7 @@ Targets can also be defined inside the `inventory`.
 ├── lib
 │   ├── kapitan.libjsonnet
 │   └── kube.libjsonnet
+└── .kapitan
 ```
 
 # Usage
@@ -307,6 +308,28 @@ optional arguments:
                         set inventory path, default is "./inventory"
   --ignore-version-check
                         ignore the version from .kapitan
+```
+
+These parameters can also be defined in a local `.kapitan` file, for example:
+```
+$ cat .kapitan
+
+compile:
+  indent: 4
+  parallelism: 8
+```
+
+This is equivalent to running:
+```
+kapitan compile --indent 4 --parallelism 8
+```
+
+To enforce the kapitan version used for compilation (for consistency and safety), you can add `version` to `.kapitan`:
+```
+$ cat .kapitan
+
+...
+version: 0.17.0
 ```
 
 # Modes of operation

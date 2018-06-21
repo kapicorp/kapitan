@@ -347,12 +347,12 @@ def from_dot_kapitan(command, flag, default):
 def check_version():
     """
     Checks the version in .kapitan is the same as the current version.
-    If the last version of kapitan used is bigger, it will prompt to upgrade.
-    If the last version of kapitan used is smaller, it will prompt to update .kapitan or downgrade.
+    If the version in .kapitan is bigger, it will prompt to upgrade.
+    If the version in .kapitan is smaller, it will prompt to update .kapitan or downgrade.
     """
     kapitan_config = dot_kapitan_config()
     try:
-        # If "saved version is bigger than current version"
+        # If .kapitan version is bigger than current version
         if kapitan_config and kapitan_config["version"] and StrictVersion(kapitan_config["version"]) > StrictVersion(VERSION):
             print("{}Current version: {}".format(termcolor.WARNING, VERSION))
             print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
@@ -362,6 +362,7 @@ def check_version():
             print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
             print("If you know what you're doing, you can skip this check by adding '--ignore-version-check'.")
             sys.exit(1)
+        # If .kapitan version is smaller than current version
         elif kapitan_config and kapitan_config["version"] and StrictVersion(kapitan_config["version"]) < StrictVersion(VERSION):
             print("{}Current version: {}".format(termcolor.WARNING, VERSION))
             print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
