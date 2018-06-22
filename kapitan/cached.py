@@ -18,3 +18,4 @@
 
 inv = {}
 gpg_backend = None
+dot_kapitan = {}

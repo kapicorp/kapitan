@@ -16,20 +16,20 @@
 
 
 class KapitanError(Exception):
-    "generic kapitan error"
+    """generic kapitan error"""
     pass
 
 
 class CompileError(KapitanError):
-    "compile error"
+    """compile error"""
     pass
 
 
 class InventoryError(KapitanError):
-    "inventory error"
+    """inventory error"""
     pass
 
 
 class SecretError(KapitanError):
-    "secrets error"
+    """secrets error"""
     pass
