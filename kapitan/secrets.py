@@ -43,7 +43,7 @@ import kapitan.cached as cached
 logger = logging.getLogger(__name__)
 
 # e.g. ?{gpg:my/secret/token} or ?{gpg:my/secret/token|func:param1:param2}
-SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)([\|\w\:]+)*})"
+SECRET_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)*})"
 SECRET_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)"  # e.g. gpg:my/secret/token
 SECRET_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)"  # e.g. gpg:my/secret/token:1deadbeef
 
@@ -248,8 +248,7 @@ def secret_gpg_update_recipients(secrets_path, token_path, recipients, **kwargs)
     token = "gpg:%s" % token_path
     secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
     data_dec = secret_gpg_read(secrets_path, token, **kwargs)
-    encoding = secret_raw_obj.get('encoding', None)
-    encode_base64 = (encoding == 'base64')
+    encode_base64 = secret_raw_obj.get('encoding', None) == 'base64'
 
     if encode_base64:
         data_dec = base64.b64decode(data_dec).decode('UTF-8')
@@ -433,6 +432,24 @@ def rsa_private_key(key_size=''):
     ), "UTF-8")
 
 
+def rsa_public_key(secrets_path, private_key_file):
+    """derives an RSA public key from private_key_file"""
+    token = "gpg:%s" % private_key_file
+    secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
+    data_dec = secret_gpg_read(secrets_path, token)
+    encode_base64 = secret_raw_obj.get('encoding', None) == 'base64'
+
+    if encode_base64:
+        data_dec = base64.b64decode(data_dec).decode('UTF-8')
+
+    private_key = serialization.load_pem_private_key(data_dec.encode(), password=None, backend=default_backend())
+
+    return str(private_key.public_key().public_bytes(
+       encoding=serialization.Encoding.PEM,
+       format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ), "UTF-8")
+
+
 def secret_gpg_write_function(secrets_path, token, func, recipients, **kwargs):
     """
     encrypt and write data returned by func for token in secrets_path
@@ -456,6 +473,14 @@ def secret_gpg_write_function(secrets_path, token, func, recipients, **kwargs):
 
         elif func_name == 'rsa':
             data = rsa_private_key(*func_params)
+
+        elif func_name == 'rsapublic':
+            if len(func_params) == 0:
+                logger.error("Secret error: secret_gpg_write_function: private key file not specific; try " +
+                    "something like 'rsapublic:path/to/encrypted_private_key'", func)
+                raise SecretError
+            else:
+                data = rsa_public_key(secrets_path, *func_params)
 
         elif func_name == 'base64':
             if data:

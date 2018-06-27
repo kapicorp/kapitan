@@ -404,6 +404,7 @@ The usual flow of creating and using an encrypted secret with kapitan is:
     ```
     randomstr - Generates a random string. You can optionally pass the length you want i.e. randomstr:32
     rsa - Generates an RSA 4096 private key (PKCS#8). You can optionally pass the key size i.e. rsa:2048
+    rsapublic - Derives an RSA public key from a private key. Required argument is the private key file i.e. rsapublic:path/to/encrypted_private_key
     base64 - base64 encodes your secret; to be used as a secondary function i.e. randomstr|base64
     sha256 - sha256 hashes your secret; to be used as a secondary function i.e. randomstr|sha256. You can optionally pass a salt i.e randomstr|sha256:salt -> becomes sha256("salt:<generated random string>")
     ```
