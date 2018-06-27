@@ -54,17 +54,17 @@ except ImportError:
 
 
 class GPGError(Exception):
-    "Generic GPG errors"
+    """Generic GPG errors"""
     pass
 
 
 class TokenError(Exception):
-    "Generic Token errors"
+    """Generic Token errors"""
     pass
 
 
 def secret_gpg_backend():
-    "return gpg secret backend"
+    """return gpg secret backend"""
     if not cached.gpg_backend:
         cached.gpg_backend = gnupg.GPG()
 
@@ -72,18 +72,18 @@ def secret_gpg_backend():
 
 
 def secret_gpg_encrypt(data, fingerprints, **kwargs):
-    "encrypt data with fingerprints keys"
+    """encrypt data with fingerprints keys"""
     assert isinstance(fingerprints, list)
     return secret_gpg_backend().encrypt(data, fingerprints, sign=True, armor=False, **kwargs)
 
 
 def secret_gpg_decrypt(data, **kwargs):
-    "decrypt data"
+    """decrypt data"""
     return secret_gpg_backend().decrypt(data, **kwargs)
 
 
 def secret_gpg_read(secrets_path, token, **kwargs):
-    "decrypt and read data for token in secrets_path"
+    """decrypt and read data for token in secrets_path"""
     _, token_path = secret_token_attributes(token)
     full_secret_path = os.path.join(secrets_path, token_path)
     try:
@@ -104,7 +104,7 @@ def secret_gpg_read(secrets_path, token, **kwargs):
 
 
 def secret_token_from_tag(token_tag):
-    "returns token from token_tag"
+    """returns token from token_tag"""
     match = re.match(SECRET_TOKEN_TAG_PATTERN, token_tag)
     if match:
         _, token, func = match.groups()
@@ -115,7 +115,7 @@ def secret_token_from_tag(token_tag):
 
 
 def secret_token_attributes(token):
-    "returns backend and path from token"
+    """returns backend and path from token"""
     match = re.match(SECRET_TOKEN_ATTR_PATTERN, token)
     if match:
         backend, token_path = match.groups()
@@ -134,7 +134,7 @@ def secret_token_attributes(token):
 
 
 def secret_token_compiled_attributes(token):
-    "validates and returns backend, path and hash from token"
+    """validates and returns backend, path and hash from token"""
     match = re.match(SECRET_TOKEN_COMPILED_ATTR_PATTERN, token)
     if match:
         backend, token_path, token_hash = match.groups()
@@ -153,7 +153,7 @@ def secret_token_compiled_attributes(token):
 
 
 def gpg_fingerprint_non_expired(recipient_name):
-    "returns first non-expired key fingerprint for recipient_name"
+    """returns first non-expired key fingerprint for recipient_name"""
     try:
         keys = secret_gpg_backend().list_keys(keys=(recipient_name,))
         for key in keys:
@@ -209,7 +209,7 @@ def secret_gpg_write(secrets_path, token, data, encode_base64, recipients, **kwa
 
 
 def secret_gpg_raw_read(secrets_path, token):
-    "load (yaml) and return the content of the secret file for token"
+    """load (yaml) and return the content of the secret file for token"""
     _, token_path = secret_token_attributes(token)
     full_secret_path = os.path.join(secrets_path, token_path)
     try:
@@ -225,7 +225,7 @@ def secret_gpg_raw_read(secrets_path, token):
 
 
 def reveal_gpg_replace(secrets_path, match_obj, verify=True, **kwargs):
-    "returns and verifies hash for decrypted secret from token in match_obj"
+    """returns and verifies hash for decrypted secret from token in match_obj"""
     token_tag, token, func = match_obj.groups()
     if verify:
         _, token_path, token_hash = secret_token_compiled_attributes(token)
@@ -244,7 +244,7 @@ def reveal_gpg_replace(secrets_path, match_obj, verify=True, **kwargs):
 
 
 def secret_gpg_update_recipients(secrets_path, token_path, recipients, **kwargs):
-    "updates the recipient list for secret in token_path"
+    """updates the recipient list for secret in token_path"""
     token = "gpg:%s" % token_path
     secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
     data_dec = secret_gpg_read(secrets_path, token, **kwargs)
@@ -291,7 +291,7 @@ def secret_gpg_reveal_raw(secrets_path, filename, verify=True, output=None, **kw
 
 
 def secret_gpg_reveal_obj(secrets_path, obj, verify=True, **kwargs):
-    "recursively updates obj with revealed secrets"
+    """recursively updates obj with revealed secrets"""
     def sub_reveal_data(data):
         _reveal_gpg_replace = partial(reveal_gpg_replace, secrets_path,
                                       verify=verify, **kwargs)
@@ -309,7 +309,7 @@ def secret_gpg_reveal_obj(secrets_path, obj, verify=True, **kwargs):
 
 
 def secret_gpg_reveal_dir(secrets_path, dirname, verify=True, **kwargs):
-    "prints grouped output for revealed file types"
+    """prints grouped output for revealed file types"""
     out_json = ''
     out_yaml = ''
     out_raw = ''
@@ -336,7 +336,7 @@ def secret_gpg_reveal_dir(secrets_path, dirname, verify=True, **kwargs):
 
 
 def secret_gpg_reveal_file(secrets_path, filename, verify=True, **kwargs):
-    "detects type and reveals file, returns revealed output string"
+    """detects type and reveals file, returns revealed output string"""
     out = None
     if filename.endswith('.json'):
         logger.debug("secret_gpg_reveal_file: revealing json file: %s", filename)
@@ -379,7 +379,7 @@ def search_target_token_paths(target_secrets_path, targets):
 
 
 def lookup_fingerprints(recipients):
-    "returns a list of fingerprints for recipients obj"
+    """returns a list of fingerprints for recipients obj"""
     lookedup = []
     for recipient in recipients:
         fingerprint = recipient.get('fingerprint')
@@ -396,7 +396,7 @@ def lookup_fingerprints(recipients):
 
 
 def secret_gpg_raw_read_fingerprints(secrets_path, token_path):
-    "returns fingerprint list in raw secret for token_path"
+    """returns fingerprint list in raw secret for token_path"""
     token = "gpg:%s" % token_path
     secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
     secret_raw_obj_fingerprints = [r['fingerprint'] for r in secret_raw_obj['recipients']]
@@ -404,14 +404,14 @@ def secret_gpg_raw_read_fingerprints(secrets_path, token_path):
 
 
 def secret_gpg_exists(secrets_path, token_path):
-    "checks if a secret with token exists in secrets_path"
+    """checks if a secret with token exists in secrets_path"""
     full_secret_path = os.path.join(secrets_path, token_path)
 
     return os.path.exists(full_secret_path)
 
 
 def randomstr(nbytes=''):
-    "generates a URL-safe text string, containing nbytes random bytes"
+    """generates a URL-safe text string, containing nbytes random bytes"""
     if nbytes:
         nbytes = int(nbytes)
         return secrets.token_urlsafe(nbytes)
@@ -419,7 +419,7 @@ def randomstr(nbytes=''):
 
 
 def rsa_private_key(key_size=''):
-    "generates an RSA private key of key_size, default 4096"
+    """generates an RSA private key of key_size, default 4096"""
     rsa_key_size = 4096
     if key_size:
         rsa_key_size = int(key_size)
