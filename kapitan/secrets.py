@@ -476,7 +476,7 @@ def secret_gpg_write_function(secrets_path, token, func, recipients, **kwargs):
 
         elif func_name == 'rsapublic':
             if len(func_params) == 0:
-                logger.error("Secret error: secret_gpg_write_function: private key file not specific; try " +
+                logger.error("Secret error: secret_gpg_write_function: private key file not specified; try " +
                     "something like 'rsapublic:path/to/encrypted_private_key'", func)
                 raise SecretError
             else:
