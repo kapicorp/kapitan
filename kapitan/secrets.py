@@ -434,17 +434,18 @@ def rsa_private_key(key_size=''):
 
 def rsa_public_key(secrets_path, private_key_file):
     """derives an RSA public key from private_key_file"""
-    token = "gpg:%s" % private_key_file
+    token = "gpg:{}".format(private_key_file)
     secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
     data_dec = secret_gpg_read(secrets_path, token)
-    encode_base64 = secret_raw_obj.get('encoding', None) == 'base64'
+    encoded_base64 = secret_raw_obj.get('encoding', None) == 'base64'
 
-    if encode_base64:
+    if encoded_base64:
         data_dec = base64.b64decode(data_dec).decode('UTF-8')
 
     private_key = serialization.load_pem_private_key(data_dec.encode(), password=None, backend=default_backend())
+    public_key = private_key.public_key()
 
-    return str(private_key.public_key().public_bytes(
+    return str(public_key.public_bytes(
        encoding=serialization.Encoding.PEM,
        format=serialization.PublicFormat.SubjectPublicKeyInfo
     ), "UTF-8")
