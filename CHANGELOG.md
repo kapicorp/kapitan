@@ -1,3 +1,8 @@
+## 0.17.1:
+- Command flags support in .kapitan (#125)
+- Upgraded reclass to 1.5.4 (#127)
+- Added `rsapublic` function to gpg backend (#128)
+
 ## 0.17.0:
 #### Breaking:
 - `kapitan compile` does not prune jsonnet output anymore by default (#118). `--no-prune` flag has been removed and replaced with `--prune`. If you want to keep jsonnet output consistent with <0.17.0, you can do `kapitan compile --prune`.
