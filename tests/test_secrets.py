@@ -21,10 +21,15 @@ import unittest
 import re
 import tempfile
 import gnupg
+import base64
 from kapitan.secrets import secret_token_attributes, SECRET_TOKEN_TAG_PATTERN
-from kapitan.secrets import secret_gpg_write, secret_gpg_reveal_raw
+from kapitan.secrets import secret_gpg_write, secret_gpg_reveal_raw, secret_gpg_write_function
 from kapitan.secrets import secret_gpg_update_recipients, secret_gpg_raw_read_fingerprints
+from kapitan.utils import get_entropy
 import kapitan.cached as cached
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
 
 cached.gpg_backend = gnupg.GPG(gnupghome=tempfile.mkdtemp())
 SECRETS_HOME = tempfile.mkdtemp()
@@ -113,3 +118,132 @@ class SecretsTest(unittest.TestCase):
                               verify=False, output=fp, passphrase="testphrase")
         with open(file_revealed) as fp:
             self.assertEqual("I am a file with a c3VwZXIgc2VjcmV0IHZhbHVl", fp.read())
+
+    def test_gpg_secret_write_function_randomstr(self):
+        "write randomstr to secret, confirm secret file exists, reveal and check"
+
+        token = "secret/randomstr"
+        secret_gpg_write_function(SECRETS_HOME, token, '|randomstr', [{'fingerprint': KEY.fingerprint}],
+                                  passphrase="testphrase")
+        self.assertTrue(os.path.isfile(os.path.join(SECRETS_HOME, token)))
+
+        file_with_secret_tags = tempfile.mktemp()
+        file_revealed = tempfile.mktemp()
+        with open(file_with_secret_tags, 'w') as fp:
+            fp.write('?{gpg:secret/randomstr:deadbeef}')
+        with open(file_revealed, 'w') as fp:
+            secret_gpg_reveal_raw(SECRETS_HOME, file_with_secret_tags,
+                              verify=False, output=fp, passphrase="testphrase")
+        with open(file_revealed) as fp:
+            secret = fp.read()
+            self.assertEqual(len(secret), 43)  # default length of token_urlsafe() string is 43
+            assert get_entropy(secret) > 4
+
+        # Test with parameter nbytes=16, correlating with string length 22
+        secret_gpg_write_function(SECRETS_HOME, token, '|randomstr:16', [{'fingerprint': KEY.fingerprint}],
+                                  passphrase="testphrase")
+
+        file_revealed = tempfile.mktemp()
+        with open(file_revealed, 'w') as fp:
+            secret_gpg_reveal_raw(SECRETS_HOME, file_with_secret_tags,
+                              verify=False, output=fp, passphrase="testphrase")
+        with open(file_revealed) as fp:
+            secret = fp.read()
+            self.assertEqual(len(secret), 22)
+
+    def test_gpg_secret_write_function_rsa(self):
+        "write rsa (private and public), confirm secret file exists, reveal and check"
+
+        token = "secret/rsa"
+        secret_gpg_write_function(SECRETS_HOME, token, '|rsa', [{'fingerprint': KEY.fingerprint}],
+                                  passphrase="testphrase")
+        self.assertTrue(os.path.isfile(os.path.join(SECRETS_HOME, token)))
+
+        file_with_secret_tags = tempfile.mktemp()
+        file_revealed = tempfile.mktemp()
+        with open(file_with_secret_tags, 'w') as fp:
+            fp.write('?{gpg:secret/rsa:deadbeef}')
+        with open(file_revealed, 'w') as fp:
+            secret_gpg_reveal_raw(SECRETS_HOME, file_with_secret_tags,
+                              verify=False, output=fp, passphrase="testphrase")
+        with open(file_revealed) as fp:
+            try:
+                private_key = serialization.load_pem_private_key(fp.read().encode(), password=None, backend=default_backend())
+            except ValueError:
+                raise Exception("Failed to decode RSA private key")
+
+        # Test with parameter key_size=2048
+        secret_gpg_write_function(SECRETS_HOME, token, '|rsa:2048', [{'fingerprint': KEY.fingerprint}],
+                                  passphrase="testphrase")
+
+        file_revealed = tempfile.mktemp()
+        with open(file_revealed, 'w') as fp:
+            secret_gpg_reveal_raw(SECRETS_HOME, file_with_secret_tags,
+                              verify=False, output=fp, passphrase="testphrase")
+        with open(file_revealed) as fp:
+            try:
+                private_key = serialization.load_pem_private_key(fp.read().encode(), password=None, backend=default_backend())
+            except ValueError:
+                raise Exception("Failed to decode RSA private key")
+
+            self.assertEqual(private_key.key_size, 2048)
+
+        # Test rsapublic with previous private key as the parameter
+        token_rsapublic = 'secret/rsapublic'
+        secret_gpg_write_function(SECRETS_HOME, token_rsapublic, '|rsapublic:secret/rsa', [{'fingerprint': KEY.fingerprint}],
+                                  passphrase="testphrase")
+        self.assertTrue(os.path.isfile(os.path.join(SECRETS_HOME, token_rsapublic)))
+
+        file_with_secret_tags = tempfile.mktemp()
+        file_revealed = tempfile.mktemp()
+        with open(file_with_secret_tags, 'w') as fp:
+            fp.write('?{gpg:secret/rsapublic:deadbeef}')
+        with open(file_revealed, 'w') as fp:
+            secret_gpg_reveal_raw(SECRETS_HOME, file_with_secret_tags,
+                              verify=False, output=fp, passphrase="testphrase")
+        with open(file_revealed) as fp:
+            public_key = fp.read()
+            self.assertEqual(public_key.splitlines()[0], "-----BEGIN PUBLIC KEY-----")
+
+    def test_gpg_secret_write_function_base64(self):
+        "write randomstr to secret and base64, confirm secret file exists, reveal and check"
+
+        token = "secret/base64"
+        secret_gpg_write_function(SECRETS_HOME, token, '|randomstr|base64', [{'fingerprint': KEY.fingerprint}],
+                                  passphrase="testphrase")
+        self.assertTrue(os.path.isfile(os.path.join(SECRETS_HOME, token)))
+
+        file_with_secret_tags = tempfile.mktemp()
+        file_revealed = tempfile.mktemp()
+        with open(file_with_secret_tags, 'w') as fp:
+            fp.write('?{gpg:secret/base64:deadbeef}')
+        with open(file_revealed, 'w') as fp:
+            secret_gpg_reveal_raw(SECRETS_HOME, file_with_secret_tags,
+                              verify=False, output=fp, passphrase="testphrase")
+        with open(file_revealed) as fp:
+            secret = fp.read()
+            # If the following succeeds, we guarantee that secret is base64-encoded
+            self.assertEqual(base64.b64encode(base64.b64decode(secret)).decode("UTF-8"), secret)
+
+    def test_gpg_secret_write_function_sha256(self):
+        "write randomstr to secret and sha256, confirm secret file exists, reveal and check"
+
+        token = "secret/sha256"
+        secret_gpg_write_function(SECRETS_HOME, token, '|randomstr|sha256', [{'fingerprint': KEY.fingerprint}],
+                                  passphrase="testphrase")
+        self.assertTrue(os.path.isfile(os.path.join(SECRETS_HOME, token)))
+
+        file_with_secret_tags = tempfile.mktemp()
+        file_revealed = tempfile.mktemp()
+        with open(file_with_secret_tags, 'w') as fp:
+            fp.write('?{gpg:secret/sha256:deadbeef}')
+        with open(file_revealed, 'w') as fp:
+            secret_gpg_reveal_raw(SECRETS_HOME, file_with_secret_tags,
+                              verify=False, output=fp, passphrase="testphrase")
+        with open(file_revealed) as fp:
+            secret = fp.read()
+            self.assertEqual(len(secret), 64)
+            try:
+                int(secret, 16)  # sha256 should convert to hex
+            except ValueError:
+                raise Exception("secret is not sha256 hash")
