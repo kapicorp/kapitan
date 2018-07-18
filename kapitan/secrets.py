@@ -432,11 +432,11 @@ def rsa_private_key(key_size=''):
     ), "UTF-8")
 
 
-def rsa_public_key(secrets_path, private_key_file):
+def rsa_public_key(secrets_path, private_key_file, passphrase=None):
     """derives an RSA public key from private_key_file"""
     token = "gpg:{}".format(private_key_file)
     secret_raw_obj = secret_gpg_raw_read(secrets_path, token)
-    data_dec = secret_gpg_read(secrets_path, token)
+    data_dec = secret_gpg_read(secrets_path, token, passphrase=passphrase)
     encoded_base64 = secret_raw_obj.get('encoding', None) == 'base64'
 
     if encoded_base64:
@@ -481,7 +481,7 @@ def secret_gpg_write_function(secrets_path, token, func, recipients, **kwargs):
                     "something like 'rsapublic:path/to/encrypted_private_key'", func)
                 raise SecretError
             else:
-                data = rsa_public_key(secrets_path, *func_params)
+                data = rsa_public_key(secrets_path, passphrase=kwargs.get('passphrase', None), *func_params)
 
         elif func_name == 'base64':
             if data:
