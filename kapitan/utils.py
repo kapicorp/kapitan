@@ -29,6 +29,8 @@ import ujson as json
 import jinja2
 import _jsonnet as jsonnet
 import yaml
+import math
+from collections import Counter
 from distutils.version import StrictVersion
 
 from kapitan.version import VERSION
@@ -315,6 +317,14 @@ def get_directory_hash(directory):
         raise
 
     return hash.hexdigest()
+
+
+def get_entropy(s):
+    "Computes and returns the Shannon Entropy for string 's'"
+    length = float(len(s))
+    # https://en.wiktionary.org/wiki/Shannon_entropy
+    entropy = -sum(count/length * math.log(count/length, 2) for count in Counter(s).values())
+    return round(entropy, 2)
 
 
 def dot_kapitan_config():
