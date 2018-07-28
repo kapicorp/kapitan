@@ -100,7 +100,7 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
             shutil.copytree(temp_path, compile_path)
             logger.debug("Copied %s into %s", temp_path, compile_path)
 
-        # Save inventory cache
+        # Save inventory and folders cache
         if cached.inv_cache:
             inv_cache_path = os.path.join(compile_path, ".kapitan_cache")
             with open(inv_cache_path, "w") as f:
@@ -124,7 +124,7 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
 
 def generate_inv_cache_hashes(inventory_path):
     """
-    generates the hashes for the inventory and jsonnet/jinja2 folders per target for caching purposes
+    generates the hashes for the inventory per target and jsonnet/jinja2 folders for caching purposes
     struct: {
         inventory:
             <target>:
