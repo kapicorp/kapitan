@@ -17,5 +17,6 @@
 "cached module"
 
 inv = {}
+inv_cache = {}
 gpg_backend = None
 dot_kapitan = {}

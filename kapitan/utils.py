@@ -294,11 +294,13 @@ def searchvar(flat_var, inventory_path, pretty_print):
             print('{0!s:{l}} {1!s}'.format(*i, l=maxlenght + 2))
 
 
-def get_directory_hash(directory):
-    """Compute a sha256 hash for the file contents of a directory"""
+def directory_hash(directory):
+    """Return the sha256 hash for the file contents of a directory"""
     if not os.path.exists(directory):
-        logger.error("utils.get_directory_hash failed, %s dir doesn't exist", directory)
-        return -1
+        raise IOError("utils.directory_hash failed, {} dir doesn't exist".format(directory))
+
+    if not os.path.isdir(directory):
+        raise IOError("utils.directory_hash failed, {} is not a directory".format(directory))
 
     try:
         hash = sha256()
@@ -309,18 +311,22 @@ def get_directory_hash(directory):
                     with open(file_path, 'r') as f:
                         hash.update(sha256(f.read().encode("UTF-8")).hexdigest().encode("UTF-8"))
                 except Exception as e:
-                    logger.error("utils.get_directory_hash failed to open %s: %s", file_path, str(e))
+                    logger.error("utils.directory_hash failed to open %s: %s", file_path, str(e))
                     raise
-
     except Exception as e:
-        logger.error("utils.get_directory_hash failed: %s", str(e))
+        logger.error("utils.directory_hash failed: %s", str(e))
         raise
 
     return hash.hexdigest()
 
 
+def dictionary_hash(dict):
+    """Return the sha256 hash for dict"""
+    return sha256(json.dumps(dict, sort_keys=True).encode("UTF-8")).hexdigest()
+
+
 def get_entropy(s):
-    "Computes and returns the Shannon Entropy for string 's'"
+    """Computes and returns the Shannon Entropy for string 's'"""
     length = float(len(s))
     # https://en.wiktionary.org/wiki/Shannon_entropy
     entropy = -sum(count/length * math.log(count/length, 2) for count in Counter(s).values())

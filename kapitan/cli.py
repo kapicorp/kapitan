@@ -105,6 +105,10 @@ def main():
                                 help='ignore the version from .kapitan',
                                 action='store_true',
                                 default=from_dot_kapitan('compile', 'ignore-version-check', False))
+    compile_parser.add_argument('--force-recompile', '-f',
+                                help='force recompilation of all targets, ignores .kapitan_cache',
+                                action='store_true',
+                                default=from_dot_kapitan('compile', 'force-recompile', False))
 
     inventory_parser = subparser.add_parser('inventory', help='show inventory')
     inventory_parser.add_argument('--target-name', '-t',
@@ -221,7 +225,8 @@ def main():
         compile_targets(args.inventory_path, search_path, args.output_path,
                         args.parallelism, args.targets,
                         prune=(args.prune), secrets_path=args.secrets_path,
-                        secrets_reveal=args.reveal, indent=args.indent)
+                        secrets_reveal=args.reveal, indent=args.indent,
+                        force_recompile=args.force_recompile)
 
     elif cmd == 'inventory':
         if args.verbose:

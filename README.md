@@ -286,6 +286,7 @@ usage: kapitan compile [-h] [--search-path JPATH] [--verbose] [--prune]
                        [--quiet] [--output-path PATH] [--target-path PATH]
                        [--parallelism INT] [--secrets-path SECRETS_PATH]
                        [--reveal] [--inventory-path INVENTORY_PATH]
+                       [--force-recompile]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -308,6 +309,8 @@ optional arguments:
                         set inventory path, default is "./inventory"
   --ignore-version-check
                         ignore the version from .kapitan
+  --force-recompile, -f
+                        force recompilation of all targets, ignores .kapitan_cache
 ```
 
 These parameters can also be defined in a local `.kapitan` file, for example:

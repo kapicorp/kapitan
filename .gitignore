@@ -7,3 +7,4 @@ kapitan.egg-info/
 tags
 .python-version
 .kapitan
+.kapitan_cache
