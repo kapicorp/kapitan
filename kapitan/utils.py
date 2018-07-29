@@ -311,8 +311,12 @@ def directory_hash(directory):
                     with open(file_path, 'r') as f:
                         hash.update(sha256(f.read().encode("UTF-8")).hexdigest().encode("UTF-8"))
                 except Exception as e:
-                    logger.error("utils.directory_hash failed to open %s: %s", file_path, str(e))
-                    raise
+                    if isinstance(e, UnicodeDecodeError):
+                        with open(file_path, 'rb') as f:
+                            hash.update(sha256(f.read()).hexdigest().encode("UTF-8"))
+                    else:
+                        logger.error("utils.directory_hash failed to open %s: %s", file_path, str(e))
+                        raise
     except Exception as e:
         logger.error("utils.directory_hash failed: %s", str(e))
         raise
