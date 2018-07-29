@@ -160,7 +160,7 @@ def generate_inv_cache_hashes(inventory_path):
                         cached.inv_cache['folder'][base_folder] = directory_hash(base_folder)
 
             # Most commonly changed but not referenced in input_paths
-            for common in ('lib', 'vendor'):
+            for common in ('lib', 'vendor', 'secrets'):
                 if common not in cached.inv_cache['folder'].keys():
                     if os.path.exists(common) and os.path.isdir(common):
                         cached.inv_cache['folder'][common] = directory_hash(common)
