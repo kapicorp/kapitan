@@ -45,7 +45,7 @@ from kapitan import cached
 logger = logging.getLogger(__name__)
 
 
-def compile_targets(inventory_path, search_path, output_path, parallel, targets, **kwargs):
+def compile_targets(inventory_path, search_paths, output_path, parallel, targets, **kwargs):
     """
     Searches and loads target files, and runs compile_target_file() on a
     multiprocessing pool with parallel number of processes.
@@ -59,7 +59,7 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
     pool = multiprocessing.Pool(parallel)
     # append "compiled" to output_path so we can safely overwrite it
     compile_path = os.path.join(output_path, "compiled")
-    worker = partial(compile_target, search_path=search_path, compile_path=temp_path, **kwargs)
+    worker = partial(compile_target, search_paths=search_paths, compile_path=temp_path, **kwargs)
 
     try:
         if target_objs == []:
@@ -128,7 +128,7 @@ def load_target_inventory(inventory_path, targets):
     return target_objs
 
 
-def compile_target(target_obj, search_path, compile_path, **kwargs):
+def compile_target(target_obj, search_paths, compile_path, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
 
@@ -140,6 +140,7 @@ def compile_target(target_obj, search_path, compile_path, **kwargs):
         input_type = obj["input_type"]
         input_paths = obj["input_paths"]
         output_path = obj["output_path"]
+
         if input_type == "jsonnet":
             _compile_path = os.path.join(compile_path, target_name, output_path)
             # support writing to an already existent dir
@@ -149,22 +150,25 @@ def compile_target(target_obj, search_path, compile_path, **kwargs):
                 # If directory exists, pass
                 if ex.errno == errno.EEXIST:
                     pass
+
             output_type = obj["output_type"]  # output_type is mandatory in jsonnet
             for input_path in input_paths:
-                compile_file_sp = os.path.join(search_path, input_path)
-                if os.path.exists(compile_file_sp):
-                    logger.debug("Compiling %s", compile_file_sp)
-                    try:
-                        compile_jsonnet(compile_file_sp, _compile_path, search_path,
-                                        ext_vars, output=output_type, target_name=target_name,
-                                        **kwargs)
-                    except CompileError as e:
-                        logger.error("Compile error: failed to compile target: %s",
-                                     target_name)
-                        raise e
-                else:
-                    logger.error("Compile error: input_path for target: %s not found in search_path: %s",
-                                 target_name, input_path)
+                jsonnet_file_found = False
+                for path in search_paths:
+                    compile_file_sp = os.path.join(path, input_path)
+                    if os.path.exists(compile_file_sp):
+                        jsonnet_file_found = True
+                        logger.debug("Compiling %s", compile_file_sp)
+                        try:
+                            compile_jsonnet(compile_file_sp, _compile_path, search_paths, ext_vars,
+                                            output=output_type, target_name=target_name, **kwargs)
+                        except CompileError as e:
+                            logger.error("Compile error: failed to compile target: %s", target_name)
+                            raise e
+
+                if not jsonnet_file_found:
+                    logger.error("Compile error: %s for target: %s not found in " +
+                                 "search_paths: %s", input_path, target_name, search_paths)
                     raise CompileError()
 
         if input_type == "jinja2":
@@ -177,22 +181,25 @@ def compile_target(target_obj, search_path, compile_path, **kwargs):
                 if ex.errno == errno.EEXIST:
                     pass
             for input_path in input_paths:
-                compile_path_sp = os.path.join(search_path, input_path)
-                if os.path.exists(compile_path_sp):
-                    # copy ext_vars to dedicated jinja2 context so we can update it
-                    ctx = ext_vars.copy()
-                    ctx["inventory"] = inventory(search_path, target_name)
-                    ctx["inventory_global"] = inventory(search_path, None)
-                    try:
-                        compile_jinja2(compile_path_sp, ctx, _compile_path,
-                                       target_name=target_name, **kwargs)
-                    except CompileError as e:
-                        logger.error("Compile error: failed to compile target: %s",
-                                     target_name)
-                        raise e
-                else:
-                    logger.error("Compile error: input_path for target: %s not found in search_path: %s",
-                                 target_name, input_path)
+                jinja2_file_found = False
+                for path in search_paths:
+                    compile_path_sp = os.path.join(path, input_path)
+                    if os.path.exists(compile_path_sp):
+                        jinja2_file_found = True
+                        # copy ext_vars to dedicated jinja2 context so we can update it
+                        ctx = ext_vars.copy()
+                        ctx["inventory"] = inventory(search_paths, target_name)
+                        ctx["inventory_global"] = inventory(search_paths, None)
+                        try:
+                            compile_jinja2(compile_path_sp, ctx, _compile_path,
+                                           target_name=target_name, **kwargs)
+                        except CompileError as e:
+                            logger.error("Compile error: failed to compile target: %s", target_name)
+                            raise e
+
+                if not jinja2_file_found:
+                    logger.error("Compile error: %s for target: %s not found in " +
+                                 "search_paths: %s", input_path, target_name, search_paths)
                     raise CompileError()
 
     logger.info("Compiled %s (%.2fs)", target_name, time.time() - start)
@@ -227,11 +234,11 @@ def compile_jinja2(path, context, compile_path, **kwargs):
             logger.debug("Wrote %s with mode %.4o", full_item_path, mode)
 
 
-def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
+def compile_jsonnet(file_path, compile_path, search_paths, ext_vars, **kwargs):
     """
     Write file_path (jsonnet evaluated) items as files to compile_path.
     Set output to write as json or yaml
-    search_path and ext_vars will be passed as parameters to jsonnet_file()
+    search_paths and ext_vars will be passed as parameters to jsonnet_file()
     kwargs:
         output: default 'yaml', accepts 'json'
         prune: default False, accepts True
@@ -240,9 +247,9 @@ def compile_jsonnet(file_path, compile_path, search_path, ext_vars, **kwargs):
         target_name: default None, set to current target being compiled
         indent: default 2
     """
-    _search_imports = lambda cwd, imp: search_imports(cwd, imp, search_path)
+    _search_imports = lambda cwd, imp: search_imports(cwd, imp, search_paths)
     json_output = jsonnet_file(file_path, import_callback=_search_imports,
-                               native_callbacks=resource_callbacks(search_path),
+                               native_callbacks=resource_callbacks(search_paths),
                                ext_vars=ext_vars)
     json_output = json.loads(json_output)
 

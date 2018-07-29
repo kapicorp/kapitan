@@ -282,15 +282,17 @@ Additional parameters are available for each positional argument. For example:
 
 ```
 $ kapitan compile -h
-usage: kapitan compile [-h] [--search-path JPATH] [--verbose] [--prune]
-                       [--quiet] [--output-path PATH] [--target-path PATH]
-                       [--parallelism INT] [--secrets-path SECRETS_PATH]
-                       [--reveal] [--inventory-path INVENTORY_PATH]
+usage: kapitan compile [-h] [--search-paths JPATH [JPATH ...]] [--verbose] [--prune]
+                       [--quiet] [--output-path PATH]
+                       [--targets TARGET [TARGET ...]] [--parallelism INT]
+                       [--indent INT] [--secrets-path SECRETS_PATH] [--reveal]
+                       [--inventory-path INVENTORY_PATH]
+                       [--ignore-version-check]
 
 optional arguments:
   -h, --help            show this help message and exit
-  --search-path JPATH, -J JPATH
-                        set search path, default is "."
+  --search-paths JPATH [JPATH ...], -J JPATH [JPATH ...]
+                        set search paths, default is ["."]
   --verbose, -v         set verbose mode
   --prune               prune jsonnet output
   --quiet               set quiet mode, only critical output
