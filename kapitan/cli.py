@@ -57,16 +57,16 @@ def main():
                              nargs='*',
                              metavar='VAR',
                              help='set variables')
-    eval_parser.add_argument('--search-path', '-J', type=str,
-                             default=from_dot_kapitan('eval', 'search-path', '.'),
+    eval_parser.add_argument('--search-paths', '-J', type=str, nargs='+',
+                             default=from_dot_kapitan('eval', 'search-paths', ['.']),
                              metavar='JPATH',
-                             help='set search path, default is "."')
+                             help='set search paths, default is ["."]')
 
     compile_parser = subparser.add_parser('compile', help='compile targets')
-    compile_parser.add_argument('--search-path', '-J', type=str,
-                                default=from_dot_kapitan('compile', 'search-path', '.'),
+    compile_parser.add_argument('--search-paths', '-J', type=str, nargs='+',
+                                default=from_dot_kapitan('compile', 'search-paths', ['.']),
                                 metavar='JPATH',
-                                help='set search path, default is "."')
+                                help='set search paths, default is ["."]')
     compile_parser.add_argument('--verbose', '-v', help='set verbose mode',
                                 action='store_true',
                                 default=from_dot_kapitan('compile', 'verbose', False))
@@ -194,14 +194,14 @@ def main():
 
     if cmd == 'eval':
         file_path = args.jsonnet_file
-        search_path = os.path.abspath(args.search_path)
+        search_paths = [os.path.abspath(path) for path in args.search_paths]
         ext_vars = {}
         if args.vars:
             ext_vars = dict(var.split('=') for var in args.vars)
         json_output = None
-        _search_imports = lambda cwd, imp: search_imports(cwd, imp, search_path)
+        _search_imports = lambda cwd, imp: search_imports(cwd, imp, search_paths)
         json_output = jsonnet_file(file_path, import_callback=_search_imports,
-                                   native_callbacks=resource_callbacks(search_path),
+                                   native_callbacks=resource_callbacks(search_paths),
                                    ext_vars=ext_vars)
         if args.output == 'yaml':
             json_obj = json.loads(json_output)
@@ -217,12 +217,13 @@ def main():
             logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
         else:
             logging.basicConfig(level=logging.INFO, format="%(message)s")
-        search_path = os.path.abspath(args.search_path)
+
+        search_paths = [os.path.abspath(path) for path in args.search_paths]
 
         if not args.ignore_version_check:
             check_version()
 
-        compile_targets(args.inventory_path, search_path, args.output_path,
+        compile_targets(args.inventory_path, search_paths, args.output_path,
                         args.parallelism, args.targets,
                         prune=(args.prune), secrets_path=args.secrets_path,
                         secrets_reveal=args.reveal, indent=args.indent,

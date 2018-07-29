@@ -40,19 +40,19 @@ except ImportError:
     from yaml import SafeLoader as YamlLoader
 
 
-def resource_callbacks(search_path):
+def resource_callbacks(search_paths):
     """
     Returns a dict with all the functions to be used
     on the native_callbacks keyword on jsonnet
-    search_path can be used by the native functions to access files
+    search_paths can be used by the native functions to access files
     """
 
     return {"jinja2_render_file": (("name", "ctx"),
-                                   partial(jinja2_render_file, search_path)),
+                                   partial(jinja2_render_file, search_paths)),
             "inventory": (("target", "inv_path"),
-                          partial(inventory, search_path)),
+                          partial(inventory, search_paths)),
             "file_read": (("name",),
-                          partial(read_file, search_path)),
+                          partial(read_file, search_paths)),
             "yaml_dump": (("obj",), yaml_dump),
             "sha256_string": (("obj",), sha256_string),
            }
@@ -64,61 +64,74 @@ def yaml_dump(obj):
     return yaml.safe_dump(_obj, default_flow_style=False)
 
 
-def jinja2_render_file(search_path, name, ctx):
+def jinja2_render_file(search_paths, name, ctx):
     """
     Render jinja2 file name with context ctx.
-    search_path is used to find the file name
+    search_paths is used to find the file name
     as there is a limitation with jsonnet's native_callback approach:
     one can't access the current directory being evaluated
     """
     ctx = json.loads(ctx)
-    _full_path = os.path.join(search_path, name)
-    logger.debug("jinja2_render_file trying file %s", _full_path)
-    try:
+    _full_path = ""
+
+    for path in search_paths:
+        _full_path = os.path.join(path, name)
+        logger.debug("jinja2_render_file trying file %s", _full_path)
         if os.path.exists(_full_path):
             logger.debug("jinja2_render_file found file at %s", _full_path)
-            return render_jinja2_file(_full_path, ctx)
-        else:
-            raise IOError("Could not find file %s" % name)
-    except Exception as e:
-        logger.error("Jsonnet jinja2 failed to render %s: %s", _full_path, str(e))
-        raise CompileError(e)
+            try:
+                return render_jinja2_file(_full_path, ctx)
+            except Exception as e:
+                logger.error("Jsonnet jinja2 failed to render %s: %s", _full_path, str(e))
+                raise CompileError(e)
+
+    raise IOError("jinja2 failed to render, could not find file: {}".format(_full_path))
 
 
-def read_file(search_path, name):
+def read_file(search_paths, name):
     """return content of file in name"""
-    full_path = os.path.join(search_path, name)
-    logger.debug("read_file trying file %s", full_path)
-    if os.path.exists(full_path):
-        logger.debug("read_file found file at %s", full_path)
-        with io.open(full_path, newline='') as f:
-            return f.read()
-    raise IOError("Could not find file %s" % name)
+    for path in search_paths:
+        full_path = os.path.join(path, name)
+        logger.debug("read_file trying file %s", full_path)
+        if os.path.exists(full_path):
+            logger.debug("read_file found file at %s", full_path)
+            with io.open(full_path, newline='') as f:
+                return f.read()
+
+    raise IOError("Could not find file {}".format(name))
 
 
-def search_imports(cwd, import_str, search_path):
+def search_imports(cwd, import_str, search_paths):
     """
     This is only to be used as a callback for the jsonnet API!
     - cwd is the import context $CWD,
     - import_str is the "bla.jsonnet" in 'import "bla.jsonnet"'
-    - search_path is the location where to look for import_str if not in cwd
-    The only supported parameters are cwd and import_str, so search_path
+    - search_paths is the location where to look for import_str if not in cwd
+    The only supported parameters are cwd and import_str, so search_paths
     needs to be closured.
     """
     basename = os.path.basename(import_str)
     full_import_path = os.path.join(cwd, import_str)
 
-    # if import_str not found, search in search_path
     if not os.path.exists(full_import_path):
+        # if import_str not found, search in install_path
         install_path = os.path.dirname(kapitan_install_path)
-        for path in (install_path, search_path):
-            _full_import_path = os.path.join(path, import_str)
-            # if found, set as full_import_path
-            if os.path.exists(_full_import_path):
-                full_import_path = _full_import_path
-                logger.debug("import_str: %s found in search_path: %s",
-                             import_str, path)
-                break
+        _full_import_path = os.path.join(install_path, import_str)
+        # if found, set as full_import_path
+        if os.path.exists(_full_import_path):
+            full_import_path = _full_import_path
+            logger.debug("import_str: %s found in search_path: %s",
+                         import_str, install_path)
+        else:
+            # if import_str not found, search in search_paths
+            for path in search_paths:
+                _full_import_path = os.path.join(path, import_str)
+                # if found, set as full_import_path
+                if os.path.exists(_full_import_path):
+                    full_import_path = _full_import_path
+                    logger.debug("import_str: %s found in search_path: %s",
+                                 import_str, path)
+                    break
 
     # if the above search did not find anything, let jsonnet error
     # with a non existent import
@@ -134,14 +147,25 @@ def search_imports(cwd, import_str, search_path):
     return normalised_path, normalised_path_content
 
 
-def inventory(search_path, target, inventory_path="inventory/"):
+def inventory(search_paths, target, inventory_path="inventory/"):
     """
-    Reads inventory (set by inventory_path) in search_path.
+    Reads inventory (set by inventory_path) in search_paths.
     set nodes_uri to change reclass nodes_uri the default value
     set target to None to return all target in the inventory
     Returns a dictionary with the inventory for target
     """
-    full_inv_path = os.path.join(search_path, inventory_path)
+
+    full_inv_path = ""
+    inv_path_exists = False
+    for path in search_paths:
+        full_inv_path = os.path.join(path, inventory_path)
+        if os.path.exists(full_inv_path):
+            inv_path_exists = True
+            break
+
+    if not inv_path_exists:
+        logger.error("Inventory not found in search paths: %s", search_paths)
+        raise InventoryError()
 
     if target is None:
         return inventory_reclass(full_inv_path)["nodes"]
