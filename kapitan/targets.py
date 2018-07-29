@@ -55,16 +55,17 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
 
-    if not kwargs.get('force_recompile'):
-        generate_inv_cache_hashes(inventory_path)
-        if not targets:
-            targets = get_changed_targets(inventory_path, output_path)
-            logger.debug("Changed targets since last compilation: %s", targets)
-            if len(targets) == 0:
-                logger.info("No changes since last compilation.")
-                return
+    generate_inv_cache_hashes(inventory_path, targets)
 
-    target_objs = load_target_inventory(inventory_path, targets)
+    changed_targets = targets
+    if not kwargs.get('force_recompile') and not targets:
+        changed_targets = get_changed_targets(inventory_path, output_path)
+        logger.debug("Changed targets since last compilation: %s", changed_targets)
+        if len(changed_targets) == 0:
+            logger.info("No changes since last compilation.")
+            return
+
+    target_objs = load_target_inventory(inventory_path, changed_targets)
 
     pool = multiprocessing.Pool(parallel)
     # append "compiled" to output_path so we can safely overwrite it
@@ -82,9 +83,9 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
         if not os.path.exists(compile_path):
             os.makedirs(compile_path)
 
-        # if '-t' is set on compile, only override selected targets
-        if targets:
-            for target in targets:
+        # if '-t' is set on compile or only a few changed, only override selected targets
+        if changed_targets:
+            for target in changed_targets:
                 compile_path_target = os.path.join(compile_path, target)
                 temp_path_target = os.path.join(temp_path, target)
 
@@ -101,11 +102,7 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
             logger.debug("Copied %s into %s", temp_path, compile_path)
 
         # Save inventory and folders cache
-        if cached.inv_cache:
-            inv_cache_path = os.path.join(compile_path, ".kapitan_cache")
-            with open(inv_cache_path, "w") as f:
-                logger.debug("Saved .kapitan_cache")
-                yaml.dump(cached.inv_cache, stream=f, default_flow_style=False)
+        save_inv_cache(compile_path, targets)
 
     except Exception as e:
         # if compile worker fails, terminate immediately
@@ -122,7 +119,7 @@ def compile_targets(inventory_path, search_path, output_path, parallel, targets,
         logger.debug("Removed %s", temp_path)
 
 
-def generate_inv_cache_hashes(inventory_path):
+def generate_inv_cache_hashes(inventory_path, targets):
     """
     generates the hashes for the inventory per target and jsonnet/jinja2 folders for caching purposes
     struct: {
@@ -143,27 +140,33 @@ def generate_inv_cache_hashes(inventory_path):
     cached.inv_cache['inventory'] = {}
     cached.inv_cache['folder'] = {}
 
-    for target in inv['nodes']:
-        cached.inv_cache['inventory'][target] = {}
-        cached.inv_cache['inventory'][target]['classes'] = dictionary_hash(inv['nodes'][target]['classes'])
-        cached.inv_cache['inventory'][target]['parameters'] = dictionary_hash(inv['nodes'][target]['parameters'])
+    if targets:
+        for target in targets:
+            cached.inv_cache['inventory'][target] = {}
+            cached.inv_cache['inventory'][target]['classes'] = dictionary_hash(inv['nodes'][target]['classes'])
+            cached.inv_cache['inventory'][target]['parameters'] = dictionary_hash(inv['nodes'][target]['parameters'])
+    else:
+        for target in inv['nodes']:
+            cached.inv_cache['inventory'][target] = {}
+            cached.inv_cache['inventory'][target]['classes'] = dictionary_hash(inv['nodes'][target]['classes'])
+            cached.inv_cache['inventory'][target]['parameters'] = dictionary_hash(inv['nodes'][target]['parameters'])
 
-        compile_obj = inv['nodes'][target]['parameters']['kapitan']['compile']
-        for obj in compile_obj:
-            for input_path in obj['input_paths']:
-                base_folder = os.path.dirname(input_path).split('/')[0]
-                if base_folder == '':
-                    base_folder = os.path.basename(input_path).split('/')[0]
+            compile_obj = inv['nodes'][target]['parameters']['kapitan']['compile']
+            for obj in compile_obj:
+                for input_path in obj['input_paths']:
+                    base_folder = os.path.dirname(input_path).split('/')[0]
+                    if base_folder == '':
+                        base_folder = os.path.basename(input_path).split('/')[0]
 
-                if base_folder not in cached.inv_cache['folder'].keys():
-                    if os.path.exists(base_folder) and os.path.isdir(base_folder):
-                        cached.inv_cache['folder'][base_folder] = directory_hash(base_folder)
+                    if base_folder not in cached.inv_cache['folder'].keys():
+                        if os.path.exists(base_folder) and os.path.isdir(base_folder):
+                            cached.inv_cache['folder'][base_folder] = directory_hash(base_folder)
 
-            # Most commonly changed but not referenced in input_paths
-            for common in ('lib', 'vendor', 'secrets'):
-                if common not in cached.inv_cache['folder'].keys():
-                    if os.path.exists(common) and os.path.isdir(common):
-                        cached.inv_cache['folder'][common] = directory_hash(common)
+                # Most commonly changed but not referenced in input_paths
+                for common in ('lib', 'vendor', 'secrets'):
+                    if common not in cached.inv_cache['folder'].keys():
+                        if os.path.exists(common) and os.path.isdir(common):
+                            cached.inv_cache['folder'][common] = directory_hash(common)
 
 
 def get_changed_targets(inventory_path, output_path):
@@ -210,6 +213,43 @@ def get_changed_targets(inventory_path, output_path):
                 targets.append(target)
 
     return targets
+
+
+def save_inv_cache(compile_path, targets):
+    """save the cache to .kapitan_cache for inventories per target and folders"""
+    if cached.inv_cache:
+        inv_cache_path = os.path.join(compile_path, ".kapitan_cache")
+        # If only some targets were selected (-t), overwride only their inventory
+        if targets:
+            saved_inv_cache = None
+            try:
+                with open(inv_cache_path, "r") as f:
+                    saved_inv_cache = yaml.safe_load(f)
+            except Exception as e:
+                pass
+
+            if saved_inv_cache:
+                if 'inventory' not in saved_inv_cache:
+                    saved_inv_cache['inventory'] = {}
+            else:
+                saved_inv_cache = {}
+                saved_inv_cache['inventory'] = {}
+
+            for target in targets:
+                if target not in saved_inv_cache['inventory']:
+                    saved_inv_cache['inventory'][target] = {}
+
+                saved_inv_cache['inventory'][target]['classes'] = cached.inv_cache['inventory'][target]['classes']
+                saved_inv_cache['inventory'][target]['parameters'] = cached.inv_cache['inventory'][target]['parameters']
+
+            with open(inv_cache_path, "w") as f:
+                logger.debug("Saved .kapitan_cache for targets: %s", targets)
+                yaml.dump(saved_inv_cache, stream=f, default_flow_style=False)
+
+        else:
+            with open(inv_cache_path, "w") as f:
+                logger.debug("Saved .kapitan_cache")
+                yaml.dump(cached.inv_cache, stream=f, default_flow_style=False)
 
 
 def load_target_inventory(inventory_path, targets):
