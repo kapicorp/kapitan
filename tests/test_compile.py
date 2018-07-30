@@ -30,10 +30,6 @@ class CompileTest(unittest.TestCase):
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-f"]
         main()
-        try:
-            os.remove(os.getcwd() + '/compiled/.kapitan_cache')
-        except Exception as e:
-            pass
         compiled_dir_hash = directory_hash(os.getcwd() + '/compiled')
         test_compiled_dir_hash = directory_hash(os.getcwd() + '/../../tests/test_kubernetes_compiled')
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
