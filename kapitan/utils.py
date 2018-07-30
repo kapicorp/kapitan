@@ -304,8 +304,8 @@ def directory_hash(directory):
 
     try:
         hash = sha256()
-        for root, _, files in os.walk(directory):
-            for names in files:
+        for root, _, files in sorted(os.walk(directory)):
+            for names in sorted(files):
                 file_path = os.path.join(root, names)
                 try:
                     with open(file_path, 'r') as f:
