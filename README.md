@@ -282,12 +282,12 @@ Additional parameters are available for each positional argument. For example:
 
 ```
 $ kapitan compile -h
-usage: kapitan compile [-h] [--search-paths JPATH [JPATH ...]] [--verbose] [--prune]
-                       [--quiet] [--output-path PATH]
+usage: kapitan compile [-h] [--search-paths JPATH [JPATH ...]] [--verbose]
+                       [--prune] [--quiet] [--output-path PATH]
                        [--targets TARGET [TARGET ...]] [--parallelism INT]
                        [--indent INT] [--secrets-path SECRETS_PATH] [--reveal]
                        [--inventory-path INVENTORY_PATH]
-                       [--ignore-version-check]
+                       [--ignore-version-check] [--force-recompile]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -310,6 +310,8 @@ optional arguments:
                         set inventory path, default is "./inventory"
   --ignore-version-check
                         ignore the version from .kapitan
+  --force-recompile, -f
+                        force recompilation of all targets, ignores .kapitan_cache
 ```
 
 These parameters can also be defined in a local `.kapitan` file, for example:

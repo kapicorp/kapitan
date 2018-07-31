@@ -20,7 +20,7 @@ import unittest
 import os
 import sys
 from kapitan.cli import main
-from kapitan.utils import get_directory_hash
+from kapitan.utils import directory_hash
 
 
 class CompileTest(unittest.TestCase):
@@ -28,10 +28,10 @@ class CompileTest(unittest.TestCase):
         os.chdir(os.getcwd() + '/examples/kubernetes/')
 
     def test_compile(self):
-        sys.argv = ["kapitan", "compile"]
+        sys.argv = ["kapitan", "compile", "-f"]
         main()
-        compiled_dir_hash = get_directory_hash(os.getcwd() + '/compiled')
-        test_compiled_dir_hash = get_directory_hash(os.getcwd() + '/../../tests/test_kubernetes_compiled')
+        compiled_dir_hash = directory_hash(os.getcwd() + '/compiled')
+        test_compiled_dir_hash = directory_hash(os.getcwd() + '/../../tests/test_kubernetes_compiled')
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def tearDown(self):
