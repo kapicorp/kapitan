@@ -1,3 +1,12 @@
+## 0.18.0:
+#### Breaking:
+- Renamed `--search-path` to `--search-paths` in `eval` and `compile`, enabling multiple paths for jsonnet/jinja2 and adding support for [jsonnet bundler](https://github.com/jsonnet-bundler/jsonnet-bundler) (#133)
+
+#### Updates:
+- Inventory and folders caching; only compile targets that changed (#134)
+- Updated reclass to v1.5.5 (#135)
+- Updated jsonnet to v0.11.2 (#136)
+
 ## 0.17.1:
 - Command flags support in .kapitan (#125)
 - Upgraded reclass to 1.5.4 (#127)
