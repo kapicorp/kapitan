@@ -1,11 +1,13 @@
+# kapitan dependencies
 jsonnet==0.11.2
-PyYAML==3.12
+PyYAML==3.13
 ujson==1.35
 Jinja2>=2.10
 jsonschema>=2.6.0
-python-gnupg==0.4.2
+python-gnupg==0.4.3
 six>=1.11.0
-cryptography==2.2.2
+cryptography==2.3
 requests>=2.19.1
+
 # Reclass dependencies
 pyparsing
