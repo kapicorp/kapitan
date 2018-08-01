@@ -143,9 +143,13 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
 
     if targets:
         for target in targets:
-            cached.inv_cache['inventory'][target] = {}
-            cached.inv_cache['inventory'][target]['classes'] = dictionary_hash(inv['nodes'][target]['classes'])
-            cached.inv_cache['inventory'][target]['parameters'] = dictionary_hash(inv['nodes'][target]['parameters'])
+            try:
+                cached.inv_cache['inventory'][target] = {}
+                cached.inv_cache['inventory'][target]['classes'] = dictionary_hash(inv['nodes'][target]['classes'])
+                cached.inv_cache['inventory'][target]['parameters'] = dictionary_hash(inv['nodes'][target]['parameters'])
+            except KeyError as e:
+                logger.error("'%s' target not found", target)
+                raise
     else:
         for target in inv['nodes']:
             cached.inv_cache['inventory'][target] = {}
