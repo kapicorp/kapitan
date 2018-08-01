@@ -309,11 +309,13 @@ def directory_hash(directory):
                 file_path = os.path.join(root, names)
                 try:
                     with open(file_path, 'r') as f:
-                        hash.update(sha256(f.read().encode("UTF-8")).hexdigest().encode("UTF-8"))
+                        file_hash = sha256(f.read().encode("UTF-8"))
+                        hash.update(file_hash.hexdigest().encode("UTF-8"))
                 except Exception as e:
                     if isinstance(e, UnicodeDecodeError):
                         with open(file_path, 'rb') as f:
-                            hash.update(sha256(f.read()).hexdigest().encode("UTF-8"))
+                            binary_file_hash = sha256(f.read())
+                            hash.update(binary_file_hash.hexdigest().encode("UTF-8"))
                     else:
                         logger.error("utils.directory_hash failed to open %s: %s", file_path, str(e))
                         raise

@@ -55,17 +55,18 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
 
-    generate_inv_cache_hashes(inventory_path, targets)
+    additional_cache_paths = kwargs.get('cache_paths')
+    generate_inv_cache_hashes(inventory_path, targets, additional_cache_paths)
 
-    changed_targets = targets
+    updated_targets = targets
     if not kwargs.get('force_recompile') and not targets:
-        changed_targets = get_changed_targets(inventory_path, output_path)
-        logger.debug("Changed targets since last compilation: %s", changed_targets)
-        if len(changed_targets) == 0:
+        updated_targets = changed_targets(inventory_path, output_path)
+        logger.debug("Changed targets since last compilation: %s", updated_targets)
+        if len(updated_targets) == 0:
             logger.info("No changes since last compilation.")
             return
 
-    target_objs = load_target_inventory(inventory_path, changed_targets)
+    target_objs = load_target_inventory(inventory_path, updated_targets)
 
     pool = multiprocessing.Pool(parallel)
     # append "compiled" to output_path so we can safely overwrite it
@@ -84,8 +85,8 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
             os.makedirs(compile_path)
 
         # if '-t' is set on compile or only a few changed, only override selected targets
-        if changed_targets:
-            for target in changed_targets:
+        if updated_targets:
+            for target in updated_targets:
                 compile_path_target = os.path.join(compile_path, target)
                 temp_path_target = os.path.join(temp_path, target)
 
@@ -119,7 +120,7 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
         logger.debug("Removed %s", temp_path)
 
 
-def generate_inv_cache_hashes(inventory_path, targets):
+def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
     """
     generates the hashes for the inventory per target and jsonnet/jinja2 folders for caching purposes
     struct: {
@@ -162,6 +163,12 @@ def generate_inv_cache_hashes(inventory_path, targets):
                         if os.path.exists(base_folder) and os.path.isdir(base_folder):
                             cached.inv_cache['folder'][base_folder] = directory_hash(base_folder)
 
+                # Cache additional folders set by --cache-paths
+                for path in cache_paths:
+                    if path not in cached.inv_cache['folder'].keys():
+                        if os.path.exists(path) and os.path.isdir(path):
+                            cached.inv_cache['folder'][path] = directory_hash(path)
+
                 # Most commonly changed but not referenced in input_paths
                 for common in ('lib', 'vendor', 'secrets'):
                     if common not in cached.inv_cache['folder'].keys():
@@ -169,7 +176,7 @@ def generate_inv_cache_hashes(inventory_path, targets):
                             cached.inv_cache['folder'][common] = directory_hash(common)
 
 
-def get_changed_targets(inventory_path, output_path):
+def changed_targets(inventory_path, output_path):
     """returns a list of targets that have changed since last compilation"""
     targets = []
     inv = inventory_reclass(inventory_path)
@@ -194,7 +201,7 @@ def get_changed_targets(inventory_path, output_path):
                 if hash != saved_inv_cache['folder'][key]:
                     logger.debug("%s folder hash changed, recompiling all targets", key)
                     return targets_list
-            except Exception as e:
+            except KeyError as e:
                 # Errors usually occur when saved_inv_cache doesn't contain a new folder
                 # Recompile anyway to be safe
                 return targets_list
@@ -207,7 +214,7 @@ def get_changed_targets(inventory_path, output_path):
                 elif cached.inv_cache['inventory'][target]['parameters'] != saved_inv_cache['inventory'][target]['parameters']:
                     logger.debug("parameters hash changed in %s, recompiling", target)
                     targets.append(target)
-            except Exception as e:
+            except KeyError as e:
                 # Errors usually occur when saved_inv_cache doesn't contain a new target
                 # Recompile anyway to be safe
                 targets.append(target)

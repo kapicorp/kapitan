@@ -105,6 +105,10 @@ def main():
                                 help='ignore the version from .kapitan',
                                 action='store_true',
                                 default=from_dot_kapitan('compile', 'ignore-version-check', False))
+    compile_parser.add_argument('--cache-paths', '-c', type=str, nargs='+',
+                                default=from_dot_kapitan('compile', 'cache-paths', []),
+                                metavar='PATH',
+                                help='cache additional paths to .kapitan_cache, default is []')
     compile_parser.add_argument('--force-recompile', '-f',
                                 help='force recompilation of all targets, ignores .kapitan_cache',
                                 action='store_true',
@@ -227,7 +231,7 @@ def main():
                         args.parallelism, args.targets,
                         prune=(args.prune), secrets_path=args.secrets_path,
                         secrets_reveal=args.reveal, indent=args.indent,
-                        force_recompile=args.force_recompile)
+                        cache_paths=args.cache_paths, force_recompile=args.force_recompile)
 
     elif cmd == 'inventory':
         if args.verbose:
