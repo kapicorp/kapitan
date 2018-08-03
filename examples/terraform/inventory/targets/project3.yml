@@ -2,7 +2,8 @@
 # Classes to include in this target
 ########################################
 classes:
-  - common
+  - type.terraform
+  - provider.gcp
 
 ########################################
 # override variables defined in any of
@@ -10,8 +11,8 @@ classes:
 ########################################
 parameters:
   name: project3
-  main_region: europe-west2
-  main_zone: europe-west2-a
+  region: europe-west2
+  zone: europe-west2-a
 
   resources:
 

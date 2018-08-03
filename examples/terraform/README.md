@@ -6,29 +6,33 @@ Running `kapitan compile` in this directory would produce 3 terraform projects n
 
 ```
 $ docker run -t --rm -v $(pwd):/src:delegated deepmind/kapitan compile
-Compiled project3 (0.32s)
-Compiled project1 (0.39s)
-Compiled project2 (0.41s)
+Compiled project3 (0.14s)
+Compiled project2 (0.15s)
+Compiled project1 (0.16s)
 
 $ tree compiled
 compiled
 ├── project1
-│   └── manifests
+│   ├── scripts
+│   │   └── terraform.sh
+│   └── terraform
 │       ├── dns.tf.json
 │       ├── output.tf.json
 │       └── provider.tf.json
 ├── project2
-│   └── manifests
-│       ├── container.tf.json
+│   ├── scripts
+│   │   └── terraform.sh
+│   └── terraform
 │       ├── output.tf.json
 │       └── provider.tf.json
 └── project3
-    └── manifests
-        ├── container.tf.json
+    ├── scripts
+    │   └── terraform.sh
+    └── terraform
         ├── output.tf.json
         └── provider.tf.json
 
-6 directories, 9 files
+9 directories, 10 files
 ```
 
 You can now run `terraform` commands as usual:
