@@ -80,10 +80,15 @@ def main():
                                 default=from_dot_kapitan('compile', 'output-path', '.'),
                                 metavar='PATH',
                                 help='set output path, default is "."')
-    compile_parser.add_argument('--targets', '-t', help='targets to compile, default is all',
+    compile_parser_subgroup = compile_parser.add_mutually_exclusive_group()
+    compile_parser_subgroup.add_argument('--targets', '-t', help='targets to compile, default is all',
                                 type=str, nargs='+',
                                 default=from_dot_kapitan('compile', 'targets', []),
                                 metavar='TARGET')
+    compile_parser_subgroup.add_argument('--force-recompile', '-f',
+                                help='force recompilation of all targets, ignores .kapitan_cache',
+                                action='store_true',
+                                default=from_dot_kapitan('compile', 'force-recompile', False))
     compile_parser.add_argument('--parallelism', '-p', type=int,
                                 default=from_dot_kapitan('compile', 'parallelism', 4),
                                 metavar='INT',
@@ -105,10 +110,6 @@ def main():
                                 help='ignore the version from .kapitan',
                                 action='store_true',
                                 default=from_dot_kapitan('compile', 'ignore-version-check', False))
-    compile_parser.add_argument('--force-recompile', '-f',
-                                help='force recompilation of all targets, ignores .kapitan_cache',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'force-recompile', False))
 
     inventory_parser = subparser.add_parser('inventory', help='show inventory')
     inventory_parser.add_argument('--target-name', '-t',
