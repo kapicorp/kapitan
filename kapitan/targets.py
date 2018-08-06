@@ -162,11 +162,11 @@ def generate_inv_cache_hashes(inventory_path, targets):
                         if os.path.exists(base_folder) and os.path.isdir(base_folder):
                             cached.inv_cache['folder'][base_folder] = directory_hash(base_folder)
 
-                # Most commonly changed but not referenced in input_paths
-                for common in ('lib', 'vendor', 'secrets'):
-                    if common not in cached.inv_cache['folder'].keys():
-                        if os.path.exists(common) and os.path.isdir(common):
-                            cached.inv_cache['folder'][common] = directory_hash(common)
+        # Most commonly changed but not referenced in input_paths
+        for common in ('lib', 'vendor', 'secrets'):
+            if common not in cached.inv_cache['folder'].keys():
+                if os.path.exists(common) and os.path.isdir(common):
+                    cached.inv_cache['folder'][common] = directory_hash(common)
 
 
 def get_changed_targets(inventory_path, output_path):
@@ -257,10 +257,11 @@ def load_target_inventory(inventory_path, targets):
     target_objs = []
     inv = inventory_reclass(inventory_path)
 
-    targets_list = inv['nodes']
     # if '-t' is set on compile, only loop through selected targets
     if targets:
         targets_list = targets
+    else:
+        targets_list = inv['nodes']
 
     for target_name in targets_list:
         try:
