@@ -55,16 +55,18 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
 
-    additional_cache_paths = kwargs.get('cache_paths')
-    generate_inv_cache_hashes(inventory_path, targets, additional_cache_paths)
-
     updated_targets = targets
-    if not kwargs.get('force_recompile') and not targets:
-        updated_targets = changed_targets(inventory_path, output_path)
-        logger.debug("Changed targets since last compilation: %s", updated_targets)
-        if len(updated_targets) == 0:
-            logger.info("No changes since last compilation.")
-            return
+    # If --cache is set
+    if kwargs.get('cache'):
+        additional_cache_paths = kwargs.get('cache_paths')
+        generate_inv_cache_hashes(inventory_path, targets, additional_cache_paths)
+
+        if not targets:
+            updated_targets = changed_targets(inventory_path, output_path)
+            logger.debug("Changed targets since last compilation: %s", updated_targets)
+            if len(updated_targets) == 0:
+                logger.info("No changes since last compilation.")
+                return
 
     target_objs = load_target_inventory(inventory_path, updated_targets)
 
