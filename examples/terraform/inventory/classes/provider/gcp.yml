@@ -1,0 +1,27 @@
+# base class that should be imported on all cluster classes
+#
+
+parameters:
+
+  provider:
+    google:
+      version: 1.16.2
+
+  terraform:
+    required_version: ">= 0.11.7"
+    backend:
+      gcs:
+        bucket: my_centralized_tf_bucket
+        project: centralized_gcloud_project
+        prefix: /${name}/
+
+  # List of allowed values for different resources
+  # These values are used in different assert methods in the templates
+  valid_values:
+
+    # Updated list below with:
+    # gcloud compute zones list
+    zones:
+      - europe-west2-a
+      - europe-west2-b
+      - europe-west2-c

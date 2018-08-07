@@ -1,0 +1,20 @@
+parameters:
+
+  type: terraform
+
+  kapitan:
+    vars:
+      target: ${name}
+
+    compile:
+
+      - output_path: terraform
+        output_type: json
+        input_paths:
+          - templates/terraform/main.jsonnet
+        input_type: jsonnet
+
+      - output_path: scripts
+        input_type: jinja2
+        input_paths:
+          - templates/scripts/
