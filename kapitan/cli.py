@@ -80,15 +80,10 @@ def main():
                                 default=from_dot_kapitan('compile', 'output-path', '.'),
                                 metavar='PATH',
                                 help='set output path, default is "."')
-    compile_parser_subgroup = compile_parser.add_mutually_exclusive_group()
-    compile_parser_subgroup.add_argument('--targets', '-t', help='targets to compile, default is all',
+    compile_parser.add_argument('--targets', '-t', help='targets to compile, default is all',
                                 type=str, nargs='+',
                                 default=from_dot_kapitan('compile', 'targets', []),
                                 metavar='TARGET')
-    compile_parser_subgroup.add_argument('--force-recompile', '-f',
-                                help='force recompilation of all targets, ignores .kapitan_cache',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'force-recompile', False))
     compile_parser.add_argument('--parallelism', '-p', type=int,
                                 default=from_dot_kapitan('compile', 'parallelism', 4),
                                 metavar='INT',
@@ -106,6 +101,14 @@ def main():
     compile_parser.add_argument('--inventory-path',
                                 default=from_dot_kapitan('compile', 'inventory-path', './inventory'),
                                 help='set inventory path, default is "./inventory"')
+    compile_parser.add_argument('--cache', '-c',
+                                help='enable compilation caching to .kapitan_cache, default is False',
+                                action='store_true',
+                                default=from_dot_kapitan('compile', 'cache', False))
+    compile_parser.add_argument('--cache-paths', type=str, nargs='+',
+                                default=from_dot_kapitan('compile', 'cache-paths', []),
+                                metavar='PATH',
+                                help='cache additional paths to .kapitan_cache, default is []')
     compile_parser.add_argument('--ignore-version-check',
                                 help='ignore the version from .kapitan',
                                 action='store_true',
@@ -228,7 +231,7 @@ def main():
                         args.parallelism, args.targets,
                         prune=(args.prune), secrets_path=args.secrets_path,
                         secrets_reveal=args.reveal, indent=args.indent,
-                        force_recompile=args.force_recompile)
+                        cache=args.cache, cache_paths=args.cache_paths)
 
     elif cmd == 'inventory':
         if args.verbose:
