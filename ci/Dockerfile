@@ -6,7 +6,7 @@ RUN apk add --no-cache python3-dev git g++ make libstdc++ gnupg musl-dev util-li
     apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community terraform && \
     python3 -m ensurepip && \
     rm -rf /usr/lib/python*/ensurepip && \
-    pip3 install --upgrade --no-cache-dir pip setuptools && \
+    pip3 install --upgrade --no-cache-dir pip setuptools yq && \
     if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
     if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
     rm -rf /root/.cache
