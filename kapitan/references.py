@@ -1,0 +1,335 @@
+# Copyright 2018 The Kapitan Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"references module"
+
+import base64
+import errno
+import hashlib
+import logging
+import re
+import secrets
+import os
+import yaml
+
+try:
+    from yaml import CSafeLoader as YamlLoader
+except ImportError:
+    from yaml import SafeLoader as YamlLoader
+
+logger = logging.getLogger(__name__)
+
+# e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
+REF_TOKEN_TAG_PATTERN = r"^(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)*})$"
+REF_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)"  # e.g. ref:my/secret/token
+REF_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)"  # e.g. ref:my/secret/token:1deadbeef
+
+class Ref(object):
+    def __init__(self, data, base64_data=False, **kwargs):
+        self.type = 'ref'
+        if not base64_data:
+            self.data = base64.b64encode(data.encode()).decode()
+        else:
+            self.data = data
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def reveal(self):
+        return base64.b64decode(self.data).decode()
+
+    def compile(self):
+        # XXX will only work if object read via backend
+        return "?{{{}:{}:{}}}".format(self.type, self.path, self.hash[:8])
+
+    def __str__(self):
+        return "{}".format(self.__dict__)
+
+    @classmethod
+    def from_file(cls, ref_full_path):
+        try:
+            with open(ref_full_path) as fp:
+                obj = yaml.load(fp, Loader=YamlLoader)
+                kwargs = { key: value for key, value in obj.items() if key not in ('data', 'base64_data') }
+                return cls(obj['data'], base64_data=True, **kwargs)
+
+        except IOError as ex:
+            if ex.errno == errno.ENOENT:
+                return None
+
+# TODO these need to extend KapitanError instead
+class RefError(Exception):
+    """ref error"""
+    pass
+
+class RefBackendError(Exception):
+    """ref backend error"""
+    pass
+
+class RefFromFuncError(Exception):
+    """ref from func error"""
+    pass
+
+
+class RefBackend(object):
+    def __init__(self, path, ref_type=Ref):
+        self.path = path
+        self.type = 'ref'
+        self.ref_type = ref_type # Ref type backend instance manages
+
+    def __getitem__(self, ref_path):
+        full_ref_path = os.path.join(self.path, ref_path)
+        ref = Ref.from_file(full_ref_path)
+
+        if ref is not None:
+            ref.path = ref_path
+            ref_path_data = "{}{}".format(ref.path, ref.data)
+            ref.hash = hashlib.sha256(ref_path_data.encode()).hexdigest()
+            ref.token = "{}:{}:{}".format(ref.type, ref.path, ref.hash[:8])
+            return ref
+
+        raise KeyError(ref_path)
+
+    def mkdir_ref(self, full_ref_path):
+        try:
+            os.makedirs(os.path.dirname(full_ref_path))
+        except OSError as ex:
+            # If directory exists, pass
+            if ex.errno == errno.EEXIST:
+                pass
+
+    def __setitem__(self, ref_path, ref_obj):
+        assert(isinstance(ref_obj, self.ref_type))
+        full_ref_path = os.path.join(self.path, ref_path)
+        self.mkdir_ref(full_ref_path)
+
+        with open(full_ref_path, 'w') as fp:
+            yaml.safe_dump(ref_obj.__dict__, stream=fp, default_flow_style=False)
+
+
+    def __contains__(self, ref_path):
+        try:
+            self.__getitem__(ref_path)
+            return True
+        except KeyError:
+            return False
+
+    def __iter__(self):
+        for root, _, files in os.walk(self.path):
+            for f in files:
+                full_path = os.path.join(root, f)
+                ref_path = full_path[len(self.path):]
+                yield ref_path
+
+    def iteritems(self):
+        for k in self.__iter__():
+            try:
+                v = self.__getitem__(k)
+                yield (k, v)
+            except KeyError:
+                pass
+
+
+class Controller(object):
+    def __init__(self):
+        self.backends = {}
+
+    def register_backend(self, backend):
+        assert(isinstance(backend, RefBackend))
+        self.backends[backend.type] = backend
+
+    def _get_backend(self, type):
+        try:
+            return self.backends[type]
+        except KeyError:
+            raise RefBackendError('no such backend: {}'.format(type))
+
+    def token_type(self, token):
+        attrs = token.split(':')
+        _type = attrs[0]
+
+        if _type in self.backends:
+            return self.backends[_type].ref_type
+        else:
+            raise RefError("{}: token has invalid (or not unregistered backend) type".format(token))
+
+    def _get_from_token(self, token):
+        attrs = token.split(':')
+
+        # "type:path/to/ref"
+        if len(attrs) == 2:
+            type = attrs[0]
+            path = attrs[1]
+            backend = self._get_backend(type)
+            return backend[path]
+
+        # "type:path/to/ref:n0c0ffee"
+        elif len(attrs) == 3:
+            type = attrs[0]
+            path = attrs[1]
+            hash = attrs[2]
+            backend = self._get_backend(type)
+            ref = backend[path]
+            if ref.hash[:8] == hash:
+                return ref
+            else:
+                raise RefError("{}: hash does not match with: {}".format(token, ref.token))
+        else:
+            return None
+
+    def _set_to_token(self, token, ref_obj):
+        attrs = token.split(':')
+
+        if len(attrs) == 2:
+            type = attrs[0]
+            path = attrs[1]
+            backend = self._get_backend(type)
+            assert(isinstance(ref_obj, backend.ref_type))
+            backend[path] = ref_obj
+        else:
+            raise RefError("{}: is not a valid token".format(token))
+
+    def _eval_func(self, func_name, data, *func_params):
+
+        func_lookup = {
+            'randomstr': func_randomstr,
+        }
+
+        return func_lookup[func_name](data, *func_params)
+
+    def _eval_func_str(self, func_str):
+        "evals func_str and returns data and a boolean indicating if data should be base64 encoded"
+        assert(func_str.startswith('|'))
+        funcs = func_str[1:].split('|')
+
+        data = None
+        encode_base64 = False
+
+        for func in funcs:
+            func_name, *func_params = func.strip().split(':')
+            if func_name == 'base64': # not a real function
+                encode_base64 = True
+            else:
+                try:
+                    data = self._eval_func(func_name, data, *func_params)
+                except KeyError:
+                    raise RefError("{}: unknown function".format(func_name))
+
+        return data, encode_base64
+
+    def __getitem__(self, key):
+        # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2} or ?{ref:my/secret/token:deadbeef}
+        match = re.match(REF_TOKEN_TAG_PATTERN, key)
+        if match:
+            tag, token, func = match.groups()
+            if func is None:
+                return self._get_from_token(token)
+            else:
+                try:
+                    return self._get_from_token(token)
+                # if func is set and ref doesnt exist, raise RefFromFuncError to indicate new ref needs to be created
+                except KeyError:
+                    raise RefFromFuncError('{}: does not exist and must be created from function: {}'.format(token, func))
+
+    def __setitem__(self, key, value):
+        # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
+        match = re.match(REF_TOKEN_TAG_PATTERN, key)
+        if match:
+            tag, token, func_str = match.groups()
+            if func_str is None and value is not None:
+                return self._set_to_token(token, value)
+            elif func_str is not None and value is None:
+                # run _eval_func_str, create ref_obj and run _set_to_token()
+                data, encode_base64 = self._eval_func_str(func_str) 
+                ref_type = self.token_type(token)
+                ref_obj = None
+                if encode_base64:
+                    b64_data = base64.b64encode(data)
+                    ref_obj = ref_type(b64_data)
+                else:
+                    ref_obj = ref_type(data)
+                return self._set_to_token(token, ref_obj)
+            else:
+                raise RefError("{}: is not a valid tag".format(key))
+        else:
+            raise RefError("{}: is not a valid tag".format(key))
+
+def func_randomstr(input_value, nbytes=''):
+    """generates a URL-safe text string, containing nbytes random bytes"""
+    return 'a'
+    # TODO XXX
+    # if nbytes:
+    #    nbytes = int(nbytes)
+    #    return secrets.token_urlsafe(nbytes)
+    # return secrets.token_urlsafe()
+
+if __name__ == '__main__':
+    rb = RefBackend('/tmp/refs/')
+
+    rb['path/to/ref1'] = Ref('data data')
+    rb['path/to/ref2'] = Ref('crap data')
+    rb['path/to/ref3'] = Ref('test data')
+    rb['path/to/ref4'] = Ref('this is a test')
+
+    r2 = Ref.from_file('/tmp/refs/path/to/ref1')
+    print(r2)
+
+    if 'path/to/ref1' in rb:
+        print('found path/to/ref1')
+    else:
+        print('not found path/to/ref1')
+
+    if 'path/to/ref2' in rb:
+        print('found path/to/ref2')
+    else:
+        print('not found path/to/ref2')
+
+    if 'path/to/ref666' in rb:
+        print('found path/to/ref2')
+    else:
+        print('not found path/to/ref666')
+
+    try:
+        rb['path/to/not-existent']
+    except KeyError:
+        print('not found path/to/not-existent')
+
+    for k in rb:
+        print('key:', k)
+
+    for k, v in rb.iteritems():
+        print(k, v)
+
+    controller = Controller()
+    controller.register_backend(rb)
+    print(controller['?{ref:path/to/ref2}'])
+    print('revealing: "?{ref:path/to/ref2}"', controller['?{ref:path/to/ref2}'].reveal())
+    print('compiling: "?{ref:path/to/ref2}"', controller['?{ref:path/to/ref2}'].compile())
+
+    print(controller['?{ref:path/to/ref1:bd46282a}'])
+    try:
+        print(controller['?{ref:path/to/ref1:6896a6feWRONG}'])
+    except RefError:
+        print('?{ref:path/to/ref1:6896a6feWRONG}: hash not valid')
+
+    # test setting to controller
+    try:
+        print(controller['?{ref:path/to/ref12|randomstr}'])
+    except RefFromFuncError:
+        print('?{ref:path/to/ref12} not found, creating...')
+        controller['?{ref:path/to/ref12|randomstr}'] = None
+
+    try:
+        controller['?{rasdasd:asdasdasd:deadbeef}'] = None
+    except RefError as ex:
+        print('could not create ?{rasdasd:asdasdasd:deadbeef} because it is not valid')
