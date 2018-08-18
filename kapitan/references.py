@@ -19,7 +19,7 @@ import errno
 import hashlib
 import logging
 import re
-import secrets
+import secrets  # python secrets module
 import os
 import yaml
 
@@ -35,10 +35,11 @@ REF_TOKEN_TAG_PATTERN = r"^(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)*})$"
 REF_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)"  # e.g. ref:my/secret/token
 REF_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)"  # e.g. ref:my/secret/token:1deadbeef
 
+
 class Ref(object):
-    def __init__(self, data, base64_data=False, **kwargs):
+    def __init__(self, data, from_base64=False, **kwargs):
         self.type = 'ref'
-        if not base64_data:
+        if not from_base64:
             self.data = base64.b64encode(data.encode()).decode()
         else:
             self.data = data
@@ -60,21 +61,30 @@ class Ref(object):
         try:
             with open(ref_full_path) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
-                kwargs = { key: value for key, value in obj.items() if key not in ('data', 'base64_data') }
-                return cls(obj['data'], base64_data=True, **kwargs)
+                kwargs = {key: value for key, value in obj.items() if key not in ('data', 'from_base64')}
+                return cls(obj['data'], from_base64=True, **kwargs)
 
         except IOError as ex:
             if ex.errno == errno.ENOENT:
                 return None
+
+
+class RefParams(object):
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
 
 # TODO these need to extend KapitanError instead
 class RefError(Exception):
     """ref error"""
     pass
 
+
 class RefBackendError(Exception):
     """ref backend error"""
     pass
+
 
 class RefFromFuncError(Exception):
     """ref from func error"""
@@ -85,11 +95,11 @@ class RefBackend(object):
     def __init__(self, path, ref_type=Ref):
         self.path = path
         self.type = 'ref'
-        self.ref_type = ref_type # Ref type backend instance manages
+        self.ref_type = ref_type  # Ref type backend instance manages
 
     def __getitem__(self, ref_path):
         full_ref_path = os.path.join(self.path, ref_path)
-        ref = Ref.from_file(full_ref_path)
+        ref = self.ref_type.from_file(full_ref_path)
 
         if ref is not None:
             ref.path = ref_path
@@ -100,7 +110,7 @@ class RefBackend(object):
 
         raise KeyError(ref_path)
 
-    def mkdir_ref(self, full_ref_path):
+    def _mkdir_ref(self, full_ref_path):
         try:
             os.makedirs(os.path.dirname(full_ref_path))
         except OSError as ex:
@@ -111,11 +121,10 @@ class RefBackend(object):
     def __setitem__(self, ref_path, ref_obj):
         assert(isinstance(ref_obj, self.ref_type))
         full_ref_path = os.path.join(self.path, ref_path)
-        self.mkdir_ref(full_ref_path)
+        self._mkdir_ref(full_ref_path)
 
         with open(full_ref_path, 'w') as fp:
             yaml.safe_dump(ref_obj.__dict__, stream=fp, default_flow_style=False)
-
 
     def __contains__(self, ref_path):
         try:
@@ -217,7 +226,7 @@ class Controller(object):
 
         for func in funcs:
             func_name, *func_params = func.strip().split(':')
-            if func_name == 'base64': # not a real function
+            if func_name == 'base64':  # not a real function
                 encode_base64 = True
             else:
                 try:
@@ -239,30 +248,32 @@ class Controller(object):
                     return self._get_from_token(token)
                 # if func is set and ref doesnt exist, raise RefFromFuncError to indicate new ref needs to be created
                 except KeyError:
-                    raise RefFromFuncError('{}: does not exist and must be created from function: {}'.format(token, func))
+                    raise RefFromFuncError('{}: does not exist and must be created from function: {}'.format(token,
+                                                                                                             func))
 
     def __setitem__(self, key, value):
         # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
         match = re.match(REF_TOKEN_TAG_PATTERN, key)
         if match:
             tag, token, func_str = match.groups()
-            if func_str is None and value is not None:
+            if func_str is None and isinstance(value, self.token_type(token)):
                 return self._set_to_token(token, value)
-            elif func_str is not None and value is None:
+            elif func_str is not None and isinstance(value, RefParams):
                 # run _eval_func_str, create ref_obj and run _set_to_token()
-                data, encode_base64 = self._eval_func_str(func_str) 
+                data, encode_base64 = self._eval_func_str(func_str)
                 ref_type = self.token_type(token)
                 ref_obj = None
                 if encode_base64:
                     b64_data = base64.b64encode(data)
-                    ref_obj = ref_type(b64_data)
+                    ref_obj = ref_type(b64_data, *value.args, **value.kwargs)
                 else:
-                    ref_obj = ref_type(data)
+                    ref_obj = ref_type(data, *value.args, **value.kwargs)
                 return self._set_to_token(token, ref_obj)
             else:
                 raise RefError("{}: is not a valid tag".format(key))
         else:
             raise RefError("{}: is not a valid tag".format(key))
+
 
 def func_randomstr(input_value, nbytes=''):
     """generates a URL-safe text string, containing nbytes random bytes"""
@@ -272,6 +283,7 @@ def func_randomstr(input_value, nbytes=''):
     #    nbytes = int(nbytes)
     #    return secrets.token_urlsafe(nbytes)
     # return secrets.token_urlsafe()
+
 
 if __name__ == '__main__':
     rb = RefBackend('/tmp/refs/')
@@ -327,7 +339,7 @@ if __name__ == '__main__':
         print(controller['?{ref:path/to/ref12|randomstr}'])
     except RefFromFuncError:
         print('?{ref:path/to/ref12} not found, creating...')
-        controller['?{ref:path/to/ref12|randomstr}'] = None
+        controller['?{ref:path/to/ref12|randomstr}'] = RefParams()
 
     try:
         controller['?{rasdasd:asdasdasd:deadbeef}'] = None
