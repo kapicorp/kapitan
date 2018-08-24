@@ -1,3 +1,10 @@
+## 0.18.1:
+- Dependencies update (#137)
+- Made cache an optional flag (`--cache`). Support for additional cache paths (`--cache-paths`) (#138)
+- Small fix in caching (#140)
+- Added `gzip_b64` jsonnet function to support gzip compression of strings + base64
+- Added Python 3.7 support
+
 ## 0.18.0:
 #### Breaking:
 - Renamed `--search-path` to `--search-paths` in `eval` and `compile`, enabling multiple paths for jsonnet/jinja2 and adding support for [jsonnet bundler](https://github.com/jsonnet-bundler/jsonnet-bundler) (#133)
