@@ -57,7 +57,7 @@ def resource_callbacks(search_paths):
                           partial(read_file, search_paths)),
             "yaml_dump": (("obj",), yaml_dump),
             "sha256_string": (("obj",), sha256_string),
-            "compress_b64": (("obj",), compress_b64),
+            "gzip_b64": (("obj",), gzip_b64),
            }
 
 
@@ -67,7 +67,7 @@ def yaml_dump(obj):
     return yaml.safe_dump(_obj, default_flow_style=False)
 
 
-def compress_b64(obj):
+def gzip_b64(obj):
     """returns base64-encoded gzip-compressed obj"""
     obj_bytes = obj.encode("UTF-8")
     compressed_obj = gzip.compress(obj_bytes)
