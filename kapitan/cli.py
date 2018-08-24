@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 #
 # Copyright 2018 The Kapitan Authors
 #
