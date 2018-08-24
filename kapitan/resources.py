@@ -22,6 +22,8 @@ import ujson as json
 import logging
 import os
 import io
+import gzip
+import base64
 import reclass
 import reclass.core
 from reclass.errors import ReclassException, NotFoundError
@@ -55,6 +57,7 @@ def resource_callbacks(search_paths):
                           partial(read_file, search_paths)),
             "yaml_dump": (("obj",), yaml_dump),
             "sha256_string": (("obj",), sha256_string),
+            "compress_b64": (("obj",), compress_b64),
            }
 
 
@@ -62,6 +65,13 @@ def yaml_dump(obj):
     """Dumps jsonnet obj as yaml"""
     _obj = json.loads(obj)
     return yaml.safe_dump(_obj, default_flow_style=False)
+
+
+def compress_b64(obj):
+    """returns base64-encoded gzip-compressed obj"""
+    obj_bytes = obj.encode("UTF-8")
+    compressed_obj = gzip.compress(obj_bytes)
+    return base64.b64encode(compressed_obj).decode("UTF-8")
 
 
 def jinja2_render_file(search_paths, name, ctx):

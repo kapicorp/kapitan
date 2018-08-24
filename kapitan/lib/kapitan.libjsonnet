@@ -5,4 +5,5 @@
   inventory_global(target=null, inv_path="inventory/"):: std.native("inventory")(target, inv_path),
   yaml_dump(obj):: std.native("yaml_dump")(std.toString(obj)),
   sha256(obj):: std.native("sha256_string")(std.toString(obj)),
+  compress_b64(obj):: std.native("compress_b64")(std.toString(obj)),
 }
