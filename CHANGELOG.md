@@ -1,3 +1,6 @@
+## 0.18.2:
+- Fixed `gzip_b64` determinism
+
 ## 0.18.1:
 - Dependencies update (#137)
 - Made cache an optional flag (`--cache`). Support for additional cache paths (`--cache-paths`) (#138)
