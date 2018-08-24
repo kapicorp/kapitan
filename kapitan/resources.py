@@ -70,7 +70,10 @@ def yaml_dump(obj):
 def gzip_b64(obj):
     """returns base64-encoded gzip-compressed obj"""
     obj_bytes = obj.encode("UTF-8")
-    compressed_obj = gzip.compress(obj_bytes)
+    buf = io.BytesIO()
+    with gzip.GzipFile(fileobj=buf, mode='wb', compresslevel=9, mtime=0) as f:
+        f.write(obj_bytes)
+    compressed_obj = buf.getvalue()
     return base64.b64encode(compressed_obj).decode("UTF-8")
 
 
