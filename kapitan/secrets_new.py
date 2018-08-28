@@ -36,15 +36,29 @@ def gpg_obj():
 
 class GPGSecret(references.Ref):
     def __init__(self, data, recipients, encode_base64=False, from_base64=False, **kwargs):
+        """
+        encrypts data for recipients
+        set encode_base64 to True to base64 encode data before writing
+        if fingerprint key is not set in recipients, the first non-expired fingerprint will be used
+        if fingerprint is set, there will be no name based lookup
+        """
         fingerprints = self._lookup_fingerprints(recipients)
-        self._encrypt(data, fingerprints, encode_base64)  # TODO review if (gpg?) kwargs are needed
+        self._encrypt(data, fingerprints, encode_base64)  # TODO review if (gpg?) kwargs are really needed
         super().__init__(self.data, from_base64, **kwargs)
         self.type = 'gpg'
 
     def reveal(self):
-        return 'DECRYPTED DATA'  # TODO
+        """
+        returns decrypted data
+        raises GPGError if decryption fails
+        """
+        self._decrypt(self.data)
 
     def _encrypt(self, data, fingerprints, encode_base64, **kwargs_gpg):
+        """
+        encrypts data
+        set encode_base64 to True to base64 encode data before writing
+        """
         assert isinstance(fingerprints, list)
         _data = data
         self.encoding = "original"
@@ -57,6 +71,14 @@ class GPGSecret(references.Ref):
             self.recipients = [{'fingerprint': f} for f in fingerprints]
         else:
             raise GPGError(enc.status)
+
+    def _decrypt(self, data, **kwargs_gpg):
+        """decrypt data"""
+        dec = gpg_obj().decrypt(data, **kwargs_gpg)
+        if dec.ok:
+            return dec.data.decode()
+        else:
+            raise GPGError(dec.status)
 
     def _lookup_fingerprints(self, recipients):
         """returns a list of fingerprints for recipients obj"""
@@ -95,6 +117,7 @@ class GPGSecret(references.Ref):
 
 class GPGBackend(references.RefBackend):
     def __init__(self, path, ref_type=GPGSecret):
+        "init GPGBackend ref backend type"
         super().__init__(path, ref_type)
         self.type = 'gpg'
         self.gpg = gpg_obj()

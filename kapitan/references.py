@@ -17,11 +17,15 @@
 import base64
 import errno
 import hashlib
+import json
 import logging
 import re
+import sys
 import secrets  # python secrets module
 import os
 import yaml
+
+from kapitan.utils import PrettyDumper
 
 try:
     from yaml import CSafeLoader as YamlLoader
@@ -91,6 +95,11 @@ class RefFromFuncError(Exception):
     pass
 
 
+class RefHashMismatchError(Exception):
+    """ref from func error"""
+    pass
+
+
 class RefBackend(object):
     def __init__(self, path, ref_type=Ref):
         self.path = path
@@ -149,7 +158,114 @@ class RefBackend(object):
                 pass
 
 
-class Controller(object):
+class Revealer(object):
+    def __init__(self, ref_controller):
+        self.ref_controller = ref_controller
+
+    def reveal_path(self, path):
+        "detects if path is file or dir, returns list of RevealObj"
+        if os.path.isfile(path):
+            content, content_type = self._reveal_file(path)
+            return [RevealedObj(content, content_type)]
+        elif os.path.isdir(path):
+            content_yaml, content_json, content_raw = self._reveal_dir(path)
+            revealed_objs = []
+            if content_yaml != '':
+                revealed_objs.append(RevealedObj(content, 'yaml'))
+            elif content_json != '':
+                revealed_objs.append(RevealedObj(content, 'json'))
+            elif content_raw != '':
+                revealed_objs.append(RevealedObj(content, 'raw'))
+            return revealed_objs
+        else:
+            raise FileNotFoundError(path)
+
+    def _reveal_file(self, filename):
+        """
+        detects filename by extension (.yml, .json or otherwise raw)
+        reveals secrets in content
+        """
+        if filename.endswith('.yml'):
+            logger.debug("Revealer: revealing yml file: %s", filename)
+            with open(filename) as fp:
+                obj = yaml.load(fp, Loader=YamlLoader)
+                rev_obj = self.reveal_obj(obj)
+                return yaml.dump(rev_obj, Dumper=PrettyDumper, default_flow_style=False, explicit_start=True), 'yaml'
+        elif filename.endswith('.json'):
+            logger.debug("Revealer: revealing json file: %s", filename)
+            with open(filename) as fp:
+                obj = json.load(fp)
+                rev_obj = self.reveal_obj(obj)
+                return json.dumps(rev_obj, indent=4, sort_keys=True), 'json'
+        else:
+            logger.debug("Revealer: revealing raw file: %s", filename)
+            return self.reveal_raw(filename), 'raw'
+
+    def _reveal_dir(self, dirname):
+        """
+        returns tuple with yaml, json, and raw concatenated output for revealed file types
+        it does not walk through the dir structure as it skips directories inside dirname
+        """
+        out_yaml = ''
+        out_json = ''
+        out_raw = ''
+        # find yaml/json/raw files and concatenate output per type
+        for f in os.listdir(dirname):
+            full_path = os.path.join(dirname, f)
+            if not os.path.isfile(full_path):
+                pass
+            if f.endswith('.yml'):
+                out_yaml += self._reveal_file(full_path)
+            elif f.endswith('.json'):
+                out_json += self._reveal_file(full_path)
+            else:
+                out_raw += self._reveal_file(full_path)
+
+        return out_yaml, out_json, out_raw
+
+    def _reveal_replace_match(self, match_obj):
+        """returns decrypted secret value from tag in match_obj"""
+        tag, _, _ = match_obj.groups()
+        ref = self.ref_controller[tag]
+        return ref.reveal()
+
+    def reveal_raw(self, filename):
+        """
+        read filename and reveal content (per line search and replace) with secrets
+        set filename=None to read stdin
+        returns string with revealed content
+        """
+        out_raw = ''
+        if filename is None:
+            for line in sys.stdin:
+                revealed = re.sub(REF_TOKEN_TAG_PATTERN, self._reveal_replace_match, line)
+                out_raw += revealed
+        else:
+            with open(filename) as fp:
+                for line in fp:
+                    revealed = re.sub(REF_TOKEN_TAG_PATTERN, self._reveal_replace_match, line)
+                    out_raw += revealed
+        return out_raw
+
+    def reveal_obj(self, obj):
+        """recursively updates obj with revealed secrets"""
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                obj[k] = self.reveal_obj(v)
+        elif isinstance(obj, list):
+            obj = [self.reveal_obj(item) for item in obj]
+        elif isinstance(obj, str):
+            obj = re.sub(REF_TOKEN_TAG_PATTERN, self._reveal_replace_match, obj)
+        return obj
+
+
+class RevealedObj(object):
+    def __init__(self, content, content_type):
+        self.content = content
+        self.content_type = content_type
+
+
+class RefController(object):
     def __init__(self):
         self.backends = {}
 
@@ -192,7 +308,7 @@ class Controller(object):
             if ref.hash[:8] == hash:
                 return ref
             else:
-                raise RefError("{}: hash does not match with: {}".format(token, ref.token))
+                raise RefHashMismatchError("{}: hash does not match with: {}".format(token, ref.token))
         else:
             return None
 
@@ -322,7 +438,7 @@ if __name__ == '__main__':
     for k, v in rb.iteritems():
         print(k, v)
 
-    controller = Controller()
+    controller = RefController()
     controller.register_backend(rb)
     print(controller['?{ref:path/to/ref2}'])
     print('revealing: "?{ref:path/to/ref2}"', controller['?{ref:path/to/ref2}'].reveal())
@@ -331,7 +447,7 @@ if __name__ == '__main__':
     print(controller['?{ref:path/to/ref1:bd46282a}'])
     try:
         print(controller['?{ref:path/to/ref1:6896a6feWRONG}'])
-    except RefError:
+    except RefHashMismatchError:
         print('?{ref:path/to/ref1:6896a6feWRONG}: hash not valid')
 
     # test setting to controller
