@@ -21,11 +21,13 @@ import json
 import logging
 import re
 import sys
-import secrets  # python secrets module
+import secrets  # python secrets module # TODO port functions
 import os
 import yaml
 
+from kapitan.refs.types import BACKEND_TYPES
 from kapitan.utils import PrettyDumper
+from kapitan.errors import KapitanError
 
 try:
     from yaml import CSafeLoader as YamlLoader
@@ -36,8 +38,6 @@ logger = logging.getLogger(__name__)
 
 # e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
 REF_TOKEN_TAG_PATTERN = r"^(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)*})$"
-REF_TOKEN_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+)"  # e.g. ref:my/secret/token
-REF_TOKEN_COMPILED_ATTR_PATTERN = r"(\w+):([\w\.\-\/]+):(\w+)"  # e.g. ref:my/secret/token:1deadbeef
 
 
 class Ref(object):
@@ -79,24 +79,23 @@ class RefParams(object):
         self.kwargs = kwargs
 
 
-# TODO these need to extend KapitanError instead
-class RefError(Exception):
+class RefError(KapitanError):
     """ref error"""
     pass
 
 
-class RefBackendError(Exception):
+class RefBackendError(KapitanError):
     """ref backend error"""
     pass
 
 
-class RefFromFuncError(Exception):
+class RefFromFuncError(KapitanError):
     """ref from func error"""
     pass
 
 
-class RefHashMismatchError(Exception):
-    """ref from func error"""
+class RefHashMismatchError(KapitanError):
+    """ref has mismatch error"""
     pass
 
 
@@ -266,18 +265,32 @@ class RevealedObj(object):
 
 
 class RefController(object):
-    def __init__(self):
+    def __init__(self, path):
         self.backends = {}
+        self.path = path
 
     def register_backend(self, backend):
         assert(isinstance(backend, RefBackend))
         self.backends[backend.type] = backend
 
-    def _get_backend(self, type):
+    def _get_backend(self, ref_type):
         try:
-            return self.backends[type]
+            return self.backends[ref_type]
         except KeyError:
-            raise RefBackendError('no such backend: {}'.format(type))
+            try:
+                backend_type = BACKEND_TYPES[ref_type]
+                self.register_backend(backend_type(self.path))
+            except KeyError:
+                raise RefBackendError('no such backend: {}'.format(type))
+
+    def tag_type(self, tag):
+        # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2} or ?{ref:my/secret/token:deadbeef}
+        match = re.match(REF_TOKEN_TAG_PATTERN, tag)
+        if match:
+            _tag, token, _ = match.groups()
+            return self.token_type(token)
+        else:
+            raise RefError("{}: tag is not valid".format(tag))
 
     def token_type(self, token):
         attrs = token.split(':')

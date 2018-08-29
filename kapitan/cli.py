@@ -30,10 +30,11 @@ from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar, d
 from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
-from kapitan.secrets import secret_gpg_write, secret_gpg_reveal_file
-from kapitan.secrets import secret_gpg_reveal_dir, secret_gpg_reveal_raw, secret_gpg_update_recipients
-from kapitan.secrets import search_target_token_paths, secret_gpg_raw_read_fingerprints
-from kapitan.secrets import lookup_fingerprints
+
+from kapitan.refs.base import RefController, Revealer
+from kapitan.refs.secrets.gpg import GPGSecretBackend, GPGSecret
+from kapitan.refs.secrets.gpg import lookup_fingerprints, search_target_token_paths
+
 from kapitan.errors import KapitanError
 
 logger = logging.getLogger(__name__)
@@ -276,6 +277,8 @@ def main():
         else:
             logging.basicConfig(level=logging.INFO, format="%(message)s")
 
+        ref_controller = RefController(args.secrets_path)
+
         if args.write is not None:
             if args.file is None:
                 parser.error('--file is required with --write')
@@ -283,7 +286,7 @@ def main():
             recipients = [dict((("name", name),)) for name in args.recipients]
             if args.target_name:
                 inv = inventory_reclass(args.inventory_path)
-                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
+                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients'] # TODO gpg key
             if args.file == '-':
                 data = ''
                 for line in sys.stdin:
@@ -291,27 +294,31 @@ def main():
             else:
                 with open(args.file) as fp:
                     data = fp.read()
-            secret_gpg_write(args.secrets_path, args.write, data, args.base64, recipients)
+            if args.backend == "gpg":
+                secret_obj = GPGSecret(data, recipients, args.base64)
+                ref_controller.backends['gpg'][args.write] = secret_obj
         elif args.reveal:
+            revealer = Revealer(ref_controller)
             if args.file is None:
                 parser.error('--file is required with --reveal')
             if args.file == '-':
-                secret_gpg_reveal_raw(args.secrets_path, None, verify=(not args.no_verify))
+                # secret_gpg_reveal_raw(args.secrets_path, None, verify=(not args.no_verify)) # TODO verify needed here?
+                out = revealer.reveal_raw(None)
+                sys.stdout.write(out)
             elif args.file:
-                if os.path.isfile(args.file):
-                    out = secret_gpg_reveal_file(args.secrets_path, args.file,
-                                                 verify=(not args.no_verify))
-                    sys.stdout.write(out)
-                elif os.path.isdir(args.file):
-                    secret_gpg_reveal_dir(args.secrets_path, args.file,
-                                          verify=(not args.no_verify))
+                for rev_obj in revealer.reveal_path(args.file):
+                    sys.stdout.write(rev_obj.content)
         elif args.update:
             # update recipients for secret tag
+            # args.recipients is a list, convert to recipients dict
             recipients = [dict([("name", name), ]) for name in args.recipients]
             if args.target_name:
                 inv = inventory_reclass(args.inventory_path)
-                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
-            secret_gpg_update_recipients(args.secrets_path, args.update, recipients)
+                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients'] # TODO gpg key
+            if args.backend == "gpg":
+                secret_obj = ref_controller.backend['gpg'][args.update]
+                secret_obj.update_recipients(recipients)
+                ref_controller.backend['gpg'][args.update] = secret_obj
         elif args.update_targets or args.validate_targets:
             # update recipients for all secrets in secrets_path
             # use --secrets-path to set scanning path
@@ -320,19 +327,22 @@ def main():
             secrets_path = os.path.abspath(args.secrets_path)
             target_token_paths = search_target_token_paths(secrets_path, targets)
             ret_code = 0
+            ref_controller.register_backend(GPGSecretBackend(secrets_path))  # override gpg backend for new secrets_path
             for target_name, token_paths in target_token_paths.items():
                 try:
                     recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['recipients']
                     for token_path in token_paths:
+                        secret_obj = ref_controller.backend['gpg'][token_path]
                         target_fingerprints = set(lookup_fingerprints(recipients))
-                        secret_fingerprints = set(secret_gpg_raw_read_fingerprints(secrets_path, token_path))
+                        secret_fingerprints = set(secret_obj.fingerprints)
                         if target_fingerprints != secret_fingerprints:
                             if args.validate_targets:
                                 logger.info("%s recipient mismatch", token_path)
                                 ret_code = 1
                             else:
                                 new_recipients = [dict([("fingerprint", f), ]) for f in target_fingerprints]
-                                secret_gpg_update_recipients(secrets_path, token_path, new_recipients)
+                                secret_obj.update_recipients(new_recipients)
+                                ref_controller.backend['gpg'][token_path] = secret_obj
                 except KeyError:
                     logger.debug("secret_gpg_update_target: target: %s has no inventory recipients, skipping",
                                  target_name)
