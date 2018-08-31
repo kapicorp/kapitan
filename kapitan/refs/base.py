@@ -72,6 +72,13 @@ class Ref(object):
             if ex.errno == errno.ENOENT:
                 return None
 
+    @classmethod
+    def from_params(cls, data, ref_params):
+        """
+        Return new Ref from data and ref_params
+        """
+        return cls(data, **ref_params.kwargs)
+
 
 class RefParams(object):
     def __init__(self, *args, **kwargs):
@@ -198,7 +205,7 @@ class Revealer(object):
                 return json.dumps(rev_obj, indent=4, sort_keys=True), 'json'
         else:
             logger.debug("Revealer: revealing raw file: %s", filename)
-            return self.reveal_raw(filename), 'raw'
+            return self.reveal_raw_file(filename), 'raw'
 
     def _reveal_dir(self, dirname):
         """
@@ -223,14 +230,30 @@ class Revealer(object):
         return out_yaml, out_json, out_raw
 
     def _reveal_replace_match(self, match_obj):
-        """returns decrypted secret value from tag in match_obj"""
+        """returns decrypted value from tag in match_obj"""
         tag, _, _ = match_obj.groups()
         ref = self.ref_controller[tag]
         return ref.reveal()
 
-    def reveal_raw(self, filename):
+    def _compile_replace_match_with_args(self, **kwargs):
+        """returns compile_replace_match function with kwargs"""
+        def compile_replace_match(match_obj):
+            """returns compile ref value from tag in match_obj"""
+            tag, _, _ = match_obj.groups()
+            try:
+                ref = self.ref_controller[tag]
+                return ref.compile()
+            except RefFromFuncError:
+                # create ref from func with kwargs RefParams
+                self.ref_controller[tag] = RefParams(**kwargs)
+                ref = self.ref_controller[tag]
+                return ref.compile()
+
+        return compile_replace_match
+
+    def reveal_raw_file(self, filename):
         """
-        read filename and reveal content (per line search and replace) with secrets
+        read filename and reveal content (per line search and replace) with refs
         set filename=None to read stdin
         returns string with revealed content
         """
@@ -246,8 +269,31 @@ class Revealer(object):
                     out_raw += revealed
         return out_raw
 
+    def compile_raw(self, data, **kwargs):
+        """
+        read data and compile refs (per line search and replace) with output of ref .compile() method
+        kwargs are passed to ref compile function
+        returns string with compile content
+        """
+        out_raw = ''
+        for line in data:
+            compiled = re.sub(REF_TOKEN_TAG_PATTERN, self._compile_replace_match_with_args(**kwargs), line)
+            out_raw += compiled
+        return out_raw
+
+    def reveal_raw(self, data):
+        """
+        read data and reveal content (per line search and replace) with refs
+        returns string with revealed content
+        """
+        out_raw = ''
+        for line in data:
+            revealed = re.sub(REF_TOKEN_TAG_PATTERN, self._reveal_replace_match, line)
+            out_raw += revealed
+        return out_raw
+
     def reveal_obj(self, obj):
-        """recursively updates obj with revealed secrets"""
+        """recursively updates obj with revealed refs"""
         if isinstance(obj, dict):
             for k, v in obj.items():
                 obj[k] = self.reveal_obj(v)
@@ -255,6 +301,20 @@ class Revealer(object):
             obj = [self.reveal_obj(item) for item in obj]
         elif isinstance(obj, str):
             obj = re.sub(REF_TOKEN_TAG_PATTERN, self._reveal_replace_match, obj)
+        return obj
+
+    def compile_obj(self, obj, **kwargs):
+        """
+        recursively updates obj with compiled refs
+        kwargs are passed to ref compile function
+        """
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                obj[k] = self.reveal_obj(v)
+        elif isinstance(obj, list):
+            obj = [self.reveal_obj(item) for item in obj]
+        elif isinstance(obj, str):
+            obj = re.sub(REF_TOKEN_TAG_PATTERN, self._compile_replace_match_with_args(**kwargs), obj)
         return obj
 
 
@@ -391,12 +451,12 @@ class RefController(object):
                 # run _eval_func_str, create ref_obj and run _set_to_token()
                 data, encode_base64 = self._eval_func_str(func_str)
                 ref_type = self.token_type(token)
-                ref_obj = None
+                # deal with |base64
                 if encode_base64:
                     b64_data = base64.b64encode(data)
-                    ref_obj = ref_type(b64_data, *value.args, **value.kwargs)
+                    ref_obj = ref_type.from_params(b64_data, value)
                 else:
-                    ref_obj = ref_type(data, *value.args, **value.kwargs)
+                    ref_obj = ref_type.from_params(data, value)
                 return self._set_to_token(token, ref_obj)
             else:
                 raise RefError("{}: is not a valid tag".format(key))

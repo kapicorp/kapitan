@@ -21,7 +21,7 @@ import logger
 import os
 import time
 
-from kapitan.refs.base import Ref, RefBackend
+from kapitan.refs.base import Ref, RefBackend, RefParams, RefError
 from kapitan import cached
 
 
@@ -48,6 +48,19 @@ class GPGSecret(Ref):
         self._encrypt(data, fingerprints, encode_base64)  # TODO review if (gpg?) kwargs are really needed
         super().__init__(self.data, from_base64, **kwargs)
         self.type = 'gpg'
+
+    @classmethod
+    def from_params(cls, data, ref_params):
+        """
+        Return new GPPSecret from data and ref_params: target_name
+        recipients will be grabbed from the inventory via target_name
+        """
+        try:
+            target_name = ref_params.kwargs['target_name']
+            target_name  # TODO get recipients from cached inventory
+            # TODO XXX return new GPGSecret()
+        except KeyError:
+            raise RefError("Could not create GPGSecret: target_name missing")
 
     def reveal(self):
         """

@@ -228,10 +228,11 @@ def main():
         if not args.ignore_version_check:
             check_version()
 
+        ref_controller = RefController(args.secrets_path)
+
         compile_targets(args.inventory_path, search_paths, args.output_path,
-                        args.parallelism, args.targets,
-                        prune=(args.prune), secrets_path=args.secrets_path,
-                        secrets_reveal=args.reveal, indent=args.indent,
+                        args.parallelism, args.targets, ref_controller,
+                        prune=(args.prune), indent=args.indent, reveal=args.secrets_reveal,
                         cache=args.cache, cache_paths=args.cache_paths)
 
     elif cmd == 'inventory':
