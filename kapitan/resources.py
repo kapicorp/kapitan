@@ -199,7 +199,8 @@ def inventory_reclass(inventory_path):
         reclass_config = {'storage_type': 'yaml_fs',
                           'inventory_base_uri': inventory_path,
                           'nodes_uri': os.path.join(inventory_path, 'targets'),
-                          'classes_uri': os.path.join(inventory_path, 'classes')
+                          'classes_uri': os.path.join(inventory_path, 'classes'),
+                          'compose_node_name': False
                          }
 
         try:
@@ -219,8 +220,10 @@ def inventory_reclass(inventory_path):
                 logger.debug("Using reclass inventory config defaults")
 
         try:
-            storage = reclass.get_storage(reclass_config['storage_type'], reclass_config['nodes_uri'],
-                                          reclass_config['classes_uri'])
+            storage = reclass.get_storage(reclass_config['storage_type'],
+                                          reclass_config['nodes_uri'],
+                                          reclass_config['classes_uri'],
+                                          reclass_config['compose_node_name'])
             class_mappings = reclass_config.get('class_mappings')  # this defaults to None (disabled)
             _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings())
 
