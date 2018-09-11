@@ -287,7 +287,8 @@ def main():
             recipients = [dict((("name", name),)) for name in args.recipients]
             if args.target_name:
                 inv = inventory_reclass(args.inventory_path)
-                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients'] # TODO gpg key
+                # TODO move into kapitan:secrets:gpg:recipients key
+                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
             if args.file == '-':
                 data = ''
                 for line in sys.stdin:
@@ -295,6 +296,7 @@ def main():
             else:
                 with open(args.file) as fp:
                     data = fp.read()
+            # TODO deprecate backend and move to passing ref tags in command line
             if args.backend == "gpg":
                 secret_obj = GPGSecret(data, recipients, args.base64)
                 ref_controller.backends['gpg'][args.write] = secret_obj
@@ -315,7 +317,8 @@ def main():
             recipients = [dict([("name", name), ]) for name in args.recipients]
             if args.target_name:
                 inv = inventory_reclass(args.inventory_path)
-                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients'] # TODO gpg key
+                # TODO move into kapitan:secrets:gpg:recipients key
+                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
             if args.backend == "gpg":
                 secret_obj = ref_controller.backend['gpg'][args.update]
                 secret_obj.update_recipients(recipients)

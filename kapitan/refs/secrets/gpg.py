@@ -47,7 +47,7 @@ class GPGSecret(Ref):
         fingerprints = lookup_fingerprints(recipients)
         self._encrypt(data, fingerprints, encode_base64)  # TODO review if (gpg?) kwargs are really needed
         super().__init__(self.data, from_base64, **kwargs)
-        self.type = 'gpg'
+        self.type_name = 'gpg'
 
     @classmethod
     def from_params(cls, data, ref_params):
@@ -115,7 +115,7 @@ class GPGBackend(RefBackend):
     def __init__(self, path, ref_type=GPGSecret):
         "init GPGBackend ref backend type"
         super().__init__(path, ref_type)
-        self.type = 'gpg'
+        self.type_name = 'gpg'
         self.gpg = gpg_obj()
 
 

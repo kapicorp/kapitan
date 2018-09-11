@@ -15,19 +15,21 @@
 "references module"
 
 import base64
+from collections import namedtuple
 import errno
 import hashlib
 import json
 import logging
 import re
 import sys
-import secrets  # python secrets module # TODO port functions
 import os
 import yaml
 
 from kapitan.refs.types import BACKEND_TYPES
+from kapitan.refs.functions import eval_func
 from kapitan.utils import PrettyDumper
-from kapitan.errors import KapitanError
+from kapitan.errors import RefFromFuncError, RefBackendError, RefError
+from kapitan.errors import RefHashMismatchError
 
 try:
     from yaml import CSafeLoader as YamlLoader
@@ -42,7 +44,7 @@ REF_TOKEN_TAG_PATTERN = r"^(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)*})$"
 
 class Ref(object):
     def __init__(self, data, from_base64=False, **kwargs):
-        self.type = 'ref'
+        self.type_name = 'ref'
         if not from_base64:
             self.data = base64.b64encode(data.encode()).decode()
         else:
@@ -55,7 +57,7 @@ class Ref(object):
 
     def compile(self):
         # XXX will only work if object read via backend
-        return "?{{{}:{}:{}}}".format(self.type, self.path, self.hash[:8])
+        return "?{{{}:{}:{}}}".format(self.type_name, self.path, self.hash[:8])
 
     def __str__(self):
         return "{}".format(self.__dict__)
@@ -86,30 +88,10 @@ class RefParams(object):
         self.kwargs = kwargs
 
 
-class RefError(KapitanError):
-    """ref error"""
-    pass
-
-
-class RefBackendError(KapitanError):
-    """ref backend error"""
-    pass
-
-
-class RefFromFuncError(KapitanError):
-    """ref from func error"""
-    pass
-
-
-class RefHashMismatchError(KapitanError):
-    """ref has mismatch error"""
-    pass
-
-
 class RefBackend(object):
     def __init__(self, path, ref_type=Ref):
         self.path = path
-        self.type = 'ref'
+        self.type_name = 'ref'
         self.ref_type = ref_type  # Ref type backend instance manages
 
     def __getitem__(self, ref_path):
@@ -120,7 +102,7 @@ class RefBackend(object):
             ref.path = ref_path
             ref_path_data = "{}{}".format(ref.path, ref.data)
             ref.hash = hashlib.sha256(ref_path_data.encode()).hexdigest()
-            ref.token = "{}:{}:{}".format(ref.type, ref.path, ref.hash[:8])
+            ref.token = "{}:{}:{}".format(ref.type_name, ref.path, ref.hash[:8])
             return ref
 
         raise KeyError(ref_path)
@@ -326,12 +308,17 @@ class RevealedObj(object):
 
 class RefController(object):
     def __init__(self, path):
+        """
+        gets and sets tags for ref type objects.
+        auto registers backends in kapitan.ref.types.BACKEND_TYPES
+        """
         self.backends = {}
         self.path = path
 
     def register_backend(self, backend):
+        "register backend type"
         assert(isinstance(backend, RefBackend))
-        self.backends[backend.type] = backend
+        self.backends[backend.type_name] = backend
 
     def _get_backend(self, ref_type):
         try:
@@ -341,9 +328,10 @@ class RefController(object):
                 backend_type = BACKEND_TYPES[ref_type]
                 self.register_backend(backend_type(self.path))
             except KeyError:
-                raise RefBackendError('no such backend: {}'.format(type))
+                raise RefBackendError('no backend for ref type: {}'.format(ref_type))
 
     def tag_type(self, tag):
+        "returns ref type for tag"
         # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2} or ?{ref:my/secret/token:deadbeef}
         match = re.match(REF_TOKEN_TAG_PATTERN, tag)
         if match:
@@ -353,30 +341,38 @@ class RefController(object):
             raise RefError("{}: tag is not valid".format(tag))
 
     def token_type(self, token):
+        "returns ref type for token"
         attrs = token.split(':')
-        _type = attrs[0]
+        type_name = attrs[0]
 
-        if _type in self.backends:
-            return self.backends[_type].ref_type
+        if type_name in self.backends:
+            return self.backends[type_name].ref_type
         else:
-            raise RefError("{}: token has invalid (or not unregistered backend) type".format(token))
+            raise RefError("{}: token has invalid (or unregistered backend) type".format(token))
+
+    def token_type_name(self, token):
+        "returns ref type name for token"
+        attrs = token.split(':')
+        type_name = attrs[0]
+
+        return type_name
 
     def _get_from_token(self, token):
         attrs = token.split(':')
 
-        # "type:path/to/ref"
+        # "type_name:path/to/ref"
         if len(attrs) == 2:
-            type = attrs[0]
+            type_name = attrs[0]
             path = attrs[1]
-            backend = self._get_backend(type)
+            backend = self._get_backend(type_name)
             return backend[path]
 
-        # "type:path/to/ref:n0c0ffee"
+        # "type_name:path/to/ref:n0c0ffee"
         elif len(attrs) == 3:
-            type = attrs[0]
+            type_name = attrs[0]
             path = attrs[1]
             hash = attrs[2]
-            backend = self._get_backend(type)
+            backend = self._get_backend(type_name)
             ref = backend[path]
             if ref.hash[:8] == hash:
                 return ref
@@ -389,41 +385,33 @@ class RefController(object):
         attrs = token.split(':')
 
         if len(attrs) == 2:
-            type = attrs[0]
+            type_name = attrs[0]
             path = attrs[1]
-            backend = self._get_backend(type)
+            backend = self._get_backend(type_name)
             assert(isinstance(ref_obj, backend.ref_type))
             backend[path] = ref_obj
         else:
             raise RefError("{}: is not a valid token".format(token))
 
-    def _eval_func(self, func_name, data, *func_params):
-
-        func_lookup = {
-            'randomstr': func_randomstr,
-        }
-
-        return func_lookup[func_name](data, *func_params)
-
-    def _eval_func_str(self, func_str):
-        "evals func_str and returns data and a boolean indicating if data should be base64 encoded"
+    def _eval_func_str(self, ctx, func_str):
+        """
+        evals and updates context ctx for func_str
+        returns evaluated ctx
+        """
         assert(func_str.startswith('|'))
         funcs = func_str[1:].split('|')
-
-        data = None
-        encode_base64 = False
 
         for func in funcs:
             func_name, *func_params = func.strip().split(':')
             if func_name == 'base64':  # not a real function
-                encode_base64 = True
+                ctx.encode_base64 = True
             else:
                 try:
-                    data = self._eval_func(func_name, data, *func_params)
+                    eval_func(func_name, ctx, *func_params)
                 except KeyError:
                     raise RefError("{}: unknown function".format(func_name))
 
-        return data, encode_base64
+        return ctx
 
     def __getitem__(self, key):
         # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2} or ?{ref:my/secret/token:deadbeef}
@@ -449,29 +437,25 @@ class RefController(object):
                 return self._set_to_token(token, value)
             elif func_str is not None and isinstance(value, RefParams):
                 # run _eval_func_str, create ref_obj and run _set_to_token()
-                data, encode_base64 = self._eval_func_str(func_str)
+                ctx = namedtuple('FunctionCtx', [])()
+                ctx.data = None
+                ctx.encode_base64 = False
+                ctx.ref_controller = self.ref_controller
+                ctx.token = token
+
+                self._eval_func_str(ctx, func_str)
                 ref_type = self.token_type(token)
-                # deal with |base64
-                if encode_base64:
-                    b64_data = base64.b64encode(data)
+
+                if ctx.encode_base64:
+                    b64_data = base64.b64encode(ctx.data)
                     ref_obj = ref_type.from_params(b64_data, value)
                 else:
-                    ref_obj = ref_type.from_params(data, value)
+                    ref_obj = ref_type.from_params(ctx.data, value)
                 return self._set_to_token(token, ref_obj)
             else:
                 raise RefError("{}: is not a valid tag".format(key))
         else:
             raise RefError("{}: is not a valid tag".format(key))
-
-
-def func_randomstr(input_value, nbytes=''):
-    """generates a URL-safe text string, containing nbytes random bytes"""
-    return 'a'
-    # TODO XXX
-    # if nbytes:
-    #    nbytes = int(nbytes)
-    #    return secrets.token_urlsafe(nbytes)
-    # return secrets.token_urlsafe()
 
 
 if __name__ == '__main__':
