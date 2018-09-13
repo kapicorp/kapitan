@@ -16,8 +16,6 @@
 
 "kapitan targets"
 
-from six import string_types
-
 import logging
 import os
 import errno
@@ -320,7 +318,9 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
                         try:
                             compile_jsonnet(compile_file_sp, _compile_path, search_paths, ext_vars, ref_controller,
                                             output=output_type, target_name=target_name, **kwargs)
-                        except CompileError as e:
+                        except KapitanError as e:
+                            if str(e):
+                                logger.error("Kapitan error: %s", e)
                             logger.error("Compile error: failed to compile target: %s", target_name)
                             raise e
 
@@ -351,7 +351,9 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
                         try:
                             compile_jinja2(compile_path_sp, ctx, _compile_path, ref_controller,
                                            target_name=target_name, **kwargs)
-                        except CompileError as e:
+                        except KapitanError as e:
+                            if str(e):
+                                logger.error("Kapitan error: %s", e)
                             logger.error("Compile error: failed to compile target: %s", target_name)
                             raise e
 

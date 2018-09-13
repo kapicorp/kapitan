@@ -48,7 +48,8 @@ def randomstr(ctx, nbytes=''):
     if nbytes:
         nbytes = int(nbytes)
         ctx.data = secrets.token_urlsafe(nbytes)
-    ctx.data = secrets.token_urlsafe()
+    else:
+        ctx.data = secrets.token_urlsafe()
 
 
 def sha256(ctx, salt=''):

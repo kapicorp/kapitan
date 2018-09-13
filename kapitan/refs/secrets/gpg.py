@@ -17,12 +17,14 @@
 import base64
 from collections import defaultdict
 import gnupg
-import logger
+import logging
 import os
 import time
 
-from kapitan.refs.base import Ref, RefBackend, RefParams, RefError
+from kapitan.refs.base import Ref, RefBackend, RefError
 from kapitan import cached
+
+logger = logging.getLogger(__name__)
 
 
 class GPGError(Exception):
@@ -37,16 +39,21 @@ def gpg_obj():
 
 
 class GPGSecret(Ref):
-    def __init__(self, data, recipients, encode_base64=False, from_base64=False, **kwargs):
+    def __init__(self, data, recipients, encrypt=True, encode_base64=False, **kwargs):
         """
         encrypts data for recipients
-        set encode_base64 to True to base64 encode data before writing
+        set encode_base64 to True to base64 encode data before encrypting and writing
+        set encrypt to False if loading data that is already encrypted and base64
         if fingerprint key is not set in recipients, the first non-expired fingerprint will be used
         if fingerprint is set, there will be no name based lookup
         """
+        # TODO review if (gpg?) kwargs are really needed
         fingerprints = lookup_fingerprints(recipients)
-        self._encrypt(data, fingerprints, encode_base64)  # TODO review if (gpg?) kwargs are really needed
-        super().__init__(self.data, from_base64, **kwargs)
+        if encrypt:
+            self._encrypt(data, fingerprints, encode_base64)
+        else:
+            self.data = data
+        super().__init__(self.data, **kwargs)
         self.type_name = 'gpg'
 
     @classmethod
@@ -57,17 +64,29 @@ class GPGSecret(Ref):
         """
         try:
             target_name = ref_params.kwargs['target_name']
-            target_name  # TODO get recipients from cached inventory
-            # TODO XXX return new GPGSecret()
+            target_inv = cached.inv['nodes'].get(target_name, None)
+            if target_name is None:
+                raise ValueError('target_name not set')
+            if target_inv is None:
+                raise ValueError('target_inv not set')
+
+            recipients = target_inv['parameters']['kapitan']['secrets']['recipients']
+            return cls(data, recipients, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create GPGSecret: target_name missing")
+
+    @classmethod
+    def from_path(cls, ref_full_path, **kwargs):
+        return super().from_path(ref_full_path, encrypt=False)
 
     def reveal(self):
         """
         returns decrypted data
         raises GPGError if decryption fails
         """
-        self._decrypt(self.data)
+        # can't use super().reveal() as we want bytes
+        ref_data = base64.b64decode(self.data)
+        return self._decrypt(ref_data)
 
     def update_recipients(self, recipients):
         """
@@ -97,7 +116,7 @@ class GPGSecret(Ref):
             self.encoding = "base64"
         enc = gpg_obj().encrypt(_data, fingerprints, sign=True, armor=False, **kwargs_gpg)
         if enc.ok:
-            self.data = base64.b64encode(enc.data).decode()
+            self.data = enc.data
             self.recipients = [{'fingerprint': f} for f in fingerprints]
         else:
             raise GPGError(enc.status)
@@ -109,6 +128,13 @@ class GPGSecret(Ref):
             return dec.data.decode()
         else:
             raise GPGError(dec.status)
+
+    def raw(self):
+        """
+        Returns dict with keys/values to be serialised.
+        """
+        return {"data": self.data, "encoding": self.encoding,
+                "recipients": self.recipients, "type": self.type_name}
 
 
 class GPGBackend(RefBackend):

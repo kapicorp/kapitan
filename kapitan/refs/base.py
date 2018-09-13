@@ -15,7 +15,6 @@
 "references module"
 
 import base64
-from collections import namedtuple
 import errno
 import hashlib
 import json
@@ -25,11 +24,10 @@ import sys
 import os
 import yaml
 
-from kapitan.refs.types import BACKEND_TYPES
-from kapitan.refs.functions import eval_func
-from kapitan.utils import PrettyDumper
 from kapitan.errors import RefFromFuncError, RefBackendError, RefError
 from kapitan.errors import RefHashMismatchError
+from kapitan.refs.functions import eval_func
+from kapitan.utils import PrettyDumper
 
 try:
     from yaml import CSafeLoader as YamlLoader
@@ -39,18 +37,21 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
-REF_TOKEN_TAG_PATTERN = r"^(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)*})$"
+REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)*})"
 
 
 class Ref(object):
     def __init__(self, data, from_base64=False, **kwargs):
+        """
+        writes data
+        set from_base64 to load a already encoded data
+        """
         self.type_name = 'ref'
-        if not from_base64:
-            self.data = base64.b64encode(data.encode()).decode()
-        else:
+        self.encoding = kwargs.get('encoding', 'original')
+        if from_base64:
             self.data = data
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        else:
+            self.data = base64.b64encode(data).decode()
 
     def reveal(self):
         return base64.b64decode(self.data).decode()
@@ -63,11 +64,16 @@ class Ref(object):
         return "{}".format(self.__dict__)
 
     @classmethod
-    def from_file(cls, ref_full_path):
+    def from_path(cls, ref_full_path, **kwargs):
+        """
+        return a new Ref from file at ref_full_path
+        the data key in the file must be base64 encoded
+        """
         try:
             with open(ref_full_path) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
-                kwargs = {key: value for key, value in obj.items() if key not in ('data', 'from_base64')}
+                _kwargs = {key: value for key, value in obj.items() if key not in ('data', 'from_base64')}
+                kwargs.update(_kwargs)
                 return cls(obj['data'], from_base64=True, **kwargs)
 
         except IOError as ex:
@@ -79,7 +85,19 @@ class Ref(object):
         """
         Return new Ref from data and ref_params
         """
-        return cls(data, **ref_params.kwargs)
+        encoding = ref_params.kwargs.get('encoding')
+        if encoding == 'original':
+            return cls(data.encode(), **ref_params.kwargs)
+        elif encoding == 'base64':
+            # data already bytes encoded
+            return cls(data, **ref_params.kwargs)
+
+    def raw(self):
+        """
+        Returns dict with keys/values to be serialised.
+        """
+        return {"data": self.data, "encoding": self.encoding,
+                "type": self.type_name}
 
 
 class RefParams(object):
@@ -96,7 +114,7 @@ class RefBackend(object):
 
     def __getitem__(self, ref_path):
         full_ref_path = os.path.join(self.path, ref_path)
-        ref = self.ref_type.from_file(full_ref_path)
+        ref = self.ref_type.from_path(full_ref_path)
 
         if ref is not None:
             ref.path = ref_path
@@ -121,7 +139,7 @@ class RefBackend(object):
         self._mkdir_ref(full_ref_path)
 
         with open(full_ref_path, 'w') as fp:
-            yaml.safe_dump(ref_obj.__dict__, stream=fp, default_flow_style=False)
+            yaml.safe_dump(ref_obj.raw(), stream=fp, default_flow_style=False)
 
     def __contains__(self, ref_path):
         try:
@@ -159,11 +177,11 @@ class Revealer(object):
             content_yaml, content_json, content_raw = self._reveal_dir(path)
             revealed_objs = []
             if content_yaml != '':
-                revealed_objs.append(RevealedObj(content, 'yaml'))
+                revealed_objs.append(RevealedObj(content_yaml, 'yaml'))
             elif content_json != '':
-                revealed_objs.append(RevealedObj(content, 'json'))
+                revealed_objs.append(RevealedObj(content_json, 'json'))
             elif content_raw != '':
-                revealed_objs.append(RevealedObj(content, 'raw'))
+                revealed_objs.append(RevealedObj(content_raw, 'raw'))
             return revealed_objs
         else:
             raise FileNotFoundError(path)
@@ -203,11 +221,14 @@ class Revealer(object):
             if not os.path.isfile(full_path):
                 pass
             if f.endswith('.yml'):
-                out_yaml += self._reveal_file(full_path)
+                out, _ = self._reveal_file(full_path)
+                out_yaml += out
             elif f.endswith('.json'):
+                out, _ = self._reveal_file(full_path)
                 out_json += self._reveal_file(full_path)
             else:
-                out_raw += self._reveal_file(full_path)
+                out, _ = self._reveal_file(full_path)
+                out_raw += out
 
         return out_yaml, out_json, out_raw
 
@@ -215,6 +236,7 @@ class Revealer(object):
         """returns decrypted value from tag in match_obj"""
         tag, _, _ = match_obj.groups()
         ref = self.ref_controller[tag]
+        logger.debug("Ref: revealing: %s", tag)
         return ref.reveal()
 
     def _compile_replace_match_with_args(self, **kwargs):
@@ -225,11 +247,15 @@ class Revealer(object):
             try:
                 ref = self.ref_controller[tag]
                 return ref.compile()
+            # if refs needs to be created from func:
             except RefFromFuncError:
                 # create ref from func with kwargs RefParams
                 self.ref_controller[tag] = RefParams(**kwargs)
                 ref = self.ref_controller[tag]
                 return ref.compile()
+            # if refs don't exist:
+            except KeyError as e:
+                raise RefError("Could not find ref: {}".format(tag))
 
         return compile_replace_match
 
@@ -257,22 +283,16 @@ class Revealer(object):
         kwargs are passed to ref compile function
         returns string with compile content
         """
-        out_raw = ''
-        for line in data:
-            compiled = re.sub(REF_TOKEN_TAG_PATTERN, self._compile_replace_match_with_args(**kwargs), line)
-            out_raw += compiled
-        return out_raw
+        compiled = re.sub(REF_TOKEN_TAG_PATTERN, self._compile_replace_match_with_args(**kwargs), data)
+        return compiled
 
     def reveal_raw(self, data):
         """
         read data and reveal content (per line search and replace) with refs
         returns string with revealed content
         """
-        out_raw = ''
-        for line in data:
-            revealed = re.sub(REF_TOKEN_TAG_PATTERN, self._reveal_replace_match, line)
-            out_raw += revealed
-        return out_raw
+        revealed = re.sub(REF_TOKEN_TAG_PATTERN, self._reveal_replace_match, data)
+        return revealed
 
     def reveal_obj(self, obj):
         """recursively updates obj with revealed refs"""
@@ -292,9 +312,9 @@ class Revealer(object):
         """
         if isinstance(obj, dict):
             for k, v in obj.items():
-                obj[k] = self.reveal_obj(v)
+                obj[k] = self.compile_obj(v, **kwargs)
         elif isinstance(obj, list):
-            obj = [self.reveal_obj(item) for item in obj]
+            obj = [self.compile_obj(item, **kwargs) for item in obj]
         elif isinstance(obj, str):
             obj = re.sub(REF_TOKEN_TAG_PATTERN, self._compile_replace_match_with_args(**kwargs), obj)
         return obj
@@ -310,7 +330,7 @@ class RefController(object):
     def __init__(self, path):
         """
         gets and sets tags for ref type objects.
-        auto registers backends in kapitan.ref.types.BACKEND_TYPES
+        auto registers backends
         """
         self.backends = {}
         self.path = path
@@ -320,15 +340,20 @@ class RefController(object):
         assert(isinstance(backend, RefBackend))
         self.backends[backend.type_name] = backend
 
-    def _get_backend(self, ref_type):
+    def _get_backend(self, type_name):
+        "imports and registers backend according to type_name"
         try:
-            return self.backends[ref_type]
+            return self.backends[type_name]
         except KeyError:
-            try:
-                backend_type = BACKEND_TYPES[ref_type]
-                self.register_backend(backend_type(self.path))
-            except KeyError:
-                raise RefBackendError('no backend for ref type: {}'.format(ref_type))
+            if type_name == 'ref':
+                from kapitan.refs.base import RefBackend
+                self.register_backend(RefBackend(self.path))
+            elif type_name == 'gpg':
+                from kapitan.refs.secrets.gpg import GPGBackend
+                self.register_backend(GPGBackend(self.path))
+            else:
+                raise RefBackendError('no backend for ref type: {}'.format(type_name))
+        return self.backends[type_name]
 
     def tag_type(self, tag):
         "returns ref type for tag"
@@ -418,15 +443,24 @@ class RefController(object):
         match = re.match(REF_TOKEN_TAG_PATTERN, key)
         if match:
             tag, token, func = match.groups()
+            # if there is no function, grab token
             if func is None:
-                return self._get_from_token(token)
+                ref = self._get_from_token(token)
+                if ref:
+                    return ref
             else:
+                # if there is a function, try grabbing token
                 try:
-                    return self._get_from_token(token)
-                # if func is set and ref doesnt exist, raise RefFromFuncError to indicate new ref needs to be created
+                    ref = self._get_from_token(token)
+                    if ref:
+                        return ref
                 except KeyError:
-                    raise RefFromFuncError('{}: does not exist and must be created from function: {}'.format(token,
-                                                                                                             func))
+                    # if func is set and ref doesnt exist,
+                    # raise RefFromFuncError to indicate new ref needs to be created
+                    raise RefFromFuncError('{}: does not exist and must be '
+                                           'created from function: {}'.format(token, func))
+
+        raise KeyError("{}: ref not found".format(tag))
 
     def __setitem__(self, key, value):
         # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
@@ -437,17 +471,17 @@ class RefController(object):
                 return self._set_to_token(token, value)
             elif func_str is not None and isinstance(value, RefParams):
                 # run _eval_func_str, create ref_obj and run _set_to_token()
-                ctx = namedtuple('FunctionCtx', [])()
-                ctx.data = None
+                ctx = FunctionContext(None)
                 ctx.encode_base64 = False
-                ctx.ref_controller = self.ref_controller
+                ctx.ref_controller = self
                 ctx.token = token
 
                 self._eval_func_str(ctx, func_str)
                 ref_type = self.token_type(token)
 
                 if ctx.encode_base64:
-                    b64_data = base64.b64encode(ctx.data)
+                    b64_data = base64.b64encode(ctx.data.encode())
+                    value.kwargs['encoding'] = 'base64'
                     ref_obj = ref_type.from_params(b64_data, value)
                 else:
                     ref_obj = ref_type.from_params(ctx.data, value)
@@ -458,6 +492,11 @@ class RefController(object):
             raise RefError("{}: is not a valid tag".format(key))
 
 
+class FunctionContext(object):
+    def __init__(self, data):
+        self.data = data
+
+
 if __name__ == '__main__':
     rb = RefBackend('/tmp/refs/')
 
@@ -466,7 +505,7 @@ if __name__ == '__main__':
     rb['path/to/ref3'] = Ref('test data')
     rb['path/to/ref4'] = Ref('this is a test')
 
-    r2 = Ref.from_file('/tmp/refs/path/to/ref1')
+    r2 = Ref.from_path('/tmp/refs/path/to/ref1')
     print(r2)
 
     if 'path/to/ref1' in rb:

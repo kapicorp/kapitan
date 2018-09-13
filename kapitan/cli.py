@@ -32,7 +32,7 @@ from kapitan.resources import search_imports, resource_callbacks, inventory_recl
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
 
 from kapitan.refs.base import RefController, Revealer
-from kapitan.refs.secrets.gpg import GPGSecretBackend, GPGSecret
+from kapitan.refs.secrets.gpg import GPGBackend, GPGSecret
 from kapitan.refs.secrets.gpg import lookup_fingerprints, search_target_token_paths
 
 from kapitan.errors import KapitanError
@@ -232,7 +232,7 @@ def main():
 
         compile_targets(args.inventory_path, search_paths, args.output_path,
                         args.parallelism, args.targets, ref_controller,
-                        prune=(args.prune), indent=args.indent, reveal=args.secrets_reveal,
+                        prune=(args.prune), indent=args.indent, reveal=args.reveal,
                         cache=args.cache, cache_paths=args.cache_paths)
 
     elif cmd == 'inventory':
@@ -331,7 +331,7 @@ def main():
             secrets_path = os.path.abspath(args.secrets_path)
             target_token_paths = search_target_token_paths(secrets_path, targets)
             ret_code = 0
-            ref_controller.register_backend(GPGSecretBackend(secrets_path))  # override gpg backend for new secrets_path
+            ref_controller.register_backend(GPGBackend(secrets_path))  # override gpg backend for new secrets_path
             for target_name, token_paths in target_token_paths.items():
                 try:
                     recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['recipients']
