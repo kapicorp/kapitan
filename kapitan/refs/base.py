@@ -48,12 +48,14 @@ class Ref(object):
         """
         self.type_name = 'ref'
         self.encoding = kwargs.get('encoding', 'original')
+        # TODO data should be bytes only
         if from_base64:
             self.data = data
         else:
             self.data = base64.b64encode(data).decode()
 
     def reveal(self):
+        # TODO data should be bytes only
         return base64.b64decode(self.data).decode()
 
     def compile(self):
@@ -85,14 +87,16 @@ class Ref(object):
         """
         Return new Ref from data and ref_params
         """
-        encoding = ref_params.kwargs.get('encoding')
+        # default encoding to 'original'
+        # TODO encoding needs a better place other than kwargs
+        encoding = ref_params.kwargs.get('encoding', 'original')
         if encoding == 'original':
             return cls(data.encode(), **ref_params.kwargs)
         elif encoding == 'base64':
             # data already bytes encoded
             return cls(data, **ref_params.kwargs)
 
-    def raw(self):
+    def dump(self):
         """
         Returns dict with keys/values to be serialised.
         """
@@ -139,7 +143,7 @@ class RefBackend(object):
         self._mkdir_ref(full_ref_path)
 
         with open(full_ref_path, 'w') as fp:
-            yaml.safe_dump(ref_obj.raw(), stream=fp, default_flow_style=False)
+            yaml.safe_dump(ref_obj.dump(), stream=fp, default_flow_style=False)
 
     def __contains__(self, ref_path):
         try:
@@ -358,22 +362,27 @@ class RefController(object):
     def tag_type(self, tag):
         "returns ref type for tag"
         # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2} or ?{ref:my/secret/token:deadbeef}
+        _, token, _ = self.tag_params(tag)
+        return self.token_type(token)
+
+    def tag_params(self, tag):
+        "returns tag parameter tuple with (tag, token, func_str)"
         match = re.match(REF_TOKEN_TAG_PATTERN, tag)
         if match:
-            _tag, token, _ = match.groups()
-            return self.token_type(token)
+            tag, token, func_str = match.groups()
+            return tag, token, func_str
         else:
-            raise RefError("{}: tag is not valid".format(tag))
+            raise RefError("{}: is not a valid tag".format(tag))
 
     def token_type(self, token):
         "returns ref type for token"
         attrs = token.split(':')
         type_name = attrs[0]
 
-        if type_name in self.backends:
-            return self.backends[type_name].ref_type
-        else:
-            raise RefError("{}: token has invalid (or unregistered backend) type".format(token))
+        # force type_name to register
+        self._get_backend(type_name)
+
+        return self.backends[type_name].ref_type
 
     def token_type_name(self, token):
         "returns ref type name for token"
@@ -440,56 +449,52 @@ class RefController(object):
 
     def __getitem__(self, key):
         # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2} or ?{ref:my/secret/token:deadbeef}
-        match = re.match(REF_TOKEN_TAG_PATTERN, key)
-        if match:
-            tag, token, func = match.groups()
-            # if there is no function, grab token
-            if func is None:
+        tag, token, func_str = self.tag_params(key)
+
+        # if there is no function, grab token
+        if func_str is None:
+            ref = self._get_from_token(token)
+            if ref:
+                return ref
+        else:
+            # if there is a function, try grabbing token
+            try:
                 ref = self._get_from_token(token)
                 if ref:
                     return ref
-            else:
-                # if there is a function, try grabbing token
-                try:
-                    ref = self._get_from_token(token)
-                    if ref:
-                        return ref
-                except KeyError:
-                    # if func is set and ref doesnt exist,
-                    # raise RefFromFuncError to indicate new ref needs to be created
-                    raise RefFromFuncError('{}: does not exist and must be '
-                                           'created from function: {}'.format(token, func))
+            except KeyError:
+                # if func is set and ref doesnt exist,
+                # raise RefFromFuncError to indicate new ref needs to be created
+                raise RefFromFuncError('{}: does not exist and must be '
+                                       'created from function: {}'.format(token, func_str))
 
         raise KeyError("{}: ref not found".format(tag))
 
     def __setitem__(self, key, value):
         # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
-        match = re.match(REF_TOKEN_TAG_PATTERN, key)
-        if match:
-            tag, token, func_str = match.groups()
-            if func_str is None and isinstance(value, self.token_type(token)):
-                return self._set_to_token(token, value)
-            elif func_str is not None and isinstance(value, RefParams):
-                # run _eval_func_str, create ref_obj and run _set_to_token()
-                ctx = FunctionContext(None)
-                ctx.encode_base64 = False
-                ctx.ref_controller = self
-                ctx.token = token
+        tag, token, func_str = self.tag_params(key)
 
-                self._eval_func_str(ctx, func_str)
-                ref_type = self.token_type(token)
+        if func_str is None and isinstance(value, self.token_type(token)):
+            return self._set_to_token(token, value)
+        elif func_str is not None and isinstance(value, RefParams):
+            # run _eval_func_str, create ref_obj and run _set_to_token()
+            ctx = FunctionContext(None)
+            ctx.encode_base64 = False
+            ctx.ref_controller = self
+            ctx.token = token
 
-                if ctx.encode_base64:
-                    b64_data = base64.b64encode(ctx.data.encode())
-                    value.kwargs['encoding'] = 'base64'
-                    ref_obj = ref_type.from_params(b64_data, value)
-                else:
-                    ref_obj = ref_type.from_params(ctx.data, value)
-                return self._set_to_token(token, ref_obj)
+            self._eval_func_str(ctx, func_str)
+            ref_type = self.token_type(token)
+
+            if ctx.encode_base64:
+                b64_data = base64.b64encode(ctx.data.encode())
+                # TODO encoding needs a better place other than kwargs
+                value.kwargs['encoding'] = 'base64'
+                ref_obj = ref_type.from_params(b64_data, value)
             else:
-                raise RefError("{}: is not a valid tag".format(key))
-        else:
-            raise RefError("{}: is not a valid tag".format(key))
+                ref_obj = ref_type.from_params(ctx.data, value)
+
+            return self._set_to_token(token, ref_obj)
 
 
 class FunctionContext(object):

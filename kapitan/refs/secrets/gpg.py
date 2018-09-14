@@ -129,7 +129,7 @@ class GPGSecret(Ref):
         else:
             raise GPGError(dec.status)
 
-    def raw(self):
+    def dump(self):
         """
         Returns dict with keys/values to be serialised.
         """
