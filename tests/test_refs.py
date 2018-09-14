@@ -18,11 +18,12 @@
 
 import tempfile
 import unittest
-from kapitan.refs.base import Ref, RefController, RefParams
-from kapitan.errors import RefFromFuncError
+from kapitan.refs.base import Ref, RefController, RefParams, Revealer
+from kapitan.errors import RefFromFuncError, RefHashMismatchError
 
 REFS_HOME = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_HOME)
+REVEALER = Revealer(REF_CONTROLLER)
 
 
 class RefsTest(unittest.TestCase):
@@ -112,5 +113,29 @@ class RefsTest(unittest.TestCase):
             REF_CONTROLLER[tag]
         except RefFromFuncError:
             REF_CONTROLLER[tag] = RefParams()
-
         REF_CONTROLLER[tag]
+
+    def test_ref_revealer_reveal_raw_data_tag(self):
+        "check Revealer reveals raw data"
+        tag = '?{ref:my/ref2}'
+        data = "data with {}, period.".format(tag)
+        revealed_data = REVEALER.reveal_raw(data)
+        self.assertEqual(revealed_data, 'data with ref 2 data, period.')
+
+    def test_ref_revealer_reveal_raw_data_tag_compiled_hash(self):
+        "check Revealer reveals raw data with compiled tag (with hash)"
+        tag = '?{ref:my/ref2}'
+        tag_compiled = REF_CONTROLLER[tag].compile()
+        data = "data with {}, period.".format(tag_compiled)
+        revealed_data = REVEALER.reveal_raw(data)
+        self.assertEqual(revealed_data, 'data with ref 2 data, period.')
+
+    def test_ref_revealer_reveal_raw_data_tag_compiled_hash_mismatch(self):
+        """
+        check Revealer reveals raises RefHashMismatchError
+        on mismatch compiled tag hashes
+        """
+        tag_compiled_hash_mismatch = '?{ref:my/ref2:deadbeef}'
+        with self.assertRaises(RefHashMismatchError):
+            data = "data with {}, period.".format(tag_compiled_hash_mismatch)
+            REVEALER.reveal_raw(data)
