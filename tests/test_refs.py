@@ -16,10 +16,13 @@
 
 "refs tests"
 
+import base64
+import os
 import tempfile
 import unittest
 from kapitan.refs.base import Ref, RefController, RefParams, Revealer
 from kapitan.errors import RefFromFuncError, RefHashMismatchError
+from kapitan.utils import get_entropy
 
 REFS_HOME = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_HOME)
@@ -139,3 +142,56 @@ class RefsTest(unittest.TestCase):
         with self.assertRaises(RefHashMismatchError):
             data = "data with {}, period.".format(tag_compiled_hash_mismatch)
             REVEALER.reveal_raw(data)
+
+    def test_ref_function_randomstr(self):
+        "write randomstr to secret, confirm ref file exists, reveal and check"
+
+        tag = '?{ref:ref/randomstr|randomstr}'
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'ref/base64')))
+
+        file_with_tags = tempfile.mktemp()
+        with open(file_with_tags, 'w') as fp:
+            fp.write('?{ref:ref/randomstr}')
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 43)  # default length of token_urlsafe() string is 43
+        self.assertTrue(get_entropy(revealed) > 4)
+
+        # Test with parameter nbytes=16, correlating with string length 22
+        tag = '?{ref:ref/randomstr|randomstr:16}'
+        REF_CONTROLLER[tag] = RefParams()
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 22)
+
+    def test_ref_function_base64(self):
+        "write randomstr to ref and base64, confirm ref file exists, reveal and check"
+
+        tag = '?{ref:ref/base64|randomstr|base64}'
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'ref/base64')))
+
+        file_with_tags = tempfile.mktemp()
+        with open(file_with_tags, 'w') as fp:
+            fp.write('?{ref:ref/base64}')
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        # If the following succeeds, we guarantee that ref is base64-encoded
+        self.assertEqual(base64.b64encode(base64.b64decode(revealed)).decode("UTF-8"), revealed)
+
+    def test_ref_function_sha256(self):
+        "write randomstr to ref and sha256, confirm ref file exists, reveal and check"
+
+        tag = '?{ref:ref/sha256|randomstr|sha256}'
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'ref/sha256')))
+
+        file_with_tags = tempfile.mktemp()
+        with open(file_with_tags, 'w') as fp:
+            fp.write('?{ref:ref/sha256}')
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 64)
+        try:
+            int(revealed, 16)  # sha256 should convert to hex
+        except ValueError:
+            raise Exception("ref is not sha256 hash")
+
+    # TODO write tests for RefController errors (lookups, etc..)

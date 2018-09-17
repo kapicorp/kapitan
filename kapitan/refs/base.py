@@ -476,6 +476,7 @@ class RefController(object):
 
         if func_str is None and isinstance(value, self.token_type(token)):
             return self._set_to_token(token, value)
+        # if function is set, ensure value is RefParams instance
         elif func_str is not None and isinstance(value, RefParams):
             # run _eval_func_str, create ref_obj and run _set_to_token()
             ctx = FunctionContext(None)

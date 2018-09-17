@@ -27,14 +27,23 @@ from kapitan import cached
 logger = logging.getLogger(__name__)
 
 
+# XXX only use this for testing!
+# pass custom kwargs to gpg encrypt()/decrypt()
+GPG_KWARGS = {}
+
+# XXX only use this for testing!
+# pass custom fingerprints within from_params()
+GPG_TARGET_FINGERPRINTS = {}
+
+
 class GPGError(Exception):
     """Generic GPG errors"""
     pass
 
 
-def gpg_obj():
+def gpg_obj(*args, **kwargs):
     if not cached.gpg_obj:
-        cached.gpg_obj = gnupg.GPG()
+        cached.gpg_obj = gnupg.GPG(*args, **kwargs)
     return cached.gpg_obj
 
 
@@ -47,12 +56,12 @@ class GPGSecret(Ref):
         if fingerprint key is not set in recipients, the first non-expired fingerprint will be used
         if fingerprint is set, there will be no name based lookup
         """
-        # TODO review if (gpg?) kwargs are really needed
         fingerprints = lookup_fingerprints(recipients)
         if encrypt:
             self._encrypt(data, fingerprints, encode_base64)
         else:
             self.data = data
+            self.recipients = [{'fingerprint': f} for f in fingerprints]  # TODO move to .load() method
         super().__init__(self.data, **kwargs)
         self.type_name = 'gpg'
 
@@ -63,6 +72,11 @@ class GPGSecret(Ref):
         recipients will be grabbed from the inventory via target_name
         """
         try:
+            # XXX only used for testing
+            if GPG_TARGET_FINGERPRINTS:
+                _fingerprints = [{'fingerprint': v} for _, v in GPG_TARGET_FINGERPRINTS.items()]
+                return cls(data, _fingerprints, **ref_params.kwargs)
+
             target_name = ref_params.kwargs['target_name']
             target_inv = cached.inv['nodes'].get(target_name, None)
             if target_name is None:
@@ -94,16 +108,16 @@ class GPGSecret(Ref):
         returns True if recipients are different and secret is updated, False otherwise
         """
         fingerprints = lookup_fingerprints(recipients)
-        if set(fingerprints) != set(self.fingerprints):
-            data_dec = self.decrypt()
+        if set(fingerprints) != set([r['fingerprint'] for r in self.recipients]):
+            data_dec = self.reveal()
             encode_base64 = self.encoding == 'base64'
             if encode_base64:
                 data_dec = base64.b64decode(data_dec).decode()
-            self.encrypt(data_dec, fingerprints, encode_base64)
+            self._encrypt(data_dec, fingerprints, encode_base64)
             return True
         return False
 
-    def _encrypt(self, data, fingerprints, encode_base64, **kwargs_gpg):
+    def _encrypt(self, data, fingerprints, encode_base64):
         """
         encrypts data
         set encode_base64 to True to base64 encode data before writing
@@ -114,16 +128,16 @@ class GPGSecret(Ref):
         if encode_base64:
             _data = base64.b64encode(data.encode())
             self.encoding = "base64"
-        enc = gpg_obj().encrypt(_data, fingerprints, sign=True, armor=False, **kwargs_gpg)
+        enc = gpg_obj().encrypt(_data, fingerprints, sign=True, armor=False, **GPG_KWARGS)
         if enc.ok:
             self.data = enc.data
             self.recipients = [{'fingerprint': f} for f in fingerprints]
         else:
             raise GPGError(enc.status)
 
-    def _decrypt(self, data, **kwargs_gpg):
+    def _decrypt(self, data):
         """decrypt data"""
-        dec = gpg_obj().decrypt(data, **kwargs_gpg)
+        dec = gpg_obj().decrypt(data, **GPG_KWARGS)
         if dec.ok:
             return dec.data.decode()
         else:
