@@ -95,8 +95,7 @@ def jinja2_render_file(search_paths, name, ctx):
             try:
                 return render_jinja2_file(_full_path, ctx)
             except Exception as e:
-                logger.error("Jsonnet jinja2 failed to render %s: %s", _full_path, str(e))
-                raise CompileError(e)
+                raise CompileError("Jsonnet jinja2 failed to render {}: {}".format(_full_path, e))
 
     raise IOError("jinja2 failed to render, could not find file: {}".format(_full_path))
 
@@ -177,8 +176,7 @@ def inventory(search_paths, target, inventory_path="inventory/"):
             break
 
     if not inv_path_exists:
-        logger.error("Inventory not found in search paths: %s", search_paths)
-        raise InventoryError()
+        raise InventoryError("Inventory not found in search paths: {}".format(search_paths))
 
     if target is None:
         return inventory_reclass(full_inv_path)["nodes"]

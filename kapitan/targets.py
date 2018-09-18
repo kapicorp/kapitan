@@ -72,8 +72,7 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
 
     try:
         if target_objs == []:
-            logger.error("Error: no targets found")
-            raise KapitanError("Error: no targets found")
+            raise CompileError("Error: no targets found")
         # compile_target() returns None on success
         # so p is only not None when raising an exception
         [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
@@ -111,6 +110,9 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
         if not isinstance(e, KapitanError):
             logger.error("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             traceback.print_exc()
+
+        logger.error("\n")
+        logger.error(e)
         sys.exit(1)
     finally:
         shutil.rmtree(temp_path)
@@ -145,8 +147,7 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
                 cached.inv_cache['inventory'][target]['classes'] = dictionary_hash(inv['nodes'][target]['classes'])
                 cached.inv_cache['inventory'][target]['parameters'] = dictionary_hash(inv['nodes'][target]['parameters'])
             except KeyError as e:
-                logger.error("'%s' target not found", target)
-                raise
+                raise CompileError("target not found: {}".format(target))
     else:
         for target in inv['nodes']:
             cached.inv_cache['inventory'][target] = {}
@@ -189,7 +190,7 @@ def changed_targets(inventory_path, output_path):
             try:
                 saved_inv_cache = yaml.safe_load(f)
             except Exception as e:
-                logger.error("Failed to load kapitan cache: %s", saved_inv_cache_path)
+                raise CompileError("Failed to load kapitan cache: %s", saved_inv_cache_path)
 
     targets_list = list(inv['nodes'])
 
@@ -319,15 +320,11 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
                             compile_jsonnet(compile_file_sp, _compile_path, search_paths, ext_vars, ref_controller,
                                             output=output_type, target_name=target_name, **kwargs)
                         except KapitanError as e:
-                            if str(e):
-                                logger.error("Kapitan error: %s", e)
-                            logger.error("Compile error: failed to compile target: %s", target_name)
-                            raise e
+                            raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
 
                 if not jsonnet_file_found:
-                    logger.error("Compile error: %s for target: %s not found in " +
-                                 "search_paths: %s", input_path, target_name, search_paths)
-                    raise CompileError()
+                    raise CompileError("Compile error: {} for target: {} not found in "
+                                       "search_paths: {}".format(input_path, target_name, search_paths))
 
         if input_type == "jinja2":
             _compile_path = os.path.join(compile_path, target_name, output_path)
@@ -352,15 +349,11 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
                             compile_jinja2(compile_path_sp, ctx, _compile_path, ref_controller,
                                            target_name=target_name, **kwargs)
                         except KapitanError as e:
-                            if str(e):
-                                logger.error("Kapitan error: %s", e)
-                            logger.error("Compile error: failed to compile target: %s", target_name)
-                            raise e
+                            raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
 
                 if not jinja2_file_found:
-                    logger.error("Compile error: %s for target: %s not found in " +
-                                 "search_paths: %s", input_path, target_name, search_paths)
-                    raise CompileError()
+                    raise CompileError("Compile error: {} for target: {} not found in "
+                                       "search_paths: {}".format(input_path, target_name, search_paths))
 
     logger.info("Compiled %s (%.2fs)", target_name, time.time() - start)
 

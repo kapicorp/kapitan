@@ -58,10 +58,8 @@ def sha256(ctx, salt=''):
         salted_input_value = salt + ":" + ctx.data
         ctx.data = hashlib.sha256(salted_input_value.encode()).hexdigest()
     else:
-        # TODO we should not log here
-        logger.error("Ref error: eval_func: nothing to sha256 hash; try "
-                     "something like 'randomstr|sha256'")
-        raise RefError
+        raise RefError("Ref error: eval_func: nothing to sha256 hash; try "
+                       "something like 'randomstr|sha256'")
 
 
 def rsa_private_key(ctx, key_size='4096'):

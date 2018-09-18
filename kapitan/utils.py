@@ -157,8 +157,8 @@ def render_jinja2(path, context):
                     "mode": file_mode(render_path)
                 }
             except Exception as e:
-                logger.error("Jinja2 error: failed to render %s: %s", render_path, str(e))
-                raise CompileError(e)
+                raise CompileError("Jinja2 error: failed to render {}: {}".format(render_path, e))
+
     return rendered
 
 
@@ -176,8 +176,7 @@ def jsonnet_file(file_path, **kwargs):
     try:
         return jsonnet.evaluate_file(file_path, **kwargs)
     except Exception as e:
-        logger.error("Jsonnet error: failed to compile %s:\n %s", file_path, str(e))
-        raise CompileError(e)
+        raise CompileError("Jsonnet error: failed to compile {}:\n {}".format(file_path, e))
 
 
 def prune_empty(d):
@@ -317,11 +316,9 @@ def directory_hash(directory):
                             binary_file_hash = sha256(f.read())
                             hash.update(binary_file_hash.hexdigest().encode("UTF-8"))
                     else:
-                        logger.error("utils.directory_hash failed to open %s: %s", file_path, str(e))
-                        raise
+                        raise CompileError("utils.directory_hash failed to open {}: {}".format(file_path, e))
     except Exception as e:
-        logger.error("utils.directory_hash failed: %s", str(e))
-        raise
+        raise CompileError("utils.directory_hash failed: {}".format(e))
 
     return hash.hexdigest()
 
