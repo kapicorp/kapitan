@@ -106,12 +106,14 @@ class Ref(object):
 
 class RefParams(object):
     def __init__(self, *args, **kwargs):
+        "pack params for new Refs from functions"
         self.args = args
         self.kwargs = kwargs
 
 
 class RefBackend(object):
     def __init__(self, path, ref_type=Ref):
+        "Get and create Refs"
         self.path = path
         self.type_name = 'ref'
         self.ref_type = ref_type  # Ref type backend instance manages
@@ -130,6 +132,7 @@ class RefBackend(object):
         raise KeyError(ref_path)
 
     def _mkdir_ref(self, full_ref_path):
+        "create dir full_ref_path if not existent"
         try:
             os.makedirs(os.path.dirname(full_ref_path))
         except OSError as ex:
@@ -170,6 +173,7 @@ class RefBackend(object):
 
 class Revealer(object):
     def __init__(self, ref_controller):
+        "reveal files and objects"
         self.ref_controller = ref_controller
 
     def reveal_path(self, path):
@@ -325,6 +329,7 @@ class Revealer(object):
 
 
 class RevealedObj(object):
+    "Content and content type object type"
     def __init__(self, content, content_type):
         self.content = content
         self.content_type = content_type
@@ -500,66 +505,5 @@ class RefController(object):
 
 class FunctionContext(object):
     def __init__(self, data):
+        "Carry context accross function evaluation"
         self.data = data
-
-
-if __name__ == '__main__':
-    rb = RefBackend('/tmp/refs/')
-
-    rb['path/to/ref1'] = Ref('data data')
-    rb['path/to/ref2'] = Ref('crap data')
-    rb['path/to/ref3'] = Ref('test data')
-    rb['path/to/ref4'] = Ref('this is a test')
-
-    r2 = Ref.from_path('/tmp/refs/path/to/ref1')
-    print(r2)
-
-    if 'path/to/ref1' in rb:
-        print('found path/to/ref1')
-    else:
-        print('not found path/to/ref1')
-
-    if 'path/to/ref2' in rb:
-        print('found path/to/ref2')
-    else:
-        print('not found path/to/ref2')
-
-    if 'path/to/ref666' in rb:
-        print('found path/to/ref2')
-    else:
-        print('not found path/to/ref666')
-
-    try:
-        rb['path/to/not-existent']
-    except KeyError:
-        print('not found path/to/not-existent')
-
-    for k in rb:
-        print('key:', k)
-
-    for k, v in rb.iteritems():
-        print(k, v)
-
-    controller = RefController()
-    controller.register_backend(rb)
-    print(controller['?{ref:path/to/ref2}'])
-    print('revealing: "?{ref:path/to/ref2}"', controller['?{ref:path/to/ref2}'].reveal())
-    print('compiling: "?{ref:path/to/ref2}"', controller['?{ref:path/to/ref2}'].compile())
-
-    print(controller['?{ref:path/to/ref1:bd46282a}'])
-    try:
-        print(controller['?{ref:path/to/ref1:6896a6feWRONG}'])
-    except RefHashMismatchError:
-        print('?{ref:path/to/ref1:6896a6feWRONG}: hash not valid')
-
-    # test setting to controller
-    try:
-        print(controller['?{ref:path/to/ref12|randomstr}'])
-    except RefFromFuncError:
-        print('?{ref:path/to/ref12} not found, creating...')
-        controller['?{ref:path/to/ref12|randomstr}'] = RefParams()
-
-    try:
-        controller['?{rasdasd:asdasdasd:deadbeef}'] = None
-    except RefError as ex:
-        print('could not create ?{rasdasd:asdasdasd:deadbeef} because it is not valid')
