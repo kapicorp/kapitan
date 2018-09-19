@@ -33,3 +33,23 @@ class InventoryError(KapitanError):
 class SecretError(KapitanError):
     """secrets error"""
     pass
+
+
+class RefError(KapitanError):
+    """ref error"""
+    pass
+
+
+class RefBackendError(KapitanError):
+    """ref backend error"""
+    pass
+
+
+class RefFromFuncError(KapitanError):
+    """ref from func error"""
+    pass
+
+
+class RefHashMismatchError(KapitanError):
+    """ref has mismatch error"""
+    pass

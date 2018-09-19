@@ -18,5 +18,5 @@
 
 inv = {}
 inv_cache = {}
-gpg_backend = None
+gpg_obj = None
 dot_kapitan = {}
