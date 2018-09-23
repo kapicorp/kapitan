@@ -80,6 +80,7 @@ setup(
 
     keywords='jsonnet kubernetes reclass jinja',
     py_modules=["kapitan"],
+    python_requires=">=3.6",
     packages=find_packages(),
     include_package_data=True,
     dependency_links=new_links,
