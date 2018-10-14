@@ -45,6 +45,12 @@ except ImportError:
     from yaml import SafeLoader as YamlLoader
 
 
+def fatal_error(message):
+    "Logs error message, sys.exit(1)"
+    logger.error(message)
+    sys.exit(1)
+
+
 def hashable_lru_cache(func):
     """Usable instead of lru_cache for functions using unhashable objects"""
 
