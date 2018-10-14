@@ -295,8 +295,10 @@ def main():
                     data = fp.read()
             # TODO deprecate backend and move to passing ref tags in command line
             if args.backend == "gpg":
-                secret_obj = GPGSecret(data, recipients, args.base64)
-                ref_controller.backends['gpg'][args.write] = secret_obj
+                secret_obj = GPGSecret(data.encode(), recipients, encode_base64=args.base64)
+                tag = '?{{gpg:{}}}'.format(args.write)
+                print('data', secret_obj.data)
+                ref_controller[tag] = secret_obj
         elif args.reveal:
             revealer = Revealer(ref_controller)
             if args.file is None:
