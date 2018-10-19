@@ -276,58 +276,23 @@ def main():
         ref_controller = RefController(args.secrets_path)
 
         if args.write is not None:
-            recipients = [dict((("name", name),)) for name in args.recipients]
-            if args.target_name:
-                inv = inventory_reclass(args.inventory_path)
-                # TODO move into kapitan:secrets:gpg:recipients key
-                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
-            secret_write(args.write, data, recipients, ref_controller, encode_base64=args.base64)
+            secret_write(args, ref_controller)
         elif args.reveal:
-            secret_reveal(args.file, ref_controller)
+            secret_reveal(args, ref_controller)
         elif args.update:
-            # update recipients for secret tag
-            # args.recipients is a list, convert to recipients dict
-            recipients = [dict([("name", name), ]) for name in args.recipients]
-            if args.target_name:
-                inv = inventory_reclass(args.inventory_path)
-                # TODO move into kapitan:secrets:gpg:recipients key
-                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
-            secret_update(args.update, recipients, ref_controller)
+            secret_update(args, ref_controller)
         elif args.update_targets or args.validate_targets:
-            # update recipients for all secrets in secrets_path
-            # use --secrets-path to set scanning path
-            inv = inventory_reclass(args.inventory_path)
-            targets = set(inv['nodes'].keys())
-            secrets_path = os.path.abspath(args.secrets_path)
-            target_token_paths = search_target_token_paths(secrets_path, targets)
-            ret_code = 0
-            ref_controller.register_backend(GPGBackend(secrets_path))  # override gpg backend for new secrets_path
-            for target_name, token_paths in target_token_paths.items():
-                try:
-                    recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['recipients']
-                    for token_path in token_paths:
-                        secret_obj = ref_controller.backends['gpg'][token_path]
-                        target_fingerprints = set(lookup_fingerprints(recipients))
-                        secret_fingerprints = set(lookup_fingerprints(secret_obj.recipients))
-                        if target_fingerprints != secret_fingerprints:
-                            if args.validate_targets:
-                                logger.info("%s recipient mismatch", token_path)
-                                ret_code = 1
-                            else:
-                                new_recipients = [dict([("fingerprint", f), ]) for f in target_fingerprints]
-                                secret_obj.update_recipients(new_recipients)
-                                ref_controller.backends['gpg'][token_path] = secret_obj
-                except KeyError:
-                    logger.debug("secret_gpg_update_target: target: %s has no inventory recipients, skipping",
-                                 target_name)
-            sys.exit(ret_code)
+            secret_update_validate(args, ref_controller)
 
 
-def secret_write(file_name, token_name, data, recipients, ref_controller, encode_base64):
-    "Write secret at token_name with content from file_name"
+def secret_write(args, ref_controller):
+    "Write secret to ref_controller based on cli args"
+    token_name = args.write
+    file_name = args.file_name
+    data = None
+
     if file_name is None:
         fatal_error('--file is required with --write')
-    data = None
     if file_name == '-':
         data = ''
         for line in sys.stdin:
@@ -335,18 +300,33 @@ def secret_write(file_name, token_name, data, recipients, ref_controller, encode
     else:
         with open(file_name) as fp:
             data = fp.read()
+
+    # deal with gpg type
     if token_name.startswith("gpg:"):
         type_name, token_path = token_name.split(":")
-        secret_obj = GPGSecret(data, recipients, encode_base64=encode_base64)
+        recipients = [dict((("name", name),)) for name in args.recipients]
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            # TODO move into kapitan:secrets:gpg:recipients key
+            recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
+        secret_obj = GPGSecret(data, recipients, encode_base64=args.base64)
         tag = '?{{gpg:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
     else:
         fatal_error("Invalid token: {}".format(token_name))
 
 
-def secret_update(token_name, recipients, ref_controller):
-    "Update secret recipients at token_name"
+def secret_update(args, ref_controller):
+    "Update secret recipients"
+    # TODO --update *might* mean something else for other types
+    token_name = args.update
     if token_name.startswith("gpg:"):
+        # args.recipients is a list, convert to recipients dict
+        recipients = [dict([("name", name), ]) for name in args.recipients]
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+        # TODO move into kapitan:secrets:gpg:recipients key
+        recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
         type_name, token_path = token_name.split(":")
         tag = '?{{gpg:{}}}'.format(token_path)
         secret_obj = ref_controller[tag]
@@ -356,9 +336,10 @@ def secret_update(token_name, recipients, ref_controller):
         fatal_error("Invalid token: {}".format(token_name))
 
 
-def secret_reveal(file_name, ref_controller):
+def secret_reveal(args, ref_controller):
     "Reveal secrets in file_name"
     revealer = Revealer(ref_controller)
+    file_name = args.file
     if file_name is None:
         fatal_error('--file is required with --reveal')
     if file_name == '-':
@@ -368,3 +349,34 @@ def secret_reveal(file_name, ref_controller):
     elif file_name:
         for rev_obj in revealer.reveal_path(file_name):
             sys.stdout.write(rev_obj.content)
+
+
+def secret_update_validate(args, ref_controller):
+    "Validate and/or update target secrets"
+    # update recipients for all secrets in secrets_path
+    # use --secrets-path to set scanning path
+    inv = inventory_reclass(args.inventory_path)
+    targets = set(inv['nodes'].keys())
+    secrets_path = os.path.abspath(args.secrets_path)
+    target_token_paths = search_target_token_paths(secrets_path, targets)
+    ret_code = 0
+    ref_controller.register_backend(GPGBackend(secrets_path))  # override gpg backend for new secrets_path
+    for target_name, token_paths in target_token_paths.items():
+        try:
+            recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['recipients']
+            for token_path in token_paths:
+                secret_obj = ref_controller.backends['gpg'][token_path]
+                target_fingerprints = set(lookup_fingerprints(recipients))
+                secret_fingerprints = set(lookup_fingerprints(secret_obj.recipients))
+                if target_fingerprints != secret_fingerprints:
+                    if args.validate_targets:
+                        logger.info("%s recipient mismatch", token_path)
+                        ret_code = 1
+                    else:
+                        new_recipients = [dict([("fingerprint", f), ]) for f in target_fingerprints]
+                        secret_obj.update_recipients(new_recipients)
+                        ref_controller.backends['gpg'][token_path] = secret_obj
+        except KeyError:
+            logger.debug("secret_gpg_update_target: target: %s has no inventory recipients, skipping",
+                         target_name)
+    sys.exit(ret_code)
