@@ -288,7 +288,7 @@ def main():
 def secret_write(args, ref_controller):
     "Write secret to ref_controller based on cli args"
     token_name = args.write
-    file_name = args.file_name
+    file_name = args.file
     data = None
 
     if file_name is None:
