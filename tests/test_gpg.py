@@ -27,7 +27,12 @@ from kapitan.refs.secrets.gpg import gpg_obj, GPGSecret, GPG_KWARGS, GPG_TARGET_
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 
-gpg_obj(gnupghome=tempfile.mkdtemp())
+# set GNUPGHOME for test_cli
+GNUPGHOME = tempfile.mkdtemp()
+os.environ["GNUPGHOME"] = GNUPGHOME
+
+gpg_obj(gnupghome=GNUPGHOME)
+
 KEY = cached.gpg_obj.gen_key(cached.gpg_obj.gen_key_input(key_type="RSA",
                                                           key_length=2048,
                                                           passphrase="testphrase"))
