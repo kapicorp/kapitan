@@ -59,6 +59,8 @@ class GPGSecret(Ref):
         fingerprints = lookup_fingerprints(recipients)
         if encrypt:
             self._encrypt(data, fingerprints, encode_base64)
+            if encode_base64:
+                kwargs["encoding"] = "base64"
         else:
             self.data = data
             self.recipients = [{'fingerprint': f} for f in fingerprints]  # TODO move to .load() method

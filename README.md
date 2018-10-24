@@ -401,9 +401,9 @@ The usual flow of creating and using an encrypted secret with kapitan is:
 
   - Manually:
     ```
-    kapitan secrets --write mysql/root/password -t minikube-mysql -f <password file>
+    kapitan secrets --write gpg:mysql/root/password -t minikube-mysql -f <password file>
     OR
-    echo -n '<password>' | kapitan secrets --write mysql/root/password -t minikube-mysql -f -
+    echo -n '<password>' | kapitan secrets --write gpg:mysql/root/password -t minikube-mysql -f -
     ```
     This will encrypt and save your password into `secrets/mysql/root/password`, see `examples/kubernetes`.
 
