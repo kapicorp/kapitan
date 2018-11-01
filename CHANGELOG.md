@@ -1,3 +1,9 @@
+## 0.19.0:
+- Fix cli secrets (#154)
+- Add python_requires (#149) - thanks @Code0x58
+- update reclass to release v1.5.6 (#146)
+- Secrets restructure (#148)
+
 ## 0.18.2:
 - Fixed `gzip_b64` determinism
 
