@@ -7,7 +7,7 @@ jsonschema>=2.6.0
 python-gnupg==0.4.3
 six>=1.11.0
 cryptography==2.3
-requests>=2.19.1
+requests>=2.20.0
 
 # Reclass dependencies
 pyparsing
