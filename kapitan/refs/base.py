@@ -37,7 +37,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
-REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)*})"
+REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)?=*})"
 
 
 class Ref(object):
