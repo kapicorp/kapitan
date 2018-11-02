@@ -37,7 +37,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
-REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)*})"
+REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)?=*})"
 
 
 class Ref(object):
@@ -175,6 +175,7 @@ class Revealer(object):
     def __init__(self, ref_controller):
         "reveal files and objects"
         self.ref_controller = ref_controller
+        self.regex = re.compile(REF_TOKEN_TAG_PATTERN)
 
     def reveal_path(self, path):
         "detects if path is file or dir, returns list of RevealObj"
@@ -276,12 +277,12 @@ class Revealer(object):
         out_raw = ''
         if filename is None:
             for line in sys.stdin:
-                revealed = re.sub(REF_TOKEN_TAG_PATTERN, self._reveal_replace_match, line)
+                revealed = self.regex.sub(self._reveal_replace_match, line)
                 out_raw += revealed
         else:
             with open(filename) as fp:
                 for line in fp:
-                    revealed = re.sub(REF_TOKEN_TAG_PATTERN, self._reveal_replace_match, line)
+                    revealed = self.regex.sub(self._reveal_replace_match, line)
                     out_raw += revealed
         return out_raw
 
@@ -291,7 +292,7 @@ class Revealer(object):
         kwargs are passed to ref compile function
         returns string with compile content
         """
-        compiled = re.sub(REF_TOKEN_TAG_PATTERN, self._compile_replace_match_with_args(**kwargs), data)
+        compiled = self.regex.sub(self._compile_replace_match_with_args(**kwargs), data)
         return compiled
 
     def reveal_raw(self, data):
@@ -299,7 +300,7 @@ class Revealer(object):
         read data and reveal content (per line search and replace) with refs
         returns string with revealed content
         """
-        revealed = re.sub(REF_TOKEN_TAG_PATTERN, self._reveal_replace_match, data)
+        revealed = self.regex.sub(self._reveal_replace_match, data)
         return revealed
 
     def reveal_obj(self, obj):
@@ -310,7 +311,7 @@ class Revealer(object):
         elif isinstance(obj, list):
             obj = [self.reveal_obj(item) for item in obj]
         elif isinstance(obj, str):
-            obj = re.sub(REF_TOKEN_TAG_PATTERN, self._reveal_replace_match, obj)
+            obj = self.regex.sub(self._reveal_replace_match, obj)
         return obj
 
     def compile_obj(self, obj, **kwargs):
@@ -324,7 +325,7 @@ class Revealer(object):
         elif isinstance(obj, list):
             obj = [self.compile_obj(item, **kwargs) for item in obj]
         elif isinstance(obj, str):
-            obj = re.sub(REF_TOKEN_TAG_PATTERN, self._compile_replace_match_with_args(**kwargs), obj)
+            obj = self.regex.sub(self._compile_replace_match_with_args(**kwargs), obj)
         return obj
 
 
