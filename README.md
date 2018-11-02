@@ -33,7 +33,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 * Use the Inventory as the single source of truth to tie together deployments, resources and documentation. [based on reclass](https://github.com/salt-formulas/reclass)
 * Use [Jsonnet](https://jsonnet.org/) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
 * Use [Jinja2](http://jinja.pocoo.org/) to create text based templates for scripts and documentation;
-* Manage secrets by defining who can see them, without compromising collaboration with other users.
+* Manage secrets with GPG or gCloud KMS and define who can access them, without compromising collaboration with other users.
 * Create dynamically generated documentation about a single deployment (i.e. ad-hoc instructions) or all deployments at once (i.e. global state of deployments)
 
 
@@ -170,6 +170,7 @@ parameters:
       root:
         # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
         password: ?{gpg:mysql/root/password|randomstr|base64}
+        # password: ?{gkms:mysql/root/password|randomstr|base64}
 
   kapitan:
     compile:
@@ -337,7 +338,7 @@ To enforce the kapitan version used for compilation (for consistency and safety)
 $ cat .kapitan
 
 ...
-version: 0.17.0
+version: 0.19.0
 ```
 
 # Modes of operation
@@ -391,21 +392,22 @@ It's up to you to decide what the output is.
 
 ### kapitan secrets
 
-Manages your secrets with GPG (with plans to support GCP/AWS KMS and Vault).
+Manages your secrets with GPG or Google Cloud KMS (beta), with plans to also support AWS KMS and Vault.
 
 The usual flow of creating and using an encrypted secret with kapitan is:
 
-- Define your GPG recipients (keys who can encrypt and decrypt the secret), see [common.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/common.yml), `parameters.kapitan.secrets`. You can also define these per target.
+- Define your GPG recipients or KMS key, see [common.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/common.yml), `parameters.kapitan.secrets`. You can also define these per target.
 
 - Create your secret:
 
   - Manually:
     ```
-    kapitan secrets --write gpg:mysql/root/password -t minikube-mysql -f <password file>
-    OR
-    echo -n '<password>' | kapitan secrets --write gpg:mysql/root/password -t minikube-mysql -f -
+    GPG: kapitan secrets --write gpg:mysql/root/password -t minikube-mysql -f <password file>
+    gKMS: kapitan secrets --write gkms:mysql/root/password -t minikube-mysql -f <password file>
+    OR use stdin:
+    echo -n '<password>' | kapitan secrets --write [gpg/gkms]:mysql/root/password -t minikube-mysql -f -
     ```
-    This will encrypt and save your password into `secrets/mysql/root/password`, see `examples/kubernetes`.
+    This will inherit the secrets configuration from minikube-mysql target, encrypt and save your password into `secrets/mysql/root/password`, see `examples/kubernetes`.
 
   - Automatically:<br>
     See [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml). When referencing your secret, you can use the following functions to automatically generate, encrypt and save your secret:
@@ -585,7 +587,7 @@ With Kapitan, we worked to de-compose several problems that most of the other so
 
 3) ***Hierarchical inventory***: This is the feature that sets us apart from other solutions. We use the inventory (based on [reclass](https://github.com/salt-formulas/reclass)) to define variables and properties that can be reused across different projects/deployments. This allows us to limit repetition, but also to define a nicer interface with developers (or CI tools) which will only need to understand YAML to operate changes.
 
-4) ***Secrets***: We manage most of our secrets with kapitan using the GPG integration. Keys can be setup per class, per target or shared so you can easily and flexibly manage access per environment. They can also be dynamically generated on compilation, if you don't feel like generating random passwords or RSA private keys, and they can be referenced in the inventory like any other variables. The secrets backend can be expanded to support other providers such as KMS (GCP/AWS) or Vault, in addition to GPG.
+4) ***Secrets***: We manage most of our secrets with kapitan using the GPG and Google Cloud KMS integrations. Keys can be setup per class, per target or shared so you can easily and flexibly manage access per environment. They can also be dynamically generated on compilation, if you don't feel like generating random passwords or RSA private keys, and they can be referenced in the inventory like any other variables. We have plans to support other providers such as AWS KMS and Vault, in addition to GPG and Google Cloud KMS.
 
 5) ***Canned scripts***: We treat scripts as text templates, so that we can craft pre-canned scripts for the specific target we are working on. This can be used for instance to define scripts that setup clusters, contexts or allow to run kubectl with all the correct settings. Most other solutions require you to define contexts and call kubectl with the correct settings. We take care of that for you. Less ambiguity, less mistakes.
 

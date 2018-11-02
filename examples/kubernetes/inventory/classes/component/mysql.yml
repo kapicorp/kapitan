@@ -23,3 +23,4 @@ parameters:
       root:
         # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
         password: ?{gpg:mysql/root/password|randomstr|base64}
+        # password: ?{gkms:mysql/root/password|randomstr|base64}

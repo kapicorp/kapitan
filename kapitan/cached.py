@@ -19,4 +19,5 @@
 inv = {}
 inv_cache = {}
 gpg_obj = None
+gkms_obj = None
 dot_kapitan = {}
