@@ -90,7 +90,7 @@ class GPGSecret(Ref):
                 recipients = target_inv['parameters']['kapitan']['secrets']['gpg']['recipients']
             except KeyError:
                 # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-                logger.info("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
+                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
                     "please move them to parameters.kapitan.secrets.gpg.recipients")
                 recipients = target_inv['parameters']['kapitan']['secrets']['recipients']
             return cls(data, recipients, **ref_params.kwargs)

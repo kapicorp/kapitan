@@ -314,7 +314,7 @@ def secret_write(args, ref_controller):
                 recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gpg']['recipients']
             except KeyError:
                 # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-                logger.info("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
+                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
                     "please move them to parameters.kapitan.secrets.gpg.recipients")
                 recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
         secret_obj = GPGSecret(data, recipients, encode_base64=args.base64)
@@ -349,7 +349,7 @@ def secret_update(args, ref_controller):
             recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gpg']['recipients']
         except KeyError:
             # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-            logger.info("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
+            logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
                 "please move them to parameters.kapitan.secrets.gpg.recipients")
             recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
         type_name, token_path = token_name.split(":")
@@ -394,7 +394,7 @@ def secret_update_validate(args, ref_controller):
                 recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['gpg']['recipients']
             except KeyError:
                 # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-                logger.info("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
+                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
                     "please move them to parameters.kapitan.secrets.gpg.recipients")
                 recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['recipients']
             for token_path in token_paths:
