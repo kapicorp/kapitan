@@ -197,10 +197,10 @@ class Revealer(object):
 
     def _reveal_file(self, filename):
         """
-        detects filename by extension (.yml, .json or otherwise raw)
+        detects filename by extension (.yml/.yaml, .json or otherwise raw)
         reveals secrets in content
         """
-        if filename.endswith('.yml'):
+        if filename.endswith('.yml') or filename.endswith('.yaml'):
             logger.debug("Revealer: revealing yml file: %s", filename)
             with open(filename) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
@@ -229,7 +229,7 @@ class Revealer(object):
             full_path = os.path.join(dirname, f)
             if not os.path.isfile(full_path):
                 pass
-            if f.endswith('.yml'):
+            if f.endswith('.yml') or f.endswith('.yaml'):
                 out, _ = self._reveal_file(full_path)
                 out_yaml += out
             elif f.endswith('.json'):
