@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"secrets module"
+"gpg secrets module"
 
 import base64
 from collections import defaultdict
@@ -86,7 +86,13 @@ class GPGSecret(Ref):
             if target_inv is None:
                 raise ValueError('target_inv not set')
 
-            recipients = target_inv['parameters']['kapitan']['secrets']['recipients']
+            try:
+                recipients = target_inv['parameters']['kapitan']['secrets']['gpg']['recipients']
+            except KeyError:
+                # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
+                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
+                    "please move them to parameters.kapitan.secrets.gpg.recipients")
+                recipients = target_inv['parameters']['kapitan']['secrets']['recipients']
             return cls(data, recipients, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create GPGSecret: target_name missing")
@@ -158,7 +164,6 @@ class GPGBackend(RefBackend):
         "init GPGBackend ref backend type"
         super().__init__(path, ref_type)
         self.type_name = 'gpg'
-        self.gpg = gpg_obj()
 
 
 def search_target_token_paths(target_secrets_path, targets):

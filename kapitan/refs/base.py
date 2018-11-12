@@ -361,6 +361,9 @@ class RefController(object):
             elif type_name == 'gpg':
                 from kapitan.refs.secrets.gpg import GPGBackend
                 self.register_backend(GPGBackend(self.path))
+            elif type_name == 'gkms':
+                from kapitan.refs.secrets.gkms import GoogleKMSBackend
+                self.register_backend(GoogleKMSBackend(self.path))
             else:
                 raise RefBackendError('no backend for ref type: {}'.format(type_name))
         return self.backends[type_name]

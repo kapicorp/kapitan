@@ -35,6 +35,7 @@ from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.gpg import GPGBackend, GPGSecret
 from kapitan.refs.secrets.gpg import lookup_fingerprints, search_target_token_paths
+from kapitan.refs.secrets.gkms import GoogleKMSSecret
 
 from kapitan.errors import KapitanError
 
@@ -171,10 +172,13 @@ def main():
     secrets_parser.add_argument('--inventory-path',
                                 default=from_dot_kapitan('secrets', 'inventory-path', './inventory'),
                                 help='set inventory path, default is "./inventory"')
-    secrets_parser.add_argument('--recipients', '-R', help='set recipients',
+    secrets_parser.add_argument('--recipients', '-R', help='set GPG recipients',
                                 type=str, nargs='+',
                                 default=from_dot_kapitan('secrets', 'recipients', []),
                                 metavar='RECIPIENT')
+    secrets_parser.add_argument('--key', '-K', help='set KMS key',
+                                default=from_dot_kapitan('secrets', 'key', ''),
+                                metavar='KEY')
     secrets_parser.add_argument('--secrets-path', help='set secrets path, default is "./secrets"',
                                 default=from_dot_kapitan('secrets', 'secrets-path', './secrets'))
     secrets_parser.add_argument('--verbose', '-v',
@@ -301,16 +305,32 @@ def secret_write(args, ref_controller):
         with open(file_name) as fp:
             data = fp.read()
 
-    # deal with gpg type
     if token_name.startswith("gpg:"):
         type_name, token_path = token_name.split(":")
         recipients = [dict((("name", name),)) for name in args.recipients]
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
-            # TODO move into kapitan:secrets:gpg:recipients key
-            recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
+            try:
+                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gpg']['recipients']
+            except KeyError:
+                # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
+                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
+                    "please move them to parameters.kapitan.secrets.gpg.recipients")
+                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
         secret_obj = GPGSecret(data, recipients, encode_base64=args.base64)
         tag = '?{{gpg:{}}}'.format(token_path)
+        ref_controller[tag] = secret_obj
+
+    elif token_name.startswith("gkms:"):
+        type_name, token_path = token_name.split(":")
+        key = args.key
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            key = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gkms']['key']
+        if not key:
+            raise KapitanError("No KMS key specified. Use --key or specify in parameters.kapitan.secrets.gkms.key and use --target")
+        secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
+        tag = '?{{gkms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
     else:
         fatal_error("Invalid token: {}".format(token_name))
@@ -325,13 +345,19 @@ def secret_update(args, ref_controller):
         recipients = [dict([("name", name), ]) for name in args.recipients]
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
-        # TODO move into kapitan:secrets:gpg:recipients key
-        recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
+        try:
+            recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gpg']['recipients']
+        except KeyError:
+            # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
+            logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
+                "please move them to parameters.kapitan.secrets.gpg.recipients")
+            recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
         type_name, token_path = token_name.split(":")
         tag = '?{{gpg:{}}}'.format(token_path)
         secret_obj = ref_controller[tag]
         secret_obj.update_recipients(recipients)
         ref_controller[tag] = secret_obj
+    # TODO: Implement --update for KMS
     else:
         fatal_error("Invalid token: {}".format(token_name))
 
@@ -361,9 +387,16 @@ def secret_update_validate(args, ref_controller):
     target_token_paths = search_target_token_paths(secrets_path, targets)
     ret_code = 0
     ref_controller.register_backend(GPGBackend(secrets_path))  # override gpg backend for new secrets_path
+    # TODO: Implement --update-targets and --validate-targets for KMS
     for target_name, token_paths in target_token_paths.items():
         try:
-            recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['recipients']
+            try:
+                recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['gpg']['recipients']
+            except KeyError:
+                # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
+                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
+                    "please move them to parameters.kapitan.secrets.gpg.recipients")
+                recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['recipients']
             for token_path in token_paths:
                 secret_obj = ref_controller.backends['gpg'][token_path]
                 target_fingerprints = set(lookup_fingerprints(recipients))
