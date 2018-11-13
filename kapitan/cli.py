@@ -345,13 +345,13 @@ def secret_update(args, ref_controller):
         recipients = [dict([("name", name), ]) for name in args.recipients]
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
-        try:
-            recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gpg']['recipients']
-        except KeyError:
-            # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-            logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                "please move them to parameters.kapitan.secrets.gpg.recipients")
-            recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
+            try:
+                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gpg']['recipients']
+            except KeyError:
+                # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
+                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
+                    "please move them to parameters.kapitan.secrets.gpg.recipients")
+                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
         type_name, token_path = token_name.split(":")
         tag = '?{{gpg:{}}}'.format(token_path)
         secret_obj = ref_controller[tag]
