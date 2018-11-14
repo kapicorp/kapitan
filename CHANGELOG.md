@@ -1,3 +1,8 @@
+## 0.20.0-rc.0:
+- gCloud KMS secrets backend (#159)
+- Fix re.sub hanging (#158)
+- Support .yaml in refs (#160)
+
 ## 0.19.0:
 - Fix cli secrets (#154)
 - Add python_requires (#149) - thanks @Code0x58
