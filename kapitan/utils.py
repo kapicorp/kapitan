@@ -31,7 +31,7 @@ import _jsonnet as jsonnet
 import yaml
 import math
 from collections import Counter
-from distutils.version import StrictVersion
+from pkg_resources import parse_version
 
 from kapitan.version import VERSION
 from kapitan.errors import CompileError
@@ -378,7 +378,7 @@ def check_version():
     kapitan_config = dot_kapitan_config()
     try:
         # If .kapitan version is bigger than current version
-        if kapitan_config and kapitan_config["version"] and StrictVersion(kapitan_config["version"]) > StrictVersion(VERSION):
+        if kapitan_config and kapitan_config["version"] and parse_version(kapitan_config["version"]) > parse_version(VERSION):
             print("{}Current version: {}".format(termcolor.WARNING, VERSION))
             print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
             print("Upgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
@@ -388,7 +388,7 @@ def check_version():
             print("If you know what you're doing, you can skip this check by adding '--ignore-version-check'.")
             sys.exit(1)
         # If .kapitan version is smaller than current version
-        elif kapitan_config and kapitan_config["version"] and StrictVersion(kapitan_config["version"]) < StrictVersion(VERSION):
+        elif kapitan_config and kapitan_config["version"] and parse_version(kapitan_config["version"]) < parse_version(VERSION):
             print("{}Current version: {}".format(termcolor.WARNING, VERSION))
             print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
             print("Option 1: You can update the version in .kapitan to '{}' and recompile\n".format(VERSION))
