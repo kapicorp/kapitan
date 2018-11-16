@@ -24,6 +24,8 @@ import time
 from kapitan.refs.base import Ref, RefBackend, RefError
 from kapitan import cached
 
+from kapitan.errors import KapitanError
+
 logger = logging.getLogger(__name__)
 
 
@@ -86,12 +88,15 @@ class GPGSecret(Ref):
             if target_inv is None:
                 raise ValueError('target_inv not set')
 
+            if 'secrets' not in target_inv['parameters']['kapitan']:
+                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
+
             try:
                 recipients = target_inv['parameters']['kapitan']['secrets']['gpg']['recipients']
             except KeyError:
                 # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
                 logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                    "please move them to parameters.kapitan.secrets.gpg.recipients")
+                    "please use parameters.kapitan.secrets.gpg.recipients")
                 recipients = target_inv['parameters']['kapitan']['secrets']['recipients']
             return cls(data, recipients, **ref_params.kwargs)
         except KeyError:
