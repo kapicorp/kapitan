@@ -1,3 +1,7 @@
+## 0.20.0-rc.1:
+- Better kapitan version checking (#163)
+- Secrets fixes (#165)
+
 ## 0.20.0-rc.0:
 - gCloud KMS secrets backend (#159)
 - Fix re.sub hanging (#158)
