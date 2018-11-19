@@ -17,7 +17,7 @@
 "Project description variables"
 
 PROJECT_NAME = 'kapitan'
-VERSION = '0.20.0-rc.0'
+VERSION = '0.20.0-rc.1'
 DESCRIPTION = ('Generic templated configuration management for Kubernetes, '
                'Terraform and other things')
 AUTHOR = 'Ricardo Amaro'
