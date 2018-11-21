@@ -93,6 +93,20 @@ class GoogleKMSSecret(Ref):
         ref_data = base64.b64decode(self.data)
         return self._decrypt(ref_data)
 
+    def update_key(self, key):
+        """
+        re-encrypts data with new key, respects original encoding
+        returns True if key is different and secret is updated, False otherwise
+        """
+        if key != self.key:
+            data_dec = self.reveal()
+            encode_base64 = self.encoding == 'base64'
+            if encode_base64:
+                data_dec = base64.b64decode(data_dec).decode()
+            self._encrypt(data_dec, key, encode_base64)
+            return True
+        return False
+
     def _encrypt(self, data, key, encode_base64):
         """
         encrypts data

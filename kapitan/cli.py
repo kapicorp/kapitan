@@ -33,7 +33,7 @@ from kapitan.resources import search_imports, resource_callbacks, inventory_recl
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
 
 from kapitan.refs.base import RefController, Revealer, search_target_token_paths
-from kapitan.refs.secrets.gpg import GPGBackend, GPGSecret
+from kapitan.refs.secrets.gpg import GPGSecret
 from kapitan.refs.secrets.gpg import lookup_fingerprints
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
 
@@ -346,7 +346,7 @@ def secret_write(args, ref_controller):
 
 
 def secret_update(args, ref_controller):
-    "Update secret recipients"
+    "Update secret gpg recipients/gkms key"
     # TODO --update *might* mean something else for other types
     token_name = args.update
     if token_name.startswith("gpg:"):
@@ -372,7 +372,23 @@ def secret_update(args, ref_controller):
         secret_obj = ref_controller[tag]
         secret_obj.update_recipients(recipients)
         ref_controller[tag] = secret_obj
-    # TODO: Implement --update for KMS
+
+    elif token_name.startswith("gkms:"):
+        key = args.key
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            if 'secrets' not in inv['nodes'][args.target_name]['parameters']['kapitan']:
+                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+
+            key = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gkms']['key']
+        if not key:
+            raise KapitanError("No KMS key specified. Use --key or specify in parameters.kapitan.secrets.gkms.key and use --target")
+        type_name, token_path = token_name.split(":")
+        tag = '?{{gkms:{}}}'.format(token_path)
+        secret_obj = ref_controller[tag]
+        secret_obj.update_key(key)
+        ref_controller[tag] = secret_obj
+
     else:
         fatal_error("Invalid token: {}. Try using gpg/gkms:{}".format(token_name, token_name))
 
@@ -394,15 +410,14 @@ def secret_reveal(args, ref_controller):
 
 def secret_update_validate(args, ref_controller):
     "Validate and/or update target secrets"
-    # update recipients for all secrets in secrets_path
+    # update gpg recipients/gkms key for all secrets in secrets_path
     # use --secrets-path to set scanning path
     inv = inventory_reclass(args.inventory_path)
     targets = set(inv['nodes'].keys())
     secrets_path = os.path.abspath(args.secrets_path)
     target_token_paths = search_target_token_paths(secrets_path, targets)
     ret_code = 0
-    ref_controller.register_backend(GPGBackend(secrets_path))  # override gpg backend for new secrets_path
-    # TODO: Implement --update-targets and --validate-targets for KMS
+
     for target_name, token_paths in target_token_paths.items():
         if 'secrets' not in inv['nodes'][target_name]['parameters']['kapitan']:
             raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
@@ -415,19 +430,46 @@ def secret_update_validate(args, ref_controller):
                 logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
                     "please use parameters.kapitan.secrets.gpg.recipients")
                 recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['recipients']
-            for token_path in token_paths:
-                secret_obj = ref_controller.backends['gpg'][token_path]
+        except KeyError:
+            recipients = None
+
+        try:
+            key = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['gkms']['key']
+        except KeyError:
+            key = None
+
+        for token_path in token_paths:
+            if token_path.startswith("?{gpg:"):
+                if not recipients:
+                    logger.debug("secret_update_validate: target: %s has no inventory gpg recipients, skipping %s", target_name, token_path)
+                    continue
+                secret_obj = ref_controller[token_path]
                 target_fingerprints = set(lookup_fingerprints(recipients))
                 secret_fingerprints = set(lookup_fingerprints(secret_obj.recipients))
                 if target_fingerprints != secret_fingerprints:
                     if args.validate_targets:
-                        logger.info("%s recipient mismatch", token_path)
+                        logger.info("%s recipients mismatch", token_path)
                         ret_code = 1
                     else:
                         new_recipients = [dict([("fingerprint", f), ]) for f in target_fingerprints]
                         secret_obj.update_recipients(new_recipients)
-                        ref_controller.backends['gpg'][token_path] = secret_obj
-        except KeyError:
-            logger.debug("secret_gpg_update_target: target: %s has no inventory recipients, skipping",
-                         target_name)
+                        ref_controller[token_path] = secret_obj
+
+            elif token_path.startswith("?{gkms:"):
+                if not key:
+                    logger.debug("secret_update_validate: target: %s has no inventory gkms key, skipping %s", target_name, token_path)
+                    continue
+                secret_obj = ref_controller[token_path]
+                if key != secret_obj.key:
+                    if args.validate_targets:
+                        logger.info("%s key mismatch", token_path)
+                        ret_code = 1
+                    else:
+                        secret_obj.update_key(key)
+                        ref_controller[token_path] = secret_obj
+
+            else:
+                logger.info("Invalid secret %s, could not get type, skipping", token_path)
+                ret_code = 1
+
     sys.exit(ret_code)
