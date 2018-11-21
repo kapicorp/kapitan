@@ -32,9 +32,9 @@ from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
 
-from kapitan.refs.base import RefController, Revealer
+from kapitan.refs.base import RefController, Revealer, search_target_token_paths
 from kapitan.refs.secrets.gpg import GPGBackend, GPGSecret
-from kapitan.refs.secrets.gpg import lookup_fingerprints, search_target_token_paths
+from kapitan.refs.secrets.gpg import lookup_fingerprints
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
 
 from kapitan.errors import KapitanError
