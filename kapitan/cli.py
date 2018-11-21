@@ -320,6 +320,9 @@ def secret_write(args, ref_controller):
                 logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
                     "please use parameters.kapitan.secrets.gpg.recipients")
                 recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
+        if not recipients:
+            raise KapitanError("No GPG recipients specified. Use --recipients or specify in " +
+                               "parameters.kapitan.secrets.gpg.recipients and use --target")
         secret_obj = GPGSecret(data, recipients, encode_base64=args.base64)
         tag = '?{{gpg:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
@@ -339,7 +342,7 @@ def secret_write(args, ref_controller):
         tag = '?{{gkms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
     else:
-        fatal_error("Invalid token: {}".format(token_name))
+        fatal_error("Invalid token: {}. Try using gpg/gkms:{}".format(token_name, token_name))
 
 
 def secret_update(args, ref_controller):
@@ -361,6 +364,9 @@ def secret_update(args, ref_controller):
                 logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
                     "please use parameters.kapitan.secrets.gpg.recipients")
                 recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
+        if not recipients:
+            raise KapitanError("No GPG recipients specified. Use --recipients or specify in " +
+                               "parameters.kapitan.secrets.gpg.recipients and use --target")
         type_name, token_path = token_name.split(":")
         tag = '?{{gpg:{}}}'.format(token_path)
         secret_obj = ref_controller[tag]
@@ -368,7 +374,7 @@ def secret_update(args, ref_controller):
         ref_controller[tag] = secret_obj
     # TODO: Implement --update for KMS
     else:
-        fatal_error("Invalid token: {}".format(token_name))
+        fatal_error("Invalid token: {}. Try using gpg/gkms:{}".format(token_name, token_name))
 
 
 def secret_reveal(args, ref_controller):
