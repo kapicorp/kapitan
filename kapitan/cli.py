@@ -321,7 +321,7 @@ def secret_write(args, ref_controller):
                     "please use parameters.kapitan.secrets.gpg.recipients")
                 recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
         if not recipients:
-            raise KapitanError("No GPG recipients specified. Use --recipients or specify in " +
+            raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
                                "parameters.kapitan.secrets.gpg.recipients and use --target")
         secret_obj = GPGSecret(data, recipients, encode_base64=args.base64)
         tag = '?{{gpg:{}}}'.format(token_path)
@@ -337,12 +337,12 @@ def secret_write(args, ref_controller):
 
             key = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gkms']['key']
         if not key:
-            raise KapitanError("No KMS key specified. Use --key or specify in parameters.kapitan.secrets.gkms.key and use --target")
+            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target")
         secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
         tag = '?{{gkms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
     else:
-        fatal_error("Invalid token: {}. Try using gpg/gkms:{}".format(token_name, token_name))
+        fatal_error("Invalid token: {name}. Try using gpg/gkms:{name}".format(name=token_name))
 
 
 def secret_update(args, ref_controller):
@@ -365,7 +365,7 @@ def secret_update(args, ref_controller):
                     "please use parameters.kapitan.secrets.gpg.recipients")
                 recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
         if not recipients:
-            raise KapitanError("No GPG recipients specified. Use --recipients or specify in " +
+            raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
                                "parameters.kapitan.secrets.gpg.recipients and use --target")
         type_name, token_path = token_name.split(":")
         tag = '?{{gpg:{}}}'.format(token_path)
@@ -382,7 +382,7 @@ def secret_update(args, ref_controller):
 
             key = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gkms']['key']
         if not key:
-            raise KapitanError("No KMS key specified. Use --key or specify in parameters.kapitan.secrets.gkms.key and use --target")
+            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target")
         type_name, token_path = token_name.split(":")
         tag = '?{{gkms:{}}}'.format(token_path)
         secret_obj = ref_controller[tag]
@@ -390,7 +390,7 @@ def secret_update(args, ref_controller):
         ref_controller[tag] = secret_obj
 
     else:
-        fatal_error("Invalid token: {}. Try using gpg/gkms:{}".format(token_name, token_name))
+        fatal_error("Invalid token: {name}. Try using gpg/gkms:{name}".format(name=token_name))
 
 
 def secret_reveal(args, ref_controller):
@@ -448,7 +448,13 @@ def secret_update_validate(args, ref_controller):
                 secret_fingerprints = set(lookup_fingerprints(secret_obj.recipients))
                 if target_fingerprints != secret_fingerprints:
                     if args.validate_targets:
-                        logger.info("%s recipients mismatch", token_path)
+                        logger.info("%s recipient mismatch", token_path)
+                        to_remove = secret_fingerprints.difference(target_fingerprints)
+                        to_add = target_fingerprints.difference(secret_fingerprints)
+                        if to_remove:
+                            logger.info("%s needs removal", to_remove)
+                        if to_add:
+                            logger.info("%s needs addition", to_add)
                         ret_code = 1
                     else:
                         new_recipients = [dict([("fingerprint", f), ]) for f in target_fingerprints]
