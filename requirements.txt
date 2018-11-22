@@ -6,9 +6,9 @@ Jinja2>=2.10
 jsonschema>=2.6.0
 python-gnupg==0.4.3
 six>=1.11.0
-cryptography==2.3
+cryptography>=2.4.2
 google-api-python-client==1.7.4
-requests>=2.20.0
+requests>=2.20.1
 
 # Reclass dependencies
 pyparsing
