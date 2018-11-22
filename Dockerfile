@@ -1,14 +1,16 @@
-FROM python:3.6-alpine
+FROM python:3.7-alpine
 
-RUN apk add --no-cache git g++ make libstdc++ gnupg musl-dev yaml-dev libffi-dev openssl-dev && \
-    mkdir /kapitan
-
+RUN mkdir /kapitan
 WORKDIR /kapitan
 COPY kapitan/ kapitan/
 COPY requirements.txt ./
 
-RUN pip install --upgrade --no-cache-dir pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN apk add --no-cache --virtual build-dependencies g++ make musl-dev && \
+    apk add --no-cache libstdc++ gnupg yaml-dev libffi-dev openssl-dev && \
+    pip install --upgrade --no-cache-dir pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    apk del build-dependencies && \
+    rm -r /root/.cache
 
 ENV PYTHONPATH="/kapitan/"
 ENV SEARCHPATH="/src"
