@@ -125,6 +125,7 @@ class GPGSecret(Ref):
             if encode_base64:
                 data_dec = base64.b64decode(data_dec).decode()
             self._encrypt(data_dec, fingerprints, encode_base64)
+            self.data = base64.b64encode(self.data).decode()
             return True
         return False
 
