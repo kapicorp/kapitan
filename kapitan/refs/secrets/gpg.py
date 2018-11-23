@@ -119,15 +119,17 @@ class GPGSecret(Ref):
         returns True if recipients are different and secret is updated, False otherwise
         """
         fingerprints = lookup_fingerprints(recipients)
-        if set(fingerprints) != set([r['fingerprint'] for r in self.recipients]):
-            data_dec = self.reveal()
-            encode_base64 = self.encoding == 'base64'
-            if encode_base64:
-                data_dec = base64.b64decode(data_dec).decode()
-            self._encrypt(data_dec, fingerprints, encode_base64)
-            self.data = base64.b64encode(self.data).decode()
-            return True
-        return False
+        if set(fingerprints) == set([r['fingerprint'] for r in self.recipients]):
+            return False
+
+        data_dec = self.reveal()
+        encode_base64 = self.encoding == 'base64'
+        if encode_base64:
+            data_dec = base64.b64decode(data_dec).decode()
+        self._encrypt(data_dec, fingerprints, encode_base64)
+        self.data = base64.b64encode(self.data).decode()
+        return True
+
 
     def _encrypt(self, data, fingerprints, encode_base64):
         """

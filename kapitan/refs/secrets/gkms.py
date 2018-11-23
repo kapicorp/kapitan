@@ -98,15 +98,16 @@ class GoogleKMSSecret(Ref):
         re-encrypts data with new key, respects original encoding
         returns True if key is different and secret is updated, False otherwise
         """
-        if key != self.key:
-            data_dec = self.reveal()
-            encode_base64 = self.encoding == 'base64'
-            if encode_base64:
-                data_dec = base64.b64decode(data_dec).decode()
-            self._encrypt(data_dec, key, encode_base64)
-            self.data = base64.b64encode(self.data).decode()
-            return True
-        return False
+        if key == self.key:
+            return False
+
+        data_dec = self.reveal()
+        encode_base64 = self.encoding == 'base64'
+        if encode_base64:
+            data_dec = base64.b64decode(data_dec).decode()
+        self._encrypt(data_dec, key, encode_base64)
+        self.data = base64.b64encode(self.data).decode()
+        return True
 
     def _encrypt(self, data, key, encode_base64):
         """
