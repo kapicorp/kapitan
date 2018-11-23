@@ -15,10 +15,8 @@
 "gpg secrets module"
 
 import base64
-from collections import defaultdict
 import gnupg
 import logging
-import os
 import time
 
 from kapitan.refs.base import Ref, RefBackend, RefError
@@ -121,14 +119,17 @@ class GPGSecret(Ref):
         returns True if recipients are different and secret is updated, False otherwise
         """
         fingerprints = lookup_fingerprints(recipients)
-        if set(fingerprints) != set([r['fingerprint'] for r in self.recipients]):
-            data_dec = self.reveal()
-            encode_base64 = self.encoding == 'base64'
-            if encode_base64:
-                data_dec = base64.b64decode(data_dec).decode()
-            self._encrypt(data_dec, fingerprints, encode_base64)
-            return True
-        return False
+        if set(fingerprints) == set([r['fingerprint'] for r in self.recipients]):
+            return False
+
+        data_dec = self.reveal()
+        encode_base64 = self.encoding == 'base64'
+        if encode_base64:
+            data_dec = base64.b64decode(data_dec).decode()
+        self._encrypt(data_dec, fingerprints, encode_base64)
+        self.data = base64.b64encode(self.data).decode()
+        return True
+
 
     def _encrypt(self, data, fingerprints, encode_base64):
         """
@@ -169,23 +170,6 @@ class GPGBackend(RefBackend):
         "init GPGBackend ref backend type"
         super().__init__(path, ref_type)
         self.type_name = 'gpg'
-
-
-def search_target_token_paths(target_secrets_path, targets):
-    """
-    returns dict of target and their secret token paths in target_secrets_path
-    targets is a set of target names used to lookup targets in target_secrets_path
-    """
-    target_files = defaultdict(list)
-    for root, _, files in os.walk(target_secrets_path):
-        for f in files:
-            full_path = os.path.join(root, f)
-            full_path = full_path[len(target_secrets_path)+1:]
-            target_name = full_path.split("/")[0]
-            if target_name in targets:
-                logger.debug('search_target_token_paths: found %s', full_path)
-                target_files[target_name].append(full_path)
-    return target_files
 
 
 def lookup_fingerprints(recipients):
