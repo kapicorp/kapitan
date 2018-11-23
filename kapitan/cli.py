@@ -310,16 +310,17 @@ def secret_write(args, ref_controller):
         recipients = [dict((("name", name),)) for name in args.recipients]
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
-            if 'secrets' not in inv['nodes'][args.target_name]['parameters']['kapitan']:
+            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
+            if 'secrets' not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
             try:
-                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gpg']['recipients']
+                recipients = kap_inv_params['secrets']['gpg']['recipients']
             except KeyError:
                 # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
                 logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
                     "please use parameters.kapitan.secrets.gpg.recipients")
-                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
+                recipients = kap_inv_params['secrets']['recipients']
         if not recipients:
             raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
                                "parameters.kapitan.secrets.gpg.recipients and use --target")
@@ -332,10 +333,11 @@ def secret_write(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
-            if 'secrets' not in inv['nodes'][args.target_name]['parameters']['kapitan']:
+            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
+            if 'secrets' not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            key = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gkms']['key']
+            key = kap_inv_params['secrets']['gkms']['key']
         if not key:
             raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target")
         secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
@@ -354,16 +356,17 @@ def secret_update(args, ref_controller):
         recipients = [dict([("name", name), ]) for name in args.recipients]
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
-            if 'secrets' not in inv['nodes'][args.target_name]['parameters']['kapitan']:
+            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
+            if 'secrets' not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
             try:
-                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gpg']['recipients']
+                recipients = kap_inv_params['secrets']['gpg']['recipients']
             except KeyError:
                 # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
                 logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
                     "please use parameters.kapitan.secrets.gpg.recipients")
-                recipients = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['recipients']
+                recipients = kap_inv_params['secrets']['recipients']
         if not recipients:
             raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
                                "parameters.kapitan.secrets.gpg.recipients and use --target")
@@ -377,10 +380,11 @@ def secret_update(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
-            if 'secrets' not in inv['nodes'][args.target_name]['parameters']['kapitan']:
+            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
+            if 'secrets' not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            key = inv['nodes'][args.target_name]['parameters']['kapitan']['secrets']['gkms']['key']
+            key = kap_inv_params['secrets']['gkms']['key']
         if not key:
             raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target")
         type_name, token_path = token_name.split(":")
@@ -419,22 +423,23 @@ def secret_update_validate(args, ref_controller):
     ret_code = 0
 
     for target_name, token_paths in target_token_paths.items():
-        if 'secrets' not in inv['nodes'][target_name]['parameters']['kapitan']:
+        kap_inv_params = inv['nodes'][target_name]['parameters']['kapitan']
+        if 'secrets' not in kap_inv_params:
             raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
 
         try:
             try:
-                recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['gpg']['recipients']
+                recipients = kap_inv_params['secrets']['gpg']['recipients']
             except KeyError:
                 # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
                 logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
                     "please use parameters.kapitan.secrets.gpg.recipients")
-                recipients = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['recipients']
+                recipients = kap_inv_params['secrets']['recipients']
         except KeyError:
             recipients = None
 
         try:
-            key = inv['nodes'][target_name]['parameters']['kapitan']['secrets']['gkms']['key']
+            key = kap_inv_params['secrets']['gkms']['key']
         except KeyError:
             key = None
 
