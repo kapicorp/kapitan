@@ -1,3 +1,7 @@
+## 0.20.0-rc.2:
+- Travis, Docker and requirements updates (#166)
+- gkms update and validate secrets (#167)
+
 ## 0.20.0-rc.1:
 - Better kapitan version checking (#163)
 - Secrets fixes (#165)
