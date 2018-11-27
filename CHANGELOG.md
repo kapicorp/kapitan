@@ -1,3 +1,13 @@
+## 0.20.0
+- Fix re.sub hanging (#158)
+- gCloud KMS secrets backend (#159)
+- Support .yaml in refs (#160)
+- Better kapitan version checking (#163)
+- Secrets fixes (#165)
+- Travis, Docker and requirements updates (#166)
+- gkms update and validate secrets (#167)
+- Added promtool to CI image (#168)
+
 ## 0.20.0-rc.2:
 - Travis, Docker and requirements updates (#166)
 - gkms update and validate secrets (#167)
