@@ -1,5 +1,9 @@
 FROM sparkprime/jsonnet AS jsonnet
 
+FROM golang:1.11 AS promtool
+
+RUN go get -u github.com/prometheus/prometheus/cmd/promtool
+
 FROM google/cloud-sdk:alpine
 
 RUN apk add --no-cache python3-dev git g++ make libstdc++ gnupg musl-dev util-linux openssl openssl-dev libffi-dev coreutils yaml-dev jq ncurses && \
@@ -21,3 +25,4 @@ RUN pip3 install --upgrade --no-cache-dir git+https://github.com/deepmind/kapita
 RUN gcloud components install kubectl
 
 COPY --from=jsonnet /usr/local/bin/jsonnet /usr/local/bin/
+COPY --from=promtool /go/bin/promtool /usr/local/bin/
