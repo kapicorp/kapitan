@@ -101,7 +101,7 @@ Compiled minikube-es
 
 ### Components
 
-A component is an aplication that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (StatefulSet, Services, ConfigMaps) defined in jsonnet.
+A component is an application that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (StatefulSet, Services, ConfigMaps) defined in jsonnet.
 It may also include scripts, config files and dynamically generated documentation defined using Jinja templates.
 
 ### Inventory
