@@ -390,6 +390,17 @@ local kap = import "lib/kapitan.libjsonnet";
 
 It's up to you to decide what the output is.
 
+#### Jinja2 custom filters
+
+We support the following filters for use in Jinja2 templates:
+
+```
+sha256 - SHA256 hashing of text e.g. {{ text | sha256 }}
+yaml - Dump text as YAML e.g. {{ text | yaml }}
+b64encode - base64 encode text e.g. {{ text | b64encode }}
+b64decode - base64 decode text e.g. {{ text | b64decode }}
+```
+
 ### kapitan secrets
 
 Manages your secrets with GPG or Google Cloud KMS (beta), with plans to also support AWS KMS and Vault.
