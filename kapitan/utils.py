@@ -30,6 +30,7 @@ import jinja2
 import _jsonnet as jsonnet
 import yaml
 import math
+import base64
 from collections import Counter
 from pkg_resources import parse_version
 
@@ -110,6 +111,14 @@ def sha256_string(string):
     return sha256(string.encode("UTF-8")).hexdigest()
 
 
+def base64_encode(string):
+    return base64.b64encode(string.encode("UTF-8")).decode("UTF-8")
+
+
+def base64_decode(string):
+    return base64.b64decode(string).decode("UTF-8")
+
+
 def jinja2_yaml_filter(obj):
     """Returns yaml for object"""
     return yaml.safe_dump(obj, default_flow_style=False)
@@ -127,6 +136,8 @@ def render_jinja2_file(name, context):
     )
     env.filters['sha256'] = sha256_string
     env.filters['yaml'] = jinja2_yaml_filter
+    env.filters['b64encode'] = base64_encode
+    env.filters['b64decode'] = base64_decode
     return env.get_template(filename).render(context)
 
 
