@@ -1,4 +1,4 @@
-# Kapitan on Older Operating Systems
+# Kapitan on Older Linux Systems
 
 ## Introduction
 
