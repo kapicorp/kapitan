@@ -21,12 +21,12 @@ Take a look at the [PyEnv](https://github.com/pyenv/pyenv) project on Github.  T
 
 ### The Automated Installer
 
-To use the installer, we would recommend downloading the installer script and examining it before you execute it.  
-```bash
+To use the installer, we would recommend downloading the installer script and examining it before you execute it. 
+```console
 $ curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer > pyenv-installer
 ```
 Then, once you've checked it, you can execute it.  PyEnv doesn't need root privileges, so you can run it without using sudo
-```bash
+```console
 $ bash ./pyenv-installer
 ```
 Instructions on updating and removing the tool when you've installed it with the installer can be found on the pyenv-installer project page.  Pay attention to the output of the installer.  It might require you to add lines to your .bashrc file manually.
@@ -35,22 +35,23 @@ Instructions on updating and removing the tool when you've installed it with the
 Take a look at the README.md on the PyEnv project page and follow the installation instructions there.
 
 ### Using Kapitan with PyEnv
-Once you have successfully installed PyEnv, you'll need to restart your shell.  Either open a new shell session or source your .bashrc file like so: ``` source ~/.bashrc```
+Once you have successfully installed PyEnv, you'll need to restart your shell.  Either open a new shell session or source your .bashrc file like so: 
+``` source ~/.bashrc```
 
 Now that you have PyEnv ready to go, we can check it runs:
-```bash
+```console
 $ pyenv 
 pyenv 1.2.8
 Usage: pyenv <command> [<args>]
 ...
 ```
 Before you move onto the next step, you'll need to install some dependencies if they aren't already present.  To do this, you might need root access:
-```bash
+```console
 # apt install libssl-dev libffi-dev
 ```
 
 Let's install Python 3.7.1, which is a stable and up-to-date release at the time of writing.  We know Kapitan works with this release.
-```bash
+```console
 $ pyenv install 3.7.1
 Downloading Python-3.7.1.tar.xz...
 -> https://www.python.org/ftp/python/3.7.1/Python-3.7.1.tar.xz
@@ -63,20 +64,20 @@ $
 ```
 Once it completes, we can activate the newer Python installation and set about installing Kapitan!
 Make sure PyEnv is activated using the ```$ pyenv local 3.7.1``` command above and then run the following:
-```bash
+```console
 $ pip install --user --upgrade kapitan
 ```
 After Kapitan is installed in this way, you might have to add the following to your PATH environment variable:
-```bash
+```console
 ${HOME}/.local/bin
 ```
 and you can do this like so:
-```bash
+```console
 export PATH=${HOME}/.local/bin:${PATH}
 ```
 Add that line to the end of your .bashrc if you'd like it to take effect in all the shell sessions you use.
 You can now check everything installed correctly and start using Kapitan!
-```bash
+```console
 $ kapitan
 usage: kapitan [-h] [--version] {eval,compile,inventory,searchvar,secrets} ...
 ```
@@ -90,28 +91,28 @@ Software Collections has installation documentation available [here](https://www
 As this procedure needs you to add a repository to the OS package manager, you'll need to be root.  Use ```su``` or run the following with ```sudo``` as appropriate.
 
 Once you've completed the installation of the scl tool, install the Python 3.5 SCL package (YUM/DNF package names are identical to the name of the Software Collection).  
-```bash
+```console
 # yum install rh-python35
 ```
 As of this point, you don't need to be root any more.  Return to your regular shell and activate the Python 3.5 software collection you just installed.  This command starts a shell that uses the Python 3.5 installation you just carried out:
-```bash
+```console
 scl enable rh-python35 bash
 ```
 Install Kapitan:
-```bash
+```console
 pip install --user --upgrade kapitan
 ```
 After Kapitan is installed in this way, you might have to add the following to your PATH environment variable:
-```bash
+```console
 ${HOME}/.local/bin
 ```
 and you can do this like so:
-```bash
+```console
 export PATH=${HOME}/.local/bin:${PATH}
 ```
 Add that line to the end of your .bashrc if you'd like it to take effect in all the shell sessions you use.
 You can now check everything installed correctly and start using Kapitan!
-```bash
+```console
 $ kapitan
 usage: kapitan [-h] [--version] {eval,compile,inventory,searchvar,secrets} ...
 ```
