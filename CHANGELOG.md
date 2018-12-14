@@ -1,3 +1,6 @@
+## 0.20.1
+- Added jinja2 base64 filter (#170)
+
 ## 0.20.0
 - Fix re.sub hanging (#158)
 - gCloud KMS secrets backend (#159)
