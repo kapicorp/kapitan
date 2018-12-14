@@ -17,7 +17,7 @@ PyEnv and Software Collections are not Google projects, so please exercise your 
 
 Here at Streams, we use a Debian-based operating system for our day-to-day work.  We've found that [PyEnv](https://github.com/pyenv/pyenv) works well for us.
 ### Getting Started
-Take a look at the [PyEnv](https://github.com/pyenv/pyenv) project on Github.  There are two options for installing this project.  The author makes a separate installer script available at [https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer](this Github link), or you can manually install it.  We recommend using the automated installer unless you have reason to use the manual installation process.
+Take a look at the [PyEnv](https://github.com/pyenv/pyenv) project on Github.  There are two options for installing this project.  The author makes a separate installer script available at [this Github link](https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer), or you can manually install it.  We recommend using the automated installer unless you have reason to use the manual installation process.
 
 ### The Automated Installer
 
