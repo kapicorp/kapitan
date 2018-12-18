@@ -36,7 +36,7 @@ Take a look at the README.md on the PyEnv project page and follow the installati
 
 ### Using Kapitan with PyEnv
 Once you have successfully installed PyEnv, you'll need to restart your shell.  Either open a new shell session or source your .bashrc file like so: 
-``` source ~/.bashrc```
+```$ source ~/.bashrc```
 
 Now that you have PyEnv ready to go, we can check it runs:
 ```console
@@ -82,7 +82,7 @@ $ kapitan
 usage: kapitan [-h] [--version] {eval,compile,inventory,searchvar,secrets} ...
 ```
 ## On RHEL-based Operating Systems - Software Collections
-PyEnv will work on RHEL-based operating systems (including the upstream Fedora release.  Another option is to use the [Software Collections](https://www.softwarecollections.org/) project.  It's a community project with backing from Red Hat, and it includes both official Red Hat releases of some software collections and third-party contributions.  While Kapitan only needs you to install an official Red Hat collection release, please remember this isn't a Google project and to use your judgment as to whether this is appropriate for your circumstances.
+PyEnv will work on RHEL-based operating systems (including the upstream Fedora project).  Another option is to use the [Software Collections](https://www.softwarecollections.org/) project.  It's a community project with backing from Red Hat, and it includes both official Red Hat releases of some software collections and third-party contributions.  While Kapitan only needs you to install an official Red Hat collection release, please remember this isn't a Google project and to use your judgment as to whether this is appropriate for your circumstances.
 
 ### Installing Software Collections support on your machine
 
@@ -96,11 +96,11 @@ Once you've completed the installation of the scl tool, install the Python 3.5 S
 ```
 As of this point, you don't need to be root any more.  Return to your regular shell and activate the Python 3.5 software collection you just installed.  This command starts a shell that uses the Python 3.5 installation you just carried out:
 ```console
-scl enable rh-python35 bash
+$ scl enable rh-python35 bash
 ```
 Install Kapitan:
 ```console
-pip install --user --upgrade kapitan
+$ pip install --user --upgrade kapitan
 ```
 After Kapitan is installed in this way, you might have to add the following to your PATH environment variable:
 ```console
@@ -118,6 +118,6 @@ usage: kapitan [-h] [--version] {eval,compile,inventory,searchvar,secrets} ...
 ```
 When you come back to using this method after restarting your shell, you can switch back to the rh-python35 collection either by creating a shell alias for the kapitan command to ``` 'scl enable rh-python35 kapitan'``` 
 but we recommend that you can use the scl command to start a new shell using
-``` 'scl enable rh-python35 bash' ```
+``` '$ scl enable rh-python35 bash' ```
 Once you finish using the software collection, exit the shell with ``` exit ```  or ``` Ctrl+D ```
 
