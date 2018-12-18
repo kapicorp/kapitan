@@ -58,7 +58,7 @@ def resource_callbacks(search_paths):
             "yaml_dump": (("obj",), yaml_dump),
             "sha256_string": (("obj",), sha256_string),
             "gzip_b64": (("obj",), gzip_b64),
-           }
+            }
 
 
 def yaml_dump(obj):
@@ -199,7 +199,7 @@ def inventory_reclass(inventory_path):
                           'nodes_uri': os.path.join(inventory_path, 'targets'),
                           'classes_uri': os.path.join(inventory_path, 'classes'),
                           'compose_node_name': False
-                         }
+                          }
 
         try:
             cfg_file = os.path.join(inventory_path, 'reclass-config.yml')

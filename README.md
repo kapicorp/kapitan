@@ -22,11 +22,10 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 * [Typical folder structure](#typical-folder-structure)
 * [Usage](#usage)
 * [Modes of operation](#modes-of-operation)
+* [Contributing](#contributing)
 * [Credits](#credits)
 * [FAQ](#faq)
 * [Related projects](#related-projects)
-
-
 
 # Main Features
 
@@ -568,6 +567,18 @@ $ kapitan searchvar parameters.elasticsearch.replicas
 ./inventory/targets/minikube-es.yml               2
 ./inventory/classes/component/elasticsearch.yml   1
 ```
+
+# Contributing
+
+## Testing
+
+Run `make test` to run all tests. If you modify anything in the `examples/` folder
+make sure you replicate the compiled result of that in `tests/test_kubernetes_compiled`.
+
+## Code Style
+
+Try to fix warnings from `make codestyle` before submitting to make sure you adhere to the
+[Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/).
 
 # Credits
 

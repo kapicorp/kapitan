@@ -23,7 +23,6 @@ import ujson as json
 import logging
 import os
 import sys
-import traceback
 import yaml
 
 from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar
@@ -257,8 +256,7 @@ def main():
                 yaml.dump(inv, sys.stdout, Dumper=PrettyDumper, default_flow_style=False)
         except Exception as e:
             if not isinstance(e, KapitanError):
-                logger.error("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                traceback.print_exc()
+                logger.exception("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             sys.exit(1)
 
     elif cmd == 'searchvar':
@@ -319,7 +317,7 @@ def secret_write(args, ref_controller):
             except KeyError:
                 # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
                 logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                    "please use parameters.kapitan.secrets.gpg.recipients")
+                               "please use parameters.kapitan.secrets.gpg.recipients")
                 recipients = kap_inv_params['secrets']['recipients']
         if not recipients:
             raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
@@ -365,7 +363,7 @@ def secret_update(args, ref_controller):
             except KeyError:
                 # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
                 logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                    "please use parameters.kapitan.secrets.gpg.recipients")
+                               "please use parameters.kapitan.secrets.gpg.recipients")
                 recipients = kap_inv_params['secrets']['recipients']
         if not recipients:
             raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
@@ -433,7 +431,7 @@ def secret_update_validate(args, ref_controller):
             except KeyError:
                 # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
                 logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                    "please use parameters.kapitan.secrets.gpg.recipients")
+                               "please use parameters.kapitan.secrets.gpg.recipients")
                 recipients = kap_inv_params['secrets']['recipients']
         except KeyError:
             recipients = None

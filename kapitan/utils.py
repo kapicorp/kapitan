@@ -286,7 +286,7 @@ def deep_get(dictionary, keys, previousKey=None):
 def searchvar(flat_var, inventory_path, pretty_print):
     """Show all inventory files where a given reclass variable is declared"""
     output = []
-    maxlenght = 0
+    maxlength = 0
     keys = flat_var.split(".")
     for root, _, files in os.walk(inventory_path):
         for file in files:
@@ -297,8 +297,8 @@ def searchvar(flat_var, inventory_path, pretty_print):
                     value = deep_get(data, keys)
                     if value is not None:
                         output.append((filename, value))
-                        if len(filename) > maxlenght:
-                            maxlenght = len(filename)
+                        if len(filename) > maxlength:
+                            maxlength = len(filename)
     if pretty_print:
         for i in output:
             print(i[0])
@@ -307,7 +307,7 @@ def searchvar(flat_var, inventory_path, pretty_print):
             print()
     else:
         for i in output:
-            print('{0!s:{l}} {1!s}'.format(*i, l=maxlenght + 2))
+            print('{0!s:{length}} {1!s}'.format(*i, length=maxlength + 2))
 
 
 def directory_hash(directory):
@@ -349,7 +349,7 @@ def get_entropy(s):
     """Computes and returns the Shannon Entropy for string 's'"""
     length = float(len(s))
     # https://en.wiktionary.org/wiki/Shannon_entropy
-    entropy = -sum(count/length * math.log(count/length, 2) for count in Counter(s).values())
+    entropy = - sum(count / length * math.log(count / length, 2) for count in Counter(s).values())
     return round(entropy, 2)
 
 
@@ -388,22 +388,20 @@ def check_version():
     """
     kapitan_config = dot_kapitan_config()
     try:
-        # If .kapitan version is bigger than current version
-        if kapitan_config and kapitan_config["version"] and parse_version(kapitan_config["version"]) > parse_version(VERSION):
+        if kapitan_config and kapitan_config["version"]:
+            if parse_version(kapitan_config["version"]) == parse_version(VERSION):
+                return
             print("{}Current version: {}".format(termcolor.WARNING, VERSION))
             print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
-            print("Upgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
-            print("Docker: docker pull deepmind/kapitan:{}".format(kapitan_config["version"]))
-            print("Pip (user): pip3 install --user --upgrade kapitan=={}\n".format(kapitan_config["version"]))
-            print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
-            print("If you know what you're doing, you can skip this check by adding '--ignore-version-check'.")
-            sys.exit(1)
-        # If .kapitan version is smaller than current version
-        elif kapitan_config and kapitan_config["version"] and parse_version(kapitan_config["version"]) < parse_version(VERSION):
-            print("{}Current version: {}".format(termcolor.WARNING, VERSION))
-            print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
-            print("Option 1: You can update the version in .kapitan to '{}' and recompile\n".format(VERSION))
-            print("Option 2: Downgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
+
+            # If .kapitan version is bigger than current version
+            if parse_version(kapitan_config["version"]) > parse_version(VERSION):
+                print("Upgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
+            # If .kapitan version is smaller than current version
+            elif parse_version(kapitan_config["version"]) < parse_version(VERSION):
+                print("Option 1: You can update the version in .kapitan to '{}' and recompile\n".format(VERSION))
+                print("Option 2: Downgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
+
             print("Docker: docker pull deepmind/kapitan:{}".format(kapitan_config["version"]))
             print("Pip (user): pip3 install --user --upgrade kapitan=={}\n".format(kapitan_config["version"]))
             print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")

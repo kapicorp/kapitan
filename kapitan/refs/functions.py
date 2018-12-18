@@ -91,6 +91,6 @@ def rsa_public_key(ctx, private_key_token_path):
     public_key = private_key.public_key()
 
     ctx.data = str(public_key.public_bytes(
-       encoding=serialization.Encoding.PEM,
-       format=serialization.PublicFormat.SubjectPublicKeyInfo
-    ), "UTF-8")
+                   encoding=serialization.Encoding.PEM,
+                   format=serialization.PublicFormat.SubjectPublicKeyInfo
+                   ), "UTF-8")

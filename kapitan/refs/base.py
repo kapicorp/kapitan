@@ -523,7 +523,7 @@ def search_target_token_paths(target_secrets_path, targets):
     for root, _, files in os.walk(target_secrets_path):
         for f in files:
             full_path = os.path.join(root, f)
-            secret_path = full_path[len(target_secrets_path)+1:]
+            secret_path = full_path[len(target_secrets_path) + 1:]
             target_name = secret_path.split("/")[0]
             if target_name in targets:
                 with open(full_path) as fp:

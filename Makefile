@@ -19,3 +19,10 @@ package:
 .PHONY: clean
 clean:
 	rm -rf dist/ build/ kapitan.egg-info/
+
+.PHONY: codestyle
+codestyle:
+	which flake8 || echo "Install flake8 with pip3 install --user flake8"
+	# ignores line length and reclass related errors
+	flake8 --ignore E501 . | grep -v "reclass"
+	@echo

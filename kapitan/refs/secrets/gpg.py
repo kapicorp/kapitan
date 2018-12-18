@@ -94,7 +94,7 @@ class GPGSecret(Ref):
             except KeyError:
                 # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
                 logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                    "please use parameters.kapitan.secrets.gpg.recipients")
+                               "please use parameters.kapitan.secrets.gpg.recipients")
                 recipients = target_inv['parameters']['kapitan']['secrets']['recipients']
             return cls(data, recipients, **ref_params.kwargs)
         except KeyError:
@@ -129,7 +129,6 @@ class GPGSecret(Ref):
         self._encrypt(data_dec, fingerprints, encode_base64)
         self.data = base64.b64encode(self.data).decode()
         return True
-
 
     def _encrypt(self, data, fingerprints, encode_base64):
         """
