@@ -134,7 +134,6 @@ local inv = kap.inventory();
   Container(name): {
     name: name,
     image: error "container image value required",
-
     envList(map):: [
       if std.type(map[x]) == "object" then { name: x, valueFrom: map[x] } else { name: x, value: std.toString(map[x]) }
       for x in std.objectFields(map)],
@@ -145,7 +144,8 @@ local inv = kap.inventory();
     imagePullPolicy: "Always",
 
     args_:: {},
-    args: ["--%s=%s" % kv for kv in $.objectItems(self.args_)],
+    args_stripped:: std.prune(self.args_),
+    args: ["--%s=%s" % kv for kv in $.objectItems(self.args_stripped)],
 
     ports_:: {},
     ports: $.mapToNamedList(self.ports_),
@@ -153,6 +153,8 @@ local inv = kap.inventory();
     volumeMounts_:: {},
     volumeMounts: $.mapToNamedList(self.volumeMounts_),
 
+    assert std.isObject(self.ports_) : "container.ports_ should be object. Maybe you wanted to use ports instead",
+    assert std.isArray(self.ports) : "container.ports should be array. Maybe you wanted to use ports_+ instead",
   },
 
   Pod(name): $._Object("v1", "Pod", name) {
@@ -171,11 +173,24 @@ local inv = kap.inventory();
 
     imagePullSecrets: [],
 
+    nodeSelector: {
+      [if "nodepools" in inv.parameters.cluster && "nodeselector" in inv.parameters then inv.parameters.cluster.nodepools[inv.parameters.nodeselector].label]: inv.parameters.cluster.nodepools[inv.parameters.nodeselector].name,
+    },
+
     assert std.length(self.containers) > 0 : "must have at least one container",
+    assert std.isObject(self.containers_) : "podspec.containers_ should be object. Maybe you wanted to use containers instead",
+    assert std.isArray(self.containers) : "podspec.containers should be array. Maybe you wanted to use containers_+ instead",
+
   },
 
   EmptyDirVolume(): {
     emptyDir: {},
+  },
+
+  EmptyDirMemoryVolume(): {
+    emptyDir: {
+      medium: "Memory",
+    },
   },
 
   HostPathVolume(path): {
@@ -257,6 +272,18 @@ local inv = kap.inventory();
       name: name,
       namespace: inv.parameters.namespace,
     }],
+  },
+
+  NetworkPolicy(name, from, to): $._Object("networking.k8s.io/v1", "NetworkPolicy", name) {
+    spec: {
+      ingress:
+        # https://github.com/ahmetb/kubernetes-network-policy-recipes/blob/master/08-allow-external-traffic.md
+        if from == "all" then [{ from: [] }]
+        # https://github.com/ahmetb/kubernetes-network-policy-recipes/blob/master/01-deny-all-traffic-to-an-application.md
+        else if from == "none" then []
+        else [{ from: from, }],
+      podSelector: to,
+    },
   },
 
   Secret(name): $._Object("v1", "Secret", name) {
@@ -403,7 +430,7 @@ local inv = kap.inventory();
     },
   },
 
-  CronJob(name): $._Object("batch/v2alpha1", "CronJob", name) {
+  CronJob(name): $._Object("batch/v1beta1", "CronJob", name) {
     local cronjob = self,
 
     spec: {
@@ -430,8 +457,6 @@ local inv = kap.inventory();
         },
         spec: $.PodSpec,
       },
-
-      tolerations: {},
     },
   },
 

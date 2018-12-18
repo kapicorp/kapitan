@@ -24,7 +24,6 @@ import shutil
 import sys
 from functools import partial
 import multiprocessing
-import traceback
 import tempfile
 import jsonschema
 import yaml
@@ -100,21 +99,21 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
 
         # Save inventory and folders cache
         save_inv_cache(compile_path, targets)
-
+        pool.close()
     except Exception as e:
         # if compile worker fails, terminate immediately
         pool.terminate()
-        pool.join()
         logger.debug("Compile pool terminated")
         # only print traceback for errors we don't know about
         if not isinstance(e, KapitanError):
-            logger.error("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            traceback.print_exc()
+            logger.exception("Unknown (Non-Kapitan) Error occured")
 
         logger.error("\n")
         logger.error(e)
         sys.exit(1)
     finally:
+        # always wait for other worker processes to terminate
+        pool.join()
         shutil.rmtree(temp_path)
         logger.debug("Removed %s", temp_path)
 

@@ -27,7 +27,7 @@ class Jinja2FiltersTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as f:
             f.write("{{text|sha256}}".encode("UTF-8"))
             f.seek(0)
-            context = {"text":"this and that"}
+            context = {"text": "this and that"}
             digest = 'e863c1ac42619a2b429a08775a6acd89ff4c2c6b8dae12e3461a5fa63b2f92f5'
             self.assertEqual(render_jinja2_file(f.name, context), digest)
 
@@ -35,7 +35,7 @@ class Jinja2FiltersTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as f:
             f.write("{{text|b64encode}}".encode("UTF-8"))
             f.seek(0)
-            context = {"text":"this and that"}
+            context = {"text": "this and that"}
             base64_encoded = "dGhpcyBhbmQgdGhhdA=="
             self.assertEqual(render_jinja2_file(f.name, context), base64_encoded)
 
@@ -43,7 +43,7 @@ class Jinja2FiltersTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as f:
             f.write("{{text|b64decode}}".encode("UTF-8"))
             f.seek(0)
-            context = {"text":"dGhpcyBhbmQgdGhhdA=="}
+            context = {"text": "dGhpcyBhbmQgdGhhdA=="}
             base64_decoded = "this and that"
             self.assertEqual(render_jinja2_file(f.name, context), base64_decoded)
 
@@ -51,7 +51,7 @@ class Jinja2FiltersTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as f:
             f.write("{{text|yaml}}".encode("UTF-8"))
             f.seek(0)
-            context = {"text":["this", "that"]}
+            context = {"text": ["this", "that"]}
             yaml = '- this\n- that\n'
             self.assertEqual(render_jinja2_file(f.name, context), yaml)
 

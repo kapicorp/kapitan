@@ -11,13 +11,12 @@ DIR=$(realpath $(dirname ${BASH_SOURCE[0]}))
 
 check_installed() {
   CMD=$1
-  if ! $(which $CMD > /dev/null); then
-      error "$CMD not installed. Exiting..."
+  if ! $(which ${CMD} > /dev/null); then
+      error "${CMD} not installed. Exiting..."
   fi
 }
 
 check_installed terraform
-
 
 ########################################################################################
 # Variables

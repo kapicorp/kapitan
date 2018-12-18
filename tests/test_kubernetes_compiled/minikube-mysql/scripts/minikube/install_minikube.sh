@@ -20,7 +20,7 @@ case "$(uname -s)" in
     *)          exit 1
 esac
 
-MINIKUBE_VERSION=${MINIKUBE_VERSION:-v0.25.0}
+MINIKUBE_VERSION=${MINIKUBE_VERSION:-v0.31.0}
 URL=https://storage.googleapis.com/minikube/releases/${MINIKUBE_VERSION}/${MINIKUBE_BINARY}
 
 

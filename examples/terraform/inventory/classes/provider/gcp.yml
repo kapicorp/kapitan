@@ -1,5 +1,4 @@
 # base class that should be imported on all cluster classes
-#
 
 parameters:
 
