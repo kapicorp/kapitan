@@ -577,7 +577,7 @@ make sure you replicate the compiled result of that in `tests/test_kubernetes_co
 
 ## Code Style
 
-Try to fix warning from `make pycodestyle` before submitting to make sure you adhere to the
+Try to fix warnings from `make codestyle` before submitting to make sure you adhere to the
 [Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/).
 
 # Credits

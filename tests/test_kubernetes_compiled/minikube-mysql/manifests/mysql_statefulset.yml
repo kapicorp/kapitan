@@ -32,7 +32,6 @@ spec:
           volumeMounts: []
       imagePullSecrets: []
       initContainers: []
-      nodeSelector: {}
       volumes: []
   volumeClaimTemplates:
     - apiVersion: v1

@@ -20,9 +20,9 @@ package:
 clean:
 	rm -rf dist/ build/ kapitan.egg-info/
 
-.PHONY: pycodestyle
-pycodestyle:
-	which pycodestyle || echo "Install pycodestyle with pip3 install --user pycodestyle"
+.PHONY: codestyle
+codestyle:
+	which flake8 || echo "Install flake8 with pip3 install --user flake8"
 	# ignores line length and reclass related errors
-	pycodestyle --ignore=E501 . | grep -v "reclass"
+	flake8 --ignore E501 . | grep -v "reclass"
 	@echo

@@ -173,10 +173,6 @@ local inv = kap.inventory();
 
     imagePullSecrets: [],
 
-    nodeSelector: {
-      [if "nodepools" in inv.parameters.cluster && "nodeselector" in inv.parameters then inv.parameters.cluster.nodepools[inv.parameters.nodeselector].label]: inv.parameters.cluster.nodepools[inv.parameters.nodeselector].name,
-    },
-
     assert std.length(self.containers) > 0 : "must have at least one container",
     assert std.isObject(self.containers_) : "podspec.containers_ should be object. Maybe you wanted to use containers instead",
     assert std.isArray(self.containers) : "podspec.containers should be array. Maybe you wanted to use containers_+ instead",

@@ -388,21 +388,24 @@ def check_version():
     """
     kapitan_config = dot_kapitan_config()
     try:
-        print("{}Current version: {}".format(termcolor.WARNING, VERSION))
-        print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
+        if kapitan_config and kapitan_config["version"]:
+            if parse_version(kapitan_config["version"]) == parse_version(VERSION):
+                return
+            print("{}Current version: {}".format(termcolor.WARNING, VERSION))
+            print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
 
-        # If .kapitan version is bigger than current version
-        if kapitan_config and kapitan_config["version"] and parse_version(kapitan_config["version"]) > parse_version(VERSION):
-            print("Upgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
-        # If .kapitan version is smaller than current version
-        elif kapitan_config and kapitan_config["version"] and parse_version(kapitan_config["version"]) < parse_version(VERSION):
-            print("Option 1: You can update the version in .kapitan to '{}' and recompile\n".format(VERSION))
-            print("Option 2: Downgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
+            # If .kapitan version is bigger than current version
+            if parse_version(kapitan_config["version"]) > parse_version(VERSION):
+                print("Upgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
+            # If .kapitan version is smaller than current version
+            elif parse_version(kapitan_config["version"]) < parse_version(VERSION):
+                print("Option 1: You can update the version in .kapitan to '{}' and recompile\n".format(VERSION))
+                print("Option 2: Downgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
 
-        print("Docker: docker pull deepmind/kapitan:{}".format(kapitan_config["version"]))
-        print("Pip (user): pip3 install --user --upgrade kapitan=={}\n".format(kapitan_config["version"]))
-        print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
-        print("If you know what you're doing, you can skip this check by adding '--ignore-version-check'.")
-        sys.exit(1)
+            print("Docker: docker pull deepmind/kapitan:{}".format(kapitan_config["version"]))
+            print("Pip (user): pip3 install --user --upgrade kapitan=={}\n".format(kapitan_config["version"]))
+            print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
+            print("If you know what you're doing, you can skip this check by adding '--ignore-version-check'.")
+            sys.exit(1)
     except KeyError:
         pass
