@@ -19,3 +19,9 @@ package:
 .PHONY: clean
 clean:
 	rm -rf dist/ build/ kapitan.egg-info/
+
+pycodestyle:
+	which pycodestyle || pip3 install --user pycodestyle
+	# ignores line length and reclass related errors
+	pycodestyle --ignore=E501 . | grep -v "reclass"
+	@echo
