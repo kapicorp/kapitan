@@ -8,6 +8,7 @@ python-gnupg==0.4.3
 six>=1.11.0
 cryptography>=2.4.2
 google-api-python-client==1.7.4
+boto3==1.9.68
 requests>=2.20.1
 
 # Reclass dependencies

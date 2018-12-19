@@ -13,3 +13,5 @@ parameters:
             fingerprint: D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C
       gkms:
         key: 'projects/<project>/locations/<location>/keyRings/<keyRing>/cryptoKeys/<key>'
+      awskms:
+        key: 'alias/nameOfKey'

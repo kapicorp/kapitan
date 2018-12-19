@@ -365,6 +365,9 @@ class RefController(object):
             elif type_name == 'gkms':
                 from kapitan.refs.secrets.gkms import GoogleKMSBackend
                 self.register_backend(GoogleKMSBackend(self.path))
+            elif type_name == 'awskms':
+                from kapitan.refs.secrets.awskms import AWSKMSBackend
+                self.register_backend(AWSKMSBackend(self.path))
             else:
                 raise RefBackendError('no backend for ref type: {}'.format(type_name))
         return self.backends[type_name]
@@ -516,7 +519,7 @@ class FunctionContext(object):
 
 def search_target_token_paths(target_secrets_path, targets):
     """
-    returns dict of target and their secret token paths (e.g ?{[gpg/gkms]:mysql/root/password}) in target_secrets_path
+    returns dict of target and their secret token paths (e.g ?{[gpg/gkms/awskms]:mysql/root/password}) in target_secrets_path
     targets is a set of target names used to lookup targets in target_secrets_path
     """
     target_files = defaultdict(list)

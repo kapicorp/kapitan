@@ -170,6 +170,7 @@ parameters:
         # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
         password: ?{gpg:mysql/root/password|randomstr|base64}
         # password: ?{gkms:mysql/root/password|randomstr|base64}
+        # password: ?{awskms:mysql/root/password|randomstr|base64}
 
   kapitan:
     compile:
@@ -402,7 +403,7 @@ b64decode - base64 decode text e.g. {{ text | b64decode }}
 
 ### kapitan secrets
 
-Manages your secrets with GPG or Google Cloud KMS (beta), with plans to also support AWS KMS and Vault.
+Manages your secrets with GPG, Google Cloud KMS (beta) or AWS KMS (beta), with plans to also support Vault.
 
 The usual flow of creating and using an encrypted secret with kapitan is:
 
@@ -414,8 +415,9 @@ The usual flow of creating and using an encrypted secret with kapitan is:
     ```
     GPG: kapitan secrets --write gpg:mysql/root/password -t minikube-mysql -f <password file>
     gKMS: kapitan secrets --write gkms:mysql/root/password -t minikube-mysql -f <password file>
+    awsKMS: kapitan secrets --write awskms:mysql/root/password -t minikube-mysql -f <password file>
     OR use stdin:
-    echo -n '<password>' | kapitan secrets --write [gpg/gkms]:mysql/root/password -t minikube-mysql -f -
+    echo -n '<password>' | kapitan secrets --write [gpg/gkms/awskms]:mysql/root/password -t minikube-mysql -f -
     ```
     This will inherit the secrets configuration from minikube-mysql target, encrypt and save your password into `secrets/mysql/root/password`, see `examples/kubernetes`.
 
@@ -609,7 +611,7 @@ With Kapitan, we worked to de-compose several problems that most of the other so
 
 3) ***Hierarchical inventory***: This is the feature that sets us apart from other solutions. We use the inventory (based on [reclass](https://github.com/salt-formulas/reclass)) to define variables and properties that can be reused across different projects/deployments. This allows us to limit repetition, but also to define a nicer interface with developers (or CI tools) which will only need to understand YAML to operate changes.
 
-4) ***Secrets***: We manage most of our secrets with kapitan using the GPG and Google Cloud KMS integrations. Keys can be setup per class, per target or shared so you can easily and flexibly manage access per environment. They can also be dynamically generated on compilation, if you don't feel like generating random passwords or RSA private keys, and they can be referenced in the inventory like any other variables. We have plans to support other providers such as AWS KMS and Vault, in addition to GPG and Google Cloud KMS.
+4) ***Secrets***: We manage most of our secrets with kapitan using the GPG, Google Cloud KMS and AWS KMS integrations. Keys can be setup per class, per target or shared so you can easily and flexibly manage access per environment. They can also be dynamically generated on compilation, if you don't feel like generating random passwords or RSA private keys, and they can be referenced in the inventory like any other variables. We have plans to support other providers such as Vault, in addition to GPG, Google Cloud KMS and AWS KMS.
 
 5) ***Canned scripts***: We treat scripts as text templates, so that we can craft pre-canned scripts for the specific target we are working on. This can be used for instance to define scripts that setup clusters, contexts or allow to run kubectl with all the correct settings. Most other solutions require you to define contexts and call kubectl with the correct settings. We take care of that for you. Less ambiguity, less mistakes.
 
