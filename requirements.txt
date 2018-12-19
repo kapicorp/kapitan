@@ -1,5 +1,5 @@
 # kapitan dependencies
-jsonnet==0.11.2
+jsonnet==0.12.1
 PyYAML==3.13
 ujson==1.35
 Jinja2>=2.10
