@@ -18,8 +18,6 @@
 
 import logging
 import os
-import errno
-import ujson as json
 import shutil
 import sys
 from functools import partial
@@ -29,11 +27,12 @@ import jsonschema
 import yaml
 import time
 
-from kapitan.resources import search_imports, resource_callbacks, inventory, inventory_reclass
-from kapitan.utils import jsonnet_file, prune_empty, render_jinja2, PrettyDumper, hashable_lru_cache
+from kapitan.resources import inventory_reclass
+from kapitan.utils import hashable_lru_cache
 from kapitan.utils import directory_hash, dictionary_hash
 from kapitan.errors import KapitanError, CompileError
-from kapitan.refs.base import Revealer
+from kapitan.inputs.jinja2 import Jinja2
+from kapitan.inputs.jsonnet import Jsonnet
 from kapitan import cached
 
 logger = logging.getLogger(__name__)
@@ -41,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 def compile_targets(inventory_path, search_paths, output_path, parallel, targets, ref_controller, **kwargs):
     """
-    Searches and loads target files, and runs compile_target_file() on a
+    Searches and loads target files, and runs compile_target() on a
     multiprocessing pool with parallel number of processes.
     kwargs are passed to compile_target()
     """
@@ -288,145 +287,27 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
 
+    compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
-    compile_obj = target_obj["compile"]
 
-    for obj in compile_obj:
-        input_type = obj["input_type"]
-        input_paths = obj["input_paths"]
-        output_path = obj["output_path"]
+    jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller)
+    jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
 
-        if input_type == "jsonnet":
-            _compile_path = os.path.join(compile_path, target_name, output_path)
-            # support writing to an already existent dir
-            try:
-                os.makedirs(_compile_path)
-            except OSError as ex:
-                # If directory exists, pass
-                if ex.errno == errno.EEXIST:
-                    pass
-
-            output_type = obj["output_type"]  # output_type is mandatory in jsonnet
-            for input_path in input_paths:
-                jsonnet_file_found = False
-                for path in search_paths:
-                    compile_file_sp = os.path.join(path, input_path)
-                    if os.path.exists(compile_file_sp):
-                        jsonnet_file_found = True
-                        logger.debug("Compiling %s", compile_file_sp)
-                        try:
-                            compile_jsonnet(compile_file_sp, _compile_path, search_paths, ext_vars, ref_controller,
-                                            output=output_type, target_name=target_name, **kwargs)
-                        except KapitanError as e:
-                            raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
-
-                if not jsonnet_file_found:
-                    raise CompileError("Compile error: {} for target: {} not found in "
-                                       "search_paths: {}".format(input_path, target_name, search_paths))
-
+    for comp_obj in compile_objs:
+        input_type = comp_obj["input_type"]
+        output_path = comp_obj["output_path"]
         if input_type == "jinja2":
-            _compile_path = os.path.join(compile_path, target_name, output_path)
-            # support writing to an already existent dir
-            try:
-                os.makedirs(_compile_path)
-            except OSError as ex:
-                # If directory exists, pass
-                if ex.errno == errno.EEXIST:
-                    pass
-            for input_path in input_paths:
-                jinja2_file_found = False
-                for path in search_paths:
-                    compile_path_sp = os.path.join(path, input_path)
-                    if os.path.exists(compile_path_sp):
-                        jinja2_file_found = True
-                        # copy ext_vars to dedicated jinja2 context so we can update it
-                        ctx = ext_vars.copy()
-                        ctx["inventory"] = inventory(search_paths, target_name)
-                        ctx["inventory_global"] = inventory(search_paths, None)
-                        try:
-                            compile_jinja2(compile_path_sp, ctx, _compile_path, ref_controller,
-                                           target_name=target_name, **kwargs)
-                        except KapitanError as e:
-                            raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
+            input_compiler = jinja2_compiler
+        elif input_type == "jsonnet":
+            input_compiler = jsonnet_compiler
+        else:
+            raise CompileError("")
 
-                if not jinja2_file_found:
-                    raise CompileError("Compile error: {} for target: {} not found in "
-                                       "search_paths: {}".format(input_path, target_name, search_paths))
+        input_compiler.make_compile_dirs(target_name, output_path)
+        input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 
     logger.info("Compiled %s (%.2fs)", target_name, time.time() - start)
-
-
-def compile_jinja2(path, context, compile_path, ref_controller, **kwargs):
-    """
-    Write items in path as jinja2 rendered files to compile_path.
-    path can be either a file or directory.
-    kwargs:
-        reveal: default False, set to reveal refs on compile
-        target_name: default None, set to current target being compiled
-    """
-    reveal = kwargs.get('reveal', False)
-    target_name = kwargs.get('target_name', None)
-
-    for item_key, item_value in render_jinja2(path, context).items():
-        full_item_path = os.path.join(compile_path, item_key)
-        try:
-            os.makedirs(os.path.dirname(full_item_path))
-        except OSError as ex:
-            # If directory exists, pass
-            if ex.errno == errno.EEXIST:
-                pass
-        with CompiledFile(full_item_path, ref_controller, mode="w", reveal=reveal, target_name=target_name) as fp:
-            fp.write(item_value["content"])
-            mode = item_value["mode"]
-            os.chmod(full_item_path, mode)
-            logger.debug("Wrote %s with mode %.4o", full_item_path, mode)
-
-
-def compile_jsonnet(file_path, compile_path, search_paths, ext_vars, ref_controller, **kwargs):
-    """
-    Write file_path (jsonnet evaluated) items as files to compile_path.
-    Set output to write as json or yaml
-    search_paths and ext_vars will be passed as parameters to jsonnet_file()
-    kwargs:
-        output: default 'yaml', accepts 'json'
-        prune: default False, accepts True
-        reveal: default False, set to reveal refs on compile
-        target_name: default None, set to current target being compiled
-        indent: default 2
-    """
-    _search_imports = lambda cwd, imp: search_imports(cwd, imp, search_paths)
-    json_output = jsonnet_file(file_path, import_callback=_search_imports,
-                               native_callbacks=resource_callbacks(search_paths),
-                               ext_vars=ext_vars)
-    json_output = json.loads(json_output)
-
-    output = kwargs.get('output', 'yaml')
-    prune = kwargs.get('prune', False)
-    reveal = kwargs.get('reveal', False)
-    target_name = kwargs.get('target_name', None)
-    indent = kwargs.get('indent', 2)
-
-    if prune:
-        json_output = prune_empty(json_output)
-        logger.debug("Pruned output for: %s", file_path)
-
-    for item_key, item_value in json_output.items():
-        # write each item to disk
-        if output == 'json':
-            file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
-            with CompiledFile(file_path, ref_controller, mode="w", reveal=reveal, target_name=target_name,
-                              indent=indent) as fp:
-                fp.write_json(item_value)
-                logger.debug("Wrote %s", file_path)
-        elif output == 'yaml':
-            file_path = os.path.join(compile_path, '%s.%s' % (item_key, "yml"))
-            with CompiledFile(file_path, ref_controller, mode="w", reveal=reveal, target_name=target_name,
-                              indent=indent) as fp:
-                fp.write_yaml(item_value)
-                logger.debug("Wrote %s", file_path)
-        else:
-            raise ValueError('output is neither "json" or "yaml"')
 
 
 @hashable_lru_cache
@@ -461,58 +342,3 @@ def valid_target_obj(target_obj):
     }
 
     return jsonschema.validate(target_obj, schema)
-
-
-class CompilingFile(object):
-    def __init__(self, context, fp, ref_controller, **kwargs):
-        self.fp = fp
-        self.ref_controller = ref_controller
-        self.kwargs = kwargs
-        self.revealer = Revealer(ref_controller)
-
-    def write(self, data):
-        """write data into file"""
-        reveal = self.kwargs.get('reveal', False)
-        target_name = self.kwargs.get('target_name', None)
-        if reveal:
-            self.fp.write(self.revealer.reveal_raw(data))
-        else:
-            self.fp.write(self.revealer.compile_raw(data, target_name=target_name))
-
-    def write_yaml(self, obj):
-        """recursively compile or reveal refs and convert obj to yaml and write to file"""
-        indent = self.kwargs.get('indent', 2)
-        reveal = self.kwargs.get('reveal', False)
-        target_name = self.kwargs.get('target_name', None)
-        if reveal:
-            self.revealer.reveal_obj(obj)
-        else:
-            self.revealer.compile_obj(obj, target_name=target_name)
-        yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
-
-    def write_json(self, obj):
-        """recursively hash or reveal refs and convert obj to json and write to file"""
-        indent = self.kwargs.get('indent', 2)
-        reveal = self.kwargs.get('reveal', False)
-        target_name = self.kwargs.get('target_name', None)
-        if reveal:
-            self.revealer.reveal_obj(obj)
-        else:
-            self.revealer.compile_obj(obj, target_name=target_name)
-        json.dump(obj, self.fp, indent=indent, escape_forward_slashes=False)
-
-
-class CompiledFile(object):
-    def __init__(self, name, ref_controller, **kwargs):
-        self.name = name
-        self.fp = None
-        self.ref_controller = ref_controller
-        self.kwargs = kwargs
-
-    def __enter__(self):
-        mode = self.kwargs.get("mode", "r")
-        self.fp = open(self.name, mode)
-        return CompilingFile(self, self.fp, self.ref_controller, **self.kwargs)
-
-    def __exit__(self, *args):
-        self.fp.close()
