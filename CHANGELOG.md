@@ -1,3 +1,6 @@
+## 0.21.0
+- Upgraded to jsonnet 0.12.1 (https://github.com/google/jsonnet/releases/tag/v0.12.1)
+
 ## 0.20.1
 - Added jinja2 base64 filter (#170)
 
