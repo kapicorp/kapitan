@@ -14,7 +14,7 @@ RUN apk add --no-cache python3-dev git g++ make libstdc++ gnupg musl-dev util-li
     if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
     rm -rf /root/.cache
 
-ENV TERRAFORM_VERSION=0.11.10
+ENV TERRAFORM_VERSION=0.11.11
 ENV TERRAFORM_URL=https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 RUN curl -o /tmp/terraform_${TERRAFORM_VERSION}.zip ${TERRAFORM_URL} && \
         unzip -d /usr/local/bin /tmp/terraform_${TERRAFORM_VERSION}.zip && \
