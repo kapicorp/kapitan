@@ -76,12 +76,7 @@ class InputType(object):
         """make compile dirs, skips if dirs exist"""
         _compile_path = os.path.join(self.compile_path, target_name, output_path)
         # support writing to an already existent dir
-        try:
-            os.makedirs(_compile_path)
-        except OSError as ex:
-            # If directory exists, pass
-            if ex.errno == errno.EEXIST:
-                pass
+        os.makedirs(_compile_path, exist_ok=True)
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """implements compilation for file_path to compile_path with ext_vars"""
