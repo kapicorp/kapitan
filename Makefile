@@ -24,5 +24,5 @@ clean:
 codestyle:
 	which flake8 || echo "Install flake8 with pip3 install --user flake8"
 	# ignores line length and reclass related errors
-	flake8 --ignore E501 . | grep -v "reclass"
+	flake8 --ignore E501 . --exclude=reclass
 	@echo
