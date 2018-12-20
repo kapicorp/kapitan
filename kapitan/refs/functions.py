@@ -102,6 +102,10 @@ def reveal(ctx, secret_path):
     """
     token_type_name = ctx.ref_controller.token_type_name(ctx.token)
     secret_tag = "?{{{}:{}}}".format(token_type_name, secret_path)
-    ref_obj = ctx.ref_controller[secret_tag]
-    ctx.ref_encoding = ref_obj.encoding
-    ctx.data = ref_obj.reveal()
+    try:
+        ref_obj = ctx.ref_controller[secret_tag]
+        ctx.ref_encoding = ref_obj.encoding
+        ctx.data = ref_obj.reveal()
+    except KeyError:
+        raise RefError("|reveal function error: {secret_path} file in {}|reveal:{secret_path} does not exist"
+                       .format(ctx.token, secret_path=secret_path,))

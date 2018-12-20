@@ -435,6 +435,7 @@ The usual flow of creating and using an encrypted secret with kapitan is:
     rsa - Generates an RSA 4096 private key (PKCS#8). You can optionally pass the key size i.e. `|rsa:2048`
     rsapublic - Derives an RSA public key from a revealed private key i.e. `|reveal:path/to/encrypted_private_key|rsapublic`
     ```
+    **Note:** If you use `|reveal:/path/secret`, when changing the `/path/secret` file make sure you also delete any secrets referencing `/path/secret` so kapitan can regenerate them.
 
 - Use your secret in your classes/targets, like in the [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml):
   ```
