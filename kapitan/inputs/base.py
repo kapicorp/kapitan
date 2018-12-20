@@ -35,6 +35,10 @@ class InputType(object):
         self.ref_controller = ref_controller
 
     def compile_obj(self, comp_obj, ext_vars, **kwargs):
+        """
+        run compile_input_path() for each input_path in comp_obj
+        kwargss are passed into compile_input_path()
+        """
         input_type = comp_obj["input_type"]
         assert input_type == self.type_name
         input_paths = comp_obj["input_paths"]
@@ -43,6 +47,10 @@ class InputType(object):
             self.compile_input_path(input_path, comp_obj, ext_vars, **kwargs)
 
     def compile_input_path(self, input_path, comp_obj, ext_vars, **kwargs):
+        """
+        compile and validate input_path in comp_obj
+        kwargs are passed into compile_file()
+        """
         target_name = ext_vars["target"]
         output_path = comp_obj["output_path"]
         output_type = comp_obj.get("output_type", self.default_output_type())
@@ -65,7 +73,7 @@ class InputType(object):
                                "search_paths: {}".format(input_path, target_name, self.search_paths))
 
     def make_compile_dirs(self, target_name, output_path):
-        "make compile dirs, skips if dirs exist"
+        """make compile dirs, skips if dirs exist"""
         _compile_path = os.path.join(self.compile_path, target_name, output_path)
         # support writing to an already existent dir
         try:
@@ -76,6 +84,7 @@ class InputType(object):
                 pass
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
+        """implements compilation for file_path to compile_path with ext_vars"""
         return NotImplementedError
 
     def default_output_type(self):

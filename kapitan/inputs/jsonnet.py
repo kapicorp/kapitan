@@ -32,8 +32,7 @@ class Jsonnet(InputType):
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """
         Write file_path (jsonnet evaluated) items as files to compile_path.
-        Set output to write as json or yaml
-        search_paths and ext_vars will be passed as parameters to jsonnet_file()
+        ext_vars will be passed as parameters to jsonnet_file()
         kwargs:
             output: default 'yaml', accepts 'json'
             prune: default False, accepts True

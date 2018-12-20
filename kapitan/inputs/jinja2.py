@@ -61,4 +61,5 @@ class Jinja2(InputType):
                 logger.debug("Wrote %s with mode %.4o", full_item_path, mode)
 
     def default_output_type(self):
+        # no output_type options for jinja2
         return None
