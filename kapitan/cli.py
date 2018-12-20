@@ -203,7 +203,10 @@ def main():
         if args.vars:
             ext_vars = dict(var.split('=') for var in args.vars)
         json_output = None
-        _search_imports = lambda cwd, imp: search_imports(cwd, imp, search_paths)
+
+        def _search_imports(cwd, imp):
+            return search_imports(cwd, imp, search_paths)
+
         json_output = jsonnet_file(file_path, import_callback=_search_imports,
                                    native_callbacks=resource_callbacks(search_paths),
                                    ext_vars=ext_vars)

@@ -114,10 +114,7 @@ class AWSKMSSecret(Ref):
             if isinstance(data, str):
                 _data = data.encode()
         try:
-            response = awskms_obj().encrypt(
-                KeyId=key,
-                Plaintext=_data
-                )
+            response = awskms_obj().encrypt(KeyId=key, Plaintext=_data)
             ciphertext = base64.b64encode(response['CiphertextBlob'])
             self.data = ciphertext
             self.key = key
