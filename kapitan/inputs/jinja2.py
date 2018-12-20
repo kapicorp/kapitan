@@ -47,12 +47,8 @@ class Jinja2(InputType):
 
         for item_key, item_value in render_jinja2(file_path, context).items():
             full_item_path = os.path.join(compile_path, item_key)
-            try:
-                os.makedirs(os.path.dirname(full_item_path))
-            except OSError as ex:
-                # If directory exists, pass
-                if ex.errno == errno.EEXIST:
-                    pass
+            os.makedirs(os.path.dirname(full_item_path), exist_ok=True)
+
             with CompiledFile(full_item_path, self.ref_controller, mode="w", reveal=reveal,
                               target_name=target_name) as fp:
                 fp.write(item_value["content"])
