@@ -108,4 +108,4 @@ def reveal(ctx, secret_path):
         ctx.data = ref_obj.reveal()
     except KeyError:
         raise RefError("|reveal function error: {secret_path} file in {}|reveal:{secret_path} does not exist"
-                       .format(ctx.token, secret_path=secret_path,))
+                       .format(ctx.token, secret_path=secret_path))
