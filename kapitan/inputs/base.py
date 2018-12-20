@@ -113,6 +113,7 @@ class CompilingFile(object):
         else:
             self.revealer.compile_obj(obj, target_name=target_name)
         yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+        logger.debug("Wrote %s", self.fp.name)
 
     def write_json(self, obj):
         """recursively hash or reveal refs and convert obj to json and write to file"""
@@ -124,6 +125,7 @@ class CompilingFile(object):
         else:
             self.revealer.compile_obj(obj, target_name=target_name)
         json.dump(obj, self.fp, indent=indent, escape_forward_slashes=False)
+        logger.debug("Wrote %s", self.fp.name)
 
 
 class CompiledFile(object):
