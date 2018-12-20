@@ -35,6 +35,7 @@ from kapitan.refs.base import RefController, Revealer, search_target_token_paths
 from kapitan.refs.secrets.gpg import GPGSecret
 from kapitan.refs.secrets.gpg import lookup_fingerprints
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
+from kapitan.refs.secrets.awskms import AWSKMSSecret
 
 from kapitan.errors import KapitanError
 
@@ -341,12 +342,28 @@ def secret_write(args, ref_controller):
         secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
         tag = '?{{gkms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
+
+    elif token_name.startswith("awskms:"):
+        type_name, token_path = token_name.split(":")
+        key = args.key
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
+            if 'secrets' not in kap_inv_params:
+                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+
+            key = kap_inv_params['secrets']['awskms']['key']
+        if not key:
+            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.awskms.key and use --target")
+        secret_obj = AWSKMSSecret(data, key, encode_base64=args.base64)
+        tag = '?{{awskms:{}}}'.format(token_path)
+        ref_controller[tag] = secret_obj
     else:
-        fatal_error("Invalid token: {name}. Try using gpg/gkms:{name}".format(name=token_name))
+        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms:{name}".format(name=token_name))
 
 
 def secret_update(args, ref_controller):
-    "Update secret gpg recipients/gkms key"
+    "Update secret gpg recipients/gkms/awskms key"
     # TODO --update *might* mean something else for other types
     token_name = args.update
     if token_name.startswith("gpg:"):
@@ -391,8 +408,25 @@ def secret_update(args, ref_controller):
         secret_obj.update_key(key)
         ref_controller[tag] = secret_obj
 
+    elif token_name.startswith("awskms:"):
+        key = args.key
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
+            if 'secrets' not in kap_inv_params:
+                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+
+            key = kap_inv_params['secrets']['awskms']['key']
+        if not key:
+            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.awskms.key and use --target")
+        type_name, token_path = token_name.split(":")
+        tag = '?{{awskms:{}}}'.format(token_path)
+        secret_obj = ref_controller[tag]
+        secret_obj.update_key(key)
+        ref_controller[tag] = secret_obj
+
     else:
-        fatal_error("Invalid token: {name}. Try using gpg/gkms:{name}".format(name=token_name))
+        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms:{name}".format(name=token_name))
 
 
 def secret_reveal(args, ref_controller):
@@ -412,7 +446,7 @@ def secret_reveal(args, ref_controller):
 
 def secret_update_validate(args, ref_controller):
     "Validate and/or update target secrets"
-    # update gpg recipients/gkms key for all secrets in secrets_path
+    # update gpg recipients/gkms/awskms key for all secrets in secrets_path
     # use --secrets-path to set scanning path
     inv = inventory_reclass(args.inventory_path)
     targets = set(inv['nodes'].keys())
@@ -437,9 +471,14 @@ def secret_update_validate(args, ref_controller):
             recipients = None
 
         try:
-            key = kap_inv_params['secrets']['gkms']['key']
+            gkey = kap_inv_params['secrets']['gkms']['key']
         except KeyError:
-            key = None
+            gkey = None
+
+        try:
+            awskey = kap_inv_params['secrets']['awskms']['key']
+        except KeyError:
+            awskey = None
 
         for token_path in token_paths:
             if token_path.startswith("?{gpg:"):
@@ -465,16 +504,29 @@ def secret_update_validate(args, ref_controller):
                         ref_controller[token_path] = secret_obj
 
             elif token_path.startswith("?{gkms:"):
-                if not key:
+                if not gkey:
                     logger.debug("secret_update_validate: target: %s has no inventory gkms key, skipping %s", target_name, token_path)
                     continue
                 secret_obj = ref_controller[token_path]
-                if key != secret_obj.key:
+                if gkey != secret_obj.key:
                     if args.validate_targets:
                         logger.info("%s key mismatch", token_path)
                         ret_code = 1
                     else:
-                        secret_obj.update_key(key)
+                        secret_obj.update_key(gkey)
+                        ref_controller[token_path] = secret_obj
+
+            elif token_path.startswith("?{awskms:"):
+                if not awskey:
+                    logger.debug("secret_update_validate: target: %s has no inventory awskms key, skipping %s", target_name, token_path)
+                    continue
+                secret_obj = ref_controller[token_path]
+                if awskey != secret_obj.key:
+                    if args.validate_targets:
+                        logger.info("%s key mismatch", token_path)
+                        ret_code = 1
+                    else:
+                        secret_obj.update_key(awskey)
                         ref_controller[token_path] = secret_obj
 
             else:

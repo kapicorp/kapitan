@@ -52,18 +52,21 @@ For CI/CD usage, check out [ci/](https://github.com/deepmind/kapitan/tree/master
 Kapitan needs Python 3.6.
 
 **Install Python 3.6:**
-<br>Linux: `sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip python3-yaml`
-<br>Mac: `brew install python3 libyaml`
+
+ * Linux: `sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip python3-yaml`
+ * Mac: `brew install python3 libyaml`
 
 **Install Kapitan:**
 
 User (`$HOME/.local/lib/python3.6/bin` on Linux or `$HOME/Library/Python/3.6/bin` on macOS):
-```
+
+```shell
 pip3 install --user --upgrade kapitan
 ```
 
 System-wide (not recommended):
-```
+
+```shell
 sudo pip3 install --upgrade kapitan
 ```
 
@@ -88,7 +91,7 @@ These targets generate the following resources:
 
 ![demo](https://raw.githubusercontent.com/deepmind/kapitan/master/docs/demo.gif)
 
-```
+```shell
 $ cd examples/kubernetes
 
 $ kapitan compile
@@ -151,7 +154,6 @@ parameters:
         java_opts: ${elasticsearch:java_opts}
         replicas: ${elasticsearch:replicas}
         masters: ${elasticsearch:masters}
-...
 ```
 
 Or in the `mysql` class example, we declare the generic variables that will be shared by all targets that import the component and what to compile.
@@ -170,6 +172,7 @@ parameters:
         # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
         password: ?{gpg:mysql/root/password|randomstr|base64}
         # password: ?{gkms:mysql/root/password|randomstr|base64}
+        # password: ?{awskms:mysql/root/password|randomstr|base64}
 
   kapitan:
     compile:
@@ -319,7 +322,8 @@ optional arguments:
 ```
 
 These parameters can also be defined in a local `.kapitan` file, for example:
-```
+
+```shell
 $ cat .kapitan
 
 compile:
@@ -328,14 +332,15 @@ compile:
 ```
 
 This is equivalent to running:
-```
+
+```shell
 kapitan compile --indent 4 --parallelism 8
 ```
 
 To enforce the kapitan version used for compilation (for consistency and safety), you can add `version` to `.kapitan`:
-```
-$ cat .kapitan
 
+```shell
+$ cat .kapitan
 ...
 version: 0.19.0
 ```
@@ -375,7 +380,7 @@ java_opts for elasticsearch data role are: {{ inventory.parameters.elasticsearch
 
 #### Jinja2 jsonnet templating
 
-Such as reading the inventory within jsonnet, Kapitan also provides a function to render a Jinja2 template file. Again, importing "kapitan.jsonnet" is needed.
+Such as reading the inventory within jsonnet, Kapitan also provides a function to render a Jinja2 template file. Again, importing `kapitan.jsonnet` is needed.
 
 The jsonnet snippet renders the jinja2 template in templates/got.j2:
 
@@ -402,7 +407,7 @@ b64decode - base64 decode text e.g. {{ text | b64decode }}
 
 ### kapitan secrets
 
-Manages your secrets with GPG or Google Cloud KMS (beta), with plans to also support AWS KMS and Vault.
+Manages your secrets with GPG, Google Cloud KMS (beta) or AWS KMS (beta), with plans to also support Vault.
 
 The usual flow of creating and using an encrypted secret with kapitan is:
 
@@ -414,42 +419,45 @@ The usual flow of creating and using an encrypted secret with kapitan is:
     ```
     GPG: kapitan secrets --write gpg:mysql/root/password -t minikube-mysql -f <password file>
     gKMS: kapitan secrets --write gkms:mysql/root/password -t minikube-mysql -f <password file>
+    awsKMS: kapitan secrets --write awskms:mysql/root/password -t minikube-mysql -f <password file>
     OR use stdin:
-    echo -n '<password>' | kapitan secrets --write [gpg/gkms]:mysql/root/password -t minikube-mysql -f -
+    echo -n '<password>' | kapitan secrets --write [gpg/gkms/awskms]:mysql/root/password -t minikube-mysql -f -
     ```
     This will inherit the secrets configuration from minikube-mysql target, encrypt and save your password into `secrets/mysql/root/password`, see `examples/kubernetes`.
 
   - Automatically:<br>
     See [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml). When referencing your secret, you can use the following functions to automatically generate, encrypt and save your secret:
     ```
-    randomstr - Generates a random string. You can optionally pass the length you want i.e. randomstr:32
-    rsa - Generates an RSA 4096 private key (PKCS#8). You can optionally pass the key size i.e. rsa:2048
-    rsapublic - Derives an RSA public key from a private key. Required argument is the private key file i.e. rsapublic:path/to/encrypted_private_key
-    base64 - base64 encodes your secret; to be used as a secondary function i.e. randomstr|base64
-    sha256 - sha256 hashes your secret; to be used as a secondary function i.e. randomstr|sha256. You can optionally pass a salt i.e randomstr|sha256:salt -> becomes sha256("salt:<generated random string>")
+    randomstr - Generates a random string. You can optionally pass the length you want i.e. `randomstr:32`
+    rsa - Generates an RSA 4096 private key (PKCS#8). You can optionally pass the key size i.e. `rsa:2048`
+    rsapublic - Derives an RSA public key from a private key. Required argument is the private key file i.e. `rsapublic:path/to/encrypted_private_key`
+    base64 - base64 encodes your secret; to be used as a secondary function i.e. `randomstr|base64`
+    sha256 - sha256 hashes your secret; to be used as a secondary function i.e. `randomstr|sha256`. You can optionally pass a salt i.e `randomstr|sha256:salt` -> becomes `sha256("salt:<generated random string>")`
     ```
 
 - Use your secret in your classes/targets, like in the [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml):
-```
-users:
-  root:
-    # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
-    password: ?{gpg:mysql/root/password|randomstr|base64}
-```
+  ```
+  users:
+    root:
+      # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
+      password: ?{gpg:mysql/root/password|randomstr|base64}
+  ```
 
 - After `kapitan compile`, this will compile to the [mysql_secret.yml k8s secret](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml). If you are part of the GPG recipients, you can see the secret by running:
-```
-kapitan secrets --reveal -f examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml
-```
+  ```
+  kapitan secrets --reveal -f examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml
+  ```
 
 To setup GPG for the kubernetes examples you can run:
-```
+
+```shell
 gpg --import examples/kubernetes/secrets/example\@kapitan.dev.pub
 gpg --import examples/kubernetes/secrets/example\@kapitan.dev.key
 ```
 
 And to trust the GPG example key:
-```
+
+```shell
 gpg --edit-key example@kapitan.dev
 gpg> trust
 Please decide how far you trust this user to correctly verify other users' keys
@@ -469,7 +477,7 @@ gpg> quit
 
 Rendering the inventory for the `minikube-es` target:
 
-```
+```shell
 $ kapitan inventory -t minikube-es
 ...
 classes:
@@ -609,7 +617,7 @@ With Kapitan, we worked to de-compose several problems that most of the other so
 
 3) ***Hierarchical inventory***: This is the feature that sets us apart from other solutions. We use the inventory (based on [reclass](https://github.com/salt-formulas/reclass)) to define variables and properties that can be reused across different projects/deployments. This allows us to limit repetition, but also to define a nicer interface with developers (or CI tools) which will only need to understand YAML to operate changes.
 
-4) ***Secrets***: We manage most of our secrets with kapitan using the GPG and Google Cloud KMS integrations. Keys can be setup per class, per target or shared so you can easily and flexibly manage access per environment. They can also be dynamically generated on compilation, if you don't feel like generating random passwords or RSA private keys, and they can be referenced in the inventory like any other variables. We have plans to support other providers such as AWS KMS and Vault, in addition to GPG and Google Cloud KMS.
+4) ***Secrets***: We manage most of our secrets with kapitan using the GPG, Google Cloud KMS and AWS KMS integrations. Keys can be setup per class, per target or shared so you can easily and flexibly manage access per environment. They can also be dynamically generated on compilation, if you don't feel like generating random passwords or RSA private keys, and they can be referenced in the inventory like any other variables. We have plans to support other providers such as Vault, in addition to GPG, Google Cloud KMS and AWS KMS.
 
 5) ***Canned scripts***: We treat scripts as text templates, so that we can craft pre-canned scripts for the specific target we are working on. This can be used for instance to define scripts that setup clusters, contexts or allow to run kubectl with all the correct settings. Most other solutions require you to define contexts and call kubectl with the correct settings. We take care of that for you. Less ambiguity, less mistakes.
 
