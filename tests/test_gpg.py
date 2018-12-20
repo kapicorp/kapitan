@@ -108,7 +108,7 @@ class GPGSecretsTest(unittest.TestCase):
         self.assertEqual(private_key.key_size, 2048)
 
         # Test rsapublic with previous private key as the parameter
-        tag_rsapublic = '?{gpg:secret/rsapublic|rsapublic:secret/rsa}'
+        tag_rsapublic = '?{gpg:secret/rsapublic|reveal:secret/rsa|rsapublic}'
         REF_CONTROLLER[tag_rsapublic] = RefParams()
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'secret/rsa')))
 
