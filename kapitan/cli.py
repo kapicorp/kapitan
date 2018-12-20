@@ -27,11 +27,12 @@ import yaml
 
 from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar
 from kapitan.utils import deep_get, from_dot_kapitan, check_version, fatal_error
+from kapitan.utils import search_target_token_paths
 from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
 
-from kapitan.refs.base import RefController, Revealer, search_target_token_paths
+from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.gpg import GPGSecret
 from kapitan.refs.secrets.gpg import lookup_fingerprints
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
@@ -196,7 +197,17 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    if hasattr(args, 'verbose') and args.verbose:
+        logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    elif hasattr(args, 'quiet') and args.quiet:
+        logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
+    else:
+        logging.basicConfig(level=logging.INFO, format="%(message)s")
+
     if cmd == 'eval':
+        logging.basicConfig(level=logging.WARNING)
+
         file_path = args.jsonnet_file
         search_paths = [os.path.abspath(path) for path in args.search_paths]
         ext_vars = {}
@@ -217,14 +228,6 @@ def main():
             print(json_output)
 
     elif cmd == 'compile':
-        if args.verbose:
-            logging.basicConfig(level=logging.DEBUG,
-                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-        elif args.quiet:
-            logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
-        else:
-            logging.basicConfig(level=logging.INFO, format="%(message)s")
-
         search_paths = [os.path.abspath(path) for path in args.search_paths]
 
         if not args.ignore_version_check:
@@ -238,12 +241,6 @@ def main():
                         cache=args.cache, cache_paths=args.cache_paths)
 
     elif cmd == 'inventory':
-        if args.verbose:
-            logging.basicConfig(level=logging.DEBUG,
-                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-        else:
-            logging.basicConfig(level=logging.INFO, format="%(message)s")
-
         if args.pattern and args.target_name == '':
             parser.error("--pattern requires --target_name")
         try:
@@ -264,21 +261,9 @@ def main():
             sys.exit(1)
 
     elif cmd == 'searchvar':
-        if args.verbose:
-            logging.basicConfig(level=logging.DEBUG,
-                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-        else:
-            logging.basicConfig(level=logging.INFO, format="%(message)s")
-
         searchvar(args.searchvar, args.inventory_path, args.pretty_print)
 
     elif cmd == 'secrets':
-        if args.verbose:
-            logging.basicConfig(level=logging.DEBUG,
-                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-        else:
-            logging.basicConfig(level=logging.INFO, format="%(message)s")
-
         ref_controller = RefController(args.secrets_path)
 
         if args.write is not None:

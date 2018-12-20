@@ -45,7 +45,7 @@ class Ref(object):
     def __init__(self, data, from_base64=False, **kwargs):
         """
         writes data
-        set from_base64 to load a already encoded data
+        set from_base64 to load already base64 encoded data
         """
         self.type_name = 'ref'
         self.encoding = kwargs.get('encoding', 'original')
@@ -515,28 +515,3 @@ class FunctionContext(object):
     def __init__(self, data):
         "Carry context accross function evaluation"
         self.data = data
-
-
-def search_target_token_paths(target_secrets_path, targets):
-    """
-    returns dict of target and their secret token paths (e.g ?{[gpg/gkms/awskms]:mysql/root/password}) in target_secrets_path
-    targets is a set of target names used to lookup targets in target_secrets_path
-    """
-    target_files = defaultdict(list)
-    for root, _, files in os.walk(target_secrets_path):
-        for f in files:
-            full_path = os.path.join(root, f)
-            secret_path = full_path[len(target_secrets_path) + 1:]
-            target_name = secret_path.split("/")[0]
-            if target_name in targets:
-                with open(full_path) as fp:
-                    obj = yaml.load(fp, Loader=YamlLoader)
-                    try:
-                        secret_type = obj['type']
-                    except KeyError:
-                        # Backwards compatible with gpg secrets that didn't have type in yaml
-                        secret_type = "gpg"
-                    secret_path = "?{{{}:{}}}".format(secret_type, secret_path)
-                logger.debug('search_target_token_paths: found %s', secret_path)
-                target_files[target_name].append(secret_path)
-    return target_files
