@@ -193,14 +193,17 @@ def fingerprint_non_expired(recipient_name):
     try:
         keys = gpg_obj().list_keys(keys=(recipient_name,))
         for key in keys:
-            # if 'expires' key is set and time in the future, return
-            if key.get('expires') and (time.time() < int(key['expires'])):
-                return key['fingerprint']
-            # if 'expires' key not set, return
-            elif key.get('expires') is None:
+            if 'expires' not in key:
+                logger.info("Invalid dictionary structure for key for recipient: %s with fingerprint: %s",
+                             recipient_name, key['fingerprint'])
+                continue
+
+            # if 'expires' is indefinite (meaning it is an empty string) OR
+            # if 'expires' key is set and time is in the future, return
+            if (not key['expires']) or (time.time() < int(key['expires'])):
                 return key['fingerprint']
             else:
-                logger.debug("Key for recipient: %s with fingerprint: %s is expired, skipping",
+                logger.debug("Key for recipient: %s with fingerprint: %s has expired, skipping",
                              recipient_name, key['fingerprint'])
         raise GPGError("Could not find valid key for recipient: %s" % recipient_name)
     except IndexError as iexp:
