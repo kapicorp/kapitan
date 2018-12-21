@@ -58,10 +58,11 @@ class AWSKMSSecret(Ref):
         """
         try:
             target_name = ref_params.kwargs['target_name']
-            target_inv = cached.inv['nodes'].get(target_name, None)
-            if target_name is None:
+            if not target_name:
                 raise ValueError('target_name not set')
-            if target_inv is None:
+
+            target_inv = cached.inv['nodes'].get(target_name, None)
+            if not target_inv:
                 raise ValueError('target_inv not set')
 
             key = target_inv['parameters']['kapitan']['secrets']['awskms']['key']
@@ -137,8 +138,9 @@ class AWSKMSSecret(Ref):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding,
-                "key": self.key, "type": self.type_name}
+        orig = super().dump()
+        orig['key'] = self.key
+        return orig
 
 
 class AWSKMSBackend(RefBackend):

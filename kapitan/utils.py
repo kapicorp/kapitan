@@ -18,8 +18,6 @@ from __future__ import print_function
 
 "random utils"
 
-from functools import lru_cache, wraps
-from hashlib import sha256
 import logging
 import os
 import sys
@@ -31,8 +29,10 @@ import _jsonnet as jsonnet
 import yaml
 import math
 import base64
-from collections import Counter
+from collections import Counter, defaultdict
 from pkg_resources import parse_version
+from functools import lru_cache, wraps
+from hashlib import sha256
 
 from kapitan.version import VERSION
 from kapitan.errors import CompileError
@@ -409,6 +409,7 @@ def check_version():
             sys.exit(1)
     except KeyError:
         pass
+
 
 def search_target_token_paths(target_secrets_path, targets):
     """

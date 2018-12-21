@@ -21,7 +21,6 @@ import time
 
 from kapitan.refs.base import Ref, RefBackend, RefError
 from kapitan import cached
-
 from kapitan.errors import KapitanError
 
 logger = logging.getLogger(__name__)
@@ -80,22 +79,18 @@ class GPGSecret(Ref):
                 return cls(data, _fingerprints, **ref_params.kwargs)
 
             target_name = ref_params.kwargs['target_name']
-            target_inv = cached.inv['nodes'].get(target_name, None)
-            if target_name is None:
+            if not target_name:
                 raise ValueError('target_name not set')
-            if target_inv is None:
+
+            target_inv = cached.inv['nodes'].get(target_name, None)
+            if not target_inv:
                 raise ValueError('target_inv not set')
 
             if 'secrets' not in target_inv['parameters']['kapitan']:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
 
-            try:
-                recipients = target_inv['parameters']['kapitan']['secrets']['gpg']['recipients']
-            except KeyError:
-                # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                               "please use parameters.kapitan.secrets.gpg.recipients")
-                recipients = target_inv['parameters']['kapitan']['secrets']['recipients']
+            recipients = target_inv['parameters']['kapitan']['secrets']['gpg']['recipients']
+
             return cls(data, recipients, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create GPGSecret: target_name missing")
@@ -160,8 +155,9 @@ class GPGSecret(Ref):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding,
-                "recipients": self.recipients, "type": self.type_name}
+        orig = super().dump()
+        orig['recipients'] = self.recipients
+        return orig
 
 
 class GPGBackend(RefBackend):
@@ -195,7 +191,7 @@ def fingerprint_non_expired(recipient_name):
         for key in keys:
             if 'expires' not in key:
                 logger.info("Invalid dictionary structure for key for recipient: %s with fingerprint: %s",
-                             recipient_name, key['fingerprint'])
+                            recipient_name, key['fingerprint'])
                 continue
 
             # if 'expires' is indefinite (meaning it is an empty string) OR

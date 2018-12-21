@@ -20,12 +20,12 @@ import logging
 import os
 import shutil
 import sys
-from functools import partial
 import multiprocessing
 import tempfile
 import jsonschema
 import yaml
 import time
+from functools import partial
 
 from kapitan.resources import inventory_reclass
 from kapitan.utils import hashable_lru_cache
@@ -75,8 +75,7 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
         # so p is only not None when raising an exception
         [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
-        if not os.path.exists(compile_path):
-            os.makedirs(compile_path)
+        os.makedirs(compile_path, exist_ok=True)
 
         # if '-t' is set on compile or only a few changed, only override selected targets
         if updated_targets:
@@ -84,8 +83,7 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
                 compile_path_target = os.path.join(compile_path, target)
                 temp_path_target = os.path.join(temp_path, target)
 
-                if not os.path.exists(compile_path_target):
-                    os.makedirs(compile_path_target)
+                os.makedirs(compile_path_target, exist_ok=True)
 
                 shutil.rmtree(compile_path_target)
                 shutil.copytree(temp_path_target, compile_path_target)
@@ -144,7 +142,7 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
                 cached.inv_cache['inventory'][target] = {}
                 cached.inv_cache['inventory'][target]['classes'] = dictionary_hash(inv['nodes'][target]['classes'])
                 cached.inv_cache['inventory'][target]['parameters'] = dictionary_hash(inv['nodes'][target]['parameters'])
-            except KeyError as e:
+            except KeyError:
                 raise CompileError("target not found: {}".format(target))
     else:
         for target in inv['nodes']:
@@ -187,7 +185,7 @@ def changed_targets(inventory_path, output_path):
         with open(saved_inv_cache_path, "r") as f:
             try:
                 saved_inv_cache = yaml.safe_load(f)
-            except Exception as e:
+            except Exception:
                 raise CompileError("Failed to load kapitan cache: %s", saved_inv_cache_path)
 
     targets_list = list(inv['nodes'])
@@ -201,7 +199,7 @@ def changed_targets(inventory_path, output_path):
                 if hash != saved_inv_cache['folder'][key]:
                     logger.debug("%s folder hash changed, recompiling all targets", key)
                     return targets_list
-            except KeyError as e:
+            except KeyError:
                 # Errors usually occur when saved_inv_cache doesn't contain a new folder
                 # Recompile anyway to be safe
                 return targets_list
@@ -214,7 +212,7 @@ def changed_targets(inventory_path, output_path):
                 elif cached.inv_cache['inventory'][target]['parameters'] != saved_inv_cache['inventory'][target]['parameters']:
                     logger.debug("parameters hash changed in %s, recompiling", target)
                     targets.append(target)
-            except KeyError as e:
+            except KeyError:
                 # Errors usually occur when saved_inv_cache doesn't contain a new target
                 # Recompile anyway to be safe
                 targets.append(target)
@@ -232,7 +230,7 @@ def save_inv_cache(compile_path, targets):
             try:
                 with open(inv_cache_path, "r") as f:
                     saved_inv_cache = yaml.safe_load(f)
-            except Exception as e:
+            except Exception:
                 pass
 
             if saved_inv_cache:

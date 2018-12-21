@@ -38,7 +38,7 @@ from kapitan.refs.secrets.gpg import lookup_fingerprints
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 
-from kapitan.errors import KapitanError
+from kapitan.errors import KapitanError, RefHashMismatchError
 
 logger = logging.getLogger(__name__)
 
@@ -301,13 +301,7 @@ def secret_write(args, ref_controller):
             if 'secrets' not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            try:
-                recipients = kap_inv_params['secrets']['gpg']['recipients']
-            except KeyError:
-                # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                               "please use parameters.kapitan.secrets.gpg.recipients")
-                recipients = kap_inv_params['secrets']['recipients']
+            recipients = kap_inv_params['secrets']['gpg']['recipients']
         if not recipients:
             raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
                                "parameters.kapitan.secrets.gpg.recipients and use --target")
@@ -363,13 +357,7 @@ def secret_update(args, ref_controller):
             if 'secrets' not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            try:
-                recipients = kap_inv_params['secrets']['gpg']['recipients']
-            except KeyError:
-                # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                               "please use parameters.kapitan.secrets.gpg.recipients")
-                recipients = kap_inv_params['secrets']['recipients']
+            recipients = kap_inv_params['secrets']['gpg']['recipients']
         if not recipients:
             raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
                                "parameters.kapitan.secrets.gpg.recipients and use --target")
@@ -423,13 +411,15 @@ def secret_reveal(args, ref_controller):
     file_name = args.file
     if file_name is None:
         fatal_error('--file is required with --reveal')
-    if file_name == '-':
-        # TODO deal with RefHashMismatchError or KeyError exceptions
-        out = revealer.reveal_raw_file(None)
-        sys.stdout.write(out)
-    elif file_name:
-        for rev_obj in revealer.reveal_path(file_name):
-            sys.stdout.write(rev_obj.content)
+    try:
+        if file_name == '-':
+            out = revealer.reveal_raw_file(None)
+            sys.stdout.write(out)
+        elif file_name:
+            for rev_obj in revealer.reveal_path(file_name):
+                sys.stdout.write(rev_obj.content)
+    except (RefHashMismatchError, KeyError):
+        logger.exception("Reveal failed for file {name}".format(name=file_name))
 
 
 def secret_update_validate(args, ref_controller):
@@ -447,29 +437,13 @@ def secret_update_validate(args, ref_controller):
         if 'secrets' not in kap_inv_params:
             raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
 
-        try:
-            try:
-                recipients = kap_inv_params['secrets']['gpg']['recipients']
-            except KeyError:
-                # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                               "please use parameters.kapitan.secrets.gpg.recipients")
-                recipients = kap_inv_params['secrets']['recipients']
-        except KeyError:
-            recipients = None
-
-        try:
-            gkey = kap_inv_params['secrets']['gkms']['key']
-        except KeyError:
-            gkey = None
-
-        try:
-            awskey = kap_inv_params['secrets']['awskms']['key']
-        except KeyError:
-            awskey = None
-
         for token_path in token_paths:
             if token_path.startswith("?{gpg:"):
+                try:
+                    recipients = kap_inv_params['secrets']['gpg']['recipients']
+                except KeyError:
+                    recipients = None
+
                 if not recipients:
                     logger.debug("secret_update_validate: target: %s has no inventory gpg recipients, skipping %s", target_name, token_path)
                     continue
@@ -492,6 +466,11 @@ def secret_update_validate(args, ref_controller):
                         ref_controller[token_path] = secret_obj
 
             elif token_path.startswith("?{gkms:"):
+                try:
+                    gkey = kap_inv_params['secrets']['gkms']['key']
+                except KeyError:
+                    gkey = None
+
                 if not gkey:
                     logger.debug("secret_update_validate: target: %s has no inventory gkms key, skipping %s", target_name, token_path)
                     continue
@@ -505,6 +484,11 @@ def secret_update_validate(args, ref_controller):
                         ref_controller[token_path] = secret_obj
 
             elif token_path.startswith("?{awskms:"):
+                try:
+                    awskey = kap_inv_params['secrets']['awskms']['key']
+                except KeyError:
+                    awskey = None
+
                 if not awskey:
                     logger.debug("secret_update_validate: target: %s has no inventory awskms key, skipping %s", target_name, token_path)
                     continue
