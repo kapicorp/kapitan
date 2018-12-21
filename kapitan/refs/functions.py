@@ -34,7 +34,8 @@ def eval_func(func_name, ctx, *func_params):
         'randomstr': randomstr,
         'sha256': sha256,
         'rsa': rsa_private_key,
-        'rsapublic': rsa_public_key
+        'rsapublic': rsa_public_key,
+        'reveal': reveal
     }
 
     return func_lookup[func_name](ctx, *func_params)
@@ -59,7 +60,7 @@ def sha256(ctx, salt=''):
         ctx.data = hashlib.sha256(salted_input_value.encode()).hexdigest()
     else:
         raise RefError("Ref error: eval_func: nothing to sha256 hash; try "
-                       "something like 'randomstr|sha256'")
+                       "something like '|randomstr|sha256'")
 
 
 def rsa_private_key(ctx, key_size='4096'):
@@ -76,15 +77,14 @@ def rsa_private_key(ctx, key_size='4096'):
     ), "utf-8")
 
 
-def rsa_public_key(ctx, private_key_token_path):
-    """sets ctx.data to derived RSA public key from private_key_token_path"""
-    # load and decrypt secret content in private_key_token_path
-    token_type_name = ctx.ref_controller.token_type_name(ctx.token)
-    private_key_tag = "?{{{}:{}}}".format(token_type_name, private_key_token_path)
-    ref_obj = ctx.ref_controller[private_key_tag]
-    data_dec = ref_obj.reveal()
+def rsa_public_key(ctx):
+    """Derives RSA public key from revealed private key"""
+    if not ctx.data:
+        raise RefError("Ref error: eval_func: RSA public key cannot be derived; try "
+                       "something like '|reveal:path/to/encrypted_private_key|rsapublic'")
 
-    if ref_obj.encoding == 'base64':
+    data_dec = ctx.data
+    if ctx.ref_encoding == 'base64':
         data_dec = base64.b64decode(data_dec).decode()
 
     private_key = serialization.load_pem_private_key(data_dec.encode(), password=None, backend=default_backend())
@@ -94,3 +94,18 @@ def rsa_public_key(ctx, private_key_token_path):
                    encoding=serialization.Encoding.PEM,
                    format=serialization.PublicFormat.SubjectPublicKeyInfo
                    ), "UTF-8")
+
+
+def reveal(ctx, secret_path):
+    """
+    decrypt and return data from secret_path
+    """
+    token_type_name = ctx.ref_controller.token_type_name(ctx.token)
+    secret_tag = "?{{{}:{}}}".format(token_type_name, secret_path)
+    try:
+        ref_obj = ctx.ref_controller[secret_tag]
+        ctx.ref_encoding = ref_obj.encoding
+        ctx.data = ref_obj.reveal()
+    except KeyError:
+        raise RefError("|reveal function error: {secret_path} file in {}|reveal:{secret_path} does not exist"
+                       .format(ctx.token, secret_path=secret_path))

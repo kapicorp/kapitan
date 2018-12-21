@@ -428,12 +428,14 @@ The usual flow of creating and using an encrypted secret with kapitan is:
   - Automatically:<br>
     See [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml). When referencing your secret, you can use the following functions to automatically generate, encrypt and save your secret:
     ```
-    randomstr - Generates a random string. You can optionally pass the length you want i.e. `randomstr:32`
-    rsa - Generates an RSA 4096 private key (PKCS#8). You can optionally pass the key size i.e. `rsa:2048`
-    rsapublic - Derives an RSA public key from a private key. Required argument is the private key file i.e. `rsapublic:path/to/encrypted_private_key`
-    base64 - base64 encodes your secret; to be used as a secondary function i.e. `randomstr|base64`
-    sha256 - sha256 hashes your secret; to be used as a secondary function i.e. `randomstr|sha256`. You can optionally pass a salt i.e `randomstr|sha256:salt` -> becomes `sha256("salt:<generated random string>")`
+    randomstr - Generates a random string. You can optionally pass the length you want i.e. `|randomstr:32`
+    base64 - base64 encodes your secret; to be used as a secondary function i.e. `|randomstr|base64`
+    sha256 - sha256 hashes your secret; to be used as a secondary function i.e. `|randomstr|sha256`. You can optionally pass a salt i.e `|randomstr|sha256:salt` -> becomes `sha256("salt:<generated random string>")`
+    reveal - Decrypts a secret; to be used as a secondary function, useful for reuse of a secret like for different encodings i.e `|reveal:path/to/secret|base64`
+    rsa - Generates an RSA 4096 private key (PKCS#8). You can optionally pass the key size i.e. `|rsa:2048`
+    rsapublic - Derives an RSA public key from a revealed private key i.e. `|reveal:path/to/encrypted_private_key|rsapublic`
     ```
+    **Note:** If you use `|reveal:/path/secret`, when changing the `/path/secret` file make sure you also delete any secrets referencing `/path/secret` so kapitan can regenerate them.
 
 - Use your secret in your classes/targets, like in the [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml):
   ```
