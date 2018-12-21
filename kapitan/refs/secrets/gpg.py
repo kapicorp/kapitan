@@ -79,11 +79,11 @@ class GPGSecret(Ref):
                 return cls(data, _fingerprints, **ref_params.kwargs)
 
             target_name = ref_params.kwargs['target_name']
-            if not target_name:
+            if target_name is None:
                 raise ValueError('target_name not set')
 
             target_inv = cached.inv['nodes'].get(target_name, None)
-            if not target_inv:
+            if target_inv is None:
                 raise ValueError('target_inv not set')
 
             if 'secrets' not in target_inv['parameters']['kapitan']:
@@ -155,9 +155,8 @@ class GPGSecret(Ref):
         """
         Returns dict with keys/values to be serialised.
         """
-        orig = super().dump()
-        orig['recipients'] = self.recipients
-        return orig
+        return {"data": self.data, "encoding": self.encoding,
+                "recipients": self.recipients, "type": self.type_name}
 
 
 class GPGBackend(RefBackend):

@@ -1,7 +1,7 @@
 ## 0.22.0-rc.0:
 #### Breaking:
 - Added reveal secrets function, updated rsapublic function (#182)
-- Parameters.kapitan.secrets.recipients is deprecated, please use parameters.kapitan.secrets.gpg.recipients (#183)
+- parameters.kapitan.secrets.recipients is deprecated, please use parameters.kapitan.secrets.gpg.recipients (#183)
 
 #### Updates:
 - Added AWS KMS support as a secrets backend(#179)

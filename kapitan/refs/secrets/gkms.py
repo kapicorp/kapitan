@@ -69,11 +69,11 @@ class GoogleKMSSecret(Ref):
         """
         try:
             target_name = ref_params.kwargs['target_name']
-            if not target_name:
+            if target_name is None:
                 raise ValueError('target_name not set')
 
             target_inv = cached.inv['nodes'].get(target_name, None)
-            if not target_inv:
+            if target_inv is None:
                 raise ValueError('target_inv not set')
 
             key = target_inv['parameters']['kapitan']['secrets']['gkms']['key']
@@ -156,9 +156,8 @@ class GoogleKMSSecret(Ref):
         """
         Returns dict with keys/values to be serialised.
         """
-        orig = super().dump()
-        orig['key'] = self.key
-        return orig
+        return {"data": self.data, "encoding": self.encoding,
+                "key": self.key, "type": self.type_name}
 
 
 class GoogleKMSBackend(RefBackend):

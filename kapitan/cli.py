@@ -206,8 +206,6 @@ def main():
         logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     if cmd == 'eval':
-        logging.basicConfig(level=logging.WARNING)
-
         file_path = args.jsonnet_file
         search_paths = [os.path.abspath(path) for path in args.search_paths]
         ext_vars = {}
@@ -419,7 +417,7 @@ def secret_reveal(args, ref_controller):
             for rev_obj in revealer.reveal_path(file_name):
                 sys.stdout.write(rev_obj.content)
     except (RefHashMismatchError, KeyError):
-        logger.exception("Reveal failed for file {name}".format(name=file_name))
+        raise KapitanError("Reveal failed for file {name}".format(name=file_name))
 
 
 def secret_update_validate(args, ref_controller):
@@ -437,13 +435,21 @@ def secret_update_validate(args, ref_controller):
         if 'secrets' not in kap_inv_params:
             raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
 
+        try:
+            recipients = kap_inv_params['secrets']['gpg']['recipients']
+        except KeyError:
+            recipients = None
+        try:
+            gkey = kap_inv_params['secrets']['gkms']['key']
+        except KeyError:
+            gkey = None
+        try:
+            awskey = kap_inv_params['secrets']['awskms']['key']
+        except KeyError:
+            awskey = None
+
         for token_path in token_paths:
             if token_path.startswith("?{gpg:"):
-                try:
-                    recipients = kap_inv_params['secrets']['gpg']['recipients']
-                except KeyError:
-                    recipients = None
-
                 if not recipients:
                     logger.debug("secret_update_validate: target: %s has no inventory gpg recipients, skipping %s", target_name, token_path)
                     continue
@@ -466,11 +472,6 @@ def secret_update_validate(args, ref_controller):
                         ref_controller[token_path] = secret_obj
 
             elif token_path.startswith("?{gkms:"):
-                try:
-                    gkey = kap_inv_params['secrets']['gkms']['key']
-                except KeyError:
-                    gkey = None
-
                 if not gkey:
                     logger.debug("secret_update_validate: target: %s has no inventory gkms key, skipping %s", target_name, token_path)
                     continue
@@ -484,11 +485,6 @@ def secret_update_validate(args, ref_controller):
                         ref_controller[token_path] = secret_obj
 
             elif token_path.startswith("?{awskms:"):
-                try:
-                    awskey = kap_inv_params['secrets']['awskms']['key']
-                except KeyError:
-                    awskey = None
-
                 if not awskey:
                     logger.debug("secret_update_validate: target: %s has no inventory awskms key, skipping %s", target_name, token_path)
                     continue
