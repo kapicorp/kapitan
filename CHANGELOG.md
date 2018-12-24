@@ -1,3 +1,13 @@
+## 0.22.0-rc.0:
+#### Breaking:
+- Added reveal secrets function, updated rsapublic function (#182)
+- parameters.kapitan.secrets.recipients is deprecated, please use parameters.kapitan.secrets.gpg.recipients (#183)
+
+#### Updates:
+- Added AWS KMS support as a secrets backend(#179)
+- Refactor input\_type code into classes(#180)
+- Fix GPG failing when expiry of gpg key is infinite (#181)
+
 ## 0.21.0
 - Upgraded to jsonnet 0.12.1 (https://github.com/google/jsonnet/releases/tag/v0.12.1)
 

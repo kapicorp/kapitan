@@ -58,9 +58,10 @@ class AWSKMSSecret(Ref):
         """
         try:
             target_name = ref_params.kwargs['target_name']
-            target_inv = cached.inv['nodes'].get(target_name, None)
             if target_name is None:
                 raise ValueError('target_name not set')
+
+            target_inv = cached.inv['nodes'].get(target_name, None)
             if target_inv is None:
                 raise ValueError('target_inv not set')
 

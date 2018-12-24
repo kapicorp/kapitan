@@ -23,7 +23,6 @@ import re
 import sys
 import os
 import yaml
-from collections import defaultdict
 
 from kapitan.errors import RefFromFuncError, RefBackendError, RefError
 from kapitan.errors import RefHashMismatchError
@@ -45,7 +44,7 @@ class Ref(object):
     def __init__(self, data, from_base64=False, **kwargs):
         """
         writes data
-        set from_base64 to load a already encoded data
+        set from_base64 to load already base64 encoded data
         """
         self.type_name = 'ref'
         self.encoding = kwargs.get('encoding', 'original')
@@ -132,19 +131,10 @@ class RefBackend(object):
 
         raise KeyError(ref_path)
 
-    def _mkdir_ref(self, full_ref_path):
-        "create dir full_ref_path if not existent"
-        try:
-            os.makedirs(os.path.dirname(full_ref_path))
-        except OSError as ex:
-            # If directory exists, pass
-            if ex.errno == errno.EEXIST:
-                pass
-
     def __setitem__(self, ref_path, ref_obj):
         assert(isinstance(ref_obj, self.ref_type))
         full_ref_path = os.path.join(self.path, ref_path)
-        self._mkdir_ref(full_ref_path)
+        os.makedirs(os.path.dirname(full_ref_path), exist_ok=True)
 
         with open(full_ref_path, 'w') as fp:
             yaml.safe_dump(ref_obj.dump(), stream=fp, default_flow_style=False)
@@ -264,7 +254,7 @@ class Revealer(object):
                 ref = self.ref_controller[tag]
                 return ref.compile()
             # if refs don't exist:
-            except KeyError as e:
+            except KeyError:
                 raise RefError("Could not find ref: {}".format(tag))
 
         return compile_replace_match
@@ -513,30 +503,5 @@ class RefController(object):
 
 class FunctionContext(object):
     def __init__(self, data):
-        "Carry context accross function evaluation"
+        "Carry context across function evaluation"
         self.data = data
-
-
-def search_target_token_paths(target_secrets_path, targets):
-    """
-    returns dict of target and their secret token paths (e.g ?{[gpg/gkms/awskms]:mysql/root/password}) in target_secrets_path
-    targets is a set of target names used to lookup targets in target_secrets_path
-    """
-    target_files = defaultdict(list)
-    for root, _, files in os.walk(target_secrets_path):
-        for f in files:
-            full_path = os.path.join(root, f)
-            secret_path = full_path[len(target_secrets_path) + 1:]
-            target_name = secret_path.split("/")[0]
-            if target_name in targets:
-                with open(full_path) as fp:
-                    obj = yaml.load(fp, Loader=YamlLoader)
-                    try:
-                        secret_type = obj['type']
-                    except KeyError:
-                        # Backwards compatible with gpg secrets that didn't have type in yaml
-                        secret_type = "gpg"
-                    secret_path = "?{{{}:{}}}".format(secret_type, secret_path)
-                logger.debug('search_target_token_paths: found %s', secret_path)
-                target_files[target_name].append(secret_path)
-    return target_files

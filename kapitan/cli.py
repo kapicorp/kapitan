@@ -27,17 +27,18 @@ import yaml
 
 from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar
 from kapitan.utils import deep_get, from_dot_kapitan, check_version, fatal_error
+from kapitan.utils import search_target_token_paths
 from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
 
-from kapitan.refs.base import RefController, Revealer, search_target_token_paths
+from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.gpg import GPGSecret
 from kapitan.refs.secrets.gpg import lookup_fingerprints
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 
-from kapitan.errors import KapitanError
+from kapitan.errors import KapitanError, RefHashMismatchError
 
 logger = logging.getLogger(__name__)
 
@@ -196,6 +197,14 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    if hasattr(args, 'verbose') and args.verbose:
+        logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    elif hasattr(args, 'quiet') and args.quiet:
+        logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
+    else:
+        logging.basicConfig(level=logging.INFO, format="%(message)s")
+
     if cmd == 'eval':
         file_path = args.jsonnet_file
         search_paths = [os.path.abspath(path) for path in args.search_paths]
@@ -217,14 +226,6 @@ def main():
             print(json_output)
 
     elif cmd == 'compile':
-        if args.verbose:
-            logging.basicConfig(level=logging.DEBUG,
-                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-        elif args.quiet:
-            logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
-        else:
-            logging.basicConfig(level=logging.INFO, format="%(message)s")
-
         search_paths = [os.path.abspath(path) for path in args.search_paths]
 
         if not args.ignore_version_check:
@@ -238,12 +239,6 @@ def main():
                         cache=args.cache, cache_paths=args.cache_paths)
 
     elif cmd == 'inventory':
-        if args.verbose:
-            logging.basicConfig(level=logging.DEBUG,
-                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-        else:
-            logging.basicConfig(level=logging.INFO, format="%(message)s")
-
         if args.pattern and args.target_name == '':
             parser.error("--pattern requires --target_name")
         try:
@@ -264,21 +259,9 @@ def main():
             sys.exit(1)
 
     elif cmd == 'searchvar':
-        if args.verbose:
-            logging.basicConfig(level=logging.DEBUG,
-                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-        else:
-            logging.basicConfig(level=logging.INFO, format="%(message)s")
-
         searchvar(args.searchvar, args.inventory_path, args.pretty_print)
 
     elif cmd == 'secrets':
-        if args.verbose:
-            logging.basicConfig(level=logging.DEBUG,
-                                format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-        else:
-            logging.basicConfig(level=logging.INFO, format="%(message)s")
-
         ref_controller = RefController(args.secrets_path)
 
         if args.write is not None:
@@ -316,13 +299,7 @@ def secret_write(args, ref_controller):
             if 'secrets' not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            try:
-                recipients = kap_inv_params['secrets']['gpg']['recipients']
-            except KeyError:
-                # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                               "please use parameters.kapitan.secrets.gpg.recipients")
-                recipients = kap_inv_params['secrets']['recipients']
+            recipients = kap_inv_params['secrets']['gpg']['recipients']
         if not recipients:
             raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
                                "parameters.kapitan.secrets.gpg.recipients and use --target")
@@ -378,13 +355,7 @@ def secret_update(args, ref_controller):
             if 'secrets' not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            try:
-                recipients = kap_inv_params['secrets']['gpg']['recipients']
-            except KeyError:
-                # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                               "please use parameters.kapitan.secrets.gpg.recipients")
-                recipients = kap_inv_params['secrets']['recipients']
+            recipients = kap_inv_params['secrets']['gpg']['recipients']
         if not recipients:
             raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
                                "parameters.kapitan.secrets.gpg.recipients and use --target")
@@ -438,13 +409,15 @@ def secret_reveal(args, ref_controller):
     file_name = args.file
     if file_name is None:
         fatal_error('--file is required with --reveal')
-    if file_name == '-':
-        # TODO deal with RefHashMismatchError or KeyError exceptions
-        out = revealer.reveal_raw_file(None)
-        sys.stdout.write(out)
-    elif file_name:
-        for rev_obj in revealer.reveal_path(file_name):
-            sys.stdout.write(rev_obj.content)
+    try:
+        if file_name == '-':
+            out = revealer.reveal_raw_file(None)
+            sys.stdout.write(out)
+        elif file_name:
+            for rev_obj in revealer.reveal_path(file_name):
+                sys.stdout.write(rev_obj.content)
+    except (RefHashMismatchError, KeyError):
+        raise KapitanError("Reveal failed for file {name}".format(name=file_name))
 
 
 def secret_update_validate(args, ref_controller):
@@ -463,21 +436,13 @@ def secret_update_validate(args, ref_controller):
             raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
 
         try:
-            try:
-                recipients = kap_inv_params['secrets']['gpg']['recipients']
-            except KeyError:
-                # TODO: Keeping gpg recipients backwards-compatible until we make a breaking release
-                logger.warning("WARNING: parameters.kapitan.secrets.recipients is deprecated, " +
-                               "please use parameters.kapitan.secrets.gpg.recipients")
-                recipients = kap_inv_params['secrets']['recipients']
+            recipients = kap_inv_params['secrets']['gpg']['recipients']
         except KeyError:
             recipients = None
-
         try:
             gkey = kap_inv_params['secrets']['gkms']['key']
         except KeyError:
             gkey = None
-
         try:
             awskey = kap_inv_params['secrets']['awskms']['key']
         except KeyError:
