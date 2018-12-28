@@ -11,7 +11,7 @@ Join our community on [`#kapitan`](https://kubernetes.slack.com) or visit [**`ht
 
 How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](#faq)!
 
-<img src="https://raw.githubusercontent.com/deepmind/kapitan/master/docs/kapitan_logo.png" width="250">
+<img src="./docs/kapitan_logo.png" width="250">
 
 # Table of Contents
 
@@ -40,15 +40,17 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 # Quickstart
 
 #### Docker (recommended)
+
 ```
 docker run -t --rm -v $(pwd):/src:delegated deepmind/kapitan -h
 ```
 
-On Linux you can add `-u $(id -u)` on `docker run` in order for kapitan to not change file permissions.
+On Linux you can add `-u $(id -u)` to `docker run` to preserve file permissions.
 
-For CI/CD usage, check out [ci/](https://github.com/deepmind/kapitan/tree/master/ci)
+For CI/CD usage, check out [ci/](./ci)
 
 #### Pip
+
 Kapitan needs Python 3.6.
 
 **Install Python 3.6:**
@@ -85,11 +87,11 @@ These targets generate the following resources:
 * Kubernetes `Service` to expose ElasticSearch service port
 * Kubernetes `StatefulSet` for MySQL
 * Kubernetes `Service` to expose MySQL service port
-* Kubernetes `Secret` for MySQL
+* Kubernetes `Secret` for MySQL credentials
 * Scripts to configure kubectl context to control the targets and helpers to apply/delete objects.
 * Documentation
 
-![demo](https://raw.githubusercontent.com/deepmind/kapitan/master/docs/demo.gif)
+![demo](./docs/demo.gif)
 
 ```shell
 $ cd examples/kubernetes
@@ -342,7 +344,7 @@ To enforce the kapitan version used for compilation (for consistency and safety)
 ```shell
 $ cat .kapitan
 ...
-version: 0.19.0
+version: 0.21.0
 ```
 
 # Modes of operation
@@ -411,7 +413,7 @@ Manages your secrets with GPG, Google Cloud KMS (beta) or AWS KMS (beta), with p
 
 The usual flow of creating and using an encrypted secret with kapitan is:
 
-- Define your GPG recipients or KMS key, see [common.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/common.yml), `parameters.kapitan.secrets`. You can also define these per target.
+- Define your GPG recipients or KMS key, see [common.yml class](./examples/kubernetes/inventory/classes/common.yml), `parameters.kapitan.secrets`. You can also define these per target.
 
 - Create your secret:
 
@@ -426,7 +428,7 @@ The usual flow of creating and using an encrypted secret with kapitan is:
     This will inherit the secrets configuration from minikube-mysql target, encrypt and save your password into `secrets/mysql/root/password`, see `examples/kubernetes`.
 
   - Automatically:<br>
-    See [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml). When referencing your secret, you can use the following functions to automatically generate, encrypt and save your secret:
+    See [mysql.yml class](./examples/kubernetes/inventory/classes/component/mysql.yml). When referencing your secret, you can use the following functions to automatically generate, encrypt and save your secret:
     ```
     randomstr - Generates a random string. You can optionally pass the length you want i.e. `|randomstr:32`
     base64 - base64 encodes your secret; to be used as a secondary function i.e. `|randomstr|base64`
@@ -437,7 +439,7 @@ The usual flow of creating and using an encrypted secret with kapitan is:
     ```
     **Note:** If you use `|reveal:/path/secret`, when changing the `/path/secret` file make sure you also delete any secrets referencing `/path/secret` so kapitan can regenerate them.
 
-- Use your secret in your classes/targets, like in the [mysql.yml class](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/inventory/classes/component/mysql.yml):
+- Use your secret in your classes/targets, like in the [mysql.yml class](./examples/kubernetes/inventory/classes/component/mysql.yml):
   ```
   users:
     root:
@@ -445,7 +447,7 @@ The usual flow of creating and using an encrypted secret with kapitan is:
       password: ?{gpg:mysql/root/password|randomstr|base64}
   ```
 
-- After `kapitan compile`, this will compile to the [mysql_secret.yml k8s secret](https://github.com/deepmind/kapitan/tree/master/examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml). If you are part of the GPG recipients, you can see the secret by running:
+- After `kapitan compile`, this will compile to the [mysql_secret.yml k8s secret](./examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml). If you are part of the GPG recipients, you can see the secret by running:
   ```
   kapitan secrets --reveal -f examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml
   ```
@@ -570,7 +572,7 @@ parameters:
 
 ### kapitan searchvar
 
-Show all inventory files where variable is declared:
+Show all inventory files where a variable is declared:
 
 ```
 $ kapitan searchvar parameters.elasticsearch.replicas
@@ -580,15 +582,7 @@ $ kapitan searchvar parameters.elasticsearch.replicas
 
 # Contributing
 
-## Testing
-
-Run `make test` to run all tests. If you modify anything in the `examples/` folder
-make sure you replicate the compiled result of that in `tests/test_kubernetes_compiled`.
-
-## Code Style
-
-Try to fix warnings from `make codestyle` before submitting to make sure you adhere to the
-[Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/).
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 # Credits
 
@@ -600,12 +594,12 @@ Try to fix warnings from `make codestyle` before submitting to make sure you adh
 
 ## Why do we prefer Kapitan to `Helm`?
 
-Before developing Kapitan, we turned to [`Helm`](https://github.com/kubernetes/helm) in an attempt to improve from our old Jinja based templating system.
+Before developing Kapitan, we turned to [`Helm`](https://github.com/kubernetes/helm) in an attempt to improve our old Jinja based templating system.
 
 We quickly discovered that `Helm` did not fit well with our workflow, for the following reasons (which were true at the time of the evaluation):
 * `Helm` uses Go templates to define Kubernetes (yaml) manifests. We were already unsatisfied by using Jinja and we did not see a huge improvement from our previous system, the main reason being: YAML files are not suitable to be managed by text templating frameworks.
 * `Helm` does not have a solution for sharing values across charts, if not through subcharts. We wanted to be able to have one single place to define all values for all our templates. Sharing data between charts felt awkward and complicated.
-* `Helm` is component/chart based. We wanted to have something that would treat the whole of our deployments as a whole.
+* `Helm` is component/chart based. We wanted to have something that would treat all our deployments as a whole.
 * We did not fancy the dependency on the tiller.
 
 In short, we feel `Helm` is trying to be `apt-get` for Kubernetes charts, while we are trying to take you further than that.
@@ -621,7 +615,7 @@ With Kapitan, we worked to de-compose several problems that most of the other so
 
 4) ***Secrets***: We manage most of our secrets with kapitan using the GPG, Google Cloud KMS and AWS KMS integrations. Keys can be setup per class, per target or shared so you can easily and flexibly manage access per environment. They can also be dynamically generated on compilation, if you don't feel like generating random passwords or RSA private keys, and they can be referenced in the inventory like any other variables. We have plans to support other providers such as Vault, in addition to GPG, Google Cloud KMS and AWS KMS.
 
-5) ***Canned scripts***: We treat scripts as text templates, so that we can craft pre-canned scripts for the specific target we are working on. This can be used for instance to define scripts that setup clusters, contexts or allow to run kubectl with all the correct settings. Most other solutions require you to define contexts and call kubectl with the correct settings. We take care of that for you. Less ambiguity, less mistakes.
+5) ***Canned scripts***: We treat scripts as text templates, so that we can craft pre-canned scripts for the specific target we are working on. This can be used for instance to define scripts that setup clusters, contexts or allow running kubectl with all the correct settings. Most other solutions require you to define contexts and call kubectl with the correct settings. We take care of that for you. Less ambiguity, less mistakes.
 
 6) ***Documentation***: We also use templates to create documentation for the targets we deploy. Documentation lived alongside everything else and it is treated as a first class citizen.
 We feel most other solutions are pushing the limits of their capacity in order to provide for the above problems.
