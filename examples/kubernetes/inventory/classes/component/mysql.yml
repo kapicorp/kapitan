@@ -25,3 +25,7 @@ parameters:
         password: ?{gpg:mysql/root/password|randomstr|base64}
         # password: ?{gkms:mysql/root/password|randomstr|base64}
         # password: ?{awskms:mysql/root/password|randomstr|base64}
+
+        # Generates the sha256 checksum of the previously declared B64'ed password
+        # It's base64'ed again so that it can be used in kubernetes secrets 
+        password_sha256: ?{gpg:mysql/root/password_sha256|reveal:mysql/root/password|sha256|base64}

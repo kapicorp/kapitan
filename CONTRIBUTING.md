@@ -3,6 +3,16 @@
 We'd love to accept your patches and contributions to this project. There are
 just a few small guidelines you need to follow.
 
+## Testing
+
+Run `make test` to run all tests. If you modify anything in the `examples/` folder
+make sure you replicate the compiled result of that in `tests/test_kubernetes_compiled`.
+
+## Code Style
+
+Try to fix warnings from `make codestyle` before submitting to make sure you adhere to the
+[Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/).
+
 ## Contributor License Agreement
 
 Contributions to this project must be accompanied by a Contributor License
