@@ -33,6 +33,7 @@ from kapitan.utils import directory_hash, dictionary_hash
 from kapitan.errors import KapitanError, CompileError
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
+from kapitan.inputs.kadet import Kadet
 from kapitan import cached
 
 logger = logging.getLogger(__name__)
@@ -291,6 +292,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
 
     jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller)
     jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
+    kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
@@ -299,8 +301,11 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             input_compiler = jinja2_compiler
         elif input_type == "jsonnet":
             input_compiler = jsonnet_compiler
+        elif input_type == "kadet":
+            input_compiler = kadet_compiler
         else:
-            raise CompileError("Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2".format(input_type))
+            err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet"
+            raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)

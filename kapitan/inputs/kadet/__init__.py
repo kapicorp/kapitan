@@ -1,8 +1,43 @@
-from addict import Dict
-import json
-import yaml
-from pprint import pprint
+#!/usr/bin/env python3
+#
+# Copyright 2018 The Kapitan Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+from addict import Dict
+import logging
+import json
+import os
+from pprint import pprint
+import yaml
+
+from kapitan.inputs.base import InputType, CompiledFile
+from kapitan.resources import inventory
+from kapitan.utils import render_jinja2
+
+logger = logging.getLogger(__name__)
+
+
+class Kadet(InputType):
+    def __init__(self, compile_path, search_paths, ref_controller):
+        super().__init__("kadet", compile_path, search_paths, ref_controller)
+
+    def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
+        pass
+
+
+    def default_output_type(self):
+        return "yaml"
 
 class BaseObj(object):
     def __init__(self, init_as={}, **kwargs):
