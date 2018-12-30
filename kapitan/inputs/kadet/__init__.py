@@ -16,14 +16,17 @@
 
 from addict import Dict
 import logging
+import importlib.util
 import json
 import os
 from pprint import pprint
+import sys
 import yaml
 
+from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType, CompiledFile
 from kapitan.resources import inventory
-from kapitan.utils import render_jinja2
+from kapitan.utils import render_jinja2, prune_empty
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +36,52 @@ class Kadet(InputType):
         super().__init__("kadet", compile_path, search_paths, ref_controller)
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
-        pass
+        """
+        Write file_path (kadet evaluated) items as files to compile_path.
+        ext_vars will be passed as parameters to kadet TODO ??
+        kwargs:
+            output: default 'yaml', accepts 'json'
+            prune: default False
+            reveal: default False, set to reveal refs on compile
+            target_name: default None, set to current target being compiled
+            indent: default 2
+        """
+        if not os.path.isdir(file_path):
+            raise CompiledFile("file_path: {} must be a directory".format(file_path))
 
+        module_name = os.path.basename(os.path.normpath(file_path))
+        init_path = os.path.join(file_path, '__init__.py')
+        spec = importlib.util.spec_from_file_location('kadet_module_'+module_name, init_path)
+        kadet_module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = kadet_module # TODO insert only once
+        spec.loader.exec_module(kadet_module) # TODO load only once
+        logger.debug('Kadet.compile_file: spec.name: %s', spec.name)
+
+        output = kwargs.get('output', 'yaml')
+        prune = kwargs.get('prune', False)
+        reveal = kwargs.get('reveal', False)
+        target_name = kwargs.get('target_name', None)
+        indent = kwargs.get('indent', 2)
+
+        output_obj = kadet_module.main().to_dict()
+        if prune:
+            output_obj = prune_empty(output_obj)
+
+        for item_key, item_value in output_obj.items():
+            # write each item to disk
+            if output == 'json':
+                file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
+                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
+                                  indent=indent) as fp:
+                    fp.write_json(item_value)
+            elif output == 'yaml':
+                file_path = os.path.join(compile_path, '%s.%s' % (item_key, "yml"))
+                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
+                                  indent=indent) as fp:
+                    fp.write_yaml(item_value)
+            else:
+                raise ValueError('output is neither "json" or "yaml"')
+            logger.debug("Pruned output for: %s", file_path)
 
     def default_output_type(self):
         return "yaml"
@@ -137,6 +184,7 @@ class BaseObj(object):
         returns object dict
         """
         return self._to_dict(self)
+
 
 # XXX TEST TEST
 # TODO move this to proper tests

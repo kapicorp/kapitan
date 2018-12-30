@@ -1,0 +1,9 @@
+parameters:
+  namespace: ${target_name}
+  kapitan:
+    compile:
+    - output_path: manifests
+      input_type: kadet
+      output_type: yaml
+      input_paths:
+        - components/dummy/

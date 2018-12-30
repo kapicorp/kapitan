@@ -46,7 +46,7 @@ class Jsonnet(InputType):
         json_output = jsonnet_file(file_path, import_callback=_search_imports,
                                    native_callbacks=resource_callbacks(self.search_paths),
                                    ext_vars=ext_vars)
-        json_output = json.loads(json_output)
+        output_obj = json.loads(json_output)
 
         output = kwargs.get('output', 'yaml')
         prune = kwargs.get('prune', False)
@@ -55,10 +55,10 @@ class Jsonnet(InputType):
         indent = kwargs.get('indent', 2)
 
         if prune:
-            json_output = prune_empty(json_output)
+            output_obj = prune_empty(output_obj)
             logger.debug("Pruned output for: %s", file_path)
 
-        for item_key, item_value in json_output.items():
+        for item_key, item_value in output_obj.items():
             # write each item to disk
             if output == 'json':
                 file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
