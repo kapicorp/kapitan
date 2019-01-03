@@ -2,7 +2,6 @@ classes:
   - common
   - cluster.minikube
   - component.elasticsearch
-  - component.dummy
 
 parameters:
   target_name: minikube-es

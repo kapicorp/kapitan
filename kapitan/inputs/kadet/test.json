@@ -1,8 +1,0 @@
-{
-    "json": true,
-    "test": "value",
-    "number": 1,
-    "bool": false,
-    "list": [1,2,3,4],
-    "dict": {"yoda": 6}
-}

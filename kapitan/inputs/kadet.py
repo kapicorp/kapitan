@@ -16,19 +16,61 @@
 
 from addict import Dict
 import logging
-import importlib.util
+from importlib.util import module_from_spec, spec_from_file_location
 import json
 import os
-from pprint import pprint
 import sys
 import yaml
 
-from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType, CompiledFile
-from kapitan.resources import inventory
-from kapitan.utils import render_jinja2, prune_empty
+from kapitan.resources import inventory as inventory_func
+from kapitan.utils import prune_empty
 
 logger = logging.getLogger(__name__)
+inventory = None
+inventory_global = None
+search_paths = None
+
+
+def module_from_path(path, check_name=None):
+    """
+    loads python module in path
+    set check_name to verify module name against spec name
+    returns tuple with module and spec
+    """
+
+    if not os.path.isdir(path):
+        raise FileNotFoundError("path: {} must be an existing directory".format(path))
+
+    module_name = os.path.basename(os.path.normpath(path))
+    init_path = os.path.join(path, '__init__.py')
+    spec = spec_from_file_location('kadet_component_{}'.format(module_name), init_path)
+    mod = module_from_spec(spec)
+
+    if spec is None:
+        raise ModuleNotFoundError("Could not load module in path {}".format(path))
+    if check_name is not None and check_name != module_name:
+        raise ModuleNotFoundError("Module name {} does not match check_name {}".format(module_name, check_name))
+
+    return mod, spec
+
+
+def load_from_search_paths(module_name):
+    """
+    loads and executes python module with module_name from search paths
+    returns module
+    """
+    for path in search_paths:
+        try:
+            _path = os.path.join(path, module_name)
+            mod, spec = module_from_path(_path, check_name=module_name)
+            spec.loader.exec_module(mod)
+            return mod
+        except ModuleNotFoundError:
+            pass
+        except FileNotFoundError:
+            pass
+    raise ModuleNotFoundError("Could not load module name {}".format(module_name))
 
 
 class Kadet(InputType):
@@ -38,7 +80,7 @@ class Kadet(InputType):
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """
         Write file_path (kadet evaluated) items as files to compile_path.
-        ext_vars will be passed as parameters to kadet TODO ??
+        ext_vars is not used in Kadet
         kwargs:
             output: default 'yaml', accepts 'json'
             prune: default False
@@ -46,22 +88,25 @@ class Kadet(InputType):
             target_name: default None, set to current target being compiled
             indent: default 2
         """
-        if not os.path.isdir(file_path):
-            raise CompiledFile("file_path: {} must be a directory".format(file_path))
-
-        module_name = os.path.basename(os.path.normpath(file_path))
-        init_path = os.path.join(file_path, '__init__.py')
-        spec = importlib.util.spec_from_file_location('kadet_module_'+module_name, init_path)
-        kadet_module = importlib.util.module_from_spec(spec)
-        sys.modules[spec.name] = kadet_module # TODO insert only once
-        spec.loader.exec_module(kadet_module) # TODO load only once
-        logger.debug('Kadet.compile_file: spec.name: %s', spec.name)
-
         output = kwargs.get('output', 'yaml')
         prune = kwargs.get('prune', False)
         reveal = kwargs.get('reveal', False)
         target_name = kwargs.get('target_name', None)
         indent = kwargs.get('indent', 2)
+
+        # These will be updated per target
+        # XXX At the moment we have no other way of setting externals for modules...
+        global search_paths
+        search_paths = self.search_paths
+        global inventory
+        inventory = lambda: Dict(inventory_func(self.search_paths, target_name)) # noqa E731
+        global inventory_global
+        inventory_global = lambda: Dict(inventory_func(self.search_paths, None)) # noqa E731
+
+        kadet_module, spec = module_from_path(file_path)
+        sys.modules[spec.name] = kadet_module
+        spec.loader.exec_module(kadet_module)
+        logger.debug('Kadet.compile_file: spec.name: %s', spec.name)
 
         output_obj = kadet_module.main().to_dict()
         if prune:
@@ -85,6 +130,7 @@ class Kadet(InputType):
 
     def default_output_type(self):
         return "yaml"
+
 
 class BaseObj(object):
     def __init__(self, init_as={}, **kwargs):
@@ -120,6 +166,26 @@ class BaseObj(object):
             yaml_obj = yaml.safe_load(fp)
             return cls(init_as=yaml_obj, **kwargs)
 
+    def root_from_yaml(self, file_path):
+        """
+        update self.root with YAML content in file_path
+        """
+        with open(file_path) as fp:
+            yaml_obj = yaml.safe_load(fp)
+            _copy = dict(self.root)
+            _copy.update(yaml_obj)
+            self.root = Dict(_copy)
+
+    def root_from_json(self, file_path):
+        """
+        update self.root with JSON content in file_path
+        """
+        with open(file_path) as fp:
+            json_obj = json.load(fp)
+            _copy = dict(self.root)
+            _copy.update(json_obj)
+            self.root = Dict(_copy)
+
     def _parse_kwargs(self, kwargs):
         """
         sets priv and root values from kwargs
@@ -137,10 +203,10 @@ class BaseObj(object):
         requires that key is set in root
         errors with msg if key not set
         """
-        err_msg ='{}: "{}": {}'.format(self.__class__.__name__, key, msg)
+        err_msg = '{}: "{}": {}'.format(self.__class__.__name__, key, msg)
         if key.startswith('_') and not hasattr(self, key):
             raise Exception(err_msg)
-        if key not in self.root:
+        elif not key.startswith('_') and key not in self.root:
             raise Exception(err_msg)
 
     def new(self):
@@ -184,36 +250,3 @@ class BaseObj(object):
         returns object dict
         """
         return self._to_dict(self)
-
-
-# XXX TEST TEST
-# TODO move this to proper tests
-if __name__ == '__main__':
-    class Deployment(BaseObj):
-        def new(self):
-            self.need('z')
-            self.root['ola'] = 1
-            self.root.ole = 2
-            self.root.oli = {'x': BaseObj(a=1, b=2)}
-            class MyThing(BaseObj):
-                def body(self):
-                    self.root.yoda = 3
-                    class OtherThing(BaseObj):
-                        def new(self):
-                            self.need('stuff', 'got no stuff')
-                        def body(self):
-                            self.root.yada = 4
-                    self.root.otherthing = OtherThing(a=3, stuff=666)
-            self.root.mything = MyThing()
-            self.root.things = [MyThing(y=3), MyThing(u=9, f=[MyThing(p=9)])]
-
-
-    d = Deployment(a=2, z=3, _c=4, w={'a': 34})
-    pprint(d.to_dict())
-    f = Deployment(a=2, z=3, _c=4, w={'b': 34})
-    f.root.z = 69
-    pprint(f.to_dict())
-    b = BaseObj.from_json("test.json", andthis="also")
-    pprint(b.to_dict())
-    b = BaseObj.from_yaml("test.yaml", andthis="too")
-    pprint(b.to_dict())
