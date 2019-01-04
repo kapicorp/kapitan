@@ -137,12 +137,11 @@ class BaseObj(object):
         """
         returns a BaseObj
         set init_as to initialise self.root
-        use kwargs to set values in self (starting with _)
-        use kwargs to set values in self.root
+        kwargs will be save into self.kwargs
         values in self.root are returned as dict via self.to_dict()
         """
         self.root = Dict(init_as)
-        self._parse_kwargs(kwargs)
+        self.kwargs = Dict(kwargs)
         self.new()
         self.body()
 
@@ -186,27 +185,13 @@ class BaseObj(object):
             _copy.update(json_obj)
             self.root = Dict(_copy)
 
-    def _parse_kwargs(self, kwargs):
-        """
-        sets priv and root values from kwargs
-        kwargs keys starting with _ are private
-        any other keys are set in self.root
-        """
-        for k, v in kwargs.items():
-            if k.startswith('_'):
-                setattr(self, k, v)
-            else:
-                setattr(self.root, k, v)
-
     def need(self, key, msg="key and value needed"):
         """
-        requires that key is set in root
+        requires that key is set in self.kwargs
         errors with msg if key not set
         """
         err_msg = '{}: "{}": {}'.format(self.__class__.__name__, key, msg)
-        if key.startswith('_') and not hasattr(self, key):
-            raise Exception(err_msg)
-        elif not key.startswith('_') and key not in self.root:
+        if key not in self.kwargs:
             raise Exception(err_msg)
 
     def new(self):

@@ -4,32 +4,32 @@ inv = inventory()
 
 class Deployment(BaseObj):
     def new(self):
-        self.need("_name", "name string needed")
-        self.need("_labels", "labels dict needed")
-        self.need("_containers", "containers dict needed")
+        self.need("name", "name string needed")
+        self.need("labels", "labels dict needed")
+        self.need("containers", "containers dict needed")
         self.root_from_yaml("lib/kubelib/deployment.yml")
 
     def body(self):
-        self.root.metadata.name = self._name
+        self.root.metadata.name = self.kwargs.name
         self.root.metadata.namespace = inv.parameters.target_name
-        self.root.spec.template.metadata.labels = self._labels
-        self.root.spec.template.spec.containers = self._containers
+        self.root.spec.template.metadata.labels = self.kwargs.labels
+        self.root.spec.template.spec.containers = self.kwargs.containers
 
 
 class Service(BaseObj):
     def new(self):
-        self.need("_name", "name string needed")
-        self.need("_labels", "labels dict needed")
-        self.need("_ports", "ports dict needed")
-        self.need("_selector", "selector dict needed")
+        self.need("name", "name string needed")
+        self.need("labels", "labels dict needed")
+        self.need("ports", "ports dict needed")
+        self.need("selector", "selector dict needed")
         self.root_from_yaml("lib/kubelib/service.yml")
 
     def body(self):
-        self.root.metadata.name = self._name
-        self.root.metadata.labels = self._labels
+        self.root.metadata.name = self.kwargs.name
+        self.root.metadata.labels = self.kwargs.labels
         self.root.metadata.namespace = inv.parameters.target_name
-        self.root.spec.ports = self._ports
-        self.root.spec.selector = self._selector
+        self.root.spec.ports = self.kwargs.ports
+        self.root.spec.selector = self.kwargs.selector
 
 
 class Container(BaseObj):
@@ -37,3 +37,8 @@ class Container(BaseObj):
         self.need("name")
         self.need("image")
         self.need("ports", "ports list of dict needed")
+
+    def body(self):
+        self.root.name = self.kwargs.name
+        self.root.image = self.kwargs.image
+        self.root.ports = self.kwargs.ports

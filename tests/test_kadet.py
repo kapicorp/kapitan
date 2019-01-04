@@ -27,6 +27,8 @@ class KadetTestObj(BaseObj):
         self.need('size', 'Need a size int')
 
     def body(self):
+        self.root.name = self.kwargs.name
+        self.root.size = self.kwargs.size
         self.root.firstkey = 1
         self.root.nested.firstkey = 2
         self.root['tradicional_key'] = 3
@@ -49,7 +51,7 @@ class KadetTestObjWithInner(KadetTestObj):
 
 class KadetTest(unittest.TestCase):
     def test_parse_kwargs(self):
-        kobj = BaseObj(this="that", _hidden=True, nothidden=True)
+        kobj = BaseObj({"this": "that", "nothidden": True}, param="notset")
         output = kobj.to_dict()
         desired_output = {"this": "that", "nothidden": True}
         self.assertEqual(output, desired_output)
@@ -71,7 +73,7 @@ class KadetTest(unittest.TestCase):
         self.assertEqual(output, desired_output)
 
     def test_inner(self):
-        kobj = KadetTestObjWithInner(name='testWithInnerObj', size=6, _hidden=9)
+        kobj = KadetTestObjWithInner(name='testWithInnerObj', size=6)
         output = kobj.to_dict()
         desired_output = {
             "name": "testWithInnerObj",
@@ -89,8 +91,10 @@ class KadetTest(unittest.TestCase):
 
     def test_lists(self):
         kobj = KadetTestObj(name='testObj', size=5)
-        kobj.root.withLists = [Dict({"i_am_inside_a_list": True}), BaseObj(init_as={"me": "too"}),
-                               BaseObj(list_of_objs=[BaseObj(a=1, b=2), Dict(c=3, d=4)])]
+        kobj.root.withLists = [Dict({"i_am_inside_a_list": True}),
+                               BaseObj(init_as={"me": "too"}),
+                               BaseObj({"list_of_objs": [BaseObj(dict(a=1, b=2)),
+                                                         Dict(dict(c=3, d=4))]})]
         output = kobj.to_dict()
         desired_output = {
             "name": "testObj",
