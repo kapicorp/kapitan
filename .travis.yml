@@ -28,7 +28,7 @@ after_success:
   - echo "$LAST_COMMIT_MSG"
   - echo "$TRAVIS_COMMIT_MESSAGE"
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ] \
-    && [[ $LAST_COMMIT_MSG =~ ^.*deepmind/release-v.*$" ]]; then sh ./scripts/inc_version.sh; fi
+    && [[ "$LAST_COMMIT_MSG" =~ "^.*deepmind/release-v.*$" ]]; then sh ./scripts/inc_version.sh; fi
 
 deploy:
   - provider: script
