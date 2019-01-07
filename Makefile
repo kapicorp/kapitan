@@ -9,7 +9,7 @@ release:
 ifeq ($(version),)
 	@echo Please pass version to release e.g. make release version=0.16.5
 else
-	scripts/make_release.sh $(version)
+	scripts/inc_version.sh $(version)
 endif
 
 .PHONY: package
