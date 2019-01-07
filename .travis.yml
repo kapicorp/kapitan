@@ -24,11 +24,9 @@ script:
   - make test
 
 after_success:
-  - export LAST_COMMIT_MSG="$(git log -1 --oneline)"
-  - echo "$LAST_COMMIT_MSG"
   - echo "$TRAVIS_COMMIT_MESSAGE"
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ] \
-    && [[ "$LAST_COMMIT_MSG" =~ "^.*deepmind/release-v.*$" ]]; then sh ./scripts/inc_version.sh; fi
+    && [[ "$TRAVIS_COMMIT_MESSAGE" == *deepmind/release-v* ]]; then sh ./scripts/inc_version.sh; fi
 
 deploy:
   - provider: script
