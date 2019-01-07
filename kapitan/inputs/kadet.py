@@ -133,39 +133,47 @@ class Kadet(InputType):
 
 
 class BaseObj(object):
-    def __init__(self, init_as={}, **kwargs):
+    def __init__(self, **kwargs):
         """
         returns a BaseObj
-        set init_as to initialise self.root
         kwargs will be save into self.kwargs
         values in self.root are returned as dict via self.to_dict()
         """
-        self.root = Dict(init_as)
+        self.root = Dict()
         self.kwargs = Dict(kwargs)
         self.new()
         self.body()
 
     @classmethod
-    def from_json(cls, file_path, **kwargs):
+    def from_json(cls, file_path):
         """
         returns a BaseObj initialised with json content
         from file_path
         """
         with open(file_path) as fp:
             json_obj = json.load(fp)
-            return cls(init_as=json_obj, **kwargs)
+            return cls.from_dict(json_obj)
 
     @classmethod
-    def from_yaml(cls, file_path, **kwargs):
+    def from_yaml(cls, file_path):
         """
         returns a BaseObj initialised with yaml content
         from file_path
         """
         with open(file_path) as fp:
             yaml_obj = yaml.safe_load(fp)
-            return cls(init_as=yaml_obj, **kwargs)
+            return cls.from_dict(yaml_obj)
 
-    def root_from_yaml(self, file_path):
+    @classmethod
+    def from_dict(cls, dict_value):
+        """
+        returns a BaseObj initialise with dict_value
+        """
+        bobj = cls()
+        bobj.root = Dict(dict_value)
+        return bobj
+
+    def update_root_yaml(self, file_path):
         """
         update self.root with YAML content in file_path
         """
@@ -175,7 +183,7 @@ class BaseObj(object):
             _copy.update(yaml_obj)
             self.root = Dict(_copy)
 
-    def root_from_json(self, file_path):
+    def update_root_json(self, file_path):
         """
         update self.root with JSON content in file_path
         """

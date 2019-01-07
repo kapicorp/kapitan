@@ -33,7 +33,7 @@ class KadetTestObj(BaseObj):
         self.root.nested.firstkey = 2
         self.root['tradicional_key'] = 3
         self.root.withdict = {'A': 'dict'}
-        self.root.withbaseobj_init_as = BaseObj(init_as={'init': 'as'})
+        self.root.withbaseobj_init_as = BaseObj.from_dict({'init': 'as'})
         bobj = BaseObj()
         bobj.root.inside = "BaseObj"
         self.root.withbaseobj = bobj
@@ -51,7 +51,7 @@ class KadetTestObjWithInner(KadetTestObj):
 
 class KadetTest(unittest.TestCase):
     def test_parse_kwargs(self):
-        kobj = BaseObj({"this": "that", "nothidden": True}, param="notset")
+        kobj = BaseObj.from_dict({"this": "that", "nothidden": True})
         output = kobj.to_dict()
         desired_output = {"this": "that", "nothidden": True}
         self.assertEqual(output, desired_output)
@@ -92,9 +92,9 @@ class KadetTest(unittest.TestCase):
     def test_lists(self):
         kobj = KadetTestObj(name='testObj', size=5)
         kobj.root.withLists = [Dict({"i_am_inside_a_list": True}),
-                               BaseObj(init_as={"me": "too"}),
-                               BaseObj({"list_of_objs": [BaseObj(dict(a=1, b=2)),
-                                                         Dict(dict(c=3, d=4))]})]
+                               BaseObj.from_dict({"me": "too"}),
+                               BaseObj.from_dict({"list_of_objs": [BaseObj.from_dict(dict(a=1, b=2)),
+                                                                   Dict(dict(c=3, d=4))]})]
         output = kobj.to_dict()
         desired_output = {
             "name": "testObj",
@@ -115,27 +115,27 @@ class KadetTest(unittest.TestCase):
         with self.assertRaises(Exception):
             KadetTestObj(this_should_error=True)
 
-    def test_root_from_yaml(self):
+    def test_update_root_yaml(self):
         yaml_file = tempfile.mktemp()
         with open(yaml_file, 'w') as fp:
             fp.write("this: that\nlist: [1,2,3]\n")
 
         class KadetObjFromYaml(BaseObj):
             def new(self):
-                self.root_from_yaml(yaml_file)
+                self.update_root_yaml(yaml_file)
 
         output = KadetObjFromYaml().to_dict()
         desired_output = {"this": "that", "list": [1, 2, 3]}
         self.assertEqual(output, desired_output)
 
-    def test_root_from_json(self):
+    def test_update_root_json(self):
         json_file = tempfile.mktemp()
         with open(json_file, 'w') as fp:
             fp.write('{"this": "that", "list": [1,2,3]}')
 
         class KadetObjFromYaml(BaseObj):
             def new(self):
-                self.root_from_json(json_file)
+                self.update_root_json(json_file)
 
         output = KadetObjFromYaml().to_dict()
         desired_output = {"this": "that", "list": [1, 2, 3]}

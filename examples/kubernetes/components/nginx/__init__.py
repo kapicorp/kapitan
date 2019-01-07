@@ -3,7 +3,7 @@ kubelib = kadet.load_from_search_paths("kubelib")
 inv = kadet.inventory()
 
 name = "nginx"
-labels = kadet.BaseObj({"app": name})
+labels = kadet.BaseObj.from_dict({"app": name})
 nginx_container = kubelib.Container(name=name, image=inv.parameters.nginx.image, ports=[{"containerPort": 80}])
 
 svc_selector = {"app": name}
