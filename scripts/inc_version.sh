@@ -6,9 +6,15 @@ echomsg() {
   echo "--- ${1} ---"
 }
 
+export LAST_COMMIT_MSG="$(git log -1 --oneline)"
+
+if ! [[ "$LAST_COMMIT_MSG" =~ ^.*deepmind/release-v.*$ ]]; then
+  echomsg "Not a release, skipping version incrementing"
+  exit 0;
+fi
+
 echomsg "Incrementing Version"
 
-export LAST_COMMIT_MSG="$(git log -1 --oneline)"
 # Get everything after deepmind/release-v
 export VERSION="${LAST_COMMIT_MSG##*deepmind/release-v}"
 # Get everything before space character
