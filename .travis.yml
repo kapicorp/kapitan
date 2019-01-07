@@ -24,9 +24,12 @@ script:
   - make test
 
 after_success:
-  - echo "$TRAVIS_COMMIT_MESSAGE"
-  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ] \
-    && (echo "$TRAVIS_COMMIT_MESSAGE" | grep -q 'deepmind/release-v'); then sh ./scripts/inc_version.sh; fi
+  - provider: script
+    script: ./scripts/inc_version.sh
+    on:
+      branch: master
+      repo: deepmind/kapitan
+      condition: "$TRAVIS_COMMIT_MESSAGE =~ ^.*deepmind/release-v.*$"
 
 deploy:
   - provider: script
