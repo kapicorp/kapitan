@@ -2,9 +2,6 @@ language: python
 cache: pip
 python:
   - "3.7-dev"
-branches:
-  only:
-    - master
 notifications:
   recipients:
     - kapitan@google.com
@@ -26,6 +23,8 @@ script:
 after_success:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ]; then sh ./scripts/inc_version.sh; fi
 
+before_deploy:
+  - echo $TRAVIS_BRANCH
 deploy:
   - provider: pypi
     distributions: sdist bdist_wheel
@@ -36,6 +35,5 @@ deploy:
       secure: GBENUUiSJWHqQNU6NnKrbWSDIoTTPsowV9oME3eTXFOcyvZLL5W0xs5TwOXZxPyz0eaQ20F+o9rT8jiuhe9laA3gDnID109wznuRwY1uGsWP2xolRwZIDeikBS/V7LSrvm69IDGbBuyakWOS0Z1GgPKW3NZzJRYnWhwRolxgqrXmCtK5yiPBHMWRlwn+KPpjGkDKufw47PKOomxScmSeXv3wRk85azWbriNFbtnbymqGut2VqccdbWrQPZ9VaKPbOolnOA6XC95ib4sMyXzpTpwVfsPeBSlYQoCNr6G4QQ3P8x93/twFwFSTGoGqqF5qa8xsvu7KyinjBZvzsTYdTq/2KTKhogSQRkxhcIR+bWBguGWyim1zptbHI0NYPhAEwOtwWT94lXPaisDyCIgCXmMm9f68ViJ4qpfD6o1qaQ+iSmHq16Q+p3CAstKTbUhIEKZomkVwPc7M9D2vUj+LphdGGn8Qp2rbz/jbkfJjVhNJRYrhJuCwtK7O2icf5fgLHruhFKBYeiNepAbF9wyleAREYGBoiw2PT2c0RUYyX+ITrNLsEcV7EzfT7qOm3Pl/ONQ9VV3IaXXWExpOvPdSl3toyAAPqYJ0Zsv23l4PIIY/g6VREyhtGQx2P8ZCGYVfVa+dd1FVH0hfXIsKnmsp0+Y1cpFb1pBa/XWlXRwjxZw=
     on:
       tags: true
-      branch: master
 after_deploy:
   - sh ./scripts/after_deploy.sh

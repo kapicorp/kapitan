@@ -36,7 +36,6 @@ git add ./kapitan/version.py
 git commit -m "Version increment $VERSION"
 git tag -a "v$VERSION" -m "Version increment $VERSION"
 
-
 git remote remove origin
 git remote add origin https://${GH_TOKEN}@github.com/deepmind/kapitan.git
 

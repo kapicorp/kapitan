@@ -1,4 +1,4 @@
-## 0.22.0-rc.1:
+## 0.22.0-rc.2:
 #### Updates:
 - Updated python dependencies: pyyaml and six
 
