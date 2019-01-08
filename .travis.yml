@@ -2,6 +2,10 @@ language: python
 cache: pip
 python:
   - "3.7-dev"
+branches:
+  only:
+    - master
+    - /v(\d+\.){2}\d+(-rc\.\d+)?/ # reged for tag branches e.g. v0.22.0-rc.1, v0.22.0 etc
 notifications:
   recipients:
     - kapitan@google.com
@@ -25,6 +29,7 @@ after_success:
 
 before_deploy:
   - echo $TRAVIS_BRANCH
+
 deploy:
   - provider: pypi
     distributions: sdist bdist_wheel
