@@ -27,29 +27,15 @@ after_success:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ]; then sh ./scripts/inc_version.sh; fi
 
 deploy:
-  - provider: script
-    script: echo "Deploying $TRAVIS_COMMIT_MESSAGE!"
+  - provider: pypi
+    distributions: sdist bdist_wheel
+    skip_existing: true
+    user:
+      secure: REHK3fFiXqp56I1nWzBmhkRf9uuNDIOH4tBpxYb/H++Geyl8qGL3PTPdS5MQQMMAhhqXOughQY2KNApKODsiL4LNoNlqE+C9IFgWgt6nlzFV3yNSZPC4iHMe2ggLkA15YRoKcha4x+K70HQtsLOfH1LhvBGhJzG5M6D2pN1+aY4+8g4JADGtEj9Ey6gMJKj63Vl1Eqz5Gc5yHPwJAQJsTXdCHPA3Lvpc9u75+QMe+C04NvyC+TE5i7zp4Bc1rJ1eEfcY5CuhjN3K5UGVtFJ84xFR6SJ7Hur9ONm7Cpaesq7qr+BY9ejQqXm0gs8u+Uv0Lcc65n228QAkqML3N5xtJFPCICmHPu2CrntIAyOboHXgU6VHv79r68cteo/nQOob8vjFNu6jJxsmKJv/TBD2aMc+pF8+uWQxr+GkfENnoYQATQGh7CQ1ZPkGhbsdpDga+IPRmWDRdY5vFPDQspLB7+nIWY4v4WvtOmnlrQGDmhSuu8/71qyMKVLuDQrI9NSR56WKL/lxnZHJA06M83oI1JU7XRmf1PTWosB0Apg+Zdk7KObrcxyJfWQTnTO8ruvZoUsGIzZ3JTAnA5rHOgQE+kbPt+vy3SAmZ490Jj+MezByLOCnOR1y+8VwnwLogNxiwmRtuUBFXf7tOyWYduxERy8gWRILmkFAGCkppT4WrQ4=
+    password:
+      secure: GBENUUiSJWHqQNU6NnKrbWSDIoTTPsowV9oME3eTXFOcyvZLL5W0xs5TwOXZxPyz0eaQ20F+o9rT8jiuhe9laA3gDnID109wznuRwY1uGsWP2xolRwZIDeikBS/V7LSrvm69IDGbBuyakWOS0Z1GgPKW3NZzJRYnWhwRolxgqrXmCtK5yiPBHMWRlwn+KPpjGkDKufw47PKOomxScmSeXv3wRk85azWbriNFbtnbymqGut2VqccdbWrQPZ9VaKPbOolnOA6XC95ib4sMyXzpTpwVfsPeBSlYQoCNr6G4QQ3P8x93/twFwFSTGoGqqF5qa8xsvu7KyinjBZvzsTYdTq/2KTKhogSQRkxhcIR+bWBguGWyim1zptbHI0NYPhAEwOtwWT94lXPaisDyCIgCXmMm9f68ViJ4qpfD6o1qaQ+iSmHq16Q+p3CAstKTbUhIEKZomkVwPc7M9D2vUj+LphdGGn8Qp2rbz/jbkfJjVhNJRYrhJuCwtK7O2icf5fgLHruhFKBYeiNepAbF9wyleAREYGBoiw2PT2c0RUYyX+ITrNLsEcV7EzfT7qOm3Pl/ONQ9VV3IaXXWExpOvPdSl3toyAAPqYJ0Zsv23l4PIIY/g6VREyhtGQx2P8ZCGYVfVa+dd1FVH0hfXIsKnmsp0+Y1cpFb1pBa/XWlXRwjxZw=
     on:
-      branch: master
       tags: true
-  # - provider: releases
-  #   api_key:
-  #     secure: VFZDeLYUZ/Fs+NTbIW7DjbANhqAtlbZTzsWods6MuSN3DmGibZwNBpHfNN/hCfJEBCKvmWBEzF2R14Pau+GMZAYaP0N0pCRuO8wtlXGe4ygc5bff4Y93BA98sTh/eRnLf+jsI+acliBWlm0WCRWDMsxfzhZTgWDO/IBdOrzwno5BqEeXbvsqe6MG9z3BLvp8t7WkI67NPoJfRGve7twb1VLMCLlRwXJwxefxgYHcH3pImhx4CMVjXKEMr4jQIMh+mlGA+aMhTAM/If2X3fhdbiA9KNNQ0FrZFLOw0iCLCYzaCHGm70eSMlXJr2kqEjzdZkR2J4TxnJqghTrnNVeXg917vtlFrTnJUxeOSQl3s3LOOQ0vM2wob8y+oPWYz7zw+KKqs8hA4crE7CngQmPGJvWQfYEGtW/5Zc9j+T/yplq5Zwqbe3ibsQ54V8jr6LU4IcLLXgT3qii13Zpg7pILQ+ObOge8c20EeUd6+HhBt9+5K0S67/GgSoa2Nd5+g4XgvEO95ncMZkWztNidk1ygVn00TLK5Dn8UHSaEoxlGXCfgVphzV1//MpOeJn67kQWxHvJxgqVfHAsbL2dlXMux/cuv+UQlRPQsw+8A18hpTUWcxRl7cLm9bMedW14CCtEmSWikanY/2lBEwFIjYndOu7v4VY4L3aNs6EsHrinoLVA=
-  #   # file: CHANGELOG.md
-  #   # prerelease: true
-  #   on:
-  #     branch: master
-  #     condition: "$TRAVIS_COMMIT_MESSAGE =~ ^.*deepmind\/release-v.*$"
-  # - provider: pypi
-  #   distributions: sdist bdist_wheel
-  #   skip_existing: true
-  #   user:
-  #     secure: REHK3fFiXqp56I1nWzBmhkRf9uuNDIOH4tBpxYb/H++Geyl8qGL3PTPdS5MQQMMAhhqXOughQY2KNApKODsiL4LNoNlqE+C9IFgWgt6nlzFV3yNSZPC4iHMe2ggLkA15YRoKcha4x+K70HQtsLOfH1LhvBGhJzG5M6D2pN1+aY4+8g4JADGtEj9Ey6gMJKj63Vl1Eqz5Gc5yHPwJAQJsTXdCHPA3Lvpc9u75+QMe+C04NvyC+TE5i7zp4Bc1rJ1eEfcY5CuhjN3K5UGVtFJ84xFR6SJ7Hur9ONm7Cpaesq7qr+BY9ejQqXm0gs8u+Uv0Lcc65n228QAkqML3N5xtJFPCICmHPu2CrntIAyOboHXgU6VHv79r68cteo/nQOob8vjFNu6jJxsmKJv/TBD2aMc+pF8+uWQxr+GkfENnoYQATQGh7CQ1ZPkGhbsdpDga+IPRmWDRdY5vFPDQspLB7+nIWY4v4WvtOmnlrQGDmhSuu8/71qyMKVLuDQrI9NSR56WKL/lxnZHJA06M83oI1JU7XRmf1PTWosB0Apg+Zdk7KObrcxyJfWQTnTO8ruvZoUsGIzZ3JTAnA5rHOgQE+kbPt+vy3SAmZ490Jj+MezByLOCnOR1y+8VwnwLogNxiwmRtuUBFXf7tOyWYduxERy8gWRILmkFAGCkppT4WrQ4=
-  #   password:
-  #     secure: GBENUUiSJWHqQNU6NnKrbWSDIoTTPsowV9oME3eTXFOcyvZLL5W0xs5TwOXZxPyz0eaQ20F+o9rT8jiuhe9laA3gDnID109wznuRwY1uGsWP2xolRwZIDeikBS/V7LSrvm69IDGbBuyakWOS0Z1GgPKW3NZzJRYnWhwRolxgqrXmCtK5yiPBHMWRlwn+KPpjGkDKufw47PKOomxScmSeXv3wRk85azWbriNFbtnbymqGut2VqccdbWrQPZ9VaKPbOolnOA6XC95ib4sMyXzpTpwVfsPeBSlYQoCNr6G4QQ3P8x93/twFwFSTGoGqqF5qa8xsvu7KyinjBZvzsTYdTq/2KTKhogSQRkxhcIR+bWBguGWyim1zptbHI0NYPhAEwOtwWT94lXPaisDyCIgCXmMm9f68ViJ4qpfD6o1qaQ+iSmHq16Q+p3CAstKTbUhIEKZomkVwPc7M9D2vUj+LphdGGn8Qp2rbz/jbkfJjVhNJRYrhJuCwtK7O2icf5fgLHruhFKBYeiNepAbF9wyleAREYGBoiw2PT2c0RUYyX+ITrNLsEcV7EzfT7qOm3Pl/ONQ9VV3IaXXWExpOvPdSl3toyAAPqYJ0Zsv23l4PIIY/g6VREyhtGQx2P8ZCGYVfVa+dd1FVH0hfXIsKnmsp0+Y1cpFb1pBa/XWlXRwjxZw=
-  #   on:
-  #     tags: true
-  #     branch: master
+      branch: master
 after_deploy:
-  - provider: script
-    script: scripts/after_deploy.sh
+  - sh ./scripts/after_deploy.sh

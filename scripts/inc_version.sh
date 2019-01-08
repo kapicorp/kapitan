@@ -32,8 +32,8 @@ git config --local user.name "Kapitan CI"
 git remote remove origin
 git remote set-head origin -d
 git remote add origin https://${GH_TOKEN}@github.com/deepmind/kapitan.git
-git fetch
-git checkout --track origin/master
+#git fetch
+#git checkout --track origin/master
 
 echomsg "Increment version in kapitan/version.py"
 
