@@ -2,7 +2,7 @@
 
 set -e
 
-function notify_slack() {
+notify_slack() {
   if [ -z "$SLACK_WEBHOOK" ]; then
     return 0
   fi
