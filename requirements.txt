@@ -1,11 +1,11 @@
 # kapitan dependencies
 jsonnet==0.12.1
-PyYAML==3.13
+pyyaml>=4.2b1
 ujson==1.35
 Jinja2>=2.10
 jsonschema>=2.6.0
 python-gnupg==0.4.3
-six>=1.11.0
+six>=1.12.0
 cryptography>=2.4.2
 google-api-python-client==1.7.4
 boto3==1.9.68
