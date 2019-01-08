@@ -25,7 +25,7 @@ script:
   - make test
 
 after_success:
-  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ]; then ./scripts/inc_version.sh; fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ]; then chmod +x ./scripts/inc_version.sh; ./scripts/inc_version.sh fi
 
 before_deploy:
   - echo $TRAVIS_BRANCH
@@ -41,4 +41,4 @@ deploy:
     on:
       tags: true
 after_deploy:
-  - ./scripts/after_deploy.sh
+  - chmod +x ./scripts/after_deploy.sh; ./scripts/after_deploy.sh
