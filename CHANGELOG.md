@@ -1,3 +1,7 @@
+## 0.22.0-rc.1:
+#### Updates:
+- Updated python dependencies: pyyaml and six
+
 ## 0.22.0-rc.0:
 #### Breaking:
 - Added reveal secrets function, updated rsapublic function (#182)
