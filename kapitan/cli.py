@@ -68,7 +68,7 @@ def main():
 
     compile_parser = subparser.add_parser('compile', help='compile targets')
     compile_parser.add_argument('--search-paths', '-J', type=str, nargs='+',
-                                default=from_dot_kapitan('compile', 'search-paths', ['.']),
+                                default=from_dot_kapitan('compile', 'search-paths', ['.', 'lib']),
                                 metavar='JPATH',
                                 help='set search paths, default is ["."]')
     compile_parser.add_argument('--verbose', '-v', help='set verbose mode',
