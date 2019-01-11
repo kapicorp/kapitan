@@ -31,6 +31,7 @@ from kapitan.utils import search_target_token_paths
 from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
+from kapitan.lint import start_lint
 
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.gpg import GPGSecret
@@ -187,6 +188,18 @@ def main():
                                 action='store_true',
                                 default=from_dot_kapitan('secrets', 'verbose', False))
 
+    lint_parser = subparser.add_parser('lint', help='linter')
+    lint_parser.add_argument('--fail-on-warning', default=False,
+                             action='store_true', help='exit with failure code if warnings exist, default is False')
+    lint_parser.add_argument('--skip-variable-checks', default=False,
+                             action='store_true', help='skip basic variable checks for redefinition, duplicate values and no-usage, default is False')
+    lint_parser.add_argument('--search-secrets', default=False,
+                             action='store_true', help='searches for plaintext secrets in inventory, default is False')
+    lint_parser.add_argument('--entropy', '-e', default='3.5',
+                             help='Shannon entropy bits per letter to warn for when --search-secrets is set, default is "3.5"')
+    lint_parser.add_argument('--inventory-path', default='./inventory',
+                             help='set inventory path, default is "./inventory"')
+
     args = parser.parse_args()
 
     logger.debug('Running with args: %s', args)
@@ -260,6 +273,9 @@ def main():
 
     elif cmd == 'searchvar':
         searchvar(args.searchvar, args.inventory_path, args.pretty_print)
+
+    elif cmd == 'lint':
+        start_lint(args.fail_on_warning, args.skip_variable_checks, args.search_secrets, args.entropy, args.inventory_path)
 
     elif cmd == 'secrets':
         ref_controller = RefController(args.secrets_path)
