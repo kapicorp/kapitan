@@ -29,15 +29,15 @@ class KadetTestObj(BaseObj):
     def body(self):
         self.root.name = self.kwargs.name
         self.root.size = self.kwargs.size
-        self.root.firstkey = 1
-        self.root.nested.firstkey = 2
-        self.root['tradicional_key'] = 3
-        self.root.withdict = {'A': 'dict'}
-        self.root.withbaseobj_init_as = BaseObj.from_dict({'init': 'as'})
+        self.root.first_key = 1
+        self.root.nested.first_key = 2
+        self.root['traditional_key'] = 3
+        self.root.with_dict = {'A': 'dict'}
+        self.root.with_baseobj_init_as = BaseObj.from_dict({'init': 'as'})
         bobj = BaseObj()
         bobj.root.inside = "BaseObj"
-        self.root.withbaseobj = bobj
-        self.root.withDict = Dict({'Another': 'Dict'})
+        self.root.with_baseobj = bobj
+        self.root.with_dict = Dict({'Another': 'Dict'})
 
 
 class KadetTestObjWithInner(KadetTestObj):
@@ -51,9 +51,9 @@ class KadetTestObjWithInner(KadetTestObj):
 
 class KadetTest(unittest.TestCase):
     def test_parse_kwargs(self):
-        kobj = BaseObj.from_dict({"this": "that", "nothidden": True})
+        kobj = BaseObj.from_dict({"this": "that", "not_hidden": True})
         output = kobj.to_dict()
-        desired_output = {"this": "that", "nothidden": True}
+        desired_output = {"this": "that", "not_hidden": True}
         self.assertEqual(output, desired_output)
 
     def test_to_dict(self):
@@ -62,13 +62,13 @@ class KadetTest(unittest.TestCase):
         desired_output = {
             "name": "testObj",
             "size": 5,
-            "firstkey": 1,
-            "tradicional_key": 3,
-            "nested": {"firstkey": 2},
-            "withdict": {"A": "dict"},
-            "withbaseobj_init_as": {"init": "as"},
-            "withbaseobj": {"inside": "BaseObj"},
-            "withDict": {"Another": "Dict"},
+            "first_key": 1,
+            "traditional_key": 3,
+            "nested": {"first_key": 2},
+            "with_dict": {"A": "dict"},
+            "with_baseobj_init_as": {"init": "as"},
+            "with_baseobj": {"inside": "BaseObj"},
+            "with_dict": {"Another": "Dict"},
         }
         self.assertEqual(output, desired_output)
 
@@ -78,20 +78,20 @@ class KadetTest(unittest.TestCase):
         desired_output = {
             "name": "testWithInnerObj",
             "size": 6,
-            "firstkey": 1,
-            "tradicional_key": 3,
-            "nested": {"firstkey": 2},
-            "withdict": {"A": "dict"},
-            "withbaseobj_init_as": {"init": "as"},
-            "withbaseobj": {"inside": "BaseObj"},
-            "withDict": {"Another": "Dict"},
+            "first_key": 1,
+            "traditional_key": 3,
+            "nested": {"first_key": 2},
+            "with_dict": {"A": "dict"},
+            "with_baseobj_init_as": {"init": "as"},
+            "with_baseobj": {"inside": "BaseObj"},
+            "with_dict": {"Another": "Dict"},
             "inner": {"i_am_inside": True},
         }
         self.assertEqual(output, desired_output)
 
     def test_lists(self):
         kobj = KadetTestObj(name='testObj', size=5)
-        kobj.root.withLists = [Dict({"i_am_inside_a_list": True}),
+        kobj.root.with_lists = [Dict({"i_am_inside_a_list": True}),
                                BaseObj.from_dict({"me": "too"}),
                                BaseObj.from_dict({"list_of_objs": [BaseObj.from_dict(dict(a=1, b=2)),
                                                                    Dict(dict(c=3, d=4))]})]
@@ -99,14 +99,14 @@ class KadetTest(unittest.TestCase):
         desired_output = {
             "name": "testObj",
             "size": 5,
-            "firstkey": 1,
-            "tradicional_key": 3,
-            "nested": {"firstkey": 2},
-            "withdict": {"A": "dict"},
-            "withbaseobj_init_as": {"init": "as"},
-            "withbaseobj": {"inside": "BaseObj"},
-            "withDict": {"Another": "Dict"},
-            "withLists": [{"i_am_inside_a_list": True}, {"me": "too"},
+            "first_key": 1,
+            "traditional_key": 3,
+            "nested": {"first_key": 2},
+            "with_dict": {"A": "dict"},
+            "with_baseobj_init_as": {"init": "as"},
+            "with_baseobj": {"inside": "BaseObj"},
+            "with_dict": {"Another": "Dict"},
+            "with_lists": [{"i_am_inside_a_list": True}, {"me": "too"},
                           {"list_of_objs": [{"a": 1, "b": 2}, {"c": 3, "d": 4}]}]
         }
         self.assertEqual(output, desired_output)
