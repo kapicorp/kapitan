@@ -19,8 +19,9 @@
 import logging
 from sys import exit
 
-from kapitan.utils import entropy, termcolor
+from kapitan.utils import get_entropy, termcolor
 from kapitan.resources import inventory_reclass
+from pprint import pformat
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ def start_lint(fail_on_warning, skip_variable_checks, search_secrets, entropy_wa
         exit(0)
 
     if not skip_variable_checks:
+        logger.info("\nInventory path:{}\n".format(inventory_path))
         logger.info("\nChecking for unused variables...\n")
         status_var_no_usage = lint_var_no_usage(inventory_path)
         logger.info("\nChecking for variable redefinition or duplicate values...\n")
@@ -47,6 +49,7 @@ def start_lint(fail_on_warning, skip_variable_checks, search_secrets, entropy_wa
 
 
 def lint_var_redefinition(inventory_path):
+    logger.info(pformat(inventory_reclass(inventory_path)))
     return 0
 
 

@@ -171,6 +171,7 @@ def inventory(search_paths, target, inventory_path="inventory/"):
     inv_path_exists = False
     for path in search_paths:
         full_inv_path = os.path.join(path, inventory_path)
+        logger.info(full_inv_path)
         if os.path.exists(full_inv_path):
             inv_path_exists = True
             break
@@ -187,7 +188,7 @@ def inventory(search_paths, target, inventory_path="inventory/"):
 def inventory_reclass(inventory_path):
     """
     Runs a reclass inventory in inventory_path
-    (same output as running ./reclass.py -b streams/ --inventory)
+    (same output as running ./reclass.py -b inv_base_uri/ --inventory)
     Will attempt to read reclass config from 'reclass-config.yml' otherwise
     it will failback to the default config.
     Returns a reclass style dictionary

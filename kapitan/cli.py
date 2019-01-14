@@ -189,15 +189,23 @@ def main():
                                 default=from_dot_kapitan('secrets', 'verbose', False))
 
     lint_parser = subparser.add_parser('lint', help='linter')
-    lint_parser.add_argument('--fail-on-warning', default=False,
-                             action='store_true', help='exit with failure code if warnings exist, default is False')
-    lint_parser.add_argument('--skip-variable-checks', default=False,
-                             action='store_true', help='skip basic variable checks for redefinition, duplicate values and no-usage, default is False')
-    lint_parser.add_argument('--search-secrets', default=False,
-                             action='store_true', help='searches for plaintext secrets in inventory, default is False')
-    lint_parser.add_argument('--entropy', '-e', default='3.5',
-                             help='Shannon entropy bits per letter to warn for when --search-secrets is set, default is "3.5"')
-    lint_parser.add_argument('--inventory-path', default='./inventory',
+    lint_parser.add_argument('--fail-on-warning',
+                             default=from_dot_kapitan('lint', 'fail-on-warning', False),
+                             action='store_true',
+                             help='exit with failure code if warnings exist, default is False')
+    lint_parser.add_argument('--skip-variable-checks',
+                             default=from_dot_kapitan('lint', 'skip-variable-checks', False),
+                             action='store_true',
+                             help='skip basic variable checks for redefinition, duplicate values and no-usage, default is False')
+    lint_parser.add_argument('--search-secrets',
+                             default=from_dot_kapitan('lint', 'search-secrets', False),
+                             action='store_true',
+                             help='searches for plaintext secrets in inventory, default is False')
+    lint_parser.add_argument('--entropy', '-e',
+                             default=from_dot_kapitan('lint', 'entropy', 3.5),
+                             help='Shannon entropy bits per letter to warn for when --search-secrets is set, default is 3.5')
+    lint_parser.add_argument('--inventory-path',
+                             default=from_dot_kapitan('lint', 'inventory-path', './inventory'),
                              help='set inventory path, default is "./inventory"')
 
     args = parser.parse_args()
