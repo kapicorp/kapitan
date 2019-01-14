@@ -22,6 +22,7 @@ import os
 import sys
 import yaml
 
+from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType, CompiledFile
 from kapitan.resources import inventory as inventory_func
 from kapitan.utils import prune_empty
@@ -171,25 +172,25 @@ class BaseObj(object):
         bobj.root = Dict(dict_value)
         return bobj
 
-    def update_root_yaml(self, file_path):
+    def update_root(self, file_path):
         """
-        update self.root with YAML content in file_path
+        update self.root with YAML/JSON content in file_path
+        raises CompileError if file_path does not end with .yaml, .yml or .json
         """
         with open(file_path) as fp:
-            yaml_obj = yaml.safe_load(fp)
-            _copy = dict(self.root)
-            _copy.update(yaml_obj)
-            self.root = Dict(_copy)
+            if file_path.endswith(".yaml") or file_path.endswith(".yml"):
+                yaml_obj = yaml.safe_load(fp)
+                _copy = dict(self.root)
+                _copy.update(yaml_obj)
+                self.root = Dict(_copy)
 
-    def update_root_json(self, file_path):
-        """
-        update self.root with JSON content in file_path
-        """
-        with open(file_path) as fp:
-            json_obj = json.load(fp)
-            _copy = dict(self.root)
-            _copy.update(json_obj)
-            self.root = Dict(_copy)
+            elif file_path.endswith(".json"):
+                json_obj = json.load(fp)
+                _copy = dict(self.root)
+                _copy.update(json_obj)
+                self.root = Dict(_copy)
+            else:
+                raise CompileError("file_path is neither JSON or YAML: {}".format(file_path))
 
     def need(self, key, msg="key and value needed"):
         """
@@ -198,7 +199,7 @@ class BaseObj(object):
         """
         err_msg = '{}: "{}": {}'.format(self.__class__.__name__, key, msg)
         if key not in self.kwargs:
-            raise Exception(err_msg)
+            raise CompileError(err_msg)
 
     def new(self):
         """
