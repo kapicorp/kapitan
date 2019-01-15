@@ -188,22 +188,24 @@ def main():
                                 action='store_true',
                                 default=from_dot_kapitan('secrets', 'verbose', False))
 
-    lint_parser = subparser.add_parser('lint', help='linter')
+    lint_parser = subparser.add_parser('lint', help='linter for inventory and secrets')
     lint_parser.add_argument('--fail-on-warning',
                              default=from_dot_kapitan('lint', 'fail-on-warning', False),
                              action='store_true',
                              help='exit with failure code if warnings exist, default is False')
-    lint_parser.add_argument('--skip-variable-checks',
-                             default=from_dot_kapitan('lint', 'skip-variable-checks', False),
-                             action='store_true',
-                             help='skip basic variable checks for redefinition, duplicate values and no-usage, default is False')
+    lint_parser.add_argument('--skip-class-checks',
+                             help='skip checking for unused classes, default is False',
+                             default=from_dot_kapitan('secrets', 'skip-class-checks', False))
     lint_parser.add_argument('--search-secrets',
                              default=from_dot_kapitan('lint', 'search-secrets', False),
                              action='store_true',
                              help='searches for plaintext secrets in inventory, default is False')
-    lint_parser.add_argument('--entropy', '-e',
-                             default=from_dot_kapitan('lint', 'entropy', 3.5),
-                             help='Shannon entropy bits per letter to warn for when --search-secrets is set, default is 3.5')
+    lint_parser.add_argument('--secrets-path',
+                             help='set secrets path, default is "./secrets"',
+                             default=from_dot_kapitan('secrets', 'secrets-path', './secrets'))
+    lint_parser.add_argument('--compiled-path',
+                             default=from_dot_kapitan('lint', 'compiled-path', './compiled'),
+                             help='set compiled path, default is "./compiled"')
     lint_parser.add_argument('--inventory-path',
                              default=from_dot_kapitan('lint', 'inventory-path', './inventory'),
                              help='set inventory path, default is "./inventory"')
@@ -283,7 +285,7 @@ def main():
         searchvar(args.searchvar, args.inventory_path, args.pretty_print)
 
     elif cmd == 'lint':
-        start_lint(args.fail_on_warning, args.skip_variable_checks, args.search_secrets, args.entropy, args.inventory_path)
+        start_lint(args.fail_on_warning, args.skip_class_checks, args.inventory_path, args.search_secrets, args.secrets_path, args.compiled_path)
 
     elif cmd == 'secrets':
         ref_controller = RefController(args.secrets_path)

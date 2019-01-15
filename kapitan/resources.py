@@ -171,7 +171,6 @@ def inventory(search_paths, target, inventory_path="inventory/"):
     inv_path_exists = False
     for path in search_paths:
         full_inv_path = os.path.join(path, inventory_path)
-        logger.info(full_inv_path)
         if os.path.exists(full_inv_path):
             inv_path_exists = True
             break

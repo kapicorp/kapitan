@@ -265,22 +265,26 @@ Targets can also be defined inside the `inventory`.
 
 ```
 $ kapitan -h
-usage: kapitan [-h] [--version] {eval,compile,inventory,searchvar,secrets} ...
+usage: kapitan [-h] [--version]
+               {eval,compile,inventory,searchvar,secrets,lint} ...
 
-Kapitan is a tool to manage kubernetes configuration using jsonnet templates
+Generic templated configuration management for Kubernetes, Terraform and other
+things
 
 positional arguments:
-  {eval,compile,inventory,searchvar,secrets}
+  {eval,compile,inventory,searchvar,secrets,lint}
                         commands
     eval                evaluate jsonnet file
     compile             compile targets
     inventory           show inventory
     searchvar           show all inventory files where var is declared
     secrets             manage secrets
+    lint                linter for inventory and secrets
 
 optional arguments:
   -h, --help            show this help message and exit
   --version             show program's version number and exit
+
 ```
 
 Additional parameters are available for each positional argument. For example:
@@ -569,6 +573,8 @@ parameters:
   vault:
     address: https://localhost:8200
 ```
+
+Use `kapitan lint -h` to checkup on your inventory/secrets.
 
 ### kapitan searchvar
 
