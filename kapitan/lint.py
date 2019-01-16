@@ -93,7 +93,11 @@ def lint_unused_classes(inventory_path):
             with open(path, "r") as compiled_file:
                 file_contents = compiled_file.read()
                 for class_path in list(class_paths):
-                    if class_path in file_contents:
+                    exists = class_path in file_contents
+                    if class_path.endswith(".init"):
+                        exists = (class_path[:-5] in file_contents) or (exists)
+
+                    if exists:
                         class_paths.discard(class_path)
 
     status = len(class_paths) > 0

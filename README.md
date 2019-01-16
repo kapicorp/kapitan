@@ -574,7 +574,7 @@ parameters:
     address: https://localhost:8200
 ```
 
-Use `kapitan lint -h` to checkup on your inventory/secrets.
+Use `kapitan lint` to checkup on your inventory/secrets.
 
 ### kapitan searchvar
 
