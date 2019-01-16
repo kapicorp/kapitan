@@ -195,14 +195,14 @@ def main():
                              help='exit with failure code if warnings exist, default is False')
     lint_parser.add_argument('--skip-class-checks',
                              help='skip checking for unused classes, default is False',
-                             default=from_dot_kapitan('secrets', 'skip-class-checks', False))
+                             default=from_dot_kapitan('lint', 'skip-class-checks', False))
     lint_parser.add_argument('--search-secrets',
                              default=from_dot_kapitan('lint', 'search-secrets', False),
                              action='store_true',
                              help='searches for plaintext secrets in inventory, default is False')
     lint_parser.add_argument('--secrets-path',
                              help='set secrets path, default is "./secrets"',
-                             default=from_dot_kapitan('secrets', 'secrets-path', './secrets'))
+                             default=from_dot_kapitan('lint', 'secrets-path', './secrets'))
     lint_parser.add_argument('--compiled-path',
                              default=from_dot_kapitan('lint', 'compiled-path', './compiled'),
                              help='set compiled path, default is "./compiled"')

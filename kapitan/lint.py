@@ -18,8 +18,8 @@
 
 import logging
 import os
+import sys
 from pprint import pformat
-from sys import exit
 
 from kapitan.utils import list_all_paths
 
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 def start_lint(fail_on_warning, skip_class_checks, inventory_path, search_secrets, secrets_path, compiled_path):
     if skip_class_checks and not search_secrets:
         logger.info("Nothing to check. Remove --skip-class-checks or add --search-secrets to lint secrets")
-        exit(0)
+        sys.exit(0)
 
     status_class_checks = 0
     if not skip_class_checks:
@@ -46,7 +46,7 @@ def start_lint(fail_on_warning, skip_class_checks, inventory_path, search_secret
         status_secrets = lint_orphan_secrets(compiled_path, secrets_path)
 
     if fail_on_warning and (status_secrets + status_class_checks) > 0:
-        exit(1)
+        sys.exit(1)
 
 
 def lint_orphan_secrets(compiled_path, secrets_path):
