@@ -1,0 +1,31 @@
+parameters:
+  kapitan:
+    compile:
+    - output_path: manifests
+      input_type: jsonnet
+      input_paths:
+        - components/mysql/main.jsonnet
+      output_type: yaml
+    - output_path: scripts
+      input_type: jinja2
+      input_paths:
+        - scripts
+    - output_path: .
+      output_type: yaml
+      input_type: jinja2
+      input_paths:
+        - docs/mysql/README.md
+  mysql:
+    storage: 10G
+    storage_class: standard
+    image: mysql:latest
+    users:
+      root:
+        # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
+        password: ?{gpg:mysql/root/password|randomstr|base64}
+        # password: ?{gkms:mysql/root/password|randomstr|base64}
+        # password: ?{awskms:mysql/root/password|randomstr|base64}
+
+        # Generates the sha256 checksum of the previously declared B64'ed password
+        # It's base64'ed again so that it can be used in kubernetes secrets 
+        password_sha256: ?{gpg:mysql/root/password_sha256|reveal:mysql/root/password|sha256|base64}

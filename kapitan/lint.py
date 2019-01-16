@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 #
 # Copyright 2019 The Kapitan Authors
 #
@@ -22,8 +22,8 @@ import sys
 from pprint import pformat
 
 from kapitan.utils import list_all_paths
+from kapitan.errors import KapitanError
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -45,8 +45,11 @@ def start_lint(fail_on_warning, skip_class_checks, inventory_path, search_secret
         logger.info("\nChecking for orphan secrets files...\n")
         status_secrets = lint_orphan_secrets(compiled_path, secrets_path)
 
-    if fail_on_warning and (status_secrets + status_class_checks) > 0:
+    status = status_secrets + status_class_checks
+    if fail_on_warning and status > 0:
         sys.exit(1)
+
+    return status
 
 
 def lint_orphan_secrets(compiled_path, secrets_path):
@@ -70,13 +73,16 @@ def lint_orphan_secrets(compiled_path, secrets_path):
 
     status = len(secrets_paths) > 0
     if status:
-        logger.info("No usage found for the following {} secrets files:\n{}".format(len(secrets_paths), pformat(secrets_paths)))
+        logger.info("No usage found for the following {} secrets files:\n{}\n".format(len(secrets_paths), pformat(secrets_paths)))
 
     return status
 
 
 def lint_unused_classes(inventory_path):
     classes_dir = os.path.join(inventory_path, "classes/")
+    if not os.path.isdir(classes_dir):
+        raise KapitanError("{} is not a valid directory or does not exist".format(classes_dir))
+
     logger.debug("Find unused classes from {}".format(classes_dir))
     class_paths = set()
     for path in list_all_paths(classes_dir):
@@ -102,6 +108,6 @@ def lint_unused_classes(inventory_path):
 
     status = len(class_paths) > 0
     if status:
-        logger.info("No usage found for the following {} classes:\n{}".format(len(class_paths), pformat(class_paths)))
+        logger.info("No usage found for the following {} classes:\n{}\n".format(len(class_paths), pformat(class_paths)))
 
     return status

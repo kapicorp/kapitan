@@ -1,0 +1,10 @@
+classes:
+  - common
+  - component.mysql
+
+parameters:
+  target_name: minikube-mysql
+
+  mysql:
+    instance_name: example-mysql
+    replicas: 1

@@ -30,13 +30,13 @@ from functools import partial
 from kapitan.resources import inventory_reclass
 from kapitan.utils import hashable_lru_cache
 from kapitan.utils import directory_hash, dictionary_hash
-from kapitan.errors import KapitanError, CompileError
+from kapitan.errors import KapitanError, CompileError, InventoryError
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
 from kapitan import cached
 
-from reclass.errors import ReclassException
+from reclass.errors import NotFoundError, ReclassException
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,6 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
         compile_path = os.path.join(output_path, "compiled")
         worker = partial(compile_target, search_paths=search_paths, compile_path=temp_path, ref_controller=ref_controller,
                          **kwargs)
-
 
         if target_objs == []:
             raise CompileError("Error: no targets found")
