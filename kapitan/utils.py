@@ -352,6 +352,9 @@ def get_entropy(s):
 
 
 def list_all_paths(folder):
+    """Given a folder (string), returns a list with the full paths
+       of every sub-folder/file.
+    """
     for root, folders, files in os.walk(folder):
         for filename in folders + files:
             yield os.path.join(root, filename)

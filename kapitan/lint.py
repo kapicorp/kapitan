@@ -28,9 +28,20 @@ logger = logging.getLogger(__name__)
 
 
 def start_lint(fail_on_warning, skip_class_checks, inventory_path, search_secrets, secrets_path, compiled_path):
+    """ Runs all lint operations available
+    Args:
+        fail_on_warning (bool): if set to True, function will exit if any warning is found
+        skip_class_checks (bool): whether to skip checking for class related warnings or not
+        inventory_path (string): path to your inventory/ folder
+        search_secrets (bool): whether to search for secret related warnings or not
+        secrets_path (string): path to your secrets/ folder
+        compiled_path (string): path to your compiled/ folder
+    Yields:
+        checks_sum (int): the number of lint warnings found
+    """
     if skip_class_checks and not search_secrets:
         logger.info("Nothing to check. Remove --skip-class-checks or add --search-secrets to lint secrets")
-        sys.exit(0)
+        sys.exit(1)
 
     status_class_checks = 0
     if not skip_class_checks:
@@ -45,14 +56,23 @@ def start_lint(fail_on_warning, skip_class_checks, inventory_path, search_secret
         logger.info("\nChecking for orphan secrets files...\n")
         status_secrets = lint_orphan_secrets(compiled_path, secrets_path)
 
-    status = status_secrets + status_class_checks
-    if fail_on_warning and status > 0:
+    checks_sum = status_secrets + status_class_checks
+    if fail_on_warning and checks_sum > 0:
         sys.exit(1)
 
-    return status
+    return checks_sum
 
 
 def lint_orphan_secrets(compiled_path, secrets_path):
+    """ Checks your secrets/ folder for unused secrets files by:
+        - iterating the secrets_path/ dir and extracting all secrets names from the file paths
+        - does a text search over the entire compiled_path/ to find usages of those secrets
+    Args:
+        compiled_path (string): path to your compiled/ folder
+        secrets_path (string): path to your secrets/ folder
+    Yields:
+        checks_sum (int): the number of orphan secrets found
+    """
     logger.debug("Find secret paths for " + secrets_path)
     secrets_paths = set()
     for path in list_all_paths(secrets_path):
@@ -71,14 +91,23 @@ def lint_orphan_secrets(compiled_path, secrets_path):
                     if secret_path in file_contents:
                         secrets_paths.discard(secret_path)
 
-    status = len(secrets_paths) > 0
-    if status:
+    checks_sum = len(secrets_paths)
+    if checks_sum > 0:
         logger.info("No usage found for the following {} secrets files:\n{}\n".format(len(secrets_paths), pformat(secrets_paths)))
 
-    return status
+    return checks_sum
 
 
 def lint_unused_classes(inventory_path):
+    """ Checks your inventory for unused classes by:
+        - iterating the inventory_path/classes/ dir and extracting all class names from the file paths
+        - converting those file paths to class references (e.g. component/mysql -> component.mysql)
+        - does a text search over the entire inventory_path/ to find usages of those classes
+    Args:
+        inventory_path (string): path to your inventory folder
+    Yields:
+        checks_sum (int): the number of unused classes found
+    """
     classes_dir = os.path.join(inventory_path, "classes/")
     if not os.path.isdir(classes_dir):
         raise KapitanError("{} is not a valid directory or does not exist".format(classes_dir))
@@ -100,14 +129,22 @@ def lint_unused_classes(inventory_path):
                 file_contents = compiled_file.read()
                 for class_path in list(class_paths):
                     exists = class_path in file_contents
+                    """
+                    Classes files may reside in subdirectories, which act as namespaces.
+                    For instance, a class ssh.server will result in the class definition to be read from ssh/server.yml.
+                    Specifying just ssh will cause the class data to be read from ssh/init.yml or ssh.yml.
+                    Note, however, that only one of those two may be present.
+                    Thus we also check for ".init" being used in the class here to cover that case.
+                    https://reclass.pantsfullofunix.net/operations.html
+                    """
                     if class_path.endswith(".init"):
                         exists = (class_path[:-5] in file_contents) or (exists)
 
                     if exists:
                         class_paths.discard(class_path)
 
-    status = len(class_paths) > 0
-    if status:
+    checks_sum = len(class_paths)
+    if checks_sum > 0:
         logger.info("No usage found for the following {} classes:\n{}\n".format(len(class_paths), pformat(class_paths)))
 
-    return status
+    return checks_sum
