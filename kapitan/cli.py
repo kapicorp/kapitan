@@ -31,6 +31,7 @@ from kapitan.utils import search_target_token_paths
 from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
+from kapitan.lint import start_lint
 
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.gpg import GPGSecret
@@ -187,6 +188,28 @@ def main():
                                 action='store_true',
                                 default=from_dot_kapitan('secrets', 'verbose', False))
 
+    lint_parser = subparser.add_parser('lint', help='linter for inventory and secrets')
+    lint_parser.add_argument('--fail-on-warning',
+                             default=from_dot_kapitan('lint', 'fail-on-warning', False),
+                             action='store_true',
+                             help='exit with failure code if warnings exist, default is False')
+    lint_parser.add_argument('--skip-class-checks',
+                             help='skip checking for unused classes, default is False',
+                             default=from_dot_kapitan('lint', 'skip-class-checks', False))
+    lint_parser.add_argument('--search-secrets',
+                             default=from_dot_kapitan('lint', 'search-secrets', False),
+                             action='store_true',
+                             help='searches for plaintext secrets in inventory, default is False')
+    lint_parser.add_argument('--secrets-path',
+                             help='set secrets path, default is "./secrets"',
+                             default=from_dot_kapitan('lint', 'secrets-path', './secrets'))
+    lint_parser.add_argument('--compiled-path',
+                             default=from_dot_kapitan('lint', 'compiled-path', './compiled'),
+                             help='set compiled path, default is "./compiled"')
+    lint_parser.add_argument('--inventory-path',
+                             default=from_dot_kapitan('lint', 'inventory-path', './inventory'),
+                             help='set inventory path, default is "./inventory"')
+
     args = parser.parse_args()
 
     logger.debug('Running with args: %s', args)
@@ -260,6 +283,9 @@ def main():
 
     elif cmd == 'searchvar':
         searchvar(args.searchvar, args.inventory_path, args.pretty_print)
+
+    elif cmd == 'lint':
+        start_lint(args.fail_on_warning, args.skip_class_checks, args.inventory_path, args.search_secrets, args.secrets_path, args.compiled_path)
 
     elif cmd == 'secrets':
         ref_controller = RefController(args.secrets_path)

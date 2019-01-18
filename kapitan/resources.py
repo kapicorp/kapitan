@@ -187,7 +187,7 @@ def inventory(search_paths, target, inventory_path="inventory/"):
 def inventory_reclass(inventory_path):
     """
     Runs a reclass inventory in inventory_path
-    (same output as running ./reclass.py -b streams/ --inventory)
+    (same output as running ./reclass.py -b inv_base_uri/ --inventory)
     Will attempt to read reclass config from 'reclass-config.yml' otherwise
     it will failback to the default config.
     Returns a reclass style dictionary

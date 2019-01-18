@@ -288,17 +288,15 @@ def searchvar(flat_var, inventory_path, pretty_print):
     output = []
     maxlength = 0
     keys = flat_var.split(".")
-    for root, _, files in os.walk(inventory_path):
-        for file in files:
-            if file.endswith(".yml") or file.endswith(".yaml"):
-                filename = os.path.join(root, file)
-                with open(filename, 'r') as fd:
-                    data = yaml.load(fd, Loader=YamlLoader)
-                    value = deep_get(data, keys)
-                    if value is not None:
-                        output.append((filename, value))
-                        if len(filename) > maxlength:
-                            maxlength = len(filename)
+    for full_path in list_all_paths(inventory_path):
+        if full_path.endswith(".yml") or full_path.endswith(".yaml"):
+            with open(full_path, 'r') as fd:
+                data = yaml.load(fd, Loader=YamlLoader)
+                value = deep_get(data, keys)
+                if value is not None:
+                    output.append((full_path, value))
+                    if len(full_path) > maxlength:
+                        maxlength = len(full_path)
     if pretty_print:
         for i in output:
             print(i[0])
@@ -351,6 +349,15 @@ def get_entropy(s):
     # https://en.wiktionary.org/wiki/Shannon_entropy
     entropy = - sum(count / length * math.log(count / length, 2) for count in Counter(s).values())
     return round(entropy, 2)
+
+
+def list_all_paths(folder):
+    """Given a folder (string), returns a list with the full paths
+       of every sub-folder/file.
+    """
+    for root, folders, files in os.walk(folder):
+        for filename in folders + files:
+            yield os.path.join(root, filename)
 
 
 def dot_kapitan_config():
@@ -417,20 +424,18 @@ def search_target_token_paths(target_secrets_path, targets):
     targets is a set of target names used to lookup targets in target_secrets_path
     """
     target_files = defaultdict(list)
-    for root, _, files in os.walk(target_secrets_path):
-        for f in files:
-            full_path = os.path.join(root, f)
-            secret_path = full_path[len(target_secrets_path) + 1:]
-            target_name = secret_path.split("/")[0]
-            if target_name in targets:
-                with open(full_path) as fp:
-                    obj = yaml.load(fp, Loader=YamlLoader)
-                    try:
-                        secret_type = obj['type']
-                    except KeyError:
-                        # Backwards compatible with gpg secrets that didn't have type in yaml
-                        secret_type = "gpg"
-                    secret_path = "?{{{}:{}}}".format(secret_type, secret_path)
-                logger.debug('search_target_token_paths: found %s', secret_path)
-                target_files[target_name].append(secret_path)
+    for full_path in list_all_paths(target_secrets_path):
+        secret_path = full_path[len(target_secrets_path) + 1:]
+        target_name = secret_path.split("/")[0]
+        if target_name in targets:
+            with open(full_path) as fp:
+                obj = yaml.load(fp, Loader=YamlLoader)
+                try:
+                    secret_type = obj['type']
+                except KeyError:
+                    # Backwards compatible with gpg secrets that didn't have type in yaml
+                    secret_type = "gpg"
+                secret_path = "?{{{}:{}}}".format(secret_type, secret_path)
+            logger.debug('search_target_token_paths: found %s', secret_path)
+            target_files[target_name].append(secret_path)
     return target_files

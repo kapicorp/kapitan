@@ -27,7 +27,7 @@ import yaml
 from kapitan.errors import RefFromFuncError, RefBackendError, RefError
 from kapitan.errors import RefHashMismatchError
 from kapitan.refs.functions import eval_func
-from kapitan.utils import PrettyDumper
+from kapitan.utils import PrettyDumper, list_all_paths
 
 try:
     from yaml import CSafeLoader as YamlLoader
@@ -147,11 +147,9 @@ class RefBackend(object):
             return False
 
     def __iter__(self):
-        for root, _, files in os.walk(self.path):
-            for f in files:
-                full_path = os.path.join(root, f)
-                ref_path = full_path[len(self.path):]
-                yield ref_path
+        for full_path in list_all_paths(self.path):
+            ref_path = full_path[len(self.path):]
+            yield ref_path
 
     def iteritems(self):
         for k in self.__iter__():
