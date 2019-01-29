@@ -2,7 +2,10 @@ all: clean package
 
 .PHONY: test
 test:
+	@echo ----- Running python tests -----
 	python3 -m unittest discover
+	@echo ----- Testing build of docker image -----
+	docker build . --no-cache
 
 .PHONY: release
 release:
