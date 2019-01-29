@@ -1,3 +1,7 @@
+## 0.22.1:
+- Added some basic linter functionality (kapitan linter -h)
+- Added support for Kadet input type (python, still a beta feature)
+
 ## 0.22.0:
 #### Updates:
 - Updated python dependencies: pyyaml and six
