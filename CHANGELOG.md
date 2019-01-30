@@ -1,6 +1,7 @@
-## 0.22.1:
+## 0.22.2:
 - Added some basic linter functionality (kapitan linter -h)
 - Added support for Kadet input type (python, still a beta feature)
+- Fixed failing docker builds and added it to the tests
 
 ## 0.22.0:
 #### Updates:
