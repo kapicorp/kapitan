@@ -427,7 +427,7 @@ def search_target_token_paths(target_secrets_path, targets):
     for full_path in list_all_paths(target_secrets_path):
         secret_path = full_path[len(target_secrets_path) + 1:]
         target_name = secret_path.split("/")[0]
-        if target_name in targets:
+        if target_name in targets and os.path.isfile(full_path):
             with open(full_path) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
                 try:
