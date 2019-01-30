@@ -1,13 +1,19 @@
-## 0.22.2:
-- Added some basic linter functionality (kapitan linter -h)
-- Added support for Kadet input type (python, still a beta feature)
-- Fixed failing docker builds and added it to the tests
+## 0.22.3:
+- Fixed bug in secrets --validate-targets and --update-targets (#207)
+
+## 0.22.2 (secrets validation broken, do not use)
+- Fixed failing docker builds and added it to the tests (#204)
+- Update google api python client (#204)
+
+## 0.22.1 (secrets validation broken, do not use)
+- Added some basic linter functionality (kapitan linter -h) (#193)
+- Added support for Kadet input type (python, still a beta feature) (#190)
 
 ## 0.22.0:
 #### Updates:
 - Updated python dependencies: pyyaml and six
-- Added AWS KMS support as a secrets backend(#179)
-- Refactor input\_type code into classes(#180)
+- Added AWS KMS support as a secrets backend (#179)
+- Refactor input\_type code into classes (#180)
 - Fix GPG failing when expiry of gpg key is infinite (#181)
 
 #### Breaking:
