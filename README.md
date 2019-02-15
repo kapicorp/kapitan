@@ -263,6 +263,11 @@ Targets can also be defined inside the `inventory`.
 
 # Usage
 
+Use `kapitan init --init-directory <directory>` to populate a new
+directory with the recommended kapitan folder structure in new projects.
+
+For other available options use:
+
 ```
 $ kapitan -h
 usage: kapitan [-h] [--version]
@@ -272,7 +277,7 @@ Generic templated configuration management for Kubernetes, Terraform and other
 things
 
 positional arguments:
-  {eval,compile,inventory,searchvar,secrets,lint}
+  {eval,compile,inventory,searchvar,secrets,lint,init}
                         commands
     eval                evaluate jsonnet file
     compile             compile targets
@@ -280,6 +285,8 @@ positional arguments:
     searchvar           show all inventory files where var is declared
     secrets             manage secrets
     lint                linter for inventory and secrets
+    init                initialize a directory with the recommended kapitan
+                        project skeleton.
 
 optional arguments:
   -h, --help            show this help message and exit

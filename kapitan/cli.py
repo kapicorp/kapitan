@@ -32,6 +32,7 @@ from kapitan.targets import compile_targets
 from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
 from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
 from kapitan.lint import start_lint
+from kapitan.initialiser import initialise_skeleton
 
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.gpg import GPGSecret
@@ -210,6 +211,11 @@ def main():
                              default=from_dot_kapitan('lint', 'inventory-path', './inventory'),
                              help='set inventory path, default is "./inventory"')
 
+    init_parser = subparser.add_parser('init', help='initialize a directory with the recommended kapitan project skeleton.')
+    init_parser.add_argument('--directory',
+                             default=from_dot_kapitan('init', 'directory', '.'),
+                             help='set path, in which to generate the project skeleton, assumes directory already exists. default is "./"')
+    
     args = parser.parse_args()
 
     logger.debug('Running with args: %s', args)
@@ -287,6 +293,9 @@ def main():
     elif cmd == 'lint':
         start_lint(args.fail_on_warning, args.skip_class_checks, args.inventory_path, args.search_secrets, args.secrets_path, args.compiled_path)
 
+    elif cmd == 'init':
+        initialise_skeleton(args.directory)
+        
     elif cmd == 'secrets':
         ref_controller = RefController(args.secrets_path)
 
