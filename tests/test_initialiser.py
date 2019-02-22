@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 "init tests"
 
 import logging
@@ -46,4 +45,4 @@ class InitTest(unittest.TestCase):
                     if f in diff_files:
                         diff_files.remove(f)
 
-            self.assertEqual(len(diff_files), 1)
+            self.assertEqual(len(diff_files), 0)

@@ -29,16 +29,11 @@ def initialise_skeleton(directory):
     Args:
         directory (string): path which to initialise, directory is assumed to exist
     """
-    
-    templates_directory = os.path.join(os.path.dirname(
-        __file__), 'inputs', 'templates')
+
+    current_pwd = os.path.dirname(__file__)
+    templates_directory = os.path.join(current_pwd, 'inputs', 'templates')
 
     copy_tree(templates_directory, directory)
-
-    # create lib/kube.libjsonnet
-    kube_jsonnet_lib_path = os.path.join(os.path.dirname(
-        __file__), '..', 'examples', 'kubernetes', 'lib', 'kube.libjsonnet')
-    shutil.copy2(kube_jsonnet_lib_path, os.path.join(directory, 'lib'))
 
     logger.info("Populated {} with:".format(directory))
     for dirName, subdirList, fileList in os.walk(directory):

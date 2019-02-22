@@ -22,8 +22,8 @@ parameters:
         input_paths:
           - templates/docs
 
-      # - output_path: manifests
-      #   input_type: kadet
-      #   output_type: yaml
-      #   input_paths:
-      #     - components/nginx/
+      - output_path: kadet_output
+        input_type: kadet
+        output_type: yaml
+        input_paths:
+          - components/other_component/

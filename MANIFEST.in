@@ -1,4 +1,3 @@
 recursive-include kapitan/reclass/reclass/ *.py
 include kapitan/lib/*.libjsonnet
 include kapitan/inputs/templates/*
-include examples/kubernetes/lib/*.libjsonnet
