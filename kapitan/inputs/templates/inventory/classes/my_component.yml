@@ -1,0 +1,29 @@
+parameters:
+  your_component:
+    some_parameter: true
+
+  kapitan:
+
+    compile:
+      - output_path: jsonnet_output
+        input_type: jsonnet
+        output_type: yaml
+        input_paths:
+          - components/my_component/my_component.jsonnet
+
+      - output_path: scripts
+        input_type: jinja2
+        input_paths:
+          - templates/scripts
+
+      - output_path: .
+        output_type: yaml
+        input_type: jinja2
+        input_paths:
+          - templates/docs
+
+      - output_path: kadet_output
+        input_type: kadet
+        output_type: yaml
+        input_paths:
+          - components/other_component/
