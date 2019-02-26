@@ -263,7 +263,7 @@ Targets can also be defined inside the `inventory`.
 
 # Usage
 
-Use `kapitan init --init-directory <directory>` to populate a new
+Use `kapitan init --directory <directory>` to populate a new
 directory with the recommended kapitan folder structure in new projects.
 
 For other available options use:
