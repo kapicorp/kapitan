@@ -103,6 +103,8 @@ Compiled minikube-es
 
 # Main concepts
 
+<img src="./docs/kapitan_overview.png" width="600">
+
 ### Components
 
 A component is an application that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (StatefulSet, Services, ConfigMaps) defined in jsonnet.
