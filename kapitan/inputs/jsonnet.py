@@ -16,7 +16,7 @@
 
 import logging
 import os
-import ujson as json
+import json
 
 from kapitan.inputs.base import InputType, CompiledFile
 from kapitan.resources import search_imports, resource_callbacks

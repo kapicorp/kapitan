@@ -23,7 +23,7 @@ import os
 import sys
 import stat
 import collections
-import ujson as json
+import json
 import jinja2
 import _jsonnet as jsonnet
 import yaml
