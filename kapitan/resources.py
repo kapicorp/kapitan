@@ -18,7 +18,7 @@
 
 import errno
 from functools import partial
-import ujson as json
+import json
 import logging
 import os
 import io

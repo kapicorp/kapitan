@@ -5,8 +5,16 @@ test:
 	@echo ----- Running python tests -----
 	python3 -m unittest discover
 	@echo ----- Testing build of docker image -----
-	docker build . --no-cache
-
+	docker build . --no-cache -t kapitan
+	@echo ----- Testing run of docker image -----
+	docker run -ti --rm kapitan --help
+	@echo ----- Testing build of docker ci image -----
+	cd ci
+	docker build . --no-cache -t kapitan-ci
+	@echo ----- Testing run of docker ci image -----
+	docker run -ti --rm kapitan-ci --help
+	cd ..
+	
 .PHONY: release
 release:
 ifeq ($(version),)

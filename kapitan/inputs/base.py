@@ -17,7 +17,7 @@
 import logging
 import os
 import yaml
-import ujson as json
+import json
 
 from kapitan.errors import CompileError, KapitanError
 from kapitan.refs.base import Revealer
