@@ -1,7 +1,7 @@
-
-## 0.22.4:
+## 0.22.4-rc.0:
 - Added kapitan init (#213)
 - Removed ujson dependency (#220)
+- Tests for terraform compile (#225)
 
 ## 0.22.3:
 - Fixed bug in secrets --validate-targets and --update-targets (#207)
