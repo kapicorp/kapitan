@@ -18,6 +18,7 @@ Try to fix warnings from `make codestyle` before submitting to make sure you adh
  - Create a branch named `release-v<NUMBER>`. Use `v0.*.*-rc.*` if you want pre-release versions to be uploaded.
  - Update CHANGELOG.md with the release changes.
  - Once reviewed and merged, Travis will auto-release.
+ - The merge has to happen with a merge commit not with squash/rebase so that the commit message still mentions `deepmind/release-v*` inside.
 
 ## Contributor License Agreement
 
