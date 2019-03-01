@@ -13,6 +13,13 @@ make sure you replicate the compiled result of that in `tests/test_kubernetes_co
 Try to fix warnings from `make codestyle` before submitting to make sure you adhere to the
 [Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/).
 
+## Releasing
+
+ - Create a branch named `release-v<NUMBER>`. Use `v0.*.*-rc.*` if you want pre-release versions to be uploaded.
+ - Update CHANGELOG.md with the release changes.
+ - Once reviewed and merged, Travis will auto-release.
+ - The merge has to happen with a merge commit not with squash/rebase so that the commit message still mentions `deepmind/release-v*` inside.
+
 ## Contributor License Agreement
 
 Contributions to this project must be accompanied by a Contributor License
