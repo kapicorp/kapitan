@@ -15,7 +15,7 @@ Try to fix warnings from `make codestyle` before submitting to make sure you adh
 
 ## Releasing
 
- - Create a branch named release-v<NUMBER>. Use v0.*.*-rc.* if you want pre-release versions to be uploaded.
+ - Create a branch named `release-v<NUMBER>`. Use `v0.*.*-rc.*` if you want pre-release versions to be uploaded.
  - Update CHANGELOG.md with the release changes.
  - Once reviewed and merged, Travis will auto-release.
 
