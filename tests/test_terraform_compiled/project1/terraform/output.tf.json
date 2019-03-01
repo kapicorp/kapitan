@@ -1,0 +1,15 @@
+{
+  "data": {
+    "template_file": {
+      "readme": {
+        "template": "# project1\n|   |   |\n| - | - |\n| **region** | europe-west2 |\n| **zone**   | europe-west2-a |\n| **url**         | https://console.cloud.google.com/home/dashboard?project=project1 |\n\nResources managed by terraform in this project:\n\n  * dns\n\n\n\n## DNS\n  * google.co.uk\n  * google.com\n"
+      }
+    }
+  },
+  "output": {
+    "README.md": {
+      "sensitive": true,
+      "value": "${data.template_file.readme.rendered}"
+    }
+  }
+}

@@ -21,9 +21,9 @@ import os
 import sys
 from kapitan.cli import main
 from kapitan.utils import directory_hash
+from kapitan.cached import reset_cache
 
-
-class CompileTest(unittest.TestCase):
+class CompileKubernetesTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + '/examples/kubernetes/')
 
@@ -36,3 +36,20 @@ class CompileTest(unittest.TestCase):
 
     def tearDown(self):
         os.chdir(os.getcwd() + '/../../')
+        reset_cache()
+
+class CompileTerraformTest(unittest.TestCase):
+    def setUp(self):
+        os.chdir(os.getcwd() + '/examples/terraform/')
+
+    def test_compile(self):
+        sys.argv = ["kapitan", "compile"]
+        main()
+        compiled_dir_hash = directory_hash(os.getcwd() + '/compiled')
+        test_compiled_dir_hash = directory_hash(
+            os.getcwd() + '/../../tests/test_terraform_compiled')
+        self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
+
+    def tearDown(self):
+        os.chdir(os.getcwd() + '/../../')
+        reset_cache()

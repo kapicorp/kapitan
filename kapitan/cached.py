@@ -22,3 +22,12 @@ gpg_obj = None
 gkms_obj = None
 awskms_obj = None
 dot_kapitan = {}
+
+def reset_cache():
+    global inv, inv_cache, gpg_obj, gkms_obj, awskms_obj, dot_kapitan
+    inv = {}
+    inv_cache = {}
+    gpg_obj = None
+    gkms_obj = None
+    awskms_obj = None
+    dot_kapitan = {}

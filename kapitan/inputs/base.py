@@ -123,7 +123,7 @@ class CompilingFile(object):
             self.revealer.reveal_obj(obj)
         else:
             self.revealer.compile_obj(obj, target_name=target_name)
-        json.dump(obj, self.fp, indent=indent, escape_forward_slashes=False)
+        json.dump(obj, self.fp, indent=indent)
         logger.debug("Wrote %s", self.fp.name)
 
 
