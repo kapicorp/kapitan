@@ -7,6 +7,8 @@ just a few small guidelines you need to follow.
 
 Run `make test` to run all tests. If you modify anything in the `examples/` folder
 make sure you replicate the compiled result of that in `tests/test_kubernetes_compiled`.
+If you add new features, run `make test_coverage` to make sure the test coverage remains 
+at current or better levels.
 
 ## Code Style
 
