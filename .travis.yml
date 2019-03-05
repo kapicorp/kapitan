@@ -23,9 +23,10 @@ before_install:
   - sudo apt-get install -y gnupg2
 install:
   - pip3 install -r requirements.txt
+  - pip3 install coverage
 
 script:
-  - make test
+  - make test && make test_coverage
 
 after_success:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ]; then bash ./scripts/inc_version.sh; fi
