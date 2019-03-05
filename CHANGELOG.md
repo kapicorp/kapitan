@@ -1,4 +1,4 @@
-## 0.22.4-rc.0:
+## 0.22.4-rc.1:
 - Added kapitan init (#213)
 - Removed ujson dependency (#220)
 - Tests for terraform compile (#225)
