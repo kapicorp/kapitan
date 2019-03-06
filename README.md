@@ -258,9 +258,8 @@ Targets can also be defined inside the `inventory`.
 │   ├── common
 │   │   └── example-com-tls.key
 ├── lib
-│   ├── kapitan.libjsonnet
-│   └── kube.libjsonnet
-└── .kapitan
+    ├── kapitan.libjsonnet
+    └── kube.libjsonnet
 ```
 
 # Usage
@@ -356,9 +355,15 @@ To enforce the kapitan version used for compilation (for consistency and safety)
 
 ```shell
 $ cat .kapitan
-...
 version: 0.21.0
 ```
+
+Or to skip all minor version checks:
+```shell
+$ cat .kapitan
+version: 0.21
+```
+
 
 # Modes of operation
 
