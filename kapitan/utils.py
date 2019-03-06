@@ -407,7 +407,7 @@ def compare_versions(v1_raw, v2_raw):
         if v1_split[i] < v2_split[i]:
             return "lower"
 
-    if min_range > 1:
+    if min_range > 2:
         v1_is_rc = "-rc" in v1_raw
         v2_is_rc = "-rc" in v2_raw
 

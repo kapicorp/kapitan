@@ -42,6 +42,12 @@ class VersionTest(unittest.TestCase):
         result = compare_versions(dot_kapitan_version, current_version)
         self.assertEqual(result, "equal")
 
+    def test_version_one_rc_major_equal(self):
+        dot_kapitan_version = "0.22"
+        current_version = "0.22.1-rc.1"
+        result = compare_versions(dot_kapitan_version, current_version)
+        self.assertEqual(result, "equal")
+
     def test_version_greater(self):
         dot_kapitan_version = "0.22.1"
         current_version = "0.22.0"
