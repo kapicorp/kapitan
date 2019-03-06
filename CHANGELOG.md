@@ -1,4 +1,11 @@
+## 0.23.0-rc.0:
+#### Breaking:
+- Fixed and updated kapitan version checking (#233)
+
 ## 0.22.4-rc.1:
+- Fix included input templates (#229)
+
+## 0.22.4-rc.0:
 - Added kapitan init (#213)
 - Removed ujson dependency (#220)
 - Tests for terraform compile (#225)
@@ -6,11 +13,11 @@
 ## 0.22.3:
 - Fixed bug in secrets --validate-targets and --update-targets (#207)
 
-## 0.22.2 (secrets validation broken, do not use)
+## 0.22.2 (secrets validation broken, do not use):
 - Fixed failing docker builds and added it to the tests (#204)
 - Update google api python client (#204)
 
-## 0.22.1 (secrets validation broken, do not use)
+## 0.22.1 (secrets validation broken, do not use):
 - Added some basic linter functionality (kapitan linter -h) (#193)
 - Added support for Kadet input type (python, still a beta feature) (#190)
 
@@ -25,13 +32,13 @@
 - Added reveal secrets function, updated rsapublic function (#182)
 - parameters.kapitan.secrets.recipients is deprecated, please use parameters.kapitan.secrets.gpg.recipients (#183)
 
-## 0.21.0
+## 0.21.0:
 - Upgraded to jsonnet 0.12.1 (https://github.com/google/jsonnet/releases/tag/v0.12.1)
 
-## 0.20.1
+## 0.20.1:
 - Added jinja2 base64 filter (#170)
 
-## 0.20.0
+## 0.20.0:
 - Fix re.sub hanging (#158)
 - gCloud KMS secrets backend (#159)
 - Support .yaml in refs (#160)
