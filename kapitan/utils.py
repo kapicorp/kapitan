@@ -30,7 +30,6 @@ import yaml
 import math
 import base64
 from collections import Counter, defaultdict
-from pkg_resources import parse_version
 from functools import lru_cache, wraps
 from hashlib import sha256
 
@@ -387,30 +386,65 @@ def from_dot_kapitan(command, flag, default):
     return default
 
 
+def compare_versions(v1_raw, v2_raw):
+    """
+    Parses v1_raw and v2_raw into versions and compares them
+    Returns 'equal' if v1 == v2
+    Returns 'greater' if v1 > v2
+    Returns 'lower' if v1 < v2
+    """
+    v1 = v1_raw.replace("-rc", "")
+    v2 = v2_raw.replace("-rc", "")
+    v1_split = v1.split(".")
+    v2_split = v2.split(".")
+    min_range = min(len(v1_split), len(v2_split))
+
+    for i in range(min_range):
+        if v1_split[i] == v2_split[i]:
+            continue
+        if v1_split[i] > v2_split[i]:
+            return "greater"
+        if v1_split[i] < v2_split[i]:
+            return "lower"
+
+    if min_range > 2:
+        v1_is_rc = "-rc" in v1_raw
+        v2_is_rc = "-rc" in v2_raw
+
+        if not v1_is_rc and v2_is_rc:
+            return "greater"
+        elif v1_is_rc and not v2_is_rc:
+            return "lower"
+
+    return "equal"
+
+
 def check_version():
     """
     Checks the version in .kapitan is the same as the current version.
-    If the version in .kapitan is bigger, it will prompt to upgrade.
-    If the version in .kapitan is smaller, it will prompt to update .kapitan or downgrade.
+    If the version in .kapitan is greater, it will prompt to upgrade.
+    If the version in .kapitan is lower, it will prompt to update .kapitan or downgrade.
     """
     kapitan_config = dot_kapitan_config()
     try:
         if kapitan_config and kapitan_config["version"]:
-            if parse_version(kapitan_config["version"]) == parse_version(VERSION):
+            dot_kapitan_version = str(kapitan_config["version"])
+            result = compare_versions(dot_kapitan_version, VERSION)
+            if result == "equal":
                 return
             print("{}Current version: {}".format(termcolor.WARNING, VERSION))
-            print("Version in .kapitan: {}{}\n".format(kapitan_config["version"], termcolor.ENDC))
+            print("Version in .kapitan: {}{}\n".format(dot_kapitan_version, termcolor.ENDC))
 
-            # If .kapitan version is bigger than current version
-            if parse_version(kapitan_config["version"]) > parse_version(VERSION):
-                print("Upgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
-            # If .kapitan version is smaller than current version
-            elif parse_version(kapitan_config["version"]) < parse_version(VERSION):
+            # If .kapitan version is greater than current version
+            if result == "greater":
+                print("Upgrade kapitan to '{}' in order to keep results consistent:\n".format(dot_kapitan_version))
+            # If .kapitan version is lower than current version
+            elif result == "lower":
                 print("Option 1: You can update the version in .kapitan to '{}' and recompile\n".format(VERSION))
-                print("Option 2: Downgrade kapitan to '{}' in order to keep results consistent:\n".format(kapitan_config["version"]))
+                print("Option 2: Downgrade kapitan to '{}' in order to keep results consistent:\n".format(dot_kapitan_version))
 
-            print("Docker: docker pull deepmind/kapitan:{}".format(kapitan_config["version"]))
-            print("Pip (user): pip3 install --user --upgrade kapitan=={}\n".format(kapitan_config["version"]))
+            print("Docker: docker pull deepmind/kapitan:{}".format(dot_kapitan_version))
+            print("Pip (user): pip3 install --user --upgrade kapitan=={}\n".format(dot_kapitan_version))
             print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
             print("If you know what you're doing, you can skip this check by adding '--ignore-version-check'.")
             sys.exit(1)
