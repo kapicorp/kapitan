@@ -30,7 +30,6 @@ import yaml
 import math
 import base64
 from collections import Counter, defaultdict
-from pkg_resources import parse_version
 from functools import lru_cache, wraps
 from hashlib import sha256
 
