@@ -51,7 +51,7 @@ class CliFuncsTest(unittest.TestCase):
 
     def test_cli_secret_write_reveal_gpg(self):
         """
-        run $ kapitan secrets --write
+        run $ kapitan secrets --write gpg:test_secret
         and $ kapitan secrets --reveal
         with example@kapitan.dev recipient
         """
@@ -85,7 +85,7 @@ class CliFuncsTest(unittest.TestCase):
 
     def test_cli_secret_base64_write_reveal_gpg(self):
         """
-        run $ kapitan secrets --write --base64
+        run $ kapitan secrets --write gpg:test_secretb64 --base64
         and $ kapitan secrets --reveal
         with example@kapitan.dev recipient
         """
@@ -117,5 +117,112 @@ class CliFuncsTest(unittest.TestCase):
 
         os.remove(test_tag_file)
 
+    def test_cli_secret_validate_targets(self):
+        """
+        run $ kapitan secrets --validate-targets
+        expect 0 (success) exit status code
+        """
+        with self.assertRaises(SystemExit) as cm:
+            sys.argv = ["kapitan", "secrets", "--validate-targets",
+                        "--secrets-path", "examples/kubernetes/secrets/targets/",
+                        "--inventory-path", "examples/kubernetes/inventory/"]
+            main()
+        self.assertEqual(cm.exception.code, 0)
+
+    def test_cli_secret_write_reveal_gkms(self):
+        """
+        run $ kapitan secrets --write gkms:test_secret
+        and $ kapitan secrets --reveal
+        using mock KMS key
+        """
+        test_secret_content = "mock"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = ["kapitan", "secrets", "--write", "gkms:test_secret",
+                    "-f", test_secret_file,
+                    "--secrets-path", SECRETS_PATH,
+                    "--key", "mock"]
+        main()
+
+        test_tag_content = "revealing: ?{gkms:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        sys.argv = ["kapitan", "secrets", "--reveal",
+                    "-f", test_tag_file,
+                    "--secrets-path", SECRETS_PATH]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("revealing: {}".format(test_secret_content),
+                         stdout.getvalue())
+
+        os.remove(test_tag_file)
+
+    def test_cli_secret_write_reveal_awskms(self):
+        """
+        run $ kapitan secrets --write awskms:test_secret
+        and $ kapitan secrets --reveal
+        using mock KMS key
+        """
+        test_secret_content = "mock"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = ["kapitan", "secrets", "--write", "awskms:test_secret",
+                    "-f", test_secret_file,
+                    "--secrets-path", SECRETS_PATH,
+                    "--key", "mock"]
+        main()
+
+        test_tag_content = "revealing: ?{awskms:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        sys.argv = ["kapitan", "secrets", "--reveal",
+                    "-f", test_tag_file,
+                    "--secrets-path", SECRETS_PATH]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("revealing: {}".format(test_secret_content),
+                         stdout.getvalue())
+
+        os.remove(test_tag_file)
+
+    def test_cli_searchvar(self):
+        """
+        run $ kapitan searchvar mysql.replicas
+        """
+        sys.argv = ["kapitan", "searchvar", "mysql.replicas",
+                    "--inventory-path", "examples/kubernetes/inventory/"]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("examples/kubernetes/inventory/targets/minikube-mysql.yml   1\n", stdout.getvalue())
+
+    def test_cli_inventory(self):
+        """
+        run $ kapitan inventory -t minikube-es -F -p cluster
+        """
+        sys.argv = ["kapitan", "inventory", "-t", "minikube-es", "-F", "-p", "cluster",
+                    "--inventory-path", "examples/kubernetes/inventory/"]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("id: minikube\nname: minikube\ntype: minikube\nuser: minikube\n",
+                         stdout.getvalue())
+
     def tearDown(self):
-        shutil.rmtree(SECRETS_PATH)
+        shutil.rmtree(SECRETS_PATH, ignore_errors=True)

@@ -215,7 +215,7 @@ def main():
     init_parser.add_argument('--directory',
                              default=from_dot_kapitan('init', 'directory', '.'),
                              help='set path, in which to generate the project skeleton, assumes directory already exists. default is "./"')
-    
+
     args = parser.parse_args()
 
     logger.debug('Running with args: %s', args)
@@ -279,7 +279,7 @@ def main():
                     inv = deep_get(inv, pattern)
             if args.flat:
                 inv = flatten_dict(inv)
-                yaml.dump(inv, sys.stdout, width=10000)
+                yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False)
             else:
                 yaml.dump(inv, sys.stdout, Dumper=PrettyDumper, default_flow_style=False)
         except Exception as e:
@@ -295,7 +295,7 @@ def main():
 
     elif cmd == 'init':
         initialise_skeleton(args.directory)
-        
+
     elif cmd == 'secrets':
         ref_controller = RefController(args.secrets_path)
 

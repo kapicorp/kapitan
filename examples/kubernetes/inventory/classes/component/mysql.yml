@@ -21,11 +21,11 @@ parameters:
     image: mysql:latest
     users:
       root:
-        # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
-        password: ?{gpg:mysql/root/password|randomstr|base64}
-        # password: ?{gkms:mysql/root/password|randomstr|base64}
-        # password: ?{awskms:mysql/root/password|randomstr|base64}
+        # If 'secrets/targets/${target_name}/mysql/password' doesn't exist, it will gen a random b64-encoded password
+        password: ?{gpg:targets/${target_name}/mysql/password|randomstr|base64}
+        # password: ?{gkms:targets/${target_name}/mysql/password|randomstr|base64}
+        # password: ?{awskms:targets/${target_name}/mysql/password|randomstr|base64}
 
         # Generates the sha256 checksum of the previously declared B64'ed password
-        # It's base64'ed again so that it can be used in kubernetes secrets 
-        password_sha256: ?{gpg:mysql/root/password_sha256|reveal:mysql/root/password|sha256|base64}
+        # It's base64'ed again so that it can be used in kubernetes secrets
+        password_sha256: ?{gpg:targets/${target_name}/mysql/password_sha256|reveal:targets/${target_name}/mysql/password|sha256|base64}

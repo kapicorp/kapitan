@@ -439,7 +439,7 @@ def check_version():
 
 def search_target_token_paths(target_secrets_path, targets):
     """
-    returns dict of target and their secret token paths (e.g ?{[gpg/gkms/awskms]:mysql/root/password}) in target_secrets_path
+    returns dict of target and their secret token paths (e.g ?{[gpg/gkms/awskms]:path/to/secret}) in target_secrets_path
     targets is a set of target names used to lookup targets in target_secrets_path
     """
     target_files = defaultdict(list)

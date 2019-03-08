@@ -14,12 +14,12 @@ test:
 	@echo ----- Testing run of docker ci image -----
 	docker run -ti --rm kapitan-ci --help
 	cd ..
-	
+
 .PHONY: test_coverage
 test_coverage:
 	@echo ----- Testing code coverage -----
 	coverage run --source=kapitan --omit="*reclass*" -m unittest discover
-	coverage report --fail-under=51 -m
+	coverage report --fail-under=60 -m
 
 .PHONY: release
 release:

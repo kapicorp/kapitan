@@ -162,7 +162,7 @@ parameters:
 
 Or in the `mysql` class example, we declare the generic variables that will be shared by all targets that import the component and what to compile.
 
-We include a secret that is referencing a GPG encrypted value in `secrets/mysql/root/password`, or if the file doesn't exist, it will dynamically generate a random b64-encoded password, encrypt it and save it into the file.
+We include a secret that is referencing a GPG encrypted value in `secrets/targets/minikube-mysql/mysql/password`, or if the file doesn't exist, it will dynamically generate a random b64-encoded password, encrypt it and save it into the file.
 
 ```
 $ cat inventory/classes/component/mysql.yml
@@ -173,11 +173,14 @@ parameters:
     image: mysql:latest
     users:
       root:
-        # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
-        password: ?{gpg:mysql/root/password|randomstr|base64}
-        # password: ?{gkms:mysql/root/password|randomstr|base64}
-        # password: ?{awskms:mysql/root/password|randomstr|base64}
+        # If 'secrets/targets/${target_name}/mysql/password' doesn't exist, it will gen a random b64-encoded password
+        password: ?{gpg:targets/${target_name}/mysql/password|randomstr|base64}
+        # password: ?{gkms:targets/${target_name}/mysql/password|randomstr|base64}
+        # password: ?{awskms:targets/${target_name}/mysql/password|randomstr|base64}
 
+        # Generates the sha256 checksum of the previously declared B64'ed password
+        # It's base64'ed again so that it can be used in kubernetes secrets
+        password_sha256: ?{gpg:targets/${target_name}/mysql/password_sha256|reveal:targets/${target_name}/mysql/password|sha256|base64}
   kapitan:
     compile:
     - output_path: manifests
@@ -447,13 +450,13 @@ The usual flow of creating and using an encrypted secret with kapitan is:
 
   - Manually:
     ```
-    GPG: kapitan secrets --write gpg:mysql/root/password -t minikube-mysql -f <password file>
-    gKMS: kapitan secrets --write gkms:mysql/root/password -t minikube-mysql -f <password file>
-    awsKMS: kapitan secrets --write awskms:mysql/root/password -t minikube-mysql -f <password file>
+    GPG: kapitan secrets --write gpg:targets/minikube-mysql/mysql/password -t minikube-mysql -f <password file>
+    gKMS: kapitan secrets --write gkms:targets/minikube-mysql/mysql/password -t minikube-mysql -f <password file>
+    awsKMS: kapitan secrets --write awskms:targets/minikube-mysql/mysql/password -t minikube-mysql -f <password file>
     OR use stdin:
-    echo -n '<password>' | kapitan secrets --write [gpg/gkms/awskms]:mysql/root/password -t minikube-mysql -f -
+    echo -n '<password>' | kapitan secrets --write [gpg/gkms/awskms]:targets/minikube-mysql/mysql/password -t minikube-mysql -f -
     ```
-    This will inherit the secrets configuration from minikube-mysql target, encrypt and save your password into `secrets/mysql/root/password`, see `examples/kubernetes`.
+    This will inherit the secrets configuration from minikube-mysql target, encrypt and save your password into `secrets/targets/minikube-mysql/mysql/password`, see `examples/kubernetes`.
 
   - Automatically:<br>
     See [mysql.yml class](./examples/kubernetes/inventory/classes/component/mysql.yml). When referencing your secret, you can use the following functions to automatically generate, encrypt and save your secret:
@@ -471,8 +474,8 @@ The usual flow of creating and using an encrypted secret with kapitan is:
   ```
   users:
     root:
-      # If 'secrets/mysql/root/password' doesn't exist, it will gen a random b64-encoded password
-      password: ?{gpg:mysql/root/password|randomstr|base64}
+      # If 'secrets/targets/${target_name}/mysql/password' doesn't exist, it will gen a random b64-encoded password
+      password: ?{gpg:targets/${target_name}/mysql/password|randomstr|base64}
   ```
 
 - After `kapitan compile`, this will compile to the [mysql_secret.yml k8s secret](./examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml). If you are part of the GPG recipients, you can see the secret by running:
