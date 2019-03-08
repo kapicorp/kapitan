@@ -115,8 +115,13 @@ class AWSKMSSecret(Ref):
             if isinstance(data, str):
                 _data = data.encode()
         try:
-            response = awskms_obj().encrypt(KeyId=key, Plaintext=_data)
-            ciphertext = base64.b64encode(response['CiphertextBlob'])
+            ciphertext = ""
+            # Mocking encrypted response for tests
+            if key == "mock":
+                ciphertext = base64.b64encode("mock".encode())
+            else:
+                response = awskms_obj().encrypt(KeyId=key, Plaintext=_data)
+                ciphertext = base64.b64encode(response['CiphertextBlob'])
             self.data = ciphertext
             self.key = key
 
@@ -126,8 +131,13 @@ class AWSKMSSecret(Ref):
     def _decrypt(self, data):
         """decrypt data"""
         try:
-            response = awskms_obj().decrypt(CiphertextBlob=base64.b64decode(data))
-            plaintext = response['Plaintext']
+            plaintext = ""
+            # Mocking decrypted response for tests
+            if self.key == "mock":
+                plaintext = "mock".encode()
+            else:
+                response = awskms_obj().decrypt(CiphertextBlob=base64.b64decode(data))
+                plaintext = response['Plaintext']
 
             return plaintext.decode()
 
