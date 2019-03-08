@@ -35,6 +35,7 @@ from hashlib import sha256
 
 from kapitan.version import VERSION
 from kapitan.errors import CompileError
+from kapitan.inputs.jinja2_filters import load_jinja2_filters
 import kapitan.cached as cached
 
 logger = logging.getLogger(__name__)
@@ -110,19 +111,6 @@ def sha256_string(string):
     return sha256(string.encode("UTF-8")).hexdigest()
 
 
-def base64_encode(string):
-    return base64.b64encode(string.encode("UTF-8")).decode("UTF-8")
-
-
-def base64_decode(string):
-    return base64.b64decode(string).decode("UTF-8")
-
-
-def jinja2_yaml_filter(obj):
-    """Returns yaml for object"""
-    return yaml.safe_dump(obj, default_flow_style=False)
-
-
 def render_jinja2_file(name, context):
     """Render jinja2 file name with context"""
     path, filename = os.path.split(name)
@@ -133,10 +121,7 @@ def render_jinja2_file(name, context):
         lstrip_blocks=True,
         extensions=['jinja2.ext.do'],
     )
-    env.filters['sha256'] = sha256_string
-    env.filters['yaml'] = jinja2_yaml_filter
-    env.filters['b64encode'] = base64_encode
-    env.filters['b64decode'] = base64_decode
+    load_jinja2_filters(env)
     return env.get_template(filename).render(context)
 
 
