@@ -82,7 +82,7 @@ def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
 
 
 def strftime(string_format, second=None):
-    """return a date string using string. See https://docs.python.org/3/library/time.html#time.strftime for format"""
+    """return current date string for format. See https://docs.python.org/3/library/time.html#time.strftime for format"""
     if second is not None:
         try:
             second = int(second)

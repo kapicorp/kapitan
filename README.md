@@ -423,15 +423,15 @@ sha256 - SHA256 hashing of text e.g. {{ text | sha256 }}
 yaml - Dump text as YAML e.g. {{ text | yaml }}
 b64encode - base64 encode text e.g. {{ text | b64encode }}
 b64decode - base64 decode text e.g. {{ text | b64decode }}
-fileglob - return list of matched regular files for glob e.g. {{ fileglob(*filename*) }}
-bool - return the bool for value e.g. {{ [yes/on/1/true] | bool }}
-to_datetime - return datetime object for string e.g. {{ "07/03/19 13:37:00" | to_datetime }}
-strftime - return a date string using string e.g. {{ "%a, %d %b %Y %H:%M:%S +0000" | strftime }}
-regex_replace - perform a re.sub returning a string e.g. {{ regex_replace("hello world", pattern="world", replacement="kapitan") }}
-regex_escape - escape all regular expressions special characters from string e.g. {{ "/[\s].*" | regex_escape }}
-regex_search - perform re.search and return the list of matches or a backref e.g. {{ regex_search("hello world", "\s[a-z].*") }}
-regex_findall - perform re.findall and return the list of matches e.g. {{ regex_findall("hello world", "world.*") }}
-ternary - value ? true_val : false_val e.g. {{ ternary(condition, "hello", "world") }}
+fileglob - return list of matched regular files for glob e.g. {{ ./path/file* | fileglob }}
+bool - return the bool for value e.g. {{ yes | bool }}
+to_datetime - return datetime object for string e.g. {{ "2019-03-07 13:37:00" | to_datetime }}
+strftime - return current date string for format e.g. {{ "%a, %d %b %Y %H:%M" | strftime }}
+regex_replace - perform a re.sub returning a string e.g. {{ hello world | regex_replace(pattern="world", replacement="kapitan") }}
+regex_escape - escape all regular expressions special characters from string e.g. {{ "+s[a-z].*" | regex_escape }}
+regex_search - perform re.search and return the list of matches or a backref e.g. {{ hello world | regex_search("world.*") }}
+regex_findall - perform re.findall and return the list of matches as array e.g. {{ hello world | regex_findall("world.*") }}
+ternary - value ? true_val : false_val e.g. {{ condition | ternary("yes", "no") }}
 shuffle - randomly shuffle elements of a list {{ [1, 2, 3, 4, 5] | shuffle }}
 ```
 
