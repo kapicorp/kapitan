@@ -221,7 +221,7 @@ class CliFuncsTest(unittest.TestCase):
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             main()
-        self.assertEqual("{id: minikube, name: minikube, type: minikube, user: minikube}\n",
+        self.assertEqual("id: minikube\nname: minikube\ntype: minikube\nuser: minikube\n",
                          stdout.getvalue())
 
     def tearDown(self):

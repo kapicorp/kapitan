@@ -279,7 +279,7 @@ def main():
                     inv = deep_get(inv, pattern)
             if args.flat:
                 inv = flatten_dict(inv)
-                yaml.dump(inv, sys.stdout, width=10000)
+                yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False)
             else:
                 yaml.dump(inv, sys.stdout, Dumper=PrettyDumper, default_flow_style=False)
         except Exception as e:

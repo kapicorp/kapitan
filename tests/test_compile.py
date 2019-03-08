@@ -19,6 +19,8 @@
 import unittest
 import os
 import sys
+import io
+import contextlib
 from kapitan.cli import main
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
@@ -37,8 +39,10 @@ class CompileKubernetesTest(unittest.TestCase):
 
     def test_compile_not_enough_args(self):
         with self.assertRaises(SystemExit) as cm:
-            sys.argv = ["kapitan"]
-            main()
+            # Ignoring stdout for "kapitan --help"
+            with contextlib.redirect_stdout(io.StringIO()):
+                sys.argv = ["kapitan"]
+                main()
         self.assertEqual(cm.exception.code, 1)
 
     def tearDown(self):
