@@ -1,3 +1,7 @@
+## 0.23.0-rc.1:
+- Added more jinja2 filters (#234)
+- Improved tests coverage (#236)
+
 ## 0.23.0-rc.0:
 #### Breaking:
 - Fixed and updated kapitan version checking (#233)
