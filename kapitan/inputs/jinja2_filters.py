@@ -26,7 +26,7 @@ from six import string_types
 from random import Random, shuffle
 
 from kapitan.errors import CompileError
-import kapitan.utils as utils
+from kapitan import utils
 
 
 def load_jinja2_filters(env):
