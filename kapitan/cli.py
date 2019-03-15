@@ -388,7 +388,7 @@ def secret_write(args, ref_controller):
         ref_controller[tag] = ref_obj
 
     else:
-        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms:{name}".format(name=token_name))
+        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/ref:{name}".format(name=token_name))
 
 
 def secret_update(args, ref_controller):
