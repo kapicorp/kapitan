@@ -283,6 +283,7 @@ def load_target_inventory(inventory_path, targets):
     for target_name in targets_list:
         try:
             target_obj = inv['nodes'][target_name]['parameters']['kapitan']
+            valid_target_obj(target_obj)
             validate_matching_target_name(target_name, target_obj, inventory_path)
             logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
             target_objs.append(target_obj)
