@@ -442,6 +442,8 @@ shuffle - randomly shuffle elements of a list {{ [1, 2, 3, 4, 5] | shuffle }}
 
 Manages your secrets with GPG, Google Cloud KMS (beta) or AWS KMS (beta), with plans to also support Vault.
 
+If you want to get started with secrets but don't have a GPG or KMS setup, you can use the secret ref type. Note that `ref` is not encrypted and is intented for development purposes only. *Do not use `ref` secrets if you're storing sensitive information!*
+
 The usual flow of creating and using an encrypted secret with kapitan is:
 
 - Define your GPG recipients or KMS key, see [common.yml class](./examples/kubernetes/inventory/classes/common.yml), `parameters.kapitan.secrets`. You can also define these per target.
@@ -453,6 +455,7 @@ The usual flow of creating and using an encrypted secret with kapitan is:
     GPG: kapitan secrets --write gpg:targets/minikube-mysql/mysql/password -t minikube-mysql -f <password file>
     gKMS: kapitan secrets --write gkms:targets/minikube-mysql/mysql/password -t minikube-mysql -f <password file>
     awsKMS: kapitan secrets --write awskms:targets/minikube-mysql/mysql/password -t minikube-mysql -f <password file>
+    ref: kapitan secrets --write ref:targets/minikube-mysql/mysql/password -t minikube-mysql -f <password file> # WARNING: ref is not encrypted and intended for dev use only
     OR use stdin:
     echo -n '<password>' | kapitan secrets --write [gpg/gkms/awskms]:targets/minikube-mysql/mysql/password -t minikube-mysql -f -
     ```
