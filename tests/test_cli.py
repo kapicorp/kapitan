@@ -197,6 +197,71 @@ class CliFuncsTest(unittest.TestCase):
 
         os.remove(test_tag_file)
 
+    def test_cli_secret_write_ref(self):
+        """
+        run $ kapitan secrets --write ref:test_secret
+        and $ kapitan secrets --reveal -f sometest_file
+        """
+        test_secret_content = "secret_value!"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = ["kapitan", "secrets", "--write", "ref:test_secret",
+                    "-f", test_secret_file,
+                    "--secrets-path", SECRETS_PATH]
+        main()
+
+        test_tag_content = "revealing: ?{ref:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        sys.argv = ["kapitan", "secrets", "--reveal",
+                    "-f", test_tag_file,
+                    "--secrets-path", SECRETS_PATH]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("revealing: {}".format(test_secret_content),
+                         stdout.getvalue())
+
+        os.remove(test_tag_file)
+
+    def test_cli_secret_write_base64_ref(self):
+        """
+        run $ kapitan secrets --write ref:test_secret --base64
+        and $ kapitan secrets --reveal -f sometest_file
+        """
+        test_secret_content = "secret_value!"
+        test_secret_content_b64 = base64.b64encode(test_secret_content.encode())
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = ["kapitan", "secrets", "--write", "ref:test_secret",
+                    "--base64", "-f", test_secret_file,
+                    "--secrets-path", SECRETS_PATH]
+        main()
+
+        test_tag_content = "revealing: ?{ref:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        sys.argv = ["kapitan", "secrets", "--reveal",
+                    "-f", test_tag_file,
+                    "--secrets-path", SECRETS_PATH]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("revealing: {}".format(test_secret_content_b64.decode()),
+                         stdout.getvalue())
+
+        os.remove(test_tag_file)
+
     def test_cli_searchvar(self):
         """
         run $ kapitan searchvar mysql.replicas

@@ -19,6 +19,7 @@
 from __future__ import print_function
 
 import argparse
+import base64
 import json
 import logging
 import os
@@ -34,7 +35,7 @@ from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
 from kapitan.lint import start_lint
 from kapitan.initialiser import initialise_skeleton
 
-from kapitan.refs.base import RefController, Revealer
+from kapitan.refs.base import RefController, Revealer, Ref
 from kapitan.refs.secrets.gpg import GPGSecret
 from kapitan.refs.secrets.gpg import lookup_fingerprints
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
@@ -373,8 +374,21 @@ def secret_write(args, ref_controller):
         secret_obj = AWSKMSSecret(data, key, encode_base64=args.base64)
         tag = '?{{awskms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
+
+    elif token_name.startswith("ref:"):
+        type_name, token_path = token_name.split(":")
+        _data = data.encode()
+        encoding = 'original'
+        if args.base64:
+            _data = base64.b64encode(_data).decode()
+            _data = _data.encode()
+            encoding = 'base64'
+        ref_obj = Ref(_data, encoding=encoding)
+        tag = '?{{ref:{}}}'.format(token_path)
+        ref_controller[tag] = ref_obj
+
     else:
-        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms:{name}".format(name=token_name))
+        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/ref:{name}".format(name=token_name))
 
 
 def secret_update(args, ref_controller):
