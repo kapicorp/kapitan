@@ -360,10 +360,15 @@ def valid_target_obj(target_obj):
 
 
 def validate_matching_target_name(target_filename, target_obj, inventory_path):
-    """if target does not have a corresponding yaml file in *inventory_path*,
-    throws *InventoryError*
+    """Throws *InventoryError* if parameters.kapitan.vars.target is not set,
+    or target does not have a corresponding yaml file in *inventory_path*
     """
-    target_name = target_obj["vars"]["target"]
+    try:
+        target_name = target_obj["vars"]["target"]
+    except KeyError:
+        error_message = "Target missing: target \"{}\" is missing parameters.kapitan.vars.target\n" \
+                        "This parameter should be set to the target name"
+        raise InventoryError(error_message.format(target_filename))
 
     if target_filename != target_name:
         target_path = os.path.join(os.path.abspath(inventory_path), "targets")
