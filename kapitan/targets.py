@@ -363,6 +363,7 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
     """Throws *InventoryError* if parameters.kapitan.vars.target is not set,
     or target does not have a corresponding yaml file in *inventory_path*
     """
+    logger.debug("validating target name matches the name of yml file%s", target_filename)
     try:
         target_name = target_obj["vars"]["target"]
     except KeyError:
