@@ -269,8 +269,7 @@ def save_inv_cache(compile_path, targets):
 
 
 def load_target_inventory(inventory_path, targets):
-    """returns a list of target objects from the inventory.
-    """
+    """returns a list of target objects from the inventory"""
     target_objs = []
     inv = inventory_reclass(inventory_path)
 

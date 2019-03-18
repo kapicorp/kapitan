@@ -50,9 +50,7 @@ class CompileKubernetesTest(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
 
     def test_compile_not_matching_targets(self):
-        stdout_redirect = io.StringIO()
-        sys.stdout = stdout_redirect
-        with self.assertLogs(logger='kapitan.targets', level='ERROR') as cm:
+        with self.assertLogs(logger='kapitan.targets', level='ERROR') as cm, contextlib.redirect_stdout(io.StringIO()):
             # as of now, we cannot capture stdout with contextlib.redirect_stdout
             # since we only do logger.error(e) in targets.py before exiting
             with self.assertRaises(SystemExit) as ca:
@@ -67,8 +65,8 @@ class CompileKubernetesTest(unittest.TestCase):
                     # correct the filename again, even if assertion fails
                     if os.path.exists(unmatched_filename):
                         os.rename(src=unmatched_filename, dst=correct_filename)
-        error_message = "Target \"minikube-es\" is missing the corresponding yml file"
-        self.assertTrue(' '.join(cm.output).find(error_message) != -1)
+        error_message_substr = "is missing the corresponding yml file"
+        self.assertTrue(' '.join(cm.output).find(error_message_substr) != -1)
 
     def test_compile_vars_target_missing(self):
         inventory_path = "inventory"
