@@ -20,8 +20,9 @@ import base64
 import os
 import tempfile
 import unittest
-from kapitan.refs.base import Ref, RefController, RefParams, Revealer
+
 from kapitan.errors import RefFromFuncError, RefHashMismatchError
+from kapitan.refs.base import Ref, RefController, RefParams, Revealer
 from kapitan.utils import get_entropy
 
 REFS_HOME = tempfile.mkdtemp()
@@ -157,11 +158,11 @@ class RefsTest(unittest.TestCase):
         self.assertEqual(len(revealed), 43)  # default length of token_urlsafe() string is 43
         self.assertTrue(get_entropy(revealed) > 4)
 
-        # Test with parameter nbytes=16, correlating with string length 22
+        # Test with parameter nbytes=16, correlating with string length 16
         tag = '?{ref:ref/randomstr|randomstr:16}'
         REF_CONTROLLER[tag] = RefParams()
         revealed = REVEALER.reveal_raw_file(file_with_tags)
-        self.assertEqual(len(revealed), 22)
+        self.assertEqual(len(revealed), 16)
 
     def test_ref_function_base64(self):
         "write randomstr to ref and base64, confirm ref file exists, reveal and check"

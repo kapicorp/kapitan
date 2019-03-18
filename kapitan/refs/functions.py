@@ -22,7 +22,6 @@ import secrets  # python secrets module
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-
 from kapitan.errors import RefError
 
 logger = logging.getLogger(__name__)
@@ -48,7 +47,10 @@ def randomstr(ctx, nbytes=''):
     """
     if nbytes:
         nbytes = int(nbytes)
-        ctx.data = secrets.token_urlsafe(nbytes)
+        # Generate twice the amount of bytes asked for
+        # and then trim the string to nbytes length if it's longer
+        ctx.data = secrets.token_urlsafe(2 * nbytes)[:nbytes]
+
     else:
         ctx.data = secrets.token_urlsafe()
 
