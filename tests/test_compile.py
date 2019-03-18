@@ -24,6 +24,9 @@ import contextlib
 from kapitan.cli import main
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
+from kapitan.targets import validate_matching_target_name
+from kapitan.resources import inventory_reclass
+from kapitan.errors import InventoryError
 
 
 class CompileKubernetesTest(unittest.TestCase):
@@ -45,6 +48,39 @@ class CompileKubernetesTest(unittest.TestCase):
                 sys.argv = ["kapitan"]
                 main()
         self.assertEqual(cm.exception.code, 1)
+
+    def test_compile_not_matching_targets(self):
+        with self.assertLogs(logger='kapitan.targets', level='ERROR') as cm, contextlib.redirect_stdout(io.StringIO()):
+            # as of now, we cannot capture stdout with contextlib.redirect_stdout
+            # since we only do logger.error(e) in targets.py before exiting
+            with self.assertRaises(SystemExit) as ca:
+                unmatched_filename = "inventory/targets/minikube-es-fake.yml"
+                correct_filename = "inventory/targets/minikube-es.yml"
+                os.rename(src=correct_filename, dst=unmatched_filename)
+                sys.argv = ["kapitan", "compile"]
+
+                try:
+                    main()
+                finally:
+                    # correct the filename again, even if assertion fails
+                    if os.path.exists(unmatched_filename):
+                        os.rename(src=unmatched_filename, dst=correct_filename)
+        error_message_substr = "is missing the corresponding yml file"
+        self.assertTrue(' '.join(cm.output).find(error_message_substr) != -1)
+
+    def test_compile_vars_target_missing(self):
+        inventory_path = "inventory"
+        target_filename = "minikube-es"
+        target_obj = inventory_reclass(inventory_path)['nodes'][target_filename]['parameters']['kapitan']
+        # delete vars.target
+        del target_obj["vars"]["target"]
+
+        with self.assertRaises(InventoryError) as ie:
+            validate_matching_target_name(target_filename, target_obj, inventory_path)
+
+        error_message = "Target missing: target \"{}\" is missing parameters.kapitan.vars.target\n" \
+                        "This parameter should be set to the target name"
+        self.assertTrue(error_message.format(target_filename), ie.exception.args[0])
 
     def tearDown(self):
         os.chdir(os.getcwd() + '/../../')

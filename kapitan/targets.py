@@ -269,7 +269,7 @@ def save_inv_cache(compile_path, targets):
 
 
 def load_target_inventory(inventory_path, targets):
-    """retuns a list of target objects from the inventory"""
+    """returns a list of target objects from the inventory"""
     target_objs = []
     inv = inventory_reclass(inventory_path)
 
@@ -283,6 +283,7 @@ def load_target_inventory(inventory_path, targets):
         try:
             target_obj = inv['nodes'][target_name]['parameters']['kapitan']
             valid_target_obj(target_obj)
+            validate_matching_target_name(target_name, target_obj, inventory_path)
             logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
             target_objs.append(target_obj)
         except KeyError:
@@ -355,3 +356,23 @@ def valid_target_obj(target_obj):
     }
 
     return jsonschema.validate(target_obj, schema)
+
+
+def validate_matching_target_name(target_filename, target_obj, inventory_path):
+    """Throws *InventoryError* if parameters.kapitan.vars.target is not set,
+    or target does not have a corresponding yaml file in *inventory_path*
+    """
+    logger.debug("validating target name matches the name of yml file%s", target_filename)
+    try:
+        target_name = target_obj["vars"]["target"]
+    except KeyError:
+        error_message = "Target missing: target \"{}\" is missing parameters.kapitan.vars.target\n" \
+                        "This parameter should be set to the target name"
+        raise InventoryError(error_message.format(target_filename))
+
+    if target_filename != target_name:
+        target_path = os.path.join(os.path.abspath(inventory_path), "targets")
+
+        error_message = "Target \"{}\" is missing the corresponding yml file in {}\n" \
+                        "Target name should match the name of the target yml file in inventory"
+        raise InventoryError(error_message.format(target_name, target_path))
