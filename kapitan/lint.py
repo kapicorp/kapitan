@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 yamllint_config = """
 # https://yamllint.readthedocs.io/en/stable/rules.html
 rules:
-  braces: enable
-  brackets: enable
+  braces: disable
+  brackets: disable
   colons: disable
   commas: disable
   comments: disable
@@ -40,14 +40,14 @@ rules:
   document-end: disable
   document-start: disable
   empty-lines: disable
-  empty-values: enable
-  hyphens: enable
+  empty-values: disable
+  hyphens: disable
   indentation: disable
   key-duplicates: enable
   key-ordering: disable
   line-length: disable
   new-line-at-end-of-file: disable
-  new-lines: enable
+  new-lines: disable
   octal-values: enable
   quoted-strings: disable
   trailing-spaces: disable
@@ -73,24 +73,21 @@ def start_lint(fail_on_warning, skip_class_checks, skip_yamllint, inventory_path
         sys.exit(1)
     
     status_yamllint = 0
-    if not skip_yamllint:
-        if not os.path.isdir(inventory_path):
-            logger.info(
-                "\nInventory path is invalid or not provided, skipping yamllint checks\n")
-        else:
+    status_secrets = 0
+    status_class_checks = 0
+
+    if not os.path.isdir(inventory_path):
+        logger.info(
+            "\nInventory path is invalid or not provided, skipping yamllint and orphan class checks\n")
+    else:
+        if not skip_yamllint:
             logger.info("\nRunning yamllint on all inventory files...\n")
             status_yamllint = lint_yamllint(inventory_path)
 
-
-    status_class_checks = 0
-    if not skip_class_checks:
-        if not os.path.isdir(inventory_path):
-            logger.info("\nInventory path is invalid or not provided, skipping class checks\n")
-        else:
+        if not skip_class_checks:
             logger.info("\nChecking for orphan classes in inventory...\n")
             status_class_checks = lint_unused_classes(inventory_path)
 
-    status_secrets = 0
     if search_secrets:
         logger.info("\nChecking for orphan secrets files...\n")
         status_secrets = lint_orphan_secrets(compiled_path, secrets_path)
@@ -196,27 +193,29 @@ def lint_yamllint(inventory_path):
         checks_sum (int): the number of yaml lint issues found
     """
     logger.debug("Running yamllint for " + inventory_path)
-    
+
+    if os.path.isfile('.yamllint'):
+        logger.info("Loading values from .yamllint found.")
+        conf = YamlLintConfig(file='.yamllint')
+    else:
+        logger.info(".yamllint not found. Using default values")
+        conf = YamlLintConfig(yamllint_config)
+
     checks_sum = 0
     for path in list_all_paths(inventory_path):
         if os.path.isfile(path) and (path.endswith(".yml") or path.endswith(".yaml")):
             with open(path, "r") as yaml_file:
                 file_contents = yaml_file.read()
 
-                if os.path.isfile('.yamllint'):
-                    conf = YamlLintConfig(file='.yamllint')
-                else:
-                    conf = YamlLintConfig(yamllint_config)
-
                 try:
-                    problems = list(linter.run(file_contents, conf))
+                    problems = list(linter.run(file_contents, conf, filepath=path))
                 except EnvironmentError as e:
                     logger.error(e)
                     sys.exit(-1)
   
                 if len(problems) > 0:
                     checks_sum += len(problems)
-                    logger.info("File {} has the following issues:\n".format(path))
+                    logger.info("File {} has the following issues:".format(path))
                     for problem in problems:
                         logger.info("\t{}".format(problem))
 
