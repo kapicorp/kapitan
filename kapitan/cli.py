@@ -24,24 +24,22 @@ import json
 import logging
 import os
 import sys
+
 import yaml
-
-from kapitan.utils import jsonnet_file, PrettyDumper, flatten_dict, searchvar
-from kapitan.utils import deep_get, from_dot_kapitan, check_version, fatal_error
-from kapitan.utils import search_target_token_paths
-from kapitan.targets import compile_targets
-from kapitan.resources import search_imports, resource_callbacks, inventory_reclass
-from kapitan.version import PROJECT_NAME, DESCRIPTION, VERSION
-from kapitan.lint import start_lint
-from kapitan.initialiser import initialise_skeleton
-
-from kapitan.refs.base import RefController, Revealer, Ref
-from kapitan.refs.secrets.gpg import GPGSecret
-from kapitan.refs.secrets.gpg import lookup_fingerprints
-from kapitan.refs.secrets.gkms import GoogleKMSSecret
-from kapitan.refs.secrets.awskms import AWSKMSSecret
-
 from kapitan.errors import KapitanError, RefHashMismatchError
+from kapitan.initialiser import initialise_skeleton
+from kapitan.lint import start_lint
+from kapitan.refs.base import Ref, RefController, Revealer
+from kapitan.refs.secrets.awskms import AWSKMSSecret
+from kapitan.refs.secrets.gkms import GoogleKMSSecret
+from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
+from kapitan.resources import (inventory_reclass, resource_callbacks,
+                               search_imports)
+from kapitan.targets import compile_targets
+from kapitan.utils import (PrettyDumper, check_version, deep_get, fatal_error,
+                           flatten_dict, from_dot_kapitan, jsonnet_file,
+                           search_target_token_paths, searchvar)
+from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -196,8 +194,13 @@ def main():
                              action='store_true',
                              help='exit with failure code if warnings exist, default is False')
     lint_parser.add_argument('--skip-class-checks',
+                             action='store_true',
                              help='skip checking for unused classes, default is False',
                              default=from_dot_kapitan('lint', 'skip-class-checks', False))
+    lint_parser.add_argument('--skip-yamllint',
+                             action='store_true',
+                             help='skip running yamllint on inventory, default is False',
+                             default=from_dot_kapitan('lint', 'skip-yamllint', False))
     lint_parser.add_argument('--search-secrets',
                              default=from_dot_kapitan('lint', 'search-secrets', False),
                              action='store_true',
@@ -292,7 +295,7 @@ def main():
         searchvar(args.searchvar, args.inventory_path, args.pretty_print)
 
     elif cmd == 'lint':
-        start_lint(args.fail_on_warning, args.skip_class_checks, args.inventory_path, args.search_secrets, args.secrets_path, args.compiled_path)
+        start_lint(args.fail_on_warning, args.skip_class_checks, args.skip_yamllint, args.inventory_path, args.search_secrets, args.secrets_path, args.compiled_path)
 
     elif cmd == 'init':
         initialise_skeleton(args.directory)

@@ -21,17 +21,46 @@ import os
 import sys
 from pprint import pformat
 
-from kapitan.utils import list_all_paths
 from kapitan.errors import KapitanError
+from kapitan.utils import list_all_paths
+from yamllint import linter
+from yamllint.config import YamlLintConfig
 
 logger = logging.getLogger(__name__)
 
+yamllint_config = """
+# https://yamllint.readthedocs.io/en/stable/rules.html
+rules:
+  braces: disable
+  brackets: disable
+  colons: disable
+  commas: disable
+  comments: disable
+  comments-indentation: disable
+  document-end: disable
+  document-start: disable
+  empty-lines: disable
+  empty-values: disable
+  hyphens: disable
+  indentation: disable
+  key-duplicates: enable
+  key-ordering: disable
+  line-length: disable
+  new-line-at-end-of-file: disable
+  new-lines: disable
+  octal-values: enable
+  quoted-strings: disable
+  trailing-spaces: disable
+  truthy: disable
+"""
 
-def start_lint(fail_on_warning, skip_class_checks, inventory_path, search_secrets, secrets_path, compiled_path):
+
+def start_lint(fail_on_warning, skip_class_checks, skip_yamllint, inventory_path, search_secrets, secrets_path, compiled_path):
     """ Runs all lint operations available
     Args:
         fail_on_warning (bool): if set to True, function will exit if any warning is found
         skip_class_checks (bool): whether to skip checking for class related warnings or not
+        skip_yamllint (bool): whether to skip checking yaml files for lint problems
         inventory_path (string): path to your inventory/ folder
         search_secrets (bool): whether to search for secret related warnings or not
         secrets_path (string): path to your secrets/ folder
@@ -39,24 +68,31 @@ def start_lint(fail_on_warning, skip_class_checks, inventory_path, search_secret
     Yields:
         checks_sum (int): the number of lint warnings found
     """
-    if skip_class_checks and not search_secrets:
+    if skip_class_checks and skip_yamllint and not search_secrets:
         logger.info("Nothing to check. Remove --skip-class-checks or add --search-secrets to lint secrets")
         sys.exit(1)
-
+    
+    status_yamllint = 0
+    status_secrets = 0
     status_class_checks = 0
-    if not skip_class_checks:
-        if not os.path.isdir(inventory_path):
-            logger.info("\nInventory path is invalid or not provided, skipping class checks\n")
-        else:
+
+    if not os.path.isdir(inventory_path):
+        logger.info(
+            "\nInventory path is invalid or not provided, skipping yamllint and orphan class checks\n")
+    else:
+        if not skip_yamllint:
+            logger.info("\nRunning yamllint on all inventory files...\n")
+            status_yamllint = lint_yamllint(inventory_path)
+
+        if not skip_class_checks:
             logger.info("\nChecking for orphan classes in inventory...\n")
             status_class_checks = lint_unused_classes(inventory_path)
 
-    status_secrets = 0
     if search_secrets:
         logger.info("\nChecking for orphan secrets files...\n")
         status_secrets = lint_orphan_secrets(compiled_path, secrets_path)
 
-    checks_sum = status_secrets + status_class_checks
+    checks_sum = status_secrets + status_class_checks + status_yamllint
     if fail_on_warning and checks_sum > 0:
         sys.exit(1)
 
@@ -146,5 +182,44 @@ def lint_unused_classes(inventory_path):
     checks_sum = len(class_paths)
     if checks_sum > 0:
         logger.info("No usage found for the following {} classes:\n{}\n".format(len(class_paths), pformat(class_paths)))
+
+    return checks_sum
+
+def lint_yamllint(inventory_path):
+    """ Run yamllint on all yaml files in inventory
+    Args:
+        inventory_path (string): path to your inventory/ folder
+    Yields:
+        checks_sum (int): the number of yaml lint issues found
+    """
+    logger.debug("Running yamllint for " + inventory_path)
+
+    if os.path.isfile('.yamllint'):
+        logger.info("Loading values from .yamllint found.")
+        conf = YamlLintConfig(file='.yamllint')
+    else:
+        logger.info(".yamllint not found. Using default values")
+        conf = YamlLintConfig(yamllint_config)
+
+    checks_sum = 0
+    for path in list_all_paths(inventory_path):
+        if os.path.isfile(path) and (path.endswith(".yml") or path.endswith(".yaml")):
+            with open(path, "r") as yaml_file:
+                file_contents = yaml_file.read()
+
+                try:
+                    problems = list(linter.run(file_contents, conf, filepath=path))
+                except EnvironmentError as e:
+                    logger.error(e)
+                    sys.exit(-1)
+  
+                if len(problems) > 0:
+                    checks_sum += len(problems)
+                    logger.info("File {} has the following issues:".format(path))
+                    for problem in problems:
+                        logger.info("\t{}".format(problem))
+
+    if checks_sum > 0:
+        logger.info("\nTotal yamllint issues found: {}".format(checks_sum))
 
     return checks_sum

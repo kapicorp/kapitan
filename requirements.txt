@@ -10,6 +10,6 @@ google-api-python-client==1.7.8
 boto3==1.9.68
 requests>=2.20.1
 addict==2.2.0
-
+yamllint>=1.15.0
 # Reclass dependencies
 pyparsing
