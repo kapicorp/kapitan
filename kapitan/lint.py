@@ -76,7 +76,7 @@ def start_lint(fail_on_warning, skip_class_checks, skip_yamllint, inventory_path
     if not skip_yamllint:
         if not os.path.isdir(inventory_path):
             logger.info(
-                "\nInventory path is invalid or not provided, skipping class checks\n")
+                "\nInventory path is invalid or not provided, skipping yamllint checks\n")
         else:
             logger.info("\nRunning yamllint on all inventory files...\n")
             status_yamllint = lint_yamllint(inventory_path)
