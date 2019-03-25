@@ -1,3 +1,9 @@
+## 0.23.0-rc.2:
+- Add support for writing ref type secrets in cli (#242)
+- Validate target name matches target yml file name (#243)
+- randomstr now generates exactly as many characters as requested (#245)
+- Add yamllint in kapitan linter checks (#246)
+
 ## 0.23.0-rc.1:
 - Added more jinja2 filters (#234)
 - Improved tests coverage (#236)
