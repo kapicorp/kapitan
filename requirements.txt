@@ -1,14 +1,14 @@
 # kapitan dependencies
 jsonnet==0.12.1
-pyyaml>=4.2b1
+pyyaml>=5.1
 Jinja2>=2.10
-jsonschema>=2.6.0
-python-gnupg==0.4.3
+jsonschema==3.0.1
+python-gnupg==0.4.4
 six>=1.12.0
-cryptography>=2.4.2
+cryptography>=2.6.1
 google-api-python-client==1.7.8
-boto3==1.9.68
-requests>=2.20.1
+boto3==1.9.120
+requests>=2.21.0
 addict==2.2.0
 yamllint>=1.15.0
 # Reclass dependencies
