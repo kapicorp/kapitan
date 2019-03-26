@@ -10,12 +10,10 @@ test:
 	docker run -ti --rm kapitan --help
 	docker run -ti --rm kapitan lint
 	@echo ----- Testing build of docker ci image -----
-	cd ci
-	docker build . --no-cache -t kapitan-ci
+	docker build . --no-cache -t kapitan-ci -f Dockerfile.ci
 	@echo ----- Testing run of docker ci image -----
 	docker run -ti --rm kapitan-ci --help
 	docker run -ti --rm kapitan-ci lint
-	cd ..
 
 .PHONY: test_coverage
 test_coverage:
