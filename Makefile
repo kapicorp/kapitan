@@ -12,8 +12,8 @@ test:
 	@echo ----- Testing build of docker ci image -----
 	docker build . --no-cache -t kapitan-ci -f Dockerfile.ci
 	@echo ----- Testing run of docker ci image -----
-	docker run -ti --rm kapitan-ci --help
-	docker run -ti --rm kapitan-ci lint
+	docker run -ti --rm kapitan-ci kapitan --help
+	docker run -ti --rm kapitan-ci kapitan lint
 
 .PHONY: test_coverage
 test_coverage:
