@@ -14,7 +14,8 @@ RUN apk add --no-cache python3-dev git g++ make libstdc++ gnupg musl-dev util-li
     if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
     rm -rf /root/.cache
 
-COPY . /kapitan/
+COPY setup.py requirements.txt MANIFEST.in /kapitan/
+COPY kapitan /kapitan/kapitan/
 RUN pip3 install -e /kapitan
 
 ENV TERRAFORM_VERSION=0.11.13
