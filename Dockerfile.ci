@@ -1,6 +1,6 @@
 FROM sparkprime/jsonnet AS jsonnet
 
-FROM golang:1.11 AS promtool
+FROM golang:1.12 AS promtool
 
 RUN go get -u github.com/prometheus/prometheus/cmd/promtool
 
@@ -14,13 +14,15 @@ RUN apk add --no-cache python3-dev git g++ make libstdc++ gnupg musl-dev util-li
     if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
     rm -rf /root/.cache
 
-ENV TERRAFORM_VERSION=0.11.11
+COPY setup.py requirements.txt MANIFEST.in /kapitan/
+COPY kapitan /kapitan/kapitan/
+RUN pip3 install -e /kapitan
+
+ENV TERRAFORM_VERSION=0.11.13
 ENV TERRAFORM_URL=https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 RUN curl -o /tmp/terraform_${TERRAFORM_VERSION}.zip ${TERRAFORM_URL} && \
         unzip -d /usr/local/bin /tmp/terraform_${TERRAFORM_VERSION}.zip && \
         rm /tmp/terraform_${TERRAFORM_VERSION}.zip
-
-RUN pip3 install --upgrade git+https://github.com/deepmind/kapitan.git
 
 RUN gcloud components install kubectl
 

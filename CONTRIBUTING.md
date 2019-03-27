@@ -1,28 +1,28 @@
-# How to Contribute
+## How to Contribute
 
 We'd love to accept your patches and contributions to this project. There are
 just a few small guidelines you need to follow.
 
-## Testing
+### Testing
 
 Run `make test` to run all tests. If you modify anything in the `examples/` folder
 make sure you replicate the compiled result of that in `tests/test_kubernetes_compiled`.
 If you add new features, run `make test_coverage` to make sure the test coverage remains 
 at current or better levels.
 
-## Code Style
+### Code Style
 
 Try to fix warnings from `make codestyle` before submitting to make sure you adhere to the
 [Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/).
 
-## Releasing
+### Releasing
 
  - Create a branch named `release-v<NUMBER>`. Use `v0.*.*-rc.*` if you want pre-release versions to be uploaded.
  - Update CHANGELOG.md with the release changes.
  - Once reviewed and merged, Travis will auto-release.
  - The merge has to happen with a merge commit not with squash/rebase so that the commit message still mentions `deepmind/release-v*` inside.
 
-## Contributor License Agreement
+### Contributor License Agreement
 
 Contributions to this project must be accompanied by a Contributor License
 Agreement. You (or your employer) retain the copyright to your contribution,
@@ -34,7 +34,7 @@ You generally only need to submit a CLA once, so if you've already submitted one
 (even if it was for a different project), you probably don't need to do it
 again.
 
-## Code reviews
+### Code reviews
 
 All submissions, including submissions by project members, require review. We
 use GitHub pull requests for this purpose. Consult
