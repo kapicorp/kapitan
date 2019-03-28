@@ -8,7 +8,7 @@ echomsg() {
 
 export LAST_COMMIT_MSG="$(git log -1 --oneline)"
 
-if ! $(echo "$LAST_COMMIT_MSG" | grep -q "deepmind/release-v" ); then
+if ! $(echo "$LAST_COMMIT_MSG" | grep -qE "deepmind/release-v([0-9]+.[0-9]{2}.[0-9]+)+" ); then
   echomsg "Not a release, skipping version incrementing"
   exit 0;
 fi
