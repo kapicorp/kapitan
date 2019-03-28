@@ -9,6 +9,7 @@
 - Added kapitan init (#213)
 - Removed ujson dependency (#220)
 - Tests for terraform compile (#225)
+
 #### Breaking:
 - Fixed and updated kapitan version checking (#233)
 
