@@ -52,6 +52,20 @@ def fatal_error(message):
     sys.exit(1)
 
 
+def parse_arg_delimiter(val, delimiter, is_a_path=False):
+    """
+    If parsed as string then returns list of string delimited by delimiter
+    else just returns list of elements in val
+    """
+    if isinstance(val, str):
+        if is_a_path:
+            return [os.path.abspath(path) for path in val.split(delimiter)]
+        else:
+            return [item for item in val.split(delimiter)]
+
+    return [item for item in val]
+
+
 def hashable_lru_cache(func):
     """Usable instead of lru_cache for functions using unhashable objects"""
 
@@ -267,7 +281,7 @@ def deep_get(dictionary, keys, previousKey=None):
     return value
 
 
-def searchvar(flat_var, inventory_path, pretty_print):
+def searchvars(flat_var, inventory_path, pretty_print):
     """Show all inventory files where a given reclass variable is declared"""
     output = []
     maxlength = 0
