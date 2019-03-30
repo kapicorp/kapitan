@@ -80,7 +80,10 @@ class KapitanCLI():
         '''
         if output not in ['yaml', 'json']:
             fatal_error('Only yaml and json are supported currently')
-
+        
+        if isinstance(search_paths, bool):
+            fatal_error("expected at least one argument")
+        
         file_path = jsonnet_file
         search_paths = parse_arg_delimiter(search_paths, ',', is_a_path=True)
         ext_vars = {}
@@ -149,7 +152,10 @@ class KapitanCLI():
             logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
         elif verbose:
             logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-            
+        
+        if isinstance(search_paths, bool) or isinstance(cache_paths, bool) or isinstance(targets, bool):
+            fatal_error("expected at least one argument")
+        
         search_paths = parse_arg_delimiter(search_paths, ",", is_a_path=True)
         cache_paths = parse_arg_delimiter(cache_paths, ",", is_a_path=True)
         targets = parse_arg_delimiter(targets, ",")
@@ -244,7 +250,10 @@ class KapitanCLI():
         '''
         if verbose:
             logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-            
+        
+        if isinstance(recipients, bool):
+            fatal_error("expected at least one argument")            
+        
         recipients = parse_arg_delimiter(recipients, ",")
         
         ref_controller = RefController(secrets_path)
