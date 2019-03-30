@@ -85,7 +85,7 @@ class CliFuncsTest(unittest.TestCase):
 
     def test_cli_secret_base64_write_reveal_gpg(self):
         """
-        run $ kapitan secrets --write gpg:test_secretb64 --b64e
+        run $ kapitan secrets --write gpg:test_secretb64 --base64
         and $ kapitan secrets --reveal
         with example@kapitan.dev recipient
         """
@@ -95,7 +95,7 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_secret_content)
 
         sys.argv = ["kapitan", "secrets", "--write", "gpg:test_secretb64",
-                    "--file", test_secret_file, "--b64e",
+                    "--file", test_secret_file, "--base64",
                     "--secrets-path", SECRETS_PATH,
                     "--recipients", "example@kapitan.dev"]
         main()
@@ -241,7 +241,7 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_secret_content)
 
         sys.argv = ["kapitan", "secrets", "--write", "ref:test_secret",
-                    "--b64e", "--file", test_secret_file,
+                    "--base64", "--file", test_secret_file,
                     "--secrets-path", SECRETS_PATH]
         main()
 

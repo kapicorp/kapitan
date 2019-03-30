@@ -19,7 +19,7 @@
 from __future__ import print_function
 
 import argparse
-import base64
+import base64 as b64
 import json
 import logging
 import os
@@ -210,7 +210,7 @@ class KapitanCLI():
 
     def secrets(self, write=None, update=None, update_targets=from_dot_kapitan('secrets', 'update-targets', False), 
                 validate_targets=from_dot_kapitan('secrets', 'validate-targets', False),
-                b64e=from_dot_kapitan('secrets', 'base64', False),
+                base64=from_dot_kapitan('secrets', 'base64', False),
                 reveal=from_dot_kapitan('secrets', 'reveal', False),
                 file=None, target_name=None, inventory_path=from_dot_kapitan('secrets', 'inventory-path', './inventory'),
                 recipients=from_dot_kapitan('secrets', 'recipients', []),
@@ -229,7 +229,7 @@ class KapitanCLI():
                 update target secrets
             validate_targets: bool
                 validate target secrets
-            b64e: bool
+            base64: bool
                 base64 encode file content
             reveal: bool
                 reveal secrets
@@ -260,7 +260,7 @@ class KapitanCLI():
 
         if write is not None:
             secret_write(write, file, recipients, target_name, inventory_path, 
-                    b64e, key, ref_controller)
+                    base64, key, ref_controller)
         elif reveal:
             secret_reveal(file, ref_controller)
         elif update:
@@ -338,7 +338,7 @@ def main():
 
 
 def secret_write(write, file, recipients, target_name, inventory_path, 
-                 b64e, key, ref_controller):
+                 base64, key, ref_controller):
     "Write secret to ref_controller based on cli args"
     token_name = write
     file_name = file
@@ -368,7 +368,7 @@ def secret_write(write, file, recipients, target_name, inventory_path,
             raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
                                "parameters.kapitan.secrets.gpg.recipients and use --target")
 
-        secret_obj = GPGSecret(data, recipients, encode_base64=b64e)
+        secret_obj = GPGSecret(data, recipients, encode_base64=base64)
         tag = '?{{gpg:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
 
@@ -384,7 +384,7 @@ def secret_write(write, file, recipients, target_name, inventory_path,
             key = kap_inv_params['secrets']['gkms']['key']
         if not key:
             raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target")
-        secret_obj = GoogleKMSSecret(data, key, encode_base64=b64e)
+        secret_obj = GoogleKMSSecret(data, key, encode_base64=base64)
         tag = '?{{gkms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
 
@@ -400,7 +400,7 @@ def secret_write(write, file, recipients, target_name, inventory_path,
             key = kap_inv_params['secrets']['awskms']['key']
         if not key:
             raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.awskms.key and use --target")
-        secret_obj = AWSKMSSecret(data, key, encode_base64=b64e)
+        secret_obj = AWSKMSSecret(data, key, encode_base64=base64)
         tag = '?{{awskms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
 
@@ -408,8 +408,8 @@ def secret_write(write, file, recipients, target_name, inventory_path,
         type_name, token_path = token_name.split(":")
         _data = data.encode()
         encoding = 'original'
-        if b64e:
-            _data = base64.b64encode(_data).decode()
+        if base64:
+            _data = b64.b64encode(_data).decode()
             _data = _data.encode()
             encoding = 'base64'
         ref_obj = Ref(_data, encoding=encoding)
