@@ -61,7 +61,7 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_secret_content)
 
         sys.argv = ["kapitan", "secrets", "--write", "gpg:test_secret",
-                    "-f", test_secret_file,
+                    "--file", test_secret_file,
                     "--secrets-path", SECRETS_PATH,
                     "--recipients", "example@kapitan.dev"]
         main()
@@ -71,7 +71,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
         sys.argv = ["kapitan", "secrets", "--reveal",
-                    "-f", test_tag_file,
+                    "--file", test_tag_file,
                     "--secrets-path", SECRETS_PATH]
 
         # set stdout as string
@@ -85,7 +85,7 @@ class CliFuncsTest(unittest.TestCase):
 
     def test_cli_secret_base64_write_reveal_gpg(self):
         """
-        run $ kapitan secrets --write gpg:test_secretb64 --base64
+        run $ kapitan secrets --write gpg:test_secretb64 --b64e
         and $ kapitan secrets --reveal
         with example@kapitan.dev recipient
         """
@@ -95,7 +95,7 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_secret_content)
 
         sys.argv = ["kapitan", "secrets", "--write", "gpg:test_secretb64",
-                    "-f", test_secret_file, "--base64",
+                    "--file", test_secret_file, "--b64e",
                     "--secrets-path", SECRETS_PATH,
                     "--recipients", "example@kapitan.dev"]
         main()
@@ -105,7 +105,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
         sys.argv = ["kapitan", "secrets", "--reveal",
-                    "-f", test_tag_file,
+                    "--file", test_tag_file,
                     "--secrets-path", SECRETS_PATH]
 
         # set stdout as string
@@ -141,7 +141,7 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_secret_content)
 
         sys.argv = ["kapitan", "secrets", "--write", "gkms:test_secret",
-                    "-f", test_secret_file,
+                    "--file", test_secret_file,
                     "--secrets-path", SECRETS_PATH,
                     "--key", "mock"]
         main()
@@ -151,7 +151,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
         sys.argv = ["kapitan", "secrets", "--reveal",
-                    "-f", test_tag_file,
+                    "--file", test_tag_file,
                     "--secrets-path", SECRETS_PATH]
 
         # set stdout as string
@@ -175,7 +175,7 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_secret_content)
 
         sys.argv = ["kapitan", "secrets", "--write", "awskms:test_secret",
-                    "-f", test_secret_file,
+                    "--file", test_secret_file,
                     "--secrets-path", SECRETS_PATH,
                     "--key", "mock"]
         main()
@@ -185,7 +185,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
         sys.argv = ["kapitan", "secrets", "--reveal",
-                    "-f", test_tag_file,
+                    "--file", test_tag_file,
                     "--secrets-path", SECRETS_PATH]
 
         # set stdout as string
@@ -200,7 +200,7 @@ class CliFuncsTest(unittest.TestCase):
     def test_cli_secret_write_ref(self):
         """
         run $ kapitan secrets --write ref:test_secret
-        and $ kapitan secrets --reveal -f sometest_file
+        and $ kapitan secrets --reveal --file sometest_file
         """
         test_secret_content = "secret_value!"
         test_secret_file = tempfile.mktemp()
@@ -208,7 +208,7 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_secret_content)
 
         sys.argv = ["kapitan", "secrets", "--write", "ref:test_secret",
-                    "-f", test_secret_file,
+                    "--file", test_secret_file,
                     "--secrets-path", SECRETS_PATH]
         main()
 
@@ -217,7 +217,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
         sys.argv = ["kapitan", "secrets", "--reveal",
-                    "-f", test_tag_file,
+                    "--file", test_tag_file,
                     "--secrets-path", SECRETS_PATH]
 
         # set stdout as string
@@ -232,7 +232,7 @@ class CliFuncsTest(unittest.TestCase):
     def test_cli_secret_write_base64_ref(self):
         """
         run $ kapitan secrets --write ref:test_secret --base64
-        and $ kapitan secrets --reveal -f sometest_file
+        and $ kapitan secrets --reveal --file sometest_file
         """
         test_secret_content = "secret_value!"
         test_secret_content_b64 = base64.b64encode(test_secret_content.encode())
@@ -241,7 +241,7 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_secret_content)
 
         sys.argv = ["kapitan", "secrets", "--write", "ref:test_secret",
-                    "--base64", "-f", test_secret_file,
+                    "--b64e", "--file", test_secret_file,
                     "--secrets-path", SECRETS_PATH]
         main()
 
@@ -250,7 +250,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
         sys.argv = ["kapitan", "secrets", "--reveal",
-                    "-f", test_tag_file,
+                    "--file", test_tag_file,
                     "--secrets-path", SECRETS_PATH]
 
         # set stdout as string
@@ -277,9 +277,9 @@ class CliFuncsTest(unittest.TestCase):
 
     def test_cli_inventory(self):
         """
-        run $ kapitan inventory -t minikube-es -F -p cluster
+        run $ kapitan inventory --target-name minikube-es --flat --pattern cluster
         """
-        sys.argv = ["kapitan", "inventory", "-t", "minikube-es", "-F", "-p", "cluster",
+        sys.argv = ["kapitan", "inventory", "--target-name", "minikube-es", "--flat", "--pattern", "cluster",
                     "--inventory-path", "examples/kubernetes/inventory/"]
 
         # set stdout as string
