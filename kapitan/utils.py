@@ -281,7 +281,7 @@ def deep_get(dictionary, keys, previousKey=None):
     return value
 
 
-def searchvars(flat_var, inventory_path, pretty_print):
+def searchvar(flat_var, inventory_path, pretty_print):
     """Show all inventory files where a given reclass variable is declared"""
     output = []
     maxlength = 0

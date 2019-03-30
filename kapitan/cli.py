@@ -39,7 +39,7 @@ from kapitan.resources import (inventory_reclass, resource_callbacks,
 from kapitan.targets import compile_targets
 from kapitan.utils import (PrettyDumper, check_version, deep_get, fatal_error,
                            flatten_dict, from_dot_kapitan, jsonnet_file,
-                           search_target_token_paths, searchvars, parse_arg_delimiter)
+                           search_target_token_paths, searchvar as searchvariable, parse_arg_delimiter)
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
 logger = logging.getLogger(__name__)
@@ -329,7 +329,7 @@ class KapitanCLI():
         if verbose:
             logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
 
-        searchvars(searchvar, inventory_path, pretty_print)
+        searchvariable(searchvar, inventory_path, pretty_print)
 
 
 def main():
