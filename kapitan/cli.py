@@ -114,7 +114,7 @@ class KapitanCLI():
                 secrets_path=from_dot_kapitan('compile', 'secrets-path', './secrets'),
                 reveal=from_dot_kapitan('compile', 'reveal', False),
                 inventory_path=from_dot_kapitan('compile', 'inventory-path', './inventory'),
-                cache=from_dot_kapitan('compile', 'inventory-path', './inventory'),
+                cache=from_dot_kapitan('compile', 'cache', False),
                 cache_paths=from_dot_kapitan('compile', 'cache-paths', []),
                 ignore_version_check=from_dot_kapitan('compile', 'ignore-version-check', False)):
         '''
