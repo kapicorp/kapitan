@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
 
-Kapitan is a tool to manage complex deployments using jsonnet and jinja2.
+Kapitan is a tool to manage complex deployments using jsonnet, [kadet (alpha)](https://github.com/deepmind/kapitan/pull/190) and jinja2.
 
 Use Kapitan to manage your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
 
@@ -31,7 +31,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 # Main Features
 
 * Use the Inventory as the single source of truth to tie together deployments, resources and documentation. [based on reclass](https://github.com/salt-formulas/reclass)
-* Use [Jsonnet](https://jsonnet.org/) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
+* Use [Jsonnet](https://jsonnet.org/) or [Kadet (alpha)](https://github.com/deepmind/kapitan/pull/190) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
 * Use [Jinja2](http://jinja.pocoo.org/) to create text based templates for scripts and documentation;
 * Manage secrets with GPG or gCloud KMS and define who can access them, without compromising collaboration with other users.
 * Create dynamically generated documentation about a single deployment (i.e. ad-hoc instructions) or all deployments at once (i.e. global state of deployments)
@@ -108,7 +108,7 @@ Compiled minikube-es
 
 ### Components
 
-A component is an application that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (StatefulSet, Services, ConfigMaps) defined in jsonnet.
+A component is an application that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (StatefulSet, Services, ConfigMaps) defined in jsonnet or kadet.
 It may also include scripts, config files and dynamically generated documentation defined using Jinja templates.
 
 ### Inventory
