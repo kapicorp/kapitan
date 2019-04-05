@@ -58,6 +58,9 @@ def resource_callbacks(search_paths):
             "yaml_dump": (("obj",), yaml_dump),
             "sha256_string": (("obj",), sha256_string),
             "gzip_b64": (("obj",), gzip_b64),
+
+            "yaml_to_json": (("obj",),
+                                partial(yaml_to_json, search_paths)),
             }
 
 
@@ -99,6 +102,19 @@ def jinja2_render_file(search_paths, name, ctx):
 
     raise IOError("jinja2 failed to render, could not find file: {}".format(_full_path))
 
+def yaml_to_json(search_paths, name):
+    """return content of file in json"""
+    for path in search_paths:
+        _full_path = os.path.join(path, name)
+        logger.debug("yaml_to_json trying file %s", _full_path)
+        if os.path.exists(_full_path):
+            print(_full_path)
+            logger.debug("yaml_to_json found file at %s", _full_path)
+            try:
+                with open(_full_path) as f:
+                    return json.dumps(yaml.safe_load(f.read()))
+            except Exception as e:
+                raise CompileError("Parse yaml failed to parse {}: {}".format(_full_path, e))
 
 def read_file(search_paths, name):
     """return content of file in name"""

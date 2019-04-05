@@ -1,5 +1,6 @@
 {
   jinja2_template(name, ctx):: std.native("jinja2_render_file")(name, std.toString(ctx)),
+  parse_yaml(name):: std.native("yaml_to_json")(name),
   file_read(name):: std.native("file_read")(name),
   inventory(target=std.extVar("target"), inv_path="inventory/"):: std.native("inventory")(target, inv_path),
   inventory_global(target=null, inv_path="inventory/"):: std.native("inventory")(target, inv_path),
