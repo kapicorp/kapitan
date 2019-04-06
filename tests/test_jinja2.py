@@ -21,6 +21,7 @@ import tempfile
 import time
 from kapitan.utils import render_jinja2_file
 from kapitan.resources import inventory
+from kapitan.inputs.jinja2_filters import base64_encode
 
 
 class Jinja2FiltersTest(unittest.TestCase):
@@ -158,3 +159,16 @@ class Jinja2ContextVars(unittest.TestCase):
             context = {"inventory_global": inv_global}
             f.seek(0)
             self.assertEqual(render_jinja2_file(f.name, context), cluster_name)
+
+
+class Jinja2ExternalFilterTest(unittest.TestCase):
+    def test_custom_filter_jinja2(self):
+        with tempfile.NamedTemporaryFile() as f:
+            f.write("{{ inventory.parameters.cluster.name | custom_filter }}".encode("UTF-8"))
+            cluster_name = "minikube"
+            target_name = "minikube-es"
+            inv = inventory(["examples/kubernetes"], target_name)
+            context = {"inventory": inv}
+            f.seek(0)
+            self.assertEqual(render_jinja2_file(f.name, context, ["./kapitan/lib/custom_filter.py"]), base64_encode(cluster_name))
+            
