@@ -378,7 +378,7 @@ This will compile all targets to `compiled` folder.
 #### Using the inventory in jsonnet
 
 Accessing the inventory from jsonnet compile types requires you to import `jsonnet/kapitan.libjsonnet`, which includes the native_callback functions glueing reclass to jsonnet (amongst others).
-Available native_callack functions are:
+Available native_callback functions are:
 ```
 yaml_to_json - returns json as string of the yaml file specified
 yaml_dump - returns yaml as string from json string
