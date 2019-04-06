@@ -30,16 +30,18 @@ logger = logging.getLogger(__name__)
 class InitTest(unittest.TestCase):
     def test_init(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
-            initialise_skeleton(directory=tmp_dir)
+            initialise_skeleton(directory=tmp_dir,
+                                target_name="",
+                                compile_input="")
 
             template_dir = os.path.join(
                 os.getcwd(), 'kapitan', 'inputs', 'templates')
 
             diff_files = []
-            
+
             for root, dirs, files in os.walk(tmp_dir):
                 diff_files += files
-            
+
             for root, dirs, files in os.walk(template_dir):
                 for f in files:
                     if f in diff_files:
