@@ -55,10 +55,9 @@ def resource_callbacks(search_paths):
                           partial(inventory, search_paths)),
             "file_read": (("name",),
                           partial(read_file, search_paths)),
-            "yaml_dump": (("obj",), yaml_dump),
             "sha256_string": (("obj",), sha256_string),
             "gzip_b64": (("obj",), gzip_b64),
-
+            "yaml_dump": (("obj",), yaml_dump),
             "yaml_to_json": (("obj",),
                                 partial(yaml_to_json, search_paths)),
             }
@@ -107,8 +106,7 @@ def yaml_to_json(search_paths, name):
     for path in search_paths:
         _full_path = os.path.join(path, name)
         logger.debug("yaml_to_json trying file %s", _full_path)
-        if os.path.exists(_full_path):
-            print(_full_path)
+        if os.path.exists(_full_path) and ( name.endswith(".yml") or name.endswith(".yaml") ):
             logger.debug("yaml_to_json found file at %s", _full_path)
             try:
                 with open(_full_path) as f:

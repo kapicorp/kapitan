@@ -378,6 +378,16 @@ This will compile all targets to `compiled` folder.
 #### Using the inventory in jsonnet
 
 Accessing the inventory from jsonnet compile types requires you to import `jsonnet/kapitan.libjsonnet`, which includes the native_callback functions glueing reclass to jsonnet (amongst others).
+Available native_callack functions are:
+```
+yaml_to_json - returns json as string of the yaml file specified
+yaml_dump - returns yaml as string from json string
+file_read - reads the file specified
+jinja2_render_file - renders the jinja2 file with context specified
+sha256_string - returns sha256 of string
+gzip_b64 - returns base64 encoded gzip of obj
+inventory - returns a dictionary with the inventory for target
+```
 
 The jsonnet snippet below imports the inventory for the target you're compiling
 and returns the java_opts for the elasticsearch data role:

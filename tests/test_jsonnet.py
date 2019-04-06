@@ -17,7 +17,9 @@
 "jsonnet tests"
 
 import unittest
-from kapitan.resources import yaml_dump, gzip_b64
+import os
+
+from kapitan.resources import yaml_dump, gzip_b64, yaml_to_json
 from kapitan.utils import sha256_string, prune_empty
 
 
@@ -26,6 +28,15 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         """dump json string to yaml"""
         yaml = yaml_dump("{\"key\":\"value\"}")
         self.assertEqual(yaml, "key: value\n")
+
+    def test_parse_yaml(self):
+        """
+            search_paths is also provided as partial
+            is used for parse_yaml nor yaml to json
+        """
+        current_pwd = os.path.dirname(__file__)
+        json = yaml_to_json([current_pwd], "test_resources/test_parse_yaml.yaml")
+        self.assertEqual(json, "{\"test\": {\"parse\": \"yaml\"}}")
 
     def test_sha256_string(self):
         """sha256 hex digest for string"""
