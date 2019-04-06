@@ -21,13 +21,17 @@ import os
 import datetime
 import time
 import re
+import types
+import logging
 
 from six import string_types
 from random import Random, shuffle
+from importlib import util
 
 from kapitan.errors import CompileError
 from kapitan import utils
 
+logger = logging.getLogger(__name__)
 
 def load_jinja2_filters(env):
     """Load Jinja2 custom filters into env"""
@@ -45,6 +49,19 @@ def load_jinja2_filters(env):
     env.filters['regex_findall'] = regex_findall
     env.filters['ternary'] = ternary
     env.filters['shuffle'] = randomize_list
+
+
+def load_jinja2_filters_from_file(env, filter_path):
+    for path in filter_path:
+        try:
+            custom_filter_spec = util.spec_from_file_location(path.split('/')[-1].split('.')[0], path)
+            custom_filter_module = util.module_from_spec(custom_filter_spec)
+            custom_filter_spec.loader.exec_module(custom_filter_module)
+            for f in dir(custom_filter_module):
+                if isinstance(getattr(custom_filter_module, f), types.FunctionType):
+                    env.filters[f] = getattr(custom_filter_module, f)
+        except Exception as e:
+            raise IOError("jinja2 failed to render, could not find filter at {}: {}".format(path, e))
 
 
 # Custom filters
