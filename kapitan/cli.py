@@ -28,7 +28,7 @@ import sys
 import yaml
 from kapitan import cached
 from kapitan.errors import KapitanError, RefHashMismatchError
-from kapitan.initialiser import initialise_skeleton
+from kapitan.initialiser import Initialiser
 from kapitan.lint import start_lint
 from kapitan.refs.base import Ref, RefController, Revealer
 from kapitan.refs.secrets.awskms import AWSKMSSecret
@@ -352,8 +352,9 @@ def main():
         start_lint(args.fail_on_warning, args.skip_class_checks, args.skip_yamllint, args.inventory_path, args.search_secrets, args.secrets_path, args.compiled_path)
 
     elif cmd == 'init':
-        init = initialise_skeleton(args.directory, args.target_name, args.compile_input)
+        init = Initialiser(args.directory, args.targets, args.compile_inputs)
         init.generate_copy()
+        init.list_new_directory()
 
     elif cmd == 'secrets':
         ref_controller = RefController(args.secrets_path)

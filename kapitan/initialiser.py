@@ -27,8 +27,8 @@ from kapitan.utils import list_all_paths
 
 logger = logging.getLogger(__name__)
 
-class initialise_skeleton(object):
-    def __init__(self,directory,target_name,compile_input):
+class Initialiser(object):
+    def __init__(self,directory,targets,compile_inputs):
         """ Initialises a directory with a recommended skeleton structure
         Args:
             directory (string): path which to initialise, directory is assumed to exist
@@ -39,8 +39,8 @@ class initialise_skeleton(object):
         self.component_dir = "inventory/classes"
 
         self.directory = directory
-        self.target_name = target_name.split(',') if target_name else []
-        self.compile_input = compile_input.split(',') if compile_input else []
+        self.targets = targets
+        self.compile_inputs = compile_inputs
         current_pwd = os.path.dirname(__file__)
         self.templates_directory = os.path.join(current_pwd, 'inputs/templates')
 
@@ -66,7 +66,6 @@ class initialise_skeleton(object):
         self.copy_target_file()
         self.copy_component_file()
         self.copy_compile_components()
-        self.list_new_directory()
 
     def copy_inventory(self):
         """
@@ -83,8 +82,8 @@ class initialise_skeleton(object):
             if is empty target-name then copy original file
         """
         target_file = self.get_target_template()
-        if len(self.target_name):
-            for i in self.target_name:
+        if len(self.targets):
+            for i in self.targets:
                 target_file['parameters']['target_name'] = i
                 path = self.get_new_target_path("%s.yml" % i)
                 self.dump_yaml(target_file,path)
@@ -103,7 +102,7 @@ class initialise_skeleton(object):
         component_file = self.get_component_template()
         compile_objs = []
         for compile_obj in component_file['parameters']['kapitan']['compile']:
-            if compile_obj['input_type'] in self.compile_input or len(self.compile_input) == 0:
+            if compile_obj['input_type'] in self.compile_inputs or len(self.compile_inputs) == 0:
                 self.copy_path_list += compile_obj['input_paths']
                 compile_objs.append(compile_obj)
         component_file['parameters']['kapitan']['compile'] = compile_objs

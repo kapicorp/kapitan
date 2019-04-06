@@ -21,7 +21,7 @@ import unittest
 import tempfile
 import os
 
-from kapitan.initialiser import initialise_skeleton
+from kapitan.initialiser import Initialiser
 
 logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -30,9 +30,10 @@ logger = logging.getLogger(__name__)
 class InitTest(unittest.TestCase):
     def test_init(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
-            initialise_skeleton(directory=tmp_dir,
-                                target_name="",
-                                compile_input="")
+            init = Initialiser(directory=tmp_dir,
+                                targets=[],
+                                compile_inputs=[])
+            init.generate_copy()
 
             template_dir = os.path.join(
                 os.getcwd(), 'kapitan', 'inputs', 'templates')

@@ -20,7 +20,6 @@ import yaml
 import json
 import collections
 
-from shutil import copy
 from kapitan.errors import CompileError, KapitanError
 from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper
