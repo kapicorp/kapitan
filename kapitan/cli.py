@@ -234,6 +234,13 @@ def main():
 
     init_parser = subparser.add_parser('init',
                                        help='initialize a directory with the recommended kapitan project skeleton.')
+    init_parser.add_argument('--verbose', '-v', help='set verbose mode',
+                                action='store_true',
+                                default=from_dot_kapitan('init', 'verbose', False))
+    init_parser.add_argument('--target-name', help='provide a target-name ex: name1,name2',
+                                default=from_dot_kapitan('init', 'verbose', ""))
+    init_parser.add_argument('--compile-input', help='provide a target-name ex: jinja2,jsonnet,kadet',
+                                default=from_dot_kapitan('init', 'verbose', ""))
     init_parser.add_argument('--directory',
                              default=from_dot_kapitan('init', 'directory', '.'),
                              help='set path, in which to generate the project skeleton,'
@@ -345,7 +352,8 @@ def main():
         start_lint(args.fail_on_warning, args.skip_class_checks, args.skip_yamllint, args.inventory_path, args.search_secrets, args.secrets_path, args.compiled_path)
 
     elif cmd == 'init':
-        initialise_skeleton(args.directory)
+        init = initialise_skeleton(args.directory, args.target_name, args.compile_input)
+        init.generate_copy()
 
     elif cmd == 'secrets':
         ref_controller = RefController(args.secrets_path)
