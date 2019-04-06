@@ -1,0 +1,10 @@
+classes:
+  - common
+  - cluster.minikube
+  - component.nginx-kadet
+  - component.nginx-common
+
+parameters:
+  target_name: minikube-nginx-kadet
+  namespace: ${target_name}
+

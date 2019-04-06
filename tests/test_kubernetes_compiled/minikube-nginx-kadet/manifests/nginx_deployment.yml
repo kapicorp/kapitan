@@ -1,7 +1,7 @@
 kind: Deployment
 metadata:
   name: nginx
-  namespace: minikube-nginx
+  namespace: minikube-nginx-kadet
 spec:
   replicas: 1
   revisionHistoryLimit: 10
