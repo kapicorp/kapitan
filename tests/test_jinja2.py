@@ -170,5 +170,5 @@ class Jinja2ExternalFilterTest(unittest.TestCase):
             inv = inventory(["examples/kubernetes"], target_name)
             context = {"inventory": inv}
             f.seek(0)
-            self.assertEqual(render_jinja2_file(f.name, context, ["./kapitan/lib/custom_filter.py"]), base64_encode(cluster_name))
+            self.assertEqual(render_jinja2_file(f.name, context, ["./examples/kubernetes/lib/custom_filter.py"]), base64_encode(cluster_name))
             

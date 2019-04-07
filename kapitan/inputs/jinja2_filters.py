@@ -51,8 +51,8 @@ def load_jinja2_filters(env):
     env.filters['shuffle'] = randomize_list
 
 
-def load_jinja2_filters_from_file(env, filter_path):
-    for path in filter_path:
+def load_jinja2_filters_from_file(env, filter_paths):
+    for path in filter_paths:
         try:
             custom_filter_spec = util.spec_from_file_location(path.split('/')[-1].split('.')[0], path)
             custom_filter_module = util.module_from_spec(custom_filter_spec)
