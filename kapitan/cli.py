@@ -27,7 +27,7 @@ import sys
 
 import yaml
 from kapitan.errors import KapitanError, RefHashMismatchError
-from kapitan.initialiser import initialise_skeleton
+from kapitan.initialiser import initialise
 from kapitan.lint import start_lint
 from kapitan.refs.base import Ref, RefController, Revealer
 from kapitan.refs.secrets.awskms import AWSKMSSecret
@@ -219,6 +219,15 @@ def main():
     init_parser.add_argument('--directory',
                              default=from_dot_kapitan('init', 'directory', '.'),
                              help='set path, in which to generate the project skeleton, assumes directory already exists. default is "./"')
+    init_parser.add_argument('-t','--target',nargs='+',type=str,
+                             default=from_dot_kapitan('init','target',['my_target']),
+                             help='targets to be initialised, default is "my_target"')
+    init_parser.add_argument('--compile-input',nargs='+',type=str,
+                             default=from_dot_kapitan('init','compile-input',['jsonnet','jinja2','kadet']),
+                             help='')
+    init_parser.add_argument('--classes',nargs='+',type=str,
+                             default=from_dot_kapitan('init','compile-input',['my_component']),
+                             help='')
 
     args = parser.parse_args()
 
@@ -298,7 +307,8 @@ def main():
         start_lint(args.fail_on_warning, args.skip_class_checks, args.skip_yamllint, args.inventory_path, args.search_secrets, args.secrets_path, args.compiled_path)
 
     elif cmd == 'init':
-        initialise_skeleton(args.directory)
+        _obj = initialise(args.directory,args.target,args.compile_input,args.classes)
+        _obj()
 
     elif cmd == 'secrets':
         ref_controller = RefController(args.secrets_path)

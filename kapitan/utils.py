@@ -458,3 +458,23 @@ def search_target_token_paths(target_secrets_path, targets):
             logger.debug('search_target_token_paths: found %s', secret_path)
             target_files[target_name].append(secret_path)
     return target_files
+
+def parse_yaml(path):
+    """
+    parse yaml file to python object
+
+    :path:(string) path to yaml file location
+    :returns: python object
+
+    """
+    with open(path,'r') as fd:
+        obj = yaml.load(fd,Loader=YamlLoader)
+    return obj
+
+def dump_yaml(path,obj):
+    """
+    dump python object to destination path
+    :path: file name including path
+    """
+    with open(path,'w') as fd:
+        yaml.dump(obj,fd,default_flow_style=False)
