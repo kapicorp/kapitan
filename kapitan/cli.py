@@ -224,10 +224,10 @@ def main():
                              help='targets to be initialised, default is "my_target"')
     init_parser.add_argument('--compile-input',nargs='+',type=str,
                              default=from_dot_kapitan('init','compile-input',['jsonnet','jinja2','kadet']),
-                             help='')
+                             help='components to be initialised, by default "all" are selected')
     init_parser.add_argument('--classes',nargs='+',type=str,
                              default=from_dot_kapitan('init','compile-input',['my_component']),
-                             help='')
+                             help='classes to be initialised, default is "my_component"')
 
     args = parser.parse_args()
 
