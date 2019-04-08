@@ -18,24 +18,6 @@
 
 import logging
 import os
-<<<<<<< HEAD
-import sys
-import shutil
-from distutils.dir_util import copy_tree
-
-logger = logging.getLogger(__name__)
-
-def initialise_skeleton(directory):
-    """ Initialises a directory with a recommended skeleton structure
-    Args:
-        directory (string): path which to initialise, directory is assumed to exist
-    """
-
-    current_pwd = os.path.dirname(__file__)
-    templates_directory = os.path.join(current_pwd, 'inputs', 'templates')
-
-    copy_tree(templates_directory, directory)
-=======
 from shutil import copytree, ignore_patterns
 from kapitan.utils import parse_yaml, dump_yaml
 
@@ -112,14 +94,14 @@ class initialise(object):
             dump_yaml(os.path.join(
                         target_directory, '{}.yml'.format(name)
                         ), target_obj)
->>>>>>> 4686c84... fixed whitespaces and removed unused imports
 
-    logger.info("Populated {} with:".format(directory))
-    for dirName, subdirList, fileList in os.walk(directory):
-        logger.info('{}'.format(dirName))
-        for fname in fileList:
-            logger.info('\t {}'.format(fname))
-        # Remove the first entry in the list of sub-directories
-        # if there are any sub-directories present
-        if len(subdirList) > 0:
-            del subdirList[0]
+    def print_log(self):
+        logger.info("Populated {} with:".format(self.directory))
+        for dirName, subdirList, fileList in os.walk(self.directory):
+            logger.info('{}'.format(dirName))
+            for fname in fileList:
+                logger.info('\t {}'.format(fname))
+            # Remove the first entry in the list of sub-directories
+            # if there are any sub-directories present
+            if len(subdirList) > 0:
+                del subdirList[0]

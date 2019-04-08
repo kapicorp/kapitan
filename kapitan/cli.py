@@ -27,7 +27,7 @@ import sys
 
 import yaml
 from kapitan.errors import KapitanError, RefHashMismatchError
-from kapitan.initialiser import initialise_skeleton
+from kapitan.initialiser import initialise
 from kapitan.lint import start_lint
 from kapitan.refs.base import Ref, RefController, Revealer
 from kapitan.refs.secrets.awskms import AWSKMSSecret
