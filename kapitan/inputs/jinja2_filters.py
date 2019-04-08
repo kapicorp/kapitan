@@ -53,11 +53,12 @@ def load_jinja2_filters(env):
 
 def load_module_from_path(env, path):
     """
-    loads a python module from provided path and adds it to jinja2 environment
+    Loads a python module from provided path and adds it to jinja2 environment
     filter name is same as that of function
     """
     try:
-        custom_filter_spec = util.spec_from_file_location(os.path.basename(path).split('.')[0],path)
+        module_name = os.path.basename(path).split('.')[0]
+        custom_filter_spec = util.spec_from_file_location(module_name, path)
         custom_filter_module = util.module_from_spec(custom_filter_spec)
         custom_filter_spec.loader.exec_module(custom_filter_module)
         for function in dir(custom_filter_module):
@@ -72,19 +73,21 @@ def load_module_from_path(env, path):
 
 def load_jinja2_filters_from_files(env, jinja2_filter_paths):
     """
-    iterates over all paths provided in jinja2_filter_paths list (files and directories) 
-    and calls load_module_from_path for each path
+    Iterates over all paths provided in jinja2_filter_paths list (files and directories) 
+    and loads module for each path
     """
+    all_file_paths = []
     for path in jinja2_filter_paths:
-        if os.path.isfile(path) and path.endswith(".py"):
-            load_module_from_path(env, path)
-        elif os.path.isdir(path):
+        if os.path.isdir(path):
             for filename in os.listdir(path):
                 subpath = os.path.join(path, filename)
-                if os.path.isfile(subpath) and subpath.endswith(".py"):
-                    load_module_from_path(env, subpath)
+                if subpath.endswith(".py"):
+                    all_file_paths.append(subpath)
         else:
-            logger.debug("Invalid path {}".format(path))
+            all_file_paths.append(path)
+    
+    for path in all_file_paths:
+        load_module_from_path(env, path)
 
 
 # Custom filters

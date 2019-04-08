@@ -440,7 +440,7 @@ regex_findall - perform re.findall and return the list of matches as array e.g. 
 ternary - value ? true_val : false_val e.g. {{ condition | ternary("yes", "no") }}
 shuffle - randomly shuffle elements of a list {{ [1, 2, 3, 4, 5] | shuffle }}
 ```
-We support custom jinja2 filters as well.
+You can also provide path to your custom filter modules in CLI.
 
 ### kapitan secrets
 
