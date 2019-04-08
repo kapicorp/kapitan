@@ -58,7 +58,7 @@ def resource_callbacks(search_paths):
             "sha256_string": (("obj",), sha256_string),
             "gzip_b64": (("obj",), gzip_b64),
             "yaml_dump": (("obj",), yaml_dump),
-            "yaml_to_json": (("obj",),
+            "yaml_to_json": (("name",),
                                 partial(yaml_to_json, search_paths)),
             }
 
