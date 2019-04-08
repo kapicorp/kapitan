@@ -31,12 +31,12 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
 
     def test_parse_yaml(self):
         """
-            search_paths is also provided as partial
-            is used for parse_yaml nor yaml to json
+            This tests the yaml_to_json function.
+            It converts the yaml file in test_resources/ to a json string
         """
         current_pwd = os.path.dirname(__file__)
         json = yaml_to_json([current_pwd], "test_resources/test_parse_yaml.yaml")
-        self.assertEqual(json, "{\"test\": {\"parse\": \"yaml\"}}")
+        self.assertEqual(json, "{\"test\": {\"key\": \"value\", \"array\": [\"ele1\", \"ele2\"]}}")
 
     def test_sha256_string(self):
         """sha256 hex digest for string"""

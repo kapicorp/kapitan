@@ -102,7 +102,7 @@ def jinja2_render_file(search_paths, name, ctx):
     raise IOError("jinja2 failed to render, could not find file: {}".format(_full_path))
 
 def yaml_to_json(search_paths, name):
-    """return content of file in json"""
+    """returns content of yaml file as json string"""
     for path in search_paths:
         _full_path = os.path.join(path, name)
         logger.debug("yaml_to_json trying file %s", _full_path)
@@ -113,6 +113,8 @@ def yaml_to_json(search_paths, name):
                     return json.dumps(yaml.safe_load(f.read()))
             except Exception as e:
                 raise CompileError("Parse yaml failed to parse {}: {}".format(_full_path, e))
+
+    raise IOError("yaml failed to render, could not find file: {}".format(_full_path))
 
 def read_file(search_paths, name):
     """return content of file in name"""
