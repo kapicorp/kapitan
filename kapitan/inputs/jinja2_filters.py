@@ -51,17 +51,40 @@ def load_jinja2_filters(env):
     env.filters['shuffle'] = randomize_list
 
 
-def load_jinja2_filters_from_file(env, filter_paths):
-    for path in filter_paths:
-        try:
-            custom_filter_spec = util.spec_from_file_location(path.split('/')[-1].split('.')[0], path)
-            custom_filter_module = util.module_from_spec(custom_filter_spec)
-            custom_filter_spec.loader.exec_module(custom_filter_module)
-            for f in dir(custom_filter_module):
-                if isinstance(getattr(custom_filter_module, f), types.FunctionType):
-                    env.filters[f] = getattr(custom_filter_module, f)
-        except Exception as e:
-            raise IOError("jinja2 failed to render, could not find filter at {}: {}".format(path, e))
+def load_module_from_path(env, path):
+    """
+    loads a python module from provided path and adds it to jinja2 environment
+    filter name is same as that of function
+    """
+    try:
+        custom_filter_spec = util.spec_from_file_location(os.path.basename(path).split('.')[0],path)
+        custom_filter_module = util.module_from_spec(custom_filter_spec)
+        custom_filter_spec.loader.exec_module(custom_filter_module)
+        for function in dir(custom_filter_module):
+            if isinstance(getattr(custom_filter_module, function),
+                                    types.FunctionType):
+                logger.debug("custom filter loaded from {}".format(path))
+                env.filters[function] = getattr(custom_filter_module, function)
+    except Exception as e:
+        logger.debug("failed to find custom filter from path {}".format(path))
+        raise IOError("jinja2 failed to render, could not find filter at {}: {}".format(path, e))
+
+
+def load_jinja2_filters_from_files(env, jinja2_filter_paths):
+    """
+    iterates over all paths provided in jinja2_filter_paths list (files and directories) 
+    and calls load_module_from_path for each path
+    """
+    for path in jinja2_filter_paths:
+        if os.path.isfile(path) and path.endswith(".py"):
+            load_module_from_path(env, path)
+        elif os.path.isdir(path):
+            for filename in os.listdir(path):
+                subpath = os.path.join(path, filename)
+                if os.path.isfile(subpath) and subpath.endswith(".py"):
+                    load_module_from_path(env, subpath)
+        else:
+            logger.debug("Invalid path {}".format(path))
 
 
 # Custom filters

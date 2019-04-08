@@ -164,11 +164,13 @@ class Jinja2ContextVars(unittest.TestCase):
 class Jinja2ExternalFilterTest(unittest.TestCase):
     def test_custom_filter_jinja2(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ inventory.parameters.cluster.name | custom_filter }}".encode("UTF-8"))
+            f.write("{{ inventory.parameters.cluster.name | custom_jinja2_filter }}".encode("UTF-8"))
             cluster_name = "minikube"
             target_name = "minikube-es"
             inv = inventory(["examples/kubernetes"], target_name)
             context = {"inventory": inv}
             f.seek(0)
-            self.assertEqual(render_jinja2_file(f.name, context, ["./examples/kubernetes/lib/custom_filter.py"]), base64_encode(cluster_name))
+            actual_output = render_jinja2_file(f.name, context, ["./examples/kubernetes/lib/custom_jinja2_filter.py"])
+            expected_output = base64_encode(cluster_name)
+            self.assertEqual(actual_output, expected_output)
             

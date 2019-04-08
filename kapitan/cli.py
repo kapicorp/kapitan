@@ -72,8 +72,8 @@ def main():
                                 default=from_dot_kapitan('compile', 'search-paths', ['.', 'lib']),
                                 metavar='JPATH',
                                 help='set search paths, default is ["."]')
-    compile_parser.add_argument('--filter-paths', '-J2F', type=str, nargs='+',
-                                default=from_dot_kapitan('compile', 'filter-paths', []),
+    compile_parser.add_argument('--jinja2-filter-paths', '-J2F', type=str, nargs='+',
+                                default=from_dot_kapitan('compile', 'jinja2-filter-paths', []),
                                 metavar='FPATH',
                                 help='load custom jinja2 filter modules')
     compile_parser.add_argument('--verbose', '-v', help='set verbose mode',
@@ -273,7 +273,8 @@ def main():
         compile_targets(args.inventory_path, search_paths, args.output_path,
                         args.parallelism, args.targets, ref_controller,
                         prune=(args.prune), indent=args.indent, reveal=args.reveal,
-                        cache=args.cache, cache_paths=args.cache_paths, filter_paths=args.filter_paths)
+                        cache=args.cache, cache_paths=args.cache_paths,
+                        jinja2_filter_paths=args.jinja2_filter_paths)
 
     elif cmd == 'inventory':
         if args.pattern and args.target_name == '':

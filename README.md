@@ -315,6 +315,8 @@ optional arguments:
   -h, --help            show this help message and exit
   --search-paths JPATH [JPATH ...], -J JPATH [JPATH ...]
                         set search paths, default is ["."]
+  --jinja2-filter-paths FPATH [FPATH ...], -J2F FPATH [FPATH ...]
+                        load custom jinja2 filter modules
   --verbose, -v         set verbose mode
   --prune               prune jsonnet output
   --quiet               set quiet mode, only critical output
@@ -438,6 +440,7 @@ regex_findall - perform re.findall and return the list of matches as array e.g. 
 ternary - value ? true_val : false_val e.g. {{ condition | ternary("yes", "no") }}
 shuffle - randomly shuffle elements of a list {{ [1, 2, 3, 4, 5] | shuffle }}
 ```
+We support custom jinja2 filters as well.
 
 ### kapitan secrets
 

@@ -35,7 +35,7 @@ from hashlib import sha256
 
 from kapitan.version import VERSION
 from kapitan.errors import CompileError
-from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
+from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_files
 import kapitan.cached as cached
 
 logger = logging.getLogger(__name__)
@@ -111,7 +111,7 @@ def sha256_string(string):
     return sha256(string.encode("UTF-8")).hexdigest()
 
 
-def render_jinja2_file(name, context, filter_paths=[]):
+def render_jinja2_file(name, context, jinja2_filter_paths=[]):
     """Render jinja2 file name with context"""
     path, filename = os.path.split(name)
     env = jinja2.Environment(
@@ -122,12 +122,12 @@ def render_jinja2_file(name, context, filter_paths=[]):
         extensions=['jinja2.ext.do'],
     )
     load_jinja2_filters(env)
-    if filter_paths:
-        load_jinja2_filters_from_file(env, filter_paths)
+    if jinja2_filter_paths:
+        load_jinja2_filters_from_files(env, jinja2_filter_paths)
     return env.get_template(filename).render(context)
 
 
-def render_jinja2(path, context, filter_paths=[]):
+def render_jinja2(path, context, jinja2_filter_paths=[]):
     """
     Render files in path with context
     Returns a dict where the is key is the filename (with subpath)
@@ -156,7 +156,8 @@ def render_jinja2(path, context, filter_paths=[]):
             name = render_path[len(os.path.commonprefix([root, path])):].strip('/')
             try:
                 rendered[name] = {
-                    "content": render_jinja2_file(render_path, context, filter_paths=filter_paths),
+                    "content": render_jinja2_file(render_path, context,
+                                                  jinja2_filter_paths=jinja2_filter_paths),
                     "mode": file_mode(render_path)
                 }
             except Exception as e:
