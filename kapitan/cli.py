@@ -219,14 +219,14 @@ def main():
     init_parser.add_argument('--directory',
                              default=from_dot_kapitan('init', 'directory', '.'),
                              help='set path, in which to generate the project skeleton, assumes directory already exists. default is "./"')
-    init_parser.add_argument('-t','--target',nargs='+',type=str,
-                             default=from_dot_kapitan('init','target',['my_target']),
+    init_parser.add_argument('-t', '--target', nargs='+', type=str,
+                             default=from_dot_kapitan('init', 'target', ['my_target']),
                              help='targets to be initialised, default is "my_target"')
-    init_parser.add_argument('--compile-input',nargs='+',type=str,
-                             default=from_dot_kapitan('init','compile-input',['jsonnet','jinja2','kadet']),
+    init_parser.add_argument('--compile-input', nargs='+', type=str,
+                             default=from_dot_kapitan('init', 'compile-input', ['jsonnet', 'jinja2', 'kadet']),
                              help='components to be initialised, by default "all" are selected')
-    init_parser.add_argument('--classes',nargs='+',type=str,
-                             default=from_dot_kapitan('init','compile-input',['my_component']),
+    init_parser.add_argument('--classes', nargs='+', type=str,
+                             default=from_dot_kapitan('init', 'compile-input', ['my_component']),
                              help='classes to be initialised, default is "my_component"')
 
     args = parser.parse_args()
@@ -307,7 +307,7 @@ def main():
         start_lint(args.fail_on_warning, args.skip_class_checks, args.skip_yamllint, args.inventory_path, args.search_secrets, args.secrets_path, args.compiled_path)
 
     elif cmd == 'init':
-        _obj = initialise(args.directory,args.target,args.compile_input,args.classes)
+        _obj = initialise(args.directory, args.target, args.compile_input, args.classes)
         _obj()
 
     elif cmd == 'secrets':
