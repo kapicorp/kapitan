@@ -114,7 +114,7 @@ def yaml_to_json(search_paths, name):
             except Exception as e:
                 raise CompileError("Parse yaml failed to parse {}: {}".format(_full_path, e))
 
-    raise IOError("yaml failed to render, could not find file: {}".format(_full_path))
+    raise IOError("could not find any input yaml file: {}".format(_full_path))
 
 def read_file(search_paths, name):
     """return content of file in name"""

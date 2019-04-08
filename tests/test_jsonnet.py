@@ -36,7 +36,8 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         """
         current_pwd = os.path.dirname(__file__)
         json = yaml_to_json([current_pwd], "test_resources/test_parse_yaml.yaml")
-        self.assertEqual(json, "{\"test\": {\"key\": \"value\", \"array\": [\"ele1\", \"ele2\"]}}")
+        expected_output = """{"test": {"key": "value", "array": ["ele1", "ele2"]}}"""
+        self.assertEqual(json, expected_output)
 
     def test_sha256_string(self):
         """sha256 hex digest for string"""
