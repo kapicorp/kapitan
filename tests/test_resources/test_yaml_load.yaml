@@ -1,0 +1,5 @@
+test:
+  key: value
+  array:
+    - ele1
+    - ele2
