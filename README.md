@@ -315,8 +315,9 @@ optional arguments:
   -h, --help            show this help message and exit
   --search-paths JPATH [JPATH ...], -J JPATH [JPATH ...]
                         set search paths, default is ["."]
-  --jinja2-filter-paths FPATH [FPATH ...], -J2F FPATH [FPATH ...]
-                        load custom jinja2 filter modules
+  --jinja2-filters FPATH, -J2F FPATH
+                        load custom jinja2 filters from any file, default is
+                        to put them inside lib/jinja2_filters.py
   --verbose, -v         set verbose mode
   --prune               prune jsonnet output
   --quiet               set quiet mode, only critical output
@@ -440,7 +441,7 @@ regex_findall - perform re.findall and return the list of matches as array e.g. 
 ternary - value ? true_val : false_val e.g. {{ condition | ternary("yes", "no") }}
 shuffle - randomly shuffle elements of a list {{ [1, 2, 3, 4, 5] | shuffle }}
 ```
-You can also provide path to your custom filter modules in CLI.
+You can also provide path to your custom filter modules in CLI. By default you can put your filters in lib/jinja2_filters.py and they will automatically get loaded.
 
 ### kapitan secrets
 

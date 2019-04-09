@@ -68,26 +68,21 @@ def load_module_from_path(env, path):
                 env.filters[function] = getattr(custom_filter_module, function)
     except Exception as e:
         logger.debug("failed to find custom filter from path {}".format(path))
-        raise IOError("jinja2 failed to render, could not find filter at {}: {}".format(path, e))
+        raise IOError("jinja2 failed to render, could not load filter at {}: {}".format(path, e))
 
 
-def load_jinja2_filters_from_files(env, jinja2_filter_paths):
+def load_jinja2_filters_from_file(env, jinja2_filters):
     """
-    Iterates over all paths provided in jinja2_filter_paths list (files and directories) 
-    and loads module for each path
+    if filter points to default file and in case it doesn't exist then proceed silently, no error
+    else try to load module (which will throw error in case of non existence of file)
     """
-    all_file_paths = []
-    for path in jinja2_filter_paths:
-        if os.path.isdir(path):
-            for filename in os.listdir(path):
-                subpath = os.path.join(path, filename)
-                if subpath.endswith(".py"):
-                    all_file_paths.append(subpath)
-        else:
-            all_file_paths.append(path)
+    default_path = os.path.join('lib', 'jinja2_filters.py')
+    jinja2_filters = os.path.normpath(jinja2_filters)
+    if jinja2_filters == default_path:
+        if not os.path.isfile(jinja2_filters):
+            return 
     
-    for path in all_file_paths:
-        load_module_from_path(env, path)
+    load_module_from_path(env, jinja2_filters)
 
 
 # Custom filters

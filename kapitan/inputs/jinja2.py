@@ -43,10 +43,10 @@ class Jinja2(InputType):
         context = ext_vars.copy()
         context["inventory"] = inventory(self.search_paths, target_name)
         context["inventory_global"] = inventory(self.search_paths, None)
-        jinja2_filter_paths = kwargs.get('jinja2_filter_paths')
+        jinja2_filters = kwargs.get('jinja2_filters')
 
         for item_key, item_value in render_jinja2(file_path, context,
-                                                  jinja2_filter_paths=jinja2_filter_paths).items():
+                                                  jinja2_filters=jinja2_filters).items():
             full_item_path = os.path.join(compile_path, item_key)
             os.makedirs(os.path.dirname(full_item_path), exist_ok=True)
 
