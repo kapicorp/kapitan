@@ -1,0 +1,17 @@
+{
+    "nginx": {
+        "args": [],
+        "env": [],
+        "image": "nginx:1:15.8",
+        "imagePullPolicy": "IfNotPresent",
+        "name": "redis",
+        "ports": [
+            {
+                "containerPort": 80
+            }
+        ],
+        "stdin": false,
+        "tty": false,
+        "volumeMounts": []
+    }
+}

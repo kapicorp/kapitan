@@ -26,6 +26,7 @@ import gzip
 import base64
 import reclass
 import reclass.core
+import requests
 from reclass.errors import ReclassException, NotFoundError
 import yaml
 
@@ -138,6 +139,15 @@ def search_imports(cwd, import_str, search_paths):
     The only supported parameters are cwd and import_str, so search_paths
     needs to be closured.
     """
+
+    # handle url import for jsonnet
+    if import_str.startswith("https://") or import_str.startswith("http://"):
+        resp = requests.get(import_str)
+        if resp.status_code >= 400:
+            raise HTTPGetError(import_str, resp.status_code, resp.text)
+        return import_str, resp.text
+
+    # handle local jsonnet imports
     basename = os.path.basename(import_str)
     full_import_path = os.path.join(cwd, import_str)
 
@@ -161,16 +171,17 @@ def search_imports(cwd, import_str, search_paths):
                                  import_str, path)
                     break
 
-    # if the above search did not find anything, let jsonnet error
-    # with a non existent import
     normalised_path = os.path.normpath(full_import_path)
-
+    normalised_path_content = ""
     logger.debug("cwd:%s import_str:%s basename:%s -> norm:%s",
                  cwd, import_str, basename, normalised_path)
 
-    normalised_path_content = ""
-    with open(normalised_path) as f:
-        normalised_path_content = f.read()
+    # if imported jsonnet is found, read it else throguh IOError
+    if os.path.exists(normalised_path):
+        with open(normalised_path) as f:
+            normalised_path_content = f.read()
+    else:
+        raise IOError("Could not find file {}".format(import_str))
 
     return normalised_path, normalised_path_content
 
@@ -250,3 +261,8 @@ def inventory_reclass(inventory_path):
             raise InventoryError(e.message)
 
     return cached.inv
+
+class HTTPGetError(RuntimeError):
+    def __init__(self, url, code, msg):
+        super(RuntimeError, self).__init__(
+            'GET %s failed (%d): %s', url, code, msg)

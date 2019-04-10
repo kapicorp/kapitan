@@ -19,9 +19,8 @@
 import unittest
 import os
 
-from kapitan.resources import yaml_dump, gzip_b64, yaml_load
-from kapitan.utils import sha256_string, prune_empty
-
+from kapitan.resources import *
+from kapitan.utils import sha256_string, prune_empty, jsonnet_file
 
 class JsonnetNativeFuncsTest(unittest.TestCase):
     def test_yaml_dump(self):
@@ -54,3 +53,25 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         dictionary = {"hello": "world", "array": [1, 2], "foo": {}, "bar": []}
         pruned = prune_empty(dictionary)
         self.assertEqual(pruned, {"hello": "world", "array": [1, 2]})
+
+    def test_jsonnet_file(self):
+        """ Url import test for jsonnet """
+        def _search_imports(cwd, imp):
+            return search_imports(cwd, imp, [])
+
+        pwd = os.path.dirname(__file__)
+        input_file = "test_resources/test_url_imports_input.jsonnet"
+        output_file = "test_resources/test_url_imports_output.json"
+
+        # load rendered jsonnet as json
+        input_abs_path = os.path.join(pwd, input_file)
+        output_str = jsonnet_file(input_abs_path, import_callback=_search_imports,
+                                   native_callbacks=resource_callbacks([]))
+        actual_output = json.loads(output_str)
+
+        # load excepted output as json
+        output_abs_path = os.path.join(pwd, output_file)
+        with open(output_abs_path,'r') as f:
+            except_output = json.load(f)
+
+        self.assertEqual(actual_output, except_output)
