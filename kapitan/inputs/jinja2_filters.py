@@ -33,7 +33,7 @@ from kapitan import utils
 
 logger = logging.getLogger(__name__)
 
-"""default path from where user defined custom filters are read"""
+#default path from where user defined custom filters are read
 default_jinja2_filters_path = os.path.join('lib', 'jinja2_filters.py')
 
 
