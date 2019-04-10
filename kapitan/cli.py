@@ -36,6 +36,7 @@ from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.resources import (inventory_reclass, resource_callbacks,
                                search_imports)
 from kapitan.targets import compile_targets
+from kapitan.inputs.jinja2_filters import default_jinja2_filters_path
 from kapitan.utils import (PrettyDumper, check_version, deep_get, fatal_error,
                            flatten_dict, from_dot_kapitan, jsonnet_file,
                            search_target_token_paths, searchvar)
@@ -74,7 +75,7 @@ def main():
                                 help='set search paths, default is ["."]')
     compile_parser.add_argument('--jinja2-filters', '-J2F', type=str,
                                 default=from_dot_kapitan('compile', 'jinja2-filters',
-                                os.path.join('lib','jinja2_filters.py')),
+                                default_jinja2_filters_path),
                                 metavar='FPATH',
                                 help='load custom jinja2 filters from any file, default is to put\
                                 them inside lib/jinja2_filters.py')
