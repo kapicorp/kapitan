@@ -80,9 +80,8 @@ def load_jinja2_filters_from_file(env, jinja2_filters):
     if filter points to default file and in case it doesn't exist then proceed silently, no error
     else try to load module (which will throw error in case of non existence of file)
     """
-    default_path = os.path.join('lib', 'jinja2_filters.py')
     jinja2_filters = os.path.normpath(jinja2_filters)
-    if jinja2_filters == default_path:
+    if jinja2_filters == default_jinja2_filters_path:
         if not os.path.isfile(jinja2_filters):
             return 
     
