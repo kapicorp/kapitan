@@ -21,12 +21,20 @@ import os
 import datetime
 import time
 import re
+import types
+import logging
 
 from six import string_types
 from random import Random, shuffle
+from importlib import util
 
 from kapitan.errors import CompileError
 from kapitan import utils
+
+logger = logging.getLogger(__name__)
+
+#default path from where user defined custom filters are read
+default_jinja2_filters_path = os.path.join('lib', 'jinja2_filters.py')
 
 
 def load_jinja2_filters(env):
@@ -45,6 +53,39 @@ def load_jinja2_filters(env):
     env.filters['regex_findall'] = regex_findall
     env.filters['ternary'] = ternary
     env.filters['shuffle'] = randomize_list
+
+
+def load_module_from_path(env, path):
+    """
+    Loads a python module from provided path and adds it to jinja2 environment
+    filter name is same as that of function
+    """
+    try:
+        module_name = os.path.basename(path).split('.')[0]
+        custom_filter_spec = util.spec_from_file_location(module_name, path)
+        custom_filter_module = util.module_from_spec(custom_filter_spec)
+        custom_filter_spec.loader.exec_module(custom_filter_module)
+        for function in dir(custom_filter_module):
+            if isinstance(getattr(custom_filter_module, function),
+                                    types.FunctionType):
+                logger.debug("custom filter loaded from {}".format(path))
+                env.filters[function] = getattr(custom_filter_module, function)
+    except Exception as e:
+        logger.debug("failed to find custom filter from path {}".format(path))
+        raise IOError("jinja2 failed to render, could not load filter at {}: {}".format(path, e))
+
+
+def load_jinja2_filters_from_file(env, jinja2_filters):
+    """
+    if filter points to default file and in case it doesn't exist then proceed silently, no error
+    else try to load module (which will throw error in case of non existence of file)
+    """
+    jinja2_filters = os.path.normpath(jinja2_filters)
+    if jinja2_filters == default_jinja2_filters_path:
+        if not os.path.isfile(jinja2_filters):
+            return 
+    
+    load_module_from_path(env, jinja2_filters)
 
 
 # Custom filters

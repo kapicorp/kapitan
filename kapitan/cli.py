@@ -36,6 +36,7 @@ from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.resources import (inventory_reclass, resource_callbacks,
                                search_imports)
 from kapitan.targets import compile_targets
+from kapitan.inputs.jinja2_filters import default_jinja2_filters_path
 from kapitan.utils import (PrettyDumper, check_version, deep_get, fatal_error,
                            flatten_dict, from_dot_kapitan, jsonnet_file,
                            search_target_token_paths, searchvar)
@@ -72,6 +73,12 @@ def main():
                                 default=from_dot_kapitan('compile', 'search-paths', ['.', 'lib']),
                                 metavar='JPATH',
                                 help='set search paths, default is ["."]')
+    compile_parser.add_argument('--jinja2-filters', '-J2F', type=str,
+                                default=from_dot_kapitan('compile', 'jinja2-filters',
+                                default_jinja2_filters_path),
+                                metavar='FPATH',
+                                help='load custom jinja2 filters from any file, default is to put\
+                                them inside lib/jinja2_filters.py')
     compile_parser.add_argument('--verbose', '-v', help='set verbose mode',
                                 action='store_true',
                                 default=from_dot_kapitan('compile', 'verbose', False))
@@ -269,7 +276,8 @@ def main():
         compile_targets(args.inventory_path, search_paths, args.output_path,
                         args.parallelism, args.targets, ref_controller,
                         prune=(args.prune), indent=args.indent, reveal=args.reveal,
-                        cache=args.cache, cache_paths=args.cache_paths)
+                        cache=args.cache, cache_paths=args.cache_paths,
+                        jinja2_filters=args.jinja2_filters)
 
     elif cmd == 'inventory':
         if args.pattern and args.target_name == '':
