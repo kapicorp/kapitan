@@ -23,7 +23,6 @@ import shutil
 import yaml
 
 from distutils.dir_util import copy_tree
-from kapitan.utils import list_all_paths
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +31,8 @@ class Initialiser(object):
         """ Initialises a directory with a recommended skeleton structure
         Args:
             directory (string): path which to initialise, directory is assumed to exist
+            targets (list): target files to be created under targets/
+            compile_inputs (list): input type of templates to be generated
         """
         self.target_template_name = 'my_target.yml'
         self.component_template_name = 'my_component.yml'
@@ -47,8 +48,6 @@ class Initialiser(object):
         self.copy_path_list = []
 
 
-
-    # copy_tree(templates_directory, directory)
     def get_target_template(self):
         path = os.path.join(self.templates_directory, self.target_dir, self.target_template_name)
         with open(path) as f:
@@ -65,7 +64,7 @@ class Initialiser(object):
         self.copy_inventory()
         self.copy_target_file()
         self.copy_component_file()
-        self.copy_compile_components()
+        self.copy_components()
 
     def copy_inventory(self):
         """
@@ -110,47 +109,41 @@ class Initialiser(object):
         path = self.get_new_component_path()
         self.dump_yaml(component_file, path)
 
-    def copy_compile_components(self):
-        """
-            copy for files present in copy_path_list to new location
-        """
-        for path in self.copy_path_list:
-            self.copy_components(path)
-
     def get_new_target_path(self,name):
         path = os.path.join(self.directory, self.target_dir)
-        self.handle_directory_creation(path)
+        self.create_directory(path)
         path = os.path.join(path,name)
         return path
 
     def get_new_component_path(self):
         path = os.path.join(self.directory, self.component_dir)
-        self.handle_directory_creation(path)
+        self.create_directory(path)
         path = os.path.join(path,self.component_template_name)
         return path
 
-    def handle_directory_creation(self,path):
+    def create_directory(self,path):
         try:
             os.makedirs(path, exist_ok=True)
         except OSError as e:
-            pass
+            logger.debug('Directory already exists: {}'.format(path))
 
-    def copy_components(self,path):
+    def copy_components(self):
         """
-            copy allowed components to new location
-            if directory then copy every entire directory
+            copy files present in copy_path_list to new directory
         """
-        template_file_path = os.path.join(self.templates_directory, path)
-        new_file_path = os.path.join(self.directory, path)
-        if os.path.isdir(template_file_path):
-            new_file_path = new_file_path.rstrip('/')
-            dirname = os.path.dirname(new_file_path)
-            self.handle_directory_creation(dirname)
-            shutil.copytree(template_file_path, new_file_path)
-        else:
-            file_directory = os.path.dirname(new_file_path)
-            self.handle_directory_creation(file_directory)
-            shutil.copy(template_file_path, new_file_path)
+        for path in self.copy_path_list:
+            template_file_path = os.path.join(self.templates_directory, path)
+            new_file_path = os.path.join(self.directory, path)
+
+            if os.path.isdir(template_file_path):
+                new_file_path = new_file_path.rstrip('/')
+                dirname = os.path.dirname(new_file_path)
+                self.create_directory(dirname)
+                shutil.copytree(template_file_path, new_file_path)
+            else:
+                file_directory = os.path.dirname(new_file_path)
+                self.create_directory(file_directory)
+                shutil.copy(template_file_path, new_file_path)
 
 
 
@@ -158,9 +151,9 @@ class Initialiser(object):
         with open(path, 'w') as outfile:
             yaml.dump(obj, outfile, default_flow_style=False)
 
-    def list_new_directory(self):
+    def list_directory(self):
         """
-            list all files in new location
+            list all files created in new directory
         """
         logger.info("Populated {} with:".format(self.directory))
         for dirName, _, fileList in os.walk(self.directory):

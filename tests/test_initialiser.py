@@ -22,6 +22,7 @@ import tempfile
 import os
 
 from kapitan.initialiser import Initialiser
+from kapitan.utils import directory_hash
 
 logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -49,3 +50,16 @@ class InitTest(unittest.TestCase):
                         diff_files.remove(f)
 
             self.assertEqual(len(diff_files), 0)
+
+    def test_parameterized_init(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            init = Initialiser(directory=tmp_dir,
+                                targets=['dev', 'staging', 'prod'],
+                                compile_inputs=['jinja2'])
+            init.generate_copy()
+            init_dir_hash = directory_hash(tmp_dir)
+
+            test_init_dir = os.path.join(os.getcwd(), "tests/test_parameterized_init")
+            test_init_dir_hash = directory_hash(test_init_dir)
+
+            self.assertEqual(init_dir_hash, test_init_dir_hash)

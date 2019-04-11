@@ -354,7 +354,7 @@ def main():
     elif cmd == 'init':
         init = Initialiser(args.directory, args.targets, args.compile_inputs)
         init.generate_copy()
-        init.list_new_directory()
+        init.list_directory()
 
     elif cmd == 'secrets':
         ref_controller = RefController(args.secrets_path)
