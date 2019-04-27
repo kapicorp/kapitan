@@ -23,16 +23,18 @@ compiled
 │   ├── scripts
 │   │   └── terraform.sh
 │   └── terraform
+│       ├── kubernetes.tf.json
 │       ├── output.tf.json
 │       └── provider.tf.json
 └── project3
     ├── scripts
     │   └── terraform.sh
     └── terraform
+        ├── kubernetes.tf.json
         ├── output.tf.json
         └── provider.tf.json
 
-9 directories, 10 files
+9 directories, 12 files
 ```
 
 You can now run `terraform` commands as usual:

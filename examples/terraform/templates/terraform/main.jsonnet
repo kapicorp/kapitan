@@ -11,6 +11,6 @@ local kubernetes = import "kubernetes.jsonnet";
 {
   "output.tf": output,
   "provider.tf": provider,
-  [if "kubernetes" in inv.parameters.resources then "kubernetes.tf"]: kubernetes,
+  [if "container" in inv.parameters.resources then "kubernetes.tf"]: kubernetes,
   [if "dns" in inv.parameters.resources then "dns.tf"]: dns,
 }
