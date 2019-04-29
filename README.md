@@ -499,7 +499,7 @@ The usual flow of creating and using an encrypted secret with kapitan is:
 
 - After `kapitan compile`, this will compile to the [mysql_secret.yml k8s secret](./examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml). If you are part of the GPG recipients, you can see the secret by running:
   ```
-  kapitan secrets --reveal -f examples/kubernetes/compiled/minikube-mysql/manifests/mysql_secret.yml
+  kapitan secrets --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
   ```
 
 To setup GPG for the kubernetes examples you can run:
