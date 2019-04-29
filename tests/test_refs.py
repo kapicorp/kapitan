@@ -161,6 +161,7 @@ class RefsTest(unittest.TestCase):
         # Test with parameter nbytes=16, correlating with string length 16
         tag = '?{ref:ref/randomstr|randomstr:16}'
         REF_CONTROLLER[tag] = RefParams()
+        REVEALER._reveal_tag_without_subvar.cache_clear()
         revealed = REVEALER.reveal_raw_file(file_with_tags)
         self.assertEqual(len(revealed), 16)
 

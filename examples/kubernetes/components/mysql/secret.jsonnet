@@ -10,3 +10,12 @@ local inv = kap.inventory();
     }
   }
 }
+
+{
+  MySQLSecret_subvar(name): kube.Secret(name) {
+    data: {
+      "MYSQL_ROOT_PASSWORD": inv.parameters.mysql.users.root.password_subvar,
+      "MYSQL_ROOT_PASSWORD_SHA256": inv.parameters.mysql.users.root.password_sha256_subvar
+    }
+  }
+}

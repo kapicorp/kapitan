@@ -29,3 +29,6 @@ parameters:
         # Generates the sha256 checksum of the previously declared B64'ed password
         # It's base64'ed again so that it can be used in kubernetes secrets
         password_sha256: ?{gpg:targets/${target_name}/mysql/password_sha256|reveal:targets/${target_name}/mysql/password|sha256|base64}
+
+        password_subvar: ?{gpg:targets/${target_name}/mysql/subvars@var1.password}
+        password_sha256_subvar: ?{gpg:targets/${target_name}/mysql/subvars@var2.password_sha256}
