@@ -41,8 +41,8 @@ local inv = kap.inventory();
             "https://www.googleapis.com/auth/monitoring",
           ],
         },
+        version: inv.parameters.resources.container[cluster].node_version,
         node_count: inv.parameters.resources.container[cluster].pools[pool].node_count,
-        version: inv.parameters.resources.kubernetes[cluster].pools[pool].version,
         depends_on: ["google_container_cluster." + cluster],
       }
       for cluster in std.objectFields(inv.parameters.resources.container)
