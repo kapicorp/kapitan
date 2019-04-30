@@ -1,3 +1,8 @@
+## 0.23.1-rc.0:
+- Add parseYaml function in jsonnet (#263)
+- Add support for specifying custom jinja2 filters (#267)
+- Update reclass (1.6.0) and other minor dependencies (#283)
+
 ## 0.23.0:
 - Add support for writing ref type secrets in cli (#242)
 - Validate target name matches target yml file name (#243)
