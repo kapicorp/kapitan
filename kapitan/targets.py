@@ -349,6 +349,25 @@ def valid_target_obj(target_obj):
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
+                    "oneOf": [
+                        {
+                            "properties": {
+                                "input_type": {
+                                    "enum": ["jsonnet", "kadet"] 
+                                },
+                                "output_type" : {
+                                    "enum": ["yaml", "json"]
+                                }
+                            },
+                        },
+                        {
+                            "properties": {
+                                "input_type": {
+                                    "enum": ["jinja2"]
+                                } 
+                            }
+                        }
+                    ],
                 }
             },
         },
