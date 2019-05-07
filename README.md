@@ -64,13 +64,13 @@ Kapitan needs Python 3.6.
 User (`$HOME/.local/lib/python3.6/bin` on Linux or `$HOME/Library/Python/3.6/bin` on macOS):
 
 ```shell
-pip3 install --user --upgrade kapitan
+pip3 install --user --no-cache --only-binary kapitan kapitan
 ```
 
 System-wide (not recommended):
 
 ```shell
-sudo pip3 install --upgrade kapitan
+sudo pip3 install --user --no-cache --only-binary kapitan kapitan
 ```
 
 # Example
