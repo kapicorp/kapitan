@@ -1,0 +1,11 @@
+classes:
+  - dockerfiles
+parameters:
+  kapitan:
+    vars:
+      target: docker
+  dockerfiles:
+    - name: web
+      image: amazoncorretto:11
+    - name: worker
+      image: amazoncorretto:8
