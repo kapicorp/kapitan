@@ -16,7 +16,6 @@
 
 import logging
 import os
-from shutil import copy
 
 from kapitan.inputs.base import InputType, CompiledFile
 from kapitan.resources import inventory

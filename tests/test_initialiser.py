@@ -52,14 +52,16 @@ class InitTest(unittest.TestCase):
             self.assertEqual(len(diff_files), 0)
 
     def test_parameterized_init(self):
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            init = Initialiser(directory=tmp_dir,
-                                targets=['dev', 'staging', 'prod'],
-                                compile_inputs=['jinja2'])
-            init.generate_copy()
-            init_dir_hash = directory_hash(tmp_dir)
+        for input_type in ['jinja2', 'jsonnet', 'kadet']:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                init = Initialiser(directory=tmp_dir,
+                                    targets=['dev', 'staging', 'prod'],
+                                    compile_inputs=[input_type])
+                init.generate_copy()
+                init_dir_hash = directory_hash(tmp_dir)
 
-            test_init_dir = os.path.join(os.getcwd(), "tests/test_parameterized_init")
-            test_init_dir_hash = directory_hash(test_init_dir)
+                test_init_dir = os.path.join(os.getcwd(),
+                                            "tests/test_parameterized_init/{}".format(input_type))
+                test_init_dir_hash = directory_hash(test_init_dir)
 
-            self.assertEqual(init_dir_hash, test_init_dir_hash)
+                self.assertEqual(init_dir_hash, test_init_dir_hash)
