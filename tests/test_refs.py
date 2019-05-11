@@ -21,7 +21,7 @@ import os
 import tempfile
 import unittest
 
-from kapitan.errors import RefFromFuncError, RefHashMismatchError
+from kapitan.errors import RefFromFuncError, RefHashMismatchError, RefError
 from kapitan.refs.base import Ref, RefController, RefParams, Revealer
 from kapitan.utils import get_entropy
 
@@ -143,6 +143,61 @@ class RefsTest(unittest.TestCase):
         with self.assertRaises(RefHashMismatchError):
             data = "data with {}, period.".format(tag_compiled_hash_mismatch)
             REVEALER.reveal_raw(data)
+
+    def test_compile_subvars(self):
+        """
+        test that refs with sub-variables compile properly,
+        and refs with different sub-variables stored in the same file has the same hash
+        """
+        subvar_tag1 = '?{ref:ref/subvars@var1}'
+        subvar_tag2 = '?{ref:ref/subvars@var2}'
+        REF_CONTROLLER['?{ref:ref/subvars}'] = Ref(b'ref 1 data')
+        ref_obj1 = REF_CONTROLLER[subvar_tag1]
+        ref_obj2 = REF_CONTROLLER[subvar_tag2]
+        self.assertEqual(ref_obj1.compile(), '?{ref:ref/subvars@var1:4357a29b}')
+        self.assertEqual(ref_obj2.compile(), '?{ref:ref/subvars@var2:4357a29b}')
+
+    def test_reveal_subvars_raise_RefError(self):
+        """
+        test that reveal with sub-variable fails should the secret not
+        be in valid yaml format
+        """
+        tag_to_save = '?{ref:ref/subvars_error}'
+        yaml_secret = b"this is not yaml"
+        REF_CONTROLLER[tag_to_save] = Ref(yaml_secret)
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'ref/subvars_error')))
+
+        with self.assertRaises(RefError):
+            tag_subvar = '?{ref:ref/subvars_error@var3.var4}'
+            data = "message here: {}".format(tag_subvar)
+            REVEALER.reveal_raw(data)
+
+    def test_reveal_subvars(self):
+        "write yaml secret, and access sub-variables in secrets"
+        tag_to_save = '?{ref:ref/subvars}'
+        yaml_secret = b"""
+        var1:
+          var2: hello
+        var3:
+          var4: world
+        """
+        REF_CONTROLLER[tag_to_save] = Ref(yaml_secret)
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'ref/subvars')))
+
+        tag_subvar = '?{ref:ref/subvars@var1.var2}'
+        data = "message here: {}".format(tag_subvar)
+        revealed_data = REVEALER.reveal_raw(data)
+        self.assertEqual("message here: hello", revealed_data)
+
+        tag_subvar = '?{ref:ref/subvars@var3.var4}'
+        data = "message here: {}".format(tag_subvar)
+        revealed_data = REVEALER.reveal_raw(data)
+        self.assertEqual("message here: world", revealed_data)
+
+        with self.assertRaises(KeyError):
+            tag_subvar = '?{ref:ref/subvars@var3.varDoesntExist}'
+            data = "message here: {}".format(tag_subvar)
+            revealed_data = REVEALER.reveal_raw(data)
 
     def test_ref_function_randomstr(self):
         "write randomstr to secret, confirm ref file exists, reveal and check"
