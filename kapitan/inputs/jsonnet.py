@@ -70,8 +70,13 @@ class Jsonnet(InputType):
                 with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
                                   indent=indent) as fp:
                     fp.write_yaml(item_value)
+            elif output == 'plain':
+                file_path = os.path.join(compile_path, '%s' % item_key)
+                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
+                                  indent=indent) as fp:
+                    fp.write(item_value)
             else:
-                raise ValueError('output is neither "json" or "yaml"')
+                raise ValueError('output is neither "json", "yaml" or "plain"')
 
     def default_output_type(self):
         return "yaml"

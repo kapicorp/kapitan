@@ -102,3 +102,20 @@ class CompileTerraformTest(unittest.TestCase):
     def tearDown(self):
         os.chdir(os.getcwd() + '/../../')
         reset_cache()
+
+
+class PlainOutputTest(unittest.TestCase):
+    def setUp(self):
+        os.chdir(os.getcwd() + '/examples/docker/')
+
+    def test_compile(self):
+        sys.argv = ["kapitan", "compile"]
+        main()
+        compiled_dir_hash = directory_hash(os.getcwd() + '/compiled')
+        test_compiled_dir_hash = directory_hash(
+            os.getcwd() + '/../../tests/test_docker_compiled')
+        self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
+
+    def tearDown(self):
+        os.chdir(os.getcwd() + '/../../')
+        reset_cache()
