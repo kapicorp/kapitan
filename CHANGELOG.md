@@ -1,3 +1,11 @@
+## 0.23.1:
+- Fix pypi package by including requirements.txt (#287)
+- Make jsonnet & kadet support plain text output_type (#288)
+- Fallback to reclass 1.5.6 because of regression (#284)
+- Add parseYaml function in jsonnet (#263)
+- Add support for specifying custom jinja2 filters (#267)
+- Update minor dependencies (#283)
+
 ## 0.23.1-rc.1:
 - Fallback to reclass 1.5.6 because of regression (#284)
 
