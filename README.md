@@ -22,7 +22,8 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 * [Typical folder structure](#typical-folder-structure)
 * [Usage](#usage)
 * [Modes of operation](#modes-of-operation)
-* [CI](#ci)
+* [Continuous Integration](#continuous-integration)
+* [Kapitan feature proposals](#kapitan-feature-proposals)
 * [Contributing](#contributing)
 * [Credits](#credits)
 * [FAQ](#faq)
@@ -634,6 +635,10 @@ $ kapitan searchvar parameters.elasticsearch.replicas
 # Continuous Integration
 
 See [CI.md](docs/CI.md).
+
+# Kapitan feature proposals
+
+See [kapitan_proposals/](docs/kap_proposals/).
 
 # Contributing
 
