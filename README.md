@@ -22,7 +22,6 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 * [Typical folder structure](#typical-folder-structure)
 * [Usage](#usage)
 * [Modes of operation](#modes-of-operation)
-* [Continuous Integration](#continuous-integration)
 * [Kapitan feature proposals](#kapitan-feature-proposals)
 * [Contributing](#contributing)
 * [Credits](#credits)
@@ -49,7 +48,7 @@ docker run -t --rm -v $(pwd):/src:delegated deepmind/kapitan -h
 
 On Linux you can add `-u $(id -u)` to `docker run` to preserve file permissions.
 
-For CI/CD usage, check out our [ci instructions](#ci)
+For CI/CD usage, check out [CI.md](./docs/CI.md)
 
 #### Pip
 
@@ -632,9 +631,6 @@ $ kapitan searchvar parameters.elasticsearch.replicas
 ./inventory/targets/minikube-es.yml               2
 ./inventory/classes/component/elasticsearch.yml   1
 ```
-# Continuous Integration
-
-See [CI.md](docs/CI.md).
 
 # Kapitan feature proposals
 
