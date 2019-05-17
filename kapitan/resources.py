@@ -239,7 +239,7 @@ def inventory_reclass(inventory_path):
                                           reclass_config['classes_uri'],
                                           reclass_config['compose_node_name'])
             class_mappings = reclass_config.get('class_mappings')  # this defaults to None (disabled)
-            _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings())
+            _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
 
             cached.inv = _reclass.inventory()
         except ReclassException as e:
