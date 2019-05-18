@@ -39,7 +39,7 @@ class CompileKubernetesTest(unittest.TestCase):
         os.remove('./compiled/.kapitan_cache')
         compiled_dir_hash = directory_hash(os.getcwd() + '/compiled')
         test_compiled_dir_hash = directory_hash(os.getcwd() + '/../../tests/test_kubernetes_compiled')
-        # self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
+        self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def test_compile_not_enough_args(self):
         with self.assertRaises(SystemExit) as cm:
