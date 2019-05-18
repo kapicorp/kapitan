@@ -1,4 +1,4 @@
-# schema validation (for k8s) 
+# Schema Validation (for k8s) 
 
 If a yaml/json output is to be used as k8s manifest, users may specify its kind and have kapitan validate its structure during `kapitan compile`.
 The plan is to have this validation feature extendable to other outputs as well, such as terraform.
