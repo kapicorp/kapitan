@@ -1,4 +1,4 @@
-# Standalone kapitan executable
+# Standalone Kapitan Executable
 
 Create a portable (i.e. static) kapitan binary for users. This executable will be made available for each release on Github. The target/tested platform is Debian 9 (possibly Windows to be supported in the future).
 

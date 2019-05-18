@@ -1,4 +1,4 @@
-# Import Helm charts
+# Helm Charts Input Type
 
 This will allow kapitan, during compilation, to overwrite the values in user-specified helm charts using its inventory by calling the Go & Sprig template libraries. The helm charts can be specified via local path, and users may download the helm chart via [external-dependency feature](./kap_1_external_dependencies.md) (of http[s] type).
 
