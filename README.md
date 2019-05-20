@@ -600,9 +600,10 @@ parameters:
         input_type: jinja2
         output_path: .
     secrets:
-      recipients:
-        - fingerprint: D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C
-          name: example@kapitan.dev
+      gpg:
+        recipients:
+          - fingerprint: D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C
+            name: example@kapitan.dev
     vars:
       namespace: minikube-es
       target: minikube-es
