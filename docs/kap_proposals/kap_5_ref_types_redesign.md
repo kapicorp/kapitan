@@ -47,7 +47,7 @@ $ echo $USER | kapitan refs --write plain:my/user -f -
 Or update a docker image value as ref `?{plain:images/dev/envoy}`:
 
 ```shell
-$ echo `envoyproxy/envoy:v1.10.0` | kapitan refs --write plain:images/dev/envoy -f -
+$ echo 'envoyproxy/envoy:v1.10.0' | kapitan refs --write plain:images/dev/envoy -f -
 ```
 
 These references will be compiled into their values instead of hashed tags.
