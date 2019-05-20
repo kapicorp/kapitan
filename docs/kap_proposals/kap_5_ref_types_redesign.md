@@ -114,7 +114,7 @@ password: secret_content_of_file.txt
 Kapitan today offers multiple secret backends:
 
 | Type | Description | Encrypted? | Compiles To |
-| ----   -----------          --- | ----------
+| ----   -----------          --- | ----------  |
 | gpg  | GnuPG       |        Yes | hashed tag  |
 | gkms | Google KMS  |        Yes | hashed tag  |
 | akms | Amazon KMS  |        Yes | hashed tag  |
