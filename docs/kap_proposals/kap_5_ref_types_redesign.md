@@ -15,7 +15,7 @@ by removing the `ref` backend and introducting new backends:
 | ------ | ----------- |        --- | ----------  |
 | gpg    | GnuPG       |        Yes | hashed tag  |
 | gkms   | Google KMS  |        Yes | hashed tag  |
-| akms   | Amazon KMS  |        Yes | hashed tag  |
+| awskms | Amazon KMS  |        Yes | hashed tag  |
 | base64 | base64      |        No  | hashed tag  |
 | plain  | plain text  |        No  | plain text  |
 
@@ -82,10 +82,10 @@ This secret can be referred to in a jsonnet compoment:
 
 ```json
 {
-    type: "app",
-    name: "test_app",
-    username: "user_one",
-    password: "?{gpg:my/secret1}"
+    "type": "app",
+    "name": "test_app",
+    "username": "user_one",
+    "password": "?{gpg:my/secret1}"
 }
 ```
 
@@ -113,12 +113,12 @@ password: secret_content_of_file.txt
 
 Kapitan today offers multiple secret backends:
 
-| Type | Description | Encrypted? | Compiles To |
-| ---- | ----------- |        --- | ----------  |
-| gpg  | GnuPG       |        Yes | hashed tag  |
-| gkms | Google KMS  |        Yes | hashed tag  |
-| akms | Amazon KMS  |        Yes | hashed tag  |
-| ref  | base64      |        No  | hashed tag  |
+| Type   | Description | Encrypted? | Compiles To |
+| ------ | ----------- |        --- | ----------  |
+| gpg    | GnuPG       |        Yes | hashed tag  |
+| gkms   | Google KMS  |        Yes | hashed tag  |
+| awskms | Amazon KMS  |        Yes | hashed tag  |
+| ref    | base64      |        No  | hashed tag  |
 
 However, not all backends are encrypted - this is not consistent!
 
