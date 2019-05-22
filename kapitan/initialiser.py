@@ -27,21 +27,22 @@ from distutils.dir_util import copy_tree
 logger = logging.getLogger(__name__)
 
 class Initialiser(object):
-    def __init__(self,directory,targets,compile_inputs):
+    def __init__(self,directory,targets,input_types,inventory_path):
         """ Initialises a directory with a recommended skeleton structure
         Args:
             directory (string): path which to initialise, directory is assumed to exist
             targets (list): target files to be created under targets/
-            compile_inputs (list): input type of templates to be generated
+            input_types (list): input type of templates to be generated
+            inventory_path (string): set inventory path
         """
         self.target_template_name = 'my_target.yml'
         self.component_template_name = 'my_component.yml'
-        self.target_dir = "inventory/targets"
-        self.component_dir = "inventory/classes"
+        self.target_dir = "{}/targets".format(inventory_path)
+        self.component_dir = "{}/classes".format(inventory_path)
 
         self.directory = directory
         self.targets = targets
-        self.compile_inputs = compile_inputs
+        self.input_types = input_types
         current_pwd = os.path.dirname(__file__)
         self.templates_directory = os.path.join(current_pwd, 'inputs/templates')
 
@@ -101,7 +102,7 @@ class Initialiser(object):
         component_file = self.get_component_template()
         compile_objs = []
         for compile_obj in component_file['parameters']['kapitan']['compile']:
-            if compile_obj['input_type'] in self.compile_inputs or len(self.compile_inputs) == 0:
+            if compile_obj['input_type'] in self.input_types or len(self.input_types) == 0:
                 self.copy_path_list += compile_obj['input_paths']
                 compile_objs.append(compile_obj)
         component_file['parameters']['kapitan']['compile'] = compile_objs

@@ -33,7 +33,8 @@ class InitTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             init = Initialiser(directory=tmp_dir,
                                 targets=[],
-                                compile_inputs=[])
+                                input_types=[],
+                                inventory_path='./inventory')
             init.generate_copy()
 
             template_dir = os.path.join(
@@ -56,7 +57,8 @@ class InitTest(unittest.TestCase):
             with tempfile.TemporaryDirectory() as tmp_dir:
                 init = Initialiser(directory=tmp_dir,
                                     targets=['dev', 'staging', 'prod'],
-                                    compile_inputs=[input_type])
+                                    input_types=[input_type],
+                                    inventory_path='./inventory')
                 init.generate_copy()
                 init_dir_hash = directory_hash(tmp_dir)
 

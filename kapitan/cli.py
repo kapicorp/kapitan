@@ -352,7 +352,7 @@ def main():
         start_lint(args.fail_on_warning, args.skip_class_checks, args.skip_yamllint, args.inventory_path, args.search_secrets, args.secrets_path, args.compiled_path)
 
     elif cmd == 'init':
-        init = Initialiser(args.directory, args.targets, args.compile_inputs)
+        init = Initialiser(args.directory, args.targets, args.input_types, args.inventory_path)
         init.generate_copy()
         init.list_directory()
 
