@@ -356,7 +356,7 @@ def valid_target_obj(target_obj):
                                     "enum": ["jsonnet", "kadet"] 
                                 },
                                 "output_type" : {
-                                    "enum": ["yaml", "json"]
+                                    "enum": ["yaml", "json", "plain"]
                                 }
                             },
                         },
