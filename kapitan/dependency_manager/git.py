@@ -5,6 +5,7 @@ import os
 from distutils.dir_util import copy_tree, remove_tree
 
 from kapitan.dependency_manager.base import Dependency
+from kapitan.errors import GitSubdirNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +24,18 @@ class Git(Dependency):
         if 'ref' in self.kwargs:
             ref = self.kwargs['ref']
             repo.git.checkout(ref)
-            copy_tree(repo_cache_dirname, self.output_path)
 
         if 'subdir' in self.kwargs:
-            full_subdir = os.path.join(repo_cache_dirname, self.kwargs['subdir'])
+            sub_dir = self.kwargs['subdir']
+            full_subdir = os.path.join(repo_cache_dirname, sub_dir)
 
             if os.path.isdir(os.path.join(full_subdir)):
-                copy_tree(full_subdir, self.output_path)
+                repo_cache_dirname = full_subdir
+            else:
+                raise GitSubdirNotFoundError("subdir {} not found in repo: ".format(sub_dir, self.source_uri))
+
+        copy_tree(repo_cache_dirname, self.output_path)
+        logger.info("copied dependency from {} to {}".format(repo_cache_dirname, self.output_path))
 
     def _get_repo_cache_dirname(self):
         repo_name = os.path.basename(self.source_uri)

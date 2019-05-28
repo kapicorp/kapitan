@@ -16,8 +16,12 @@
 import contextlib
 import io
 import os
+import sys
 import unittest
 import tempfile
+
+from kapitan.cached import reset_cache
+from kapitan.cli import main
 
 from kapitan.dependency_manager.git import Git
 
@@ -62,3 +66,17 @@ class GitDependencyTest(unittest.TestCase):
             # as of now, we cannot capture stdout with contextlib.redirect_stdout
             # since we only do logger.error(e) in targets.py before exiting
         self.assertTrue(' '.join(cm.output).find('cache loaded') != -1)
+
+    def test_compile_fetch(self):
+        cwd = os.getcwd()
+        os.chdir(os.path.join(cwd, "tests", "test_resources"))
+        temp = tempfile.mkdtemp()
+        Git.cache_dir = temp
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx", ]
+        main()
+        reset_cache()
+
+        self.assertTrue(os.path.isdir(os.path.join(temp, "compiled", "nginx", "kapitan_repo")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "compiled", "nginx", "kapitan_subdir_tests")))
+
+        os.chdir(cwd)
