@@ -27,6 +27,7 @@ import yaml
 import time
 from functools import partial
 
+from kapitan.dependency_manager.git import Git
 from kapitan.resources import inventory_reclass
 from kapitan.utils import hashable_lru_cache
 from kapitan.utils import directory_hash, dictionary_hash
@@ -70,7 +71,7 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
 
         # append "compiled" to output_path so we can safely overwrite it
         compile_path = os.path.join(output_path, "compiled")
-        worker = partial(compile_target, search_paths=search_paths, compile_path=temp_path, ref_controller=ref_controller,
+        worker = partial(compile_target, search_paths=search_paths, compile_path=temp_path,ref_controller=ref_controller,
                          **kwargs)
 
         if target_objs == []:
@@ -100,6 +101,9 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
 
         # Save inventory and folders cache
         save_inv_cache(compile_path, targets)
+        # After compile is completed successfully, fetch and copy the dependencies
+        worker = partial(fetch_dependencies, compile_path)
+        [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
         pool.close()
 
     except ReclassException as e:
@@ -324,6 +328,26 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
     logger.info("Compiled %s (%.2fs)", target_name, time.time() - start)
 
 
+def fetch_dependencies(compile_path, target_obj):
+    try:
+        dependencies = target_obj["dependencies"]
+    except KeyError:
+        return  # no dependencies found
+
+    target_name = target_obj["vars"]["target"]
+    for item in dependencies:
+        dependency_type = item["type"]
+        if dependency_type == "git":
+            source_uri = item["source"]
+            output_path = os.path.join(compile_path, target_name, item["output_path"])
+            del item["source"]
+            del item["output_path"]
+            Git(source_uri, output_path, **item).fetch()
+        else:
+            logger.error("type {} is not supported as dependency".format(dependency_type))
+            assert False
+
+
 @hashable_lru_cache
 def valid_target_obj(target_obj):
     """
@@ -353,9 +377,9 @@ def valid_target_obj(target_obj):
                         {
                             "properties": {
                                 "input_type": {
-                                    "enum": ["jsonnet", "kadet"] 
+                                    "enum": ["jsonnet", "kadet"]
                                 },
-                                "output_type" : {
+                                "output_type": {
                                     "enum": ["yaml", "json", "plain"]
                                 }
                             },
@@ -364,12 +388,30 @@ def valid_target_obj(target_obj):
                             "properties": {
                                 "input_type": {
                                     "enum": ["jinja2"]
-                                } 
+                                }
                             }
                         }
                     ],
                 }
             },
+            "dependencies": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": ["git"],
+                        },
+                        "output_path": {"type": "string"},
+                        "source": {"type": "string"},
+                        "subdir": {"type": "string"},
+                        "ref": {"type": "string"}
+                    },
+                    "required": ["type", "output_path", "source"],
+                }
+
+            }
         },
         "required": ["compile"],
     }
