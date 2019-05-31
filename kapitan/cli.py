@@ -92,6 +92,8 @@ def main():
                                 default=from_dot_kapitan('compile', 'output-path', '.'),
                                 metavar='PATH',
                                 help='set output path, default is "."')
+    compile_parser.add_argument('--dependency-cache-path',                     default=from_dot_kapitan('compile', 'dependency-cache-path', './components'),
+                                help='set external dependency cache path, default is "./components')
     compile_parser.add_argument('--targets', '-t', help='targets to compile, default is all',
                                 type=str, nargs='+',
                                 default=from_dot_kapitan('compile', 'targets', []),
@@ -276,7 +278,7 @@ def main():
         compile_targets(args.inventory_path, search_paths, args.output_path,
                         args.parallelism, args.targets, ref_controller,
                         prune=(args.prune), indent=args.indent, reveal=args.reveal,
-                        cache=args.cache, cache_paths=args.cache_paths,
+                        cache=args.cache, cache_paths=args.cache_paths, dependency_cache_path=args.dependency_cache_path,
                         jinja2_filters=args.jinja2_filters)
 
     elif cmd == 'inventory':

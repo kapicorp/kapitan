@@ -27,6 +27,7 @@ import yaml
 import time
 from functools import partial
 
+from kapitan.dependency_manager.base import Dependency
 from kapitan.dependency_manager.git import Git
 from kapitan.resources import inventory_reclass
 from kapitan.utils import hashable_lru_cache
@@ -102,7 +103,7 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
         # Save inventory and folders cache
         save_inv_cache(compile_path, targets)
         # After compile is completed successfully, fetch and copy the dependencies
-        worker = partial(fetch_dependencies, compile_path)
+        worker = partial(fetch_dependencies, compile_path, components_path=kwargs.get('dependency_cache_path'))
         [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
         pool.close()
 
@@ -328,12 +329,13 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
     logger.info("Compiled %s (%.2fs)", target_name, time.time() - start)
 
 
-def fetch_dependencies(compile_path, target_obj):
+def fetch_dependencies(compile_path, target_obj, components_path):
     try:
         dependencies = target_obj["dependencies"]
     except KeyError:
         return  # no dependencies found
 
+    Dependency.set_cache_path(components_path)
     target_name = target_obj["vars"]["target"]
     for item in dependencies:
         dependency_type = item["type"]
@@ -401,14 +403,41 @@ def valid_target_obj(target_obj):
                     "properties": {
                         "type": {
                             "type": "string",
-                            "enum": ["git"],
+                            "enum": ["git", "http", "https"]
                         },
                         "output_path": {"type": "string"},
                         "source": {"type": "string"},
                         "subdir": {"type": "string"},
                         "ref": {"type": "string"}
                     },
+                    "additionalProperties": False,
                     "required": ["type", "output_path", "source"],
+                    "oneOf": [
+                        {
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": ["http", "https"],
+                                },
+                                "source": {
+                                    "type": "string",
+                                    "format": "uri"
+                                },
+                                "output_path": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": False
+                        },
+                        {
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": ["git"],
+                                }
+                            }
+                        },
+                    ]
                 }
 
             }
@@ -416,7 +445,7 @@ def valid_target_obj(target_obj):
         "required": ["compile"],
     }
 
-    return jsonschema.validate(target_obj, schema)
+    return jsonschema.validate(target_obj, schema, format_checker=jsonschema.FormatChecker())
 
 
 def validate_matching_target_name(target_filename, target_obj, inventory_path):

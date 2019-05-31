@@ -19,6 +19,7 @@ import os
 import sys
 import unittest
 import tempfile
+from pprint import pprint
 
 from kapitan.cached import reset_cache
 from kapitan.cli import main
@@ -30,7 +31,7 @@ class GitDependencyTest(unittest.TestCase):
 
     def test_clone_repo_checkout(self):
         temp_dir = tempfile.mkdtemp()
-        Git.cache_dir = temp_dir
+        Git.cache_path = temp_dir
         repo_url = 'git@github.com:deepmind/kapitan.git'
         output_path = os.path.join(temp_dir, 'kapitan')
         ref = 'eddde31'
@@ -42,7 +43,7 @@ class GitDependencyTest(unittest.TestCase):
 
     def test_clone_repo_subdir(self):
         temp_dir = tempfile.mkdtemp()
-        Git.cache_dir = temp_dir
+        Git.cache_path = temp_dir
         repo_url = 'git@github.com:deepmind/kapitan.git'
         output_path = os.path.join(temp_dir, 'kapitan')
         git_dependency = Git(repo_url, output_path, subdir='tests')
@@ -55,7 +56,7 @@ class GitDependencyTest(unittest.TestCase):
     def test_repo_cache(self):
         with self.assertLogs(logger='kapitan.dependency_manager.git', level='INFO') as cm, contextlib.redirect_stdout(io.StringIO()):
             temp_dir = tempfile.mkdtemp()
-            Git.cache_dir = temp_dir
+            Git.cache_path = temp_dir
             repo_url = 'git@github.com:deepmind/kapitan.git'
             output_path = os.path.join(temp_dir, 'kapitan')
             git_dependency = Git(repo_url, output_path, subdir='tests')
@@ -71,12 +72,11 @@ class GitDependencyTest(unittest.TestCase):
         cwd = os.getcwd()
         os.chdir(os.path.join(cwd, "tests", "test_resources"))
         temp = tempfile.mkdtemp()
-        Git.cache_dir = temp
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx", ]
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx", "--dependency-cache-path", temp]
         main()
         reset_cache()
+        os.chdir(cwd)
 
+        self.assertTrue(os.path.isdir(os.path.join(temp, 'external', 'kapitan.git')))
         self.assertTrue(os.path.isdir(os.path.join(temp, "compiled", "nginx", "kapitan_repo")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "compiled", "nginx", "kapitan_subdir_tests")))
-
-        os.chdir(cwd)
