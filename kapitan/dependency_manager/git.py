@@ -1,4 +1,3 @@
-import shutil
 from git import Repo
 import logging
 import os
@@ -32,14 +31,14 @@ class Git(Dependency):
             if os.path.isdir(os.path.join(full_subdir)):
                 repo_cache_dirname = full_subdir
             else:
-                raise GitSubdirNotFoundError("subdir {} not found in repo: ".format(sub_dir, self.source_uri))
+                raise GitSubdirNotFoundError("subdir {} not found in repo: {}".format(sub_dir, self.source_uri))
 
         copy_tree(repo_cache_dirname, self.output_path)
         logger.info("copied dependency from {} to {}".format(repo_cache_dirname, self.output_path))
 
     def _get_repo_cache_dirname(self):
         repo_name = os.path.basename(self.source_uri)
-        repo_cache_dir = os.path.join(self.cache_dir, repo_name)
+        repo_cache_dir = os.path.join(Dependency.cache_path, repo_name)
         return repo_cache_dir
 
     def _get_repo_cache_or_clone(self):
