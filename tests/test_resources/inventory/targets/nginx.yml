@@ -24,3 +24,6 @@ parameters:
         ref: master
         subdir: tests
         source: git@github.com:deepmind/kapitan.git
+      - type: http
+        output_path: file
+        source: https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-0.1.0.tgz

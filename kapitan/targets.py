@@ -29,6 +29,7 @@ from functools import partial
 
 from kapitan.dependency_manager.base import Dependency
 from kapitan.dependency_manager.git import Git
+from kapitan.dependency_manager.http import Http
 from kapitan.resources import inventory_reclass
 from kapitan.utils import hashable_lru_cache
 from kapitan.utils import directory_hash, dictionary_hash
@@ -342,9 +343,12 @@ def fetch_dependencies(compile_path, target_obj, components_path):
         if dependency_type == "git":
             source_uri = item["source"]
             output_path = os.path.join(compile_path, target_name, item["output_path"])
-            del item["source"]
             del item["output_path"]
             Git(source_uri, output_path, **item).fetch()
+        elif dependency_type in ("http", "https"):
+            source_uri = item["source"]
+            output_path = os.path.join(compile_path, target_name, item["output_path"])
+            Http(source_uri, output_path).fetch()
         else:
             logger.error("type {} is not supported as dependency".format(dependency_type))
             assert False
@@ -410,36 +414,28 @@ def valid_target_obj(target_obj):
                         "subdir": {"type": "string"},
                         "ref": {"type": "string"}
                     },
-                    "additionalProperties": False,
                     "required": ["type", "output_path", "source"],
-                    "oneOf": [
+                    "additionalProperties": False,
+                    "allOf": [
                         {
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "enum": ["http", "https"],
-                                },
-                                "source": {
-                                    "type": "string",
-                                    "format": "uri"
-                                },
-                                "output_path": {
-                                    "type": "string"
-                                }
+                            "if": {
+                                "properties": { "type": { "enum": ["http", "https"] } }
                             },
-                            "additionalProperties": False
-                        },
-                        {
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "enum": ["git"],
-                                }
+                            "then": {
+                                "properties": {
+                                    "type": {
+                                    },
+                                    "source": {
+                                        "format": "uri"
+                                    },
+                                    "output_path": {
+                                    }
+                                },
+                                "additionalProperties": False
                             }
                         },
                     ]
                 }
-
             }
         },
         "required": ["compile"],
