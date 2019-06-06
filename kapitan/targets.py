@@ -22,6 +22,7 @@ import shutil
 import sys
 import multiprocessing
 import tempfile
+
 import jsonschema
 import yaml
 import time
@@ -76,8 +77,19 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
         worker = partial(compile_target, search_paths=search_paths, compile_path=temp_path,ref_controller=ref_controller,
                          **kwargs)
 
-        if target_objs == []:
+        if not target_objs:
             raise CompileError("Error: no targets found")
+
+        fetch = partial(fetch_dependencies, cache_path=kwargs.get('dependency_cache_path', None))
+        target_dependencies_map = get_dependencies_per_target(target_objs)
+        if kwargs.get('force_fetch', False):
+            # force fetch
+            remove_saved_dependencies(target_dependencies_map, kwargs.get('dependency_cache_path', None))
+
+        for target_name, items in target_dependencies_map.items():
+            [p.get() for p in pool.imap_unordered(fetch, items) if p]
+            logger.info("Dependency fetching complete for target {}".format(target_name))
+
         # compile_target() returns None on success
         # so p is only not None when raising an exception
         [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
@@ -103,9 +115,7 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
 
         # Save inventory and folders cache
         save_inv_cache(compile_path, targets)
-        # After compile is completed successfully, fetch and copy the dependencies
-        worker = partial(fetch_dependencies, compile_path, components_path=kwargs.get('dependency_cache_path'))
-        [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+
         pool.close()
 
     except ReclassException as e:
@@ -330,28 +340,44 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
     logger.info("Compiled %s (%.2fs)", target_name, time.time() - start)
 
 
-def fetch_dependencies(compile_path, target_obj, components_path):
-    try:
-        dependencies = target_obj["dependencies"]
-    except KeyError:
-        return  # no dependencies found
+def get_dependencies_per_target(target_objs):
+    """returns a mapping from target name to a list of dependency objects"""
+    mapping = {}
+    for target_obj in target_objs:
+        try:
+            dependencies = target_obj["dependencies"]
+            target_name = target_obj["vars"]["target"]
+            mapping[target_name] = []
+            for item in dependencies:
+                dependency_type = item["type"]
+                source_uri = item["source"]
+                output_path = item["output_path"]
+                if dependency_type == "git":
+                    del item["output_path"]
+                    mapping[target_name].append(Git(source_uri, output_path, **item))
+                elif dependency_type in ("http", "https"):
+                    mapping[target_name].append(Http(source_uri, output_path))
+                else:
+                    logger.error("type {} is not supported as dependency".format(dependency_type))
+                    assert False
 
-    Dependency.set_cache_path(components_path)
-    target_name = target_obj["vars"]["target"]
-    for item in dependencies:
-        dependency_type = item["type"]
-        if dependency_type == "git":
-            source_uri = item["source"]
-            output_path = os.path.join(compile_path, target_name, item["output_path"])
-            del item["output_path"]
-            Git(source_uri, output_path, **item).fetch()
-        elif dependency_type in ("http", "https"):
-            source_uri = item["source"]
-            output_path = os.path.join(compile_path, target_name, item["output_path"])
-            Http(source_uri, output_path).fetch()
-        else:
-            logger.error("type {} is not supported as dependency".format(dependency_type))
-            assert False
+        except KeyError:
+            continue
+    return mapping
+
+
+def remove_saved_dependencies(dependency_mapping, cache_path=None):
+    if cache_path is not None:
+        Dependency.set_cache_path(cache_path)
+    for items in dependency_mapping.values():
+        for item in items:
+            item.clear_cache()
+
+
+def fetch_dependencies(item, cache_path=None):
+    if cache_path is not None:
+        Dependency.set_cache_path(cache_path)
+    item.fetch()
 
 
 @hashable_lru_cache

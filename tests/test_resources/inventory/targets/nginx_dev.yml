@@ -1,6 +1,6 @@
 parameters:
-  host_port: 8080
-  container_port: 80
+  host_port: 80
+  container_port: 8080
   server_name: localhost
   website: $(pwd)/compiled/${kapitan:vars:target}/manifests/html
   root: /usr/share/nginx/html
@@ -8,7 +8,7 @@ parameters:
 
   kapitan:
     vars:
-      target: nginx
+      target: nginx_dev
     compile:
       - output_path: manifests
         input_type: jinja2
@@ -17,9 +17,9 @@ parameters:
 
     dependencies:
       - type: git
-        output_path: components/tests
+        output_path: components/source
         ref: master
-        subdir: tests
+        subdir: kapitan
         source: git@github.com:deepmind/kapitan.git
       - type: http
         output_path: components/acs-engine-autoscaler-0.1.0.tgz
