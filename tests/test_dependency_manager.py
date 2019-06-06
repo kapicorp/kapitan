@@ -19,7 +19,6 @@ import os
 import sys
 import unittest
 import tempfile
-from pprint import pprint
 
 from kapitan.cached import reset_cache
 from kapitan.cli import main
@@ -57,7 +56,7 @@ class GitDependencyTest(unittest.TestCase):
     def test_repo_cache(self):
         with self.assertLogs(logger='kapitan.dependency_manager.git', level='INFO') as cm, contextlib.redirect_stdout(io.StringIO()):
             temp_dir = tempfile.mkdtemp()
-            Dependency.set_cache_path(temp_dir)
+            Dependency.set_cache_path(os.path.join(temp_dir, ".cache"))
             repo_url = 'git@github.com:deepmind/kapitan.git'
             output_path = os.path.join(temp_dir, 'kapitan')
             git_dependency = Git(repo_url, output_path, subdir='tests')
@@ -73,12 +72,12 @@ class GitDependencyTest(unittest.TestCase):
         cwd = os.getcwd()
         os.chdir(os.path.join(cwd, "tests", "test_resources"))
         temp = tempfile.mkdtemp()
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx", "--dependency-cache-path", temp]
+        Dependency.set_root_output_path(temp)
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx", "nginx_dev", "--dependency-cache-path", os.path.join(temp, ".cache"), "--fetch"]
         main()
         reset_cache()
         os.chdir(cwd)
-
-        self.assertTrue(os.path.isdir(os.path.join(temp, 'external', 'kapitan.git')))
-        self.assertTrue(os.path.isdir(os.path.join(temp, "compiled", "nginx", "kapitan_repo")))
-        self.assertTrue(os.path.isdir(os.path.join(temp, "compiled", "nginx", "kapitan_subdir_tests")))
-        self.assertTrue(os.path.isfile(os.path.join(temp, "external", "acs-engine-autoscaler-0.1.0.tgz")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, ".cache", "kapitan.git")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))
+        self.assertTrue(os.path.isfile(os.path.join(temp, "components", "acs-engine-autoscaler-0.1.0.tgz")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
