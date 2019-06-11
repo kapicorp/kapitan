@@ -18,6 +18,7 @@ import logging
 import os
 import yaml
 import json
+import collections
 
 from kapitan.errors import CompileError, KapitanError
 from kapitan.refs.base import Revealer
@@ -111,7 +112,12 @@ class CompilingFile(object):
             self.revealer.reveal_obj(obj)
         else:
             self.revealer.compile_obj(obj, target_name=target_name)
-        yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+
+        if isinstance(obj, collections.Mapping):
+            yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+        else:
+            yaml.dump_all(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+
         logger.debug("Wrote %s", self.fp.name)
 
     def write_json(self, obj):
