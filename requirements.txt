@@ -1,5 +1,5 @@
 # kapitan dependencies
-jsonnet==0.12.1
+jsonnet==0.13.0
 pyyaml>=5.1
 Jinja2>=2.10
 jsonschema==3.0.1
