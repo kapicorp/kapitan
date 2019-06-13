@@ -11,5 +11,6 @@ boto3==1.9.138
 requests==2.21.0
 addict==2.2.1
 yamllint>=1.15.0
+hvac==0.9.1
 # Reclass dependencies
 pyparsing
