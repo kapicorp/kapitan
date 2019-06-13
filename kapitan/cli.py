@@ -32,6 +32,7 @@ from kapitan.lint import start_lint
 from kapitan.refs.base import Ref, RefController, Revealer
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
+from kapitan.refs.secrets.vault import VaultSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.resources import (inventory_reclass, resource_callbacks,
                                search_imports)
@@ -397,6 +398,15 @@ def secret_write(args, ref_controller):
         ref_obj = Ref(_data, encoding=encoding)
         tag = '?{{ref:{}}}'.format(token_path)
         ref_controller[tag] = ref_obj
+
+    elif token_name.startswith("vault:"):
+        type_name, token_path = token_name.split(":")
+        encoding = False
+        if args.base64:
+            encoding = True
+        secret_obj = VaultSecret(data, encode_base64=encoding)
+        tag = '?{{vault:{}}}'.format(token_path)
+        ref_controller[tag] = secret_obj
 
     else:
         fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/ref:{name}".format(name=token_name))

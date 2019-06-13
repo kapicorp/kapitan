@@ -356,6 +356,9 @@ class RefController(object):
             elif type_name == 'awskms':
                 from kapitan.refs.secrets.awskms import AWSKMSBackend
                 self.register_backend(AWSKMSBackend(self.path))
+            elif type_name == 'vault':
+                from kapitan.refs.secrets.vault import VaultBackend
+                self.register_backend(VaultBackend(self.path))
             else:
                 raise RefBackendError('no backend for ref type: {}'.format(type_name))
         return self.backends[type_name]
