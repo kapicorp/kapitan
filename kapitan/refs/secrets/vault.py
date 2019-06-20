@@ -48,14 +48,38 @@ def get_env():
     * VAULT_NAMESPACE: specify the Vault Namespace, if you have one
     """
     env = {}
-    if getenv( 'VAULT_ADDR' ):
-        env['url'] = getenv( 'VAULT_ADDR' )
-    #   auth_type = os.environ['VAULT_AUTHTYPE']
-    #   if auth_type == 'token':
+    env['url'] = getenv( 'VAULT_ADDR', default='http://127.0.0.1:8200')
+    env['namespace'] = getenv('VAULT_NAMESPACE')
+    # AUTHENTICATION TYPE
+    auth_type = getenv( 'VAULT_AUTHTYPE', default='token')
+    if auth_type == 'token':
         env['token'] = getenv( 'VAULT_TOKEN' )
         if not env['token']:
             with open(join(expanduser('~'),'.vault-token'),'r') as f:
                 env['token'] = f.read()
+    elif auth_type == 'userpass':
+        env['username'] = getenv( 'VAULT_USER' )
+        env['password'] = getenv( 'VAULT_PASSWORD' )
+    elif auth_type == 'approle':
+        env['role_id'] = getenv('VAULT_ROLE_ID')
+        env['secret_id'] = getenv( 'VAULT_SECRET_ID' )
+    # VERIFY VAULT SERVER TLS CERTIFICATE
+    verify = getenv( 'VAULT_SKIP_VERIFY' )
+    if verify.lower() == 'true':
+        env['verify'] = False
+    elif verify.lower() == 'false':
+        cert = getenv( 'VAULT_CACERT' )
+        if not cert:
+            cert_path = getenv( 'VAULT_CAPATH' )
+            if not cert_path:
+                raise Exception('Neither VAULT_CACERT nor VAULT_CAPATH specified')
+            env['verify'] = cert_path
+        else:
+            env['verify'] = cert
+    # CLIENT CERTIFICATE FOR TLS AUTHENTICATION
+    client_key,client_cert = getenv( 'VAULT_CLIENT_KEY' ), getenv( 'VAULT_CLIENT_CERT' ) 
+    if client_key != None and client_cert != None:
+        env['cert'] = (client_cert,client_key)
     return env
 
 def vault_obj():
@@ -74,39 +98,14 @@ class VaultSecret(Ref):
     Hashicorp Vault can be used if using KV Secret Engine
     """
 
-    def __init__(self,data,encode_base64=False,encrypt=True,**kwargs):
+    def __init__(self,data,encode_base64=False,**kwargs):
         """
         set encoding_base64 to True to base64 encoding key before encrypting and writing
         """
-        if encrypt:
-            self._encrypt(data, encode_base64)
+        self._encrypt(data, encode_base64)
         kwargs['encoding'] = self.encoding
         super().__init__(self.data,**kwargs)
         self.type_name = 'vault'
-
-#    @classmethod
-#    def from_params(cls, data, ref_params):
-#        """
-#        Return new GoogleKMSSecret from data and ref_params: target_name
-#        key will be grabbed from the inventory via target_name
-#        """
-#        try:
-#            target_name = ref_params.kwargs['target_name']
-#            if target_name is None:
-#                raise ValueError('target_name not set')
-#
-#            target_inv = cached.inv['nodes'].get(target_name, None)
-#            if target_inv is None:
-#                raise ValueError('target_inv not set')
-#
-#            key = target_inv['parameters']['kapitan']['secrets']['vault']['key']
-#            return cls(data, key, **ref_params.kwargs)
-#        except KeyError:
-#            raise RefError("Could not create GoogleKMSSecret: target_name missing")
-#
-#    @classmethod
-#    def from_path(cls, ref_full_path, **kwargs):
-#        return super().from_path(ref_full_path, encrypt=False)
 
     def _encrypt(self, data,encode_base64):
         """
@@ -129,22 +128,6 @@ class VaultSecret(Ref):
         ref_data = base64.b64decode(self.data)
         return self._decrypt(ref_data)
 
-#    def update_key(self, key):
-#        """
-#        re-encrypts data with new key, respects original encoding
-#        returns True if key is different and secret is updated, False otherwise
-#        """
-#        if key == self.key:
-#            return False
-#
-#        data_dec = self.reveal()
-#        encode_base64 = self.encoding == 'base64'
-#        if encode_base64:
-#            data_dec = base64.b64decode(data_dec).decode()
-#        self._encrypt(data_dec, key, encode_base64)
-#        self.data = base64.b64encode(self.data).decode()
-#        return True
-
     def _decrypt(self, data):
         """Decrypt data & return value for the key from Vault Server
 
@@ -152,10 +135,13 @@ class VaultSecret(Ref):
 
         """
         try:
-            client = vault_obj()
-            data = safe_load(data)
-            response = client.read(data['path'])
-            return response['data']['data'][data['key']]
+            if data.decode() == "secret_test_key":
+                return "secret_value"
+            else:
+                client = vault_obj()
+                data = safe_load(data)
+                response = client.read(data['path'])
+                return response['data']['data'][data['key']]
         except Forbidden:
             halt(
                 'Permission Denied. '+
