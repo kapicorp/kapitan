@@ -20,7 +20,7 @@ The following variables need to be exported to the environment where you run thi
 * VAULT_CAPATH: the path to a directory of PEM-encoded CA cert files to verify the Vault server TLS certificate  
 * VAULT_NAMESPACE: specify the Vault Namespace, if you have one  
   
-Considering a key-value pair like `my_key`:`my_secert` ( in our case let’s store hello:batman inside the vault ) in the path `secret/foo` on the vault server, to use this as a secret either follow:  
+Considering a key-value pair like `my_key`:`my_secret` ( in our case let’s store hello:batman inside the vault ) in the path `secret/foo` on the vault server, to use this as a secret either follow:  
   
 ```shell  
 $ echo “{'path':'secert/foo','key':'my_key'}” > somefile.txt  
@@ -44,14 +44,14 @@ Following is the example file having a secret and pointing to the vault `?{vault
   
 ```  
 parameters:  
-	releases:  
-		cod: latest  
-	cod:  
-		image: ?{vault:path/to/secret_inside_kapitan}  
-		release: ${releases:cod}  
-		replicas: ${replicas}  
-		args:  
-		- --verbose=${verbose}  
+  releases:  
+	  cod: latest  
+  cod:  
+	  image: ?{vault:path/to/secret_inside_kapitan}  
+	  release: ${releases:cod}  
+	  replicas: ${replicas}  
+	  args:  
+	  - --verbose=${verbose}  
 ```  
   
 when `?{vault:path/to/secret_inside_kapitan}` is compiled, it will look same with an 8 character prefix of sha256 hash added at the end like:  
@@ -74,7 +74,7 @@ Following is the result of the cod.md file after Kapitan reveal.
 # Welcome to the README!  
 Target *dev-sea* is running:  
 
--   1 replicas of *cod* running image my_secert
+-   1 replicas of *cod* running image my_secret
 -   on cluster kubernetes
 
 ```  

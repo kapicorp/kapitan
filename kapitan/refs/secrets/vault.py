@@ -64,7 +64,7 @@ def get_env():
         env['role_id'] = getenv('VAULT_ROLE_ID')
         env['secret_id'] = getenv( 'VAULT_SECRET_ID' )
     # VERIFY VAULT SERVER TLS CERTIFICATE
-    verify = getenv( 'VAULT_SKIP_VERIFY' )
+    verify = getenv( 'VAULT_SKIP_VERIFY', default='')
     if verify.lower() == 'true':
         env['verify'] = False
     elif verify.lower() == 'false':
