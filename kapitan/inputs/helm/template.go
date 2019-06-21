@@ -7,10 +7,9 @@ import (
 	"fmt"
 	"github.com/Masterminds/sprig" // TODO added by copying vendor directory
 	"github.com/ghodss/yaml"
-	//"github.com/golang/protobuf/ptypes/timestamp"
 	"io/ioutil"
-	"k8s.io/helm/pkg/chartutil" // TODO right now just share the pkg folder
-	//helm_env "k8s.io/helm/pkg/helm/environment"
+	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/manifest"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/renderutil"
@@ -20,27 +19,11 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"text/template" // TODO Added
-	//"time"
+	"text/template"
 )
-//
-//// Timestamp converts a time.Time to a protobuf *timestamp.Timestamp.
-//func Timestamp(t time.Time) *timestamp.Timestamp {
-//	return &timestamp.Timestamp{
-//		Seconds: t.Unix(),
-//		Nanos:   int32(t.Nanosecond()),
-//	}
-//}
-//
-//// Now creates a timestamp.Timestamp representing the current time.
-//func Now() *timestamp.Timestamp {
-//	return Timestamp(time.Now())
-//}
 
 const defaultDirectoryPermission_c = 0755
 
-
-// TODO from install.go
 type valueFiles []string
 
 func (v *valueFiles) String() string {
@@ -58,44 +41,16 @@ func (v *valueFiles) Set(value string) error {
 	return nil
 }
 
-
-//var (
-//	settings     helm_env.EnvSettings
-//) // from helm.Go
-
-
 var (
 	whitespaceRegex_c = regexp.MustCompile(`^\s*$`)
-
 	// defaultKubeVersion is the default value of --kube-version flag
-	defaultKubeVersion_c = fmt.Sprintf("%s.%s", chartutil.DefaultKubeVersion.Major, chartutil.DefaultKubeVersion.Minor) //TODO another dependency in template
-	//TODO: what to do with the inherited command options
+	defaultKubeVersion_c = fmt.Sprintf("%s.%s", chartutil.DefaultKubeVersion.Major, chartutil.DefaultKubeVersion.Minor)
 )
 
-//readFile load a file from the local directory or a remote file with a url.
-func readFile(filePath, CertFile, KeyFile, CAFile string) ([]byte, error) {
-	//u, _ := url.Parse(filePath)
-	//p := getter.All(settings)
-	// TODO: by default, only http[s] are supported, so this can be deleted
-
-	// FIXME: maybe someone handle other protocols like ftp.
-	//getterConstructor, err := p.ByScheme(u.Scheme)
-
-	//if err != nil {
-	//	print("this is local")
-	//	return ioutil.ReadFile(filePath)
-	//}
-
+//readFile load a file from the local directory. remote file is disabled.
+func readFile(filePath string) ([]byte, error) {
 	return ioutil.ReadFile(filePath)
-	//
-	//getter, err := getterConstructor(filePath, CertFile, KeyFile, CAFile)
-	//if err != nil {
-	//	return []byte{}, err
-	//}
-	//data, err := getter.Get(filePath)
-	//return data.Bytes(), err
 }
-
 
 // Merges source and destination map, preferring values from the source map
 func mergeValues(dest map[string]interface{}, src map[string]interface{}) map[string]interface{} {
@@ -126,7 +81,7 @@ func mergeValues(dest map[string]interface{}, src map[string]interface{}) map[st
 
 // vals merges values from files specified via -f/--values and
 // directly via --set or --set-string or --set-file, marshaling them to YAML
-func vals(valueFiles valueFiles, values []string, stringValues []string, fileValues []string, CertFile, KeyFile, CAFile string) ([]byte, error) {
+func vals(valueFiles valueFiles, values []string, stringValues []string, fileValues []string) ([]byte, error) {
 	base := map[string]interface{}{}
 
 	// User specified a values files via -f/--values
@@ -138,7 +93,7 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 		if strings.TrimSpace(filePath) == "-" {
 			bytes, err = ioutil.ReadAll(os.Stdin)
 		} else {
-			bytes, err = readFile(filePath, CertFile, KeyFile, CAFile)
+			bytes, err = readFile(filePath)
 		}
 
 		if err != nil {
@@ -169,7 +124,7 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 	// User specified a value via --set-file
 	for _, value := range fileValues {
 		reader := func(rs []rune) (interface{}, error) {
-			bytes, err := readFile(string(rs), CertFile, KeyFile, CAFile)
+			bytes, err := readFile(string(rs))
 			return string(bytes), err
 		}
 		if err := strvals.ParseIntoFile(value, base, reader); err != nil {
@@ -180,6 +135,7 @@ func vals(valueFiles valueFiles, values []string, stringValues []string, fileVal
 	return yaml.Marshal(base)
 }
 
+// generates name using Sprig template
 func generateName(nameTemplate string) (string, error) {
 	t, err := template.New("name-template").Funcs(sprig.TxtFuncMap()).Parse(nameTemplate)
 	if err != nil {
@@ -193,23 +149,25 @@ func generateName(nameTemplate string) (string, error) {
 	return b.String(), nil
 }
 
-// make sure there is no space between // and export
 //export renderChart
-func renderChart(cchartpath *C.char) C.int {
-	chartPath := C.GoString(cchartpath) // TODO: free this string
-	valueFiles := []string{}
-	values := []string{}
-	stringValues := []string{}
-	fileValues := []string{}
+func renderChart(c_chartpath, c_outputDir *C.char) C.int {
+	chartPath := C.GoString(c_chartpath)
+	outputDir := C.GoString(c_outputDir)
+	// values in YAML file
+	var valueFiles []string
+	var values []string
+	// to force string values
+	var stringValues []string
+	var fileValues []string
 	nameTemplate := ""
 	releaseName := ""
 	namespace := "default"
-	kubeVersion := "1.8.5"
-	renderFiles := []string{}
+	kubeVersion := defaultKubeVersion_c
+	// particular template files to render
+	var renderFiles []string
 	showNotes := false
-	outputDir := ""
 
-	rawVals, err := vals(valueFiles, values, stringValues, fileValues, "", "", "")
+	rawVals, err := vals(valueFiles, values, stringValues, fileValues)
 	if err != nil {
 		//return err
 		fmt.Print(err)
@@ -226,10 +184,10 @@ func renderChart(cchartpath *C.char) C.int {
 		}
 	}
 
-	//if msgs := validation.IsDNS1123Subdomain(releaseName); releaseName != "" && len(msgs) > 0 {
-	//	//return fmt.Errorf("release name %s is invalid: %s", releaseName, strings.Join(msgs, ";"))
-	//	return -1
-	//}
+	if msgs := validation.IsDNS1123Subdomain(releaseName); releaseName != "" && len(msgs) > 0 {
+		//return fmt.Errorf("release name %s is invalid: %s", releaseName, strings.Join(msgs, ";"))
+		return -1
+	}
 
 	// Check chart requirements to make sure all dependencies are present in /charts
 	c, err := chartutil.Load(chartPath)
@@ -256,22 +214,8 @@ func renderChart(cchartpath *C.char) C.int {
 		return -1
 	}
 
-	//if settings.Debug {
-	//	rel := &release.Release{
-	//		Name:      releaseName,
-	//		Chart:     c,
-	//		Config:    config,
-	//		Version:   1,
-	//		Namespace: namespace,
-	//		Info:      &release.Info{LastDeployed: timeconv.Timestamp(time.Now())},
-	//	}
-		//printRelease(os.Stdout, rel)
-	//}
-
 	listManifests := manifest.SplitManifests(renderedTemplates)
 	var manifestsToRender []manifest.Manifest
-
-	//TODO from here onwards, no more packages required
 
 	// if we have a list of files to render, then check that each of the
 	// provided files exists in the chart.
@@ -307,14 +251,12 @@ func renderChart(cchartpath *C.char) C.int {
 				//return fmt.Errorf("could not find template %s in chart", f)
 				return -1
 			}
-
 		}
 	} else {
 		// no renderFiles provided, render all manifests in the chart
 		manifestsToRender = listManifests
 	}
 
-	//for _, m := range tiller.SortByKind(manifestsToRender) { // TODO sorting is not required
 	for _, m := range manifestsToRender {
 		data := m.Content
 		b := filepath.Base(m.Name)
@@ -381,4 +323,5 @@ func ensureDirectoryForFile_c(file string) error {
 	return os.MkdirAll(baseDir, defaultDirectoryPermission_c)
 }
 
+// this is required to build this as shared object file using cgo
 func main() {}
