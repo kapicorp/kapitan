@@ -13,8 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import contextlib
-import io
 import os
 import sys
 import unittest
@@ -22,62 +20,52 @@ import tempfile
 
 from kapitan.cached import reset_cache
 from kapitan.cli import main
-from kapitan.dependency_manager.base import Dependency
-
-from kapitan.dependency_manager.git import Git
+from kapitan.dependency_manager.base import fetch_git_source, fetch_http_source, fetch_git_dependency,DEPENDENCY_OUTPUT_CONFIG
 
 
-class GitDependencyTest(unittest.TestCase):
-
-    def test_clone_repo_checkout(self):
+class DependencyManagerTest(unittest.TestCase):
+    def test_fetch_http_sources(self):
         temp_dir = tempfile.mkdtemp()
-        Dependency.set_cache_path(temp_dir)
-        repo_url = 'git@github.com:deepmind/kapitan.git'
-        output_path = os.path.join(temp_dir, 'kapitan')
-        ref = 'eddde31'
-        git_dependency = Git(repo_url, output_path, ref=ref)
-        git_dependency.fetch()
+        http_sources = [
+            "https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/components/jsonnet/jsonnet.jsonnet",
+            "https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/components/kadet/__init__.py"
+        ]
 
-        self.assertTrue(os.path.isdir(os.path.join(temp_dir, 'kapitan', 'kapitan')))
-        self.assertTrue(os.path.isdir(os.path.join(temp_dir, 'kapitan', 'tests')))
+        for source in http_sources:
+            fetch_http_source(source, temp_dir)
+
+        self.assertTrue(os.path.isfile(os.path.join(temp_dir, 'jsonnet.jsonnet')))
+        self.assertTrue(os.path.isfile(os.path.join(temp_dir, '__init__.py')))
+
+    def test_fetch_git_sources(self):
+        temp_dir = tempfile.mkdtemp()
+        git_source = 'git@github.com:deepmind/kapitan.git'
+        fetch_git_source(git_source, temp_dir)
+        self.assertTrue(os.path.isdir(os.path.join(temp_dir, 'kapitan.git', 'kapitan')))
 
     def test_clone_repo_subdir(self):
         temp_dir = tempfile.mkdtemp()
-        Dependency.set_cache_path(temp_dir)
-        repo_url = 'git@github.com:deepmind/kapitan.git'
-        output_path = os.path.join(temp_dir, 'kapitan')
-        git_dependency = Git(repo_url, output_path, subdir='tests')
-        git_dependency.fetch()
-
-        self.assertTrue(os.path.isdir(output_path))
-        self.assertFalse(os.path.isdir(os.path.join(temp_dir, 'tests')))
-        self.assertTrue(os.path.isfile(os.path.join(output_path, '__init__.py')))
-
-    def test_repo_cache(self):
-        with self.assertLogs(logger='kapitan.dependency_manager.git', level='INFO') as cm, contextlib.redirect_stdout(io.StringIO()):
-            temp_dir = tempfile.mkdtemp()
-            Dependency.set_cache_path(os.path.join(temp_dir, ".cache"))
-            repo_url = 'git@github.com:deepmind/kapitan.git'
-            output_path = os.path.join(temp_dir, 'kapitan')
-            git_dependency = Git(repo_url, output_path, subdir='tests')
-            git_dependency.fetch()
-
-            git_dependency = Git(repo_url, output_path, subdir='tests')
-            git_dependency.fetch()
-            # as of now, we cannot capture stdout with contextlib.redirect_stdout
-            # since we only do logger.error(e) in targets.py before exiting
-        self.assertTrue(' '.join(cm.output).find('cache loaded') != -1)
+        output_dir = tempfile.mkdtemp()
+        source = 'git@github.com:deepmind/kapitan.git'
+        dep = [
+                {
+                    "output_path": os.path.join(output_dir, "subdir"),
+                    "ref": "master",
+                    "subdir": "tests"
+                }
+        ]
+        fetch_git_dependency((source, dep), temp_dir)
+        self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
 
     def test_compile_fetch(self):
         cwd = os.getcwd()
         os.chdir(os.path.join(cwd, "tests", "test_resources"))
         temp = tempfile.mkdtemp()
-        Dependency.set_root_output_path(temp)
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx", "nginx_dev", "--dependency-cache-path", os.path.join(temp, ".cache"), "--fetch"]
+        DEPENDENCY_OUTPUT_CONFIG["root_dir"] = temp
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx", "nginx_dev", "--fetch", "-p", "4"]
         main()
         reset_cache()
         os.chdir(cwd)
-        self.assertTrue(os.path.isdir(os.path.join(temp, ".cache", "kapitan.git")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))
         self.assertTrue(os.path.isfile(os.path.join(temp, "components", "acs-engine-autoscaler-0.1.0.tgz")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))

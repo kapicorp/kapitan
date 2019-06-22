@@ -22,15 +22,12 @@ import shutil
 import sys
 import multiprocessing
 import tempfile
-
 import jsonschema
 import yaml
 import time
 from functools import partial
 
-from kapitan.dependency_manager.base import Dependency
-from kapitan.dependency_manager.git import Git
-from kapitan.dependency_manager.http import Http
+from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.resources import inventory_reclass
 from kapitan.utils import hashable_lru_cache
 from kapitan.utils import directory_hash, dictionary_hash
@@ -80,15 +77,7 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
         if not target_objs:
             raise CompileError("Error: no targets found")
 
-        fetch = partial(fetch_dependencies, cache_path=kwargs.get('dependency_cache_path', None))
-        target_dependencies_map = get_dependencies_per_target(target_objs)
-        if kwargs.get('force_fetch', False):
-            # force fetch
-            remove_saved_dependencies(target_dependencies_map, kwargs.get('dependency_cache_path', None))
-
-        for target_name, items in target_dependencies_map.items():
-            [p.get() for p in pool.imap_unordered(fetch, items) if p]
-            logger.info("Dependency fetching complete for target {}".format(target_name))
+        fetch_dependencies(target_objs, pool)
 
         # compile_target() returns None on success
         # so p is only not None when raising an exception
@@ -115,7 +104,6 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
 
         # Save inventory and folders cache
         save_inv_cache(compile_path, targets)
-
         pool.close()
 
     except ReclassException as e:
@@ -338,46 +326,6 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 
     logger.info("Compiled %s (%.2fs)", target_name, time.time() - start)
-
-
-def get_dependencies_per_target(target_objs):
-    """returns a mapping from target name to a list of dependency objects"""
-    mapping = {}
-    for target_obj in target_objs:
-        try:
-            dependencies = target_obj["dependencies"]
-            target_name = target_obj["vars"]["target"]
-            mapping[target_name] = []
-            for item in dependencies:
-                dependency_type = item["type"]
-                source_uri = item["source"]
-                output_path = item["output_path"]
-                if dependency_type == "git":
-                    del item["output_path"]
-                    mapping[target_name].append(Git(source_uri, output_path, **item))
-                elif dependency_type in ("http", "https"):
-                    mapping[target_name].append(Http(source_uri, output_path))
-                else:
-                    logger.error("type {} is not supported as dependency".format(dependency_type))
-                    assert False
-
-        except KeyError:
-            continue
-    return mapping
-
-
-def remove_saved_dependencies(dependency_mapping, cache_path=None):
-    if cache_path is not None:
-        Dependency.set_cache_path(cache_path)
-    for items in dependency_mapping.values():
-        for item in items:
-            item.clear_cache()
-
-
-def fetch_dependencies(item, cache_path=None):
-    if cache_path is not None:
-        Dependency.set_cache_path(cache_path)
-    item.fetch()
 
 
 @hashable_lru_cache
