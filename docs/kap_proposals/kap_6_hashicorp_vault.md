@@ -28,7 +28,7 @@ $ kapitan secrets —write vault:path/to/secret_inside_kapitan -f somefile.txt
 ```  
 or in a single line  
 ```shell  
-$ echo “{'path':'secert/foo','key':'my_key'}” | kapitan secrets --write vault:path/to/secret_inside_kapitan -f -  
+$ echo “{'path':'secret/foo','key':'my_key'}” | kapitan secrets --write vault:path/to/secret_inside_kapitan -f -  
 ```  
 The entire string __{'path':'secert/foo','key':'my_key'}__ is base64 encoded and stored in the secret_inside_kapitan. Now secret_inside_kapitan contains the following  
   
