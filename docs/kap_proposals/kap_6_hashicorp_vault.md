@@ -23,14 +23,14 @@ The following variables need to be exported to the environment where you run thi
 Considering a key-value pair like `my_key`:`my_secret` ( in our case let’s store hello:batman inside the vault ) in the path `secret/foo` on the vault server, to use this as a secret either follow:  
   
 ```shell  
-$ echo “{'path':'secert/foo','key':'my_key'}” > somefile.txt  
+$ echo “{'path':'secret/foo','key':'my_key'}” > somefile.txt  
 $ kapitan secrets —write vault:path/to/secret_inside_kapitan -f somefile.txt  
 ```  
 or in a single line  
 ```shell  
-$ echo “{'path':'secret/foo','key':'my_key'}” | kapitan secrets --write vault:path/to/secret_inside_kapitan -f -  
+$ echo “{'path':'secrt/foo','key':'my_key'}” | kapitan secrets --write vault:path/to/secret_inside_kapitan -f -  
 ```  
-The entire string __{'path':'secert/foo','key':'my_key'}__ is base64 encoded and stored in the secret_inside_kapitan. Now secret_inside_kapitan contains the following  
+The entire string __{'path':'secret/foo','key':'my_key'}__ is base64 encoded and stored in the secret_inside_kapitan. Now secret_inside_kapitan contains the following  
   
 ```  
 data: 4oCccGF0aDpzZWNlcnQvZm9v4oCdIOKAnGtleTpteV9rZXnigJ0K  
