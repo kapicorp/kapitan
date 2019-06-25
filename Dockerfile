@@ -7,6 +7,7 @@ COPY requirements.txt ./
 
 RUN apk add --no-cache --virtual build-dependencies g++ make musl-dev && \
     apk add --no-cache libstdc++ gnupg yaml-dev libffi-dev openssl-dev && \
+    apk add --no-cache git && \
     pip install --upgrade pip && \
     pip install -r requirements.txt && \
     apk del build-dependencies && \

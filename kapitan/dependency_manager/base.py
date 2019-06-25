@@ -6,6 +6,7 @@ from distutils.dir_util import copy_tree
 from functools import partial
 from shutil import copyfile
 import requests
+import hashlib
 from git import Repo
 
 from kapitan.errors import GitSubdirNotFoundError
@@ -105,15 +106,16 @@ def fetch_http_dependency(dep_mapping, save_dir):
     """
     source, deps = dep_mapping
     fetch_http_source(source, save_dir)
+    path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
+    copy_src_path = os.path.join(save_dir, path_hash + os.path.basename(source))
     for dep in deps:
-        copy_src_path = os.path.join(save_dir, os.path.basename(source))
         output_path = dep["output_path"]
         if not os.path.exists(output_path):
             # output_path could exist if this dependency is duplicated by inheritance.
             # in such cases, simply skip the copy
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             copyfile(copy_src_path, output_path)
-            logger.info("Dependency : {} saved to {}".format(source, output_path))
+            logger.info("Dependency {} : saved to {}".format(source, output_path))
 
 
 def fetch_http_source(source, save_dir):
@@ -121,7 +123,9 @@ def fetch_http_source(source, save_dir):
     content = _make_request(source)
     if content is not None:
         basename = os.path.basename(source)
-        full_save_path = os.path.join(save_dir, basename)
+        # to avoid collisions between basename(source)
+        path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
+        full_save_path = os.path.join(save_dir,  path_hash + basename)
         with open(full_save_path, 'wb') as f:
             f.write(content)
     else:
