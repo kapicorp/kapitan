@@ -9,14 +9,6 @@ def main():
         int renderChart(char* p0, char* p1);
     """)
 
-    # ffi.set_source(
-    #     module_name="_template", # specify name for importing this module
-    #     source="""
-    #         #include "libtemplate.h"
-    #     """,
-    #     libraries=["template"]
-    # )
-
     ffi.set_source(
         "_template", # specify name for importing this module
         None
