@@ -20,7 +20,7 @@ import tempfile
 
 from kapitan.cached import reset_cache
 from kapitan.cli import main
-from kapitan.dependency_manager.base import fetch_git_source, fetch_http_source, fetch_git_dependency,DEPENDENCY_OUTPUT_CONFIG
+from kapitan.dependency_manager.base import fetch_git_source, fetch_http_source, fetch_git_dependency, DEPENDENCY_OUTPUT_CONFIG
 
 
 class DependencyManagerTest(unittest.TestCase):
@@ -34,8 +34,8 @@ class DependencyManagerTest(unittest.TestCase):
         for source in http_sources:
             fetch_http_source(source, temp_dir)
 
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, 'jsonnet.jsonnet')))
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, '__init__.py')))
+        self.assertTrue(os.path.isfile(os.path.join(temp_dir, '1c3a08e6' + 'jsonnet.jsonnet')))
+        self.assertTrue(os.path.isfile(os.path.join(temp_dir, 'aff45ec8' + '__init__.py')))
 
     def test_fetch_git_sources(self):
         temp_dir = tempfile.mkdtemp()
