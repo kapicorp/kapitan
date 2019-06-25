@@ -39,10 +39,10 @@ class DependencyManagerTest(unittest.TestCase):
 
     def test_fetch_git_sources(self):
         temp_dir = tempfile.mkdtemp()
-        if 'GH_TOKEN' in os.environ: # for remote tests only
-            git_source = 'https://{}@github.com/deepmind/kapitan.git'.format(os.environ.get('GH_TOKEN'))
-        else:
-            git_source = 'git@github.com:deepmind/kapitan.git'
+        # if 'GH_TOKEN' in os.environ: # for remote tests only
+        #     git_source = 'https://{}@github.com/deepmind/kapitan.git'.format(os.environ.get('GH_TOKEN'))
+        # else:
+        git_source = 'https://github.com/deepmind/kapitan.git'
         fetch_git_source(git_source, temp_dir)
         self.assertTrue(os.path.isdir(os.path.join(temp_dir, 'kapitan.git', 'kapitan')))
     #
