@@ -25,8 +25,15 @@ class HelmInputTest(unittest.TestCase):
     def test_render_chart(self):
         temp_dir = tempfile.mkdtemp()
         chart_path = "./tests/test_resources/charts/acs-engine-autoscaler"
-        render_chart(chart_path, temp_dir)
+        error_message = render_chart(chart_path, temp_dir)
+
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "secrets.yaml")))
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "deployment.yaml")))
+        self.assertFalse(error_message)
 
+    def test_error_invalid_char_dir(self):
+        chart_path = "non-existent"
+        temp_dir = tempfile.mkdtemp()
+        error_message = render_chart(chart_path, temp_dir)
+        self.assertTrue("no such file or directory" in error_message)
 

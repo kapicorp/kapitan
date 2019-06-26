@@ -5,7 +5,7 @@ import "C"
 import (
 	"bytes"
 	"fmt"
-	"github.com/Masterminds/sprig" // TODO added by copying vendor directory
+	"github.com/Masterminds/sprig"
 	"github.com/ghodss/yaml"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -24,6 +24,13 @@ import (
 
 const defaultDirectoryPermission_c = 0755
 
+var (
+	whitespaceRegex_c = regexp.MustCompile(`^\s*$`)
+	// defaultKubeVersion is the default value of --kube-version flag
+	defaultKubeVersion_c = fmt.Sprintf("%s.%s", chartutil.DefaultKubeVersion.Major, chartutil.DefaultKubeVersion.Minor)
+)
+
+// copied from install.go
 type valueFiles []string
 
 func (v *valueFiles) String() string {
@@ -40,12 +47,6 @@ func (v *valueFiles) Set(value string) error {
 	}
 	return nil
 }
-
-var (
-	whitespaceRegex_c = regexp.MustCompile(`^\s*$`)
-	// defaultKubeVersion is the default value of --kube-version flag
-	defaultKubeVersion_c = fmt.Sprintf("%s.%s", chartutil.DefaultKubeVersion.Major, chartutil.DefaultKubeVersion.Minor)
-)
 
 //readFile load a file from the local directory. remote file is disabled.
 func readFile(filePath string) ([]byte, error) {
@@ -150,7 +151,7 @@ func generateName(nameTemplate string) (string, error) {
 }
 
 //export renderChart
-func renderChart(c_chartpath, c_outputDir *C.char) C.int {
+func renderChart(c_chartpath, c_outputDir *C.char) *C.char {
 	chartPath := C.GoString(c_chartpath)
 	outputDir := C.GoString(c_outputDir)
 	// values in YAML file
@@ -169,9 +170,7 @@ func renderChart(c_chartpath, c_outputDir *C.char) C.int {
 
 	rawVals, err := vals(valueFiles, values, stringValues, fileValues)
 	if err != nil {
-		//return err
-		fmt.Print(err)
-		return -1
+		return C.CString(err.Error())
 	}
 	config := &chart.Config{Raw: string(rawVals), Values: map[string]*chart.Value{}}
 
@@ -179,22 +178,18 @@ func renderChart(c_chartpath, c_outputDir *C.char) C.int {
 	if nameTemplate != "" {
 		releaseName, err = generateName(nameTemplate)
 		if err != nil {
-			//return err
-			return -2
+			return C.CString(err.Error())
 		}
 	}
 
 	if msgs := validation.IsDNS1123Subdomain(releaseName); releaseName != "" && len(msgs) > 0 {
-		//return fmt.Errorf("release name %s is invalid: %s", releaseName, strings.Join(msgs, ";"))
-		return -1
+		return C.CString(fmt.Errorf("release name %s is invalid: %s", releaseName, strings.Join(msgs, ";")).Error())
 	}
 
 	// Check chart requirements to make sure all dependencies are present in /charts
 	c, err := chartutil.Load(chartPath)
 	if err != nil {
-		//return prettyError(err)
-		fmt.Print(err)
-		return -3
+		return C.CString(err.Error())
 	}
 
 	renderOpts := renderutil.Options{
@@ -210,8 +205,7 @@ func renderChart(c_chartpath, c_outputDir *C.char) C.int {
 
 	renderedTemplates, err := renderutil.Render(c, config, renderOpts)
 	if err != nil {
-		//return err
-		return -1
+		return C.CString(err.Error())
 	}
 
 	listManifests := manifest.SplitManifests(renderedTemplates)
@@ -225,8 +219,7 @@ func renderChart(c_chartpath, c_outputDir *C.char) C.int {
 			if !filepath.IsAbs(f) {
 				newF, err := filepath.Abs(filepath.Join(chartPath, f))
 				if err != nil {
-					//return fmt.Errorf("could not turn template path %s into absolute path: %s", f, err)
-					return -1
+					C.CString(fmt.Errorf("could not turn template path %s into absolute path: %s", f, err).Error())
 				}
 				f = newF
 			}
@@ -248,8 +241,7 @@ func renderChart(c_chartpath, c_outputDir *C.char) C.int {
 				}
 			}
 			if missing {
-				//return fmt.Errorf("could not find template %s in chart", f)
-				return -1
+				return C.CString(fmt.Errorf("could not find template %s in chart", f).Error())
 			}
 		}
 	} else {
@@ -274,16 +266,14 @@ func renderChart(c_chartpath, c_outputDir *C.char) C.int {
 			}
 			err = writeToFile_c(outputDir, m.Name, data)
 			if err != nil {
-				//return err
-				return -1
+				C.CString(err.Error())
 			}
 			continue
 		}
 		fmt.Printf("---\n# Source: %s\n", m.Name)
 		fmt.Println(data)
 	}
-	//return nil
-	return 0
+	return C.CString("") // return empty string if no error
 }
 
 // write the <data> to <output-dir>/<name>
