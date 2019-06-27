@@ -53,3 +53,8 @@ class RefFromFuncError(KapitanError):
 class RefHashMismatchError(KapitanError):
     """ref has mismatch error"""
     pass
+
+
+class HelmBindingUnavailableError(KapitanError):
+    """helm input is used when the binding is not available"""
+    pass

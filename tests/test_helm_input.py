@@ -18,9 +18,16 @@
 import os
 import unittest
 import tempfile
-from kapitan.inputs.helm.helm_render import render_chart
+
+helm_binding_exists = True
+try:
+    from kapitan.inputs.helm._template import ffi # this statement will raise ImportError if binding not available
+    from kapitan.inputs.helm.helm_render import render_chart
+except ImportError:
+    helm_binding_exists = False
 
 
+@unittest.skipUnless(helm_binding_exists, "helm binding is not available")
 class HelmInputTest(unittest.TestCase):
     def test_render_chart(self):
         temp_dir = tempfile.mkdtemp()
@@ -36,4 +43,3 @@ class HelmInputTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         error_message = render_chart(chart_path, temp_dir)
         self.assertTrue("no such file or directory" in error_message)
-

@@ -44,7 +44,7 @@ codestyle:
 	flake8 --ignore E501 . --exclude=reclass
 	@echo
 
-.PHONY: build_helm_bindings
-build_helm_bindings:
+.PHONY: build_helm_binding
+build_helm_binding:
 	bash kapitan/inputs/helm/build.sh
 
