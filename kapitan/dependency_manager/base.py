@@ -89,7 +89,7 @@ def fetch_git_dependency(dep_mapping, save_dir):
             # output_path could exist if this dependency is duplicated by inheritance or otherwise.
             # in such cases, simply skip the copy process
             copy_tree(copy_src_path, output_path)
-            logger.info("Dependency {} : copied from {} to {}".format(source,  copy_src_path, output_path))
+            logger.info("Dependency {} : saved to {}".format(source, output_path))
 
 
 def fetch_git_source(source, save_dir):

@@ -39,36 +39,34 @@ class DependencyManagerTest(unittest.TestCase):
 
     def test_fetch_git_sources(self):
         temp_dir = tempfile.mkdtemp()
-        # if 'GH_TOKEN' in os.environ: # for remote tests only
-        #     git_source = 'https://{}@github.com/deepmind/kapitan.git'.format(os.environ.get('GH_TOKEN'))
-        # else:
+        # TODO: also test git ssh urls
         git_source = 'https://github.com/deepmind/kapitan.git'
         fetch_git_source(git_source, temp_dir)
         self.assertTrue(os.path.isdir(os.path.join(temp_dir, 'kapitan.git', 'kapitan')))
-    #
-    # def test_clone_repo_subdir(self):
-    #     temp_dir = tempfile.mkdtemp()
-    #     output_dir = tempfile.mkdtemp()
-    #     source = 'git@github.com:deepmind/kapitan.git'
-    #     dep = [
-    #             {
-    #                 "output_path": os.path.join(output_dir, "subdir"),
-    #                 "ref": "master",
-    #                 "subdir": "tests"
-    #             }
-    #     ]
-    #     fetch_git_dependency((source, dep), temp_dir)
-    #     self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
-    #
-    # def test_compile_fetch(self):
-    #     cwd = os.getcwd()
-    #     os.chdir(os.path.join(cwd, "tests", "test_resources"))
-    #     temp = tempfile.mkdtemp()
-    #     DEPENDENCY_OUTPUT_CONFIG["root_dir"] = temp
-    #     sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx", "nginx_dev", "--fetch", "-p", "4"]
-    #     main()
-    #     reset_cache()
-    #     os.chdir(cwd)
-    #     self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))
-    #     self.assertTrue(os.path.isfile(os.path.join(temp, "components", "acs-engine-autoscaler-0.1.0.tgz")))
-    #     self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
+
+    def test_clone_repo_subdir(self):
+        temp_dir = tempfile.mkdtemp()
+        output_dir = tempfile.mkdtemp()
+        source = 'https://github.com/deepmind/kapitan.git'
+        dep = [
+                {
+                    "output_path": os.path.join(output_dir, "subdir"),
+                    "ref": "master",
+                    "subdir": "tests"
+                }
+        ]
+        fetch_git_dependency((source, dep), temp_dir)
+        self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
+
+    def test_compile_fetch(self):
+        cwd = os.getcwd()
+        os.chdir(os.path.join(cwd, "tests", "test_resources"))
+        temp = tempfile.mkdtemp()
+        DEPENDENCY_OUTPUT_CONFIG["root_dir"] = temp
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx", "nginx-dev", "--fetch", "-p", "4"]
+        main()
+        reset_cache()
+        os.chdir(cwd)
+        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))
+        self.assertTrue(os.path.isfile(os.path.join(temp, "components", "acs-engine-autoscaler-0.1.0.tgz")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
