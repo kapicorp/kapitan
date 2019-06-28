@@ -7,6 +7,8 @@ from functools import partial
 from shutil import copyfile
 import requests
 import hashlib
+import tarfile
+from zipfile import ZipFile
 from git import Repo
 
 from kapitan.errors import GitSubdirNotFoundError
@@ -105,7 +107,7 @@ def fetch_http_dependency(dep_mapping, save_dir):
     the output_path stored in dep_mapping
     """
     source, deps = dep_mapping
-    fetch_http_source(source, save_dir)
+    content_type = fetch_http_source(source, save_dir)
     path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
     copy_src_path = os.path.join(save_dir, path_hash + os.path.basename(source))
     for dep in deps:
@@ -114,13 +116,25 @@ def fetch_http_dependency(dep_mapping, save_dir):
             # output_path could exist if this dependency is duplicated by inheritance.
             # in such cases, simply skip the copy
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            copyfile(copy_src_path, output_path)
+            if dep.get('unpack', False):
+                if content_type == 'application/x-tar':
+                    tar = tarfile.open(copy_src_path)
+                    tar.extractall(path=output_path)
+                    tar.close()
+                elif content_type == 'application/zip':
+                    zfile = ZipFile(copy_src_path)
+                    zfile.extractall(output_path)
+                    zfile.close()
+                else:
+                    logger.info("Dependency {} : Content-Type {} is not supported for unpack. Skipping").format(source, content_type)
+            else:
+                copyfile(copy_src_path, output_path)
             logger.info("Dependency {} : saved to {}".format(source, output_path))
 
 
 def fetch_http_source(source, save_dir):
     """downloads a http[s] file from source and saves into save_dir"""
-    content = _make_request(source)
+    content, content_type = _make_request(source)
     if content is not None:
         basename = os.path.basename(source)
         # to avoid collisions between basename(source)
@@ -128,8 +142,10 @@ def fetch_http_source(source, save_dir):
         full_save_path = os.path.join(save_dir,  path_hash + basename)
         with open(full_save_path, 'wb') as f:
             f.write(content)
+        return content_type
     else:
         logger.warning("Dependency {} : failed to fetch".format(source))
+        return None
 
 
 def _make_request(source):
@@ -138,7 +154,7 @@ def _make_request(source):
     r = requests.get(source)
     if r.ok:
         logger.info("Dependency {} : successfully fetched".format(source))
-        return r.content
+        return r.content, r.headers['Content-Type']
     else:
         r.raise_for_status()
-    return None
+    return None, None
