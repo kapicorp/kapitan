@@ -58,3 +58,8 @@ class RefHashMismatchError(KapitanError):
 class HelmBindingUnavailableError(KapitanError):
     """helm input is used when the binding is not available"""
     pass
+
+
+class HelmTemplateError(KapitanError):
+    pass
+

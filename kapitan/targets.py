@@ -15,7 +15,6 @@
 # limitations under the License.
 
 "kapitan targets"
-
 import logging
 import os
 import shutil
@@ -34,6 +33,7 @@ from kapitan.errors import KapitanError, CompileError, InventoryError
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
+from kapitan.inputs.helm import Helm
 from kapitan import cached
 
 from reclass.errors import NotFoundError, ReclassException
@@ -49,7 +49,6 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
-
     updated_targets = targets
     # If --cache is set
     if kwargs.get('cache'):
@@ -75,8 +74,7 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
 
         if target_objs == []:
             raise CompileError("Error: no targets found")
-        # compile_target() returns None on success
-        # so p is only not None when raising an exception
+
         [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
         os.makedirs(compile_path, exist_ok=True)
@@ -296,7 +294,6 @@ def load_target_inventory(inventory_path, targets):
 def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
-
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
@@ -304,6 +301,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
     jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller)
     jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
     kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
+    helm_compiler = Helm(compile_path, search_paths, ref_controller)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
@@ -314,6 +312,8 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             input_compiler = jsonnet_compiler
         elif input_type == "kadet":
             input_compiler = kadet_compiler
+        elif input_type == "helm":
+            input_compiler = helm_compiler
         else:
             err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet"
             raise CompileError(err_msg.format(input_type))
@@ -353,7 +353,7 @@ def valid_target_obj(target_obj):
                         {
                             "properties": {
                                 "input_type": {
-                                    "enum": ["jsonnet", "kadet"] 
+                                    "enum": ["jsonnet", "kadet"]
                                 },
                                 "output_type" : {
                                     "enum": ["yaml", "json", "plain"]
@@ -363,7 +363,7 @@ def valid_target_obj(target_obj):
                         {
                             "properties": {
                                 "input_type": {
-                                    "enum": ["jinja2"]
+                                    "enum": ["jinja2", "helm"]
                                 } 
                             }
                         }

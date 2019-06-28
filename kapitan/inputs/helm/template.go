@@ -264,7 +264,7 @@ func renderChart(c_chartpath, c_outputDir *C.char) *C.char {
 			if whitespaceRegex_c.MatchString(data) {
 				continue
 			}
-			err = writeToFile_c(outputDir, m.Name, data)
+			err = writeToFile_c(outputDir, b, data) // changed from m.Name to b
 			if err != nil {
 				C.CString(err.Error())
 			}
@@ -279,7 +279,6 @@ func renderChart(c_chartpath, c_outputDir *C.char) *C.char {
 // write the <data> to <output-dir>/<name>
 func writeToFile_c(outputDir string, name string, data string) error {
 	outfileName := strings.Join([]string{outputDir, name}, string(filepath.Separator))
-
 	err := ensureDirectoryForFile_c(outfileName)
 	if err != nil {
 		return err
@@ -298,7 +297,7 @@ func writeToFile_c(outputDir string, name string, data string) error {
 		return err
 	}
 
-	fmt.Printf("wrote %s\n", outfileName)
+	// fmt.Printf("wrote %s\n", outfileName)
 	return nil
 }
 

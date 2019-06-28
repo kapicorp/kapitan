@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+    #!/usr/bin/env python3
 #
 # Copyright 2019 The Kapitan Authors
 #
@@ -16,13 +16,17 @@
 
 "helm input tests"
 import os
+import sys
 import unittest
 import tempfile
+
+from kapitan.cached import reset_cache
+from kapitan.cli import main
 
 helm_binding_exists = True
 try:
     from kapitan.inputs.helm._template import ffi # this statement will raise ImportError if binding not available
-    from kapitan.inputs.helm.helm_render import render_chart
+    from kapitan.inputs.helm import render_chart
 except ImportError:
     helm_binding_exists = False
 
@@ -34,8 +38,8 @@ class HelmInputTest(unittest.TestCase):
         chart_path = "./tests/test_resources/charts/acs-engine-autoscaler"
         error_message = render_chart(chart_path, temp_dir)
 
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "secrets.yaml")))
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "deployment.yaml")))
+        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "secrets.yaml")))
+        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "deployment.yaml")))
         self.assertFalse(error_message)
 
     def test_error_invalid_char_dir(self):
@@ -43,3 +47,14 @@ class HelmInputTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         error_message = render_chart(chart_path, temp_dir)
         self.assertTrue("no such file or directory" in error_message)
+
+    def test_compile_helm_input(self):
+        cwd = os.getcwd()
+        os.chdir(os.path.join(cwd, "tests", "test_resources"))
+        temp = tempfile.mkdtemp()
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "acs-engine-autoscaler", "nginx-ingress"]
+        main()
+        os.chdir(cwd)
+        reset_cache()
+        self.assertTrue(os.path.isfile(os.path.join(temp, "compiled", "acs-engine-autoscaler", "chart", "acs", "secrets.yaml")))
+
