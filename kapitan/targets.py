@@ -386,7 +386,8 @@ def valid_target_obj(target_obj):
                         "output_path": {"type": "string"},
                         "source": {"type": "string"},
                         "subdir": {"type": "string"},
-                        "ref": {"type": "string"}
+                        "ref": {"type": "string"},
+                        "unpack": {"type": "boolean"}
                     },
                     "required": ["type", "output_path", "source"],
                     "additionalProperties": False,
@@ -403,7 +404,10 @@ def valid_target_obj(target_obj):
                                         "format": "uri"
                                     },
                                     "output_path": {
+                                    },
+                                    "unpack": {
                                     }
+
                                 },
                                 "additionalProperties": False
                             }

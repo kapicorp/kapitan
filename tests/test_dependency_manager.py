@@ -68,5 +68,6 @@ class DependencyManagerTest(unittest.TestCase):
         reset_cache()
         os.chdir(cwd)
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))
-        self.assertTrue(os.path.isfile(os.path.join(temp, "components", "acs-engine-autoscaler-0.1.0.tgz")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler-0.1.0")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "kapitan-repository")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
