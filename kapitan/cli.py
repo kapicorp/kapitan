@@ -401,15 +401,18 @@ def secret_write(args, ref_controller):
 
     elif token_name.startswith("vault:"):
         type_name, token_path = token_name.split(":")
-        encoding = False
+        _data = data.encode()
+        encoding = 'original'
         if args.base64:
-            encoding = True
-        secret_obj = VaultSecret(data, encode_base64=encoding)
+            _data = base64.b64encode(_data).decode()
+            _data = _data.encode()
+            encoding = 'base64'
+        secret_obj = VaultSecret(_data, encoding=encoding)
         tag = '?{{vault:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
 
     else:
-        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/ref:{name}".format(name=token_name))
+        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/vault/ref:{name}".format(name=token_name))
 
 
 def secret_update(args, ref_controller):

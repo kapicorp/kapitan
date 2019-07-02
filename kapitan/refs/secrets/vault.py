@@ -16,11 +16,11 @@
 
 import hvac
 import base64
-from hvac.exceptions import Forbidden, VaultError
+from hvac.exceptions import Forbidden, VaultError, InvalidPath
 from yaml import safe_load
 from os.path import join,expanduser
 from os import getenv
-from sys import argv
+from sys import argv, exit
 
 from kapitan.refs.base import Ref, RefBackend, RefError
 from kapitan import cached
@@ -52,22 +52,20 @@ def get_env():
     env['namespace'] = getenv('VAULT_NAMESPACE')
     # AUTHENTICATION TYPE
     auth_type = getenv( 'VAULT_AUTHTYPE', default='token')
-    if auth_type == 'token':
+    if auth_type in ['token','github']:
         env['token'] = getenv( 'VAULT_TOKEN' )
         if not env['token']:
             with open(join(expanduser('~'),'.vault-token'),'r') as f:
                 env['token'] = f.read()
-    elif auth_type == 'userpass':
+    elif auth_type in ['ldap','userpass']:
         env['username'] = getenv( 'VAULT_USER' )
         env['password'] = getenv( 'VAULT_PASSWORD' )
     elif auth_type == 'approle':
         env['role_id'] = getenv('VAULT_ROLE_ID')
         env['secret_id'] = getenv( 'VAULT_SECRET_ID' )
     # VERIFY VAULT SERVER TLS CERTIFICATE
-    verify = getenv( 'VAULT_SKIP_VERIFY', default='')
-    if verify.lower() == 'true':
-        env['verify'] = False
-    elif verify.lower() == 'false':
+    skip_verify = getenv( 'VAULT_SKIP_VERIFY', default='true')
+    if skip_verify.lower() == 'false':
         cert = getenv( 'VAULT_CACERT' )
         if not cert:
             cert_path = getenv( 'VAULT_CAPATH' )
@@ -76,16 +74,37 @@ def get_env():
             env['verify'] = cert_path
         else:
             env['verify'] = cert
+
+    else:
+        env['verify'] = False
     # CLIENT CERTIFICATE FOR TLS AUTHENTICATION
     client_key,client_cert = getenv( 'VAULT_CLIENT_KEY' ), getenv( 'VAULT_CLIENT_CERT' ) 
     if client_key != None and client_cert != None:
         env['cert'] = (client_cert,client_key)
-    return env
+    return env, auth_type
 
 def vault_obj():
+    env, auth_type = get_env()
     client = hvac.Client(
-        **{k:v for k,v in get_env().items() if v is not None}
+        **{k:v for k,v in env.items() if k not in ( 'username','password','role_id','secret_id','token' )}
     )
+
+    if auth_type == 'token':
+        client.token = env['token']
+    elif auth_type == 'ldap':
+        client.auth.ldap.login(
+            username = env['username'],
+            password = env['password'],
+        )
+    elif auth_type == 'userpass':
+        client.auth_userpass(username=env['username'],password=env['password'])
+    elif auth_type == 'approle':
+        client.auth_approle(env['role_id'],secret_id=env['secret_id'])
+    elif auth_type == 'github':
+        client.auth.github.login(token=env['token'])
+    else:
+        raise "Authentication type %s not supported".format(auth_type)
+
     assert (
         client.is_authenticated()
     ), "Vault Authentication Error, Environment Variables defined?"
@@ -98,52 +117,39 @@ class VaultSecret(Ref):
     Hashicorp Vault can be used if using KV Secret Engine
     """
 
-    def __init__(self,data,encode_base64=False,**kwargs):
+    def __init__(self,data,encrypt=False,**kwargs):
         """
         set encoding_base64 to True to base64 encoding key before encrypting and writing
         """
-        self._encrypt(data, encode_base64)
-        kwargs['encoding'] = self.encoding
+        self.encoding = kwargs.get('encoding', 'original')
+        self.data = data
         super().__init__(self.data,**kwargs)
         self.type_name = 'vault'
-
-    def _encrypt(self, data,encode_base64):
-        """
-        encrypt data
-        set encode_base64 to True to base64 encode data before writing
-        """
-        self.encoding = "original"
-        if encode_base64:
-            self.data = base64.b64encode(data.encode())
-            self.encoding = "base64"
-        else:
-            self.data = data.encode()
-
 
     def reveal(self):
         """
         returns decrypted data
         """
         # can't use super().reveal() as we want bytes
+        if self.encoding == 'base64':
+            self.data = base64.b64decode(self.data)
+
         ref_data = base64.b64decode(self.data)
         return self._decrypt(ref_data)
 
     def _decrypt(self, data):
-        """Decrypt data & return value for the key from Vault Server
+        """
+        Decrypt data & return value for the key from Vault Server
 
         :returns: secret in plain text
-
         """
         try:
-            if data.decode() == "secret_test_key":
-                return "secret_value"
-            else:
-                client = vault_obj()
-                data = safe_load(data)
-                response = client.read(data['path'])
-                return response['data']['data'][data['key']]
+            client = vault_obj()
+            data = safe_load(data)
+            response = client.secrets.kv.v2.read_secret_version(path=data['path'])
+            client.adapter.close()
         except Forbidden:
-            halt(
+            exit(
                 'Permission Denied. '+
                 'make sure the token is authorised to access {} on vault'.format(
                     data['path']
@@ -151,6 +157,19 @@ class VaultSecret(Ref):
             )
         except VaultError as e:
             halt('Vault Error: '+e.message)
+        except InvalidPath:
+            exit(
+                '{} does not exist on Vault secret/'.format(data['path'])
+            )
+
+        if data['key'] in response['data']:
+            return response['data'][data['key']]
+        elif data['key'] in response['data']['data']:
+            return response['data']['data'][data['key']]
+        else:
+            exit(
+                "Key doesn't exist on '{}'".format(data['path'])
+            )
 
 
     def dump(self):

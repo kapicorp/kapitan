@@ -1,6 +1,6 @@
 # Hashicorp Vault  
   
-This feature allows the user to fetch secrets from [Hashicorp Vault](https://www.vaultproject.io/), an online Kapitan Secret backend `vault` will be introduced.  
+This feature allows the user to fetch secrets from [Hashicorp Vault](https://www.vaultproject.io/), an online Kapitan Secret backend `vault`.  
   
 Author: [@vaibahvk](https://github.com/vaibhavk) [@daminisatya](https://github.com/daminisatya)  
 ## Specification  
@@ -24,7 +24,7 @@ Considering a key-value pair like `my_key`:`my_secret` ( in our case let’s sto
   
 ```shell  
 $ echo “{'path':'secret/foo','key':'my_key'}” > somefile.txt  
-$ kapitan secrets —write vault:path/to/secret_inside_kapitan -f somefile.txt  
+$ kapitan secrets --write vault:path/to/secret_inside_kapitan -f somefile.txt  
 ```  
 or in a single line  
 ```shell  

@@ -2,6 +2,10 @@ all: clean package
 
 .PHONY: test
 test:
+	@echo ----- Running docker container for vault tests-----
+	docker run --cap-add=IPC_LOCK --rm -p 8200:8200 -d -e \
+		'VAULT_LOCAL_CONFIG={"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'\
+		vault server
 	@echo ----- Running python tests -----
 	python3 -m unittest discover
 	@echo ----- Testing build of docker image -----
