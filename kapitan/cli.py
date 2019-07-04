@@ -279,7 +279,8 @@ def main():
         compile_targets(args.inventory_path, search_paths, args.output_path,
                         args.parallelism, args.targets, ref_controller,
                         prune=(args.prune), indent=args.indent, reveal=args.reveal,
-                        cache=args.cache, cache_paths=args.cache_paths, fetch_dependencies=args.fetch, jinja2_filters=args.jinja2_filters)
+                        cache=args.cache, cache_paths=args.cache_paths,
+                        fetch_dependencies=args.fetch, jinja2_filters=args.jinja2_filters)
 
     elif cmd == 'inventory':
         if args.pattern and args.target_name == '':
