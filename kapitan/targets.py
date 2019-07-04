@@ -71,13 +71,14 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
 
         # append "compiled" to output_path so we can safely overwrite it
         compile_path = os.path.join(output_path, "compiled")
-        worker = partial(compile_target, search_paths=search_paths, compile_path=temp_path,ref_controller=ref_controller,
+        worker = partial(compile_target, search_paths=search_paths, compile_path=temp_path, ref_controller=ref_controller,
                          **kwargs)
 
         if not target_objs:
             raise CompileError("Error: no targets found")
 
-        fetch_dependencies(target_objs, pool)
+        if kwargs.get('fetch_dependencies', False):
+            fetch_dependencies(target_objs, pool)
 
         # compile_target() returns None on success
         # so p is only not None when raising an exception

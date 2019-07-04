@@ -93,7 +93,8 @@ def main():
                                 metavar='PATH',
                                 help='set output path, default is "."')
     compile_parser.add_argument('--fetch',
-                                help='force fresh fetch of the external dependencies', action='store_true')
+                                help='fetches external dependencies', action='store_true',
+                                default=from_dot_kapitan('compile', 'fetch', False))
     compile_parser.add_argument('--targets', '-t', help='targets to compile, default is all',
                                 type=str, nargs='+',
                                 default=from_dot_kapitan('compile', 'targets', []),
@@ -278,8 +279,7 @@ def main():
         compile_targets(args.inventory_path, search_paths, args.output_path,
                         args.parallelism, args.targets, ref_controller,
                         prune=(args.prune), indent=args.indent, reveal=args.reveal,
-                        cache=args.cache, cache_paths=args.cache_paths, force_fetch=args.fetch,
-                        jinja2_filters=args.jinja2_filters)
+                        cache=args.cache, cache_paths=args.cache_paths, fetch_dependencies=args.fetch, jinja2_filters=args.jinja2_filters)
 
     elif cmd == 'inventory':
         if args.pattern and args.target_name == '':

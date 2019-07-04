@@ -24,6 +24,9 @@ from kapitan.dependency_manager.base import fetch_git_source, fetch_http_source,
 
 
 class DependencyManagerTest(unittest.TestCase):
+    def setUp(self):
+        os.chdir(os.path.join(os.getcwd(), "tests", "test_resources"))
+
     def test_fetch_http_sources(self):
         temp_dir = tempfile.mkdtemp()
         http_sources = [
@@ -59,15 +62,17 @@ class DependencyManagerTest(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
 
     def test_compile_fetch(self):
-        cwd = os.getcwd()
-        os.chdir(os.path.join(cwd, "tests", "test_resources"))
+
         temp = tempfile.mkdtemp()
         DEPENDENCY_OUTPUT_CONFIG["root_dir"] = temp
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx", "nginx-dev", "--fetch", "-p", "4"]
+        sys.argv = ["kapitan", "compile", "--fetch", "--output-path", temp, "-t", "nginx", "nginx-dev", "--fetch", "-p", "4"]
         main()
-        reset_cache()
-        os.chdir(cwd)
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler-0.1.0")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "kapitan-repository")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
+
+    def tearDown(self):
+        os.chdir('../../')
+        reset_cache()
+
