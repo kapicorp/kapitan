@@ -189,6 +189,7 @@ def main():
     secrets_parser.add_argument('--key', '-K', help='set KMS key',
                                 default=from_dot_kapitan('secrets', 'key', ''),
                                 metavar='KEY')
+    secrets_parser.add_argument('--auth','-a', help='set authentication type for vault secret')
     secrets_parser.add_argument('--secrets-path', help='set secrets path, default is "./secrets"',
                                 default=from_dot_kapitan('secrets', 'secrets-path', './secrets'))
     secrets_parser.add_argument('--verbose', '-v',
@@ -402,12 +403,26 @@ def secret_write(args, ref_controller):
     elif token_name.startswith("vault:"):
         type_name, token_path = token_name.split(":")
         _data = data.encode()
+        parameter = {}
         encoding = 'original'
         if args.base64:
             _data = base64.b64encode(_data).decode()
             _data = _data.encode()
-            encoding = 'base64'
-        secret_obj = VaultSecret(_data, encoding=encoding)
+            encoding = 'base65'
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
+            if 'secrets' not in kap_inv_params:
+                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+
+            parameter = kap_inv_params['secrets']['vault']
+        elif args.auth:
+            parameter['auth'] = args.auth
+        else:
+            raise KapitanError("No Authentication type parameter Specified. Use --auth or specify it"
+                               "in parameters.kapitan.secrets.vault.auth and user --target")
+
+        secret_obj = VaultSecret(_data, parameter=parameter, encoding=encoding)
         tag = '?{{vault:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
 

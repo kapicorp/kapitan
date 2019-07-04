@@ -5,7 +5,7 @@ test:
 	@echo ----- Running docker container for vault tests-----
 	docker run --cap-add=IPC_LOCK --rm -p 8200:8200 -d -e \
 		'VAULT_LOCAL_CONFIG={"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'\
-		vault server
+		--name test_vault vault server
 	@echo ----- Running python tests -----
 	python3 -m unittest discover
 	@echo ----- Testing build of docker image -----
@@ -22,7 +22,7 @@ test:
 .PHONY: test_coverage
 test_coverage:
 	@echo ----- Testing code coverage -----
-	coverage run --source=kapitan --omit="*reclass*" -m unittest discover
+	coverage run --source=kapitan --omit="*reclass*","*_vault*" -m unittest discover
 	coverage report --fail-under=60 -m
 
 .PHONY: release

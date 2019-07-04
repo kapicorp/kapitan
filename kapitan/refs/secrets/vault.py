@@ -30,16 +30,16 @@ class VaultError(KapitanError):
     """Generic vault errors"""
     pass
 
-def get_env():
+def get_env(parameter):
     """
     The following variables need to be exported to the environment where you run this script in order to authenticate to your HashiCorp Vault instance:
     * VAULT_ADDR: url for vault
     * VAULT_SKIP_VERIFY=true: if set, do not verify presented TLS certificate before communicating with Vault server. Setting this variable is not recommended except during testing
-    * VAULT_AUTHTYPE: authentication type to use: token, userpass, github, ldap, approle
+    * VAULT_AUTH: authentication type to use: token, userpass, github, ldap, approle
     * VAULT_TOKEN: token for vault
     * VAULT_ROLE_ID: (required by approle)
     * VAULT_SECRET_ID: (required by approle)
-    * VAULT_USER: username to login to vault
+    * VAULT_USERNAME: username to login to vault
     * VAULT_PASSWORD: password to login to vault
     * VAULT_CLIENT_KEY: path to an unencrypted PEM-encoded private key matching the client certificate
     * VAULT_CLIENT_CERT: path to a PEM-encoded client certificate for TLS authentication to the Vault server
@@ -47,28 +47,23 @@ def get_env():
     * VAULT_CAPATH: path to a directory of PEM-encoded CA cert files to verify the Vault server TLS certificate
     * VAULT_NAMESPACE: specify the Vault Namespace, if you have one
     """
+    # Helper lambda function to get varibles either from parameters or environment
+    get_variable = lambda x: getenv('VAULT_'+x.upper(),default=parameter.get(x,''))
     env = {}
-    env['url'] = getenv( 'VAULT_ADDR', default='http://127.0.0.1:8200')
-    env['namespace'] = getenv('VAULT_NAMESPACE')
+    env['url'] = get_variable('addr')
+    env['namespace'] = get_variable('namespace')
     # AUTHENTICATION TYPE
-    auth_type = getenv( 'VAULT_AUTHTYPE', default='token')
-    if auth_type in ['token','github']:
-        env['token'] = getenv( 'VAULT_TOKEN' )
+    if parameter.get('auth','token') in ['token','github']:
+        env['token'] = getenv('VAULT_TOKEN')
         if not env['token']:
             with open(join(expanduser('~'),'.vault-token'),'r') as f:
                 env['token'] = f.read()
-    elif auth_type in ['ldap','userpass']:
-        env['username'] = getenv( 'VAULT_USER' )
-        env['password'] = getenv( 'VAULT_PASSWORD' )
-    elif auth_type == 'approle':
-        env['role_id'] = getenv('VAULT_ROLE_ID')
-        env['secret_id'] = getenv( 'VAULT_SECRET_ID' )
     # VERIFY VAULT SERVER TLS CERTIFICATE
-    skip_verify = getenv( 'VAULT_SKIP_VERIFY', default='true')
+    skip_verify = get_variable('skip_verify')
     if skip_verify.lower() == 'false':
-        cert = getenv( 'VAULT_CACERT' )
+        cert = get_variable('cacert')
         if not cert:
-            cert_path = getenv( 'VAULT_CAPATH' )
+            cert_path = get_variable('capath')
             if not cert_path:
                 raise Exception('Neither VAULT_CACERT nor VAULT_CAPATH specified')
             env['verify'] = cert_path
@@ -78,32 +73,43 @@ def get_env():
     else:
         env['verify'] = False
     # CLIENT CERTIFICATE FOR TLS AUTHENTICATION
-    client_key,client_cert = getenv( 'VAULT_CLIENT_KEY' ), getenv( 'VAULT_CLIENT_CERT' ) 
-    if client_key != None and client_cert != None:
+    client_key,client_cert = get_variable('client_key'), get_variable('client_cert') 
+    if client_key != '' and client_cert != '':
         env['cert'] = (client_cert,client_key)
-    return env, auth_type
+    return env
 
-def vault_obj():
-    env, auth_type = get_env()
+def vault_obj(vault_parameters):
+    """
+    Authenticate client to server and return client object
+    """
+    env = get_env(vault_parameters)
+
     client = hvac.Client(
-        **{k:v for k,v in env.items() if k not in ( 'username','password','role_id','secret_id','token' )}
+        **{k:v for k,v in env.items() if k not in ('auth', 'token', None)}
     )
 
+    auth_type = vault_parameters['auth']
     if auth_type == 'token':
         client.token = env['token']
     elif auth_type == 'ldap':
         client.auth.ldap.login(
-            username = env['username'],
-            password = env['password'],
+            username = getenv('VAULT_USERNAME'),
+            password = getenv('VAULT_PASSWORD')
         )
     elif auth_type == 'userpass':
-        client.auth_userpass(username=env['username'],password=env['password'])
+        client.auth_userpass(
+            username=getenv('VAULT_USERNAME'),
+            password=getenv('VAULT_PASSWORD')
+        )
     elif auth_type == 'approle':
-        client.auth_approle(env['role_id'],secret_id=env['secret_id'])
+        client.auth_approle(
+            getenv('VAULT_ROLE_ID'),
+            secret_id=getenv('VAULT_SECRET_ID')
+        )
     elif auth_type == 'github':
         client.auth.github.login(token=env['token'])
     else:
-        raise "Authentication type %s not supported".format(auth_type)
+        raise "Authentication type {} not supported".format(auth_type)
 
     assert (
         client.is_authenticated()
@@ -117,14 +123,39 @@ class VaultSecret(Ref):
     Hashicorp Vault can be used if using KV Secret Engine
     """
 
-    def __init__(self,data,encrypt=False,**kwargs):
+    def __init__(self, data,  **kwargs):
         """
         set encoding_base64 to True to base64 encoding key before encrypting and writing
         """
         self.encoding = kwargs.get('encoding', 'original')
         self.data = data
+        self.parameter = kwargs.get('parameter')
         super().__init__(self.data,**kwargs)
         self.type_name = 'vault'
+
+    @classmethod
+    def from_params(cls, data, ref_params):
+        """
+        Return new VaultSecret from data and ref_params: target_name
+        key will be grabbed from the inventory via target_name
+        """
+        try:
+            target_name = ref_params.kwargs['target_name']
+            if target_name is None:
+                raise ValueError('target_name not set')
+
+            target_inv = cached.inv['nodes'].get(target_name, None)
+            if target_inv is None:
+                raise ValueError('target_inv not set')
+
+            ref_params.kwargs['parameter'] = target_inv['parameters']['kapitan']['secrets']['vault']
+            return cls(data, **ref_params.kwargs)
+        except KeyError:
+            raise RefError("Could not create VaultSecret: vault parameters missing")
+
+    @classmethod
+    def from_path(cls, ref_full_path, **kwargs):
+        return super().from_path(ref_full_path, encrypt=False)
 
     def reveal(self):
         """
@@ -144,9 +175,14 @@ class VaultSecret(Ref):
         :returns: secret in plain text
         """
         try:
-            client = vault_obj()
+            client = vault_obj(self.parameter)
             data = safe_load(data)
-            response = client.secrets.kv.v2.read_secret_version(path=data['path'])
+            if self.parameter.get('engine') == 'kv':
+                response = client.secrets.kv.v1.read_secret(path=data['path'],
+                                                            mount_point=self.parameter.get('mount','secret'))
+            else:
+                response = client.secrets.kv.v2.read_secret_version(path=data['path'],
+                                                                    mount_point=self.parameter.get('mount','secret'))
             client.adapter.close()
         except Forbidden:
             exit(
@@ -177,7 +213,7 @@ class VaultSecret(Ref):
         Returns dict with keys/values to be serialised.
         """
         return {"data": self.data, "encoding": self.encoding,
-                 "type": self.type_name}
+                "type": self.type_name, "parameter":self.parameter}
 
 class VaultBackend(RefBackend):
     def __init__(self, path, ref_type=VaultSecret):

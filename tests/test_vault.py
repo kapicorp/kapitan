@@ -28,36 +28,7 @@ from kapitan.refs.secrets.vault import  vault_obj, VaultSecret
 import hvac
 
 
-def initialize():
-    """
-    Initiaize Vault and return root token
-    """
-    client = hvac.Client()
-    init = client.sys.initialize()
-    client.sys.submit_unseal_keys(init['keys'])
-    return init['root_token']
-
-ROOT_TOKEN= initialize()
-print(ROOT_TOKEN)
-client = hvac.Client(token = ROOT_TOKEN)
-client.sys.enable_secrets_engine(backend_type='kv-v2',path='secret')
-test_policy = '''
-path "secret/*" {
-  capabilities = ["read", "list"]
-}
-'''
-policy = 'test_policy'
-client.sys.create_or_update_policy(name=policy,policy=test_policy)
-USERNAME = 'test_user'
-PASSWORD = 'test_password'
-client.sys.enable_auth_method('userpass')
-client.create_userpass(username=USERNAME, password=PASSWORD, policies=[ policy ])
-client.sys.enable_auth_method('approle')
-client.create_role('test_role')
-ROLE_ID = client.get_role_id('test_role')
-SECRET_ID = client.create_role_secret_id('test_role')['data']['secret_id']
-TOKEN = client.create_token(policies=[policy],lease='1h')['auth']['client_token']
-
+# Create temporary folder
 REFS_HOME = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_HOME)
 REVEALER = Revealer(REF_CONTROLLER)
@@ -66,12 +37,45 @@ REVEALER = Revealer(REF_CONTROLLER)
 class VaultSecretTest(unittest.TestCase):
     "Test Vault Secret"
 
+    @classmethod
+    def setUpClass(cls):
+        # Initialize vault, unseal, mount secret engine & add auth
+        cls.client = hvac.Client()
+        if not cls.client.sys.is_initialized():
+            init = cls.client.sys.initialize()
+            cls.client.sys.submit_unseal_keys(init['keys'])
+            os.environ['VAULT_ROOT_TOKEN'] = init['root_token']
+            cls.client = hvac.Client(token = init['root_token'])
+            cls.client.sys.enable_secrets_engine(backend_type='kv-v2',path='secret')
+            test_policy = '''
+            path "secret/*" {
+              capabilities = ["read", "list"]
+            }
+            '''
+            policy = 'test_policy'
+            cls.client.sys.create_or_update_policy(name=policy,policy=test_policy)
+            os.environ['VAULT_USERNAME'] = 'test_user'
+            os.environ['VAULT_PASSWORD'] = 'test_password'
+            cls.client.sys.enable_auth_method('userpass')
+            cls.client.create_userpass(username='test_user', password='test_password', policies=[ policy ])
+            cls.client.sys.enable_auth_method('approle')
+            cls.client.create_role('test_role')
+            os.environ['VAULT_ROLE_ID'] = cls.client.get_role_id('test_role')
+            os.environ['VAULT_SECRET_ID'] = cls.client.create_role_secret_id('test_role')['data']['secret_id']
+            os.environ['VAULT_TOKEN'] = cls.client.create_token(policies=[policy],lease='1h')['auth']['client_token']
+        else:
+            cls.client.token = os.environ['VAULT_ROOT_TOKEN']
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.client.adapter.close()
+
     def test_token_authentication(self):
         '''
         Authenticate using token
         '''
-        os.environ['VAULT_TOKEN'] = TOKEN
-        test_client = vault_obj()
+        parameters = {'auth':'token'}
+        test_client = vault_obj(parameters)
         self.assertTrue(test_client.is_authenticated())
         test_client.adapter.close()
 
@@ -79,10 +83,8 @@ class VaultSecretTest(unittest.TestCase):
         '''
         Authenticate using userpass
         '''
-        os.environ['VAULT_AUTHTYPE'] = 'userpass'
-        os.environ['VAULT_USER'] = USERNAME
-        os.environ['VAULT_PASSWORD'] = PASSWORD
-        test_client = vault_obj()
+        parameters = {'auth':'userpass'}
+        test_client = vault_obj(parameters)
         self.assertTrue(test_client.is_authenticated())
         test_client.adapter.close()
 
@@ -90,10 +92,8 @@ class VaultSecretTest(unittest.TestCase):
         '''
         Authenticate using approle
         '''
-        os.environ['VAULT_AUTHTYPE'] = 'approle'
-        os.environ['VAULT_ROLE_ID'] = ROLE_ID
-        os.environ['VAULT_SECRET_ID'] = SECRET_ID
-        test_client = vault_obj()
+        parameters = {'auth':'approle'}
+        test_client = vault_obj(parameters)
         self.assertTrue(test_client.is_authenticated())
         test_client.adapter.close()
 
@@ -103,43 +103,45 @@ class VaultSecretTest(unittest.TestCase):
         '''
         tag = '?{vault:secret/batman}'
         secret = { 'some_random_value':'somethin_secret' }
-        client.secrets.kv.v2.create_or_update_secret(
+        self.client.secrets.kv.v2.create_or_update_secret(
             path='foo',
             secret=secret,
         )
-        os.environ['VAULT_TOKEN'] = TOKEN
-        os.environ['VAULT_AUTHTYPE'] = 'token'
+        env = {'auth':'token'}
         file_data = "{'path':'foo','key':'some_random_value'}".encode()
-        REF_CONTROLLER[tag] = VaultSecret(file_data,encrypt=True,encoding='original')
+        REF_CONTROLLER[tag] = VaultSecret(file_data,parameter=env,encoding='original')
+        # confirming secret file exists
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME,'secret/batman')))
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags,'w') as fp:
             fp.write('I am a file with {}'.format(tag))
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
+        # confirming secerts are correctly revealed
         self.assertEqual(
             "I am a file with {}".format(secret['some_random_value']), revealed
         )
 
     def test_vault_base64_write_reveal(self):
         '''
-        Write secret, confirm secret file exists, reveal and compare content
+        Write secret for base64 encoded content, confirm secret file exists, reveal and compare content
         '''
         tag = '?{vault:secret/batwoman}'
         secret = { 'random_value':'something_very_secret' }
-        client.secrets.kv.v2.create_or_update_secret(
+        self.client.secrets.kv.v2.create_or_update_secret(
             path='foo',
             secret=secret,
         )
-        os.environ['VAULT_TOKEN'] = TOKEN
-        os.environ['VAULT_AUTHTYPE'] = 'token'
+        env = {'auth':'token'}
         file_data = "{'path':'foo','key':'random_value'}"
         encoded_data = base64.b64encode(file_data.encode())
-        REF_CONTROLLER[tag] = VaultSecret(encoded_data,encrypt=True,encoding='base64')
+        REF_CONTROLLER[tag] = VaultSecret(encoded_data,parameter=env,encoding='base64')
+        # confirming secret file exists
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME,'secret/batwoman')))
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags,'w') as fp:
             fp.write('I am a file with {}'.format(tag))
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
+        # confirming secerts are correctly revealed
         self.assertEqual(
             "I am a file with {}".format(secret['random_value']), revealed
         )
