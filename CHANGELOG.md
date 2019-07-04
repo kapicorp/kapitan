@@ -1,3 +1,6 @@
+## 0.24.0-rc.1:
+- Add external dependency management (#304)
+
 ## 0.24.0-rc.0:
 - Fix bug in resources.py when passing config to reclass (#296)
 - Fix requests version to circumvent urllib3 version conflict (#300)
