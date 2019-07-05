@@ -39,6 +39,8 @@ from kapitan import cached
 
 from reclass.errors import NotFoundError, ReclassException
 
+from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
+
 logger = logging.getLogger(__name__)
 
 
@@ -102,6 +104,11 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
             shutil.rmtree(compile_path)
             shutil.copytree(temp_path, compile_path)
             logger.debug("Copied %s into %s", temp_path, compile_path)
+
+        # validate the compiled outputs
+        # TODO: make cache_dir customisable
+        worker = partial(validate_output, search_path=compile_path, cache_dir='.cache')
+        [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
         # Save inventory and folders cache
         save_inv_cache(compile_path, targets)
@@ -375,6 +382,20 @@ def valid_target_obj(target_obj):
                     ],
                 }
             },
+            "validate": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "output_paths": {"type": "array"},
+                        "type": {"type": "string"},
+                        "kind": {"type": "string"},
+                        "version": {"type": "string"},
+                    },
+                    "required": ["output_paths", "type"],
+                    "minItems": 1,
+                }
+            },
             "dependencies": {
                 "type": "array",
                 "items": {
@@ -441,3 +462,33 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
         error_message = "Target \"{}\" is missing the corresponding yml file in {}\n" \
                         "Target name should match the name of the target yml file in inventory"
         raise InventoryError(error_message.format(target_name, target_path))
+
+
+def validate_output(target_obj, search_path, cache_dir):
+    """
+    validates compiled output for target_obj, as specified in kapitan.validate
+    search_path is where compiled outputs are stored, usually ./compiled
+    cache_dir is a directory where schema files will be cached
+    """
+    os.makedirs(cache_dir, exist_ok=True)
+    kubernetes_validator = KubernetesManifestValidator(cache_dir)
+    try:
+        # if validate options are specified for this target
+        validate_options = target_obj['validate']
+        target_name = target_obj['vars']['target']
+        for v in validate_options:
+            validate_type = v['type']
+            output_paths = v.pop('output_paths')
+            if validate_type == 'kubernetes':
+                for output_path in output_paths:
+                    file_path = os.path.join(search_path, target_name, output_path)
+                    v['output_path'] = output_path
+                    if not os.path.exists(file_path):
+                        logger.info("Validation: {} does not exist. Skipping".format(file_path))
+                    else:
+                        kubernetes_validator.validate(file_path, target_name=target_name, **v)
+            else:
+                logger.error("type '{}' is not supported".format(validate_type))
+
+    except KeyError:
+        pass

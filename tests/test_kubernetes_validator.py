@@ -14,18 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import sys
 import unittest
 import tempfile
 import yaml
-
 from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.errors import KubernetesManifestValidationError
-from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
+from kapitan.validator.kubernetes_validator import KubernetesManifestValidator, logger
 
 
 class KubernetesValidatorTest(unittest.TestCase):
     def setUp(self):
+        os.chdir(os.path.join('examples', 'kubernetes'))
         self.cache_dir = tempfile.mkdtemp()
         self.validator = KubernetesManifestValidator(self.cache_dir)
 
@@ -36,7 +37,7 @@ class KubernetesValidatorTest(unittest.TestCase):
 
     def test_load_from_cache(self):
         kind = 'deployment'
-        version = '1.11.0'
+        version = '1.11.0'  # different version just for testing
         downloaded_schema = self.validator._get_schema_from_web(kind, version)
         self.validator._cache_schema(kind, version, downloaded_schema)
         self.assertIsInstance(self.validator._get_cached_schema(kind, version), dict)
@@ -63,8 +64,13 @@ class KubernetesValidatorTest(unittest.TestCase):
             self.validator.validate(service_manifest, kind='deployment', version='1.14.0',
                                     file_path='service/manifest', target_name='example')
 
-    def test_compile_with_validate(self):
-        pass
+    def test_validate_after_compile(self):
+        sys.argv = ['kapitan', 'compile', '-t', 'minikube-mysql']
+        try:
+            main()
+        except KubernetesManifestValidationError:
+            self.fail("Kubernetes manifest validation error raised unexpectedly")
 
     def tearDown(self):
+        os.chdir('../../')
         reset_cache()
