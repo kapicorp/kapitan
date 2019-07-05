@@ -22,6 +22,8 @@ import logging
 import re
 import sys
 import os
+from functools import lru_cache
+
 import yaml
 
 from kapitan.errors import RefFromFuncError, RefBackendError, RefError
@@ -37,8 +39,8 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
-REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/]+)([\|\w\:\.\-\/]+)?=*})"
-
+REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@]+)([\|\w\:\.\-\/]+)?=*})"
+REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
 class Ref(object):
     def __init__(self, data, from_base64=False, **kwargs):
@@ -119,12 +121,14 @@ class RefBackend(object):
         self.ref_type = ref_type  # Ref type backend instance manages
 
     def __getitem__(self, ref_path):
-        full_ref_path = os.path.join(self.path, ref_path)
+        # remove the substring notation, if any
+        ref_file_path = re.sub(REF_TOKEN_SUBVAR_PATTERN, "", ref_path)
+        full_ref_path = os.path.join(self.path, ref_file_path)
         ref = self.ref_type.from_path(full_ref_path)
 
         if ref is not None:
             ref.path = ref_path
-            ref_path_data = "{}{}".format(ref.path, ref.data)
+            ref_path_data = "{}{}".format(ref_file_path, ref.data)
             ref.hash = hashlib.sha256(ref_path_data.encode()).hexdigest()
             ref.token = "{}:{}:{}".format(ref.type_name, ref.path, ref.hash[:8])
             return ref
@@ -233,9 +237,41 @@ class Revealer(object):
     def _reveal_replace_match(self, match_obj):
         """returns decrypted value from tag in match_obj"""
         tag, _, _ = match_obj.groups()
-        ref = self.ref_controller[tag]
-        logger.debug("Ref: revealing: %s", tag)
+        m = re.search(REF_TOKEN_SUBVAR_PATTERN, tag)
+        if m is None:
+            # no subvar pattern is found
+            logger.debug("Revealer: no sub-variable path was matched in \"{}\"".format(tag))
+            return self._reveal_tag_without_subvar(tag)
+
+        else:
+            subvar_path = m.groups()
+            # strip away the @
+            subvar_path = subvar_path[0][1:]
+            logger.debug("Revealer: sub-variable path \"{}\" matched in tag {}".
+                         format(subvar_path, tag))
+            tag_without_yaml_path = re.sub(REF_TOKEN_SUBVAR_PATTERN, "", tag)
+
+            plaintext = self._reveal_tag_without_subvar(tag_without_yaml_path)
+            revealed_yaml = yaml.load(plaintext, Loader=YamlLoader)
+            if not isinstance(revealed_yaml, dict):
+                raise RefError("revealed secret is not in yaml, cannot access sub-variable"
+                               "at {}".format(subvar_path))
+            return self._get_value_in_yaml_path(revealed_yaml, subvar_path)
+
+    @lru_cache(maxsize=256)
+    def _reveal_tag_without_subvar(self, tag_without_subvar):
+        ref = self.ref_controller[tag_without_subvar]
+        logger.debug("Revealer: revealing tag {} for the first time".format(tag_without_subvar))
         return ref.reveal()
+
+    def _get_value_in_yaml_path(self, d, yaml_path):
+        """using the sub-variable path as nested keys, returns the value in the dictionary"""
+        keys = yaml_path.split('.')
+        value = d
+        for key in keys:
+            value = value[key]
+
+        return value
 
     def _compile_replace_match_with_args(self, **kwargs):
         """returns compile_replace_match function with kwargs"""
@@ -461,6 +497,8 @@ class RefController(object):
             if ref:
                 return ref
         else:
+            if re.search(REF_TOKEN_SUBVAR_PATTERN, token) is not None:
+                raise RefError("Ref: secrets with sub-variables must be created manually")
             # if there is a function, try grabbing token
             try:
                 ref = self._get_from_token(token)

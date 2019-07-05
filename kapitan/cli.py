@@ -93,6 +93,9 @@ def main():
                                 default=from_dot_kapitan('compile', 'output-path', '.'),
                                 metavar='PATH',
                                 help='set output path, default is "."')
+    compile_parser.add_argument('--fetch',
+                                help='fetches external dependencies', action='store_true',
+                                default=from_dot_kapitan('compile', 'fetch', False))
     compile_parser.add_argument('--targets', '-t', help='targets to compile, default is all',
                                 type=str, nargs='+',
                                 default=from_dot_kapitan('compile', 'targets', []),
@@ -279,7 +282,7 @@ def main():
                         args.parallelism, args.targets, ref_controller,
                         prune=(args.prune), indent=args.indent, reveal=args.reveal,
                         cache=args.cache, cache_paths=args.cache_paths,
-                        jinja2_filters=args.jinja2_filters)
+                        fetch_dependencies=args.fetch, jinja2_filters=args.jinja2_filters)
 
     elif cmd == 'inventory':
         if args.pattern and args.target_name == '':
@@ -406,8 +409,6 @@ def secret_write(args, ref_controller):
         parameter = {}
         encoding = 'original'
         if args.base64:
-            _data = base64.b64encode(_data).decode()
-            _data = _data.encode()
             encoding = 'base64'
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
@@ -416,7 +417,7 @@ def secret_write(args, ref_controller):
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
             parameter = kap_inv_params['secrets']['vault']
-        elif args.auth:
+        if args.auth:
             parameter['auth'] = args.auth
         else:
             raise KapitanError("No Authentication type parameter Specified. Use --auth or specify it"

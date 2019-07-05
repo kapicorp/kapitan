@@ -197,12 +197,79 @@ class CliFuncsTest(unittest.TestCase):
 
         os.remove(test_tag_file)
 
+    def test_cli_secret_write_vault(self):
+
+        """
+        run $ kapitan secrets --write vault:test_secret
+        and $ kapitan secrets --reveal -f sometest_file
+        """
+        test_secret_content = "secret_test_key"
+        test_secret_content_value = "secret_value"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = ["kapitan", "secrets", "--write", "vault:test_secret",
+                    "-f", test_secret_file,"--auth","token", "--secrets-path", SECRETS_PATH]
+        main()
+
+        test_tag_content = "revealing: ?{vault:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        sys.argv = ["kapitan", "secrets", "--reveal",
+                    "-f", test_tag_file, "--secrets-path", SECRETS_PATH]
+
+         # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("revealing: {value}".format(value=test_secret_content_value),
+                         stdout.getvalue())
+
+        os.remove(test_tag_file)
+
+    def test_cli_secret_write_base64_vault(self):
+
+        """
+        run $ kapitan secrets --write vault:test_secret --base64
+        and $ kapitan secrets --reveal -f sometest_file
+        """
+        test_secret_content = "secret_test_key"
+        test_secret_content_b64 = base64.b64encode(test_secret_content.encode()).decode()
+        test_secret_content_value = "secret_value"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content_b64)
+
+        sys.argv = ["kapitan", "secrets", "--write", "vault:test_secret", "--base64",
+                    "-f", test_secret_file,"--auth","token", "--secrets-path", SECRETS_PATH]
+        main()
+
+        test_tag_content = "revealing: ?{vault:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        sys.argv = ["kapitan", "secrets", "--reveal",
+                    "-f", test_tag_file, "--secrets-path", SECRETS_PATH]
+
+         # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("revealing: {value}".format(value=test_secret_content_value),
+                         stdout.getvalue())
+
+        os.remove(test_tag_file)
+
+
     def test_cli_secret_write_ref(self):
         """
         run $ kapitan secrets --write ref:test_secret
         and $ kapitan secrets --reveal -f sometest_file
         """
-        test_secret_content = "secret_value!"
+        test_secret_content = "secret_test_key"
+        test_secret_content_value = "secret_value"
         test_secret_file = tempfile.mktemp()
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
@@ -260,6 +327,93 @@ class CliFuncsTest(unittest.TestCase):
         self.assertEqual("revealing: {}".format(test_secret_content_b64.decode()),
                          stdout.getvalue())
 
+        os.remove(test_tag_file)
+
+    def test_cli_secret_subvar_ref(self):
+        """
+        run $ kapitan secrets --write ref:test_secret
+        and $ kapitan secrets --reveal -f sometest_file
+        """
+        test_secret_content = """
+        var1:
+          var2: hello
+        var3:
+          var4: world
+        """
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = ["kapitan", "secrets", "--write", "ref:test_secret_subvar",
+                    "-f", test_secret_file,
+                    "--secrets-path", SECRETS_PATH]
+        main()
+
+        test_tag_content = """
+        revealing1: ?{ref:test_secret_subvar@var1.var2}
+        revealing2: ?{ref:test_secret_subvar@var3.var4}
+        """
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        sys.argv = ["kapitan", "secrets", "--reveal",
+                    "-f", test_tag_file,
+                    "--secrets-path", SECRETS_PATH]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+
+        expected = """
+        revealing1: {}
+        revealing2: {}
+        """
+        self.assertEqual(expected.format("hello", "world"),stdout.getvalue())
+        os.remove(test_tag_file)
+
+    def test_cli_secret_subvar_gpg(self):
+        """
+        run $ kapitan secrets --write gpg:test_secret
+        and $ kapitan secrets --reveal -f sometest_file
+        """
+        test_secret_content = """
+                var1:
+                  var2: hello
+                var3:
+                  var4: world
+                """
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = ["kapitan", "secrets", "--write", "gpg:test_secret_subvar",
+                    "-f", test_secret_file,
+                    "--secrets-path", SECRETS_PATH,
+                    "--recipients", "example@kapitan.dev"]
+        main()
+
+        test_tag_content = """
+                revealing1: ?{gpg:test_secret_subvar@var1.var2}
+                revealing2: ?{gpg:test_secret_subvar@var3.var4}
+                """
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        sys.argv = ["kapitan", "secrets", "--reveal",
+                    "-f", test_tag_file,
+                    "--secrets-path", SECRETS_PATH]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+
+        expected = """
+                revealing1: {}
+                revealing2: {}
+                """
+        self.assertEqual(expected.format("hello", "world"), stdout.getvalue())
         os.remove(test_tag_file)
 
     def test_cli_searchvar(self):

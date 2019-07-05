@@ -6,7 +6,11 @@ Kapitan is a tool to manage complex deployments using jsonnet, [kadet (alpha)](h
 
 Use Kapitan to manage your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
 
-Join our community on [`#kapitan`](https://kubernetes.slack.com) or visit [**`https://kapitan.dev`**](https://kapitan.dev)
+## Community
+* **Main Blog, articles and tutorials**: [Kapitan Blog](https://medium.com/kapitan-blog)
+* **Slack** [`#kapitan`](https://kubernetes.slack.com)
+* **Website** [**`https://kapitan.dev`**](https://kapitan.dev)
+* **London Meetup Group** [London Kapitan Meetup](https://www.meetup.com/London-Kapitan-Meetup/)
 
 
 How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](#faq)!

@@ -1,0 +1,27 @@
+parameters:
+  host_port: 80
+  container_port: 8080
+  server_name: localhost
+  website: $(pwd)/compiled/${kapitan:vars:target}/manifests/html
+  root: /usr/share/nginx/html
+  charset: koi8-r
+
+  kapitan:
+    vars:
+      target: nginx-dev
+    compile:
+      - output_path: manifests
+        input_type: jinja2
+        input_paths:
+         - templates/nginx.conf
+
+    dependencies:
+      - type: git
+        output_path: components/source
+        ref: master
+        subdir: kapitan
+        source: https://github.com/deepmind/kapitan.git
+      - type: http
+        output_path: components/acs-engine-autoscaler-0.1.0
+        source: https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-0.1.0.tgz
+        unpack: true

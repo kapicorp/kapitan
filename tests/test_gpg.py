@@ -94,6 +94,7 @@ class GPGSecretsTest(unittest.TestCase):
         except ValueError:
             raise Exception("Failed to decode RSA private key")
 
+        REVEALER._reveal_tag_without_subvar.cache_clear()
         # Test with parameter key_size=2048
         tag = '?{gpg:secret/rsa|rsa:2048}'
         REF_CONTROLLER[tag] = RefParams()

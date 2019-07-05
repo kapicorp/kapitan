@@ -53,3 +53,8 @@ class RefFromFuncError(KapitanError):
 class RefHashMismatchError(KapitanError):
     """ref has mismatch error"""
     pass
+
+
+class GitSubdirNotFoundError(KapitanError):
+    """git dependency subdir not found error"""
+    pass

@@ -11,6 +11,7 @@ local name = inv.parameters.mysql.instance_name;
   local c = self,
   mysql_statefulset: statefulset.MySQLStatefulSet(name, self.mysql_secret),
   mysql_secret: secret.MySQLSecret(name),
+  mysql_secret_subvar: secret.MySQLSecret_subvar(name),
 
 
   // The following is an example to show how you can use a simple json file

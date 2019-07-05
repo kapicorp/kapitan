@@ -13,27 +13,29 @@ parameters:
  kapitan:
   dependencies:
    - type: git | http[s]
-     output_path: relative/path/in/target
+     output_path: <output_path>
      source: <git/http[s]_url>    
 ``` 
+
+The output path is the path to save the dependency into. For example, it could be `/components/external/manifest.jsonnet`. Then, the user can specify the fetched file as a `kapitan.compile` item along with the locally-created files.  
 
 Git type may also include `ref` and `subdir` parameters as illustrated below:
 
 ```yaml
 - type: git
-  output_path: relative/path/in/target
+  output_path: <output_path>
   source: <git_url>
   subdir: relative/path/in/repository
   ref: <commit_hash/branch/tag>
 ```
 
-Downloaded files will be cached. For fresh fetch of the dependencies, users may add `--fetch` option as follows:
+If the file already exists at `output_path`, the fetch will be skipped. For fresh fetch of the dependencies, users may add `--fetch` option as follows:
 
 ```bash
 $ kapitan compile --fetch
 ```
 
-Users can also add the `always_fetch: true` option to the `kapitan.compile` in the inventory in order to force fresh fetch of the dependencies every time.
+Users can also add the `fetch_always: true` option to the `kapitan.compile` in the inventory in order to force fresh fetch of the dependencies every time.
 
 ## Implementation details
 

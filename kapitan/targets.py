@@ -27,6 +27,7 @@ import yaml
 import time
 from functools import partial
 
+from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.resources import inventory_reclass
 from kapitan.utils import hashable_lru_cache
 from kapitan.utils import directory_hash, dictionary_hash
@@ -73,8 +74,12 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
         worker = partial(compile_target, search_paths=search_paths, compile_path=temp_path, ref_controller=ref_controller,
                          **kwargs)
 
-        if target_objs == []:
+        if not target_objs:
             raise CompileError("Error: no targets found")
+
+        if kwargs.get('fetch_dependencies', False):
+            fetch_dependencies(target_objs, pool)
+
         # compile_target() returns None on success
         # so p is only not None when raising an exception
         [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
@@ -353,9 +358,9 @@ def valid_target_obj(target_obj):
                         {
                             "properties": {
                                 "input_type": {
-                                    "enum": ["jsonnet", "kadet"] 
+                                    "enum": ["jsonnet", "kadet"]
                                 },
-                                "output_type" : {
+                                "output_type": {
                                     "enum": ["yaml", "json", "plain"]
                                 }
                             },
@@ -364,17 +369,58 @@ def valid_target_obj(target_obj):
                             "properties": {
                                 "input_type": {
                                     "enum": ["jinja2"]
-                                } 
+                                }
                             }
                         }
                     ],
                 }
             },
+            "dependencies": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": ["git", "http", "https"]
+                        },
+                        "output_path": {"type": "string"},
+                        "source": {"type": "string"},
+                        "subdir": {"type": "string"},
+                        "ref": {"type": "string"},
+                        "unpack": {"type": "boolean"}
+                    },
+                    "required": ["type", "output_path", "source"],
+                    "additionalProperties": False,
+                    "allOf": [
+                        {
+                            "if": {
+                                "properties": { "type": { "enum": ["http", "https"] } }
+                            },
+                            "then": {
+                                "properties": {
+                                    "type": {
+                                    },
+                                    "source": {
+                                        "format": "uri"
+                                    },
+                                    "output_path": {
+                                    },
+                                    "unpack": {
+                                    }
+
+                                },
+                                "additionalProperties": False
+                            }
+                        },
+                    ]
+                }
+            }
         },
         "required": ["compile"],
     }
 
-    return jsonschema.validate(target_obj, schema)
+    return jsonschema.validate(target_obj, schema, format_checker=jsonschema.FormatChecker())
 
 
 def validate_matching_target_name(target_filename, target_obj, inventory_path):
