@@ -20,19 +20,20 @@ import os
 import unittest
 import tempfile
 import base64
-
-import kapitan.cached as cached
+import hvac
+import docker
 from kapitan.refs.base import RefController, RefParams, Revealer
 from kapitan.refs.secrets.vault import  vault_obj, VaultSecret
-
-import hvac
-
 
 # Create temporary folder
 REFS_HOME = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_HOME)
 REVEALER = Revealer(REF_CONTROLLER)
-
+# Create Vault docker container
+client = docker.from_env()
+env = {'VAULT_LOCAL_CONFIG':'{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'}
+vault_container= client.containers.run(image='vault',cap_add=['IPC_LOCK'],ports={'8200':'8200'},
+                               environment=env,detach=True,remove=True,command='server')
 
 class VaultSecretTest(unittest.TestCase):
     "Test Vault Secret"
@@ -41,34 +42,33 @@ class VaultSecretTest(unittest.TestCase):
     def setUpClass(cls):
         # Initialize vault, unseal, mount secret engine & add auth
         cls.client = hvac.Client()
-        if not cls.client.sys.is_initialized():
-            init = cls.client.sys.initialize()
-            cls.client.sys.submit_unseal_keys(init['keys'])
-            os.environ['VAULT_ROOT_TOKEN'] = init['root_token']
-            cls.client = hvac.Client(token = init['root_token'])
-            cls.client.sys.enable_secrets_engine(backend_type='kv-v2',path='secret')
-            test_policy = '''
-            path "secret/*" {
-              capabilities = ["read", "list"]
-            }
-            '''
-            policy = 'test_policy'
-            cls.client.sys.create_or_update_policy(name=policy,policy=test_policy)
-            os.environ['VAULT_USERNAME'] = 'test_user'
-            os.environ['VAULT_PASSWORD'] = 'test_password'
-            cls.client.sys.enable_auth_method('userpass')
-            cls.client.create_userpass(username='test_user', password='test_password', policies=[ policy ])
-            cls.client.sys.enable_auth_method('approle')
-            cls.client.create_role('test_role')
-            os.environ['VAULT_ROLE_ID'] = cls.client.get_role_id('test_role')
-            os.environ['VAULT_SECRET_ID'] = cls.client.create_role_secret_id('test_role')['data']['secret_id']
-            os.environ['VAULT_TOKEN'] = cls.client.create_token(policies=[policy],lease='1h')['auth']['client_token']
-        else:
-            cls.client.token = os.environ['VAULT_ROOT_TOKEN']
+        init = cls.client.sys.initialize()
+        cls.client.sys.submit_unseal_keys(init['keys'])
+        cls.client.adapter.close()
+        os.environ['VAULT_ROOT_TOKEN'] = init['root_token']
+        cls.client = hvac.Client(token = init['root_token'])
+        cls.client.sys.enable_secrets_engine(backend_type='kv-v2',path='secret')
+        test_policy = '''
+        path "secret/*" {
+          capabilities = ["read", "list"]
+        }
+        '''
+        policy = 'test_policy'
+        cls.client.sys.create_or_update_policy(name=policy,policy=test_policy)
+        os.environ['VAULT_USERNAME'] = 'test_user'
+        os.environ['VAULT_PASSWORD'] = 'test_password'
+        cls.client.sys.enable_auth_method('userpass')
+        cls.client.create_userpass(username='test_user', password='test_password', policies=[ policy ])
+        cls.client.sys.enable_auth_method('approle')
+        cls.client.create_role('test_role')
+        os.environ['VAULT_ROLE_ID'] = cls.client.get_role_id('test_role')
+        os.environ['VAULT_SECRET_ID'] = cls.client.create_role_secret_id('test_role')['data']['secret_id']
+        os.environ['VAULT_TOKEN'] = cls.client.create_token(policies=[policy],lease='1h')['auth']['client_token']
 
     @classmethod
     def tearDownClass(cls):
         cls.client.adapter.close()
+        vault_container.stop()
 
     def test_token_authentication(self):
         '''
@@ -76,7 +76,8 @@ class VaultSecretTest(unittest.TestCase):
         '''
         parameters = {'auth':'token'}
         test_client = vault_obj(parameters)
-        self.assertTrue(test_client.is_authenticated())
+        self.assertTrue(test_client.is_authenticated(),
+                        msg='Authentication with token failed')
         test_client.adapter.close()
 
     def test_userpss_authentication(self):
@@ -85,7 +86,8 @@ class VaultSecretTest(unittest.TestCase):
         '''
         parameters = {'auth':'userpass'}
         test_client = vault_obj(parameters)
-        self.assertTrue(test_client.is_authenticated())
+        self.assertTrue(test_client.is_authenticated(),
+                        msg='Authentication with token failed')
         test_client.adapter.close()
 
     def test_approle_authentication(self):
@@ -94,7 +96,8 @@ class VaultSecretTest(unittest.TestCase):
         '''
         parameters = {'auth':'approle'}
         test_client = vault_obj(parameters)
-        self.assertTrue(test_client.is_authenticated())
+        self.assertTrue(test_client.is_authenticated(),
+                        msg='Authentication with token failed')
         test_client.adapter.close()
 
     def test_vault_write_reveal(self):
@@ -111,7 +114,8 @@ class VaultSecretTest(unittest.TestCase):
         file_data = "{'path':'foo','key':'some_random_value'}".encode()
         REF_CONTROLLER[tag] = VaultSecret(file_data,parameter=env,encoding='original')
         # confirming secret file exists
-        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME,'secret/batman')))
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME,'secret/batman')),
+                        msg="Secret file doesn't exist")
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags,'w') as fp:
             fp.write('I am a file with {}'.format(tag))
@@ -136,7 +140,8 @@ class VaultSecretTest(unittest.TestCase):
         encoded_data = base64.b64encode(file_data.encode())
         REF_CONTROLLER[tag] = VaultSecret(encoded_data,parameter=env,encoding='base64')
         # confirming secret file exists
-        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME,'secret/batwoman')))
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME,'secret/batwoman')),
+                        msg="Secret file doesn't exist")
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags,'w') as fp:
             fp.write('I am a file with {}'.format(tag))

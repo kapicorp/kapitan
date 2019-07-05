@@ -32,10 +32,9 @@ class VaultError(KapitanError):
 
 def get_env(parameter):
     """
-    The following variables need to be exported to the environment where you run this script in order to authenticate to your HashiCorp Vault instance:
+    The following variables need to be exported to the environment depending on authentication needed
     * VAULT_ADDR: url for vault
-    * VAULT_SKIP_VERIFY=true: if set, do not verify presented TLS certificate before communicating with Vault server. Setting this variable is not recommended except during testing
-    * VAULT_AUTH: authentication type to use: token, userpass, github, ldap, approle
+    * VAULT_SKIP_VERIFY=true: if set, do not verify presented TLS certificate before communicating with Vault server.
     * VAULT_TOKEN: token for vault
     * VAULT_ROLE_ID: (required by approle)
     * VAULT_SECRET_ID: (required by approle)
@@ -48,7 +47,7 @@ def get_env(parameter):
     * VAULT_NAMESPACE: specify the Vault Namespace, if you have one
     """
     # Helper lambda function to get varibles either from parameters or environment
-    get_variable = lambda x: getenv('VAULT_'+x.upper(),default=parameter.get(x,''))
+    get_variable = lambda x: parameter.get(x, getenv('VAULT_'+x.upper(),default=''))
     env = {}
     env['url'] = get_variable('addr')
     env['namespace'] = get_variable('namespace')
@@ -109,23 +108,21 @@ def vault_obj(vault_parameters):
     elif auth_type == 'github':
         client.auth.github.login(token=env['token'])
     else:
-        raise "Authentication type {} not supported".format(auth_type)
+        raise "Authentication type '{auth}' not supported".format(auth=auth_type)
 
     assert (
         client.is_authenticated()
     ), "Vault Authentication Error, Environment Variables defined?"
     return client
 
-
 class VaultSecret(Ref):
-
     """
-    Hashicorp Vault can be used if using KV Secret Engine
+    Hashicorp Vault support for KV Secret Engine
     """
 
-    def __init__(self, data,  **kwargs):
+    def __init__(self, data, **kwargs):
         """
-        set encoding_base64 to True to base64 encoding key before encrypting and writing
+        Set vault parameter and encoding of data
         """
         self.encoding = kwargs.get('encoding', 'original')
         self.data = data
@@ -159,7 +156,7 @@ class VaultSecret(Ref):
 
     def reveal(self):
         """
-        returns decrypted data
+        Returns decrypted data
         """
         # can't use super().reveal() as we want bytes
         if self.encoding == 'base64':
@@ -170,7 +167,7 @@ class VaultSecret(Ref):
 
     def _decrypt(self, data):
         """
-        Decrypt data & return value for the key from Vault Server
+        Authenticate with Vault server & returns value of the key from secret
 
         :returns: secret in plain text
         """
@@ -187,15 +184,15 @@ class VaultSecret(Ref):
         except Forbidden:
             exit(
                 'Permission Denied. '+
-                'make sure the token is authorised to access {} on vault'.format(
-                    data['path']
+                'make sure the token is authorised to access {path} on Vault'.format(
+                    path=data['path']
                 )
             )
         except VaultError as e:
             halt('Vault Error: '+e.message)
         except InvalidPath:
             exit(
-                '{} does not exist on Vault secret/'.format(data['path'])
+                '{path} does not exist on Vault secret'.format(path=data['path'])
             )
 
         if data['key'] in response['data']:
@@ -204,9 +201,9 @@ class VaultSecret(Ref):
             return response['data']['data'][data['key']]
         else:
             exit(
-                "Key doesn't exist on '{}'".format(data['path'])
+                "'{key}' doesn't exist on '{path}'".format(key=data['key'],
+                                                           path=data['path'])
             )
-
 
     def dump(self):
         """

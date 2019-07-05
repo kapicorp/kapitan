@@ -408,7 +408,7 @@ def secret_write(args, ref_controller):
         if args.base64:
             _data = base64.b64encode(_data).decode()
             _data = _data.encode()
-            encoding = 'base65'
+            encoding = 'base64'
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
             kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
