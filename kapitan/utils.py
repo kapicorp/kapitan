@@ -16,6 +16,8 @@
 
 from __future__ import print_function
 
+import requests
+
 "random utils"
 
 import logging
@@ -462,3 +464,13 @@ def search_target_token_paths(target_secrets_path, targets):
             logger.debug('search_target_token_paths: found %s', secret_path)
             target_files[target_name].append(secret_path)
     return target_files
+
+
+def make_request(source):
+    """downloads the http file at source and returns it's content"""
+    r = requests.get(source)
+    if r.ok:
+        return r.content, r.headers['Content-Type']
+    else:
+        r.raise_for_status()
+    return None, None
