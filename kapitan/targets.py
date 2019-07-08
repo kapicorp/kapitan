@@ -106,9 +106,10 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
             logger.debug("Copied %s into %s", temp_path, compile_path)
 
         # validate the compiled outputs
-        # TODO: make cache_dir customisable
-        worker = partial(validate_output, search_path=compile_path, cache_dir='.cache')
-        [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+        if kwargs.get('validate', False):
+            worker = partial(schema_validate_output, search_path=compile_path,
+                             cache_dir=kwargs.get('schemas_path', './schemas'))
+            [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
         # Save inventory and folders cache
         save_inv_cache(compile_path, targets)
@@ -464,18 +465,58 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
         raise InventoryError(error_message.format(target_name, target_path))
 
 
-def validate_output(target_obj, search_path, cache_dir):
+def schema_validate_compiled(targets, compiled_path, inventory_path, schema_cache_path, parallel):
+    """
+    validates compiled output according to schemas specified in the inventory
+    """
+    if not os.path.isdir(compiled_path):
+        raise KapitanError("compiled-path {} not found".format(compiled_path))
+
+    if not os.path.isdir(schema_cache_path):
+        os.makedirs(schema_cache_path)
+        logger.info("created schema-cache-path {}".format(schema_cache_path))
+
+    worker = partial(schema_validate_output, search_path=compiled_path, cache_dir=schema_cache_path)
+    pool = multiprocessing.Pool(parallel)
+
+    try:
+        target_objs = load_target_inventory(inventory_path, targets)
+        [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+        pool.close()
+
+    except ReclassException as e:
+        if isinstance(e, NotFoundError):
+            logger.error("Inventory reclass error: inventory not found")
+        else:
+            logger.error("Inventory reclass error: %s", e.message)
+        raise InventoryError(e.message)
+    except Exception as e:
+        pool.terminate()
+        logger.debug("Validate pool terminated")
+        # only print traceback for errors we don't know about
+        if not isinstance(e, KapitanError):
+            logger.exception("Unknown (Non-Kapitan) Error occured")
+
+        logger.error("\n")
+        logger.error(e)
+        sys.exit(1)
+    finally:
+        # always wait for other worker processes to terminate
+        pool.join()
+
+
+def schema_validate_output(target_obj, search_path, cache_dir):
     """
     validates compiled output for target_obj, as specified in kapitan.validate
     search_path is where compiled outputs are stored, usually ./compiled
     cache_dir is a directory where schema files will be cached
     """
     os.makedirs(cache_dir, exist_ok=True)
+    target_name = target_obj['vars']['target']
     kubernetes_validator = KubernetesManifestValidator(cache_dir)
     try:
         # if validate options are specified for this target
         validate_options = target_obj['validate']
-        target_name = target_obj['vars']['target']
         for v in validate_options:
             validate_type = v['type']
             output_paths = v.pop('output_paths')
@@ -491,4 +532,5 @@ def validate_output(target_obj, search_path, cache_dir):
                 logger.error("type '{}' is not supported".format(validate_type))
 
     except KeyError:
+        logger.debug("target '{}' does not have validate parameter. skipping".format(target_name))
         pass

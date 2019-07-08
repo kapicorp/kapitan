@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from shutil import copyfile
 import sys
 import unittest
 import tempfile
@@ -21,7 +22,7 @@ import yaml
 from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.errors import KubernetesManifestValidationError
-from kapitan.validator.kubernetes_validator import KubernetesManifestValidator, logger
+from kapitan.validator.kubernetes_validator import KubernetesManifestValidator, FILE_PATH_FORMAT
 
 
 class KubernetesValidatorTest(unittest.TestCase):
@@ -31,9 +32,11 @@ class KubernetesValidatorTest(unittest.TestCase):
         self.validator = KubernetesManifestValidator(self.cache_dir)
 
     def test_download_and_cache(self):
-        downloaded_schema = self.validator._get_schema_from_web('service', '1.14.0')
-        self.validator._cache_schema('service', '1.14.0', downloaded_schema)
-        self.assertTrue(os.path.isfile(os.path.join(self.cache_dir, 'v1.14.0-standalone-strict', 'service.json')))
+        kind = 'service'
+        version = '1.14.0'
+        downloaded_schema = self.validator._get_schema_from_web(kind, version)
+        self.validator._cache_schema(kind, version, downloaded_schema)
+        self.assertTrue(os.path.isfile(os.path.join(self.cache_dir, FILE_PATH_FORMAT.format(version, kind))))
 
     def test_load_from_cache(self):
         kind = 'deployment'
@@ -64,8 +67,37 @@ class KubernetesValidatorTest(unittest.TestCase):
             self.validator.validate(service_manifest, kind='deployment', version='1.14.0',
                                     file_path='service/manifest', target_name='example')
 
+    def test_validate_command_pass(self):
+        sys.argv = ['kapitan', 'validate', '--schemas-path', self.cache_dir]
+        try:
+            main()
+        except KubernetesManifestValidationError:
+            self.fail("Kubernetes manifest validation error raised unexpectedly")
+
+    def test_validate_command_fail(self):
+        file_name_format = 'inventory/classes/component/mysql{}.yml'
+        original_file = file_name_format.format('')
+        copied_file = file_name_format.format('_copy')
+        copyfile(original_file, copied_file)
+        with open(original_file, 'r') as fp:
+            d = yaml.safe_load(fp)
+            # change kind from service to deployment
+            d['parameters']['kapitan']['validate'][0]['kind'] = 'deployment'
+        with open(original_file, 'w') as fp:
+            yaml.dump(d, fp, default_flow_style=False)
+
+        sys.argv = ['kapitan', 'validate', '--schemas-path', self.cache_dir]
+        with self.assertRaises(SystemExit), self.assertLogs(logger='kapitan.targets', level='ERROR') as log:
+            try:
+                main()
+            finally:
+                # copy back the original file
+                copyfile(copied_file, original_file)
+                os.remove(copied_file)
+        self.assertTrue(' '.join(log.output).find('invalid manifest') != -1)
+
     def test_validate_after_compile(self):
-        sys.argv = ['kapitan', 'compile', '-t', 'minikube-mysql']
+        sys.argv = ['kapitan', 'compile', '-t', 'minikube-mysql', '--validate', '--schemas-path', self.cache_dir]
         try:
             main()
         except KubernetesManifestValidationError:
