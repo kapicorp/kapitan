@@ -16,6 +16,7 @@
 
 import hvac
 import base64
+from binascii import Error as b_error
 from hvac.exceptions import Forbidden, VaultError, InvalidPath
 from yaml import safe_load
 from os.path import join,expanduser
@@ -159,16 +160,20 @@ class VaultSecret(Ref):
         Returns decrypted data
         """
         # can't use super().reveal() as we want bytes
-        if self.encoding == 'base64':
-            self.data = base64.b64decode(self.data)
+        try:
+            if self.encoding == 'base64':
+                self.data = base64.b64decode(self.data, validate=True)
 
-        ref_data = base64.b64decode(self.data)
+            ref_data = base64.b64decode(self.data, validate=True)
+        except b_error:
+            exit(
+                "non-alphabet characters in the data"
+            )
 
         if ref_data.decode() == "secret_test_key":
             return "secret_value"
 
-        else:
-            return self._decrypt(ref_data)
+        return self._decrypt(ref_data)
 
     def _decrypt(self, data):
         """

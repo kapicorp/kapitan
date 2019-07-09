@@ -22,6 +22,7 @@ import tempfile
 import base64
 import hvac
 import docker
+from time import sleep
 from kapitan.refs.base import RefController, RefParams, Revealer
 from kapitan.refs.secrets.vault import  vault_obj, VaultSecret
 
@@ -33,7 +34,8 @@ REVEALER = Revealer(REF_CONTROLLER)
 client = docker.from_env()
 env = {'VAULT_LOCAL_CONFIG':'{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'}
 vault_container= client.containers.run(image='vault',cap_add=['IPC_LOCK'],ports={'8200':'8200'},
-                               environment=env,detach=True,remove=True,command='server')
+                                       environment=env,detach=True,remove=True,command='server')
+sleep(2)
 
 class VaultSecretTest(unittest.TestCase):
     "Test Vault Secret"
@@ -44,8 +46,8 @@ class VaultSecretTest(unittest.TestCase):
         cls.client = hvac.Client()
         init = cls.client.sys.initialize()
         cls.client.sys.submit_unseal_keys(init['keys'])
-        cls.client.adapter.close()
         os.environ['VAULT_ROOT_TOKEN'] = init['root_token']
+        cls.client.adapter.close()
         cls.client = hvac.Client(token = init['root_token'])
         cls.client.sys.enable_secrets_engine(backend_type='kv-v2',path='secret')
         test_policy = '''

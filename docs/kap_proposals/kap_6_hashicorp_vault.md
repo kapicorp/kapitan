@@ -74,12 +74,12 @@ parameters:
   releases:
     cod: latest
   cod:
-	  image: alledm/cod:${cod:release}
-	  release: ${releases:cod}
-	  replicas: ${replicas}
-	  args:
-	  - --verbose=${verbose}
-      - --password=?{vault:path/to/secret_inside_kapitan}
+	image: alledm/cod:${cod:release}
+	release: ${releases:cod}
+	replicas: ${replicas}
+	args:
+	- --verbose=${verbose}
+    - --password=?{vault:path/to/secret_inside_kapitan}
 ```  
   
 when `?{vault:path/to/secret_inside_kapitan}` is compiled, it will look same with an 8 character prefix of sha256 sum of the content of file(path/to/secret_inside_kapitan) added in the end to make sure secret file wasn't changed since compile like:  

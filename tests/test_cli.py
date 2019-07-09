@@ -268,8 +268,7 @@ class CliFuncsTest(unittest.TestCase):
         run $ kapitan secrets --write ref:test_secret
         and $ kapitan secrets --reveal -f sometest_file
         """
-        test_secret_content = "secret_test_key"
-        test_secret_content_value = "secret_value"
+        test_secret_content = "secret_value!"
         test_secret_file = tempfile.mktemp()
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
