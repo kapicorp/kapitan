@@ -16,16 +16,16 @@ parameters:
       output_path: .
       output_type: yaml
     validate:
-    - kind: secret # temporarily replaced with 'deployment' during test
+    - type: kubernetes
       output_paths:
       - manifests/mysql_secret.yml
-      type: kubernetes
+      kind: secret # temporarily replaced with 'deployment' during test
       version: 1.14.0 # optional, defaults to 1.14.0
-    - kind: service
+    - type: kubernetes
       output_paths:
       - manifests/mysql_service_jsonnet.yml
       - manifests/mysql_service_simple.yml
-      type: kubernetes
+      kind: service
       version: 1.14.0
   mysql:
     image: mysql:latest

@@ -22,6 +22,8 @@ import shutil
 import sys
 import multiprocessing
 import tempfile
+from collections import defaultdict
+
 import jsonschema
 import yaml
 import time
@@ -39,7 +41,7 @@ from kapitan import cached
 
 from reclass.errors import NotFoundError, ReclassException
 
-from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
+from kapitan.validator.kubernetes_validator import KubernetesManifestValidator, DEFAULT_KUBERNETES_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -107,9 +109,9 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
 
         # validate the compiled outputs
         if kwargs.get('validate', False):
-            worker = partial(schema_validate_output, search_path=compile_path,
-                             cache_dir=kwargs.get('schemas_path', './schemas'))
-            [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+            validate_map = create_validate_mapping(target_objs, compile_path)
+            worker = partial(schema_validate_kubernetes_output, cache_dir=kwargs.get('schemas_path', './schemas'))
+            [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
 
         # Save inventory and folders cache
         save_inv_cache(compile_path, targets)
@@ -389,12 +391,36 @@ def valid_target_obj(target_obj):
                     "type": "object",
                     "properties": {
                         "output_paths": {"type": "array"},
-                        "type": {"type": "string"},
+                        "type": {
+                            "type": "string",
+                            "enum": ["kubernetes"]
+                        },
                         "kind": {"type": "string"},
                         "version": {"type": "string"},
                     },
                     "required": ["output_paths", "type"],
                     "minItems": 1,
+                    "allOf": [
+                        {
+                            "if": {
+                                "properties": {"type": {"const": "kubernetes"}}
+                            },
+                            "then": {
+                                "properties": {
+                                    "type": {
+                                    },
+                                    "kind": {
+                                    },
+                                    "output_paths": {
+                                    },
+                                    "version": {
+                                    }
+                                },
+                                "additionalProperties": False,
+                                "required": ["kind"],
+                            }
+                        },
+                    ]
                 }
             },
             "dependencies": {
@@ -476,12 +502,14 @@ def schema_validate_compiled(targets, compiled_path, inventory_path, schema_cach
         os.makedirs(schema_cache_path)
         logger.info("created schema-cache-path {}".format(schema_cache_path))
 
-    worker = partial(schema_validate_output, search_path=compiled_path, cache_dir=schema_cache_path)
+    worker = partial(schema_validate_kubernetes_output, cache_dir=schema_cache_path)
     pool = multiprocessing.Pool(parallel)
 
     try:
         target_objs = load_target_inventory(inventory_path, targets)
-        [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+        validate_map = create_validate_mapping(target_objs, compiled_path)
+
+        [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
         pool.close()
 
     except ReclassException as e:
@@ -505,32 +533,44 @@ def schema_validate_compiled(targets, compiled_path, inventory_path, schema_cach
         pool.join()
 
 
-def schema_validate_output(target_obj, search_path, cache_dir):
+def create_validate_mapping(target_objs, compiled_path):
     """
-    validates compiled output for target_obj, as specified in kapitan.validate
-    search_path is where compiled outputs are stored, usually ./compiled
-    cache_dir is a directory where schema files will be cached
+    creates mapping of (kind, version) tuple to output_paths across different targets
+    this is required to avoid redundant schema fetch when multiple targets use the same schema for validation
     """
-    os.makedirs(cache_dir, exist_ok=True)
-    target_name = target_obj['vars']['target']
-    kubernetes_validator = KubernetesManifestValidator(cache_dir)
-    try:
-        # if validate options are specified for this target
-        validate_options = target_obj['validate']
-        for v in validate_options:
-            validate_type = v['type']
-            output_paths = v.pop('output_paths')
-            if validate_type == 'kubernetes':
-                for output_path in output_paths:
-                    file_path = os.path.join(search_path, target_name, output_path)
-                    v['output_path'] = output_path
-                    if not os.path.exists(file_path):
-                        logger.info("Validation: {} does not exist. Skipping".format(file_path))
-                    else:
-                        kubernetes_validator.validate(file_path, target_name=target_name, **v)
-            else:
-                logger.error("type '{}' is not supported".format(validate_type))
+    validate_files_map = defaultdict(list)
+    for target_obj in target_objs:
+        target_name = target_obj['vars']['target']
+        if 'validate' not in target_obj:
+            logger.debug("target '{}' does not have 'validate' parameter. skipping".format(target_name))
+            continue
 
-    except KeyError:
-        logger.debug("target '{}' does not have validate parameter. skipping".format(target_name))
-        pass
+        for validate_item in target_obj['validate']:
+            validate_type = validate_item['type']
+            if validate_type == 'kubernetes':
+                kind_version_pair = (validate_item['kind'],
+                                     validate_item.get('version', DEFAULT_KUBERNETES_VERSION))
+                for output_path in validate_item['output_paths']:
+                    full_output_path = os.path.join(compiled_path, target_name, output_path)
+                    if not os.path.isfile(full_output_path):
+                        logger.warning("{} does not exist for target '{}'. skipping".
+                                       format(full_output_path, target_name))
+                        continue
+                    validate_files_map[kind_version_pair].append(full_output_path)
+            else:
+                logger.warning('type {} is not supported for validation. skipping'.format(validate_type))
+
+    return validate_files_map
+
+
+def schema_validate_kubernetes_output(validate_data, cache_dir):
+    """
+    validates given files according to kubernetes manifest schemas
+    schemas are cached from/to cache_dir
+    validate_data must be of structure ((kind, version), validate_files)
+    """
+    (kind, version), validate_files = validate_data
+    KubernetesManifestValidator(cache_dir).validate(validate_files, kind=kind, version=version)
+
+
+

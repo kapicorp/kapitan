@@ -24,34 +24,29 @@ class KubernetesManifestValidator(Validator):
     def __init__(self, cache_dir, **kwargs):
         super().__init__(cache_dir, **kwargs)
 
-    def validate(self, validate_instance, **kwargs):
+    def validate(self, validate_paths, **kwargs):
         """
-        validates validate_obj against json schema as specified by
-        'kind' and 'version' in kwargs. if validate_obj is of type str, it will be
-        used as the file path to the obj to be validated.
-        raises KubernetesManifestValidationError if validation fails, listing all the errors
-        inside validate_obj
+        validates manifests at validate_paths against json schema as specified by
+        'kind' and 'version' in kwargs.
+        raises KubernetesManifestValidationError encountering the first validation error
         """
-        output_path = kwargs.get('output_path', None)
-        if isinstance(validate_instance, str):
-            full_file_path = validate_instance
-            with open(full_file_path, 'r') as fp:
-                validate_instance = yaml.safe_load(fp.read())
-        target_name = kwargs.get('target_name', '')
         kind = kwargs.get('kind')
         version = kwargs.get('version', DEFAULT_KUBERNETES_VERSION)
         schema = self._get_schema(kind, version)
-        v = jsonschema.Draft4Validator(schema)
-        errors = sorted(v.iter_errors(validate_instance), key=lambda e: e.path)
-        if errors:
-            error_message = 'invalid manifest for target "{}" at {}\n'.format(
-                kwargs.get('target_name'), output_path)
-
-            error_message += '\n'.join(['{} {}'.format(list(error.path), error.message) for error in errors])
-            raise KubernetesManifestValidationError(error_message)
-        else:
-            logger.info("Validation: manifest validation successful for target '{}'"
-                        " for {}".format(target_name, output_path))
+        validator = jsonschema.Draft4Validator(schema)
+        for validate_path in validate_paths:
+            if not os.path.isfile(validate_path):
+                logger.warning('{} does not exist. skipping'.format(validate_path))
+                continue
+            with open(validate_path, 'r') as fp:
+                validate_instance = yaml.safe_load(fp.read())
+                errors = sorted(validator.iter_errors(validate_instance), key=lambda e: e.path)
+                if errors:
+                    error_message = 'invalid manifest for {}\n'.format(validate_path)
+                    error_message += '\n'.join(['{} {}'.format(list(error.path), error.message) for error in errors])
+                    raise KubernetesManifestValidationError(error_message)
+                else:
+                    logger.info("Validation: manifest validation successful for {}".format(validate_path))
 
     @lru_cache(maxsize=256)
     def _get_schema(self, kind, version):

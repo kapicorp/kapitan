@@ -59,19 +59,19 @@ class KubernetesValidatorTest(unittest.TestCase):
                 port: 80
                 targetPort: 9376
         """
-
-        service_manifest = yaml.safe_load(service_manifest_string)
-        self.validator.validate(service_manifest, kind='service', version='1.14.0')
+        manifest_path = os.path.join(self.cache_dir, 'service_manifest.yaml')
+        with open(manifest_path, 'w') as fp:
+            fp.write(service_manifest_string)
+        self.validator.validate([manifest_path], kind='service', version='1.14.0')
 
         with self.assertRaises(KubernetesManifestValidationError):
-            self.validator.validate(service_manifest, kind='deployment', version='1.14.0',
-                                    file_path='service/manifest', target_name='example')
+            self.validator.validate([manifest_path], kind='deployment', version='1.14.0')
 
     def test_validate_command_pass(self):
         sys.argv = ['kapitan', 'validate', '--schemas-path', self.cache_dir]
         try:
             main()
-        except KubernetesManifestValidationError:
+        except SystemExit:
             self.fail("Kubernetes manifest validation error raised unexpectedly")
 
     def test_validate_command_fail(self):
