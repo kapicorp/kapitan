@@ -496,11 +496,12 @@ def schema_validate_compiled(targets, compiled_path, inventory_path, schema_cach
     validates compiled output according to schemas specified in the inventory
     """
     if not os.path.isdir(compiled_path):
-        raise KapitanError("compiled-path {} not found".format(compiled_path))
+        logger.error("compiled-path {} not found".format(compiled_path))
+        sys.exit(1)
 
     if not os.path.isdir(schema_cache_path):
         os.makedirs(schema_cache_path)
-        logger.info("created schema-cache-path {}".format(schema_cache_path))
+        logger.info("created schema-cache-path at {}".format(schema_cache_path))
 
     worker = partial(schema_validate_kubernetes_output, cache_dir=schema_cache_path)
     pool = multiprocessing.Pool(parallel)
@@ -554,7 +555,7 @@ def create_validate_mapping(target_objs, compiled_path):
                     full_output_path = os.path.join(compiled_path, target_name, output_path)
                     if not os.path.isfile(full_output_path):
                         logger.warning("{} does not exist for target '{}'. skipping".
-                                       format(full_output_path, target_name))
+                                       format(output_path, target_name))
                         continue
                     validate_files_map[kind_version_pair].append(full_output_path)
             else:
@@ -571,6 +572,3 @@ def schema_validate_kubernetes_output(validate_data, cache_dir):
     """
     (kind, version), validate_files = validate_data
     KubernetesManifestValidator(cache_dir).validate(validate_files, kind=kind, version=version)
-
-
-

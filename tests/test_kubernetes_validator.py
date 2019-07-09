@@ -79,10 +79,11 @@ class KubernetesValidatorTest(unittest.TestCase):
         original_file = file_name_format.format('')
         copied_file = file_name_format.format('_copy')
         copyfile(original_file, copied_file)
+        wrong_manifest_kind = 'deployment'
         with open(original_file, 'r') as fp:
             d = yaml.safe_load(fp)
             # change kind from service to deployment
-            d['parameters']['kapitan']['validate'][0]['kind'] = 'deployment'
+            d['parameters']['kapitan']['validate'][0]['kind'] = wrong_manifest_kind
         with open(original_file, 'w') as fp:
             yaml.dump(d, fp, default_flow_style=False)
 
@@ -94,7 +95,7 @@ class KubernetesValidatorTest(unittest.TestCase):
                 # copy back the original file
                 copyfile(copied_file, original_file)
                 os.remove(copied_file)
-        self.assertTrue(' '.join(log.output).find('invalid manifest') != -1)
+        self.assertTrue(' '.join(log.output).find("invalid '{}' manifest".format(wrong_manifest_kind)) != -1)
 
     def test_validate_after_compile(self):
         sys.argv = ['kapitan', 'compile', '-t', 'minikube-mysql', '--validate', '--schemas-path', self.cache_dir]

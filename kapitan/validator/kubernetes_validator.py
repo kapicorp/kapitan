@@ -42,7 +42,7 @@ class KubernetesManifestValidator(Validator):
                 validate_instance = yaml.safe_load(fp.read())
                 errors = sorted(validator.iter_errors(validate_instance), key=lambda e: e.path)
                 if errors:
-                    error_message = 'invalid manifest for {}\n'.format(validate_path)
+                    error_message = "invalid '{}' manifest at {}\n".format(kind, validate_path)
                     error_message += '\n'.join(['{} {}'.format(list(error.path), error.message) for error in errors])
                     raise KubernetesManifestValidationError(error_message)
                 else:
