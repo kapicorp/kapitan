@@ -3,9 +3,10 @@ import os
 from kapitan.errors import HelmBindingUnavailableError, HelmTemplateError
 from kapitan.inputs.base import InputType, CompiledFile
 import tempfile
+import yaml
 
 try:
-    from kapitan.inputs.helm._template import ffi
+    from kapitan.inputs.helm.helm_binding import ffi
 except ImportError:
     pass # make this feature optional
 
@@ -15,6 +16,13 @@ logger = logging.getLogger(__name__)
 class Helm(InputType):
     def __init__(self, compile_path, search_paths, ref_controller):
         super().__init__("helm", compile_path, search_paths, ref_controller)
+        self.helm_values_file = None
+
+    def dump_helm_values(self, helm_values):
+        """dump helm values into a yaml file whose path will be passed over to Go helm code"""
+        _, self.helm_values_file = tempfile.mkstemp('.helm_values.yml', text=True)
+        with open(self.helm_values_file, 'w') as fp:
+            yaml.safe_dump(helm_values, fp)
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """
@@ -30,7 +38,7 @@ class Helm(InputType):
         temp_dir = tempfile.mkdtemp()
         os.makedirs(os.path.dirname(compile_path), exist_ok=True)
         # save the template output to temp dir first
-        error_message = render_chart(chart_dir=file_path, output_path=temp_dir)
+        error_message = render_chart(chart_dir=file_path, output_path=temp_dir, helm_values_file=self.helm_values_file)
         if error_message:
             raise HelmTemplateError(error_message)
 
@@ -43,21 +51,29 @@ class Helm(InputType):
                         fp.write(f.read())
                         logger.debug("Wrote file %s to %s", os.path.join(file_path, file), item_path)
 
+        self.helm_values_file = None  # reset this
+
     def default_output_type(self):
         return None
 
 
-def render_chart(chart_dir, output_path):
+def render_chart(chart_dir, output_path, **kwargs):
     """renders helm chart located at chart_dir, and stores the output to output_path"""
     try:
         # lib is opened inside the function to allow multiprocessing
-        lib = ffi.dlopen(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                      "libtemplate.so"))
-        char_dir_buf = ffi.new("char[]", chart_dir.encode('ascii'))
-        output_path_buf = ffi.new("char[]", output_path.encode('ascii'))
-        c_error_message = lib.renderChart(char_dir_buf, output_path_buf)
-        error_message = ffi.string(c_error_message) # this creates a copy as bytes
-        lib.free(c_error_message) # free the char* returned by go
-        return error_message.decode("utf-8")  # empty if no error
+        lib = ffi.dlopen(os.path.join(os.path.dirname(os.path.abspath(__file__)), "libtemplate.so"))
     except NameError:
         raise HelmBindingUnavailableError("Helm binding is not available. Run 'make build_helm_binding' to create it")
+
+    if kwargs.get('helm_values_file', None):
+        helm_values_file = ffi.new("char[]", kwargs['helm_values_file'].encode('ascii'))
+    else:
+        # the value in kwargs can be None
+        helm_values_file = ffi.new("char[]", "".encode('ascii'))
+
+    char_dir_buf = ffi.new("char[]", chart_dir.encode('ascii'))
+    output_path_buf = ffi.new("char[]", output_path.encode('ascii'))
+    c_error_message = lib.renderChart(char_dir_buf, output_path_buf, helm_values_file)
+    error_message = ffi.string(c_error_message)  # this creates a copy as bytes
+    lib.free(c_error_message)  # free the char* returned by go
+    return error_message.decode("utf-8")  # empty if no error

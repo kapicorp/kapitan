@@ -6,12 +6,12 @@ def main():
 
     # declare functions to export
     ffi.cdef("""
-        char* renderChart(char* p0, char* p1);
+        char* renderChart(char* p0, char* p1, char* p2);
         void free(void* ptr);
     """)
 
     ffi.set_source(
-        "_template", # specify name for importing this module
+        "helm_binding", # specify name for importing this module
         None
     )
 

@@ -19,13 +19,14 @@ import os
 import sys
 import unittest
 import tempfile
+import yaml
 
 from kapitan.cached import reset_cache
 from kapitan.cli import main
 
 helm_binding_exists = True
 try:
-    from kapitan.inputs.helm._template import ffi # this statement will raise ImportError if binding not available
+    from kapitan.inputs.helm.helm_binding import ffi # this statement will raise ImportError if binding not available
     from kapitan.inputs.helm import render_chart
 except ImportError:
     helm_binding_exists = False
@@ -33,14 +34,16 @@ except ImportError:
 
 @unittest.skipUnless(helm_binding_exists, "helm binding is not available")
 class HelmInputTest(unittest.TestCase):
+    def setUp(self):
+        os.chdir(os.path.join("tests", "test_resources"))
+
     def test_render_chart(self):
         temp_dir = tempfile.mkdtemp()
-        chart_path = "./tests/test_resources/charts/acs-engine-autoscaler"
+        chart_path = "charts/acs-engine-autoscaler"
         error_message = render_chart(chart_path, temp_dir)
-
+        self.assertFalse(error_message)
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "secrets.yaml")))
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "deployment.yaml")))
-        self.assertFalse(error_message)
 
     def test_error_invalid_char_dir(self):
         chart_path = "non-existent"
@@ -48,13 +51,25 @@ class HelmInputTest(unittest.TestCase):
         error_message = render_chart(chart_path, temp_dir)
         self.assertTrue("no such file or directory" in error_message)
 
-    def test_compile_helm_input(self):
-        cwd = os.getcwd()
-        os.chdir(os.path.join(cwd, "tests", "test_resources"))
+    def test_compile_without_helm_values(self):
         temp = tempfile.mkdtemp()
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "acs-engine-autoscaler", "nginx-ingress"]
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "acs-engine-autoscaler"]
         main()
-        os.chdir(cwd)
-        reset_cache()
-        self.assertTrue(os.path.isfile(os.path.join(temp, "compiled", "acs-engine-autoscaler", "chart", "acs", "secrets.yaml")))
+        self.assertTrue(os.path.isfile(
+            os.path.join(temp, "compiled", "acs-engine-autoscaler", "chart", "acs", "secrets.yaml")))
 
+    def test_compile_with_helm_values(self):
+        temp = tempfile.mkdtemp()
+        print(temp)
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx-ingress"]
+        main()
+        controller_deployment_file = os.path.join(temp, "compiled", "nginx-ingress", "chart", "controller-deployment.yaml")
+        self.assertTrue(os.path.isfile(controller_deployment_file))
+        with open(controller_deployment_file, 'r') as fp:
+            manifest = yaml.safe_load(fp.read())
+            name = manifest['metadata']['name']
+            self.assertEqual(name, '-nginx-ingress-my-controller')
+
+    def tearDown(self):
+        os.chdir('../../')
+        reset_cache()

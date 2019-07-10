@@ -8,7 +8,3 @@ parameters:
         input_type: helm
         input_paths:
           - charts/acs-engine-autoscaler
-      - output_path: chart/jenkins
-        input_type: helm
-        input_paths:
-          - charts/jenkins

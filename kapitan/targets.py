@@ -313,6 +313,8 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
         elif input_type == "kadet":
             input_compiler = kadet_compiler
         elif input_type == "helm":
+            if 'helm_values' in comp_obj:
+                helm_compiler.dump_helm_values(comp_obj['helm_values'])
             input_compiler = helm_compiler
         else:
             err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet"
@@ -346,6 +348,7 @@ def valid_target_obj(target_obj):
                         "input_type": {"type": "string"},
                         "output_path": {"type": "string"},
                         "output_type": {"type": "string"},
+                        "helm_values": {"type": "object"}
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,

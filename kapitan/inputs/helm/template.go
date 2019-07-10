@@ -151,11 +151,15 @@ func generateName(nameTemplate string) (string, error) {
 }
 
 //export renderChart
-func renderChart(c_chartpath, c_outputDir *C.char) *C.char {
+func renderChart(c_chartpath, c_outputDir, c_valueFile *C.char) *C.char {
 	chartPath := C.GoString(c_chartpath)
 	outputDir := C.GoString(c_outputDir)
+	valueFile := C.GoString(c_valueFile)
 	// values in YAML file
 	var valueFiles []string
+	if valueFile != "" {
+		valueFiles = append(valueFiles, valueFile)
+	}
 	var values []string
 	// to force string values
 	var stringValues []string
