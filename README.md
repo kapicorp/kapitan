@@ -296,7 +296,7 @@ positional arguments:
     lint                linter for inventory and secrets
     init                initialize a directory with the recommended kapitan
                         project skeleton.
-    validate            validates the compile output against schemas as
+    validate            validate the compile output against schemas as
                         specified in inventory
 
 optional arguments:
@@ -643,7 +643,7 @@ $ kapitan searchvar parameters.elasticsearch.replicas
 
 Validates the schema of compiled output (currently supports Kubernetes manifests).
 
-Refer to the `minikube-es` inventory in [kapitan inventory](#kapitan-inventory). To validate the schema of the compiled StatefulSet manifest at `compiled/minikube-es/manifests/es-client.yml` (created by `components/elasticsearch/maiin.jsonnet`), add `kapitan.validate` parameters in `minikube-es` inventory.
+Refer to the `minikube-es` inventory in [kapitan inventory](#kapitan-inventory). To validate the schema of the compiled StatefulSet manifest at `compiled/minikube-es/manifests/es-client.yml` (created by `components/elasticsearch/main.jsonnet`), add `kapitan.validate` parameters in `minikube-es` inventory.
 
 ```yaml
 kapitan:

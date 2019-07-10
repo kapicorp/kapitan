@@ -96,8 +96,8 @@ def main():
                                 help='fetches external dependencies', action='store_true',
                                 default=from_dot_kapitan('compile', 'fetch', False))
     compile_parser.add_argument('--validate',
-                                help='validates compile output against schemas as specified in inventory', action='store_true',
-                                default=from_dot_kapitan('compile', 'validate', False))
+                                help='validate compile output against schemas as specified in inventory',
+                                action='store_true', default=from_dot_kapitan('compile', 'validate', False))
     compile_parser.add_argument('--targets', '-t', help='targets to compile, default is all',
                                 type=str, nargs='+',
                                 default=from_dot_kapitan('compile', 'targets', []),
