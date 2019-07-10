@@ -15,7 +15,7 @@
 # limitations under the License.
 
 "kapitan targets"
-
+import json
 import logging
 import os
 import shutil
@@ -420,7 +420,11 @@ def valid_target_obj(target_obj):
         "required": ["compile"],
     }
 
-    return jsonschema.validate(target_obj, schema, format_checker=jsonschema.FormatChecker())
+    try:
+        jsonschema.validate(target_obj, schema, format_checker=jsonschema.FormatChecker())
+    except jsonschema.exceptions.ValidationError as e:
+        raise InventoryError('Invalid inventory structure\n\nError: {}\nOn instance:\n{}'.
+                             format(e.message, json.dumps(e.instance, indent=2, sort_keys=False)))
 
 
 def validate_matching_target_name(target_filename, target_obj, inventory_path):
