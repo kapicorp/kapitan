@@ -101,7 +101,7 @@ class KubernetesValidatorTest(unittest.TestCase):
         sys.argv = ['kapitan', 'compile', '-t', 'minikube-mysql', '--validate', '--schemas-path', self.cache_dir]
         try:
             main()
-        except KubernetesManifestValidationError:
+        except SystemExit:
             self.fail("Kubernetes manifest validation error raised unexpectedly")
 
     def tearDown(self):
