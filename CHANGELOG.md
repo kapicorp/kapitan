@@ -1,3 +1,9 @@
+## 0.24.0-rc.2:
+- Make boto3 requirement more flexible (#320)
+- Add kubernetes manifest validation (#317)
+- Improve json schema validation error display for inventory (#318) 
+- Multi-document yaml outputs (#308)
+
 ## 0.24.0-rc.1:
 - Add external dependency management (#304)
 
