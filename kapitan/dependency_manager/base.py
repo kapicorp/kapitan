@@ -12,6 +12,7 @@ from zipfile import ZipFile
 from git import Repo
 
 from kapitan.errors import GitSubdirNotFoundError
+from kapitan.utils import make_request
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +135,9 @@ def fetch_http_dependency(dep_mapping, save_dir):
 
 def fetch_http_source(source, save_dir):
     """downloads a http[s] file from source and saves into save_dir"""
-    content, content_type = _make_request(source)
+    logger.info("Dependency {} : fetching now".format(source))
+    content, content_type = make_request(source)
+    logger.info("Dependency {} : successfully fetched".format(source))
     if content is not None:
         basename = os.path.basename(source)
         # to avoid collisions between basename(source)
@@ -146,15 +149,3 @@ def fetch_http_source(source, save_dir):
     else:
         logger.warning("Dependency {} : failed to fetch".format(source))
         return None
-
-
-def _make_request(source):
-    """downloads the http file at source and returns it's content"""
-    logger.info("Dependency {} : fetching now".format(source))
-    r = requests.get(source)
-    if r.ok:
-        logger.info("Dependency {} : successfully fetched".format(source))
-        return r.content, r.headers['Content-Type']
-    else:
-        r.raise_for_status()
-    return None, None

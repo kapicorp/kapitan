@@ -58,3 +58,13 @@ class RefHashMismatchError(KapitanError):
 class GitSubdirNotFoundError(KapitanError):
     """git dependency subdir not found error"""
     pass
+
+
+class RequestUnsuccessfulError(KapitanError):
+    """request error"""
+    pass
+
+
+class KubernetesManifestValidationError(KapitanError):
+    """kubernetes manifest schema validation error"""
+    pass
