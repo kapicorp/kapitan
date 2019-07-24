@@ -16,6 +16,7 @@
 
 import base64
 import contextlib
+from distutils import dir_util
 import io
 import os
 import tempfile
@@ -245,7 +246,8 @@ class BinaryTest(unittest.TestCase):
 
 
 class TestTerraformCompile(unittest.TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         os.chdir(os.getcwd() + '/examples/terraform/')
 
     def test_cli_terraform_compile(self):
@@ -261,10 +263,11 @@ class TestTerraformCompile(unittest.TestCase):
         compile_path = tempfile.mkdtemp()
         argv = ["kapitan", "compile"]
         sys.argv = argv
-        main()
+        with contextlib.redirect_stdout(io.StringIO()):
+            main()
         argv[0] = '../../' + BINARY_PATH
         argv.extend(["--output-path", compile_path])
-        subprocess.run(argv)
+        subprocess.run(argv, stdout=subprocess.DEVNULL)
         main_compiled_dir_hash = directory_hash(os.getcwd() + '/compiled')
         binary_compiled_dir_hash = directory_hash(compile_path + '/compiled')
         self.assertEqual(main_compiled_dir_hash, binary_compiled_dir_hash)
@@ -287,10 +290,11 @@ class TestKubernetesCompile(unittest.TestCase):
         compile_path = tempfile.mkdtemp()
         argv = ["kapitan", "compile"]
         sys.argv = argv
-        main()
+        with contextlib.redirect_stdout(io.StringIO()):
+            main()
         argv[0] = '../../' + BINARY_PATH
         argv.extend(["--output-path", compile_path])
-        subprocess.run(argv)
+        subprocess.run(argv, stdout=subprocess.DEVNULL)
         main_compiled_dir_hash = directory_hash(os.getcwd() + '/compiled')
         binary_compiled_dir_hash = directory_hash(compile_path + '/compiled')
         self.assertEqual(main_compiled_dir_hash, binary_compiled_dir_hash)
@@ -299,3 +303,16 @@ class TestKubernetesCompile(unittest.TestCase):
     def tearDownClass(cls):
         os.chdir(os.getcwd() + '/../../')
         reset_cache()
+
+
+class TestDependencyManager(unittest.TestCase):
+    def test_compile_fetch(self):
+        temp = tempfile.mkdtemp()
+        dir_util.copy_tree('tests/test_resources', temp)
+        argv = [os.path.join(os.getcwd(), BINARY_PATH), "compile", "--fetch",
+                "--output-path", temp, "-t", "nginx", "nginx-dev", "-p", "4"]
+        subprocess.run(argv, cwd=temp, stdout=subprocess.DEVNULL)
+        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler-0.1.0")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "kapitan-repository")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
