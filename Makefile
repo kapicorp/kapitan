@@ -43,3 +43,7 @@ codestyle:
 	# ignores line length and reclass related errors
 	flake8 --ignore E501 . --exclude=reclass
 	@echo
+
+.PHONY: build-binary
+build-binary:
+	./build-binary.sh
