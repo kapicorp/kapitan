@@ -1,7 +1,7 @@
 ## 0.24.0-rc.2:
 - Make boto3 requirement more flexible (#320)
 - Add kubernetes manifest validation (#317)
-- Improve json schema validation error display for inventory (#318) 
+- Improve json schema validation error display for inventory (#318)
 - Multi-document yaml outputs (#308)
 
 ## 0.24.0-rc.1:
@@ -13,7 +13,6 @@
 - Upgrade to jsonnet 0.13.0 (#309)
 - Add kapp and kbld to kapitan-ci (#314)
 - Implement secret sub-variables (#282)
-
 
 ## 0.23.1:
 - Fix pypi package by including requirements.txt (#287)
