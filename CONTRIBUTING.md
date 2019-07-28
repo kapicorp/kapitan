@@ -18,14 +18,14 @@ There are multiple solutions:
 - [virtualenv](https://virtualenv.pypa.io/en/latest/)
 - [venv](https://docs.python.org/3/library/venv.html)
 
-Once you done it, please install all Kapitan's dependencies:
+Once you've done it, please install all Kapitan's dependencies:
 
 ```shell
 pip3 install -r requirements.txt
 ```
 
-Because we are using pinned version of reclass which is added as a submodule into Kapitan's
-repository, you need to pull it separately by executing below command:
+Because we are using a pinned version of reclass which is added as a submodule into Kapitan's
+repository, you need to pull it separately by executing the command below:
 
 ```shell
 git submodule update --init
