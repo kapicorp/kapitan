@@ -71,7 +71,6 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_with_helm_params(self):
         temp = tempfile.mkdtemp()
-        print(temp)
         sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx-ingress-helm-params"]
         with open('inventory/targets/nginx-ingress-helm-params.yml', 'r') as fp:
             manifest = yaml.safe_load(fp.read())
