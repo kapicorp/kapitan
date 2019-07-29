@@ -1,0 +1,81 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  annotations: {}
+  labels:
+    name: example-mysql
+  name: example-mysql
+  namespace: minikube-mysql
+spec:
+  replicas: 1
+  serviceName: example-mysql
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        name: example-mysql
+    spec:
+      containers:
+        - args: []
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: MYSQL_ROOT_PASSWORD
+                  name: example-mysql
+          image: mysql:latest
+          imagePullPolicy: Always
+          name: mysql
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts: []
+      imagePullSecrets: []
+      initContainers: []
+      volumes: []
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        annotations:
+          volume.beta.kubernetes.io/storage-class: standard
+        labels:
+          name: data
+        name: data
+        namespace: minikube-mysql
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10G
+---
+apiVersion: v1
+data:
+  MYSQL_ROOT_PASSWORD: ?{gpg:targets/minikube-mysql/mysql/password:ec3d54de}
+  MYSQL_ROOT_PASSWORD_SHA256: ?{gpg:targets/minikube-mysql/mysql/password_sha256:122d2732}
+kind: Secret
+metadata:
+  annotations: {}
+  labels:
+    name: example-mysql
+  name: example-mysql
+  namespace: minikube-mysql
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: example-mysql
+  name: example-mysql
+  namespace: minikube-mysql
+spec:
+  clusterIP: None
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+  selector:
+    name: example-mysql
+  type: ClusterIP

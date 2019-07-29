@@ -1,3 +1,19 @@
+## 0.24.0-rc.2:
+- Make boto3 requirement more flexible (#320)
+- Add kubernetes manifest validation (#317)
+- Improve json schema validation error display for inventory (#318)
+- Multi-document yaml outputs (#308)
+
+## 0.24.0-rc.1:
+- Add external dependency management (#304)
+
+## 0.24.0-rc.0:
+- Fix bug in resources.py when passing config to reclass (#296)
+- Fix requests version to circumvent urllib3 version conflict (#300)
+- Upgrade to jsonnet 0.13.0 (#309)
+- Add kapp and kbld to kapitan-ci (#314)
+- Implement secret sub-variables (#282)
+
 ## 0.23.1:
 - Fix pypi package by including requirements.txt (#287)
 - Make jsonnet & kadet support plain text output_type (#288)
