@@ -332,9 +332,11 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
         elif input_type == "helm":
             if 'helm_values' in comp_obj:
                 helm_compiler.dump_helm_values(comp_obj['helm_values'])
+            if 'helm_params' in comp_obj:
+                helm_compiler.set_helm_params(comp_obj['helm_params'])
             input_compiler = helm_compiler
         else:
-            err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet"
+            err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet, helm"
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)
@@ -365,7 +367,16 @@ def valid_target_obj(target_obj):
                         "input_type": {"type": "string"},
                         "output_path": {"type": "string"},
                         "output_type": {"type": "string"},
-                        "helm_values": {"type": "object"}
+                        "helm_values": {"type": "object"},
+                        "helm_params": {
+                            "type": "object",
+                            "properties": {
+                                "namespace": {"type": "string"},
+                                "name_template": {"type": "string"},
+                                "release_name": {"type": "string"}
+                            },
+                            "additionalProperties": False
+                        }
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,

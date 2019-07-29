@@ -26,7 +26,7 @@ from kapitan.cli import main
 
 helm_binding_exists = True
 try:
-    from kapitan.inputs.helm.helm_binding import ffi # this statement will raise ImportError if binding not available
+    from kapitan.inputs.helm.helm_binding import ffi  # this statement will raise ImportError if binding not available
     from kapitan.inputs.helm import render_chart
 except ImportError:
     helm_binding_exists = False
@@ -60,7 +60,6 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_with_helm_values(self):
         temp = tempfile.mkdtemp()
-        print(temp)
         sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx-ingress"]
         main()
         controller_deployment_file = os.path.join(temp, "compiled", "nginx-ingress", "chart", "controller-deployment.yaml")
@@ -69,6 +68,28 @@ class HelmInputTest(unittest.TestCase):
             manifest = yaml.safe_load(fp.read())
             name = manifest['metadata']['name']
             self.assertEqual(name, '-nginx-ingress-my-controller')
+
+    def test_compile_with_helm_params(self):
+        temp = tempfile.mkdtemp()
+        print(temp)
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx-ingress-helm-params"]
+        with open('inventory/targets/nginx-ingress-helm-params.yml', 'r') as fp:
+            manifest = yaml.safe_load(fp.read())
+            helm_params = manifest['parameters']['kapitan']['compile'][0]['helm_params']
+            release_name = helm_params['release_name']
+            namespace = helm_params['namespace']
+
+        main()
+        controller_deployment_file = os.path.join(temp, "compiled", "nginx-ingress-helm-params",
+                                                  "chart", "controller-deployment.yaml")
+
+        self.assertTrue(os.path.isfile(controller_deployment_file))
+        with open(controller_deployment_file, 'r') as fp:
+            manifest = yaml.safe_load(fp.read())
+            container = manifest['spec']['template']['spec']['containers'][0]
+            property = container['args'][4]
+            self.assertEqual(property, '--configmap={}/{}'.format(namespace,
+                                                                  release_name + '-nginx-ingress-my-controller'))
 
     def tearDown(self):
         os.chdir('../../')

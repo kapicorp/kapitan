@@ -151,7 +151,7 @@ func generateName(nameTemplate string) (string, error) {
 }
 
 //export renderChart
-func renderChart(c_chartpath, c_outputDir, c_valueFile *C.char) *C.char {
+func renderChart(c_chartpath, c_outputDir, c_valueFile, c_namespace, c_releaseName, c_nameTemplate *C.char) *C.char {
 	chartPath := C.GoString(c_chartpath)
 	outputDir := C.GoString(c_outputDir)
 	valueFile := C.GoString(c_valueFile)
@@ -164,9 +164,9 @@ func renderChart(c_chartpath, c_outputDir, c_valueFile *C.char) *C.char {
 	// to force string values
 	var stringValues []string
 	var fileValues []string
-	nameTemplate := ""
-	releaseName := ""
-	namespace := "default"
+	nameTemplate := C.GoString(c_nameTemplate)
+	releaseName := C.GoString(c_releaseName) // will be overwritten by nameTemplate if set
+	namespace := C.GoString(c_namespace)
 	kubeVersion := defaultKubeVersion_c
 	// particular template files to render
 	var renderFiles []string
