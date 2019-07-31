@@ -181,7 +181,7 @@ def main():
                                 default=from_dot_kapitan('secrets', 'reveal', False))
     secrets_parser.add_argument('--file', '-f', help='read file or directory, set "-" for stdin',
                                 metavar='FILENAME')
-    secrets_parser.add_argument('--target-name', '-t', help='grab recipients from target name')
+    secrets_parser.add_argument('--target-name', '-t', help='grab parameters/recipients from target name')
     secrets_parser.add_argument('--inventory-path',
                                 default=from_dot_kapitan('secrets', 'inventory-path', './inventory'),
                                 help='set inventory path, default is "./inventory"')
@@ -192,7 +192,8 @@ def main():
     secrets_parser.add_argument('--key', '-K', help='set KMS key',
                                 default=from_dot_kapitan('secrets', 'key', ''),
                                 metavar='KEY')
-    secrets_parser.add_argument('--auth','-a', help='set authentication type for vault secret')
+    secrets_parser.add_argument('--auth','-a', help='set authentication type for vault secret',
+                                default=from_dot_kapitan('secrets','auth','token'))
     secrets_parser.add_argument('--secrets-path', help='set secrets path, default is "./secrets"',
                                 default=from_dot_kapitan('secrets', 'secrets-path', './secrets'))
     secrets_parser.add_argument('--verbose', '-v',

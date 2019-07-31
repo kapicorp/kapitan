@@ -19,15 +19,15 @@ The following variables need to be exported to the environment(depending on auth
 * VAULT_CAPATH: the path to a directory of PEM-encoded CA cert files to verify the Vault server TLS certificate  
 * VAULT_NAMESPACE: specify the Vault Namespace, if you have one  
   
-Considering a key-value pair like `my_key`:`my_secret` ( in our case let’s store `hello`:`batman` inside the vault ) in the path `secret/foo` on the vault server, to use this as a secret either follow:  
+Considering a key-value pair like `my_key`:`my_secret` ( in our case let’s store `hello`:`batman` inside the vault ) in the path `secret/foo` in a kv-v2(KV version 2) secret engine on the vault server, to use this as a secret either follow:  
   
 ```shell  
 $ echo “{'path':'secret/foo','key':'hello'}” > somefile.txt  
-$ kapitan secrets --write vault:path/to/secret_inside_kapitan --file somefile.txt --target dev-sea --auth userpass 
+$ kapitan secrets --write vault:path/to/secret_inside_kapitan --file somefile.txt --target dev-sea  
 ```  
 or in a single line  
 ```shell  
-$ echo “{'path':'secret/foo','key':'hello'}” | kapitan secrets --write vault:path/to/secret_inside_kapitan -t dev-sea -a userpass -f -  
+$ echo “{'path':'secret/foo','key':'hello'}” | kapitan secrets --write vault:path/to/secret_inside_kapitan -t dev-sea -f -  
 ```  
 The entire string __{'path':'secret/foo','key':'hello'}__ is base64 encoded and stored in the secret_inside_kapitan. Now secret_inside_kapitan contains the following  
   
@@ -47,8 +47,7 @@ type: vault
 ```  
   
 Encoding tells the type of data given to kapitan, if it is `original` then after decoding base64 we'll get the original secret and if it is `base64` then after decoding once we still have a base64 encoded secret and have to decode again.  
-Parameters in the secret file are collected from the inventory of the target we gave from CLI `--target dev-sea`. If target isn't provided then kapitan will identify the variables from the environment, but providing `auth`(authentication type like token,userpass,github,approle,ldap) is necessary from either CLI (`--auth`) or as a key inside target parameters like the one shown:  
-  
+Parameters in the secret file are collected from the inventory of the target we gave from CLI `--target dev-sea`. If target isn't provided then kapitan will identify the variables from the environment, but providing `auth` is necessary from either CLI (`--auth`) or as a key inside target parameters like the one shown:  
 ```yaml  
 parameters:
   kapitan:
@@ -63,26 +62,25 @@ parameters:
         client_key: /path/to/key
         client_cert: /path/to/cert
 ```
-  
-Almost all the environment variables can be defined in kapitan inventory except the token, password, secret_id, etc. Environment like `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID` and `VAULT_SECRET_ID` need to be defined depending on the authentication type.   
-We can use the secret whenever necessary like `?{vault:path/to/secret_inside_kapitan}`.  
+Almost all the environment variables can be defined in kapitan inventory except the token, password, secret_id, etc. Environment like `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID` 
+This makes the secret_inside_kapitan file accessible throughout the inventory, where we can use the secret whenever necessary like `?{vault:path/to/secret_inside_kapitan}`  
   
 Following is the example file having a secret and pointing to the vault `?{vault:path/to/secret_inside_kapitan}`  
   
 ```yaml    
-parameters:
-  releases:
-    cod: latest
-  cod:
-	image: alledm/cod:${cod:release}
-	release: ${releases:cod}
-	replicas: ${replicas}
-	args:
-	- --verbose=${verbose}
-    - --password=?{vault:path/to/secret_inside_kapitan}
+parameters:  
+  releases:  
+	cod: latest  
+  cod:  
+	image: alledm/cod:${cod:release}  
+	release: ${releases:cod}  
+	replicas: ${replicas}  
+	args:  
+      - --verbose=${verbose}  
+      - --password=?{vault:path/to/secret_inside_kapitan}
 ```  
   
-when `?{vault:path/to/secret_inside_kapitan}` is compiled, it will look same with an 8 character prefix of sha256 sum of the content of file(path/to/secret_inside_kapitan) added in the end to make sure secret file wasn't changed since compile like:  
+when `?{vault:path/to/secret_inside_kapitan}` is compiled, it will look same with an 8 character prefix of sha256 hash added at the end like:  
 ```yaml  
 kind: Deployment
 metadata:

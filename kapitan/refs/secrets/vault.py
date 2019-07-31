@@ -56,8 +56,11 @@ def get_env(parameter):
     if parameter.get('auth','token') in ['token','github']:
         env['token'] = getenv('VAULT_TOKEN')
         if not env['token']:
-            with open(join(expanduser('~'),'.vault-token'),'r') as f:
-                env['token'] = f.read()
+            try:
+                with open(join(expanduser('~'),'.vault-token'),'r') as f:
+                    env['token'] = f.read()
+            except IOError:
+                VaultError("Cannot read file ~/.vault-token")
     # VERIFY VAULT SERVER TLS CERTIFICATE
     skip_verify = get_variable('skip_verify')
     if skip_verify.lower() == 'false':
@@ -73,13 +76,22 @@ def get_env(parameter):
     else:
         env['verify'] = False
     # CLIENT CERTIFICATE FOR TLS AUTHENTICATION
-    client_key,client_cert = get_variable('client_key'), get_variable('client_cert') 
+    client_key = get_variable('client_key')
+    client_cert = get_variable('client_cert') 
     if client_key != '' and client_cert != '':
         env['cert'] = (client_cert,client_key)
     return env
 
 def vault_obj(vault_parameters):
     """
+    vault_parameters: necessary parameters to authenticate & get value from vault, provided by inventory
+    e.g.:
+        addr: http://127.0.0.1:8200
+        auth: userpass
+        client_cert: /path/to/cert
+        client_key: /path/to/key
+        namespace: CICD-alpha
+        skip_verify: false
     Authenticate client to server and return client object
     """
     env = get_env(vault_parameters)
@@ -153,7 +165,7 @@ class VaultSecret(Ref):
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
-        return super().from_path(ref_full_path, encrypt=False)
+        return super().from_path(ref_full_path)
 
     def reveal(self):
         """
@@ -184,36 +196,34 @@ class VaultSecret(Ref):
         try:
             client = vault_obj(self.parameter)
             data = safe_load(data)
+            return_data = ''
             if self.parameter.get('engine') == 'kv':
                 response = client.secrets.kv.v1.read_secret(path=data['path'],
                                                             mount_point=self.parameter.get('mount','secret'))
+                return_data = response['data'][data['key']]
             else:
                 response = client.secrets.kv.v2.read_secret_version(path=data['path'],
                                                                     mount_point=self.parameter.get('mount','secret'))
+                return_data = response['data']['data'][data['key']]
             client.adapter.close()
         except Forbidden:
-            exit(
+            VaultError(
                 'Permission Denied. '+
                 'make sure the token is authorised to access {path} on Vault'.format(
                     path=data['path']
                 )
             )
-        except VaultError as e:
-            halt('Vault Error: '+e.message)
         except InvalidPath:
-            exit(
+            VaultError(
                 '{path} does not exist on Vault secret'.format(path=data['path'])
             )
 
-        if data['key'] in response['data']:
-            return response['data'][data['key']]
-        elif data['key'] in response['data']['data']:
-            return response['data']['data'][data['key']]
-        else:
-            exit(
+        if return_data is '':
+            VaultError(
                 "'{key}' doesn't exist on '{path}'".format(key=data['key'],
                                                            path=data['path'])
             )
+        return return_data
 
     def dump(self):
         """
