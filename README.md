@@ -15,7 +15,7 @@ Use Kapitan to manage your Kubernetes manifests, your documentation, your Terraf
 
 How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](#faq)!
 
-<img src="./docs/kapitan_logo.png" width="250">
+<img src="./docs/images/kapitan_logo.png" width="250">
 
 # Table of Contents
 
@@ -96,7 +96,7 @@ These targets generate the following resources:
 * Scripts to configure kubectl context to control the targets and helpers to apply/delete objects.
 * Documentation
 
-![demo](./docs/demo.gif)
+![demo](./docs/images/demo.gif)
 
 ```shell
 $ cd examples/kubernetes
@@ -108,7 +108,7 @@ Compiled minikube-es
 
 # Main concepts
 
-<img src="./docs/kapitan_overview.png" width="600">
+<img src="./docs/images/kapitan_overview.png" width="600">
 
 ### Components
 
