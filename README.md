@@ -23,9 +23,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 * [Quickstart](#quickstart)
 * [Example](#example)
 * [Main concepts](#main-concepts)
-* [Typical folder structure](#typical-folder-structure)
-* [Usage](#usage)
-* [Modes of operation](#modes-of-operation)
+* [Documentation](#documentation)
 * [Kapitan feature proposals](#kapitan-feature-proposals)
 * [Contributing](#contributing)
 * [Credits](#credits)
@@ -108,229 +106,23 @@ Compiled minikube-es
 
 <img src="./docs/images/kapitan_overview.png" width="600">
 
-### Components
-
-A component is an application that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (StatefulSet, Services, ConfigMaps) defined in jsonnet or kadet.
-It may also include scripts, config files and dynamically generated documentation defined using Jinja templates.
-
 ### Inventory
 
-This is a hierarchical database of variables that are passed to the targets during compilation.
+Inventory is a hierarchical database of variables, defined in yaml files, that are passed to the targets during compilation. This will be explained in detail in the [inventory](docs/inventory.md) section of the documentation.
 
-By default, Kapitan will look for an `inventory/` directory to render the inventory from.
+### Components
 
-There are 2 types of objects inside the inventory:
+Components will receive the inventory values for each individual target, and gets rendered and saved into the `compiled` directory. 
 
-#### Inventory Classes
+For example, a component could be an application that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (StatefulSet, Services, ConfigMaps) defined in jsonnet or kadet. 
 
-Classes define variables that are shared across many targets. You can have for example a `component.elasticsearch` class with all the default values for targets using elasticsearch. Or a `production` or `dev` class to enable / disable certain features based on the type of target.
+It may also include scripts, config files and dynamically generated documentation defined using Jinja templates.
 
-For example, the snippet below, taken from the example `elasticsearch` class, declares
-what parameters are needed for the elasticsearch component:
+The available component/template types and how to use them is discussed in the [compile operation](docs/compile.md) section of the documentation.
 
-```
-$ cat inventory/classes/component/elasticsearch.yml
-parameters:
-  elasticsearch:
-    image: "quay.io/pires/docker-elasticsearch-kubernetes:5.5.0"
-    java_opts: "-Xms512m -Xmx512m"
-    replicas: 1
-    masters: 1
-    roles:
-      master:
-        image: ${elasticsearch:image}
-        java_opts: ${elasticsearch:java_opts}
-        replicas: ${elasticsearch:replicas}
-        masters: ${elasticsearch:masters}
-      data:
-        image: ${elasticsearch:image}
-        java_opts: ${elasticsearch:java_opts}
-        replicas: ${elasticsearch:replicas}
-        masters: ${elasticsearch:masters}
-      client:
-        image: ${elasticsearch:image}
-        java_opts: ${elasticsearch:java_opts}
-        replicas: ${elasticsearch:replicas}
-        masters: ${elasticsearch:masters}
-      ingest:
-        image: ${elasticsearch:image}
-        java_opts: ${elasticsearch:java_opts}
-        replicas: ${elasticsearch:replicas}
-        masters: ${elasticsearch:masters}
-```
+# Documentation
 
-#### Inventory Targets
-
-A target usually represents a single namespace in a kubernetes cluster and defines all components, scripts and documentation that will be generated for that target.
-
-Inside the inventory target files you can include classes and define new values or override any values inherited from the included classes.
-For example:
-
-```
-$ cat inventory/targets/minikube-es.yml
-classes:
-  - common
-  - cluster.minikube
-  - component.elasticsearch
-
-parameters:
-  target_name: minikube-es
-
-  elasticsearch:
-    replicas: 2
-```
-
-Targets can also be defined inside the `inventory`.
-
-# Typical folder structure
-
-```
-.
-├── components
-│   ├── elasticsearch
-│   │   ├── configmap.jsonnet
-│   │   ├── deployment.jsonnet
-│   │   ├── main.jsonnet
-│   │   └── service.jsonnet
-│   └── nginx
-│       ├── configmap.jsonnet
-│       ├── deployment.jsonnet
-│       ├── main.jsonnet
-│       ├── nginx.conf.j2
-│       └── service.jsonnet
-├── inventory
-│   ├── classes
-│   │   ├── cluster
-│   │   │   ├── cluster1.yml
-│   │   │   └── cluster2.yml
-│   │   ├── component
-│   │   │   ├── elasticsearch.yml
-│   │   │   ├── nginx.yml
-│   │   │   └── zookeeper.yml
-│   │   └── environment
-│   │       ├── dev.yml
-│   │       └── prod.yml
-│   └── targets
-│       ├── dev-cluster1-elasticsearch.yml
-│       ├── prod-cluster1-elasticsearch.yml
-│       └── prod-cluster2-frontend.yml
-├── secrets
-│   ├── targets
-│   │   ├── prod-cluster1-elasticsearch
-│   │   │   └── password
-│   ├── common
-│   │   └── example-com-tls.key
-├── lib
-    ├── kapitan.libjsonnet
-    └── kube.libjsonnet
-```
-
-# Usage
-
-Use `kapitan init --directory <directory>` to populate a new
-directory with the recommended kapitan folder structure in new projects.
-
-For other available options use:
-
-```
-$ kapitan -h
-usage: kapitan [-h] [--version]
-               {eval,compile,inventory,searchvar,secrets,lint} ...
-
-Generic templated configuration management for Kubernetes, Terraform and other
-things
-
-positional arguments:
-  {eval,compile,inventory,searchvar,secrets,lint,init,validate}
-                        commands
-    eval                evaluate jsonnet file
-    compile             compile targets
-    inventory           show inventory
-    searchvar           show all inventory files where var is declared
-    secrets             manage secrets
-    lint                linter for inventory and secrets
-    init                initialize a directory with the recommended kapitan
-                        project skeleton.
-    validate            validate the compile output against schemas as
-                        specified in inventory
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --version             show program's version number and exit
-
-```
-
-Additional parameters are available for each positional argument. For example:
-
-```
-$ kapitan compile -h
-usage: kapitan compile [-h] [--search-paths JPATH [JPATH ...]] [--verbose]
-                       [--prune] [--quiet] [--output-path PATH]
-                       [--targets TARGET [TARGET ...]] [--parallelism INT]
-                       [--indent INT] [--secrets-path SECRETS_PATH] [--reveal]
-                       [--inventory-path INVENTORY_PATH] [--cache]
-                       [--cache-paths PATH [PATH ...]]
-                       [--ignore-version-check]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --search-paths JPATH [JPATH ...], -J JPATH [JPATH ...]
-                        set search paths, default is ["."]
-  --jinja2-filters FPATH, -J2F FPATH
-                        load custom jinja2 filters from any file, default is
-                        to put them inside lib/jinja2_filters.py
-  --verbose, -v         set verbose mode
-  --prune               prune jsonnet output
-  --quiet               set quiet mode, only critical output
-  --output-path PATH    set output path, default is "."
-  --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
-                        targets to compile, default is all
-  --parallelism INT, -p INT
-                        Number of concurrent compile processes, default is 4
-  --indent INT, -i INT  Indentation spaces for YAML/JSON, default is 2
-  --secrets-path SECRETS_PATH
-                        set secrets path, default is "./secrets"
-  --reveal              reveal secrets (warning: this will write sensitive
-                        data)
-  --inventory-path INVENTORY_PATH
-                        set inventory path, default is "./inventory"
-  --cache, -c           enable compilation caching to .kapitan_cache, default
-                        is False
-  --cache-paths PATH [PATH ...]
-                        cache additional paths to .kapitan_cache, default is
-                        []
-  --ignore-version-check
-                        ignore the version from .kapitan
-```
-
-These parameters can also be defined in a local `.kapitan` file, for example:
-
-```shell
-$ cat .kapitan
-
-compile:
-  indent: 4
-  parallelism: 8
-```
-
-This is equivalent to running:
-
-```shell
-kapitan compile --indent 4 --parallelism 8
-```
-
-To enforce the kapitan version used for compilation (for consistency and safety), you can add `version` to `.kapitan`:
-
-```shell
-$ cat .kapitan
-version: 0.21.0
-```
-
-Or to skip all minor version checks:
-```shell
-$ cat .kapitan
-version: 0.21
-```
+See [docs/](docs/).
 
 # Kapitan feature proposals
 
@@ -384,33 +176,4 @@ We believe that these approaches can be blended in a powerful new way, glued tog
 * [sublime-jsonnet-syntax](https://github.com/gburiola/sublime-jsonnet-syntax) - Jsonnet syntax highlighting for Sublime Text
 * [language-jsonnet](https://github.com/google/language-jsonnet) - Jsonnet syntax highlighting for Atom
 * [vim-jsonnet](https://github.com/google/vim-jsonnet) - Jsonnet plugin for Vim (requires a vim plugin manager)
-
-
-
-
-
-o setup GPG for the kubernetes examples you can run:
-
-```shell
-gpg --import examples/kubernetes/secrets/example\@kapitan.dev.pub
-gpg --import examples/kubernetes/secrets/example\@kapitan.dev.key
-```
-
-And to trust the GPG example key:
-
-```shell
-gpg --edit-key example@kapitan.dev
-gpg> trust
-Please decide how far you trust this user to correctly verify other users' keys
-(by looking at passports, checking fingerprints from different sources, etc.)
-1 = I don't know or won't say
-2 = I do NOT trust
-3 = I trust marginally
-4 = I trust fully
-5 = I trust ultimately
-m = back to the main menu
-Your decision? 5
-Do you really want to set this key to ultimate trust? (y/N) y
-gpg> quit
-```
 

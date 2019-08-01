@@ -6,7 +6,7 @@ Inventory is a hierarchical database of variables that are passed to the targets
 
 By default, Kapitan will look for an `inventory/` directory to render the inventory from.
 
-There are 2 types of objects inside the inventory; [inventory classes](#Inventory-Classes) and [inventory targets](#Inventory-Targets). 
+There are 2 types of objects inside the inventory; [inventory classes](#inventory-classes) and [inventory targets](#inventory-targets). 
 
 #### Inventory Classes
 
@@ -138,7 +138,7 @@ Values under `parameters.kapitan`, such as `parameters.kapitan.vars` as mentione
 - `kapitan.validate` items which indicate which compiled output to validate
 - `kapitan.vars` which are also passed down to jsonnet and jinja2 templates as contexts
 
-### Commands
+### Useful commands
 
 #### kapitan inventory
 

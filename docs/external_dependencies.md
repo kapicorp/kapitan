@@ -2,8 +2,8 @@
 
 Kapitan is capable of fetching components stored in remote locations. This feature can be used by specifying those dependencies in the inventory under `parameters.kapitan.dependencies`. Supported types are:
 
-- [git types](git-types)
-- [http[s] types](Http[s]-types)
+- [git type](#git-type)
+- [http type](#http-type)
 
 Some use cases of this feature may include:
 
@@ -30,7 +30,7 @@ $ kapitan compile --fetch
 
 This will download the dependencies and store them at their respective `output_path`. Dependencies whose `output_path` already exists will be skipped.
 
-### Git types
+### Git type
 
 Git types can fetch external dependencies available at `git://` URL. This is useful for fetching repositories or their sub-directories.
 
@@ -49,7 +49,7 @@ parameters:
       ref: tag, commit, branch etc. (optional)
 ```
 
-### Http[s] types
+### Http type
 
 Http[s] types can fetch external dependencies available at `http://` or `https://` URL. 
 

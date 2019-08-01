@@ -8,9 +8,11 @@ Welcome to kapitan documentation!
 
 #### Getting Started
 
-- [Introduction to inventory](#inventory.md)
+- [Kapitan Overview](kapitan_overview.md)
 
-- [Available Input types](#input_types.md)
+
+- [Understanding inventory](inventory.md)
+- [Compile operation](compile.md)
 
 
 
@@ -20,13 +22,12 @@ Welcome to kapitan documentation!
 
 - [Manifest validation](validate.md)
 
-- [Fetching external dependencies](external_dependencies.md)
+- [External dependencies management](external_dependencies.md)
 
 
+#### Miscellaneous
 
-#### Miscellaneous topics
-
-[Continuous Integration](CI.md)
-
-[Set-up kapitan on older Python systems](pyenv-scl.md)
+- [Usage](usage.md)
+- [Continuous Integration](CI.md)
+- [Set up kapitan on older Python systems](pyenv-scl.md)
 

@@ -1,0 +1,14 @@
+# dependencies:
+# pip install mkdocs mkdocs-material
+site_name: Kapitan documentation
+theme: material
+nav:
+- Home: README.md
+- Getting started:
+  - Kapitan Overview: kapitan_overview.md
+  - Inventory: inventory.md
+  - Compile: compile.md
+- Advanced features:
+  - Secret management: secrets.md
+  - Manifest validation: validate.md
+  - External dependency management: external_dependencies.md
