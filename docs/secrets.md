@@ -1,6 +1,6 @@
 ## Kapitan secrets
 
-Kapitan can manage secrets with the following services:
+Kapitan can manage secrets with the following key management services:
 
 - GPG
 - Google Cloud KMS (beta)
@@ -87,7 +87,7 @@ The usual flow of creating and using an encrypted secret with kapitan is:
    $ kapitan secrets --reveal -f path/to/rendered/template
    ```
 
-   For example, assume that there is a file called `compiled/minikube-mysql/manifests/mysql_secret.yml` with the following content:
+   For example, `compiled/minikube-mysql/manifests/mysql_secret.yml` with the following content:
 
    ```yaml
    apiVersion: v1
@@ -104,17 +104,17 @@ The usual flow of creating and using an encrypted secret with kapitan is:
    type: Opaque
    ```
 
-   Running:
+   can be revealed as follows:
 
    ```
    $ kapitan secrets --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
    ```
 
-   will substitute the referenced secrets with the actual decrypted secrets stored at the referenced paths and display the file content.
+   This will substitute the referenced secrets with the actual decrypted secrets stored at the referenced paths and display the file content.
 
 ### Secret sub-variables
 
-As illustrated above, one file corresponds to one secret. It is now possible for users who would like to reduce the decryption overhead to manually create a yaml file that contains multiple secrets, each of which can be referenced by its key. For example, consider the secret file `secrets/mysql_secrets`:
+As illustrated above, one file corresponds to one secret. It is now possible for users who would like to reduce the decryption overhead to manually create a yaml file that contains multiple secrets, each of which can be referenced by its object key. For example, consider the secret file `secrets/mysql_secrets`:
 
 ```yaml
 mysql_passwords:
@@ -122,7 +122,7 @@ mysql_passwords:
 	secret_bar: 54321password
 ```
 
-This can be manually encrypted:
+This can be manually encrypted by:
 
 ```
 $ kapitan secrets --write gpg:components/secrets/mysql_secrets -t prod -f secrets/mysql_secrets
@@ -130,5 +130,4 @@ $ kapitan secrets --write gpg:components/secrets/mysql_secrets -t prod -f secret
 
 To reference `secret_foo`inside this file, you can specify it in the inventory as follows:
 
-`${gpg:components/secrets/mysql_secrets@mysql_passwords.secret_foo}`
-
+`secret_foo: ${gpg:components/secrets/mysql_secrets@mysql_passwords.secret_foo}`

@@ -2,7 +2,7 @@
 
 Kapitan supports the following input template types:
 
-- [jinja2][#jinja2]
+- [jinja2](#jinja2)
 - [jsonnet](#jsonnet)
 - [kadet](#kadet) (alpha)
 - [helm](#helm) (optional)
@@ -24,38 +24,68 @@ parameters:
       output_type: <output_type> 
 ```
 
-
-
 ## jinja2
 
 This can render any files with jinja2 template.
 
 For Jinja2, input paths can be either a file or a directory: in case of directory, all the templates in the directory will be rendered and outputted to output_path.
 
-**Supported output types:** N/A (no need to specify this parameter)
+**Supported output types:** N/A (no need to specify `output_path`)
 
+#### Using the inventory in jinja2
 
+Jinja2 types will pass the "inventory" and whatever target vars as context keys in your template.
+
+This snippet renders the same java_opts for the elasticsearch data role:
+
+```jinja2
+java_opts for elasticsearch data role are: {{ inventory.parameters.elasticsearch.roles.data.java_opts }}
+```
+
+#### Jinja2 custom filters
+
+We support the following custom filters for use in Jinja2 templates:
+
+```
+sha256 - SHA256 hashing of text e.g. {{ text | sha256 }}
+yaml - Dump text as YAML e.g. {{ text | yaml }}
+b64encode - base64 encode text e.g. {{ text | b64encode }}
+b64decode - base64 decode text e.g. {{ text | b64decode }}
+fileglob - return list of matched regular files for glob e.g. {{ ./path/file* | fileglob }}
+bool - return the bool for value e.g. {{ yes | bool }}
+to_datetime - return datetime object for string e.g. {{ "2019-03-07 13:37:00" | to_datetime }}
+strftime - return current date string for format e.g. {{ "%a, %d %b %Y %H:%M" | strftime }}
+regex_replace - perform a re.sub returning a string e.g. {{ hello world | regex_replace(pattern="world", replacement="kapitan") }}
+regex_escape - escape all regular expressions special characters from string e.g. {{ "+s[a-z].*" | regex_escape }}
+regex_search - perform re.search and return the list of matches or a backref e.g. {{ hello world | regex_search("world.*") }}
+regex_findall - perform re.findall and return the list of matches as array e.g. {{ hello world | regex_findall("world.*") }}
+ternary - value ? true_val : false_val e.g. {{ condition | ternary("yes", "no") }}
+shuffle - randomly shuffle elements of a list {{ [1, 2, 3, 4, 5] | shuffle }}
+```
+
+You can also provide path to your custom filter modules in CLI. By default, you can put your filters in `lib/jinja2_filters.py` and they will automatically get loaded.
 
 ## jsonnet
 
-Jsonnet is a superset of json format. Typical jsonnet files as kapitan input would start as follows:
+Jsonnet is a superset of json format. 
+
+Note that unlike jinja2 templates, one jsonnet template can output multiple files (one per object declared in the file).
+
+**Supported output types:**
+
+- yaml (default)
+- json
+
+#### Using the inventory in jsonnet
+
+Typical jsonnet files would start as follows:
 
 ```
 local kap = import "lib/kapitan.libjsonnet";
 local inventory = kap.inventory();
 ```
 
-The first line is required to access the kapitan inventory values. In addition,  importing `kapitan.libjsonnet` makes available the following native_callback functions gluing reclass to jsonnet (amongst others):
-
-```
-yaml_load - returns a json string of the specified yaml file
-yaml_dump - returns a string yaml from a json string
-file_read - reads the file specified
-jinja2_render_file - renders the jinja2 file with context specified
-sha256_string - returns sha256 of string
-gzip_b64 - returns base64 encoded gzip of obj
-inventory - returns a dictionary with the inventory for target
-```
+The first line is required to access the kapitan inventory values. 
 
 On the second line, `inventory()` callback is used to initialise a local variable through which inventory values for this target can be referenced. For example, the script below
 
@@ -70,29 +100,46 @@ local inventory = kap.inventory();
 
 imports the inventory for the target you're compiling and returns the java_opts for the elasticsearch data role. 
 
-Note that unlike jinja2 templates, one jsonnet template can output multiple files (one per object declared in the file).
+#### Callback functions
+
+In addition, importing `kapitan.libjsonnet` makes available the following native_callback functions gluing reclass to jsonnet (amongst others):
+
+```
+yaml_load - returns a json string of the specified yaml file
+yaml_dump - returns a string yaml from a json string
+file_read - reads the file specified
+jinja2_template - renders the jinja2 file with context specified
+sha256_string - returns sha256 of string
+gzip_b64 - returns base64 encoded gzip of obj
+inventory - returns a dictionary with the inventory for target
+```
+
+##### Jinja2 jsonnet templating
+
+The following jsonnet snippet renders the jinja2 template in `templates/got.j2`:
+
+```
+local kap = import "lib/kapitan.libjsonnet";
+
+{
+    "jon_snow": kap.jinja2_template("templates/got.j2", { is_dead: false }),
+}
+```
+
+It's up to you to decide what the output is.
+
+## kadet
+
+This input type is experimental. See <https://github.com/deepmind/kapitan/pull/190> for its usage.
 
 **Supported output types:**
 
 - yaml (default)
 - json
-
-
-
-## kadet (experimental)
-
-See <https://github.com/deepmind/kapitan/pull/190> for its usage.
-
-**Supported output types:**
-
-- yaml (default)
-- json
-
-
 
 ## helm
 
-This is a binding to `helm template` command for users with helm charts. This input type can be made available by building the binding via `make build_helm_binding`. Unlike any other input types, Helm input types support the following parameters under `kapitan.compile`:
+This is a Python binding to `helm template` command for users with helm charts. This input type can be made available by building the binding with `$ make build_helm_binding`. Unlike any other input types, Helm input types support the following additional parameters under `kapitan.compile`:
 
 ```yaml
 parameters:
@@ -114,11 +161,21 @@ parameters:
 
 `helm_params` correspond to the options for `helm template` as follows:
 
-- namespace: equivalent of `--namespace` option
+- namespace: equivalent of `--namespace` option: note that due to the restriction on `helm template` command, specifying the namespace does not automatically add `metadata.namespace` property to the resources. Therefore, users are encourage to explicitly specify:
+
+  ```yaml
+  metadata:
+  	namespace: {{ .Release.Namespace }} # or any other custom values
+  ```
+
+  in all the manifest templates.
+
 - name_template: equivalent of `--name-template` option
 
 - release_name: equivalent of `--name` option
 
 See the [helm doc](<https://helm.sh/docs/helm/#helm-template>) for further detail.
+
+Currently, we do not support helm sub-charts.
 
 **Supported output types**: N/A (no need to specify this parameter)
