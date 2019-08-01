@@ -26,6 +26,7 @@ import os
 import sys
 
 import yaml
+from kapitan import cached
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.initialiser import initialise_skeleton
 from kapitan.lint import start_lint
@@ -36,7 +37,7 @@ from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.resources import (inventory_reclass, resource_callbacks,
                                search_imports)
 from kapitan.targets import compile_targets, schema_validate_compiled
-from kapitan.inputs.jinja2_filters import default_jinja2_filters_path
+from kapitan.inputs.jinja2_filters import DEFAULT_JINJA2_FILTERS_PATH
 from kapitan.utils import (PrettyDumper, check_version, deep_get, fatal_error,
                            flatten_dict, from_dot_kapitan, jsonnet_file,
                            search_target_token_paths, searchvar)
@@ -75,7 +76,7 @@ def main():
                                 help='set search paths, default is ["."]')
     compile_parser.add_argument('--jinja2-filters', '-J2F', type=str,
                                 default=from_dot_kapitan('compile', 'jinja2-filters',
-                                default_jinja2_filters_path),
+                                                         DEFAULT_JINJA2_FILTERS_PATH),
                                 metavar='FPATH',
                                 help='load custom jinja2 filters from any file, default is to put\
                                 them inside lib/jinja2_filters.py')
@@ -231,12 +232,15 @@ def main():
                              default=from_dot_kapitan('lint', 'inventory-path', './inventory'),
                              help='set inventory path, default is "./inventory"')
 
-    init_parser = subparser.add_parser('init', help='initialize a directory with the recommended kapitan project skeleton.')
+    init_parser = subparser.add_parser('init',
+                                       help='initialize a directory with the recommended kapitan project skeleton.')
     init_parser.add_argument('--directory',
                              default=from_dot_kapitan('init', 'directory', '.'),
-                             help='set path, in which to generate the project skeleton, assumes directory already exists. default is "./"')
+                             help='set path, in which to generate the project skeleton,'
+                             'assumes directory already exists. default is "./"')
 
-    validate_parser = subparser.add_parser('validate', help='validates the compile output against schemas as specified in inventory')
+    validate_parser = subparser.add_parser('validate',
+                                           help='validates the compile output against schemas as specified in inventory')
     validate_parser.add_argument('--compiled-path',
                                  default=from_dot_kapitan('compile', 'compiled-path', './compiled'),
                                  help='set compiled path, default is "./compiled')
@@ -244,16 +248,16 @@ def main():
                                  default=from_dot_kapitan('compile', 'inventory-path', './inventory'),
                                  help='set inventory path, default is "./inventory"')
     validate_parser.add_argument('--targets', '-t', help='targets to validate, default is all',
-                                type=str, nargs='+',
-                                default=from_dot_kapitan('compile', 'targets', []),
-                                metavar='TARGET'),
+                                 type=str, nargs='+',
+                                 default=from_dot_kapitan('compile', 'targets', []),
+                                 metavar='TARGET'),
     validate_parser.add_argument('--schemas-path',
                                  default=from_dot_kapitan('validate', 'schemas-path', './schemas'),
                                  help='set schema cache path, default is "./schemas"')
     validate_parser.add_argument('--parallelism', '-p', type=int,
-                                default=from_dot_kapitan('validate', 'parallelism', 4),
-                                metavar='INT',
-                                help='Number of concurrent validate processes, default is 4')
+                                 default=from_dot_kapitan('validate', 'parallelism', 4),
+                                 metavar='INT',
+                                 help='Number of concurrent validate processes, default is 4')
     args = parser.parse_args()
 
     logger.debug('Running with args: %s', args)
@@ -263,6 +267,9 @@ def main():
     except IndexError:
         parser.print_help()
         sys.exit(1)
+
+    # cache args where key is subcommand
+    cached.args[sys.argv[1]] = args
 
     if hasattr(args, 'verbose') and args.verbose:
         logging.basicConfig(level=logging.DEBUG,
@@ -299,6 +306,9 @@ def main():
             check_version()
 
         ref_controller = RefController(args.secrets_path)
+        # cache controller for use in reveal_maybe jinja2 filter
+        cached.ref_controller_obj = ref_controller
+        cached.revealer_obj = Revealer(ref_controller)
 
         compile_targets(args.inventory_path, search_paths, args.output_path,
                         args.parallelism, args.targets, ref_controller,

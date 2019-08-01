@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@]+)([\|\w\:\.\-\/]+)?=*})"
 REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
+
 class Ref(object):
     def __init__(self, data, from_base64=False, **kwargs):
         """
@@ -198,7 +199,8 @@ class Revealer(object):
             with open(filename) as fp:
                 obj = [o for o in yaml.load_all(fp, Loader=YamlLoader)]
                 rev_obj = self.reveal_obj(obj)
-                return yaml.dump_all(rev_obj, Dumper=PrettyDumper, default_flow_style=False, explicit_start=True), 'yaml'
+                return yaml.dump_all(rev_obj, Dumper=PrettyDumper, default_flow_style=False,
+                                     explicit_start=True), 'yaml'
         elif filename.endswith('.json'):
             logger.debug("Revealer: revealing json file: %s", filename)
             with open(filename) as fp:

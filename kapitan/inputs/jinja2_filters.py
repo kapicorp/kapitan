@@ -29,12 +29,12 @@ from random import Random, shuffle
 from importlib import util
 
 from kapitan.errors import CompileError
-from kapitan import utils
+from kapitan import utils, cached
 
 logger = logging.getLogger(__name__)
 
-#default path from where user defined custom filters are read
-default_jinja2_filters_path = os.path.join('lib', 'jinja2_filters.py')
+# default path from where user defined custom filters are read
+DEFAULT_JINJA2_FILTERS_PATH = os.path.join('lib', 'jinja2_filters.py')
 
 
 def load_jinja2_filters(env):
@@ -51,6 +51,7 @@ def load_jinja2_filters(env):
     env.filters['regex_escape'] = regex_escape
     env.filters['regex_search'] = regex_search
     env.filters['regex_findall'] = regex_findall
+    env.filters['reveal_maybe'] = reveal_maybe
     env.filters['ternary'] = ternary
     env.filters['shuffle'] = randomize_list
 
@@ -67,7 +68,7 @@ def load_module_from_path(env, path):
         custom_filter_spec.loader.exec_module(custom_filter_module)
         for function in dir(custom_filter_module):
             if isinstance(getattr(custom_filter_module, function),
-                                    types.FunctionType):
+                          types.FunctionType):
                 logger.debug("custom filter loaded from {}".format(path))
                 env.filters[function] = getattr(custom_filter_module, function)
     except Exception as e:
@@ -81,14 +82,21 @@ def load_jinja2_filters_from_file(env, jinja2_filters):
     else try to load module (which will throw error in case of non existence of file)
     """
     jinja2_filters = os.path.normpath(jinja2_filters)
-    if jinja2_filters == default_jinja2_filters_path:
+    if jinja2_filters == DEFAULT_JINJA2_FILTERS_PATH:
         if not os.path.isfile(jinja2_filters):
-            return 
-    
+            return
     load_module_from_path(env, jinja2_filters)
 
 
 # Custom filters
+def reveal_maybe(ref_tag):
+    "Will reveal ref_tag if valid and --reveal flag is used"
+    if cached.args['compile'].reveal:
+        return cached.revealer_obj.reveal_raw(ref_tag)
+    else:
+        return ref_tag
+
+
 def base64_encode(string):
     return base64.b64encode(string.encode("UTF-8")).decode("UTF-8")
 

@@ -457,6 +457,7 @@ regex_search - perform re.search and return the list of matches or a backref e.g
 regex_findall - perform re.findall and return the list of matches as array e.g. {{ hello world | regex_findall("world.*") }}
 ternary - value ? true_val : false_val e.g. {{ condition | ternary("yes", "no") }}
 shuffle - randomly shuffle elements of a list {{ [1, 2, 3, 4, 5] | shuffle }}
+reveal_maybe - reveal ref/secret tag only if `compile --reveal` flag is set e.g. {{ "?{ref:my_ref}" | reveal_maybe }}
 ```
 You can also provide path to your custom filter modules in CLI. By default you can put your filters in lib/jinja2_filters.py and they will automatically get loaded.
 
