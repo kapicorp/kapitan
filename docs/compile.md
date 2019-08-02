@@ -178,6 +178,12 @@ metadata:
 
 See the [helm doc](<https://helm.sh/docs/helm/#helm-template>) for further detail.
 
-Currently, we do not support helm sub-charts.
+##### Building the binding from source
+
+Run `$ make build_helm_binding` from project root. This requires Go >= 1.12.
+
+##### Helm subcharts
+
+This binding supports helm subcharts. However, since the [external dependency manager](external_dependencies.md) does not parse `requirements.yaml` in order to detect chart dependencies, you are required to manually download the entire chart including the parent charts.
 
 *Supported output types:* N/A (no need to specify this parameter)
