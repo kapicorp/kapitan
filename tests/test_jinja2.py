@@ -150,14 +150,14 @@ class Jinja2FiltersTest(unittest.TestCase):
             f.write("{{ my_ref_tag_var|reveal_maybe|b64encode }}".encode("UTF-8"))
             f.seek(0)
 
-            # new argparse namespace with --reveal and --secrets-path values
+            # new argparse namespace with --reveal and --refs-path values
             namespace = namedtuple('Namespace', [])
             namespace.reveal = True
-            namespace.secrets_path = tempfile.mkdtemp()
+            namespace.refs_path = tempfile.mkdtemp()
 
             # reveal_maybe uses cached, so inject namespace
             cached.args['compile'] = namespace
-            cached.ref_controller_obj = RefController(cached.args['compile'].secrets_path)
+            cached.ref_controller_obj = RefController(cached.args['compile'].refs_path)
             cached.revealer_obj = Revealer(cached.ref_controller_obj)
 
             ref_tag = '?{base64:some_value}'
@@ -178,11 +178,11 @@ class Jinja2FiltersTest(unittest.TestCase):
             # new argparse namespace with --reveal and --secrets-path values
             namespace = namedtuple('Namespace', [])
             namespace.reveal = False
-            namespace.secrets_path = tempfile.mkdtemp()
+            namespace.refs_path = tempfile.mkdtemp()
 
             # reveal_maybe uses cached, so inject namespace
             cached.args['compile'] = namespace
-            cached.ref_controller_obj = RefController(cached.args['compile'].secrets_path)
+            cached.ref_controller_obj = RefController(cached.args['compile'].refs_path)
             cached.revealer_obj = Revealer(cached.ref_controller_obj)
 
             ref_tag = '?{base64:some_value}'
@@ -202,11 +202,11 @@ class Jinja2FiltersTest(unittest.TestCase):
             # new argparse namespace with --reveal and --secrets-path values
             namespace = namedtuple('Namespace', [])
             namespace.reveal = True
-            namespace.secrets_path = tempfile.mkdtemp()
+            namespace.refs_path = tempfile.mkdtemp()
 
             # reveal_maybe uses cached, so inject namespace
             cached.args['compile'] = namespace
-            cached.ref_controller_obj = RefController(cached.args['compile'].secrets_path)
+            cached.ref_controller_obj = RefController(cached.args['compile'].refs_path)
             cached.revealer_obj = Revealer(cached.ref_controller_obj)
 
             var_value = 'heavy_rock!'
