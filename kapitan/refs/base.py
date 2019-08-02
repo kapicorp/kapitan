@@ -43,12 +43,69 @@ REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@]+)([\|\w\:\.\-\/]+)?=*})"
 REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
 
-class Base64Ref(object):
+class PlainRef(object):
+    def __init__(self, data, **kwargs):
+        """
+        writes plain data
+        """
+        self.type_name = 'plain'
+        self.encoding = kwargs.get('encoding', 'original')
+        self.data = data
+
+    def reveal(self):
+        return self.data
+
+    def compile(self):
+        return self.data
+
+    def __str__(self):
+        return "{}".format(self.__dict__)
+
+    @classmethod
+    def from_path(cls, ref_full_path, **kwargs):
+        """
+        return a new PlainRef from file at ref_full_path
+        """
+        try:
+            with open(ref_full_path) as fp:
+                obj = yaml.load(fp, Loader=YamlLoader)
+                _kwargs = {key: value for key, value in obj.items() if key not in ('data',)}
+                kwargs.update(_kwargs)
+                return cls(obj['data'], **kwargs)
+
+        except IOError as ex:
+            if ex.errno == errno.ENOENT:
+                return None
+
+    @classmethod
+    def from_params(cls, data, ref_params):
+        """
+        Return new PlainRef from data and ref_params
+        """
+        # default encoding to 'original'
+        # TODO encoding needs a better place other than kwargs
+        encoding = ref_params.kwargs.get('encoding', 'original')
+        if encoding == 'original':
+            return cls(data.encode(), **ref_params.kwargs)
+        elif encoding == 'base64':
+            # data already bytes encoded
+            return cls(data, **ref_params.kwargs)
+
+    def dump(self):
+        """
+        Returns dict with keys/values to be serialised.
+        """
+        return {"data": self.data.decode(), "encoding": self.encoding,
+                "type": self.type_name}
+
+
+class Base64Ref(PlainRef):
     def __init__(self, data, from_base64=False, **kwargs):
         """
         writes data
         set from_base64 to load already base64 encoded data
         """
+        super().__init__(data, **kwargs)
         self.type_name = 'base64'
         self.encoding = kwargs.get('encoding', 'original')
         # TODO data should be bytes only
@@ -64,9 +121,6 @@ class Base64Ref(object):
     def compile(self):
         # XXX will only work if object read via backend
         return "?{{{}:{}:{}}}".format(self.type_name, self.path, self.hash[:8])
-
-    def __str__(self):
-        return "{}".format(self.__dict__)
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -85,20 +139,6 @@ class Base64Ref(object):
             if ex.errno == errno.ENOENT:
                 return None
 
-    @classmethod
-    def from_params(cls, data, ref_params):
-        """
-        Return new Base64Ref from data and ref_params
-        """
-        # default encoding to 'original'
-        # TODO encoding needs a better place other than kwargs
-        encoding = ref_params.kwargs.get('encoding', 'original')
-        if encoding == 'original':
-            return cls(data.encode(), **ref_params.kwargs)
-        elif encoding == 'base64':
-            # data already bytes encoded
-            return cls(data, **ref_params.kwargs)
-
     def dump(self):
         """
         Returns dict with keys/values to be serialised.
@@ -114,12 +154,12 @@ class RefParams(object):
         self.kwargs = kwargs
 
 
-class Base64RefBackend(object):
-    def __init__(self, path, ref_type=Base64Ref):
-        "Get and create Refs"
+class PlainRefBackend(object):
+    def __init__(self, path, ref_type=PlainRef):
+        "Get and create PlainRefs"
         self.path = path
-        self.type_name = 'base64'
-        self.ref_type = ref_type  # Base64Ref type backend instance manages
+        self.type_name = 'plain'
+        self.ref_type = ref_type
 
     def __getitem__(self, ref_path):
         # remove the substring notation, if any
@@ -163,6 +203,12 @@ class Base64RefBackend(object):
                 yield (k, v)
             except KeyError:
                 pass
+
+
+class Base64RefBackend(PlainRefBackend):
+    def __init__(self, path, ref_type=Base64Ref):
+        super().__init__(path, ref_type)
+        self.type_name = 'base64'
 
 
 class Revealer(object):
@@ -374,7 +420,7 @@ class RefController(object):
 
     def register_backend(self, backend):
         "register backend type"
-        assert(isinstance(backend, Base64RefBackend))
+        assert(isinstance(backend, PlainRefBackend))
         self.backends[backend.type_name] = backend
 
     def _get_backend(self, type_name):
@@ -382,7 +428,10 @@ class RefController(object):
         try:
             return self.backends[type_name]
         except KeyError:
-            if type_name == 'base64':
+            if type_name == 'plain':
+                from kapitan.refs.base import PlainRefBackend
+                self.register_backend(PlainRefBackend(self.path))
+            elif type_name == 'base64':
                 from kapitan.refs.base import Base64RefBackend
                 self.register_backend(Base64RefBackend(self.path))
             elif type_name == 'gpg':

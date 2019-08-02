@@ -30,7 +30,7 @@ from kapitan import cached
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.initialiser import initialise_skeleton
 from kapitan.lint import start_lint
-from kapitan.refs.base import Base64Ref, RefController, Revealer
+from kapitan.refs.base import PlainRef, Base64Ref, RefController, Revealer
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
@@ -448,8 +448,20 @@ def ref_write(args, ref_controller):
         tag = '?{{base64:{}}}'.format(token_path)
         ref_controller[tag] = ref_obj
 
+    elif token_name.startswith("plain:"):
+        type_name, token_path = token_name.split(":")
+        _data = data.encode()
+        encoding = 'original'
+        if args.base64:
+            _data = base64.b64encode(_data).decode()
+            _data = _data.encode()
+            encoding = 'base64'
+        ref_obj = PlainRef(_data, encoding=encoding)
+        tag = '?{{plain:{}}}'.format(token_path)
+        ref_controller[tag] = ref_obj
+
     else:
-        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/base64:{name}".format(name=token_name))
+        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/base64/plain:{name}".format(name=token_name))
 
 
 def secret_update(args, ref_controller):
