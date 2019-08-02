@@ -345,7 +345,7 @@ def main():
 
     elif cmd == 'lint':
         start_lint(args.fail_on_warning, args.skip_class_checks, args.skip_yamllint, args.inventory_path,
-                   args.search_refs, args.refs_path, args.compiled_path)
+                   args.search_secrets, args.refs_path, args.compiled_path)
 
     elif cmd == 'init':
         initialise_skeleton(args.directory)
