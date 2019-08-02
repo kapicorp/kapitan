@@ -43,13 +43,13 @@ REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@]+)([\|\w\:\.\-\/]+)?=*})"
 REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
 
-class Ref(object):
+class Base64Ref(object):
     def __init__(self, data, from_base64=False, **kwargs):
         """
         writes data
         set from_base64 to load already base64 encoded data
         """
-        self.type_name = 'ref'
+        self.type_name = 'base64'
         self.encoding = kwargs.get('encoding', 'original')
         # TODO data should be bytes only
         if from_base64:
@@ -71,7 +71,7 @@ class Ref(object):
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
         """
-        return a new Ref from file at ref_full_path
+        return a new Base64Ref from file at ref_full_path
         the data key in the file must be base64 encoded
         """
         try:
@@ -88,7 +88,7 @@ class Ref(object):
     @classmethod
     def from_params(cls, data, ref_params):
         """
-        Return new Ref from data and ref_params
+        Return new Base64Ref from data and ref_params
         """
         # default encoding to 'original'
         # TODO encoding needs a better place other than kwargs
@@ -114,12 +114,12 @@ class RefParams(object):
         self.kwargs = kwargs
 
 
-class RefBackend(object):
-    def __init__(self, path, ref_type=Ref):
+class Base64RefBackend(object):
+    def __init__(self, path, ref_type=Base64Ref):
         "Get and create Refs"
         self.path = path
-        self.type_name = 'ref'
-        self.ref_type = ref_type  # Ref type backend instance manages
+        self.type_name = 'base64'
+        self.ref_type = ref_type  # Base64Ref type backend instance manages
 
     def __getitem__(self, ref_path):
         # remove the substring notation, if any
@@ -374,7 +374,7 @@ class RefController(object):
 
     def register_backend(self, backend):
         "register backend type"
-        assert(isinstance(backend, RefBackend))
+        assert(isinstance(backend, Base64RefBackend))
         self.backends[backend.type_name] = backend
 
     def _get_backend(self, type_name):
@@ -382,9 +382,9 @@ class RefController(object):
         try:
             return self.backends[type_name]
         except KeyError:
-            if type_name == 'ref':
-                from kapitan.refs.base import RefBackend
-                self.register_backend(RefBackend(self.path))
+            if type_name == 'base64':
+                from kapitan.refs.base import Base64RefBackend
+                self.register_backend(Base64RefBackend(self.path))
             elif type_name == 'gpg':
                 from kapitan.refs.secrets.gpg import GPGBackend
                 self.register_backend(GPGBackend(self.path))

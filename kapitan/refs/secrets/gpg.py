@@ -19,7 +19,7 @@ import gnupg
 import logging
 import time
 
-from kapitan.refs.base import Ref, RefBackend, RefError
+from kapitan.refs.base import Base64Ref, Base64RefBackend, RefError
 from kapitan import cached
 from kapitan.errors import KapitanError
 
@@ -46,7 +46,7 @@ def gpg_obj(*args, **kwargs):
     return cached.gpg_obj
 
 
-class GPGSecret(Ref):
+class GPGSecret(Base64Ref):
     def __init__(self, data, recipients, encrypt=True, encode_base64=False, **kwargs):
         """
         encrypts data for recipients
@@ -159,7 +159,7 @@ class GPGSecret(Ref):
                 "recipients": self.recipients, "type": self.type_name}
 
 
-class GPGBackend(RefBackend):
+class GPGBackend(Base64RefBackend):
     def __init__(self, path, ref_type=GPGSecret):
         "init GPGBackend ref backend type"
         super().__init__(path, ref_type)

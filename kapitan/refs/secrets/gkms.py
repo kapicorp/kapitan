@@ -19,7 +19,7 @@ import googleapiclient.discovery as gcloud
 import logging
 import warnings
 
-from kapitan.refs.base import Ref, RefBackend, RefError
+from kapitan.refs.base import Base64Ref, Base64RefBackend, RefError
 from kapitan import cached
 from kapitan.errors import KapitanError
 
@@ -44,7 +44,7 @@ def gkms_obj():
     return cached.gkms_obj
 
 
-class GoogleKMSSecret(Ref):
+class GoogleKMSSecret(Base64Ref):
     def __init__(self, data, key, encrypt=True, encode_base64=False, **kwargs):
         """
         encrypts data with key
@@ -170,7 +170,7 @@ class GoogleKMSSecret(Ref):
                 "key": self.key, "type": self.type_name}
 
 
-class GoogleKMSBackend(RefBackend):
+class GoogleKMSBackend(Base64RefBackend):
     def __init__(self, path, ref_type=GoogleKMSSecret):
         "init GoogleKMSBackend ref backend type"
         super().__init__(path, ref_type)

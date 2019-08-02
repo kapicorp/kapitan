@@ -23,7 +23,7 @@ import time
 from kapitan.utils import render_jinja2_file
 from kapitan.resources import inventory
 from kapitan.inputs.jinja2_filters import base64_encode
-from kapitan.refs.base import RefController, Ref, Revealer
+from kapitan.refs.base import RefController, Base64Ref, Revealer
 from kapitan import cached
 from collections import namedtuple
 
@@ -144,7 +144,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_reveal_maybe_b64encode_tag(self):
         """
-        creates ?{ref:some_value} and runs reveal_maybe|b64encode jinja2 filters
+        creates ?{base64:some_value} and runs reveal_maybe|b64encode jinja2 filters
         """
         with tempfile.NamedTemporaryFile() as f:
             f.write("{{ my_ref_tag_var|reveal_maybe|b64encode }}".encode("UTF-8"))
@@ -160,16 +160,16 @@ class Jinja2FiltersTest(unittest.TestCase):
             cached.ref_controller_obj = RefController(cached.args['compile'].secrets_path)
             cached.revealer_obj = Revealer(cached.ref_controller_obj)
 
-            ref_tag = '?{ref:some_value}'
+            ref_tag = '?{base64:some_value}'
             ref_value = b'sitar_rock!'
-            cached.ref_controller_obj[ref_tag] = Ref(ref_value)
+            cached.ref_controller_obj[ref_tag] = Base64Ref(ref_value)
             context = {"my_ref_tag_var": ref_tag}
             ref_value_b64 = base64.b64encode(ref_value).decode()
             self.assertEqual(render_jinja2_file(f.name, context), ref_value_b64)
 
     def test_reveal_maybe_tag_no_reveal_flag(self):
         """
-        creates ?{ref:some_value} and runs reveal_maybe jinja2 filters without --reveal flag
+        creates ?{base64:some_value} and runs reveal_maybe jinja2 filters without --reveal flag
         """
         with tempfile.NamedTemporaryFile() as f:
             f.write("{{ my_ref_tag_var|reveal_maybe }}".encode("UTF-8"))
@@ -185,11 +185,11 @@ class Jinja2FiltersTest(unittest.TestCase):
             cached.ref_controller_obj = RefController(cached.args['compile'].secrets_path)
             cached.revealer_obj = Revealer(cached.ref_controller_obj)
 
-            ref_tag = '?{ref:some_value}'
+            ref_tag = '?{base64:some_value}'
             ref_value = b'sitar_rock!'
-            cached.ref_controller_obj[ref_tag] = Ref(ref_value)
+            cached.ref_controller_obj[ref_tag] = Base64Ref(ref_value)
             context = {"my_ref_tag_var": ref_tag}
-            self.assertEqual(render_jinja2_file(f.name, context), '?{ref:some_value}')
+            self.assertEqual(render_jinja2_file(f.name, context), '?{base64:some_value}')
 
     def test_reveal_maybe_no_tag(self):
         """
