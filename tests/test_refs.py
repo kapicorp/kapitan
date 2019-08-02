@@ -22,7 +22,7 @@ import tempfile
 import unittest
 
 from kapitan.errors import RefFromFuncError, RefHashMismatchError, RefError
-from kapitan.refs.base import Base64Ref, RefController, RefParams, Revealer
+from kapitan.refs.base import PlainRef, Base64Ref, RefController, RefParams, Revealer
 from kapitan.utils import get_entropy
 
 REFS_HOME = tempfile.mkdtemp()
@@ -32,8 +32,23 @@ REVEALER = Revealer(REF_CONTROLLER)
 
 class Base64RefsTest(unittest.TestCase):
     "Test refs"
+    def test_plain_ref_compile(self):
+        "check plain ref compile() output is not hashed"
+        tag = '?{plain:my/ref1_plain}'
+        REF_CONTROLLER[tag] = PlainRef(b'ref plain data')
+        ref_obj = REF_CONTROLLER[tag]
+        compiled = ref_obj.compile()
+        self.assertEqual(compiled, 'ref plain data')
 
-    def test_ref_compile(self):
+    def test_plain_ref_reveal(self):
+        "check plain ref reveal() output is original plain data"
+        tag = '?{plain:my/ref2_plain}'
+        REF_CONTROLLER[tag] = PlainRef(b'ref 2 plain data')
+        ref_obj = REF_CONTROLLER[tag]
+        revealed = ref_obj.reveal()
+        self.assertEqual(revealed, 'ref 2 plain data')
+
+    def test_base64_ref_compile(self):
         "check ref compile() output is valid"
         tag = '?{base64:my/ref1}'
         REF_CONTROLLER[tag] = Base64Ref(b'ref 1 data')
@@ -41,14 +56,14 @@ class Base64RefsTest(unittest.TestCase):
         compiled = ref_obj.compile()
         self.assertEqual(compiled, '?{base64:my/ref1:3342a45c}')
 
-    def test_ref_recompile(self):
+    def test_base64_ref_recompile(self):
         "check ref recompile() output is valid"
         tag = '?{base64:my/ref1}'
         ref_obj = REF_CONTROLLER[tag]
         compiled = ref_obj.compile()
         self.assertEqual(compiled, '?{base64:my/ref1:3342a45c}')
 
-    def test_ref_update_compile(self):
+    def test_base64_ref_update_compile(self):
         "check ref update and compile() output is valid"
         tag = '?{base64:my/ref1}'
         REF_CONTROLLER[tag] = Base64Ref(b'ref 1 more data')
@@ -56,7 +71,7 @@ class Base64RefsTest(unittest.TestCase):
         compiled = ref_obj.compile()
         self.assertEqual(compiled, '?{base64:my/ref1:ed438a62}')
 
-    def test_ref_reveal(self):
+    def test_base64_ref_reveal(self):
         "check ref reveal() output is valid"
         tag = '?{base64:my/ref2}'
         REF_CONTROLLER[tag] = Base64Ref(b'ref 2 data')
@@ -64,19 +79,19 @@ class Base64RefsTest(unittest.TestCase):
         revealed = ref_obj.reveal()
         self.assertEqual(revealed, 'ref 2 data')
 
-    def test_ref_non_existent_raises_KeyError(self):
+    def test_base64_ref_non_existent_raises_KeyError(self):
         "check RefController raises KeyError for non existent Base64Ref"
         tag = '?{base64:non/existent}'
         with self.assertRaises(KeyError):
             REF_CONTROLLER[tag]
 
-    def test_ref_tag_type(self):
+    def test_base64_ref_tag_type(self):
         "check ref tag type is Base64Ref"
         tag = '?{base64:my/ref3}'
         tag_type = REF_CONTROLLER.tag_type(tag)
         self.assertEqual(tag_type, Base64Ref)
 
-    def test_ref_tag_type_name(self):
+    def test_base64_ref_tag_type_name(self):
         "check ref tag type name is ref"
         tag = '?{base64:my/ref4}'
         tag, token, func_str = REF_CONTROLLER.tag_params(tag)
@@ -86,7 +101,7 @@ class Base64RefsTest(unittest.TestCase):
         self.assertEqual(func_str, None)
         self.assertEqual(type_name, 'base64')
 
-    def test_ref_tag_func_name(self):
+    def test_base64_ref_tag_func_name(self):
         "check ref tag func name is correct"
         tag = '?{base64:my/ref5|randomstr}'
         tag, token, func_str = REF_CONTROLLER.tag_params(tag)
@@ -94,7 +109,7 @@ class Base64RefsTest(unittest.TestCase):
         self.assertEqual(token, 'base64:my/ref5')
         self.assertEqual(func_str, '|randomstr')
 
-    def test_ref_path(self):
+    def test_base64_ref_path(self):
         "check ref tag path is correct"
         tag = '?{base64:my/ref6}'
         tag, token, func_str = REF_CONTROLLER.tag_params(tag)
@@ -105,7 +120,7 @@ class Base64RefsTest(unittest.TestCase):
         ref_obj = REF_CONTROLLER[tag]
         self.assertEqual(ref_obj.path, 'my/ref6')
 
-    def test_ref_func_raise_RefFromFuncError(self):
+    def test_base64_ref_func_raise_RefFromFuncError(self):
         """
         check new ref tag with function raises RefFromFuncError
         and then creates it using RefParams()
@@ -119,14 +134,14 @@ class Base64RefsTest(unittest.TestCase):
             REF_CONTROLLER[tag] = RefParams()
         REF_CONTROLLER[tag]
 
-    def test_ref_revealer_reveal_raw_data_tag(self):
+    def test_base64_ref_revealer_reveal_raw_data_tag(self):
         "check Revealer reveals raw data"
         tag = '?{base64:my/ref2}'
         data = "data with {}, period.".format(tag)
         revealed_data = REVEALER.reveal_raw(data)
         self.assertEqual(revealed_data, 'data with ref 2 data, period.')
 
-    def test_ref_revealer_reveal_raw_data_tag_compiled_hash(self):
+    def test_base64_ref_revealer_reveal_raw_data_tag_compiled_hash(self):
         "check Revealer reveals raw data with compiled tag (with hash)"
         tag = '?{base64:my/ref2}'
         tag_compiled = REF_CONTROLLER[tag].compile()
@@ -134,7 +149,7 @@ class Base64RefsTest(unittest.TestCase):
         revealed_data = REVEALER.reveal_raw(data)
         self.assertEqual(revealed_data, 'data with ref 2 data, period.')
 
-    def test_ref_revealer_reveal_raw_data_tag_compiled_hash_mismatch(self):
+    def test_base64_ref_revealer_reveal_raw_data_tag_compiled_hash_mismatch(self):
         """
         check Revealer reveals raises RefHashMismatchError
         on mismatch compiled tag hashes
