@@ -142,7 +142,7 @@ This input type is experimental. See <https://github.com/deepmind/kapitan/pull/1
 
 #### helm
 
-This is a Python binding to `helm template` command for users with helm charts. This input type can be made available by building the binding with `$ make build_helm_binding`. Unlike any other input types, Helm input types support the following additional parameters under `kapitan.compile`:
+This is a Python binding to `helm template` command for users with helm charts. Unlike any other input types, Helm input types support the following additional parameters under `kapitan.compile`:
 
 ```yaml
 parameters:
@@ -180,7 +180,14 @@ See the [helm doc](<https://helm.sh/docs/helm/#helm-template>) for further detai
 
 ##### Building the binding from source
 
-Run `$ make build_helm_binding` from project root. This requires Go >= 1.12.
+Run 
+
+```shell
+cd kapitan/inputs/helm
+./build.sh
+```
+
+. This requires Go >= 1.12.
 
 ##### Helm subcharts
 
