@@ -24,11 +24,19 @@ before_install:
   - sudo apt-get install -y g++-4.9
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.9
   - sudo apt-get install -y gnupg2
+  - sudo apt-get install -y git
+  - sudo add-apt-repository ppa:longsleep/golang-backports -y
+  - sudo apt-get update
+  - sudo apt-get install -y golang-1.12
+  - export PATH="/usr/lib/go-1.12/bin:$PATH"
+  - export GOROOT=/usr/lib/go-1.12
+  - go version
 install:
   - pip3 install -r requirements.txt
   - pip3 install coverage
 
 script:
+  - make build_helm_binding
   - make test && make test_coverage
 
 after_success:

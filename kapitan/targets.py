@@ -37,6 +37,7 @@ from kapitan.errors import KapitanError, CompileError, InventoryError
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
+from kapitan.inputs.helm import Helm
 from kapitan import cached
 
 from reclass.errors import NotFoundError, ReclassException
@@ -54,7 +55,6 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
-
     updated_targets = targets
     # If --cache is set
     if kwargs.get('cache'):
@@ -311,7 +311,6 @@ def load_target_inventory(inventory_path, targets):
 def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
-
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
@@ -319,6 +318,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
     jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller)
     jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
     kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
+    helm_compiler = Helm(compile_path, search_paths, ref_controller)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
@@ -329,8 +329,14 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             input_compiler = jsonnet_compiler
         elif input_type == "kadet":
             input_compiler = kadet_compiler
+        elif input_type == "helm":
+            if 'helm_values' in comp_obj:
+                helm_compiler.dump_helm_values(comp_obj['helm_values'])
+            if 'helm_params' in comp_obj:
+                helm_compiler.set_helm_params(comp_obj['helm_params'])
+            input_compiler = helm_compiler
         else:
-            err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet"
+            err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet, helm"
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)
@@ -361,6 +367,16 @@ def valid_target_obj(target_obj):
                         "input_type": {"type": "string"},
                         "output_path": {"type": "string"},
                         "output_type": {"type": "string"},
+                        "helm_values": {"type": "object"},
+                        "helm_params": {
+                            "type": "object",
+                            "properties": {
+                                "namespace": {"type": "string"},
+                                "name_template": {"type": "string"},
+                                "release_name": {"type": "string"}
+                            },
+                            "additionalProperties": False
+                        }
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
@@ -378,8 +394,8 @@ def valid_target_obj(target_obj):
                         {
                             "properties": {
                                 "input_type": {
-                                    "enum": ["jinja2"]
-                                }
+                                    "enum": ["jinja2", "helm"]
+                                } 
                             }
                         }
                     ],

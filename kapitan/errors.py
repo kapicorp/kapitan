@@ -55,6 +55,15 @@ class RefHashMismatchError(KapitanError):
     pass
 
 
+class HelmBindingUnavailableError(KapitanError):
+    """helm input is used when the binding is not available"""
+    pass
+
+
+class HelmTemplateError(KapitanError):
+    pass
+
+
 class GitSubdirNotFoundError(KapitanError):
     """git dependency subdir not found error"""
     pass
