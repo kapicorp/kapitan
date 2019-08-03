@@ -10,7 +10,7 @@ Some use cases of this feature may include:
 - using templates/jsonnet libraries hosted remotely
 - using values in remote files via `file_read` jsonnet callback
 
-### Usage
+## Usage
 
 ```yaml
 parameters:
@@ -30,13 +30,13 @@ $ kapitan compile --fetch
 
 This will download the dependencies and store them at their respective `output_path`. Dependencies whose `output_path` already exists will be skipped.
 
-### Git type
+## Git type
 
 Git types can fetch external dependencies available at `git://` URL. This is useful for fetching repositories or their sub-directories.
 
 **Note**: git types require git binary available on your system. 
 
-#### Usage
+### Usage
 
 ```yaml
 parameters:
@@ -49,11 +49,11 @@ parameters:
       ref: tag, commit, branch etc. (optional)
 ```
 
-### Http type
+## HTTP type
 
-Http[s] types can fetch external dependencies available at `http://` or `https://` URL. 
+http[s] types can fetch external dependencies available at `http://` or `https://` URL. 
 
-#### Usage
+### Usage
 
 ```yaml
 parameters:
@@ -65,6 +65,16 @@ parameters:
       unpack: True | False
 ```
 
-`output_path` must fully specify the file name. 
+`output_path` must fully specify the file name. For example:
+
+```yaml
+parameters:
+  kapitan:
+    dependencies:
+    - type: https
+      output_path: foo.txt
+      source: https://example.com/foo.txt
+      unpack: True | False
+```
 
 Setting `unpack: True` will unpack zip or tar files onto the output_path.

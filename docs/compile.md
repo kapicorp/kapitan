@@ -1,8 +1,8 @@
-## Kapitan compile
+# Kapitan compile
 
 **Note:** make sure to read up on [inventory](inventory.md) before moving on.
 
-### Specifying inputs and outputs
+## Specifying inputs and outputs
 
 Input types can be specified in the inventory under `kapitan.compile` in the following format:
 
@@ -17,7 +17,7 @@ parameters:
       output_type: <output_type_specific_to_input_type>
 ```
 
-### Supported input types
+## Supported input types
 
 Kapitan supports the following input template types:
 
@@ -27,7 +27,7 @@ Kapitan supports the following input template types:
 - [helm](#helm) (optional)
 
 
-#### jinja
+### jinja
 
 This renders jinja2 templates, typically stored in `templates/` directory, such as README, scripts and config files. Refer to [jinja2 docs](http://jinja.palletsprojects.com/en/2.10.x/templates/) to understand how the template engine works.
 
@@ -35,7 +35,7 @@ For Jinja2, `input_paths` can be either a file or a directory: in case of a dire
 
 *Supported output types*: N/A (no need to specify `output_type`)
 
-##### Using the inventory in jinja2
+#### Using the inventory in jinja2
 
 Jinja2 types will pass the "inventory" and whatever target vars as context keys in your template.
 
@@ -45,7 +45,7 @@ This snippet renders the same java_opts for the elasticsearch data role:
 java_opts for elasticsearch data role are: {{ inventory.parameters.elasticsearch.roles.data.java_opts }}
 ```
 
-##### Jinja2 custom filters
+#### Jinja2 custom filters
 
 We support the following custom filters for use in Jinja2 templates:
 
@@ -68,9 +68,9 @@ shuffle - randomly shuffle elements of a list {{ [1, 2, 3, 4, 5] | shuffle }}
 
 You can also provide path to your custom filter modules in CLI. By default, you can put your filters in `lib/jinja2_filters.py` and they will automatically get loaded.
 
-#### jsonnet
+### jsonnet
 
-Jsonnet is a superset of json format that includes features such as conditionals, variables and imports. Refer to [jsonnet](https://jsonnet.org/learning/tutorial.html) docs to understand how it works.
+Jsonnet is a superset of json format that includes features such as conditionals, variables and imports. Refer to [jsonnet docs](https://jsonnet.org/learning/tutorial.html) to understand how it works.
 
 Note that unlike jinja2 templates, one jsonnet template can output multiple files (one per object declared in the file).
 
@@ -79,7 +79,7 @@ Note that unlike jinja2 templates, one jsonnet template can output multiple file
 - yaml (default)
 - json
 
-##### Using the inventory in jsonnet
+#### Using the inventory in jsonnet
 
 Typical jsonnet files would start as follows:
 
@@ -103,7 +103,7 @@ local inventory = kap.inventory();
 
 imports the inventory for the target you're compiling and returns the java_opts for the elasticsearch data role. 
 
-##### Callback functions
+#### Callback functions
 
 In addition, importing `kapitan.libjsonnet` makes available the following native_callback functions gluing reclass to jsonnet (amongst others):
 
@@ -117,7 +117,7 @@ gzip_b64 - returns base64 encoded gzip of obj
 inventory - returns a dictionary with the inventory for target
 ```
 
-###### Jinja2 jsonnet templating
+##### Jinja2 jsonnet templating
 
 The following jsonnet snippet renders the jinja2 template in `templates/got.j2`:
 
@@ -131,7 +131,7 @@ local kap = import "lib/kapitan.libjsonnet";
 
 It's up to you to decide what the output is.
 
-#### kadet
+### kadet
 
 This input type is experimental. See <https://github.com/deepmind/kapitan/pull/190> for its usage.
 
@@ -140,7 +140,7 @@ This input type is experimental. See <https://github.com/deepmind/kapitan/pull/1
 - yaml (default)
 - json
 
-#### helm
+### helm
 
 This is a Python binding to `helm template` command for users with helm charts. Unlike any other input types, Helm input types support the following additional parameters under `kapitan.compile`:
 
@@ -164,33 +164,31 @@ parameters:
 
 `helm_params` correspond to the options for `helm template` as follows:
 
-- namespace: equivalent of `--namespace` option: note that due to the restriction on `helm template` command, specifying the namespace does not automatically add `metadata.namespace` property to the resources. Therefore, users are encourage to explicitly specify:
+- namespace: equivalent of `--namespace` option: note that due to the restriction on `helm template` command, specifying the namespace does not automatically add `metadata.namespace` property to the resources. Therefore, users are encourage to explicitly specify in all resources:
 
-```yaml
-metadata:
-  namespace: {{ .Release.Namespace }} # or any other custom values
-```
-
-​	in all the manifest templates.
+    ```yaml
+    metadata:
+      namespace: {{ .Release.Namespace }} # or any other custom values
+    ```
 
 - name_template: equivalent of `--name-template` option
 - release_name: equivalent of `--name` option
 
-See the [helm doc](<https://helm.sh/docs/helm/#helm-template>) for further detail.
+See the [helm doc](https://helm.sh/docs/helm/#helm-template) for further detail.
 
-##### Building the binding from source
+#### Building the binding from source
 
-Run 
+Run
 
 ```shell
 cd kapitan/inputs/helm
 ./build.sh
 ```
 
-. This requires Go >= 1.12.
+This requires Go >= 1.12.
 
-##### Helm subcharts
+#### Helm subcharts
 
 This binding supports helm subcharts. However, since the [external dependency manager](external_dependencies.md) does not parse `requirements.yaml` in order to detect chart dependencies, you are required to manually download the entire chart including the parent charts.
 
-*Supported output types:* N/A (no need to specify this parameter)
+*Supported output types:* N/A (no need to specify `output_type`)

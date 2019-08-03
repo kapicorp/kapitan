@@ -2,9 +2,9 @@
 
 Validates the schema of compiled output. Validate options are specified in the inventory under `parameters.kapitan.validate`. Supported types are:
 
-- [kubernetes manifests](#Kubernetes-manife)
+- [kubernetes manifests](#kubernetes-manifests)
 
-### Usage
+## Usage
 
 1. Manually via command line after compile:
 
@@ -18,9 +18,9 @@ Validates the schema of compiled output. Validate options are specified in the i
    $ kapitan compile --validate
    ```
 
-### Kubernetes manifests
+## Kubernetes manifests
 
-#### Overview
+### Overview
 
 Kubernetes resources are identified by their `kind`. For example, they are:
 
@@ -39,7 +39,7 @@ validate:
   schemas-path: custom/schemas/cache/path
 ```
 
-#### Example
+### Example
 
 Refer to the `minikube-es` inventory in [kapitan inventory](#kapitan-inventory). To validate the schema of the compiled StatefulSet manifest at `compiled/minikube-es/manifests/es-client.yml` (created by `components/elasticsearch/main.jsonnet`), add `kapitan.validate` parameters in `minikube-es` inventory:
 
@@ -71,4 +71,3 @@ $ kapitan validate -t minikube-es
 invalid 'statefulset' manifest at ./compiled/minikube-es/manifests/es-client.yml
 ['spec'] 'selector' is a required property
 ```
-

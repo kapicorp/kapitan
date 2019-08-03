@@ -1,4 +1,4 @@
-## Kapitan secrets
+# Kapitan secrets
 
 Kapitan can manage secrets with the following key management services:
 
@@ -9,11 +9,16 @@ Kapitan can manage secrets with the following key management services:
 
 If you want to get started with secrets but don't have a GPG or KMS setup, you can also use the secret `ref` type. Note that `ref` is not encrypted and is intended for development purposes only. *Do not use ref secrets if you're storing sensitive information!*
 
-### Using secrets
+## Using secrets
 
 The usual flow of creating and using an encrypted secret with kapitan is:
 
-1. **Define your GPG recipients or KMS key in the inventory** under `parameters.kapitan.secrets`. Just like any other inventory parameters, this can be inherited from a common class or defined per target. For example, `common.yml` may contain:
+#### 1. Define your GPG recipients or KMS key 
+
+This is done in the inventory under `parameters.kapitan.secrets`. 
+
+Just like any other inventory parameters, this can be inherited from a common class or defined per target. For example, `common.yml` may contain:
+
 ```yaml
 parameters:
   kapitan:
@@ -31,15 +36,15 @@ parameters:
         key: 'alias/nameOfKey'
 ```
 
-1. **Create your secret**:
+#### 2. Create your secret
 
-- Manually via command line:
+##### Manually via command line:
 
-```
+```shell
 $ kapitan secrets --write <secret_type>:path/to/secret/file -t <target_name> -f <secret_file>
 ```
 
-where `<secret_type>` can be any of:
+​	where `<secret_type>` can be any of:
 
 - `ref`: ref type (not encrypted)
 - `gpg`: GPG
@@ -49,8 +54,9 @@ where `<secret_type>` can be any of:
 
 Kapitan will inherit the secrets configuration for the specified target, and encrypt and save your secret into `<path/to/secret/file>`.
 
-- **Automatically:**
-  When referencing your secret in the inventory during compile, you can use the following functions to automatically generate, encrypt and save your secret:
+##### Automatically
+
+When referencing your secret in the inventory during compile, you can use the following functions to automatically generate, encrypt and save your secret:
 
 ```
 randomstr - Generates a random string. You can optionally pass the length you want i.e. `|randomstr:32`
@@ -63,55 +69,55 @@ rsapublic - Derives an RSA public key from a revealed private key i.e. `|reveal:
 
 *Note*: If you use `|reveal:/path/secret`, when changing the `/path/secret` file make sure you also delete any secrets referencing `/path/secret` so kapitan can regenerate them.
 
-3. **Reference your secrets in your classes/targets **and run `kapitan compile`:
+#### 3. Reference your secrets in your classes/targets and run `kapitan compile`
 
-   Secrets can be referenced in the format `?{<secret_type>:path/to/secret/file}`.
+Secrets can be referenced in the format `?{<secret_type>:path/to/secret/file}`.
 
-   For example, assume for now that your GPG-encrypted secret is already stored in a file at `targets/secrets/mysql_password`. This can be referenced in the inventory in the following format:
+For example, assume for now that your GPG-encrypted secret is already stored in a file at `targets/secrets/mysql_password`. This can be referenced in the inventory in the following format:
 
-   ```yaml
-   users:
-     root:
-       # If 'secrets/targets/${target_name}/mysql/password' doesn't exist, we can automatically generate a random b64-encoded password as follows
-       password: ?{gpg:targets/${target_name}/mysql/password|randomstr|base64}
-   ```
+```yaml
+users:
+  root:
+    # If 'secrets/targets/${target_name}/mysql/password' doesn't exist, we can automatically generate a random b64-encoded password as follows
+    password: ?{gpg:targets/${target_name}/mysql/password|randomstr|base64}
+```
 
-   During compile, kapitan will search for the path `targets/${target_name}/mysql/password`. Should it not exist, then it will automatically generate a random base64 password and save it to that path.
+During compile, kapitan will search for the path `targets/${target_name}/mysql/password`. Should it not exist, then it will automatically generate a random base64 password and save it to that path.
 
-4. **Reveal and use the secrets**:
+#### 4. Reveal and use the secrets
 
-   You can reveal the secrets referenced in the outputs of `kapitan compile` via:
+You can reveal the secrets referenced in the outputs of `kapitan compile` via:
 
-   ```
-   $ kapitan secrets --reveal -f path/to/rendered/template
-   ```
+```
+$ kapitan secrets --reveal -f path/to/rendered/template
+```
 
-   For example, `compiled/minikube-mysql/manifests/mysql_secret.yml` with the following content:
+For example, `compiled/minikube-mysql/manifests/mysql_secret.yml` with the following content:
 
-   ```yaml
-   apiVersion: v1
-   data:
-     MYSQL_ROOT_PASSWORD: ?{gpg:targets/minikube-mysql/mysql/password:ec3d54de}
-     MYSQL_ROOT_PASSWORD_SHA256: ?{gpg:targets/minikube-mysql/mysql/password_sha256:122d2732}
-   kind: Secret
-   metadata:
-     annotations: {}
-     labels:
-       name: example-mysql
-     name: example-mysql
-     namespace: minikube-mysql
-   type: Opaque
-   ```
+```yaml
+apiVersion: v1
+data:
+  MYSQL_ROOT_PASSWORD: ?{gpg:targets/minikube-mysql/mysql/password:ec3d54de}
+  MYSQL_ROOT_PASSWORD_SHA256: ?{gpg:targets/minikube-mysql/mysql/password_sha256:122d2732}
+kind: Secret
+metadata:
+  annotations: {}
+  labels:
+    name: example-mysql
+  name: example-mysql
+  namespace: minikube-mysql
+type: Opaque
+```
 
-   can be revealed as follows:
+can be revealed as follows:
 
-   ```
-   $ kapitan secrets --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
-   ```
+```
+$ kapitan secrets --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
+```
 
-   This will substitute the referenced secrets with the actual decrypted secrets stored at the referenced paths and display the file content.
+This will substitute the referenced secrets with the actual decrypted secrets stored at the referenced paths and display the file content.
 
-### Secret sub-variables
+## Secret sub-variables
 
 As illustrated above, one file corresponds to one secret. It is now possible for users who would like to reduce the decryption overhead to manually create a yaml file that contains multiple secrets, each of which can be referenced by its object key. For example, consider the secret file `secrets/mysql_secrets`:
 

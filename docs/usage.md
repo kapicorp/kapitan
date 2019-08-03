@@ -1,4 +1,4 @@
-### Usage
+# Usage
 
 To see all the available commands, run:
 
@@ -73,7 +73,7 @@ optional arguments:
                         ignore the version from .kapitan
 ```
 
-#### Using `.kapitan` config file
+## Using `.kapitan` config file
 
 These parameters can also be defined in a local `.kapitan` file, for example:
 
