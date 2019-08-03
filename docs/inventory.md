@@ -1,6 +1,6 @@
-## Inventory
+# Inventory
 
-### Overview
+## Overview
 
 Inventory is a hierarchical database of variables that are passed to the targets during compilation.
 
@@ -8,7 +8,7 @@ By default, Kapitan will look for an `inventory/` directory to render the invent
 
 There are 2 types of objects inside the inventory; [inventory classes](#inventory-classes) and [inventory targets](#inventory-targets). 
 
-#### Inventory Classes
+### Inventory Classes
 
 Classes define variables that are shared across many targets. You can have, for example, a `component.elasticsearch` class with all the default values for targets using elasticsearch. Or a `production` or `dev` class to enable / disable certain features based on the type of target.
 
@@ -16,7 +16,7 @@ You can always override values further up the tree (i.e. in the inventory target
 
 Classifying almost anything will help you avoid repetition (DRY) and will force you to organise parameters hierarchically.
 
-##### Example: elasticsearch
+#### Example: elasticsearch
 
 For example, the snippet below, taken from the example `elasticsearch` class, declares
 what parameters are needed for the elasticsearch component:
@@ -54,7 +54,7 @@ parameters:
 
 As shown above, within the inventory, you can refer to the values with the syntax `${obj_name:key_name}` (no need to specify the `parameters` key).
 
-##### Example - mysql
+#### Example: mysql
 
 Or in the `mysql` class example, we declare the generic variables that will be shared by all targets that import the component and what to compile.
 
@@ -95,7 +95,7 @@ parameters:
         - docs/mysql/README.md
 ```
 
-#### Inventory Targets
+### Inventory Targets
 
 A target usually represents a single namespace in a kubernetes cluster and defines all components, scripts and documentation that will be generated for that target. Kapitan will recognise files in `inventory/targets` as targets.
 
@@ -138,9 +138,9 @@ Values under `parameters.kapitan`, such as `parameters.kapitan.vars` as mentione
 - `kapitan.validate` items which indicate which compiled output to validate
 - `kapitan.vars` which are also passed down to jsonnet and jinja2 templates as contexts
 
-### Useful commands
+## Useful commands
 
-#### kapitan inventory
+### kapitan inventory
 
 Renders the resulting inventory values for a specific target.
 
@@ -238,7 +238,7 @@ parameters:
 
 Use `kapitan lint` to checkup on your inventory/secrets.
 
-#### kapitan searchvar
+### kapitan searchvar
 
 Shows all inventory files where a variable is declared:
 
