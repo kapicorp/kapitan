@@ -47,3 +47,7 @@ codestyle:
 .PHONY: build-binary
 build-binary:
 	./build-binary.sh
+
+.PHONY: test-binary
+test-binary:
+	python3 -m unittest tests.test_binary
