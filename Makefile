@@ -44,12 +44,12 @@ codestyle:
 	flake8 --ignore E501 . --exclude=reclass
 	@echo
 
-.PHONY: build-binary
-build-binary:
-	./build-binary.sh
+.PHONY: build_binary
+build_binary:
+	scripts/build-binary.sh
 
-.PHONY: test-binary
-test-binary:
+.PHONY: test_binary
+test_binary:
 	python3 -m unittest tests.test_binary
 
 .PHONY: build_helm_binding

@@ -319,3 +319,30 @@ class TestDependencyManager(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler-0.1.0")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "kapitan-repository")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
+
+    def tearDown(self):
+        reset_cache()
+
+
+@unittest.skipIf(not os.path.exists(BINARY_PATH), 'kapitan binary not found')
+class TestHelmInputBinary(unittest.TestCase):
+    def setUp(self):
+        os.chdir(os.path.join("tests", "test_resources"))
+
+    def test_compile_helm_input(self):
+        """compile targets with helm inputs in parallel"""
+        temp_main = tempfile.mkdtemp()
+        sys.argv = ["kapitan", "compile", "--output-path", temp_main, '-t', 'nginx-ingress', 'nginx-ingress-helm-params', 'acs-engine-autoscaler']
+        with contextlib.redirect_stdout(io.StringIO()):
+            main()
+        main_hash = directory_hash(temp_main + '/compiled')
+
+        temp_bin = tempfile.mkdtemp()
+        subprocess.run(['../../' + BINARY_PATH, "compile", "--output-path", temp_bin, '-t', 'nginx-ingress', 'nginx-ingress-helm-params', 'acs-engine-autoscaler'], stdout=subprocess.DEVNULL)
+        bin_hash = directory_hash(temp_bin + '/compiled')
+        self.assertEqual(bin_hash, main_hash)
+
+    @classmethod
+    def tearDownClass(cls):
+        reset_cache()
+        os.chdir('../../')
