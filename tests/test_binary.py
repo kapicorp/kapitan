@@ -245,6 +245,7 @@ class BinaryTest(unittest.TestCase):
         shutil.rmtree(SECRETS_PATH, ignore_errors=True)
 
 
+@unittest.skipIf(not os.path.exists(BINARY_PATH), 'kapitan binary not found')
 class TestTerraformCompile(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -278,6 +279,7 @@ class TestTerraformCompile(unittest.TestCase):
         reset_cache()
 
 
+@unittest.skipIf(not os.path.exists(BINARY_PATH), 'kapitan binary not found')
 class TestKubernetesCompile(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -305,6 +307,7 @@ class TestKubernetesCompile(unittest.TestCase):
         reset_cache()
 
 
+@unittest.skipIf(not os.path.exists(BINARY_PATH), 'kapitan binary not found')
 class TestDependencyManager(unittest.TestCase):
     def test_compile_fetch(self):
         temp = tempfile.mkdtemp()

@@ -6,9 +6,11 @@ set -e
 . /root/.bashrc
 
 entry='__main__'
+output_name='runner'
 pyi-makespec kapitan/"$entry".py --onefile \
     --add-data kapitan/reclass/reclass:reclass \
     --add-data kapitan/lib:kapitan/lib \
     --hidden-import pyparsing --hidden-import jsonschema \
     --exclude-module doctest --exclude-module pydoc
 pyinstaller "$entry".spec --clean
+mv dist/$entry dist/$output_name
