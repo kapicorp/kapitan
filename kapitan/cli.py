@@ -177,10 +177,10 @@ def main():
                              metavar='TOKENNAME',)
     refs_parser.add_argument('--update-targets', action='store_true',
                              default=from_dot_kapitan('refs', 'update-targets', False),
-                             help='update target GPG secrets')
+                             help='update target secret refs')
     refs_parser.add_argument('--validate-targets', action='store_true',
                              default=from_dot_kapitan('refs', 'validate-targets', False),
-                             help='validate target GPG secrets')
+                             help='validate target secret refs')
     refs_parser.add_argument('--base64', '-b64', help='base64 encode file content',
                              action='store_true',
                              default=from_dot_kapitan('refs', 'base64', False))
