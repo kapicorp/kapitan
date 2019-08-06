@@ -12,6 +12,11 @@ RUN apk add --no-cache --virtual build-dependencies g++ make musl-dev && \
     apk del build-dependencies && \
     rm -r /root/.cache
 
+# install additional dependencies required to build helm binding
+RUN apk add --no-cache git bash go libc-dev && \
+    chmod +x kapitan/inputs/helm/build.sh && \
+    ./kapitan/inputs/helm/build.sh
+
 ENV PYTHONPATH="/kapitan/"
 ENV SEARCHPATH="/src"
 VOLUME ${SEARCHPATH}

@@ -1,0 +1,15 @@
+parameters:
+  kapitan:
+    vars:
+      target: nginx-ingress
+      namespace: temp
+    compile:
+      - output_path: chart
+        input_type: helm
+        input_paths:
+          - charts/nginx-ingress
+        helm_values:
+          controller:
+            name: my-controller
+            image:
+              repository: custom_repo

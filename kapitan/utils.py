@@ -16,6 +16,8 @@
 
 from __future__ import print_function
 
+import requests
+
 "random utils"
 
 import logging
@@ -28,7 +30,6 @@ import jinja2
 import _jsonnet as jsonnet
 import yaml
 import math
-import base64
 from collections import Counter, defaultdict
 from functools import lru_cache, wraps
 from hashlib import sha256
@@ -36,7 +37,7 @@ from hashlib import sha256
 from kapitan.version import VERSION
 from kapitan.errors import CompileError
 from kapitan.inputs.jinja2_filters import (load_jinja2_filters, load_jinja2_filters_from_file,
-                                           default_jinja2_filters_path) 
+                                           DEFAULT_JINJA2_FILTERS_PATH)
 import kapitan.cached as cached
 
 
@@ -113,7 +114,7 @@ def sha256_string(string):
     return sha256(string.encode("UTF-8")).hexdigest()
 
 
-def render_jinja2_file(name, context, jinja2_filters=default_jinja2_filters_path):
+def render_jinja2_file(name, context, jinja2_filters=DEFAULT_JINJA2_FILTERS_PATH):
     """Render jinja2 file name with context"""
     path, filename = os.path.split(name)
     env = jinja2.Environment(
@@ -128,7 +129,7 @@ def render_jinja2_file(name, context, jinja2_filters=default_jinja2_filters_path
     return env.get_template(filename).render(context)
 
 
-def render_jinja2(path, context, jinja2_filters=default_jinja2_filters_path):
+def render_jinja2(path, context, jinja2_filters=DEFAULT_JINJA2_FILTERS_PATH):
     """
     Render files in path with context
     Returns a dict where the is key is the filename (with subpath)
@@ -462,3 +463,13 @@ def search_target_token_paths(target_secrets_path, targets):
             logger.debug('search_target_token_paths: found %s', secret_path)
             target_files[target_name].append(secret_path)
     return target_files
+
+
+def make_request(source):
+    """downloads the http file at source and returns it's content"""
+    r = requests.get(source)
+    if r.ok:
+        return r.content, r.headers['Content-Type']
+    else:
+        r.raise_for_status()
+    return None, None

@@ -15,6 +15,18 @@ parameters:
       input_type: jinja2
       input_paths:
         - docs/mysql/README.md
+    validate:
+    - type: kubernetes
+      output_paths:
+        - manifests/mysql_secret.yml
+      kind: secret # temporarily replaced with 'deployment' during test
+      version: 1.14.0 # optional, defaults to 1.14.0
+    - type: kubernetes
+      output_paths:
+        - manifests/mysql_service_jsonnet.yml
+        - manifests/mysql_service_simple.yml
+      kind: service
+      version: 1.14.0
   mysql:
     storage: 10G
     storage_class: standard

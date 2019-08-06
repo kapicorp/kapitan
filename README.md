@@ -286,7 +286,7 @@ Generic templated configuration management for Kubernetes, Terraform and other
 things
 
 positional arguments:
-  {eval,compile,inventory,searchvar,secrets,lint,init}
+  {eval,compile,inventory,searchvar,secrets,lint,init,validate}
                         commands
     eval                evaluate jsonnet file
     compile             compile targets
@@ -296,6 +296,8 @@ positional arguments:
     lint                linter for inventory and secrets
     init                initialize a directory with the recommended kapitan
                         project skeleton.
+    validate            validate the compile output against schemas as
+                        specified in inventory
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -455,6 +457,7 @@ regex_search - perform re.search and return the list of matches or a backref e.g
 regex_findall - perform re.findall and return the list of matches as array e.g. {{ hello world | regex_findall("world.*") }}
 ternary - value ? true_val : false_val e.g. {{ condition | ternary("yes", "no") }}
 shuffle - randomly shuffle elements of a list {{ [1, 2, 3, 4, 5] | shuffle }}
+reveal_maybe - reveal ref/secret tag only if `compile --reveal` flag is set e.g. {{ "?{ref:my_ref}" | reveal_maybe }}
 ```
 You can also provide path to your custom filter modules in CLI. By default you can put your filters in lib/jinja2_filters.py and they will automatically get loaded.
 
@@ -636,6 +639,41 @@ $ kapitan searchvar parameters.elasticsearch.replicas
 ./inventory/targets/minikube-es.yml               2
 ./inventory/classes/component/elasticsearch.yml   1
 ```
+
+### kapitan validate
+
+Validates the schema of compiled output (currently supports Kubernetes manifests).
+
+Refer to the `minikube-es` inventory in [kapitan inventory](#kapitan-inventory). To validate the schema of the compiled StatefulSet manifest at `compiled/minikube-es/manifests/es-client.yml` (created by `components/elasticsearch/main.jsonnet`), add `kapitan.validate` parameters in `minikube-es` inventory.
+
+```yaml
+kapitan:
+  vars:
+    target: ${target_name}
+    namespace: ${target_name}
+  compile:
+  - output_path: manifests
+    input_type: jsonnet
+    input_paths:
+      - components/elasticsearch/main.jsonnet
+
+    ### other inputs abbreviated for clarity ###
+  validate:
+  - output_paths:
+      - manifests/es-client.yml
+    type: kubernetes
+    kind: statefulset
+    version: 1.14.0 # optional, defaults to 1.14.0
+```
+
+Then run:
+
+```
+$ kapitan validate -t minikube-es
+invalid 'statefulset' manifest at ./compiled/minikube-es/manifests/es-client.yml
+['spec'] 'selector' is a required property
+```
+
 
 # Kapitan feature proposals
 

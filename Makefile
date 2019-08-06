@@ -51,3 +51,7 @@ build-binary:
 .PHONY: test-binary
 test-binary:
 	python3 -m unittest tests.test_binary
+
+.PHONY: build_helm_binding
+build_helm_binding:
+	bash kapitan/inputs/helm/build.sh
