@@ -6,8 +6,9 @@ Kapitan requires Python 3.6, and you need to be able to install the dependencies
 [requirements file](../requirements.txt).  However, sometimes this isn't entirely straightforward, and you may not be able or willing to install new versions of Python system-wide.  
 
 We do provide a [dockerfile](../Dockerfile) which you can use to run Kapitan in a container, but if this isn't practical or possible either, you may wish to use one of the following options:
+
 * [PyEnv](https://github.com/pyenv/pyenv) (Linux, distro-agnostic)
-* [Software Collections](https://www.softwarecollections.org)(RHEL-based distros)
+* [Software Collections](https://www.softwarecollections.org) (RHEL-based distros)
 
 Both of these projects allow you to use a different version of Python specifically for your work with or on Kapitan.  They work similarly to [Python Virtual Environments](https://docs.python.org/3/tutorial/venv.html) but with more isolation from the lower-level OS-wide Python installation.  Both of these projects manipulate your shell environment variables to make sure you're using the right binaries and modules.  This document assumes you're using the bash shell. 
 

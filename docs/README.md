@@ -15,14 +15,13 @@ Use Kapitan to manage your Kubernetes manifests, your documentation, your Terraf
 
 How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](#faq)!
 
-<img src="./docs/images/kapitan_logo.png" width="250">
+<img src="./images/kapitan_logo.png" width="250">
 
-# Table of Contents
+## Table of Contents
 
 * [Main Features](#main-features)
 * [Quickstart](#quickstart)
 * [Example](#example)
-* [Main concepts](#main-concepts)
 * [Documentation](#documentation)
 * [Kapitan feature proposals](#kapitan-feature-proposals)
 * [Contributing](#contributing)
@@ -30,7 +29,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 * [FAQ](#faq)
 * [Related projects](#related-projects)
 
-# Main Features
+## Main Features
 
 * Use the Inventory as the single source of truth to tie together deployments, resources and documentation. [based on reclass](https://github.com/salt-formulas/reclass)
 * Use [Jsonnet](https://jsonnet.org/) or [Kadet (alpha)](https://github.com/deepmind/kapitan/pull/190) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
@@ -38,7 +37,7 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 * Manage secrets with GPG, AWS KMS or gCloud KMS and define who can access them, without compromising collaboration with other users.
 * Create dynamically generated documentation about a single deployment (i.e. ad-hoc instructions) or all deployments at once (i.e. global state of deployments)
 
-# Quickstart
+## Quickstart
 
 #### Docker (recommended)
 
@@ -48,7 +47,7 @@ docker run -t --rm -v $(pwd):/src:delegated deepmind/kapitan -h
 
 On Linux you can add `-u $(id -u)` to `docker run` to preserve file permissions.
 
-For CI/CD usage, check out [CI.md](./docs/CI.md)
+For CI/CD usage, check out [CI.md](./CI.md)
 
 #### Pip
 
@@ -73,7 +72,7 @@ System-wide (not recommended):
 sudo pip3 install --upgrade kapitan
 ```
 
-# Example
+## Example
 
 The example below _compiles_ 2 targets inside the `examples/kubernetes` folder.
 Each target represents a different namespace in a minikube cluster.
@@ -92,7 +91,7 @@ These targets generate the following resources:
 * Scripts to configure kubectl context to control the targets and helpers to apply/delete objects.
 * Documentation
 
-![demo](./docs/images/demo.gif)
+![demo](./images/demo.gif)
 
 ```shell
 $ cd examples/kubernetes
@@ -102,45 +101,35 @@ Compiled minikube-mysql
 Compiled minikube-es
 ```
 
-# Main concepts
+## Documentation
 
-<img src="./docs/images/kapitan_overview.png" width="600">
+### Getting Started
 
-### Inventory
+- [Kapitan Overview](kapitan_overview.md)
+- [Understanding inventory](inventory.md)
+- [Compile operation](compile.md)
 
-Inventory is a hierarchical database of variables, defined in yaml files, that are passed to the targets during compilation. This will be explained in detail in the [inventory](docs/inventory.md) section of the documentation.
+### Kapitan features
 
-### Components
+- [Secret management](secrets.md)
+- [Manifest validation](validate.md)
+- [External dependencies management](external_dependencies.md)
 
-Components will receive the inventory values for each individual target, and gets rendered and saved into the `compiled` directory. 
+### Miscellaneous
 
-For example, a component could be an application that will be deployed to a kubernetes cluster. This includes all necessary kubernetes objects (StatefulSet, Services, ConfigMaps) defined in jsonnet or kadet. 
+- [Usage](usage.md)
+- [Continuous Integration](CI.md)
+- [Set up kapitan on older Python systems](pyenv-scl.md)
 
-It may also include scripts, config files and dynamically generated documentation defined using Jinja templates.
-
-The available component/template types and how to use them is discussed in the [compile operation](docs/compile.md) section of the documentation.
-
-# Documentation
-
-See https://kapitan.dev/
-
-# Kapitan feature proposals
-
-See [kapitan_proposals/](docs/kap_proposals/).
-
-# Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-# Credits
+## Credits
 
 * [Jsonnet](https://github.com/google/jsonnet)
 * [Jinja2](http://jinja.pocoo.org/docs/2.9/)
 * [reclass](https://github.com/salt-formulas/reclass)
 
-# FAQ
+## FAQ
 
-## Why do we prefer Kapitan to `Helm`?
+### Why do we prefer Kapitan to `Helm`?
 
 Before developing Kapitan, we turned to [`Helm`](https://github.com/kubernetes/helm) in an attempt to improve our old Jinja based templating system.
 
@@ -152,7 +141,7 @@ We quickly discovered that `Helm` did not fit well with our workflow, for the fo
 
 In short, we feel `Helm` is trying to be `apt-get` for Kubernetes charts, while we are trying to take you further than that.
 
-## Why do I need Kapitan?
+### Why do I need Kapitan?
 With Kapitan, we worked to de-compose several problems that most of the other solutions are treating as one.
 
 1) ***Kubernetes manifests***: We like the jsonnet approach of using json as the working language. Jsonnet allows us to use inheritance and composition, and hide complexity at higher levels.
@@ -171,7 +160,7 @@ Helm treats everything as a text template, while jsonnet tries to do everything 
 We believe that these approaches can be blended in a powerful new way, glued together by the inventory.
 
 
-# Related projects
+## Related projects
 
 * [sublime-jsonnet-syntax](https://github.com/gburiola/sublime-jsonnet-syntax) - Jsonnet syntax highlighting for Sublime Text
 * [language-jsonnet](https://github.com/google/language-jsonnet) - Jsonnet syntax highlighting for Atom
