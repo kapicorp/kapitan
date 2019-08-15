@@ -4,6 +4,7 @@
 build/
 dist/
 _site/
+site/
 kapitan.egg-info/
 tags
 .python-version
