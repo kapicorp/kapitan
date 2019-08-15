@@ -17,18 +17,6 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 
 <img src="./images/kapitan_logo.png" width="250">
 
-## Table of Contents
-
-* [Main Features](#main-features)
-* [Quickstart](#quickstart)
-* [Example](#example)
-* [Documentation](#documentation)
-* [Kapitan feature proposals](#kapitan-feature-proposals)
-* [Contributing](#contributing)
-* [Credits](#credits)
-* [FAQ](#faq)
-* [Related projects](#related-projects)
-
 ## Main Features
 
 * Use the Inventory as the single source of truth to tie together deployments, resources and documentation. [based on reclass](https://github.com/salt-formulas/reclass)

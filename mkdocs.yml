@@ -5,6 +5,7 @@ theme: material
 use_directory_urls: true
 nav:
 - Home: README.md
+- Contributing: contributing.md
 - Getting started:
   - Kapitan Overview: kapitan_overview.md
   - Inventory: inventory.md
