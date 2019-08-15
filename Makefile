@@ -43,3 +43,8 @@ codestyle:
 	# ignores line length and reclass related errors
 	flake8 --ignore E501 . --exclude=reclass
 	@echo
+
+.PHONY: build_helm_binding
+build_helm_binding:
+	bash kapitan/inputs/helm/build.sh
+

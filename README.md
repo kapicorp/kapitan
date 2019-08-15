@@ -122,7 +122,7 @@ The available component/template types and how to use them is discussed in the [
 
 # Documentation
 
-See [docs/](docs/).
+See https://kapitan.dev/
 
 # Kapitan feature proposals
 
