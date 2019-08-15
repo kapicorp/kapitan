@@ -123,8 +123,8 @@ As illustrated above, one file corresponds to one secret. It is now possible for
 
 ```yaml
 mysql_passwords:
-	secret_foo: hello_world
-	secret_bar: 54321password
+  secret_foo: hello_world
+  secret_bar: 54321password
 ```
 
 This can be manually encrypted by:
