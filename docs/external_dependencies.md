@@ -74,7 +74,6 @@ parameters:
     - type: https
       output_path: foo.txt
       source: https://example.com/foo.txt
-      unpack: True | False
 ```
 
-Setting `unpack: True` will unpack zip or tar files onto the output_path.
+Setting `unpack: True` will unpack zip or tar files onto the `output_path`. In such cases, set `output_path` to a folder name.
