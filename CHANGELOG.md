@@ -1,3 +1,7 @@
+## 0.24.0-rc.3:
+- Add reveal_maybe custom jinja2 filter (#332)
+- Add support to import Helm input type (#307)
+
 ## 0.24.0-rc.2:
 - Make boto3 requirement more flexible (#320)
 - Add kubernetes manifest validation (#317)
