@@ -30,7 +30,7 @@ from kapitan.cli import main
 from kapitan.utils import directory_hash
 
 SECRETS_PATH = tempfile.mkdtemp()
-BINARY_PATH = 'dist/runner'
+BINARY_PATH = 'dist/kapitan'
 
 
 @unittest.skipIf(not os.path.exists(BINARY_PATH), 'kapitan binary not found')
