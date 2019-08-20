@@ -23,7 +23,6 @@ import re
 import sys
 import os
 from functools import lru_cache
-
 import yaml
 
 from kapitan.errors import RefFromFuncError, RefBackendError, RefError
@@ -99,54 +98,6 @@ class PlainRef(object):
                 "type": self.type_name}
 
 
-class Base64Ref(PlainRef):
-    def __init__(self, data, from_base64=False, **kwargs):
-        """
-        writes data
-        set from_base64 to load already base64 encoded data
-        """
-        super().__init__(data, **kwargs)
-        self.type_name = 'base64'
-        self.encoding = kwargs.get('encoding', 'original')
-        # TODO data should be bytes only
-        if from_base64:
-            self.data = data
-        else:
-            self.data = base64.b64encode(data).decode()
-
-    def reveal(self):
-        # TODO data should be bytes only
-        return base64.b64decode(self.data).decode()
-
-    def compile(self):
-        # XXX will only work if object read via backend
-        return "?{{{}:{}:{}}}".format(self.type_name, self.path, self.hash[:8])
-
-    @classmethod
-    def from_path(cls, ref_full_path, **kwargs):
-        """
-        return a new Base64Ref from file at ref_full_path
-        the data key in the file must be base64 encoded
-        """
-        try:
-            with open(ref_full_path) as fp:
-                obj = yaml.load(fp, Loader=YamlLoader)
-                _kwargs = {key: value for key, value in obj.items() if key not in ('data', 'from_base64')}
-                kwargs.update(_kwargs)
-                return cls(obj['data'], from_base64=True, **kwargs)
-
-        except IOError as ex:
-            if ex.errno == errno.ENOENT:
-                return None
-
-    def dump(self):
-        """
-        Returns dict with keys/values to be serialised.
-        """
-        return {"data": self.data, "encoding": self.encoding,
-                "type": self.type_name}
-
-
 class RefParams(object):
     def __init__(self, *args, **kwargs):
         "pack params for new Refs from functions"
@@ -203,12 +154,6 @@ class PlainRefBackend(object):
                 yield (k, v)
             except KeyError:
                 pass
-
-
-class Base64RefBackend(PlainRefBackend):
-    def __init__(self, path, ref_type=Base64Ref):
-        super().__init__(path, ref_type)
-        self.type_name = 'base64'
 
 
 class Revealer(object):
@@ -432,7 +377,7 @@ class RefController(object):
                 from kapitan.refs.base import PlainRefBackend
                 self.register_backend(PlainRefBackend(self.path))
             elif type_name == 'base64':
-                from kapitan.refs.base import Base64RefBackend
+                from kapitan.refs.base64 import Base64RefBackend
                 self.register_backend(Base64RefBackend(self.path))
             elif type_name == 'gpg':
                 from kapitan.refs.secrets.gpg import GPGBackend

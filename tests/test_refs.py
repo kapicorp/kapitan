@@ -22,7 +22,8 @@ import tempfile
 import unittest
 
 from kapitan.errors import RefFromFuncError, RefHashMismatchError, RefError
-from kapitan.refs.base import PlainRef, Base64Ref, RefController, RefParams, Revealer
+from kapitan.refs.base import PlainRef, RefController, RefParams, Revealer
+from kapitan.refs.base64 import Base64Ref
 from kapitan.utils import get_entropy
 
 REFS_HOME = tempfile.mkdtemp()

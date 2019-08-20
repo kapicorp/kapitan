@@ -30,7 +30,8 @@ from kapitan import cached
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.initialiser import initialise_skeleton
 from kapitan.lint import start_lint
-from kapitan.refs.base import PlainRef, Base64Ref, RefController, Revealer
+from kapitan.refs.base import PlainRef, RefController, Revealer
+from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints

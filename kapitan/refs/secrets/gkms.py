@@ -19,7 +19,8 @@ import googleapiclient.discovery as gcloud
 import logging
 import warnings
 
-from kapitan.refs.base import Base64Ref, Base64RefBackend, RefError
+from kapitan.refs.base64 import Base64Ref, Base64RefBackend
+from kapitan.refs.base import RefError
 from kapitan import cached
 from kapitan.errors import KapitanError
 

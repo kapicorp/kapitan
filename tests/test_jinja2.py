@@ -23,7 +23,8 @@ import time
 from kapitan.utils import render_jinja2_file
 from kapitan.resources import inventory
 from kapitan.inputs.jinja2_filters import base64_encode
-from kapitan.refs.base import RefController, Base64Ref, Revealer
+from kapitan.refs.base import RefController, Revealer
+from kapitan.refs.base64 import Base64Ref
 from kapitan import cached
 from collections import namedtuple
 
