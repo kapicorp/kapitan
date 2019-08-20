@@ -18,6 +18,8 @@ nav:
   - Continuous Integration: CI.md
   - Set up kapitan on older Python systems: pyenv-scl.md
   - Usage: usage.md
+- Examples:
+    - Kubernetes: example-kubernetes.md
 
 
 markdown_extensions:
