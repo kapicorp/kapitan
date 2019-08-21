@@ -25,15 +25,15 @@ This folder contains the inventory values used to render the templates for each 
 ```
 .
 ├── classes
-│   ├── cluster
-│   │   ├── common.yml
-│   │   └── minikube.yml
-│   ├── common.yml
-│   └── component
-│       ├── elasticsearch.yml
-│       ├── mysql.yml
-│       ├── namespace.yml
-│       └── nginx.yml
+│   ├── cluster
+│   │   ├── common.yml
+│   │   └── minikube.yml
+│   ├── common.yml
+│   └── component
+│       ├── elasticsearch.yml
+│       ├── mysql.yml
+│       ├── namespace.yml
+│       └── nginx.yml
 └── targets
     ├── minikube-es.yml
     ├── minikube-mysql.yml
@@ -92,7 +92,7 @@ parameters:
 
 As we see, this file declares a `kapitan.compile` item whose input path (i.e. the template file) is `components/namespace/main.jsonnet` which, when rendered, will generate yaml file(s) under `compiled/minikube-nginx/pre-deploy`.
 
-Don't confuse the `components` folder with `inventory/classes/components` folder: the former contains inventory classes, while the latter contains the actual templates.
+Don't confuse the `components` folder with `inventory/classes/components` folder: the former contains the actual templates, while the latter contains inventory classes.
 
 ### components
 
@@ -101,23 +101,23 @@ This folder contains the template files as discussed above, typically jsonnet an
 ```
 .
 ├── elasticsearch
-│   ├── elasticsearch.container.jsonnet
-│   ├── elasticsearch.statefulset.jsonnet
-│   └── main.jsonnet
+│   ├── elasticsearch.container.jsonnet
+│   ├── elasticsearch.statefulset.jsonnet
+│   └── main.jsonnet
 ├── mysql
-│   ├── main.jsonnet
-│   ├── secret.jsonnet
-│   ├── service.jsonnet
-│   └── statefulset.jsonnet
+│   ├── main.jsonnet
+│   ├── secret.jsonnet
+│   ├── service.jsonnet
+│   └── statefulset.jsonnet
 ├── namespace
-│   └── main.jsonnet
+│   └── main.jsonnet
 └── nginx
     └── __init__.py
 ```
 
 Notice how the directory structure corresponds to that of `inventory/classes/components` in order to make it easy to identify which templates are used for which components.
 
-As mentioned above, we know that the target **minikube-nginx** inherits from `components.namespace`. Let's take a look at `components/namespace/main.jsonnet`:
+As mentioned above, we know that the target **minikube-nginx** inherits from `component.namespace`. Let's take a look at `components/namespace/main.jsonnet`:
 
 ```
 local kube = import "lib/kube.libjsonnet";
@@ -133,7 +133,7 @@ local p = inventory.parameters;
 
 The first two lines import libjsonnet files under `lib` folder: this is the folder that contains helper files used inside templates. For example, `kapitan.libjsonnet` allows you to access inventory values inside jsonnet templates, and `kube.libjsonnet` defines functions to generate popular kubernetes manifests. 
 
-Take a look at the actual object defined in `components/namespace/main.jsonnet`:
+The actual object defined in `components/namespace/main.jsonnet` looks like this:
 
 ```
 {
@@ -142,7 +142,7 @@ Take a look at the actual object defined in `components/namespace/main.jsonnet`:
 }
 ```
 
-We have "00_namespace" and "10_serviceaccount" as the keys. These will become files under `compiled/minikube-nginx/pre-deploy`, since that is the `input_paths` declared in the inventory. For instance, 00_namespace.yml would look like this:
+We have "00_namespace" and "10_serviceaccount" as the keys. These will become files under `compiled/minikube-nginx/pre-deploy`, since `pre-deploy` is the `input_paths` declared in the inventory. For instance, `00_namespace.yml` would look like this:
 
 ```yaml
 apiVersion: v1
@@ -158,7 +158,7 @@ spec: {}
 
 ### templates, docs, scripts
 
-These folders contain jinja2 template files. For example, `components.elasticsearch` contains:
+These folders contain jinja2 template files. For example, `component.elasticsearch` contains:
 
 ```yaml
 kapitan:
@@ -174,7 +174,7 @@ kapitan:
       - docs/elasticsearch/README.md
 ```
 
-Since `components.elasticsearch` is inherited by the target **minikube-es**, this generates files under `compiled/minikube-es/scripts` and `compiled/minikube-es/README.md`.
+Since `component.elasticsearch` is inherited by the target **minikube-es**, this generates files under `compiled/minikube-es/scripts` and `compiled/minikube-es/README.md`.
 
 ### secrets
 
@@ -214,4 +214,4 @@ type: Opaque
 
 `MYSQL_ROOT_PASSWORD` refers to the secret stored in `secrets/targets/minikube-mysql/mysql/password` and so on.
 
-You may reveal the secrets by running `kapitan secrets --reveal -f mysql_secret.yml` and use the manifest by piping the output to kubectl! 
+You may reveal the secrets by running `kapitan secrets --reveal -f mysql_secret.yml` and use the manifest by piping the output to kubectl!
