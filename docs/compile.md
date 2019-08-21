@@ -24,7 +24,7 @@ Kapitan supports the following input template types:
 - [jinja](#jinja)
 - [jsonnet](#jsonnet)
 - [kadet](#kadet) (alpha)
-- [helm](#helm) (optional)
+- [helm](#helm) (alpha)
 
 
 ### jinja
