@@ -143,7 +143,7 @@ This input type is experimental. See <https://github.com/deepmind/kapitan/pull/1
 
 ### helm
 
-This is a Python binding to `helm template` command for users with helm charts. This does not require the helm executable to be available, and the templates are rendered without the Tiller server.
+This is a Python binding to `helm template` command for users with helm charts. This does not require the helm executable, and the templates are rendered without the Tiller server.
 
 Unlike other input types, Helm input types support the following additional parameters under `kapitan.compile`:
 
@@ -178,6 +178,58 @@ parameters:
 - release_name: equivalent of `--name` option
 
 See the [helm doc](https://helm.sh/docs/helm/#helm-template) for further detail.
+
+#### Example
+
+Let's use [nginx-ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress) helm chart as the input. Using [kapitan dependency manager](external_dependencies.md), this chart can be fetched via a URL as listed in <https://helm.nginx.com/stable/index.yaml>. 
+
+*On a side note, `https://helm.nginx.com/stable/` is the chart repository URL which you would `helm repo add`, and this repository should contain `index.yaml` that lists out all the available charts and their URLs. By locating this `index.yaml` file, you can locate all the charts available in the repository.*
+
+We can use version 0.3.3 found at https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz. We can create a simple target file as `inventory/targets/nginx-from-chart.yml` whose content is as follows:
+
+```yaml
+parameters:
+  kapitan:
+    vars:
+      target: nginx-from-chart
+    dependencies:
+    - type: https
+      source: https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz
+      unpack: True
+      output_path: components/charts
+    compile:
+      - output_path: chart
+        input_type: helm
+        input_paths:
+          - components/charts/nginx-ingress
+        helm_values:
+          controller:
+            name: my-controller
+            image:
+              repository: custom_repo
+        helm_params:
+          release_name: my-first-release-name
+          namespace: my-first-namespace
+```
+
+To compile this target, run:
+
+```shell
+$ kapitan compile --fetch
+Dependency https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz : fetching now
+Dependency https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz : successfully fetched
+Dependency https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz : extracted to components/charts
+Compiled nginx-from-chart (0.07s)
+```
+
+The chart is fetched before compile, which creates `components/charts/nginx-ingress` folder that is used as the `input_paths`  for the helm input type. To confirm if the `helm_values` actually has overridden the default values, we can try:
+
+```shell
+$ grep "my-controller" compiled/nginx-from-chart/chart/controller-deployment.yaml 
+  name: my-controller
+      app: my-controller
+        app: my-controller
+```
 
 #### Building the binding from source
 
