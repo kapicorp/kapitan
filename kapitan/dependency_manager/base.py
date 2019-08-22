@@ -89,7 +89,7 @@ def fetch_git_dependency(dep_mapping, save_dir):
             repo.git.checkout(ref)
         else:
             repo = Repo(repo_path)
-            repo.git.checkout("master") # default ref
+            repo.git.checkout("master")  # default ref
 
         if 'subdir' in dep:
             sub_dir = dep['subdir']
