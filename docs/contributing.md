@@ -53,6 +53,26 @@ Try to fix warnings from `make codestyle` before submitting to make sure you adh
 - Once reviewed and merged, Travis will auto-release.
 - The merge has to happen with a merge commit not with squash/rebase so that the commit message still mentions `deepmind/release-v*` inside.
 
+## Updating gh-pages docs
+
+### Local testing
+
+```
+# from project root
+pip install mkdocs mkdocs-material pymdown-extensions markdown-include
+mkdocs build
+mkdocs serve
+# open http://127.0.0.1:8000
+```
+
+### Deploying to Github
+
+```
+# locally, on master branch (which has your updated docs)
+mkdocs gh-deploy -m "Commit message" -f ./mkdocs.yml -b remote_branch_name
+# after it's pushed, create a PR that targets the gh-pages branch
+```
+
 ## Contributor License Agreement
 
 Contributions to this project must be accompanied by a Contributor License
