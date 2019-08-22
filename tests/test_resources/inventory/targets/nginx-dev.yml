@@ -22,6 +22,6 @@ parameters:
         subdir: kapitan
         source: https://github.com/deepmind/kapitan.git
       - type: http
-        output_path: components/
+        output_path: components
         source: https://kubernetes-charts.storage.googleapis.com/acs-engine-autoscaler-0.1.0.tgz
-        unpack: true
+        unpack: True
