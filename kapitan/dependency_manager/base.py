@@ -89,7 +89,7 @@ def fetch_git_dependency(dep_mapping, save_dir):
             repo.git.checkout(ref)
         else:
             repo = Repo(repo_path)
-            repo.git.checkout("master") # default ref
+            repo.git.checkout("master")  # default ref
 
         if 'subdir' in dep:
             sub_dir = dep['subdir']
@@ -122,8 +122,9 @@ def fetch_http_dependency(dep_mapping, save_dir):
     copy_src_path = os.path.join(save_dir, path_hash + os.path.basename(source))
     for dep in deps:
         output_path = dep["output_path"]
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         if dep.get('unpack', False):
+            # ensure that the directory we are extracting to exists
+            os.makedirs(output_path, exist_ok=True)
             is_unpacked = False
             if content_type == 'application/x-tar':
                 tar = tarfile.open(copy_src_path)
@@ -146,8 +147,11 @@ def fetch_http_dependency(dep_mapping, save_dir):
             else:
                 logger.info("Dependency {} : Content-Type {} is not supported for unpack. Ignoring save".
                             format(source, content_type))
-
         else:
+            # we are downloading a single file
+            parent_dir = os.path.dirname(output_path)
+            if parent_dir != '':
+                os.makedirs(parent_dir, exist_ok=True)
             copyfile(copy_src_path, output_path)
             logger.info("Dependency {} : saved to {}".format(source, output_path))
 

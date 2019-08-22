@@ -68,7 +68,7 @@ def render_chart(chart_dir, output_path, **kwargs):
     try:
         # lib is opened inside the function to allow multiprocessing
         lib = ffi.dlopen(os.path.join(os.path.dirname(os.path.abspath(__file__)), "libtemplate.so"))
-    except NameError:
+    except (NameError, OSError):
         raise HelmBindingUnavailableError("Helm binding is not available. Run 'make build_helm_binding' to create it")
 
     if kwargs.get('helm_values_file', None):
