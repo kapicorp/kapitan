@@ -26,8 +26,8 @@ RUN curl -o /tmp/terraform_${TERRAFORM_VERSION}.zip ${TERRAFORM_URL} && \
 
 RUN gcloud components install kubectl
 
-ENV KAPP_URL=https://github.com/k14s/kapp/releases/download/v0.10.0/kapp-linux-amd64
-ENV KBLD_URL=https://github.com/k14s/kbld/releases/download/v0.7.0/kbld-linux-amd64
+ENV KAPP_URL=https://github.com/k14s/kapp/releases/download/v0.11.0/kapp-linux-amd64
+ENV KBLD_URL=https://github.com/k14s/kbld/releases/download/v0.11.0/kbld-linux-amd64
 RUN curl -L -o /usr/local/bin/kapp ${KAPP_URL} && chmod +x /usr/local/bin/kapp
 RUN curl -L -o /usr/local/bin/kbld ${KBLD_URL} && chmod +x /usr/local/bin/kbld
 
