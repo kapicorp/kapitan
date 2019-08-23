@@ -1,3 +1,9 @@
+## 0.24.0-rc.4:
+- Upgrade some packages in requirements.txt
+- Upgrade kapp and kbld to v0.11.0
+- Fix dependency manager's behavior for files to unpack (#342)
+- creating standalone binary for kapitan (#323)
+
 ## 0.24.0-rc.3:
 - Add reveal_maybe custom jinja2 filter (#332)
 - Add support to import Helm input type (#307)
