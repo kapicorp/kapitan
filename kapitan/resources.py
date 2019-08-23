@@ -21,6 +21,7 @@ import errno
 import gzip
 import io
 import json
+import jsonschema
 import logging
 import os
 from functools import partial
@@ -61,7 +62,24 @@ def resource_callbacks(search_paths):
             "yaml_dump": (("obj",), yaml_dump),
             "yaml_load": (("name",),
                           partial(yaml_load, search_paths)),
+            "jsonschema_validate": (("obj", "schema_obj"), jsonschema_validate),
             }
+
+
+def jsonschema_validate(obj, schema_obj):
+    """
+    validates obj with a schema_obj jsonschema
+    returns an object with keys:
+    - valid (true/false)
+    - reason (will have jsonschema validation error when not valid)
+    """
+    _obj = json.loads(obj)
+    _schema_obj = json.loads(schema_obj)
+    try:
+        jsonschema.validate(_obj, _schema_obj, format_checker=jsonschema.FormatChecker())
+        return {"valid": True, "reason": ""}
+    except jsonschema.ValidationError as e:
+        return {"valid": False, "reason": ""+str(e)}
 
 
 def yaml_dump(obj):

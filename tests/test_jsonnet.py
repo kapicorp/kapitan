@@ -16,10 +16,12 @@
 
 "jsonnet tests"
 
+import json
+import jsonschema
 import unittest
 import os
 
-from kapitan.resources import yaml_dump, gzip_b64, yaml_load
+from kapitan.resources import yaml_dump, gzip_b64, yaml_load, jsonschema_validate
 from kapitan.utils import sha256_string, prune_empty
 
 
@@ -54,3 +56,33 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         dictionary = {"hello": "world", "array": [1, 2], "foo": {}, "bar": []}
         pruned = prune_empty(dictionary)
         self.assertEqual(pruned, {"hello": "world", "array": [1, 2]})
+
+    def test_jsonschema_valid(self):
+        """validate valid obj with jsonschema"""
+        dictionary = {"msg": "hello, world!", "array": [1, 2]}
+        schema = {
+                    "type": "object",
+                    "properties": {
+                        "msg": {"type": "string"},
+                        "array": {"type": "array", "contains": {"type": "number"}},
+                        }
+                    }
+        validation = jsonschema_validate(json.dumps(dictionary), json.dumps(schema))
+
+        self.assertTrue(validation["valid"])
+        self.assertEqual(validation["reason"], "")
+
+    def test_jsonschema_invalid(self):
+        """validate invalid obj with jsonschema"""
+        dictionary = {"msg": "hello, world!", "array": ["a", "b", "c"]}
+        schema = {
+                    "type": "object",
+                    "properties": {
+                        "msg": {"type": "string"},
+                        "array": {"type": "array", "contains": {"type": "number"}},
+                        }
+                    }
+        validation = jsonschema_validate(json.dumps(dictionary), json.dumps(schema))
+
+        self.assertFalse(validation["valid"])
+        self.assertNotEqual(validation["reason"], "")
