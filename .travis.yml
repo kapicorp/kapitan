@@ -54,7 +54,7 @@ deploy:
       secure: VFZDeLYUZ/Fs+NTbIW7DjbANhqAtlbZTzsWods6MuSN3DmGibZwNBpHfNN/hCfJEBCKvmWBEzF2R14Pau+GMZAYaP0N0pCRuO8wtlXGe4ygc5bff4Y93BA98sTh/eRnLf+jsI+acliBWlm0WCRWDMsxfzhZTgWDO/IBdOrzwno5BqEeXbvsqe6MG9z3BLvp8t7WkI67NPoJfRGve7twb1VLMCLlRwXJwxefxgYHcH3pImhx4CMVjXKEMr4jQIMh+mlGA+aMhTAM/If2X3fhdbiA9KNNQ0FrZFLOw0iCLCYzaCHGm70eSMlXJr2kqEjzdZkR2J4TxnJqghTrnNVeXg917vtlFrTnJUxeOSQl3s3LOOQ0vM2wob8y+oPWYz7zw+KKqs8hA4crE7CngQmPGJvWQfYEGtW/5Zc9j+T/yplq5Zwqbe3ibsQ54V8jr6LU4IcLLXgT3qii13Zpg7pILQ+ObOge8c20EeUd6+HhBt9+5K0S67/GgSoa2Nd5+g4XgvEO95ncMZkWztNidk1ygVn00TLK5Dn8UHSaEoxlGXCfgVphzV1//MpOeJn67kQWxHvJxgqVfHAsbL2dlXMux/cuv+UQlRPQsw+8A18hpTUWcxRl7cLm9bMedW14CCtEmSWikanY/2lBEwFIjYndOu7v4VY4L3aNs6EsHrinoLVA=
     file:
       - CHANGELOG.md
-      - dist/kapitan-linux-amd64
+      - bindist/kapitan-linux-amd64
     prerelease: $PRERELEASE
     on:
       tags: true

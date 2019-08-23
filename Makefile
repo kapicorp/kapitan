@@ -35,7 +35,7 @@ package:
 
 .PHONY: clean
 clean:
-	rm -rf dist/ build/ kapitan.egg-info/
+	rm -rf dist/ build/ kapitan.egg-info/ bindist/
 
 .PHONY: codestyle
 codestyle:
