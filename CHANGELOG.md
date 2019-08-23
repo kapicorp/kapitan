@@ -1,3 +1,6 @@
+## 0.24.0-rc.5:
+- Testing github release of standalone binary
+
 ## 0.24.0-rc.4:
 - Upgrade some packages in requirements.txt
 - Upgrade kapp and kbld to v0.11.0
