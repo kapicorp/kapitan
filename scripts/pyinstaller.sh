@@ -16,3 +16,7 @@ pyi-makespec kapitan/"$entry".py --onefile \
     --exclude-module doctest --exclude-module pydoc
 pyinstaller "$entry".spec --clean
 mv dist/$entry dist/$output_name
+# Open permissions so that when this binary
+# is used outside of docker (on the volume mount) it
+# also can be deleted by Travis CI
+chmod 777 dist/$output_name
