@@ -4,4 +4,4 @@
 set -e
 IMAGE_NAME='pyinstaller-debian'
 docker build -t $IMAGE_NAME -f Dockerfile.pyinstaller .
-docker run -it -v $(pwd)/dist:/kapitan/dist $IMAGE_NAME
+docker run -it -v $(pwd)/bindist:/kapitan/dist $IMAGE_NAME

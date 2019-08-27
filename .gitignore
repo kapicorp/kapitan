@@ -3,6 +3,7 @@
 *.bak
 build/
 dist/
+bindist/
 _site/
 site/
 kapitan.egg-info/

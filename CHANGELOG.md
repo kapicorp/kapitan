@@ -1,4 +1,4 @@
-## 0.24.0-rc.5:
+## 0.24.0-rc.6:
 - Testing github release of standalone binary
 
 ## 0.24.0-rc.4:
