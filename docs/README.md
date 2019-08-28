@@ -113,6 +113,10 @@ Compiled minikube-es
 - [Continuous Integration](CI.md)
 - [Set up kapitan on older Python systems](pyenv-scl.md)
 
+### Examples
+
+- [Kubernetes](example-kubernetes.md)
+
 ## Credits
 
 * [Jsonnet](https://github.com/google/jsonnet)
