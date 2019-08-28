@@ -73,14 +73,14 @@ mkdocs serve
 
 ### 2. Submit a PR for gh-pages branch to deploy the update
 
-Once the above PR has been merged, use `mkdocs gh-deploy` command to create and push a branch in your fork with the generated site content:
+Once the above PR has been merged, use `mkdocs gh-deploy` command to push the commit that updates the site content to your own gh-pages branch. Make sure that you already have this gh-pages branch in your fork that is up-to-date with our gh-pages branch such that the two branches share the commit history (otherwise Github would not allow PRs to be created).
 
 ```
 # locally, on master branch (which has your updated docs)
-mkdocs gh-deploy -m "Commit message" -f ./mkdocs.yml -b remote_branch_name
+mkdocs gh-deploy -m "Commit message" -f ./mkdocs.yml -b gh-pages
 ```
 
-After it's pushed, create a PR that targets our gh-pages branch.
+After it's pushed, create a PR that targets our gh-pages branch from your gh-pages branch.
 
 ## Contributor License Agreement
 
