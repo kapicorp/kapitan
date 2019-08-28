@@ -55,7 +55,13 @@ Try to fix warnings from `make codestyle` before submitting to make sure you adh
 
 ## Updating gh-pages docs
 
-### Local testing
+We use [mkdocs](https://www.mkdocs.org/) to generate our gh-pages from `.md` files under docs/ folder.
+
+Updating our gh-pages is therefore a two-step process.
+
+### 1. Update the `.md` files
+
+Submit a PR for our master branch that updates the `.md` file(s). Test how the changes would look like when deployed to gh-pages by serving it on localhost:
 
 ```
 # from project root
@@ -65,13 +71,16 @@ mkdocs serve
 # open http://127.0.0.1:8000
 ```
 
-### Deploying to Github
+### 2. Submit a PR for gh-pages branch to deploy the update
+
+Once the above PR has been merged, use `mkdocs gh-deploy` command to create and push a branch in your fork with the generated site content:
 
 ```
 # locally, on master branch (which has your updated docs)
 mkdocs gh-deploy -m "Commit message" -f ./mkdocs.yml -b remote_branch_name
-# after it's pushed, create a PR that targets the gh-pages branch
 ```
+
+After it's pushed, create a PR that targets our gh-pages branch.
 
 ## Contributor License Agreement
 
