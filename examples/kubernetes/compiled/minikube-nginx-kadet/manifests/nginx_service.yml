@@ -4,7 +4,7 @@ metadata:
   labels:
     app: nginx
   name: nginx
-  namespace: minikube-nginx
+  namespace: minikube-nginx-kadet
 spec:
   ports:
     - name: http
