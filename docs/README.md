@@ -60,6 +60,10 @@ System-wide (not recommended):
 sudo pip3 install --upgrade kapitan
 ```
 
+#### Standalone binary
+
+From v0.24.0, kapitan is also available as a standalone binary which you can download from the [releases page](https://github.com/deepmind/kapitan/releases). The platform currently supported is Linux amd64.
+
 ## Example
 
 The example below _compiles_ 2 targets inside the `examples/kubernetes` folder.
