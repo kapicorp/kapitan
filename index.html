@@ -276,6 +276,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#standalone-binary" title="Standalone binary" class="md-nav__link">
+    Standalone binary
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -313,6 +320,13 @@
           <li class="md-nav__item">
   <a href="#miscellaneous" title="Miscellaneous" class="md-nav__link">
     Miscellaneous
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" title="Examples" class="md-nav__link">
+    Examples
   </a>
   
 </li>
@@ -549,6 +563,54 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="usage/" title="Usage" class="md-nav__link">
+      Usage
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Examples
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="example-kubernetes/" title="Kubernetes" class="md-nav__link">
+      Kubernetes
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -610,6 +672,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#standalone-binary" title="Standalone binary" class="md-nav__link">
+    Standalone binary
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -647,6 +716,13 @@
           <li class="md-nav__item">
   <a href="#miscellaneous" title="Miscellaneous" class="md-nav__link">
     Miscellaneous
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#examples" title="Examples" class="md-nav__link">
+    Examples
   </a>
   
 </li>
@@ -760,6 +836,8 @@
 <div class="highlight"><pre><span></span>sudo pip3 install --upgrade kapitan
 </pre></div>
 
+<h4 id="standalone-binary">Standalone binary</h4>
+<p>From v0.24.0, kapitan is also available as a standalone binary which you can download from the <a href="https://github.com/deepmind/kapitan/releases">releases page</a>. The platform currently supported is Linux amd64.</p>
 <h2 id="example">Example</h2>
 <p>The example below <em>compiles</em> 2 targets inside the <code>examples/kubernetes</code> folder.
 Each target represents a different namespace in a minikube cluster.</p>
@@ -804,6 +882,10 @@ Compiled minikube-es
 <li><a href="CI/">Continuous Integration</a></li>
 <li><a href="pyenv-scl/">Set up kapitan on older Python systems</a></li>
 </ul>
+<h3 id="examples">Examples</h3>
+<ul>
+<li><a href="example-kubernetes/">Kubernetes</a></li>
+</ul>
 <h2 id="credits">Credits</h2>
 <ul>
 <li><a href="https://github.com/google/jsonnet">Jsonnet</a></li>
@@ -813,11 +895,13 @@ Compiled minikube-es
 <h2 id="faq">FAQ</h2>
 <h3 id="why-do-we-prefer-kapitan-to-helm">Why do we prefer Kapitan to <code>Helm</code>?</h3>
 <p>Before developing Kapitan, we turned to <a href="https://github.com/kubernetes/helm"><code>Helm</code></a> in an attempt to improve our old Jinja based templating system.</p>
-<p>We quickly discovered that <code>Helm</code> did not fit well with our workflow, for the following reasons (which were true at the time of the evaluation):
-* <code>Helm</code> uses Go templates to define Kubernetes (yaml) manifests. We were already unsatisfied by using Jinja and we did not see a huge improvement from our previous system, the main reason being: YAML files are not suitable to be managed by text templating frameworks.
-* <code>Helm</code> does not have a solution for sharing values across charts, if not through subcharts. We wanted to be able to have one single place to define all values for all our templates. Sharing data between charts felt awkward and complicated.
-* <code>Helm</code> is component/chart based. We wanted to have something that would treat all our deployments as a whole.
-* We did not fancy the dependency on the tiller.</p>
+<p>We quickly discovered that <code>Helm</code> did not fit well with our workflow, for the following reasons (which were true at the time of the evaluation):</p>
+<ul>
+<li><code>Helm</code> uses Go templates to define Kubernetes (yaml) manifests. We were already unsatisfied by using Jinja and we did not see a huge improvement from our previous system, the main reason being: YAML files are not suitable to be managed by text templating frameworks.</li>
+<li><code>Helm</code> does not have a solution for sharing values across charts, if not through subcharts. We wanted to be able to have one single place to define all values for all our templates. Sharing data between charts felt awkward and complicated.</li>
+<li><code>Helm</code> is component/chart based. We wanted to have something that would treat all our deployments as a whole.</li>
+<li>We did not fancy the dependency on the tiller.</li>
+</ul>
 <p>In short, we feel <code>Helm</code> is trying to be <code>apt-get</code> for Kubernetes charts, while we are trying to take you further than that.</p>
 <h3 id="why-do-i-need-kapitan">Why do I need Kapitan?</h3>
 <p>With Kapitan, we worked to de-compose several problems that most of the other solutions are treating as one.</p>

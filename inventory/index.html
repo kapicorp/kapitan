@@ -509,6 +509,54 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../usage/" title="Usage" class="md-nav__link">
+      Usage
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Examples
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../example-kubernetes/" title="Kubernetes" class="md-nav__link">
+      Kubernetes
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -734,10 +782,10 @@ parameters:
 
 <p>Targets can also be defined inside the <code>inventory</code>. </p>
 <p><strong>Note</strong>: Each target must contain the property <code>parameters.kapitan.vars.target</code> whose value equals to the name of the target file. For example, for the target <code>inventory/targets/minikube-es.yml</code>, the rendered inventory must contain:</p>
-<div class="highlight"><pre><span></span><span class="nt">parameters</span><span class="p">:</span>
-  <span class="nt">kapitan</span><span class="p">:</span>
-    <span class="nt">vars</span><span class="p">:</span>
-      <span class="nt">target</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-es</span>
+<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">vars</span><span class="p p-Indicator">:</span>
+      <span class="l l-Scalar l-Scalar-Plain">target</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-es</span>
 </pre></div>
 
 <h3 id="kapitan-specific-inventory-values-parameterskapitan">kapitan-specific inventory values: <code>parameters.kapitan</code></h3>
