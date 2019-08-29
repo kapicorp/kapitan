@@ -14,18 +14,26 @@
 
 "hashicorp vault secrets module"
 
-import hvac
 import base64
 from binascii import Error as b_error
-from hvac.exceptions import Forbidden, VaultError, InvalidPath
-from yaml import safe_load
-from os.path import join,expanduser
-from os import getenv
+import hashlib
+import re
+import os
 from sys import argv, exit
 
-from kapitan.refs.base import Ref, RefBackend, RefError
+import yaml
+
+import hvac
+from hvac.exceptions import Forbidden, InvalidPath
 from kapitan import cached
 from kapitan.errors import KapitanError
+from kapitan.resources import inventory
+from kapitan.refs.base import Ref, RefBackend, RefError
+
+try:
+    from yaml import CSafeLoader as YamlLoader
+except ImportError:
+    from yaml import SafeLoader as YamlLoader
 
 class VaultError(KapitanError):
     """Generic vault errors"""
@@ -48,19 +56,10 @@ def get_env(parameter):
     * VAULT_NAMESPACE: specify the Vault Namespace, if you have one
     """
     # Helper lambda function to get varibles either from parameters or environment
-    get_variable = lambda x: parameter.get(x, getenv('VAULT_'+x.upper(),default=''))
+    get_variable = lambda x: parameter.get(x, os.getenv('VAULT_'+x.upper(),default=''))
     env = {}
     env['url'] = get_variable('addr')
     env['namespace'] = get_variable('namespace')
-    # AUTHENTICATION TYPE
-    if parameter.get('auth','token') in ['token','github']:
-        env['token'] = getenv('VAULT_TOKEN')
-        if not env['token']:
-            try:
-                with open(join(expanduser('~'),'.vault-token'),'r') as f:
-                    env['token'] = f.read()
-            except IOError:
-                VaultError("Cannot read file ~/.vault-token")
     # VERIFY VAULT SERVER TLS CERTIFICATE
     skip_verify = get_variable('skip_verify')
     if skip_verify.lower() == 'false':
@@ -97,26 +96,36 @@ def vault_obj(vault_parameters):
     env = get_env(vault_parameters)
 
     client = hvac.Client(
-        **{k:v for k,v in env.items() if k not in ('auth', 'token', None)}
+        **{k:v for k,v in env.items() if k not in ('auth', None)}
     )
 
     auth_type = vault_parameters['auth']
+    # GET TOKEN EITHER FROM ENVIRONMENT OF FILE
+    if auth_type in ['token','github']:
+        env['token'] = os.getenv('VAULT_TOKEN')
+        if not env['token']:
+            try:
+                with open(os.path.join(os.path.expanduser('~'),'.vault-token'),'r') as f:
+                    env['token'] = f.read()
+            except IOError:
+                VaultError("Cannot read file ~/.vault-token")
+    # DIFFERENT LOGIN METHOD BASED ON AUTHENTICATION TYPE
     if auth_type == 'token':
         client.token = env['token']
     elif auth_type == 'ldap':
         client.auth.ldap.login(
-            username = getenv('VAULT_USERNAME'),
-            password = getenv('VAULT_PASSWORD')
+            username = os.getenv('VAULT_USERNAME'),
+            password = os.getenv('VAULT_PASSWORD')
         )
     elif auth_type == 'userpass':
         client.auth_userpass(
-            username=getenv('VAULT_USERNAME'),
-            password=getenv('VAULT_PASSWORD')
+            username=os.getenv('VAULT_USERNAME'),
+            password=os.getenv('VAULT_PASSWORD')
         )
     elif auth_type == 'approle':
         client.auth_approle(
-            getenv('VAULT_ROLE_ID'),
-            secret_id=getenv('VAULT_SECRET_ID')
+            os.getenv('VAULT_ROLE_ID'),
+            secret_id=os.getenv('VAULT_SECRET_ID')
         )
     elif auth_type == 'github':
         client.auth.github.login(token=env['token'])
@@ -137,11 +146,10 @@ class VaultSecret(Ref):
         """
         Set vault parameter and encoding of data
         """
-        self.encoding = kwargs.get('encoding', 'original')
-        self.data = data
+        self.data = data.rstrip()
         self.parameter = kwargs.get('parameter')
         super().__init__(self.data,**kwargs)
-        self.type_name = 'vault'
+        self.type_name = 'vaultkv'
 
     @classmethod
     def from_params(cls, data, ref_params):
@@ -158,14 +166,36 @@ class VaultSecret(Ref):
             if target_inv is None:
                 raise ValueError('target_inv not set')
 
-            ref_params.kwargs['parameter'] = target_inv['parameters']['kapitan']['secrets']['vault']
+            ref_params.kwargs['parameter'] = target_inv['parameters']['kapitan']['secrets']['vaultkv']
             return cls(data, **ref_params.kwargs)
         except KeyError:
-            raise RefError("Could not create VaultSecret: vault parameters missing")
+            raise RefError("Could not create VaultSecret: vaultkv parameters missing")
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
-        return super().from_path(ref_full_path)
+        """
+        return a new Ref from file at ref_full_path
+        the data key in the file must be base64 encoded
+        """
+        try:
+            with open(ref_full_path) as fp:
+                obj = yaml.load(fp, Loader=YamlLoader)
+                _kwargs = {key: value for key, value in obj.items() if key not in ('data', 'from_base64')}
+                target_inv = inventory(kwargs['search_paths'],kwargs['target_name'])
+                if target_inv is None:
+                    raise ValueError('target not set')
+
+                _kwargs['parameter'] = target_inv['parameters']['kapitan']['secrets']['vaultkv']
+                kwargs.update(_kwargs)
+                return cls(obj['data'], from_base64=True, **kwargs)
+
+        except IOError as ex:
+            if ex.errno == errno.ENOENT:
+                return None
+
+        except KeyError:
+            raise RefError("Could not fetch VaultSecret: vaultkv parameters missing")
+            return None
 
     def reveal(self):
         """
@@ -182,9 +212,6 @@ class VaultSecret(Ref):
                 "non-alphabet characters in the data"
             )
 
-        if ref_data.decode() == "secret_test_key":
-            return "secret_value"
-
         return self._decrypt(ref_data)
 
     def _decrypt(self, data):
@@ -195,33 +222,34 @@ class VaultSecret(Ref):
         """
         try:
             client = vault_obj(self.parameter)
-            data = safe_load(data)
+            # token will comprise of two parts path_in_vault:key
+            data = data.decode('utf-8').split(':')
             return_data = ''
             if self.parameter.get('engine') == 'kv':
-                response = client.secrets.kv.v1.read_secret(path=data['path'],
+                response = client.secrets.kv.v1.read_secret(path=data[0],
                                                             mount_point=self.parameter.get('mount','secret'))
-                return_data = response['data'][data['key']]
+                return_data = response['data'][data[1]]
             else:
-                response = client.secrets.kv.v2.read_secret_version(path=data['path'],
+                response = client.secrets.kv.v2.read_secret_version(path=data[0],
                                                                     mount_point=self.parameter.get('mount','secret'))
-                return_data = response['data']['data'][data['key']]
+                return_data = response['data']['data'][data[1]]
             client.adapter.close()
         except Forbidden:
             VaultError(
                 'Permission Denied. '+
                 'make sure the token is authorised to access {path} on Vault'.format(
-                    path=data['path']
+                    path=data[0]
                 )
             )
         except InvalidPath:
             VaultError(
-                '{path} does not exist on Vault secret'.format(path=data['path'])
+                '{path} does not exist on Vault secret'.format(path=data[0])
             )
 
         if return_data is '':
             VaultError(
-                "'{key}' doesn't exist on '{path}'".format(key=data['key'],
-                                                           path=data['path'])
+                "'{key}' doesn't exist on '{path}'".format(key=data[1],
+                                                           path=data[0])
             )
         return return_data
 
@@ -230,10 +258,29 @@ class VaultSecret(Ref):
         Returns dict with keys/values to be serialised.
         """
         return {"data": self.data, "encoding": self.encoding,
-                "type": self.type_name, "parameter":self.parameter}
+                "type": self.type_name}
 
 class VaultBackend(RefBackend):
-    def __init__(self, path, ref_type=VaultSecret):
+    def __init__(self, path,target='',search_paths='.', ref_type=VaultSecret):
         "init VaultBackend ref backend type"
         super().__init__(path, ref_type)
-        self.type_name = 'vault'
+        self.type_name = 'vaultkv'
+        self.ref_type = ref_type
+        self.target = target
+        self.search_paths = search_paths
+
+    def __getitem__(self, ref_path):
+        # remove the substring notation, if any
+        ref_file_path = re.sub(r"(@[\w\.\-\_]+)", "", ref_path)
+        full_ref_path = os.path.join(self.path, ref_file_path)
+        ref = self.ref_type.from_path(full_ref_path, target_name=self.target,
+                                      search_paths=self.search_paths)
+
+        if ref is not None:
+            ref.path = ref_path
+            ref_path_data = "{}{}".format(ref_file_path, ref.data)
+            ref.hash = hashlib.sha256(ref_path_data.encode()).hexdigest()
+            ref.token = "{}:{}:{}".format(ref.type_name, ref.path, ref.hash[:8])
+            return ref
+
+        raise KeyError(ref_path)

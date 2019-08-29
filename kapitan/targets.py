@@ -305,6 +305,8 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
+    ref_controller.target = target_name
+    ref_controller.search_paths = search_paths
 
     jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller)
     jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)

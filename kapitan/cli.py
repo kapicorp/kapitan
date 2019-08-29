@@ -192,8 +192,6 @@ def main():
     secrets_parser.add_argument('--key', '-K', help='set KMS key',
                                 default=from_dot_kapitan('secrets', 'key', ''),
                                 metavar='KEY')
-    secrets_parser.add_argument('--auth','-a', help='set authentication type for vault secret',
-                                default=from_dot_kapitan('secrets','auth','token'))
     secrets_parser.add_argument('--secrets-path', help='set secrets path, default is "./secrets"',
                                 default=from_dot_kapitan('secrets', 'secrets-path', './secrets'))
     secrets_parser.add_argument('--verbose', '-v',
@@ -404,7 +402,7 @@ def secret_write(args, ref_controller):
         tag = '?{{ref:{}}}'.format(token_path)
         ref_controller[tag] = ref_obj
 
-    elif token_name.startswith("vault:"):
+    elif token_name.startswith("vaultkv:"):
         type_name, token_path = token_name.split(":")
         _data = data.encode()
         parameter = {}
@@ -417,15 +415,14 @@ def secret_write(args, ref_controller):
             if 'secrets' not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            parameter = kap_inv_params['secrets']['vault']
-        if args.auth:
-            parameter['auth'] = args.auth
-        else:
-            raise KapitanError("No Authentication type parameter Specified. Use --auth or specify it"
-                               "in parameters.kapitan.secrets.vault.auth and user --target")
+            parameter = kap_inv_params['secrets']['vaultkv']
+        if parameter.get('auth') is None:
+            raise KapitanError("No Authentication type parameter Specified. Specify it"
+                               " in parameters.kapitan.secrets.vault.auth and use --target")
 
         secret_obj = VaultSecret(_data, parameter=parameter, encoding=encoding)
-        tag = '?{{vault:{}}}'.format(token_path)
+        tag = '?{{vaultkv:{}}}'.format(token_path)
+        ref_controller.target = args.target_name
         ref_controller[tag] = secret_obj
 
     else:
@@ -495,6 +492,9 @@ def secret_update(args, ref_controller):
 
 def secret_reveal(args, ref_controller):
     "Reveal secrets in file_name"
+    if args.target_name:
+        ref_controller.target = args.target_name
+        ref_controller.search_paths = os.path.abspath(os.path.join(args.inventory_path, os.pardir))
     revealer = Revealer(ref_controller)
     file_name = args.file
     if file_name is None:
