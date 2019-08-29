@@ -33,7 +33,7 @@ from kapitan.lint import start_lint
 from kapitan.refs.base import Ref, RefController, Revealer
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
-from kapitan.refs.secrets.vault import VaultSecret
+from kapitan.refs.secrets.vaultkv import VaultSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.resources import (inventory_reclass, resource_callbacks,
                                search_imports)
@@ -350,6 +350,9 @@ def main():
 
     elif cmd == 'secrets':
         ref_controller = RefController(args.secrets_path)
+        if args.target_name:
+            ref_controller.target = args.target_name
+            ref_controller.search_paths = os.path.abspath(os.path.join(args.inventory_path, os.pardir))
 
         if args.write is not None:
             secret_write(args, ref_controller)
@@ -458,15 +461,14 @@ def secret_write(args, ref_controller):
             parameter = kap_inv_params['secrets']['vaultkv']
         if parameter.get('auth') is None:
             raise KapitanError("No Authentication type parameter Specified. Specify it"
-                               " in parameters.kapitan.secrets.vault.auth and use --target")
+                               " in parameters.kapitan.secrets.vaultkv.auth and use --target")
 
         secret_obj = VaultSecret(_data, parameter=parameter, encoding=encoding)
         tag = '?{{vaultkv:{}}}'.format(token_path)
-        ref_controller.target = args.target_name
         ref_controller[tag] = secret_obj
 
     else:
-        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/vault/ref:{name}".format(name=token_name))
+        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/vaultkv/ref:{name}".format(name=token_name))
 
 
 def secret_update(args, ref_controller):
@@ -532,9 +534,6 @@ def secret_update(args, ref_controller):
 
 def secret_reveal(args, ref_controller):
     "Reveal secrets in file_name"
-    if args.target_name:
-        ref_controller.target = args.target_name
-        ref_controller.search_paths = os.path.abspath(os.path.join(args.inventory_path, os.pardir))
     revealer = Revealer(ref_controller)
     file_name = args.file
     if file_name is None:

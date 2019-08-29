@@ -155,7 +155,7 @@ class VaultSecret(Ref):
     def from_params(cls, data, ref_params):
         """
         Return new VaultSecret from data and ref_params: target_name
-        key will be grabbed from the inventory via target_name
+        parameters will be grabbed from the inventory via target_name
         """
         try:
             target_name = ref_params.kwargs['target_name']
@@ -194,7 +194,7 @@ class VaultSecret(Ref):
                 return None
 
         except KeyError:
-            raise RefError("Could not fetch VaultSecret: vaultkv parameters missing")
+            raise VaultError("Could not fetch VaultSecret: vaultkv parameters missing")
             return None
 
     def reveal(self):
@@ -237,9 +237,7 @@ class VaultSecret(Ref):
         except Forbidden:
             VaultError(
                 'Permission Denied. '+
-                'make sure the token is authorised to access {path} on Vault'.format(
-                    path=data[0]
-                )
+                'make sure the token is authorised to access {path} on Vault'.format( path=data[0])
             )
         except InvalidPath:
             VaultError(
@@ -248,8 +246,7 @@ class VaultSecret(Ref):
 
         if return_data is '':
             VaultError(
-                "'{key}' doesn't exist on '{path}'".format(key=data[1],
-                                                           path=data[0])
+                "'{key}' doesn't exist on '{path}'".format(key=data[1], path=data[0])
             )
         return return_data
 

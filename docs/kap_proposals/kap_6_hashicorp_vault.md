@@ -1,6 +1,6 @@
 # Hashicorp Vault  
   
-This feature allows the user to fetch secrets from [Hashicorp Vault](https://www.vaultproject.io/), an online Kapitan Secret backend `vault`.  
+This feature allows the user to fetch secrets from [Hashicorp Vault](https://www.vaultproject.io/), an online Kapitan Secret backend `vaultkv`.  
   
 Author: [@vaibahvk](https://github.com/vaibhavk) [@daminisatya](https://github.com/daminisatya)  
 ## Specification  
@@ -22,37 +22,28 @@ The following variables need to be exported to the environment(depending on auth
 Considering a key-value pair like `my_key`:`my_secret` ( in our case let’s store `hello`:`batman` inside the vault ) in the path `secret/foo` in a kv-v2(KV version 2) secret engine on the vault server, to use this as a secret either follow:  
   
 ```shell  
-$ echo “{'path':'secret/foo','key':'hello'}” > somefile.txt  
-$ kapitan secrets --write vault:path/to/secret_inside_kapitan --file somefile.txt --target dev-sea  
+$ echo "foo:hello" > somefile.txt  
+$ kapitan secrets --write vaultkv:path/to/secret_inside_kapitan --file somefile.txt --target dev-sea  
 ```  
 or in a single line  
 ```shell  
-$ echo “{'path':'secret/foo','key':'hello'}” | kapitan secrets --write vault:path/to/secret_inside_kapitan -t dev-sea -f -  
+$ echo "foo:hello"  | kapitan secrets --write vaultkv:path/to/secret_inside_kapitan -t dev-sea -f -  
 ```  
-The entire string __{'path':'secret/foo','key':'hello'}__ is base64 encoded and stored in the secret_inside_kapitan. Now secret_inside_kapitan contains the following  
+The entire string __"foo:hello"__ is base64 encoded and stored in the secret_inside_kapitan. Now secret_inside_kapitan contains the following  
   
 ```yaml    
-data: 4oCccGF0aDpzZWNlcnQvZm9v4oCdIOKAnGtleTpteV9rZXnigJ0K  
+data: Zm9vOmhlbGxvCg==  
 encoding: original  
-parameter:
-  addr: http://127.0.0.1:8200
-  auth: userpass
-  client_cert: /path/to/cert
-  client_key: /path/to/key
-  engine: kv-v2
-  mount: team-alpha-secret
-  namespace: CICD-alpha
-  skip_verify: false
-type: vault  
+type: vaultkv  
 ```  
   
 Encoding tells the type of data given to kapitan, if it is `original` then after decoding base64 we'll get the original secret and if it is `base64` then after decoding once we still have a base64 encoded secret and have to decode again.  
-Parameters in the secret file are collected from the inventory of the target we gave from CLI `--target dev-sea`. If target isn't provided then kapitan will identify the variables from the environment, but providing `auth` is necessary from either CLI (`--auth`) or as a key inside target parameters like the one shown:  
+Parameters in the secret file are collected from the inventory of the target we gave from CLI `--target dev-sea`. If target isn't provided then kapitan will identify the variables from the environment, but providing `auth` is necessary as a key inside target parameters like the one shown:  
 ```yaml  
 parameters:
   kapitan:
     secrets:
-      vault:
+      vaultkv:
         auth: userpass
         addr: http://127.0.0.1:8200
         engine: kv-v2
@@ -63,24 +54,23 @@ parameters:
         client_cert: /path/to/cert
 ```
 Almost all the environment variables can be defined in kapitan inventory except the token, password, secret_id, etc. Environment like `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID` 
-This makes the secret_inside_kapitan file accessible throughout the inventory, where we can use the secret whenever necessary like `?{vault:path/to/secret_inside_kapitan}`  
+This makes the secret_inside_kapitan file accessible throughout the inventory, where we can use the secret whenever necessary like `?{vaultkv:path/to/secret_inside_kapitan}`  
   
-Following is the example file having a secret and pointing to the vault `?{vault:path/to/secret_inside_kapitan}`  
+Following is the example file having a secret and pointing to the vault `?{vaultkv:path/to/secret_inside_kapitan}`  
   
-```yaml    
-parameters:  
-  releases:  
-	cod: latest  
-  cod:  
-	image: alledm/cod:${cod:release}  
-	release: ${releases:cod}  
-	replicas: ${replicas}  
-	args:  
-      - --verbose=${verbose}  
-      - --password=?{vault:path/to/secret_inside_kapitan}
+```yaml
+parameters:
+  releases:
+	cod: latest
+  cod:
+	image: alledm/cod:${cod:release}
+	release: ${releases:cod}
+	replicas: ${replicas}
+	args:
+    - --verbose=${verbose}
+    - --password=?{vaultkv:path/to/secret_inside_kapitan}
 ```  
-  
-when `?{vault:path/to/secret_inside_kapitan}` is compiled, it will look same with an 8 character prefix of sha256 hash added at the end like:  
+when `?{vaultkv:path/to/secret_inside_kapitan}` is compiled, it will look same with an 8 character prefix of sha256 hash added at the end like:  
 ```yaml  
 kind: Deployment
 metadata:
@@ -96,15 +86,15 @@ spec:
       containers:
         - args:
             - --verbose=True
-            - --password=?{vault:lunadb_ab:57d6f9b7}
+            - --password=?{vaultkv:path/to/secret_inside_kapitan:57d6f9b7}
           image: alledm/cod:v2.0.0
           name: cod
 ``` 
   
-Only the user with the required tokens/permissions can reveal the secrets. Please note that the roles and permissions will be handled at the Vault level. We need not worry about it within Kapitan. Use the following command to reveal the secrets:  
+Only the user with the required tokens/permissions can reveal the secrets. Please note that the roles and permissions will be handled at the Vault level. We need not worry about it within Kapitan. Also, it is mandatory to provide a target name since the parameters would be loaded from the inventory. Use the following command to reveal the secrets:  
 
 ```shell  
-$ kapitan secrets --reveal -f compile/file/containing/secret  
+$ kapitan secrets --reveal -f compile/file/containing/secret -t dev-sea
 ```  
 
 Following is the result of the cod-deployment.md file after Kapitan reveal.

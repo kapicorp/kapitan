@@ -395,7 +395,7 @@ class RefController(object):
                 from kapitan.refs.secrets.awskms import AWSKMSBackend
                 self.register_backend(AWSKMSBackend(self.path))
             elif type_name == 'vaultkv':
-                from kapitan.refs.secrets.vault import VaultBackend
+                from kapitan.refs.secrets.vaultkv import VaultBackend
                 self.register_backend(VaultBackend(self.path,target=self.target,
                                                    search_paths=self.search_paths))
             else:
