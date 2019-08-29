@@ -296,15 +296,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#local-testing" title="Local testing" class="md-nav__link">
-    Local testing
+  <a href="#1-update-the-md-files" title="1. Update the .md files" class="md-nav__link">
+    1. Update the .md files
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#deploying-to-github" title="Deploying to Github" class="md-nav__link">
-    Deploying to Github
+  <a href="#2-submit-a-pr-for-gh-pages-branch-to-deploy-the-update" title="2. Submit a PR for gh-pages branch to deploy the update" class="md-nav__link">
+    2. Submit a PR for gh-pages branch to deploy the update
   </a>
   
 </li>
@@ -495,6 +495,54 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../usage/" title="Usage" class="md-nav__link">
+      Usage
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Examples
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../example-kubernetes/" title="Kubernetes" class="md-nav__link">
+      Kubernetes
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -564,15 +612,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#local-testing" title="Local testing" class="md-nav__link">
-    Local testing
+  <a href="#1-update-the-md-files" title="1. Update the .md files" class="md-nav__link">
+    1. Update the .md files
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#deploying-to-github" title="Deploying to Github" class="md-nav__link">
-    Deploying to Github
+  <a href="#2-submit-a-pr-for-gh-pages-branch-to-deploy-the-update" title="2. Submit a PR for gh-pages branch to deploy the update" class="md-nav__link">
+    2. Submit a PR for gh-pages branch to deploy the update
   </a>
   
 </li>
@@ -650,7 +698,10 @@ that by running <code>bin/kapitan</code> from this repository or even setting an
 <li>The merge has to happen with a merge commit not with squash/rebase so that the commit message still mentions <code>deepmind/release-v*</code> inside.</li>
 </ul>
 <h2 id="updating-gh-pages-docs">Updating gh-pages docs</h2>
-<h3 id="local-testing">Local testing</h3>
+<p>We use <a href="https://www.mkdocs.org/">mkdocs</a> to generate our gh-pages from <code>.md</code> files under docs/ folder.</p>
+<p>Updating our gh-pages is therefore a two-step process.</p>
+<h3 id="1-update-the-md-files">1. Update the <code>.md</code> files</h3>
+<p>Submit a PR for our master branch that updates the <code>.md</code> file(s). Test how the changes would look like when deployed to gh-pages by serving it on localhost:</p>
 <div class="highlight"><pre><span></span># from project root
 pip install mkdocs mkdocs-material pymdown-extensions markdown-include
 mkdocs build
@@ -658,12 +709,13 @@ mkdocs serve
 # open http://127.0.0.1:8000
 </pre></div>
 
-<h3 id="deploying-to-github">Deploying to Github</h3>
+<h3 id="2-submit-a-pr-for-gh-pages-branch-to-deploy-the-update">2. Submit a PR for gh-pages branch to deploy the update</h3>
+<p>Once the above PR has been merged, use <code>mkdocs gh-deploy</code> command to push the commit that updates the site content to your own gh-pages branch. Make sure that you already have this gh-pages branch in your fork that is up-to-date with our gh-pages branch such that the two branches share the commit history (otherwise Github would not allow PRs to be created).</p>
 <div class="highlight"><pre><span></span># locally, on master branch (which has your updated docs)
-mkdocs gh-deploy -m &quot;Commit message&quot; -f ./mkdocs.yml -b remote_branch_name
-# after it&#39;s pushed, create a PR that targets the gh-pages branch
+mkdocs gh-deploy -m &quot;Commit message&quot; -f ./mkdocs.yml -b gh-pages
 </pre></div>
 
+<p>After it's pushed, create a PR that targets our gh-pages branch from your gh-pages branch.</p>
 <h2 id="contributor-license-agreement">Contributor License Agreement</h2>
 <p>Contributions to this project must be accompanied by a Contributor License
 Agreement. You (or your employer) retain the copyright to your contribution,

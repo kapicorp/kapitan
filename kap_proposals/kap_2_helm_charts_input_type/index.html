@@ -395,6 +395,54 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../usage/" title="Usage" class="md-nav__link">
+      Usage
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Examples
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../example-kubernetes/" title="Kubernetes" class="md-nav__link">
+      Kubernetes
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -486,16 +534,16 @@
 <p>This feature basically follows the <code>helm template</code> command available.<br />
 This will run after the fetching of the external dependencies takes place, such that users can simultaneously specify the fetch as well as the import of a helm chart dependency. </p>
 <h3 id="semantics">Semantics</h3>
-<div class="highlight"><pre><span></span><span class="nt">kapitan</span><span class="p">:</span>
-  <span class="nt">compile</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
-      <span class="nt">input_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;path_to_chart_dir&gt;</span> 
-      <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path&gt;</span>
-      <span class="nt">set-file</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">compile</span><span class="p p-Indicator">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">input_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
+      <span class="l l-Scalar l-Scalar-Plain">input_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;path_to_chart_dir&gt;</span> 
+      <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path&gt;</span>
+      <span class="l l-Scalar l-Scalar-Plain">set-file</span><span class="p p-Indicator">:</span>
         <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">&lt;optional_file_path&gt;</span>
         <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">...</span>
-      <span class="nt">values_file</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;optional_values_file&gt;</span>
-      <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;optional_namespace&gt;</span>
+      <span class="l l-Scalar l-Scalar-Plain">values_file</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;optional_values_file&gt;</span>
+      <span class="l l-Scalar l-Scalar-Plain">namespace</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;optional_namespace&gt;</span>
 </pre></div>
 
 <p>This mostly maps to the options available to <code>helm template</code> command (refer to <a href="https://helm.sh/docs/helm/#helm-template">here</a>). </p>

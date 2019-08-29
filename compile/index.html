@@ -407,6 +407,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#example" title="Example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#building-the-binding-from-source" title="Building the binding from source" class="md-nav__link">
     Building the binding from source
   </a>
@@ -549,6 +556,54 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../usage/" title="Usage" class="md-nav__link">
+      Usage
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Examples
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../example-kubernetes/" title="Kubernetes" class="md-nav__link">
+      Kubernetes
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -672,6 +727,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#example" title="Example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#building-the-binding-from-source" title="Building the binding from source" class="md-nav__link">
     Building the binding from source
   </a>
@@ -718,14 +780,14 @@
 <p><strong>Note:</strong> make sure to read up on <a href="../inventory/">inventory</a> before moving on.</p>
 <h2 id="specifying-inputs-and-outputs">Specifying inputs and outputs</h2>
 <p>Input types can be specified in the inventory under <code>kapitan.compile</code> in the following format:</p>
-<div class="highlight"><pre><span></span><span class="nt">parameters</span><span class="p">:</span>
-  <span class="nt">kapitan</span><span class="p">:</span>
-    <span class="nt">compile</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path_in_target_dir&gt;</span>
-      <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">jinja | jsonnet | kadet | helm</span>
-      <span class="nt">input_paths</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">compile</span><span class="p p-Indicator">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path_in_target_dir&gt;</span>
+      <span class="l l-Scalar l-Scalar-Plain">input_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">jinja | jsonnet | kadet | helm</span>
+      <span class="l l-Scalar l-Scalar-Plain">input_paths</span><span class="p p-Indicator">:</span>
         <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">path/to/input/dir/or/file</span>
-      <span class="nt">output_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_type_specific_to_input_type&gt;</span>
+      <span class="l l-Scalar l-Scalar-Plain">output_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_type_specific_to_input_type&gt;</span>
 </pre></div>
 
 <h2 id="supported-input-types">Supported input types</h2>
@@ -734,7 +796,7 @@
 <li><a href="#jinja">jinja</a></li>
 <li><a href="#jsonnet">jsonnet</a></li>
 <li><a href="#kadet">kadet</a> (alpha)</li>
-<li><a href="#helm">helm</a> (optional)</li>
+<li><a href="#helm">helm</a> (alpha)</li>
 </ul>
 <h3 id="jinja">jinja</h3>
 <p>This renders jinja2 templates, typically stored in <code>templates/</code> directory, such as README, scripts and config files. Refer to <a href="http://jinja.palletsprojects.com/en/2.10.x/templates/">jinja2 docs</a> to understand how the template engine works.</p>
@@ -820,20 +882,21 @@ inventory - returns a dictionary with the inventory for target
 <li>json</li>
 </ul>
 <h3 id="helm">helm</h3>
-<p>This is a Python binding to <code>helm template</code> command for users with helm charts. Unlike any other input types, Helm input types support the following additional parameters under <code>kapitan.compile</code>:</p>
-<div class="highlight"><pre><span></span><span class="nt">parameters</span><span class="p">:</span>
-  <span class="nt">kapitan</span><span class="p">:</span>
-    <span class="nt">compile</span><span class="p">:</span>
-    <span class="p p-Indicator">-</span> <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path&gt;</span>
-      <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
-      <span class="nt">input_paths</span><span class="p">:</span>
+<p>This is a Python binding to <code>helm template</code> command for users with helm charts. This does not require the helm executable, and the templates are rendered without the Tiller server.</p>
+<p>Unlike other input types, Helm input types support the following additional parameters under <code>kapitan.compile</code>:</p>
+<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">compile</span><span class="p p-Indicator">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path&gt;</span>
+      <span class="l l-Scalar l-Scalar-Plain">input_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
+      <span class="l l-Scalar l-Scalar-Plain">input_paths</span><span class="p p-Indicator">:</span>
         <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">&lt;chart_path&gt;</span>
-      <span class="nt">helm_values</span><span class="p">:</span>
+      <span class="l l-Scalar l-Scalar-Plain">helm_values</span><span class="p p-Indicator">:</span>
         <span class="l l-Scalar l-Scalar-Plain">&lt;object_with_values_to_override&gt;</span>
-      <span class="nt">helm_params</span><span class="p">:</span>
-        <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;substitutes_.Release.Namespace&gt;</span>
-        <span class="nt">name_template</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;namespace_template&gt;</span>
-        <span class="nt">release_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;chart_release_name&gt;</span>
+      <span class="l l-Scalar l-Scalar-Plain">helm_params</span><span class="p p-Indicator">:</span>
+        <span class="l l-Scalar l-Scalar-Plain">namespace</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;substitutes_.Release.Namespace&gt;</span>
+        <span class="l l-Scalar l-Scalar-Plain">name_template</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;namespace_template&gt;</span>
+        <span class="l l-Scalar l-Scalar-Plain">release_name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;chart_release_name&gt;</span>
 </pre></div>
 
 <p><code>helm_values</code> is an object containing values specified that will override the default values in the input chart. This has exactly the same effect as specifying <code>--values custom_values.yml</code> for <code>helm template</code> command where <code>custom_values.yml</code> structure mirrors that of <code>helm_values</code>. </p>
@@ -841,8 +904,8 @@ inventory - returns a dictionary with the inventory for target
 <ul>
 <li>
 <p>namespace: equivalent of <code>--namespace</code> option: note that due to the restriction on <code>helm template</code> command, specifying the namespace does not automatically add <code>metadata.namespace</code> property to the resources. Therefore, users are encourage to explicitly specify in all resources:</p>
-<div class="highlight"><pre><span></span><span class="nt">metadata</span><span class="p">:</span>
-  <span class="nt">namespace</span><span class="p">:</span> <span class="p p-Indicator">{{</span> <span class="nv">.Release.Namespace</span> <span class="p p-Indicator">}}</span> <span class="c1"># or any other custom values</span>
+<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">metadata</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">namespace</span><span class="p p-Indicator">:</span> <span class="p p-Indicator">{{</span> <span class="nv">.Release.Namespace</span> <span class="p p-Indicator">}}</span> <span class="c1"># or any other custom values</span>
 </pre></div>
 
 </li>
@@ -852,6 +915,49 @@ inventory - returns a dictionary with the inventory for target
 <li>release_name: equivalent of <code>--name</code> option</li>
 </ul>
 <p>See the <a href="https://helm.sh/docs/helm/#helm-template">helm doc</a> for further detail.</p>
+<h4 id="example">Example</h4>
+<p>Let's use <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">nginx-ingress</a> helm chart as the input. Using <a href="../external_dependencies/">kapitan dependency manager</a>, this chart can be fetched via a URL as listed in <a href="https://helm.nginx.com/stable/index.yaml">https://helm.nginx.com/stable/index.yaml</a>. </p>
+<p><em>On a side note, <code>https://helm.nginx.com/stable/</code> is the chart repository URL which you would <code>helm repo add</code>, and this repository should contain <code>index.yaml</code> that lists out all the available charts and their URLs. By locating this <code>index.yaml</code> file, you can locate all the charts available in the repository.</em></p>
+<p>We can use version 0.3.3 found at <a href="https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz">https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz</a>. We can create a simple target file as <code>inventory/targets/nginx-from-chart.yml</code> whose content is as follows:</p>
+<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">vars</span><span class="p p-Indicator">:</span>
+      <span class="l l-Scalar l-Scalar-Plain">target</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">nginx-from-chart</span>
+    <span class="l l-Scalar l-Scalar-Plain">dependencies</span><span class="p p-Indicator">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">https</span>
+      <span class="l l-Scalar l-Scalar-Plain">source</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz</span>
+      <span class="l l-Scalar l-Scalar-Plain">unpack</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">True</span>
+      <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">components/charts</span>
+    <span class="l l-Scalar l-Scalar-Plain">compile</span><span class="p p-Indicator">:</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">chart</span>
+        <span class="l l-Scalar l-Scalar-Plain">input_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
+        <span class="l l-Scalar l-Scalar-Plain">input_paths</span><span class="p p-Indicator">:</span>
+          <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">components/charts/nginx-ingress</span>
+        <span class="l l-Scalar l-Scalar-Plain">helm_values</span><span class="p p-Indicator">:</span>
+          <span class="l l-Scalar l-Scalar-Plain">controller</span><span class="p p-Indicator">:</span>
+            <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">my-controller</span>
+            <span class="l l-Scalar l-Scalar-Plain">image</span><span class="p p-Indicator">:</span>
+              <span class="l l-Scalar l-Scalar-Plain">repository</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">custom_repo</span>
+        <span class="l l-Scalar l-Scalar-Plain">helm_params</span><span class="p p-Indicator">:</span>
+          <span class="l l-Scalar l-Scalar-Plain">release_name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">my-first-release-name</span>
+          <span class="l l-Scalar l-Scalar-Plain">namespace</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">my-first-namespace</span>
+</pre></div>
+
+<p>To compile this target, run:</p>
+<div class="highlight"><pre><span></span>$ kapitan compile --fetch
+Dependency https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz : fetching now
+Dependency https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz : successfully fetched
+Dependency https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz : extracted to components/charts
+Compiled nginx-from-chart <span class="o">(</span><span class="m">0</span>.07s<span class="o">)</span>
+</pre></div>
+
+<p>The chart is fetched before compile, which creates <code>components/charts/nginx-ingress</code> folder that is used as the <code>input_paths</code>  for the helm input type. To confirm if the <code>helm_values</code> actually has overridden the default values, we can try:</p>
+<div class="highlight"><pre><span></span>$ grep <span class="s2">&quot;my-controller&quot;</span> compiled/nginx-from-chart/chart/controller-deployment.yaml 
+  name: my-controller
+      app: my-controller
+        app: my-controller
+</pre></div>
+
 <h4 id="building-the-binding-from-source">Building the binding from source</h4>
 <p>Run</p>
 <div class="highlight"><pre><span></span><span class="nb">cd</span> kapitan/inputs/helm
