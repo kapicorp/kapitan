@@ -1,0 +1,46 @@
+# dependencies:
+# pip install mkdocs mkdocs-material pymdown-extensions
+site_name: Kapitan documentation
+theme: material
+use_directory_urls: true
+nav:
+- Home: README.md
+- Contributing: contributing.md
+- Getting started:
+  - Kapitan Overview: kapitan_overview.md
+  - Inventory: inventory.md
+  - Compiling components/templates: compile.md
+- Kapitan features:
+  - Secret management: secrets.md
+  - Manifest validation: validate.md
+  - External dependency management: external_dependencies.md
+- Miscellaneous:
+  - Continuous Integration: CI.md
+  - Set up kapitan on older Python systems: pyenv-scl.md
+  - Usage: usage.md
+- Examples:
+    - Kubernetes: example-kubernetes.md
+
+
+markdown_extensions:
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - markdown_include.include:
+      base_path: docs
+
+repo_name: 'deepmind/kapitan'
+repo_url: 'https://github.com/deepmind/kapitan'

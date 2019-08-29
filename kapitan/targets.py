@@ -15,13 +15,15 @@
 # limitations under the License.
 
 "kapitan targets"
-
+import json
 import logging
 import os
 import shutil
 import sys
 import multiprocessing
 import tempfile
+from collections import defaultdict
+
 import jsonschema
 import yaml
 import time
@@ -35,9 +37,12 @@ from kapitan.errors import KapitanError, CompileError, InventoryError
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
+from kapitan.inputs.helm import Helm
 from kapitan import cached
 
 from reclass.errors import NotFoundError, ReclassException
+
+from kapitan.validator.kubernetes_validator import KubernetesManifestValidator, DEFAULT_KUBERNETES_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +55,6 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
-
     updated_targets = targets
     # If --cache is set
     if kwargs.get('cache'):
@@ -102,6 +106,12 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
             shutil.rmtree(compile_path)
             shutil.copytree(temp_path, compile_path)
             logger.debug("Copied %s into %s", temp_path, compile_path)
+
+        # validate the compiled outputs
+        if kwargs.get('validate', False):
+            validate_map = create_validate_mapping(target_objs, compile_path)
+            worker = partial(schema_validate_kubernetes_output, cache_dir=kwargs.get('schemas_path', './schemas'))
+            [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
 
         # Save inventory and folders cache
         save_inv_cache(compile_path, targets)
@@ -301,7 +311,6 @@ def load_target_inventory(inventory_path, targets):
 def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
-
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
@@ -311,6 +320,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
     jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller)
     jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
     kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
+    helm_compiler = Helm(compile_path, search_paths, ref_controller)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
@@ -321,8 +331,14 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             input_compiler = jsonnet_compiler
         elif input_type == "kadet":
             input_compiler = kadet_compiler
+        elif input_type == "helm":
+            if 'helm_values' in comp_obj:
+                helm_compiler.dump_helm_values(comp_obj['helm_values'])
+            if 'helm_params' in comp_obj:
+                helm_compiler.set_helm_params(comp_obj['helm_params'])
+            input_compiler = helm_compiler
         else:
-            err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet"
+            err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet, helm"
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)
@@ -353,6 +369,16 @@ def valid_target_obj(target_obj):
                         "input_type": {"type": "string"},
                         "output_path": {"type": "string"},
                         "output_type": {"type": "string"},
+                        "helm_values": {"type": "object"},
+                        "helm_params": {
+                            "type": "object",
+                            "properties": {
+                                "namespace": {"type": "string"},
+                                "name_template": {"type": "string"},
+                                "release_name": {"type": "string"}
+                            },
+                            "additionalProperties": False
+                        }
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
@@ -370,11 +396,49 @@ def valid_target_obj(target_obj):
                         {
                             "properties": {
                                 "input_type": {
-                                    "enum": ["jinja2"]
-                                }
+                                    "enum": ["jinja2", "helm"]
+                                } 
                             }
                         }
                     ],
+                }
+            },
+            "validate": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "output_paths": {"type": "array"},
+                        "type": {
+                            "type": "string",
+                            "enum": ["kubernetes"]
+                        },
+                        "kind": {"type": "string"},
+                        "version": {"type": "string"},
+                    },
+                    "required": ["output_paths", "type"],
+                    "minItems": 1,
+                    "allOf": [
+                        {
+                            "if": {
+                                "properties": {"type": {"const": "kubernetes"}}
+                            },
+                            "then": {
+                                "properties": {
+                                    "type": {
+                                    },
+                                    "kind": {
+                                    },
+                                    "output_paths": {
+                                    },
+                                    "version": {
+                                    }
+                                },
+                                "additionalProperties": False,
+                                "required": ["kind"],
+                            }
+                        },
+                    ]
                 }
             },
             "dependencies": {
@@ -422,7 +486,11 @@ def valid_target_obj(target_obj):
         "required": ["compile"],
     }
 
-    return jsonschema.validate(target_obj, schema, format_checker=jsonschema.FormatChecker())
+    try:
+        jsonschema.validate(target_obj, schema, format_checker=jsonschema.FormatChecker())
+    except jsonschema.exceptions.ValidationError as e:
+        raise InventoryError('Invalid inventory structure\n\nError: {}\nOn instance:\n{}'.
+                             format(e.message, json.dumps(e.instance, indent=2, sort_keys=False)))
 
 
 def validate_matching_target_name(target_filename, target_obj, inventory_path):
@@ -443,3 +511,86 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
         error_message = "Target \"{}\" is missing the corresponding yml file in {}\n" \
                         "Target name should match the name of the target yml file in inventory"
         raise InventoryError(error_message.format(target_name, target_path))
+
+
+def schema_validate_compiled(targets, compiled_path, inventory_path, schema_cache_path, parallel):
+    """
+    validates compiled output according to schemas specified in the inventory
+    """
+    if not os.path.isdir(compiled_path):
+        logger.error("compiled-path {} not found".format(compiled_path))
+        sys.exit(1)
+
+    if not os.path.isdir(schema_cache_path):
+        os.makedirs(schema_cache_path)
+        logger.info("created schema-cache-path at {}".format(schema_cache_path))
+
+    worker = partial(schema_validate_kubernetes_output, cache_dir=schema_cache_path)
+    pool = multiprocessing.Pool(parallel)
+
+    try:
+        target_objs = load_target_inventory(inventory_path, targets)
+        validate_map = create_validate_mapping(target_objs, compiled_path)
+
+        [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
+        pool.close()
+
+    except ReclassException as e:
+        if isinstance(e, NotFoundError):
+            logger.error("Inventory reclass error: inventory not found")
+        else:
+            logger.error("Inventory reclass error: %s", e.message)
+        raise InventoryError(e.message)
+    except Exception as e:
+        pool.terminate()
+        logger.debug("Validate pool terminated")
+        # only print traceback for errors we don't know about
+        if not isinstance(e, KapitanError):
+            logger.exception("Unknown (Non-Kapitan) Error occured")
+
+        logger.error("\n")
+        logger.error(e)
+        sys.exit(1)
+    finally:
+        # always wait for other worker processes to terminate
+        pool.join()
+
+
+def create_validate_mapping(target_objs, compiled_path):
+    """
+    creates mapping of (kind, version) tuple to output_paths across different targets
+    this is required to avoid redundant schema fetch when multiple targets use the same schema for validation
+    """
+    validate_files_map = defaultdict(list)
+    for target_obj in target_objs:
+        target_name = target_obj['vars']['target']
+        if 'validate' not in target_obj:
+            logger.debug("target '{}' does not have 'validate' parameter. skipping".format(target_name))
+            continue
+
+        for validate_item in target_obj['validate']:
+            validate_type = validate_item['type']
+            if validate_type == 'kubernetes':
+                kind_version_pair = (validate_item['kind'],
+                                     validate_item.get('version', DEFAULT_KUBERNETES_VERSION))
+                for output_path in validate_item['output_paths']:
+                    full_output_path = os.path.join(compiled_path, target_name, output_path)
+                    if not os.path.isfile(full_output_path):
+                        logger.warning("{} does not exist for target '{}'. skipping".
+                                       format(output_path, target_name))
+                        continue
+                    validate_files_map[kind_version_pair].append(full_output_path)
+            else:
+                logger.warning('type {} is not supported for validation. skipping'.format(validate_type))
+
+    return validate_files_map
+
+
+def schema_validate_kubernetes_output(validate_data, cache_dir):
+    """
+    validates given files according to kubernetes manifest schemas
+    schemas are cached from/to cache_dir
+    validate_data must be of structure ((kind, version), validate_files)
+    """
+    (kind, version), validate_files = validate_data
+    KubernetesManifestValidator(cache_dir).validate(validate_files, kind=kind, version=version)

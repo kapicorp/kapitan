@@ -40,7 +40,7 @@ compiled
 You can now run `terraform` commands as usual:
 
 ```
-$ cd compiled/project1/manifests
+$ cd compiled/project1/terraform/
 
 $ terraform init
 $ terraform plan

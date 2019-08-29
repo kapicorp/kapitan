@@ -62,13 +62,13 @@ class DependencyManagerTest(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
 
     def test_compile_fetch(self):
-
         temp = tempfile.mkdtemp()
         DEPENDENCY_OUTPUT_CONFIG["root_dir"] = temp
-        sys.argv = ["kapitan", "compile", "--fetch", "--output-path", temp, "-t", "nginx", "nginx-dev", "--fetch", "-p", "4"]
+        sys.argv = ["kapitan", "compile", "--fetch", "--output-path", temp, "-t",
+                    "nginx", "nginx-dev", "-p", "4"]
         main()
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))
-        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler-0.1.0")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "kapitan-repository")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
 
