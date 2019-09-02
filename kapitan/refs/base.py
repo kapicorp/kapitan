@@ -23,7 +23,6 @@ import re
 import sys
 import os
 from functools import lru_cache
-
 import yaml
 
 from kapitan.errors import RefFromFuncError, RefBackendError, RefError
@@ -43,27 +42,20 @@ REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@]+)([\|\w\:\.\-\/]+)?=*})"
 REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
 
-class Ref(object):
-    def __init__(self, data, from_base64=False, **kwargs):
+class PlainRef(object):
+    def __init__(self, data, **kwargs):
         """
-        writes data
-        set from_base64 to load already base64 encoded data
+        writes plain data
         """
-        self.type_name = 'ref'
+        self.type_name = 'plain'
         self.encoding = kwargs.get('encoding', 'original')
-        # TODO data should be bytes only
-        if from_base64:
-            self.data = data
-        else:
-            self.data = base64.b64encode(data).decode()
+        self.data = data
 
     def reveal(self):
-        # TODO data should be bytes only
-        return base64.b64decode(self.data).decode()
+        return self.data
 
     def compile(self):
-        # XXX will only work if object read via backend
-        return "?{{{}:{}:{}}}".format(self.type_name, self.path, self.hash[:8])
+        return self.data
 
     def __str__(self):
         return "{}".format(self.__dict__)
@@ -71,15 +63,14 @@ class Ref(object):
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
         """
-        return a new Ref from file at ref_full_path
-        the data key in the file must be base64 encoded
+        return a new PlainRef from file at ref_full_path
         """
         try:
             with open(ref_full_path) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
-                _kwargs = {key: value for key, value in obj.items() if key not in ('data', 'from_base64')}
+                _kwargs = {key: value for key, value in obj.items() if key not in ('data',)}
                 kwargs.update(_kwargs)
-                return cls(obj['data'], from_base64=True, **kwargs)
+                return cls(obj['data'], **kwargs)
 
         except IOError as ex:
             if ex.errno == errno.ENOENT:
@@ -88,7 +79,7 @@ class Ref(object):
     @classmethod
     def from_params(cls, data, ref_params):
         """
-        Return new Ref from data and ref_params
+        Return new PlainRef from data and ref_params
         """
         # default encoding to 'original'
         # TODO encoding needs a better place other than kwargs
@@ -103,7 +94,7 @@ class Ref(object):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding,
+        return {"data": self.data.decode(), "encoding": self.encoding,
                 "type": self.type_name}
 
 
@@ -114,12 +105,12 @@ class RefParams(object):
         self.kwargs = kwargs
 
 
-class RefBackend(object):
-    def __init__(self, path, ref_type=Ref):
-        "Get and create Refs"
+class PlainRefBackend(object):
+    def __init__(self, path, ref_type=PlainRef):
+        "Get and create PlainRefs"
         self.path = path
-        self.type_name = 'ref'
-        self.ref_type = ref_type  # Ref type backend instance manages
+        self.type_name = 'plain'
+        self.ref_type = ref_type
 
     def __getitem__(self, ref_path):
         # remove the substring notation, if any
@@ -374,7 +365,7 @@ class RefController(object):
 
     def register_backend(self, backend):
         "register backend type"
-        assert(isinstance(backend, RefBackend))
+        assert(isinstance(backend, PlainRefBackend))
         self.backends[backend.type_name] = backend
 
     def _get_backend(self, type_name):
@@ -382,9 +373,12 @@ class RefController(object):
         try:
             return self.backends[type_name]
         except KeyError:
-            if type_name == 'ref':
-                from kapitan.refs.base import RefBackend
-                self.register_backend(RefBackend(self.path))
+            if type_name == 'plain':
+                from kapitan.refs.base import PlainRefBackend
+                self.register_backend(PlainRefBackend(self.path))
+            elif type_name == 'base64':
+                from kapitan.refs.base64 import Base64RefBackend
+                self.register_backend(Base64RefBackend(self.path))
             elif type_name == 'gpg':
                 from kapitan.refs.secrets.gpg import GPGBackend
                 self.register_backend(GPGBackend(self.path))

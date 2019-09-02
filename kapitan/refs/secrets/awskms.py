@@ -17,7 +17,8 @@
 import base64
 import boto3
 
-from kapitan.refs.base import Ref, RefBackend, RefError
+from kapitan.refs.base import RefError
+from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan import cached
 from kapitan.errors import KapitanError
 
@@ -33,7 +34,7 @@ def awskms_obj():
     return cached.awskms_obj
 
 
-class AWSKMSSecret(Ref):
+class AWSKMSSecret(Base64Ref):
     def __init__(self, data, key, encrypt=True, encode_base64=False, **kwargs):
         """
         encrypts data with key
@@ -152,7 +153,7 @@ class AWSKMSSecret(Ref):
                 "key": self.key, "type": self.type_name}
 
 
-class AWSKMSBackend(RefBackend):
+class AWSKMSBackend(Base64RefBackend):
     def __init__(self, path, ref_type=AWSKMSSecret):
         "init AWSKMSBackend ref backend type"
         super().__init__(path, ref_type)
