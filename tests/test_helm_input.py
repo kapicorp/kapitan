@@ -42,8 +42,8 @@ class HelmInputTest(unittest.TestCase):
         chart_path = "charts/acs-engine-autoscaler"
         error_message = render_chart(chart_path, temp_dir)
         self.assertFalse(error_message)
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "secrets.yaml")))
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "deployment.yaml")))
+        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "secrets.yaml")))
+        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "deployment.yaml")))
 
     def test_error_invalid_char_dir(self):
         chart_path = "non-existent"
@@ -56,13 +56,13 @@ class HelmInputTest(unittest.TestCase):
         sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "acs-engine-autoscaler"]
         main()
         self.assertTrue(os.path.isfile(
-            os.path.join(temp, "compiled", "acs-engine-autoscaler", "chart", "acs", "secrets.yaml")))
+            os.path.join(temp, "compiled", "acs-engine-autoscaler", "chart", "acs", "acs-engine-autoscaler", "templates", "secrets.yaml")))
 
     def test_compile_with_helm_values(self):
         temp = tempfile.mkdtemp()
         sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx-ingress"]
         main()
-        controller_deployment_file = os.path.join(temp, "compiled", "nginx-ingress", "chart", "controller-deployment.yaml")
+        controller_deployment_file = os.path.join(temp, "compiled", "nginx-ingress", "chart", "nginx-ingress", "templates", "controller-deployment.yaml")
         self.assertTrue(os.path.isfile(controller_deployment_file))
         with open(controller_deployment_file, 'r') as fp:
             manifest = yaml.safe_load(fp.read())
@@ -80,7 +80,7 @@ class HelmInputTest(unittest.TestCase):
 
         main()
         controller_deployment_file = os.path.join(temp, "compiled", "nginx-ingress-helm-params",
-                                                  "chart", "controller-deployment.yaml")
+                                                  "chart", "nginx-ingress", "templates", "controller-deployment.yaml")
 
         self.assertTrue(os.path.isfile(controller_deployment_file))
         with open(controller_deployment_file, 'r') as fp:

@@ -48,13 +48,17 @@ class Helm(InputType):
             raise HelmTemplateError(error_message)
 
         walk_root_files = os.walk(temp_dir)
-        for root, _, files in walk_root_files:
+        for current_dir, _, files in walk_root_files:
             for file in files:  # go through all the template files
-                with open(os.path.join(root, file), 'r') as f:
-                    item_path = os.path.join(compile_path, file)
+                rel_dir = os.path.relpath(current_dir, temp_dir)
+                rel_file_name = os.path.join(rel_dir, file)
+                full_file_name = os.path.join(current_dir, file)
+                with open(full_file_name, 'r') as f:
+                    item_path = os.path.join(compile_path, rel_file_name)
+                    os.makedirs(os.path.dirname(item_path), exist_ok=True)
                     with CompiledFile(item_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name) as fp:
                         fp.write(f.read())
-                        logger.debug("Wrote file %s to %s", os.path.join(file_path, file), item_path)
+                        logger.debug("Wrote file %s to %s", full_file_name, item_path)
 
         self.helm_values_file = None  # reset this
         self.helm_params = {}
