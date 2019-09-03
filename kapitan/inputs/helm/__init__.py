@@ -65,11 +65,15 @@ class Helm(InputType):
 
 def render_chart(chart_dir, output_path, **kwargs):
     """renders helm chart located at chart_dir, and stores the output to output_path"""
+    binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "libtemplate.so")
+    if not os.path.exists(binding_path):
+        raise HelmBindingUnavailableError("Helm binding is not available. Run 'make build_helm_binding' to create it")
     try:
         # lib is opened inside the function to allow multiprocessing
-        lib = ffi.dlopen(os.path.join(os.path.dirname(os.path.abspath(__file__)), "libtemplate.so"))
-    except (NameError, OSError):
-        raise HelmBindingUnavailableError("Helm binding is not available. Run 'make build_helm_binding' to create it")
+        lib = ffi.dlopen(binding_path)
+    except (NameError, OSError) as e:
+        raise HelmBindingUnavailableError('There was an error opening helm binding. '
+                                          'Refer to the exception below:\n' + str(e))
 
     if kwargs.get('helm_values_file', None):
         helm_values_file = ffi.new("char[]", kwargs['helm_values_file'].encode('ascii'))

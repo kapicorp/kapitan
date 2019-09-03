@@ -17,4 +17,4 @@ else
     echo "$so_name is missing. Exiting"
     exit 1
 fi
-python cffi_build.py
+python3 cffi_build.py
