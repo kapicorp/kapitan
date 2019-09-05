@@ -28,7 +28,8 @@ from hvac.exceptions import Forbidden, InvalidPath
 from kapitan import cached
 from kapitan.errors import KapitanError
 from kapitan.resources import inventory_reclass
-from kapitan.refs.base import Ref, RefBackend, RefError
+from kapitan.refs.base64 import Base64Ref, Base64RefBackend
+from kapitan.refs.base import RefError
 
 try:
     from yaml import CSafeLoader as YamlLoader
@@ -137,7 +138,7 @@ def vault_obj(vault_parameters):
     ), "Vault Authentication Error, Environment Variables defined?"
     return client
 
-class VaultSecret(Ref):
+class VaultSecret(Base64Ref):
     """
     Hashicorp Vault support for KV Secret Engine
     """
@@ -258,7 +259,7 @@ class VaultSecret(Ref):
         return {"data": self.data, "encoding": self.encoding,
                 "type": self.type_name}
 
-class VaultBackend(RefBackend):
+class VaultBackend(Base64RefBackend):
     def __init__(self, path,target='',inventory='./inventory', ref_type=VaultSecret):
         "init VaultBackend ref backend type"
         super().__init__(path, ref_type)

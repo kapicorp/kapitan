@@ -30,7 +30,8 @@ from kapitan import cached
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.initialiser import initialise_skeleton
 from kapitan.lint import start_lint
-from kapitan.refs.base import Ref, RefController, Revealer
+from kapitan.refs.base import PlainRef, RefController, Revealer
+from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.vaultkv import VaultSecret
@@ -112,10 +113,10 @@ def main():
                                 default=from_dot_kapitan('compile', 'indent', 2),
                                 metavar='INT',
                                 help='Indentation spaces for YAML/JSON, default is 2')
-    compile_parser.add_argument('--secrets-path', help='set secrets path, default is "./secrets"',
-                                default=from_dot_kapitan('compile', 'secrets-path', './secrets'))
+    compile_parser.add_argument('--refs-path', help='set refs path, default is "./refs"',
+                                default=from_dot_kapitan('compile', 'refs-path', './refs'))
     compile_parser.add_argument('--reveal',
-                                help='reveal secrets (warning: this will write sensitive data)',
+                                help='reveal refs (warning: this will potentially write sensitive data)',
                                 action='store_true',
                                 default=from_dot_kapitan('compile', 'reveal', False))
     compile_parser.add_argument('--inventory-path',
@@ -169,44 +170,46 @@ def main():
                                   action='store_true',
                                   default=from_dot_kapitan('searchvar', 'pretty-print', False))
 
-    secrets_parser = subparser.add_parser('secrets', help='manage secrets')
-    secrets_parser.add_argument('--write', '-w', help='write secret token',
-                                metavar='TOKENNAME',)
-    secrets_parser.add_argument('--update', help='update recipients for secret token',
-                                metavar='TOKENNAME',)
-    secrets_parser.add_argument('--update-targets', action='store_true',
-                                default=from_dot_kapitan('secrets', 'update-targets', False),
-                                help='update target secrets')
-    secrets_parser.add_argument('--validate-targets', action='store_true',
-                                default=from_dot_kapitan('secrets', 'validate-targets', False),
-                                help='validate target secrets')
-    secrets_parser.add_argument('--base64', '-b64', help='base64 encode file content',
-                                action='store_true',
-                                default=from_dot_kapitan('secrets', 'base64', False))
-    secrets_parser.add_argument('--reveal', '-r', help='reveal secrets',
-                                action='store_true',
-                                default=from_dot_kapitan('secrets', 'reveal', False))
-    secrets_parser.add_argument('--file', '-f', help='read file or directory, set "-" for stdin',
-                                metavar='FILENAME')
-    secrets_parser.add_argument('--target-name', '-t', help='grab parameters/recipients from target name')
-    secrets_parser.add_argument('--inventory-path',
-                                default=from_dot_kapitan('secrets', 'inventory-path', './inventory'),
-                                help='set inventory path, default is "./inventory"')
-    secrets_parser.add_argument('--recipients', '-R', help='set GPG recipients',
-                                type=str, nargs='+',
-                                default=from_dot_kapitan('secrets', 'recipients', []),
-                                metavar='RECIPIENT')
-    secrets_parser.add_argument('--key', '-K', help='set KMS key',
-                                default=from_dot_kapitan('secrets', 'key', ''),
-                                metavar='KEY')
-    secrets_parser.add_argument('--secrets-path', help='set secrets path, default is "./secrets"',
-                                default=from_dot_kapitan('secrets', 'secrets-path', './secrets'))
-    secrets_parser.add_argument('--verbose', '-v',
-                                help='set verbose mode (warning: this will show sensitive data)',
-                                action='store_true',
-                                default=from_dot_kapitan('secrets', 'verbose', False))
+    subparser.add_parser('secrets', help='(DEPRECATED) please use refs')
 
-    lint_parser = subparser.add_parser('lint', help='linter for inventory and secrets')
+    refs_parser = subparser.add_parser('refs', help='manage refs')
+    refs_parser.add_argument('--write', '-w', help='write ref token',
+                             metavar='TOKENNAME',)
+    refs_parser.add_argument('--update', help='update GPG recipients for ref token',
+                             metavar='TOKENNAME',)
+    refs_parser.add_argument('--update-targets', action='store_true',
+                             default=from_dot_kapitan('refs', 'update-targets', False),
+                             help='update target secret refs')
+    refs_parser.add_argument('--validate-targets', action='store_true',
+                             default=from_dot_kapitan('refs', 'validate-targets', False),
+                             help='validate target secret refs')
+    refs_parser.add_argument('--base64', '-b64', help='base64 encode file content',
+                             action='store_true',
+                             default=from_dot_kapitan('refs', 'base64', False))
+    refs_parser.add_argument('--reveal', '-r', help='reveal refs',
+                             action='store_true',
+                             default=from_dot_kapitan('refs', 'reveal', False))
+    refs_parser.add_argument('--file', '-f', help='read file or directory, set "-" for stdin',
+                             metavar='FILENAME')
+    refs_parser.add_argument('--target-name', '-t', help='grab recipients from target name')
+    refs_parser.add_argument('--inventory-path',
+                             default=from_dot_kapitan('refs', 'inventory-path', './inventory'),
+                             help='set inventory path, default is "./inventory"')
+    refs_parser.add_argument('--recipients', '-R', help='set GPG recipients',
+                             type=str, nargs='+',
+                             default=from_dot_kapitan('refs', 'recipients', []),
+                             metavar='RECIPIENT')
+    refs_parser.add_argument('--key', '-K', help='set KMS key',
+                             default=from_dot_kapitan('refs', 'key', ''),
+                             metavar='KEY')
+    refs_parser.add_argument('--refs-path', help='set refs path, default is "./refs"',
+                             default=from_dot_kapitan('refs', 'refs-path', './refs'))
+    refs_parser.add_argument('--verbose', '-v',
+                             help='set verbose mode (warning: this will potentially show sensitive data)',
+                             action='store_true',
+                             default=from_dot_kapitan('refs', 'verbose', False))
+
+    lint_parser = subparser.add_parser('lint', help='linter for inventory and refs')
     lint_parser.add_argument('--fail-on-warning',
                              default=from_dot_kapitan('lint', 'fail-on-warning', False),
                              action='store_true',
@@ -223,9 +226,9 @@ def main():
                              default=from_dot_kapitan('lint', 'search-secrets', False),
                              action='store_true',
                              help='searches for plaintext secrets in inventory, default is False')
-    lint_parser.add_argument('--secrets-path',
-                             help='set secrets path, default is "./secrets"',
-                             default=from_dot_kapitan('lint', 'secrets-path', './secrets'))
+    lint_parser.add_argument('--refs-path',
+                             help='set refs path, default is "./refs"',
+                             default=from_dot_kapitan('lint', 'refs-path', './refs'))
     lint_parser.add_argument('--compiled-path',
                              default=from_dot_kapitan('lint', 'compiled-path', './compiled'),
                              help='set compiled path, default is "./compiled"')
@@ -306,7 +309,7 @@ def main():
         if not args.ignore_version_check:
             check_version()
 
-        ref_controller = RefController(args.secrets_path)
+        ref_controller = RefController(args.refs_path)
         ref_controller.inventory = args.inventory_path
         # cache controller for use in reveal_maybe jinja2 filter
         cached.ref_controller_obj = ref_controller
@@ -344,21 +347,27 @@ def main():
         searchvar(args.searchvar, args.inventory_path, args.pretty_print)
 
     elif cmd == 'lint':
-        start_lint(args.fail_on_warning, args.skip_class_checks, args.skip_yamllint, args.inventory_path, args.search_secrets, args.secrets_path, args.compiled_path)
+        start_lint(args.fail_on_warning, args.skip_class_checks, args.skip_yamllint, args.inventory_path,
+                   args.search_secrets, args.refs_path, args.compiled_path)
 
     elif cmd == 'init':
         initialise_skeleton(args.directory)
 
     elif cmd == 'secrets':
-        ref_controller = RefController(args.secrets_path)
+        logger.error("Secrets have been renamed to refs, please refer to: '$ kapitan refs --help'")
+        sys.exit(1)
+
+    elif cmd == 'refs':
+        ref_controller = RefController(args.refs_path)
         if args.target_name:
             ref_controller.target = args.target_name
             ref_controller.inventory = args.inventory_path
 
+
         if args.write is not None:
-            secret_write(args, ref_controller)
+            ref_write(args, ref_controller)
         elif args.reveal:
-            secret_reveal(args, ref_controller)
+            ref_reveal(args, ref_controller)
         elif args.update:
             secret_update(args, ref_controller)
         elif args.update_targets or args.validate_targets:
@@ -369,8 +378,8 @@ def main():
                                  schema_cache_path=args.schemas_path, parallel=args.parallelism)
 
 
-def secret_write(args, ref_controller):
-    "Write secret to ref_controller based on cli args"
+def ref_write(args, ref_controller):
+    "Write ref to ref_controller based on cli args"
     token_name = args.write
     file_name = args.file
     data = None
@@ -434,7 +443,7 @@ def secret_write(args, ref_controller):
         tag = '?{{awskms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
 
-    elif token_name.startswith("ref:"):
+    elif token_name.startswith("base64:"):
         type_name, token_path = token_name.split(":")
         _data = data.encode()
         encoding = 'original'
@@ -442,8 +451,8 @@ def secret_write(args, ref_controller):
             _data = base64.b64encode(_data).decode()
             _data = _data.encode()
             encoding = 'base64'
-        ref_obj = Ref(_data, encoding=encoding)
-        tag = '?{{ref:{}}}'.format(token_path)
+        ref_obj = PlainRef(_data, encoding=encoding)
+        tag = '?{{plain:{}}}'.format(token_path)
         ref_controller[tag] = ref_obj
 
     elif token_name.startswith("vaultkv:"):
@@ -468,8 +477,20 @@ def secret_write(args, ref_controller):
         tag = '?{{vaultkv:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
 
+    elif token_name.startswith("plain:"):
+        type_name, token_path = token_name.split(":")
+        _data = data.encode()
+        encoding = 'original'
+        if args.base64:
+            _data = base64.b64encode(_data).decode()
+            _data = _data.encode()
+            encoding = 'base64'
+        ref_obj = PlainRef(_data, encoding=encoding)
+        tag = '?{{plain:{}}}'.format(token_path)
+        ref_controller[tag] = ref_obj
+
     else:
-        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/vaultkv/ref:{name}".format(name=token_name))
+        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/vaultkv/base64/plain:{name}".format(name=token_name))
 
 
 def secret_update(args, ref_controller):
@@ -533,7 +554,7 @@ def secret_update(args, ref_controller):
         fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms:{name}".format(name=token_name))
 
 
-def secret_reveal(args, ref_controller):
+def ref_reveal(args, ref_controller):
     "Reveal secrets in file_name"
     revealer = Revealer(ref_controller)
     file_name = args.file
@@ -553,10 +574,10 @@ def secret_reveal(args, ref_controller):
 def secret_update_validate(args, ref_controller):
     "Validate and/or update target secrets"
     # update gpg recipients/gkms/awskms key for all secrets in secrets_path
-    # use --secrets-path to set scanning path
+    # use --refs-path to set scanning path
     inv = inventory_reclass(args.inventory_path)
     targets = set(inv['nodes'].keys())
-    secrets_path = os.path.abspath(args.secrets_path)
+    secrets_path = os.path.abspath(args.refs_path)
     target_token_paths = search_target_token_paths(secrets_path, targets)
     ret_code = 0
 
@@ -620,7 +641,7 @@ def secret_update_validate(args, ref_controller):
 
             elif token_path.startswith("?{awskms:"):
                 if not awskey:
-                    yogger.debug("secret_update_validate: target: %s has no inventory awskms key, skipping %s", target_name, token_path)
+                    logger.debug("secret_update_validate: target: %s has no inventory awskms key, skipping %s", target_name, token_path)
                     continue
                 secret_obj = ref_controller[token_path]
                 if awskey != secret_obj.key:

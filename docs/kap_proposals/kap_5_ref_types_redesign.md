@@ -2,7 +2,14 @@
 
 Redesign Kapitan Secrets and rename them as `References` or `Ref`.
 
-This will likely be a breaking change.
+Breaking changes:
+
+* `$ kapitan secrets` is replaced with `$ kapitan refs`
+* the default secrets directory `./secrets/` changes to `./refs/`
+* the `--secrets-path` flag changes to `--refs-path`
+* *ref* ref type is renamed to *base64* e.g.`?{ref:some/ref}` into `?{base64:some/ref}`
+
+Status: In progress
 
 Author: @ramaro
 
