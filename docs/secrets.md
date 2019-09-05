@@ -5,7 +5,7 @@ Kapitan can manage secrets with the following key management services:
 - GPG
 - Google Cloud KMS (beta)
 - AWS KMS (beta)
-- Vault (TBD)
+- Vaultkv (beta)
 
 If you want to get started with secrets but don't have a GPG or KMS setup, you can also use the secret `ref` type. Note that `ref` is not encrypted and is intended for development purposes only. *Do not use ref secrets if you're storing sensitive information!*
 
@@ -34,6 +34,8 @@ parameters:
         key: 'projects/<project>/locations/<location>/keyRings/<keyRing>/cryptoKeys/<key>'
       awskms:
         key: 'alias/nameOfKey'
+      vaultkv:
+        auth: token
 ```
 
 #### 2. Create your secret
@@ -50,7 +52,7 @@ $ kapitan secrets --write <secret_type>:path/to/secret/file -t <target_name> -f 
 - `gpg`: GPG
 - `gkms`: Google Cloud KMS
 - `awskms`: AWS KMS
-- `vault` (TBC)
+- `vaultkv`: Hashicorp Vault with kv/kv-v2 secret engine
 
 Kapitan will inherit the secrets configuration for the specified target, and encrypt and save your secret into `<path/to/secret/file>`.
 
@@ -68,6 +70,7 @@ rsapublic - Derives an RSA public key from a revealed private key i.e. `|reveal:
 ```
 
 *Note*: If you use `|reveal:/path/secret`, when changing the `/path/secret` file make sure you also delete any secrets referencing `/path/secret` so kapitan can regenerate them.
+*Note*: `vaultkv` can't be used to generate secrets automatically, manually create the secret using the command line.
 
 #### 3. Reference your secrets in your classes/targets and run `kapitan compile`
 

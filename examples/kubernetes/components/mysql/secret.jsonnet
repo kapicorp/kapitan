@@ -19,3 +19,11 @@ local inv = kap.inventory();
     }
   }
 }
+
+{
+  MySQLSecret_vaultkv(name): kube.Secret(name) {
+    data: {
+      "MYSQL_ROOT_PASSWORD": inv.parameters.mysql.users.root.password_vaultkv
+    }
+  }
+}

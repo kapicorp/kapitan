@@ -27,7 +27,7 @@ import hvac
 from hvac.exceptions import Forbidden, InvalidPath
 from kapitan import cached
 from kapitan.errors import KapitanError
-from kapitan.resources import inventory
+from kapitan.resources import inventory_reclass
 from kapitan.refs.base import Ref, RefBackend, RefError
 
 try:
@@ -181,7 +181,8 @@ class VaultSecret(Ref):
             with open(ref_full_path) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
                 _kwargs = {key: value for key, value in obj.items() if key not in ('data', 'from_base64')}
-                target_inv = inventory(kwargs['search_paths'],kwargs['target_name'])
+                inv = inventory_reclass(kwargs['inventory'])
+                target_inv = inv['nodes'][kwargs['target_name']]
                 if target_inv is None:
                     raise ValueError('target not set')
 
@@ -258,20 +259,20 @@ class VaultSecret(Ref):
                 "type": self.type_name}
 
 class VaultBackend(RefBackend):
-    def __init__(self, path,target='',search_paths='.', ref_type=VaultSecret):
+    def __init__(self, path,target='',inventory='./inventory', ref_type=VaultSecret):
         "init VaultBackend ref backend type"
         super().__init__(path, ref_type)
         self.type_name = 'vaultkv'
         self.ref_type = ref_type
         self.target = target
-        self.search_paths = search_paths
+        self.inventory = inventory
 
     def __getitem__(self, ref_path):
         # remove the substring notation, if any
         ref_file_path = re.sub(r"(@[\w\.\-\_]+)", "", ref_path)
         full_ref_path = os.path.join(self.path, ref_file_path)
         ref = self.ref_type.from_path(full_ref_path, target_name=self.target,
-                                      search_paths=self.search_paths)
+                                      inventory=self.inventory)
 
         if ref is not None:
             ref.path = ref_path

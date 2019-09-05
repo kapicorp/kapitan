@@ -23,7 +23,9 @@ import shutil
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
+from kapitan.refs.secrets import vaultkv
 from kapitan.cli import main
 
 SECRETS_PATH = tempfile.mkdtemp()
@@ -347,6 +349,84 @@ class CliFuncsTest(unittest.TestCase):
                 revealing2: {}
                 """
         self.assertEqual(expected.format("hello", "world"), stdout.getvalue())
+        os.remove(test_tag_file)
+
+    @patch.object(vaultkv.VaultSecret,'_decrypt')
+    def test_cli_secret_write_vault(self,mock_reveal):
+        """
+        run $ kapitan secrets --write vault:test_secret
+        and $ kapitan secrets --reveal -f sometest_file
+        """
+        test_secret_content = "foo:secret_test_key"
+        test_secret_content_value = "secret_value"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+ 
+        sys.argv = ["kapitan", "secrets", "--write", "vaultkv:test_secret",
+                    "-f", test_secret_file, "--secrets-path", SECRETS_PATH,
+                    "--inventory-path","./example/kubernetes/inventory",
+                    "--target-name","minikube-mysql"]
+        main()
+ 
+        test_tag_content = "revealing: ?{vaultkv:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+
+        mock_reveal.return_value = test_secret_content_value
+        sys.argv = ["kapitan", "secrets", "--reveal",
+                    "-f", test_tag_file, "--secrets-path", SECRETS_PATH,
+                    "--inventory-path","./example/kubernetes/inventory",
+                    "--target-name","minikube-mysql"]
+
+         # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("revealing: {value}".format(value=test_secret_content_value),
+                         stdout.getvalue())
+ 
+        os.remove(test_tag_file)
+ 
+    @patch.object(vaultkv.VaultSecret,'_decrypt')
+    def test_cli_secret_write_base64_vault(self,mock_reveal):
+ 
+        """
+        run $ kapitan secrets --write vault:test_secret --base64
+        and $ kapitan secrets --reveal -f sometest_file
+        """
+        test_secret_content = "foo:secret_test_key"
+        test_secret_content_b64 = base64.b64encode(test_secret_content.encode()).decode()
+        test_secret_content_value = "secret_value"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content_b64)
+ 
+        sys.argv = ["kapitan", "secrets", "--write", "vaultkv:test_secret","--base64",
+                    "-f", test_secret_file, "--secrets-path", SECRETS_PATH,
+                    "--inventory-path","./example/kubernetes/inventory",
+                    "--target-name","minikube-mysql"]
+        main()
+ 
+        test_tag_content = "revealing: ?{vaultkv:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+
+        mock_reveal.return_value = test_secret_content_value
+        sys.argv = ["kapitan", "secrets", "--reveal",
+                    "-f", test_tag_file, "--secrets-path", SECRETS_PATH,
+                    "--inventory-path","./example/kubernetes/inventory",
+                    "--target-name","minikube-mysql"]
+ 
+         # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("revealing: {value}".format(value=test_secret_content_value),
+                         stdout.getvalue())
+ 
         os.remove(test_tag_file)
 
     def test_cli_searchvar(self):

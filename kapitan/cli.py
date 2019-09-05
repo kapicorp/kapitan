@@ -307,6 +307,7 @@ def main():
             check_version()
 
         ref_controller = RefController(args.secrets_path)
+        ref_controller.inventory = args.inventory_path
         # cache controller for use in reveal_maybe jinja2 filter
         cached.ref_controller_obj = ref_controller
         cached.revealer_obj = Revealer(ref_controller)
@@ -352,7 +353,7 @@ def main():
         ref_controller = RefController(args.secrets_path)
         if args.target_name:
             ref_controller.target = args.target_name
-            ref_controller.search_paths = os.path.abspath(os.path.join(args.inventory_path, os.pardir))
+            ref_controller.inventory = args.inventory_path
 
         if args.write is not None:
             secret_write(args, ref_controller)
@@ -396,7 +397,7 @@ def secret_write(args, ref_controller):
             recipients = kap_inv_params['secrets']['gpg']['recipients']
         if not recipients:
             raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
-                               "parameters.kapitan.secrets.gpg.recipients and use --target")
+                               "parameters.kapitan.secrets.gpg.recipients and use --target-name")
         secret_obj = GPGSecret(data, recipients, encode_base64=args.base64)
         tag = '?{{gpg:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
@@ -412,7 +413,7 @@ def secret_write(args, ref_controller):
 
             key = kap_inv_params['secrets']['gkms']['key']
         if not key:
-            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target")
+            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target-name")
         secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
         tag = '?{{gkms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
@@ -428,7 +429,7 @@ def secret_write(args, ref_controller):
 
             key = kap_inv_params['secrets']['awskms']['key']
         if not key:
-            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.awskms.key and use --target")
+            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.awskms.key and use --target-name")
         secret_obj = AWSKMSSecret(data, key, encode_base64=args.base64)
         tag = '?{{awskms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
@@ -461,7 +462,7 @@ def secret_write(args, ref_controller):
             parameter = kap_inv_params['secrets']['vaultkv']
         if parameter.get('auth') is None:
             raise KapitanError("No Authentication type parameter Specified. Specify it"
-                               " in parameters.kapitan.secrets.vaultkv.auth and use --target")
+                               " in parameters.kapitan.secrets.vaultkv.auth and use --target-name or -t")
 
         secret_obj = VaultSecret(_data, parameter=parameter, encoding=encoding)
         tag = '?{{vaultkv:{}}}'.format(token_path)
@@ -576,6 +577,10 @@ def secret_update_validate(args, ref_controller):
             awskey = kap_inv_params['secrets']['awskms']['key']
         except KeyError:
             awskey = None
+        try:
+            vaultkv = kap_inv_params['secrets']['vaultkv']['auth']
+        except KeyError:
+            vaultkv = None
 
         for token_path in token_paths:
             if token_path.startswith("?{gpg:"):
@@ -615,7 +620,7 @@ def secret_update_validate(args, ref_controller):
 
             elif token_path.startswith("?{awskms:"):
                 if not awskey:
-                    logger.debug("secret_update_validate: target: %s has no inventory awskms key, skipping %s", target_name, token_path)
+                    yogger.debug("secret_update_validate: target: %s has no inventory awskms key, skipping %s", target_name, token_path)
                     continue
                 secret_obj = ref_controller[token_path]
                 if awskey != secret_obj.key:
@@ -625,6 +630,11 @@ def secret_update_validate(args, ref_controller):
                     else:
                         secret_obj.update_key(awskey)
                         ref_controller[token_path] = secret_obj
+
+            elif token_path.startswith("?{vaultkv:"):
+                if not vaultkv:
+                    logger.debug("secret_update_validate: target: %s has no inventory vaultkv parameters 'auth', skipping %s", target_name, token_path)
+                continue
 
             else:
                 logger.info("Invalid secret %s, could not get type, skipping", token_path)

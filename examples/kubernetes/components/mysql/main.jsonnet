@@ -13,6 +13,7 @@ local name = inv.parameters.mysql.instance_name;
   mysql_statefulset: statefulset.MySQLStatefulSet(name, self.mysql_secret),
   mysql_secret: secret.MySQLSecret(name),
   mysql_secret_subvar: secret.MySQLSecret_subvar(name),
+  mysql_secret_vaultkv: secret.MySQLSecret_vaultkv(name),
 
   // The following is an example to show how you can use a simple json file
   // and simply inject variables from the inventory, a-la helm

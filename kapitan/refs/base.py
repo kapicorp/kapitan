@@ -397,7 +397,7 @@ class RefController(object):
             elif type_name == 'vaultkv':
                 from kapitan.refs.secrets.vaultkv import VaultBackend
                 self.register_backend(VaultBackend(self.path,target=self.target,
-                                                   search_paths=self.search_paths))
+                                                   inventory=self.inventory))
             else:
                 raise RefBackendError('no backend for ref type: {}'.format(type_name))
         return self.backends[type_name]

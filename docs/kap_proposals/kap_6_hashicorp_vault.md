@@ -61,14 +61,14 @@ Following is the example file having a secret and pointing to the vault `?{vault
 ```yaml
 parameters:
   releases:
-	cod: latest
+    cod: latest
   cod:
-	image: alledm/cod:${cod:release}
-	release: ${releases:cod}
-	replicas: ${replicas}
-	args:
-    - --verbose=${verbose}
-    - --password=?{vaultkv:path/to/secret_inside_kapitan}
+    image: alledm/cod:${cod:release}
+    release: ${releases:cod}
+    replicas: ${replicas}
+    args:
+      - --verbose=${verbose}
+      - --password=?{vaultkv:path/to/secret_inside_kapitan}
 ```  
 when `?{vaultkv:path/to/secret_inside_kapitan}` is compiled, it will look same with an 8 character prefix of sha256 hash added at the end like:  
 ```yaml  
