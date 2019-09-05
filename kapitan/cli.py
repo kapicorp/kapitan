@@ -451,8 +451,8 @@ def ref_write(args, ref_controller):
             _data = base64.b64encode(_data).decode()
             _data = _data.encode()
             encoding = 'base64'
-        ref_obj = PlainRef(_data, encoding=encoding)
-        tag = '?{{plain:{}}}'.format(token_path)
+        ref_obj = Base64Ref(_data, encoding=encoding)
+        tag = '?{{base64:{}}}'.format(token_path)
         ref_controller[tag] = ref_obj
 
     elif token_name.startswith("vaultkv:"):
