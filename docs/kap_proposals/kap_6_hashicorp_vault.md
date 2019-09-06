@@ -45,17 +45,17 @@ parameters:
     secrets:
       vaultkv:
         auth: userpass
-        addr: http://127.0.0.1:8200
         engine: kv-v2
-        namespace: CICD-alpha
         mount: team-alpha-secret
-        skip_verify: false
-        client_key: /path/to/key
-        client_cert: /path/to/cert
+        VAULT_ADDR: http://127.0.0.1:8200
+        VAULT_NAMESPACE: CICD-alpha
+        VAULT_SKIP_VERIFY: false
+        VAULT_CLIENT_KEY: /path/to/key
+        VAULT_CLIENT_CERT: /path/to/cert
 ```
 Environment variables that can be defined in kapitan inventory are `VAULT_ADDR`, `VAULT_NAMESPACE`, `VAULT_SKIP_VERIFY`, `VAULT_CLIENT_CERT`, `VAULT_CLIENT_KEY`, `VAULT_CAPATH` & `VAULT_CACERT`.  
 Extra parameters that can be defined in inventory are:  
-* `auth`: spcify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`  
+* `auth`: specify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`  
 * `mount`: specify the mount point of key's path. e.g if path=`alpha-secret/foo/bar` then `mount: alpha-secret` (default `secret`)  
 * `engine`: secret engine used, either `kv-v2` or `kv` (default `kv-v2`)  
 Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID`.  

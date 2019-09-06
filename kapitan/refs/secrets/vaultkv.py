@@ -122,7 +122,7 @@ def vault_obj(vault_parameters):
                 if env['token'] == '':
                     raise VaultError('{file} is empty'.format(file=token_file))
             except IOError:
-                VaultError("Cannot read file ~/.vault-token")
+                VaultError("Cannot read file {file}".format(file=token_file))
     # DIFFERENT LOGIN METHOD BASED ON AUTHENTICATION TYPE
     if auth_type == 'token':
         client.token = env['token']
@@ -146,10 +146,11 @@ def vault_obj(vault_parameters):
     else:
         raise "Authentication type '{auth}' not supported".format(auth=auth_type)
 
-    assert (
-        client.is_authenticated()
-    ), "Vault Authentication Error, Environment Variables defined?"
-    return client
+    if client.is_authenticated():
+        return client
+    else:
+        VaultError("Vault Authentication Error, Environment Variables defined?")
+
 
 class VaultSecret(Base64Ref):
     """
