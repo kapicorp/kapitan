@@ -16,29 +16,30 @@
 
 "vault secrets tests"
 
-import os
-import unittest
-import tempfile
 import base64
-import hvac
-import docker
+import os
 import shutil
+import tempfile
+import unittest
 from time import sleep
+
+import docker
+import hvac
+
 from kapitan.refs.base import RefController, RefParams, Revealer
-from kapitan.refs.secrets.vaultkv import  vault_obj, VaultSecret
+from kapitan.refs.secrets.vaultkv import VaultSecret, vault_obj
 
 # Create temporary folder
 REFS_HOME = tempfile.mkdtemp()
-REF_CONTROLLER = RefController(REFS_HOME)
-REF_CONTROLLER.target = 'minikube-mysql'
-REF_CONTROLLER.inventory = os.path.join('.','examples','kubernetes','inventory')
+REF_CONTROLLER = RefController(REFS_HOME,target_name='minikube-mysql',
+                               inventory_path=os.path.join('.','examples','kubernetes','inventory'))
 REVEALER = Revealer(REF_CONTROLLER)
 # Create Vault docker container
 client = docker.from_env()
 env = {'VAULT_LOCAL_CONFIG':'{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'}
 vault_container= client.containers.run(image='vault',cap_add=['IPC_LOCK'],ports={'8200':'8200'},
                                        environment=env,detach=True,remove=True,command='server')
-sleep(2)
+sleep(4)
 
 class VaultSecretTest(unittest.TestCase):
     "Test Vault Secret"
@@ -75,6 +76,8 @@ class VaultSecretTest(unittest.TestCase):
         cls.client.adapter.close()
         vault_container.stop()
         shutil.rmtree(REFS_HOME, ignore_errors=True)
+        for i in ['ROOT_TOKEN','TOKEN','USERNAME','PASSWORD','ROLE_ID','SECRET_ID']:
+            del os.environ['VAULT_' + i]
 
     def test_token_authentication(self):
         '''
@@ -93,7 +96,7 @@ class VaultSecretTest(unittest.TestCase):
         parameters = {'auth':'userpass'}
         test_client = vault_obj(parameters)
         self.assertTrue(test_client.is_authenticated(),
-                        msg='Authentication with token failed')
+                        msg='Authentication with userpass failed')
         test_client.adapter.close()
 
     def test_approle_authentication(self):
@@ -103,7 +106,7 @@ class VaultSecretTest(unittest.TestCase):
         parameters = {'auth':'approle'}
         test_client = vault_obj(parameters)
         self.assertTrue(test_client.is_authenticated(),
-                        msg='Authentication with token failed')
+                        msg='Authentication with approle failed')
         test_client.adapter.close()
 
     def test_vault_write_reveal(self):
@@ -112,7 +115,7 @@ class VaultSecretTest(unittest.TestCase):
         '''
         tag = '?{vaultkv:secret/batman}'
         secret = {
-            'some_random_value':'somethin_secret'
+            'some_random_value':'something_secret'
         }
         self.client.secrets.kv.v2.create_or_update_secret(
             path='foo',
@@ -126,11 +129,11 @@ class VaultSecretTest(unittest.TestCase):
                         msg="Secret file doesn't exist")
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags,'w') as fp:
-            fp.write('I am a file with {}'.format(tag))
+            fp.write('File contents revealed: {}'.format(tag))
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
         # confirming secerts are correctly revealed
         self.assertEqual(
-            "I am a file with {}".format(secret['some_random_value']), revealed
+            "File contents revealed: {}".format(secret['some_random_value']), revealed
         )
 
     def test_vault_base64_write_reveal(self):
@@ -139,7 +142,7 @@ class VaultSecretTest(unittest.TestCase):
         '''
         tag = '?{vaultkv:secret/batman}'
         secret = {
-            'some_random_value':'somethin_secret'
+            'some_random_value':'something_secret'
         }
         self.client.secrets.kv.v2.create_or_update_secret(
             path='foo',
@@ -147,16 +150,15 @@ class VaultSecretTest(unittest.TestCase):
         )
         env = {'auth':'token'}
         file_data = "foo:some_random_value".encode()
-        encoded_data = base64.b64encode(file_data)
-        REF_CONTROLLER[tag] = VaultSecret(encoded_data,parameter=env,encoding='base64')
+        REF_CONTROLLER[tag] = VaultSecret(file_data,parameter=env,encoding='base64')
         # confirming secret file exists
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME,'secret/batman')),
                         msg="Secret file doesn't exist")
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags,'w') as fp:
-            fp.write('I am a file with {}'.format(tag))
+            fp.write('File contents revealed: {}'.format(tag))
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
         # confirming secerts are correctly revealed
         self.assertEqual(
-            "I am a file with {}".format(secret['some_random_value']), revealed
+            "File contents revealed: {}".format(secret['some_random_value']), revealed
         )

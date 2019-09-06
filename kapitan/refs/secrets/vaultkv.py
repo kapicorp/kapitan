@@ -15,26 +15,30 @@
 "hashicorp vault secrets module"
 
 import base64
-from binascii import Error as b_error
+import errno
 import hashlib
-import re
+import logging
 import os
+import re
+from binascii import Error as b_error
 from sys import argv, exit
 
-import yaml
-
 import hvac
+import yaml
 from hvac.exceptions import Forbidden, InvalidPath
+
 from kapitan import cached
 from kapitan.errors import KapitanError
-from kapitan.resources import inventory_reclass
-from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan.refs.base import RefError
+from kapitan.refs.base64 import Base64Ref, Base64RefBackend
+from kapitan.resources import inventory_reclass
 
 try:
     from yaml import CSafeLoader as YamlLoader
 except ImportError:
     from yaml import SafeLoader as YamlLoader
+
+logger = logging.getLogger(__name__)
 
 class VaultError(KapitanError):
     """Generic vault errors"""
@@ -42,62 +46,68 @@ class VaultError(KapitanError):
 
 def get_env(parameter):
     """
-    The following variables need to be exported to the environment depending on authentication needed
-    * VAULT_ADDR: url for vault
-    * VAULT_SKIP_VERIFY=true: if set, do not verify presented TLS certificate before communicating with Vault server.
-    * VAULT_TOKEN: token for vault
-    * VAULT_ROLE_ID: (required by approle)
-    * VAULT_SECRET_ID: (required by approle)
-    * VAULT_USERNAME: username to login to vault
-    * VAULT_PASSWORD: password to login to vault
-    * VAULT_CLIENT_KEY: path to an unencrypted PEM-encoded private key matching the client certificate
-    * VAULT_CLIENT_CERT: path to a PEM-encoded client certificate for TLS authentication to the Vault server
-    * VAULT_CACERT: path to a PEM-encoded CA cert file to use to verify the Vault server TLS certificate
-    * VAULT_CAPATH: path to a directory of PEM-encoded CA cert files to verify the Vault server TLS certificate
-    * VAULT_NAMESPACE: specify the Vault Namespace, if you have one
+    The following variables need to be exported to the environment or defined in inventory.
+        * VAULT_ADDR: url for vault
+        * VAULT_SKIP_VERIFY=true: if set, do not verify presented TLS certificate before communicating with Vault server.
+        * VAULT_CLIENT_KEY: path to an unencrypted PEM-encoded private key matching the client certificate
+        * VAULT_CLIENT_CERT: path to a PEM-encoded client certificate for TLS authentication to the Vault server
+        * VAULT_CACERT: path to a PEM-encoded CA cert file to use to verify the Vault server TLS certificate
+        * VAULT_CAPATH: path to a directory of PEM-encoded CA cert files to verify the Vault server TLS certificate
+        * VAULT_NAMESPACE: specify the Vault Namespace, if you have one
+
+    Following keys are used to creates a new hvac client instance.
+        :param url: Base URL for the Vault instance being addressed.
+        :type url: str
+        :param cert: Certificates for use in requests sent to the Vault instance. This should be a tuple with the
+            certificate and then key.
+        :type cert: tuple
+        :param verify: Either a boolean to indicate whether TLS verification should be performed when sending requests to Vault,
+            or a string pointing at the CA bundle to use for verification.
+            See http://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification.
+        :type verify: Union[bool,str]
+        :param namespace: Optional Vault Namespace.
+        :type namespace: str
     """
-    # Helper lambda function to get varibles either from parameters or environment
-    get_variable = lambda x: parameter.get(x, os.getenv('VAULT_'+x.upper(),default=''))
-    env = {}
-    env['url'] = get_variable('addr')
-    env['namespace'] = get_variable('namespace')
+    client_parameters = {}
+    client_parameters['url'] = parameter.get('VAULT_ADDR',
+                                             os.getenv('VAULT_ADDR',default=''))
+    client_parameters['namespace'] = parameter.get('VAULT_NAMESPACE',
+                                             os.getenv('VAULT_NAMESPACE',default=''))
     # VERIFY VAULT SERVER TLS CERTIFICATE
-    skip_verify = get_variable('skip_verify')
+    skip_verify = parameter.get('VAULT_SKIP_VERIFY', os.getenv('VAULT_SKIP_VERIFY',default=''))
+
     if skip_verify.lower() == 'false':
-        cert = get_variable('cacert')
+        cert = parameter.get('VAULT_CACERT', os.getenv('VAULT_CACERT',default=''))
         if not cert:
-            cert_path = get_variable('capath')
+            cert_path = parameter.get('VAULT_CAPATH', os.getenv('VAULT_CAPATH',default=''))
             if not cert_path:
                 raise Exception('Neither VAULT_CACERT nor VAULT_CAPATH specified')
-            env['verify'] = cert_path
+            client_parameters['verify'] = cert_path
         else:
-            env['verify'] = cert
-
+            client_parameters['verify'] = cert
     else:
-        env['verify'] = False
+        client_parameters['verify'] = False
+
     # CLIENT CERTIFICATE FOR TLS AUTHENTICATION
-    client_key = get_variable('client_key')
-    client_cert = get_variable('client_cert') 
+    client_key = parameter.get('VAULT_CLIENT_KEY', os.getenv('VAULT_CLIENT_KEY',default=''))
+    client_cert = parameter.get('VAULT_CLIENT_CERT', os.getenv('VAULT_CLIENT_CERT',default='')) 
     if client_key != '' and client_cert != '':
-        env['cert'] = (client_cert,client_key)
-    return env
+        client_parameters['cert'] = (client_cert,client_key)
+    return client_parameters
 
 def vault_obj(vault_parameters):
     """
     vault_parameters: necessary parameters to authenticate & get value from vault, provided by inventory
     e.g.:
-        addr: http://127.0.0.1:8200
         auth: userpass
-        client_cert: /path/to/cert
-        client_key: /path/to/key
-        namespace: CICD-alpha
-        skip_verify: false
+        VAULT_ADDR: http://127.0.0.1:8200
+        VAULT_SKIP_VERIFY: false
     Authenticate client to server and return client object
     """
     env = get_env(vault_parameters)
 
     client = hvac.Client(
-        **{k:v for k,v in env.items() if k not in ('auth', None)}
+        **{k:v for k,v in env.items() if k is not 'auth'}
     )
 
     auth_type = vault_parameters['auth']
@@ -106,8 +116,11 @@ def vault_obj(vault_parameters):
         env['token'] = os.getenv('VAULT_TOKEN')
         if not env['token']:
             try:
-                with open(os.path.join(os.path.expanduser('~'),'.vault-token'),'r') as f:
+                token_file = os.path.join(os.path.expanduser('~'),'.vault-token')
+                with open(token_file,'r') as f:
                     env['token'] = f.read()
+                if env['token'] == '':
+                    raise VaultError('{file} is empty'.format(file=token_file))
             except IOError:
                 VaultError("Cannot read file ~/.vault-token")
     # DIFFERENT LOGIN METHOD BASED ON AUTHENTICATION TYPE
@@ -142,7 +155,6 @@ class VaultSecret(Base64Ref):
     """
     Hashicorp Vault support for KV Secret Engine
     """
-
     def __init__(self, data, **kwargs):
         """
         Set vault parameter and encoding of data
@@ -182,7 +194,7 @@ class VaultSecret(Base64Ref):
             with open(ref_full_path) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
                 _kwargs = {key: value for key, value in obj.items() if key not in ('data', 'from_base64')}
-                inv = inventory_reclass(kwargs['inventory'])
+                inv = inventory_reclass(kwargs['inventory_path'])
                 target_inv = inv['nodes'][kwargs['target_name']]
                 if target_inv is None:
                     raise ValueError('target not set')
@@ -193,6 +205,7 @@ class VaultSecret(Base64Ref):
 
         except IOError as ex:
             if ex.errno == errno.ENOENT:
+                logger.debug("no such file or directory {}".format(kwargs['inventory_path']))
                 return None
 
         except KeyError:
@@ -208,15 +221,14 @@ class VaultSecret(Base64Ref):
             if self.encoding == 'base64':
                 self.data = base64.b64decode(self.data, validate=True)
 
-            ref_data = base64.b64decode(self.data, validate=True)
         except b_error:
             exit(
                 "non-alphabet characters in the data"
             )
 
-        return self._decrypt(ref_data)
+        return self._decrypt()
 
-    def _decrypt(self, data):
+    def _decrypt(self):
         """
         Authenticate with Vault server & returns value of the key from secret
 
@@ -225,7 +237,7 @@ class VaultSecret(Base64Ref):
         try:
             client = vault_obj(self.parameter)
             # token will comprise of two parts path_in_vault:key
-            data = data.decode('utf-8').split(':')
+            data = self.data.decode('utf-8').split(':')
             return_data = ''
             if self.parameter.get('engine') == 'kv':
                 response = client.secrets.kv.v1.read_secret(path=data[0],
@@ -260,24 +272,22 @@ class VaultSecret(Base64Ref):
                 "type": self.type_name}
 
 class VaultBackend(Base64RefBackend):
-    def __init__(self, path,target='',inventory='./inventory', ref_type=VaultSecret):
+    def __init__(self, path, target_name, inventory_path, ref_type=VaultSecret):
         "init VaultBackend ref backend type"
         super().__init__(path, ref_type)
         self.type_name = 'vaultkv'
         self.ref_type = ref_type
-        self.target = target
-        self.inventory = inventory
+        self.target_name = target_name
+        self.inventory_path = inventory_path
 
     def __getitem__(self, ref_path):
-        # remove the substring notation, if any
-        ref_file_path = re.sub(r"(@[\w\.\-\_]+)", "", ref_path)
-        full_ref_path = os.path.join(self.path, ref_file_path)
-        ref = self.ref_type.from_path(full_ref_path, target_name=self.target,
-                                      inventory=self.inventory)
+        full_ref_path = os.path.join(self.path, ref_path)
+        ref = self.ref_type.from_path(full_ref_path, target_name=self.target_name,
+                                      inventory_path=self.inventory_path)
 
         if ref is not None:
             ref.path = ref_path
-            ref_path_data = "{}{}".format(ref_file_path, ref.data)
+            ref_path_data = "{}{}".format(ref.path, ref.data)
             ref.hash = hashlib.sha256(ref_path_data.encode()).hexdigest()
             ref.token = "{}:{}:{}".format(ref.type_name, ref.path, ref.hash[:8])
             return ref

@@ -1,6 +1,6 @@
 # Hashicorp Vault  
   
-This feature allows the user to fetch secrets from [Hashicorp Vault](https://www.vaultproject.io/), an online Kapitan Secret backend `vaultkv`.  
+This feature allows the user to fetch secrets from [Hashicorp Vault](https://www.vaultproject.io/), with the new secret backend keyword 'vaultkv'.  
   
 Author: [@vaibahvk](https://github.com/vaibhavk) [@daminisatya](https://github.com/daminisatya)  
 ## Specification  
@@ -9,8 +9,8 @@ The following variables need to be exported to the environment(depending on auth
 * VAULT_ADDR: URL for vault  
 * VAULT_SKIP_VERIFY=true: if set, do not verify presented TLS certificate before communicating with Vault server. Setting this variable is not recommended except during testing  
 * VAULT_TOKEN: token for vault or file (~/.vault-tokens)  
-* VAULT_ROLE_ID: (required by approle)  
-* VAULT_SECRET_ID: (required by approle)  
+* VAULT_ROLE_ID: required by approle  
+* VAULT_SECRET_ID: required by approle  
 * VAULT_USERNAME: username to login to vault  
 * VAULT_PASSWORD: password to login to vault  
 * VAULT_CLIENT_KEY: the path to an unencrypted PEM-encoded private key matching the client certificate  
@@ -53,7 +53,12 @@ parameters:
         client_key: /path/to/key
         client_cert: /path/to/cert
 ```
-Almost all the environment variables can be defined in kapitan inventory except the token, password, secret_id, etc. Environment like `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID` 
+Environment variables that can be defined in kapitan inventory are `VAULT_ADDR`, `VAULT_NAMESPACE`, `VAULT_SKIP_VERIFY`, `VAULT_CLIENT_CERT`, `VAULT_CLIENT_KEY`, `VAULT_CAPATH` & `VAULT_CACERT`.  
+Extra parameters that can be defined in inventory are:  
+* `auth`: spcify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`  
+* `mount`: specify the mount point of key's path. e.g if path=`alpha-secret/foo/bar` then `mount: alpha-secret` (default `secret`)  
+* `engine`: secret engine used, either `kv-v2` or `kv` (default `kv-v2`)  
+Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID`.  
 This makes the secret_inside_kapitan file accessible throughout the inventory, where we can use the secret whenever necessary like `?{vaultkv:path/to/secret_inside_kapitan}`  
   
 Following is the example file having a secret and pointing to the vault `?{vaultkv:path/to/secret_inside_kapitan}`  

@@ -135,8 +135,8 @@ def main():
                                 action='store_true',
                                 default=from_dot_kapitan('compile', 'ignore-version-check', False))
     compile_parser.add_argument('--schemas-path',
-                                 default=from_dot_kapitan('validate', 'schemas-path', './schemas'),
-                                 help='set schema cache path, default is "./schemas"')
+                                default=from_dot_kapitan('validate', 'schemas-path', './schemas'),
+                                help='set schema cache path, default is "./schemas"')
 
     inventory_parser = subparser.add_parser('inventory', help='show inventory')
     inventory_parser.add_argument('--target-name', '-t',
@@ -309,8 +309,7 @@ def main():
         if not args.ignore_version_check:
             check_version()
 
-        ref_controller = RefController(args.refs_path)
-        ref_controller.inventory = args.inventory_path
+        ref_controller = RefController(args.refs_path,inventory_path=args.inventory_path)
         # cache controller for use in reveal_maybe jinja2 filter
         cached.ref_controller_obj = ref_controller
         cached.revealer_obj = Revealer(ref_controller)
@@ -358,11 +357,8 @@ def main():
         sys.exit(1)
 
     elif cmd == 'refs':
-        ref_controller = RefController(args.refs_path)
-        if args.target_name:
-            ref_controller.target = args.target_name
-            ref_controller.inventory = args.inventory_path
-
+        ref_controller = RefController(args.refs_path,target_name=args.target_name,
+                                       inventory_path=args.inventory_path)
 
         if args.write is not None:
             ref_write(args, ref_controller)
@@ -470,7 +466,7 @@ def ref_write(args, ref_controller):
 
             parameter = kap_inv_params['secrets']['vaultkv']
         if parameter.get('auth') is None:
-            raise KapitanError("No Authentication type parameter Specified. Specify it"
+            raise KapitanError("No Authentication type parameter specified. Specify it"
                                " in parameters.kapitan.secrets.vaultkv.auth and use --target-name or -t")
 
         secret_obj = VaultSecret(_data, parameter=parameter, encoding=encoding)
@@ -654,8 +650,8 @@ def secret_update_validate(args, ref_controller):
 
             elif token_path.startswith("?{vaultkv:"):
                 if not vaultkv:
-                    logger.debug("secret_update_validate: target: %s has no inventory vaultkv parameters 'auth', skipping %s", target_name, token_path)
-                continue
+                    logger.debug("secret_update_validate: target: %s has no inventory vaultkv parameter 'auth', skipping %s", target_name, token_path)
+                    continue
 
             else:
                 logger.info("Invalid secret %s, could not get type, skipping", token_path)

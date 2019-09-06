@@ -433,7 +433,7 @@ class CliFuncsTest(unittest.TestCase):
         test_secret_content_value = "secret_value"
         test_secret_file = tempfile.mktemp()
         with open(test_secret_file, "w") as fp:
-            fp.write(test_secret_content_b64)
+            fp.write(test_secret_content)
  
         sys.argv = ["kapitan", "refs", "--write", "vaultkv:test_secret","--base64",
                     "-f", test_secret_file, "--refs-path", REFS_PATH,
