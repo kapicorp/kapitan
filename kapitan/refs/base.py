@@ -147,10 +147,12 @@ class PlainRefBackend(object):
 
 
 class Revealer(object):
-    def __init__(self, ref_controller):
+    def __init__(self, ref_controller, **kwargs):
         "reveal files and objects"
         self.ref_controller = ref_controller
         self.regex = re.compile(REF_TOKEN_TAG_PATTERN)
+        self.reveal = kwargs.get("reveal", False)
+        self.targets = kwargs.get("targets", None)
 
     def reveal_path(self, path):
         "detects if path is file or dir, returns list of RevealObj"

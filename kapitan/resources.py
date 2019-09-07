@@ -275,7 +275,8 @@ def inventory_reclass(inventory_path):
             class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
             _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
 
-            cached.inv = _reclass.inventory()
+            # Reveal or compile refs if necessary
+            cached.inv = reveal_or_compile_refs(_reclass.inventory())
         except ReclassException as e:
             if isinstance(e, NotFoundError):
                 logger.error("Inventory reclass error: inventory not found")
@@ -284,3 +285,30 @@ def inventory_reclass(inventory_path):
             raise InventoryError(e.message)
 
     return cached.inv
+
+
+def reveal_or_compile_refs(inv):
+    """
+    Reveals or compiles the reclass inventory inv for all targets specified if a Revealer has been instantiated.
+    Otherwise, it does not modify the inventory.
+    Returns a reclass style dictionary
+    """
+
+    # Return the unmodified inventory if there is no revealer_obj
+    if cached.revealer_obj is None:
+        return inv
+
+    # Check if any targets were specified
+    if cached.revealer_obj.targets:
+        targets_list = cached.revealer_obj.targets
+    else:
+        targets_list = inv["nodes"]
+
+    # Reveal or compile refs for all necessary targets
+    for target_name in targets_list:
+        if cached.revealer_obj.reveal:
+            cached.revealer_obj.reveal_obj(inv["nodes"][target_name])
+        else:
+            cached.revealer_obj.compile_obj(inv["nodes"][target_name], target_name=target_name)
+
+    return inv

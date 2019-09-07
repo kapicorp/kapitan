@@ -18,7 +18,6 @@ from kapitan.inputs.copy import Copy
 
 
 search_path = ""
-ref_controller = ""
 test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_copy")
 compile_path = os.path.join(test_path, "output")
 file_path = os.path.join(test_path, "input")
@@ -57,7 +56,7 @@ class CopyTest(unittest.TestCase):
         except FileNotFoundError:
             pass
 
-        self.copy_compiler = Copy(compile_path, search_path, ref_controller)
+        self.copy_compiler = Copy(compile_path, search_path)
 
     def test_copy_file_folder(self):
         test_dirs_bootstrap_helper()

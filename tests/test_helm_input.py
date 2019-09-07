@@ -33,7 +33,7 @@ class HelmInputTest(unittest.TestCase):
     def test_render_chart(self):
         temp_dir = tempfile.mkdtemp()
         chart_path = "charts/acs-engine-autoscaler"
-        helm = Helm(None, None, None)
+        helm = Helm(None, None)
         error_message = helm.render_chart(chart_path, temp_dir)
         self.assertFalse(error_message)
         self.assertTrue(
@@ -46,7 +46,7 @@ class HelmInputTest(unittest.TestCase):
     def test_error_invalid_char_dir(self):
         chart_path = "non-existent"
         temp_dir = tempfile.mkdtemp()
-        helm = Helm(None, None, None)
+        helm = Helm(None, None)
         error_message = helm.render_chart(chart_path, temp_dir)
         self.assertTrue("no such file or directory" in error_message)
 

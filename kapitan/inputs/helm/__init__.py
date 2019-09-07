@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class Helm(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller):
-        super().__init__("helm", compile_path, search_paths, ref_controller)
+    def __init__(self, compile_path, search_paths):
+        super().__init__("helm", compile_path, search_paths)
         self.helm_values_file = None
         self.helm_params = {}
         self.lib = self.initialise_binding()
@@ -51,18 +51,12 @@ class Helm(InputType):
         """
         Render templates in file_path/templates and write to compile_path.
         file_path must be a directory containing helm chart.
-        kwargs:
-            reveal: default False, set to reveal refs on compile
-            target_name: default None, set to current target being compiled
         """
         if not self.lib:
             raise HelmBindingUnavailableError(
                 "Helm binding is not supported for {}."
                 "\nOr the binding does not exist.".format(platform.system())
             )
-
-        reveal = kwargs.get("reveal", False)
-        target_name = kwargs.get("target_name", None)
 
         temp_dir = tempfile.mkdtemp()
         os.makedirs(os.path.dirname(compile_path), exist_ok=True)
@@ -85,9 +79,7 @@ class Helm(InputType):
                 with open(full_file_name, "r") as f:
                     item_path = os.path.join(compile_path, rel_file_name)
                     os.makedirs(os.path.dirname(item_path), exist_ok=True)
-                    with CompiledFile(
-                        item_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name
-                    ) as fp:
+                    with CompiledFile(item_path, mode="w") as fp:
                         yml_obj = list(yaml.safe_load_all(f))
                         fp.write_yaml(yml_obj)
                         logger.debug("Wrote file %s to %s", full_file_name, item_path)

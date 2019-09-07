@@ -36,9 +36,7 @@ from reclass.errors import NotFoundError, ReclassException
 logger = logging.getLogger(__name__)
 
 
-def compile_targets(
-    inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs
-):
+def compile_targets(inventory_path, search_paths, output_path, parallel, targets, labels, **kwargs):
     """
     Searches and loads target files, and runs compile_target() on a
     multiprocessing pool with parallel number of processes.
@@ -73,13 +71,7 @@ def compile_targets(
 
         # append "compiled" to output_path so we can safely overwrite it
         compile_path = os.path.join(output_path, "compiled")
-        worker = partial(
-            compile_target,
-            search_paths=search_paths,
-            compile_path=temp_path,
-            ref_controller=ref_controller,
-            **kwargs,
-        )
+        worker = partial(compile_target, search_paths=search_paths, compile_path=temp_path, **kwargs)
 
         if not target_objs:
             raise CompileError("Error: no targets found")
@@ -318,15 +310,13 @@ def load_target_inventory(inventory_path, targets):
         targets_list = inv["nodes"]
 
     for target_name in targets_list:
-        try:
-            target_obj = inv["nodes"][target_name]["parameters"]["kapitan"]
-            valid_target_obj(target_obj)
-            validate_matching_target_name(target_name, target_obj, inventory_path)
-            logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
-            target_objs.append(target_obj)
-        except KeyError:
-            logger.debug("load_target_inventory: target %s has no kapitan compile obj", target_name)
-            pass
+        # Validate the target name and get the target object
+        target_obj = validate_matching_target_name(target_name, inv, inventory_path)
+
+        # Validate the target object
+        valid_target_obj(target_obj)
+        logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
+        target_objs.append(target_obj)
 
     return target_objs
 
@@ -368,18 +358,18 @@ def search_targets(inventory_path, targets, labels):
     return targets_found
 
 
-def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
+def compile_target(target_obj, search_paths, compile_path, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
 
-    jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller)
-    jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
-    kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
-    helm_compiler = Helm(compile_path, search_paths, ref_controller)
-    copy_compiler = Copy(compile_path, search_paths, ref_controller)
+    jinja2_compiler = Jinja2(compile_path, search_paths)
+    jsonnet_compiler = Jsonnet(compile_path, search_paths)
+    kadet_compiler = Kadet(compile_path, search_paths)
+    helm_compiler = Helm(compile_path, search_paths)
+    copy_compiler = Copy(compile_path, search_paths)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
@@ -522,12 +512,15 @@ def valid_target_obj(target_obj):
         )
 
 
-def validate_matching_target_name(target_filename, target_obj, inventory_path):
-    """Throws *InventoryError* if parameters.kapitan.vars.target is not set,
+def validate_matching_target_name(target_filename, inv, inventory_path):
+    """
+    Throws *InventoryError* if parameters.kapitan.vars.target is not set,
     or target does not have a corresponding yaml file in *inventory_path*
+    Returns a reclass style dictionary for the target_filename
     """
     logger.debug(f"validating target name matches the name of yml file {target_filename}")
     try:
+        target_obj = inv["nodes"][target_filename]["parameters"]["kapitan"]
         target_name = target_obj["vars"]["target"]
     except KeyError:
         error_message = (
@@ -544,6 +537,8 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
             "Target name should match the name of the target yml file in inventory"
         )
         raise InventoryError(error_message)
+
+    return target_obj
 
 
 def schema_validate_compiled(targets, compiled_path, inventory_path, schema_cache_path, parallel):

@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class Copy(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller):
-        super().__init__("copy", compile_path, search_paths, ref_controller)
+    def __init__(self, compile_path, search_paths):
+        super().__init__("copy", compile_path, search_paths)
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """

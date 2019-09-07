@@ -10,22 +10,20 @@ import itertools
 import json
 import logging
 import os
+import yaml
 from collections.abc import Mapping
 
-import yaml
 from kapitan.errors import CompileError, KapitanError
-from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper
 
 logger = logging.getLogger(__name__)
 
 
 class InputType(object):
-    def __init__(self, type_name, compile_path, search_paths, ref_controller):
+    def __init__(self, type_name, compile_path, search_paths):
         self.type_name = type_name
         self.compile_path = compile_path
         self.search_paths = search_paths
-        self.ref_controller = ref_controller
 
     def compile_obj(self, comp_obj, ext_vars, **kwargs):
         """
@@ -92,31 +90,17 @@ class InputType(object):
 
 
 class CompilingFile(object):
-    def __init__(self, context, fp, ref_controller, **kwargs):
+    def __init__(self, context, fp, **kwargs):
         self.fp = fp
-        self.ref_controller = ref_controller
         self.kwargs = kwargs
-        self.revealer = Revealer(ref_controller)
 
     def write(self, data):
         """write data into file"""
-        reveal = self.kwargs.get("reveal", False)
-        target_name = self.kwargs.get("target_name", None)
-
-        if reveal:
-            self.fp.write(self.revealer.reveal_raw(data))
-        else:
-            self.fp.write(self.revealer.compile_raw(data, target_name=target_name))
+        self.fp.write(data)
 
     def write_yaml(self, obj):
-        """recursively compile or reveal refs and convert obj to yaml and write to file"""
+        """write object to YAML file"""
         indent = self.kwargs.get("indent", 2)
-        reveal = self.kwargs.get("reveal", False)
-        target_name = self.kwargs.get("target_name", None)
-        if reveal:
-            obj = self.revealer.reveal_obj(obj)
-        else:
-            obj = self.revealer.compile_obj(obj, target_name=target_name)
 
         if isinstance(obj, Mapping):
             yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
@@ -126,23 +110,17 @@ class CompilingFile(object):
         logger.debug("Wrote %s", self.fp.name)
 
     def write_json(self, obj):
-        """recursively hash or reveal refs and convert obj to json and write to file"""
+        """write object to JSON file"""
         indent = self.kwargs.get("indent", 2)
-        reveal = self.kwargs.get("reveal", False)
-        target_name = self.kwargs.get("target_name", None)
-        if reveal:
-            obj = self.revealer.reveal_obj(obj)
-        else:
-            obj = self.revealer.compile_obj(obj, target_name=target_name)
+
         json.dump(obj, self.fp, indent=indent)
         logger.debug("Wrote %s", self.fp.name)
 
 
 class CompiledFile(object):
-    def __init__(self, name, ref_controller, **kwargs):
+    def __init__(self, name, **kwargs):
         self.name = name
         self.fp = None
-        self.ref_controller = ref_controller
         self.kwargs = kwargs
 
     def __enter__(self):
@@ -152,7 +130,7 @@ class CompiledFile(object):
         os.makedirs(os.path.dirname(self.name), exist_ok=True)
 
         self.fp = open(self.name, mode)
-        return CompilingFile(self, self.fp, self.ref_controller, **self.kwargs)
+        return CompilingFile(self, self.fp, **self.kwargs)
 
     def __exit__(self, *args):
         self.fp.close()
