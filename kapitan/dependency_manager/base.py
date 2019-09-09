@@ -136,7 +136,7 @@ def fetch_http_dependency(dep_mapping, save_dir):
                 zfile.extractall(output_path)
                 zfile.close()
                 is_unpacked = True
-            elif content_type == 'application/octet-stream':
+            elif content_type in ['application/octet-stream', 'application/x-gzip']:
                 if re.search(r'(\.tar\.gz|\.tgz)$', source):
                     tar = tarfile.open(copy_src_path)
                     tar.extractall(path=output_path)

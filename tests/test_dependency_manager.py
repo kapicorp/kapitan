@@ -75,4 +75,3 @@ class DependencyManagerTest(unittest.TestCase):
     def tearDown(self):
         os.chdir('../../')
         reset_cache()
-
