@@ -25,8 +25,10 @@ class Helm(InputType):
         """returns the dl_opened library (.so file) if exists, otherwise None"""
         if platform.system() not in ('Linux', 'Darwin'):  # TODO: later add binding for Mac
             return None
+        # binding_path is kapitan/inputs/helm/libtemplate.so
         binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "libtemplate.so")
         if not os.path.exists(binding_path):
+            logger.debug('The helm binding does not exist at {}'.format(binding_path))
             return None
         try:
             lib = ffi.dlopen(binding_path)
