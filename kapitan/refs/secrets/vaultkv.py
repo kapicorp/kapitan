@@ -211,7 +211,6 @@ class VaultSecret(Base64Ref):
 
         except KeyError:
             raise VaultError("Could not fetch VaultSecret: vaultkv parameters missing")
-            return None
 
     def reveal(self):
         """
@@ -286,7 +285,7 @@ class VaultBackend(Base64RefBackend):
         ref = self.ref_type.from_path(full_ref_path, target_name=self.target_name,
                                       inventory_path=self.inventory_path)
 
-        if ref is not None:
+        if ref:
             ref.path = ref_path
             ref_path_data = "{}{}".format(ref.path, ref.data)
             ref.hash = hashlib.sha256(ref_path_data.encode()).hexdigest()

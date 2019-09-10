@@ -39,7 +39,11 @@ client = docker.from_env()
 env = {'VAULT_LOCAL_CONFIG':'{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'}
 vault_container= client.containers.run(image='vault',cap_add=['IPC_LOCK'],ports={'8200':'8200'},
                                        environment=env,detach=True,remove=True,command='server')
-sleep(4)
+
+# make sure the container is up & running before testing
+while vault_container.status!="running":
+    sleep(2)
+    vault_container.reload()
 
 class VaultSecretTest(unittest.TestCase):
     "Test Vault Secret"
