@@ -1,27 +1,31 @@
 #!/usr/bin/env bash
 
-if ! command -v go >/dev/null 2>&1; then
-    echo 'go is required to build the helm template binding'
-    exit 1
-fi
-
 cd $(dirname "$0")
 pwd
-so_name=libtemplate.so
 
-go build -buildmode=c-shared -o $so_name template.go
-if [ -e $so_name ]
-then
+so_name="libtemplate.so"
+
+# Compile the binding if a Go runtime exists
+if [[ -z $(which go) ]]; then
+    echo "[WARN] go is not available on this system -- skipping Helm binding build!"
+else
+    go build -buildmode=c-shared -o $so_name template.go
+fi
+
+# Validate that the compiled binding exists
+if [[ -e $so_name ]]; then
     echo "$so_name built successfully"
 else
-    echo "error building $so_name. Exiting"
+    echo "[ERROR] $so_name does not exist!"
     exit 1
 fi
 
-if ! command -v python3 >/dev/null 2>&1; then
-    echo 'python3 is not available on this system. Skipping cffi build'
-    exit 0
+# Compile the Python ffi binding if Python is available
+if [[ -z $(which python3) ]]; then
+    echo "[WARN] python3 is not available on this system -- skipping cffi build!"
 else
-    echo 'Building the Python binding using cffi'
+    echo "Building the Python binding using cffi"
     python3 cffi_build.py
 fi
+
+exit 0

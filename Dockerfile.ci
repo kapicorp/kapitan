@@ -54,5 +54,4 @@ RUN curl -L -o /usr/local/bin/kbld ${KBLD_URL} && chmod +x /usr/local/bin/kbld
 
 COPY --from=go-env /go/bin/promtool /usr/local/bin/
 
-COPY tests/test_resources /examples
 CMD ["/bin/bash"]
