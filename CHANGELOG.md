@@ -1,3 +1,7 @@
+## 0.24.1-rc.1:
+- Add additional content type header for fetching GZIP files (#364)
+- Fix Helm binding errors in docker (#359)
+
 ## 0.24.0:
 - Add standalone binary to github releases
 - Upgrade some packages in requirements.txt (#344)
