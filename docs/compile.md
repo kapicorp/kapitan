@@ -198,7 +198,7 @@ parameters:
       unpack: True
       output_path: components/charts
     compile:
-      - output_path: chart
+      - output_path: .
         input_type: helm
         input_paths:
           - components/charts/nginx-ingress
@@ -225,7 +225,7 @@ Compiled nginx-from-chart (0.07s)
 The chart is fetched before compile, which creates `components/charts/nginx-ingress` folder that is used as the `input_paths`  for the helm input type. To confirm if the `helm_values` actually has overridden the default values, we can try:
 
 ```shell
-$ grep "my-controller" compiled/nginx-from-chart/chart/controller-deployment.yaml 
+$ grep "my-controller" compiled/nginx-from-chart/nginx-ingress/templates/controller-deployment.yaml 
   name: my-controller
       app: my-controller
         app: my-controller

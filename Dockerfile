@@ -1,21 +1,27 @@
-FROM python:3.7-alpine
+FROM python:3.7-slim-stretch
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
 COPY kapitan/ kapitan/
 COPY requirements.txt ./
 
-RUN apk add --no-cache --virtual build-dependencies g++ make musl-dev && \
-    apk add --no-cache libstdc++ gnupg yaml-dev libffi-dev openssl-dev git && \
-    pip install --upgrade pip && \
-    pip install -r requirements.txt && \
-    apk del build-dependencies && \
-    rm -r /root/.cache
+RUN apt-get update && apt-get install -y \
+    build-essential git wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --upgrade pip \
+    && pip install -r requirements.txt
 
-# install additional dependencies required to build helm binding
-RUN apk add --no-cache git bash go libc-dev && \
+# build go from source
+RUN wget https://dl.google.com/go/go1.12.7.linux-amd64.tar.gz -q && \
+    tar -C /usr/local -xvf go1.12.7.linux-amd64.tar.gz && \
+    rm go1.12.7.linux-amd64.tar.gz
+
+# build helm binding
+RUN export PATH=$PATH:/usr/local/go/bin && \
     chmod +x kapitan/inputs/helm/build.sh && \
-    ./kapitan/inputs/helm/build.sh
+    ./kapitan/inputs/helm/build.sh && \
+    rm /usr/local/go -rf
 
 ENV PYTHONPATH="/kapitan/"
 ENV SEARCHPATH="/src"

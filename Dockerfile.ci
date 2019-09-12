@@ -1,22 +1,43 @@
-FROM sparkprime/jsonnet AS jsonnet
-
-FROM golang:1.12 AS promtool
+FROM golang:1.12-stretch AS go-env
 
 RUN go get -u github.com/prometheus/prometheus/cmd/promtool
 
-FROM google/cloud-sdk:alpine
+ARG inputs_path=kapitan/inputs
+COPY $inputs_path/helm/template.go $inputs_path/helm/go.mod $inputs_path/helm/build.sh /kapitan/helm/
 
-RUN apk add --no-cache python3-dev git g++ make libstdc++ gnupg musl-dev util-linux openssl openssl-dev libffi-dev coreutils yaml-dev jq ncurses && \
-    python3 -m ensurepip && \
-    rm -rf /usr/lib/python*/ensurepip && \
-    pip3 install --upgrade pip setuptools yq && \
-    if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
-    if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
-    rm -rf /root/.cache
+RUN /kapitan/helm/build.sh
+
+FROM python:3.7-stretch
+
+RUN apt-get update && apt-get install -y \
+    build-essential git curl jq libncursesw5-dev libffi-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev \
+    libssl-dev libreadline-dev libffi-dev wget libbz2-dev libsqlite3-dev bash zip lsb-release && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+ARG CLOUD_SDK_VERSION=260.0.0
+ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
+
+ENV PATH "$PATH:/opt/google-cloud-sdk/bin/"
+
+RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
+    mkdir -p /opt && cd /opt && \
+    curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
+    tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
+    rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
+    gcloud config set core/disable_usage_reporting true && \
+    gcloud config set component_manager/disable_update_check true && \
+    gcloud config set metrics/environment github_docker_image && \
+    gcloud --version
+
+VOLUME ["/root/.config"]
 
 COPY setup.py requirements.txt MANIFEST.in /kapitan/
 COPY kapitan /kapitan/kapitan/
-RUN pip3 install -e /kapitan
+# add helm binding to kapitan/kapitan before pip install
+COPY --from=go-env /kapitan/helm/libtemplate.so /kapitan/kapitan/inputs/helm/
+RUN pip install cffi && python /kapitan/kapitan/inputs/helm/cffi_build.py && mv ./helm_binding.py /kapitan/kapitan/inputs/helm/
+RUN pip install -e /kapitan
 
 ENV TERRAFORM_VERSION=0.11.13
 ENV TERRAFORM_URL=https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
@@ -31,5 +52,6 @@ ENV KBLD_URL=https://github.com/k14s/kbld/releases/download/v0.11.0/kbld-linux-a
 RUN curl -L -o /usr/local/bin/kapp ${KAPP_URL} && chmod +x /usr/local/bin/kapp
 RUN curl -L -o /usr/local/bin/kbld ${KBLD_URL} && chmod +x /usr/local/bin/kbld
 
-COPY --from=jsonnet /usr/local/bin/jsonnet /usr/local/bin/
-COPY --from=promtool /go/bin/promtool /usr/local/bin/
+COPY --from=go-env /go/bin/promtool /usr/local/bin/
+
+CMD ["/bin/bash"]
