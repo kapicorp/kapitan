@@ -1,0 +1,8 @@
+#!/bin/bash
+# Shell wrapper to execute Kapitan using docker
+
+DIR=$(dirname ${BASH_SOURCE[0]})
+ABS_PATH=$(cd "${DIR}"; pwd)
+KAPITAN="docker run -t --rm -v ${ABS_PATH}:/src:delegated deepmind/kapitan"
+
+${KAPITAN} $@

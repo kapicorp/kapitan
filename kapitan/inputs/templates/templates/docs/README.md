@@ -1,4 +1,4 @@
-# My Readme
+# Default Readme
 
 Target: {{ target }}
 

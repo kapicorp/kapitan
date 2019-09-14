@@ -1,4 +1,16 @@
 parameters:
+  namespace: ${target_name}
+
   kapitan:
+    compile:
+      - output_path: scripts
+        input_type: jinja2
+        input_paths:
+          - templates/scripts
+      - output_path: .
+        output_type: yaml
+        input_type: jinja2
+        input_paths:
+          - templates/docs
     vars:
       target: ${target_name}
