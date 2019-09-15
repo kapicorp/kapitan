@@ -1,16 +1,21 @@
 # First build the Helm binding
-FROM golang:1.12.9-stretch AS go-builder
+FROM golang:1.12.9-stretch AS helm-builder
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
-COPY . .
 
-RUN ./kapitan/inputs/helm/build.sh
+COPY ./kapitan ./kapitan
+COPY ./MANIFEST.in ./MANIFEST.in
+COPY ./requirements.txt ./requirements.txt
+COPY ./setup.py ./setup.py
+
+RUN chmod +x ./kapitan/inputs/helm/build.sh \
+    && ./kapitan/inputs/helm/build.sh
 
 # Build the virtualenv for Kapitan
 FROM python:3.7-slim-stretch AS python-builder
 
-COPY --from=go-builder /kapitan /kapitan
+COPY --from=helm-builder /kapitan /kapitan
 WORKDIR /kapitan
 
 ENV PATH="/opt/venv/bin:${PATH}"
@@ -18,12 +23,8 @@ ENV PATH="/opt/venv/bin:${PATH}"
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         build-essential \
-        gcc \
     && python -m venv /opt/venv \
-    && pip install --upgrade \
-        pip \
-        setuptools \
-        wheel \
+    && pip install --upgrade pip \
     && pip install -r requirements.txt \
     && ./kapitan/inputs/helm/build.sh \
     && pip install .
@@ -47,6 +48,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --no-log-init --user-group kapitan
 
-USER 1000
+USER kapitan
 
 ENTRYPOINT ["kapitan"]

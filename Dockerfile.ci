@@ -1,17 +1,22 @@
 # /bin/terraform
-FROM hashicorp/terraform:0.12.8 AS terraform
+FROM hashicorp/terraform:0.12.8 AS terraform-binary
 
 # /bin/promtool
-FROM quay.io/prometheus/prometheus:v2.12.0 AS prometheus
+FROM quay.io/prometheus/prometheus:v2.12.0 AS prometheus-binary
 
 # Build the Helm binding
-FROM golang:1.12-stretch AS go-builder
+FROM golang:1.12-stretch AS helm-builder
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
-COPY . .
 
-RUN ./kapitan/inputs/helm/build.sh
+COPY ./kapitan ./kapitan
+COPY ./MANIFEST.in ./MANIFEST.in
+COPY ./requirements.txt ./requirements.txt
+COPY ./setup.py ./setup.py
+
+RUN chmod +x ./kapitan/inputs/helm/build.sh \
+    && ./kapitan/inputs/helm/build.sh
 
 # Build final image
 FROM python:3.7-stretch
@@ -23,17 +28,16 @@ ENV KAPP_URL=https://github.com/k14s/kapp/releases/download/v0.11.0/kapp-linux-a
 ENV KBLD_URL=https://github.com/k14s/kbld/releases/download/v0.11.0/kbld-linux-amd64
 ENV PATH="/opt/venv/bin:${PATH}"
 
-COPY --from=terraform /bin/terraform /usr/bin/terraform
-COPY --from=prometheus /bin/promtool /user/bin/promtool
-COPY --from=go-builder /kapitan /kapitan
+COPY --from=terraform-binary /bin/terraform /usr/bin/terraform
+COPY --from=prometheus-binary /bin/promtool /user/bin/promtool
+COPY --from=helm-builder /kapitan /kapitan
 
-RUN apt-get -qqy update \
-    && apt-get install -qqy \
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
         apt-transport-https \
         bash \
         build-essential \
         curl \
-        gcc \
         git \
         jq \
         lsb-release \
@@ -49,14 +53,14 @@ RUN apt-get -qqy update \
         kubectl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
+    # If True, anonymous statistics on SDK usage will not be collected.
     && gcloud config set core/disable_usage_reporting true \
+    # If True, Cloud SDK will not automatically check for updates.
     && gcloud config set component_manager/disable_update_check true \
+    # Metrics namespace for server side analytics
     && gcloud config set metrics/environment github_docker_image \
     && python -m venv /opt/venv \
-    && pip install --upgrade \
-        pip \
-        setuptools \
-        wheel \
+    && pip install --upgrade pip \
     && pip install -r ./kapitan/requirements.txt \
     && ./kapitan/kapitan/inputs/helm/build.sh \
     && pip install ./kapitan \
