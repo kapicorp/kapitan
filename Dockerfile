@@ -1,31 +1,53 @@
-FROM python:3.7-slim-stretch
+# First build the Helm binding
+FROM golang:1.12.9-stretch AS helm-builder
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
-COPY kapitan/ kapitan/
-COPY requirements.txt ./
 
-RUN apt-get update && apt-get install -y \
-    build-essential git wget \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
+COPY ./kapitan ./kapitan
+COPY ./MANIFEST.in ./MANIFEST.in
+COPY ./requirements.txt ./requirements.txt
+COPY ./setup.py ./setup.py
+
+RUN chmod +x ./kapitan/inputs/helm/build.sh \
+    && ./kapitan/inputs/helm/build.sh
+
+# Build the virtualenv for Kapitan
+FROM python:3.7-slim-stretch AS python-builder
+
+COPY --from=helm-builder /kapitan /kapitan
+WORKDIR /kapitan
+
+ENV PATH="/opt/venv/bin:${PATH}"
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        build-essential \
+    && python -m venv /opt/venv \
     && pip install --upgrade pip \
-    && pip install -r requirements.txt
+    && pip install -r requirements.txt \
+    && ./kapitan/inputs/helm/build.sh \
+    && pip install .
 
-# build go from source
-RUN wget https://dl.google.com/go/go1.12.7.linux-amd64.tar.gz -q && \
-    tar -C /usr/local -xvf go1.12.7.linux-amd64.tar.gz && \
-    rm go1.12.7.linux-amd64.tar.gz
+# Final image with virtualenv built in previous step
+FROM python:3.7-slim-stretch
 
-# build helm binding
-RUN export PATH=$PATH:/usr/local/go/bin && \
-    chmod +x kapitan/inputs/helm/build.sh && \
-    ./kapitan/inputs/helm/build.sh && \
-    rm /usr/local/go -rf
+COPY --from=python-builder /opt/venv /opt/venv
 
-ENV PYTHONPATH="/kapitan/"
+ENV PATH="/opt/venv/bin:${PATH}"
 ENV SEARCHPATH="/src"
 VOLUME ${SEARCHPATH}
 WORKDIR ${SEARCHPATH}
 
-ENTRYPOINT ["python", "-m", "kapitan"]
+# Install runtime dependencies and run as a non-root user for good measure
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        git \
+        gnupg \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --no-log-init --user-group kapitan
+
+USER kapitan
+
+ENTRYPOINT ["kapitan"]

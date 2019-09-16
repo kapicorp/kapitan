@@ -1,57 +1,78 @@
-FROM golang:1.12-stretch AS go-env
+# /bin/terraform
+FROM hashicorp/terraform:0.12.8 AS terraform-binary
 
-RUN go get -u github.com/prometheus/prometheus/cmd/promtool
+# /bin/promtool
+FROM quay.io/prometheus/prometheus:v2.12.0 AS prometheus-binary
 
-ARG inputs_path=kapitan/inputs
-COPY $inputs_path/helm/template.go $inputs_path/helm/go.mod $inputs_path/helm/build.sh /kapitan/helm/
+# Build the Helm binding
+FROM golang:1.12-stretch AS helm-builder
 
-RUN /kapitan/helm/build.sh
+RUN mkdir /kapitan
+WORKDIR /kapitan
 
+COPY ./kapitan ./kapitan
+COPY ./MANIFEST.in ./MANIFEST.in
+COPY ./requirements.txt ./requirements.txt
+COPY ./setup.py ./setup.py
+
+RUN chmod +x ./kapitan/inputs/helm/build.sh \
+    && ./kapitan/inputs/helm/build.sh
+
+# Build final image
 FROM python:3.7-stretch
 
-RUN apt-get update && apt-get install -y \
-    build-essential git curl jq libncursesw5-dev libffi-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev \
-    libssl-dev libreadline-dev libffi-dev wget libbz2-dev libsqlite3-dev bash zip lsb-release && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+ARG CLOUD_SDK_VERSION=262.0.0
 
-ARG CLOUD_SDK_VERSION=260.0.0
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
-
-ENV PATH "$PATH:/opt/google-cloud-sdk/bin/"
-
-RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
-    mkdir -p /opt && cd /opt && \
-    curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    gcloud config set core/disable_usage_reporting true && \
-    gcloud config set component_manager/disable_update_check true && \
-    gcloud config set metrics/environment github_docker_image && \
-    gcloud --version
-
-VOLUME ["/root/.config"]
-
-COPY setup.py requirements.txt MANIFEST.in /kapitan/
-COPY kapitan /kapitan/kapitan/
-# add helm binding to kapitan/kapitan before pip install
-COPY --from=go-env /kapitan/helm/libtemplate.so /kapitan/kapitan/inputs/helm/
-RUN pip install cffi && python /kapitan/kapitan/inputs/helm/cffi_build.py && mv ./helm_binding.py /kapitan/kapitan/inputs/helm/
-RUN pip install -e /kapitan
-
-ENV TERRAFORM_VERSION=0.11.13
-ENV TERRAFORM_URL=https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-RUN curl -o /tmp/terraform_${TERRAFORM_VERSION}.zip ${TERRAFORM_URL} && \
-        unzip -d /usr/local/bin /tmp/terraform_${TERRAFORM_VERSION}.zip && \
-        rm /tmp/terraform_${TERRAFORM_VERSION}.zip
-
-RUN gcloud components install kubectl
-
 ENV KAPP_URL=https://github.com/k14s/kapp/releases/download/v0.11.0/kapp-linux-amd64
 ENV KBLD_URL=https://github.com/k14s/kbld/releases/download/v0.11.0/kbld-linux-amd64
-RUN curl -L -o /usr/local/bin/kapp ${KAPP_URL} && chmod +x /usr/local/bin/kapp
-RUN curl -L -o /usr/local/bin/kbld ${KBLD_URL} && chmod +x /usr/local/bin/kbld
+ENV PATH="/opt/venv/bin:${PATH}"
 
-COPY --from=go-env /go/bin/promtool /usr/local/bin/
+COPY --from=terraform-binary /bin/terraform /usr/bin/terraform
+COPY --from=prometheus-binary /bin/promtool /user/bin/promtool
+COPY --from=helm-builder /kapitan /kapitan
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        apt-transport-https \
+        bash \
+        build-essential \
+        curl \
+        git \
+        jq \
+        lsb-release \
+        gnupg \
+        wget \
+        zip \
+    && export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" \
+    && echo "deb https://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" > /etc/apt/sources.list.d/google-cloud-sdk.list \
+    && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
+    && apt-get update \
+    && apt-get install -y \
+        google-cloud-sdk=${CLOUD_SDK_VERSION}-0 \
+        kubectl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    # If True, anonymous statistics on SDK usage will not be collected.
+    && gcloud config set core/disable_usage_reporting true \
+    # If True, Cloud SDK will not automatically check for updates.
+    && gcloud config set component_manager/disable_update_check true \
+    # Metrics namespace for server side analytics
+    && gcloud config set metrics/environment github_docker_image \
+    && python -m venv /opt/venv \
+    && pip install --upgrade pip \
+    && pip install -r ./kapitan/requirements.txt \
+    && ./kapitan/kapitan/inputs/helm/build.sh \
+    && pip install ./kapitan \
+    && rm -rf ./kapitan \
+    && curl -L -o /usr/local/bin/kapp ${KAPP_URL} \
+    && chmod +x /usr/local/bin/kapp \
+    && curl -L -o /usr/local/bin/kbld ${KBLD_URL} \
+    && chmod +x /usr/local/bin/kbld \
+    && gcloud --version \
+    && kubectl version --client \
+    && terraform --version
+
+VOLUME ["/root/.config"]
 
 CMD ["/bin/bash"]

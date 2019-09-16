@@ -14,7 +14,7 @@ fi
 
 # Validate that the compiled binding exists
 if [[ -e $so_name ]]; then
-    echo "$so_name built successfully"
+    echo "[INFO] $so_name built successfully or already exists"
 else
     echo "[ERROR] $so_name does not exist!"
     exit 1
@@ -24,7 +24,7 @@ fi
 if [[ -z $(which python3) ]]; then
     echo "[WARN] python3 is not available on this system -- skipping cffi build!"
 else
-    echo "Building the Python binding using cffi"
+    echo "[INFO] Building the Python binding using cffi"
     python3 cffi_build.py
 fi
 

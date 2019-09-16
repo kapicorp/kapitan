@@ -1,40 +1,37 @@
-FROM debian:stretch
-SHELL ["/bin/bash", "-i", "-c"]
-
-ARG PYTHON_VERSION=3.7.2
-ARG PYINSTALLER_VERSION=3.5
+# First build the Helm binding
+FROM golang:1.12.9-stretch AS helm-builder
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
-COPY kapitan/ kapitan/
-# COPY __main__.spec ./build.spec
-COPY requirements.txt ./requirements.txt
-COPY scripts/pyinstaller.sh ./pyinstaller.sh
+
+COPY ./kapitan ./kapitan
+COPY ./MANIFEST.in ./MANIFEST.in
+COPY ./requirements.txt ./requirements.txt
+COPY ./scripts/pyinstaller.sh ./pyinstaller.sh
+COPY ./setup.py ./setup.py
+
+RUN chmod +x ./kapitan/inputs/helm/build.sh \
+    && ./kapitan/inputs/helm/build.sh
+
+FROM python:3.7-slim-stretch
+
+SHELL ["/bin/bash", "-i", "-c"]
+
+ARG PYINSTALLER_VERSION=3.5
+
+COPY --from=helm-builder /kapitan /kapitan
+WORKDIR /kapitan
+
+ENV PATH="/opt/venv/bin:${PATH}"
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    build-essential \
-    ca-certificates \
-    git \
-    libffi-dev \
-    libbz2-dev \
-    libreadline-dev \
-    libsqlite3-dev \
-    libssl-dev \
-    zlib1g-dev \
-    curl
-
-RUN echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc \
-    && echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc \
-    && source ~/.bashrc \
-    && curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash \
-    && echo 'eval "$(pyenv init -)"' >> ~/.bashrc \
-    && source ~/.bashrc \
-    && PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install $PYTHON_VERSION \
-    && pyenv global $PYTHON_VERSION \
+    && apt-get install --no-install-recommends -y \
+        build-essential \
+    && python -m venv /opt/venv \
     && pip install --upgrade pip \
     && pip install pyinstaller==$PYINSTALLER_VERSION \
     && pip install -r requirements.txt \
-    && chmod +x pyinstaller.sh
+    && ./kapitan/inputs/helm/build.sh \
+    && chmod +x ./pyinstaller.sh
 
 ENTRYPOINT ["./pyinstaller.sh"]
