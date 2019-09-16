@@ -7,6 +7,7 @@ WORKDIR /kapitan
 COPY ./kapitan ./kapitan
 COPY ./MANIFEST.in ./MANIFEST.in
 COPY ./requirements.txt ./requirements.txt
+COPY ./scripts/pyinstaller.sh ./pyinstaller.sh
 COPY ./setup.py ./setup.py
 
 RUN chmod +x ./kapitan/inputs/helm/build.sh \
@@ -31,6 +32,6 @@ RUN apt-get update \
     && pip install pyinstaller==$PYINSTALLER_VERSION \
     && pip install -r requirements.txt \
     && ./kapitan/inputs/helm/build.sh \
-    && chmod +x ./scripts/pyinstaller.sh
+    && chmod +x ./pyinstaller.sh
 
-ENTRYPOINT ["./scripts/pyinstaller.sh"]
+ENTRYPOINT ["./pyinstaller.sh"]
