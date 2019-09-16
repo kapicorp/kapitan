@@ -1,3 +1,6 @@
+## 0.24.1-rc.2:
+- Update all Dockerfiles to use multi-stage builds (#370)
+
 ## 0.24.1-rc.1:
 - Add additional content type header for fetching GZIP files (#364)
 - Fix Helm binding errors in docker (#359)
