@@ -286,7 +286,7 @@ Mac: `brew install libyaml`
 
 ## 0.10.0:
 - Supports reading targets from the inventory as well as target files
-- Breaking change: the keys in compile items changed, see https://github.com/deepmind/kapitan/pull/22
+- Breaking change: the keys in compile items changed, see (#22)
 
 ## 0.9.19:
 - checks for gpg key expiry
