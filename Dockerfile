@@ -24,7 +24,7 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         build-essential \
     && python -m venv /opt/venv \
-    && pip install --upgrade pip \
+    && pip install --upgrade pip yq \
     && pip install -r requirements.txt \
     && ./kapitan/inputs/helm/build.sh \
     && pip install .

@@ -1,3 +1,6 @@
+## 0.24.1-rc.3:
+- Add yq to the docker images (#375)
+
 ## 0.24.1-rc.2:
 - Update all Dockerfiles to use multi-stage builds (#370)
 
