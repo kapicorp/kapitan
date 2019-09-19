@@ -55,6 +55,20 @@ def fatal_error(message):
     sys.exit(1)
 
 
+def parse_arg_delimiter(arg_value, delimiter, is_a_path=False):
+    """
+    If parsed as string then returns list of string delimited by delimiter
+    else just returns passed arg_value
+    """
+    if isinstance(arg_value, str):
+        if is_a_path:
+            return [os.path.abspath(path) for path in arg_value.split(delimiter)]
+        else:
+            return [item for item in arg_value.split(delimiter)]
+
+    return arg_value
+
+
 def hashable_lru_cache(func):
     """Usable instead of lru_cache for functions using unhashable objects"""
 
