@@ -398,7 +398,7 @@ class CliFuncsTest(unittest.TestCase):
         """
         run $ kapitan inventory -t minikube-es -F -p cluster
         """
-        sys.argv = ["kapitan", "inventory", "-t", "minikube-es", "-F", "-p", "cluster",
+        sys.argv = ["kapitan", "inventory", "-t", "minikube-es", "-f", "-p", "cluster",
                     "--inventory-path", "examples/kubernetes/inventory/"]
 
         # set stdout as string

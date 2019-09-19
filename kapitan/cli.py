@@ -24,8 +24,11 @@ import json
 import logging
 import os
 import sys
+import fire
 
 import yaml
+
+from collections import namedtuple
 from kapitan import cached
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.initialiser import initialise_skeleton
@@ -41,253 +44,57 @@ from kapitan.targets import compile_targets, schema_validate_compiled
 from kapitan.inputs.jinja2_filters import DEFAULT_JINJA2_FILTERS_PATH
 from kapitan.utils import (PrettyDumper, check_version, deep_get, fatal_error,
                            flatten_dict, from_dot_kapitan, jsonnet_file,
-                           search_target_token_paths, searchvar)
+                           search_target_token_paths, searchvar as search_var,
+                           parse_arg_delimiter)
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
 logger = logging.getLogger(__name__)
 
 
-def main():
-    """main function for command line usage"""
-    parser = argparse.ArgumentParser(prog=PROJECT_NAME,
-                                     description=DESCRIPTION)
-    parser.add_argument('--version', action='version', version=VERSION)
-    subparser = parser.add_subparsers(help="commands")
+class KapitanCLI():
+    '''
+    Generic templated configuration management for Kubernetes, Terraform and other things
+    '''
 
-    eval_parser = subparser.add_parser('eval', help='evaluate jsonnet file')
-    eval_parser.add_argument('jsonnet_file', type=str)
-    eval_parser.add_argument('--output', type=str,
-                             choices=('yaml', 'json'),
-                             default=from_dot_kapitan('eval', 'output', 'yaml'),
-                             help='set output format, default is "yaml"')
-    eval_parser.add_argument('--vars', type=str,
-                             default=from_dot_kapitan('eval', 'vars', []),
-                             nargs='*',
-                             metavar='VAR',
-                             help='set variables')
-    eval_parser.add_argument('--search-paths', '-J', type=str, nargs='+',
-                             default=from_dot_kapitan('eval', 'search-paths', ['.']),
-                             metavar='JPATH',
-                             help='set search paths, default is ["."]')
+    def __init__(self, version=False):
+        if version:
+            print(VERSION)
+            sys.exit(0)
+        try:
+            cmd = sys.argv[1]
+            logger.debug('Running with command: %s', cmd)
+        except IndexError:
+            sys.exit(1)
 
-    compile_parser = subparser.add_parser('compile', help='compile targets')
-    compile_parser.add_argument('--search-paths', '-J', type=str, nargs='+',
-                                default=from_dot_kapitan('compile', 'search-paths', ['.', 'lib']),
-                                metavar='JPATH',
-                                help='set search paths, default is ["."]')
-    compile_parser.add_argument('--jinja2-filters', '-J2F', type=str,
-                                default=from_dot_kapitan('compile', 'jinja2-filters',
-                                                         DEFAULT_JINJA2_FILTERS_PATH),
-                                metavar='FPATH',
-                                help='load custom jinja2 filters from any file, default is to put\
-                                them inside lib/jinja2_filters.py')
-    compile_parser.add_argument('--verbose', '-v', help='set verbose mode',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'verbose', False))
-    compile_parser.add_argument('--prune', help='prune jsonnet output',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'prune', False))
-    compile_parser.add_argument('--quiet', help='set quiet mode, only critical output',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'quiet', False))
-    compile_parser.add_argument('--output-path', type=str,
-                                default=from_dot_kapitan('compile', 'output-path', '.'),
-                                metavar='PATH',
-                                help='set output path, default is "."')
-    compile_parser.add_argument('--fetch',
-                                help='fetches external dependencies', action='store_true',
-                                default=from_dot_kapitan('compile', 'fetch', False))
-    compile_parser.add_argument('--validate',
-                                help='validate compile output against schemas as specified in inventory',
-                                action='store_true', default=from_dot_kapitan('compile', 'validate', False))
-    compile_parser.add_argument('--targets', '-t', help='targets to compile, default is all',
-                                type=str, nargs='+',
-                                default=from_dot_kapitan('compile', 'targets', []),
-                                metavar='TARGET')
-    compile_parser.add_argument('--parallelism', '-p', type=int,
-                                default=from_dot_kapitan('compile', 'parallelism', 4),
-                                metavar='INT',
-                                help='Number of concurrent compile processes, default is 4')
-    compile_parser.add_argument('--indent', '-i', type=int,
-                                default=from_dot_kapitan('compile', 'indent', 2),
-                                metavar='INT',
-                                help='Indentation spaces for YAML/JSON, default is 2')
-    compile_parser.add_argument('--refs-path', help='set refs path, default is "./refs"',
-                                default=from_dot_kapitan('compile', 'refs-path', './refs'))
-    compile_parser.add_argument('--reveal',
-                                help='reveal refs (warning: this will potentially write sensitive data)',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'reveal', False))
-    compile_parser.add_argument('--inventory-path',
-                                default=from_dot_kapitan('compile', 'inventory-path', './inventory'),
-                                help='set inventory path, default is "./inventory"')
-    compile_parser.add_argument('--cache', '-c',
-                                help='enable compilation caching to .kapitan_cache, default is False',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'cache', False))
-    compile_parser.add_argument('--cache-paths', type=str, nargs='+',
-                                default=from_dot_kapitan('compile', 'cache-paths', []),
-                                metavar='PATH',
-                                help='cache additional paths to .kapitan_cache, default is []')
-    compile_parser.add_argument('--ignore-version-check',
-                                help='ignore the version from .kapitan',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'ignore-version-check', False))
-    compile_parser.add_argument('--schemas-path',
-                                default=from_dot_kapitan('validate', 'schemas-path', './schemas'),
-                                help='set schema cache path, default is "./schemas"')
+    def eval(self, jsonnet_file, search_paths=from_dot_kapitan('eval', 'search-paths', ['.']),
+             vars=from_dot_kapitan('eval', 'vars', []),
+             output=from_dot_kapitan('eval', 'output', 'yaml')):
+        '''
+        evaluate jsonnet file
 
-    inventory_parser = subparser.add_parser('inventory', help='show inventory')
-    inventory_parser.add_argument('--target-name', '-t',
-                                  default=from_dot_kapitan('inventory', 'target-name', ''),
-                                  help='set target name, default is all targets')
-    inventory_parser.add_argument('--inventory-path',
-                                  default=from_dot_kapitan('inventory', 'inventory-path', './inventory'),
-                                  help='set inventory path, default is "./inventory"')
-    inventory_parser.add_argument('--flat', '-F', help='flatten nested inventory variables',
-                                  action='store_true',
-                                  default=from_dot_kapitan('inventory', 'flat', False))
-    inventory_parser.add_argument('--pattern', '-p',
-                                  default=from_dot_kapitan('inventory', 'pattern', ''),
-                                  help='filter pattern (e.g. parameters.mysql.storage_class, or storage_class,' +
-                                  ' or storage_*), default is ""')
-    inventory_parser.add_argument('--verbose', '-v', help='set verbose mode',
-                                  action='store_true',
-                                  default=from_dot_kapitan('inventory', 'verbose', False))
+        Attributes:
+            jsonnet_file : str
+                file to evaluate
+            search_paths : str
+                set search paths, default is ["."], use comma(,) separated paths like --search-paths=path1,path2,...
+            vars : str
+                set variables, use comma(,) separated values, eg. --vars var1=val1,var2=val2,...
+            output : str
+                set output format, default is "yaml"        
+        '''
 
-    searchvar_parser = subparser.add_parser('searchvar',
-                                            help='show all inventory files where var is declared')
-    searchvar_parser.add_argument('searchvar', type=str, metavar='VARNAME',
-                                  help='e.g. parameters.mysql.storage_class, or storage_class, or storage_*')
-    searchvar_parser.add_argument('--inventory-path',
-                                  default=from_dot_kapitan('searchvar', 'inventory-path', './inventory'),
-                                  help='set inventory path, default is "./inventory"')
-    searchvar_parser.add_argument('--verbose', '-v', help='set verbose mode',
-                                  action='store_true',
-                                  default=from_dot_kapitan('searchvar', 'verbose', False))
-    searchvar_parser.add_argument('--pretty-print', '-p', help='Pretty print content of var',
-                                  action='store_true',
-                                  default=from_dot_kapitan('searchvar', 'pretty-print', False))
+        cached.args[sys.argv[1]] = locals()
+        if output not in ['yaml', 'json']:
+            fatal_error('Only yaml and json are supported currently')
 
-    subparser.add_parser('secrets', help='(DEPRECATED) please use refs')
+        if isinstance(search_paths, bool):
+            fatal_error('expected at least one argument')
 
-    refs_parser = subparser.add_parser('refs', help='manage refs')
-    refs_parser.add_argument('--write', '-w', help='write ref token',
-                             metavar='TOKENNAME',)
-    refs_parser.add_argument('--update', help='update GPG recipients for ref token',
-                             metavar='TOKENNAME',)
-    refs_parser.add_argument('--update-targets', action='store_true',
-                             default=from_dot_kapitan('refs', 'update-targets', False),
-                             help='update target secret refs')
-    refs_parser.add_argument('--validate-targets', action='store_true',
-                             default=from_dot_kapitan('refs', 'validate-targets', False),
-                             help='validate target secret refs')
-    refs_parser.add_argument('--base64', '-b64', help='base64 encode file content',
-                             action='store_true',
-                             default=from_dot_kapitan('refs', 'base64', False))
-    refs_parser.add_argument('--reveal', '-r', help='reveal refs',
-                             action='store_true',
-                             default=from_dot_kapitan('refs', 'reveal', False))
-    refs_parser.add_argument('--file', '-f', help='read file or directory, set "-" for stdin',
-                             metavar='FILENAME')
-    refs_parser.add_argument('--target-name', '-t', help='grab recipients from target name')
-    refs_parser.add_argument('--inventory-path',
-                             default=from_dot_kapitan('refs', 'inventory-path', './inventory'),
-                             help='set inventory path, default is "./inventory"')
-    refs_parser.add_argument('--recipients', '-R', help='set GPG recipients',
-                             type=str, nargs='+',
-                             default=from_dot_kapitan('refs', 'recipients', []),
-                             metavar='RECIPIENT')
-    refs_parser.add_argument('--key', '-K', help='set KMS key',
-                             default=from_dot_kapitan('refs', 'key', ''),
-                             metavar='KEY')
-    refs_parser.add_argument('--refs-path', help='set refs path, default is "./refs"',
-                             default=from_dot_kapitan('refs', 'refs-path', './refs'))
-    refs_parser.add_argument('--verbose', '-v',
-                             help='set verbose mode (warning: this will potentially show sensitive data)',
-                             action='store_true',
-                             default=from_dot_kapitan('refs', 'verbose', False))
-
-    lint_parser = subparser.add_parser('lint', help='linter for inventory and refs')
-    lint_parser.add_argument('--fail-on-warning',
-                             default=from_dot_kapitan('lint', 'fail-on-warning', False),
-                             action='store_true',
-                             help='exit with failure code if warnings exist, default is False')
-    lint_parser.add_argument('--skip-class-checks',
-                             action='store_true',
-                             help='skip checking for unused classes, default is False',
-                             default=from_dot_kapitan('lint', 'skip-class-checks', False))
-    lint_parser.add_argument('--skip-yamllint',
-                             action='store_true',
-                             help='skip running yamllint on inventory, default is False',
-                             default=from_dot_kapitan('lint', 'skip-yamllint', False))
-    lint_parser.add_argument('--search-secrets',
-                             default=from_dot_kapitan('lint', 'search-secrets', False),
-                             action='store_true',
-                             help='searches for plaintext secrets in inventory, default is False')
-    lint_parser.add_argument('--refs-path',
-                             help='set refs path, default is "./refs"',
-                             default=from_dot_kapitan('lint', 'refs-path', './refs'))
-    lint_parser.add_argument('--compiled-path',
-                             default=from_dot_kapitan('lint', 'compiled-path', './compiled'),
-                             help='set compiled path, default is "./compiled"')
-    lint_parser.add_argument('--inventory-path',
-                             default=from_dot_kapitan('lint', 'inventory-path', './inventory'),
-                             help='set inventory path, default is "./inventory"')
-
-    init_parser = subparser.add_parser('init',
-                                       help='initialize a directory with the recommended kapitan project skeleton.')
-    init_parser.add_argument('--directory',
-                             default=from_dot_kapitan('init', 'directory', '.'),
-                             help='set path, in which to generate the project skeleton,'
-                             'assumes directory already exists. default is "./"')
-
-    validate_parser = subparser.add_parser('validate',
-                                           help='validates the compile output against schemas as specified in inventory')
-    validate_parser.add_argument('--compiled-path',
-                                 default=from_dot_kapitan('compile', 'compiled-path', './compiled'),
-                                 help='set compiled path, default is "./compiled')
-    validate_parser.add_argument('--inventory-path',
-                                 default=from_dot_kapitan('compile', 'inventory-path', './inventory'),
-                                 help='set inventory path, default is "./inventory"')
-    validate_parser.add_argument('--targets', '-t', help='targets to validate, default is all',
-                                 type=str, nargs='+',
-                                 default=from_dot_kapitan('compile', 'targets', []),
-                                 metavar='TARGET'),
-    validate_parser.add_argument('--schemas-path',
-                                 default=from_dot_kapitan('validate', 'schemas-path', './schemas'),
-                                 help='set schema cache path, default is "./schemas"')
-    validate_parser.add_argument('--parallelism', '-p', type=int,
-                                 default=from_dot_kapitan('validate', 'parallelism', 4),
-                                 metavar='INT',
-                                 help='Number of concurrent validate processes, default is 4')
-    args = parser.parse_args()
-
-    logger.debug('Running with args: %s', args)
-
-    try:
-        cmd = sys.argv[1]
-    except IndexError:
-        parser.print_help()
-        sys.exit(1)
-
-    # cache args where key is subcommand
-    cached.args[sys.argv[1]] = args
-
-    if hasattr(args, 'verbose') and args.verbose:
-        logging.basicConfig(level=logging.DEBUG,
-                            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    elif hasattr(args, 'quiet') and args.quiet:
-        logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
-    else:
-        logging.basicConfig(level=logging.INFO, format="%(message)s")
-
-    if cmd == 'eval':
-        file_path = args.jsonnet_file
-        search_paths = [os.path.abspath(path) for path in args.search_paths]
+        file_path = jsonnet_file
+        search_paths = parse_arg_delimiter(search_paths, ',', is_a_path=True)
         ext_vars = {}
-        if args.vars:
-            ext_vars = dict(var.split('=') for var in args.vars)
+        if vars:
+            ext_vars = dict(var.split('=') for var in parse_arg_delimiter(vars, ','))
         json_output = None
 
         def _search_imports(cwd, imp):
@@ -296,42 +103,138 @@ def main():
         json_output = jsonnet_file(file_path, import_callback=_search_imports,
                                    native_callbacks=resource_callbacks(search_paths),
                                    ext_vars=ext_vars)
-        if args.output == 'yaml':
+        if output == 'yaml':
             json_obj = json.loads(json_output)
             yaml.safe_dump(json_obj, sys.stdout, default_flow_style=False)
         elif json_output:
             print(json_output)
 
-    elif cmd == 'compile':
-        search_paths = [os.path.abspath(path) for path in args.search_paths]
+    def compile(self, search_paths=from_dot_kapitan('compile', 'search-paths', ['.', 'lib']),
+                jinja2_filters=from_dot_kapitan('compile', 'jinja2-filters', DEFAULT_JINJA2_FILTERS_PATH),
+                verbose=from_dot_kapitan('compile', 'verbose', False),
+                prune=from_dot_kapitan('compile', 'prune', False),
+                quiet=from_dot_kapitan('compile', 'quiet', False),
+                output_path=from_dot_kapitan('compile', 'output-path', '.'),
+                fetch=from_dot_kapitan('compile', 'fetch', False),
+                validate=from_dot_kapitan('compile', 'validate', False),
+                targets=from_dot_kapitan('compile', 'targets', []),
+                parallelism=from_dot_kapitan('compile', 'parallelism', 4),
+                indent=from_dot_kapitan('compile', 'indent', 2),
+                refs_path=from_dot_kapitan('compile', 'refs-path', './refs'),
+                reveal=from_dot_kapitan('compile', 'reveal', False),
+                inventory_path=from_dot_kapitan('compile', 'inventory-path', './inventory'),
+                cache=from_dot_kapitan('compile', 'cache', False),
+                cache_paths=from_dot_kapitan('compile', 'cache-paths', []),
+                ignore_version_check=from_dot_kapitan('compile', 'ignore-version-check', False),
+                schemas_path=from_dot_kapitan('validate', 'schemas-path', './schemas')):
+        '''
+        compile targets
 
-        if not args.ignore_version_check:
+        Attributes:
+            search_paths : str
+                set search paths, default is ["."], use comma(,) separated paths like --search-paths=path1,path2,...
+            jinja2_filters : str
+                load custom jinja2 filters from any file, default is to put them inside lib/jinja2_filters.py
+            verbose : bool
+                set verbose mode
+            prune : bool
+                prune jsonnet output
+            quiet : bool
+                set quiet mode, only critical output
+            output_path : str
+                set output path, default is "."
+            fetch : bool
+                fetches external dependencies
+            validate : bool
+                validate compile output against schemas as specified in inventory
+            targets : str
+                targets to compile, default is all, use comma(,) separated targets like --targets=tar1,tar2...
+            parallelism : int
+                Number of concurrent compile processes, default is 4
+            indent : int
+                Indentation spaces for YAML/JSON, default is 2
+            refs_path : str
+                set refs path, default is "./refs"
+            reveal : bool
+                reveal refs (warning: this will potentially write sensitive data)
+            inventory_path : bool
+                set inventory path, default is "./inventory"
+            cache : bool
+                enable compilation caching to .kapitan_cache, default is False
+            cache_paths : str
+                cache additional paths to .kapitan_cache, default is [], use comma(,) separated paths like --cache-paths=path1,path2,...
+            ignore_version_check : bool
+                ignore the version from .kapitan
+            schemas_path : str
+                set schema cache path, default is "./schemas"
+        '''
+
+        cached.args[sys.argv[1]] = locals()
+        if verbose:
+            logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        elif quiet:
+            logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
+        else:
+            logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+        search_paths = parse_arg_delimiter(search_paths, ',', is_a_path=True)
+
+        if not ignore_version_check:
             check_version()
 
-        ref_controller = RefController(args.refs_path)
+        ref_controller = RefController(refs_path)
         # cache controller for use in reveal_maybe jinja2 filter
         cached.ref_controller_obj = ref_controller
         cached.revealer_obj = Revealer(ref_controller)
 
-        compile_targets(args.inventory_path, search_paths, args.output_path,
-                        args.parallelism, args.targets, ref_controller,
-                        prune=(args.prune), indent=args.indent, reveal=args.reveal,
-                        cache=args.cache, cache_paths=args.cache_paths,
-                        fetch_dependencies=args.fetch, validate=args.validate,
-                        schemas_path=args.schemas_path,
-                        jinja2_filters=args.jinja2_filters)
+        compile_targets(inventory_path, search_paths, output_path,
+                        parallelism, parse_arg_delimiter(targets, ','), ref_controller,
+                        prune=(prune), indent=indent, reveal=reveal,
+                        cache=cache, cache_paths=parse_arg_delimiter(cache_paths, ',', is_a_path=True),
+                        fetch_dependencies=fetch, validate=validate,
+                        schemas_path=schemas_path,
+                        jinja2_filters=jinja2_filters)
 
-    elif cmd == 'inventory':
-        if args.pattern and args.target_name == '':
-            parser.error("--pattern requires --target_name")
+    def inventory(self, target_name=from_dot_kapitan('inventory', 'target-name', ''),
+                  inventory_path=from_dot_kapitan('inventory', 'inventory-path', './inventory'),
+                  flat=from_dot_kapitan('inventory', 'flat', False),
+                  pattern=from_dot_kapitan('inventory', 'pattern', ''),
+                  verbose=from_dot_kapitan('inventory', 'verbose', False)):
+        '''
+        show inventory
+
+        Attributes:
+            target_name : str
+                set target name, default is all targets
+            inventory_path : str
+                set inventory path, default is "./inventory"
+            flat : bool
+                flatten nested inventory variables
+            pattern : str
+                filter pattern (e.g. parameters.mysql.storage_class, or storage_class, or storage_*), default is ""
+            verbose : bool
+                set verbose mode
+        '''
+
+        cached.args[sys.argv[1]] = locals()
+        if verbose:
+            logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        else:
+            logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+        if pattern and target_name == '':
+            fatal_error("--pattern requires --target_name")
+
         try:
-            inv = inventory_reclass(args.inventory_path)
-            if args.target_name != '':
-                inv = inv['nodes'][args.target_name]
-                if args.pattern != '':
-                    pattern = args.pattern.split(".")
+            inv = inventory_reclass(inventory_path)
+            if target_name != '':
+                inv = inv['nodes'][target_name]
+                if pattern != '':
+                    pattern = pattern.split(".")
                     inv = deep_get(inv, pattern)
-            if args.flat:
+            if flat:
                 inv = flatten_dict(inv)
                 yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False)
             else:
@@ -341,21 +244,101 @@ def main():
                 logger.exception("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             sys.exit(1)
 
-    elif cmd == 'searchvar':
-        searchvar(args.searchvar, args.inventory_path, args.pretty_print)
+    def searchvar(self, searchvar, inventory_path=from_dot_kapitan('searchvar', 'inventory-path', './inventory'),
+                  verbose=from_dot_kapitan('searchvar', 'verbose', False),
+                  pretty_print=from_dot_kapitan('searchvar', 'pretty-print', False)):
+        '''
+        show all inventory files where var is declared
+        
+        Attributes:
+            searchvar : str
+                e.g. parameters.mysql.storage_class, or storage_class, or storage_*
+            inventory_path : str
+                set inventory path, default is "./inventory"
+            verbose : bool
+                set verbose mode
+            pretty_print : bool
+                Pretty print content of var
+        '''
+        
+        cached.args[sys.argv[1]] = locals()
+        if verbose:
+            logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        else:
+            logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    elif cmd == 'lint':
-        start_lint(args.fail_on_warning, args.skip_class_checks, args.skip_yamllint, args.inventory_path,
-                   args.search_secrets, args.refs_path, args.compiled_path)
+        search_var(searchvar, inventory_path, pretty_print)
 
-    elif cmd == 'init':
-        initialise_skeleton(args.directory)
+    def secrets(self):
+        '''
+        (DEPRECATED) please use refs
 
-    elif cmd == 'secrets':
+        '''
+        
+        cached.args[sys.argv[1]] = locals()
         logger.error("Secrets have been renamed to refs, please refer to: '$ kapitan refs --help'")
         sys.exit(1)
+    
+    def refs(self, write=None, update=None, file=None, target_name=None,
+             update_targets=from_dot_kapitan('refs', 'update-targets', False),
+             validate_targets=from_dot_kapitan('refs', 'validate-targets', False),
+             base64=from_dot_kapitan('refs', 'base64', False),
+             reveal=from_dot_kapitan('refs', 'reveal', False),
+             inventory_path=from_dot_kapitan('refs', 'inventory-path', './inventory'),
+             recipients=from_dot_kapitan('refs', 'recipients', []),
+             key=from_dot_kapitan('refs', 'key', ''),
+             refs_path=from_dot_kapitan('refs', 'refs-path', './refs'),
+             verbose=from_dot_kapitan('refs', 'verbose', False)):
+        '''
+        manage refs
 
-    elif cmd == 'refs':
+        Attributes:
+            write : str
+                write ref token
+            update : str
+                update GPG recipients for ref token
+            update_targets : bool
+                update target secret refs
+            validate_targets : bool
+                validate target secret refs
+            base64 : bool
+                base64 encode file content
+            reveal : bool
+                reveal refs
+            file : str
+                read file or directory, set "-" for stdin
+            target_name : str
+                grab recipients from target name
+            inventory_path : str
+                set inventory path, default is "./inventory"
+            recipients : str
+                set GPG recipients, use comma(,) seperated values like --recipients=rep1,rep2,...
+            key : str
+                set KMS key
+            refs_path : str
+                set refs path, default is "./refs"
+            verbose : bool
+                set verbose mode (warning: this will potentially show sensitive data)
+        '''
+
+        cached.args[sys.argv[1]] = locals()
+        if verbose:
+            logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        else:
+            logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+        args_holder = namedtuple('args_holder', ['write', 'update', 'update_targets', 'validate_targets',
+                                    'base64', 'reveal', 'file', 'target_name',
+                                    'inventory_path', 'recipients', 'key', 'refs_path',
+                                    'verbose'])
+        args = args_holder(write=write, update=update, update_targets=update_targets,
+                            validate_targets=validate_targets, base64=base64, reveal=reveal,
+                            file=file, target_name=target_name, inventory_path=inventory_path,
+                            recipients=parse_arg_delimiter(recipients, ','),
+                            key=key, refs_path=refs_path,verbose=verbose)
+        
         ref_controller = RefController(args.refs_path)
 
         if args.write is not None:
@@ -367,9 +350,78 @@ def main():
         elif args.update_targets or args.validate_targets:
             secret_update_validate(args, ref_controller)
 
-    elif cmd == 'validate':
-        schema_validate_compiled(args.targets, inventory_path=args.inventory_path, compiled_path=args.compiled_path,
-                                 schema_cache_path=args.schemas_path, parallel=args.parallelism)
+    def lint(self, fail_on_warning=from_dot_kapitan('lint', 'fail-on-warning', False),
+             skip_class_checks=from_dot_kapitan('lint', 'skip-class-checks', False),
+             skip_yamllint=from_dot_kapitan('lint', 'skip-yamllint', False),
+             search_secrets=from_dot_kapitan('lint', 'search-secrets', False),
+             refs_path=from_dot_kapitan('lint', 'refs-path', './refs'),
+             compiled_path=from_dot_kapitan('lint', 'compiled-path', './compiled'),
+             inventory_path=from_dot_kapitan('lint', 'inventory-path', './inventory')):
+        '''
+        linter for inventory and refs
+        
+        Attributes:
+            fail_on_warning : bool
+                exit with failure code if warnings exist, default is False
+            skip_class_checks : bool
+                skip checking for unused classes, default is False
+            skip_yamllint : bool
+                skip running yamllint on inventory, default is False
+            search_secrets : 
+                searches for plaintext secrets in inventory, default is False
+            refs_path : str
+                set refs path, default is "./refs"
+            compiled_path : str
+                set compiled path, default is "./compiled"
+            inventory_path : str
+                set inventory path, default is "./inventory"
+        '''
+
+        cached.args[sys.argv[1]] = locals()
+        start_lint(fail_on_warning, skip_class_checks, skip_yamllint, inventory_path,
+                   search_secrets, refs_path, compiled_path) 
+
+    def init(self, directory=from_dot_kapitan('init', 'directory', '.')):
+        '''
+        initialize a directory with the recommended kapitan project skeleton.
+        
+        Attributes:
+            directory : str
+                set path, in which to generate the project skeleton, assumes directory already exists. default is "./"
+        '''
+
+        cached.args[sys.argv[1]] = locals()
+        initialise_skeleton(directory)
+
+    def validate(self, compiled_path=from_dot_kapitan('compile', 'compiled-path', './compiled'),
+                 inventory_path=from_dot_kapitan('compile', 'inventory-path', './inventory'),
+                 targets=from_dot_kapitan('compile', 'targets', []),
+                 schemas_path=from_dot_kapitan('validate', 'schemas-path', './schemas'),
+                 parallelism=from_dot_kapitan('validate', 'parallelism', 4)):
+        '''
+        validates the compile output against schemas as specified in inventory
+
+        Attributes:
+            compiled_path : str
+                set compiled path, default is "./compiled
+            inventory_path : str
+                set inventory path, default is "./inventory"
+            targets : str
+                targets to validate, default is all, use comma(,) separated targets like --targets=tar1,tar2,...
+            schemas_path : str
+                set schema cache path, default is "./schemas"
+            parallelism : int
+                Number of concurrent validate processes, default is 4
+        '''
+
+        cached.args[sys.argv[1]] = locals()
+        schema_validate_compiled(targets, inventory_path=inventory_path, compiled_path=compiled_path,
+                                 schema_cache_path=schemas_path, parallel=parallelism)
+
+
+def main():
+    """main function for command line usage"""
+    fire.Fire(KapitanCLI)
 
 
 def ref_write(args, ref_controller):
