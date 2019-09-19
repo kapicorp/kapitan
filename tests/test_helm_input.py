@@ -70,7 +70,7 @@ class HelmInputTest(unittest.TestCase):
     def test_compile_multiple_targets(self):
         temp = tempfile.mkdtemp()
         sys.argv = ["kapitan", "compile", "--output-path", temp,
-                    "-t", "acs-engine-autoscaler", "nginx-ingress", "--parallelism", "2"]
+                    "-t", "acs-engine-autoscaler,nginx-ingress", "--parallelism", "2"]
         main()
         self.assertTrue(os.path.isfile(
             os.path.join(temp, "compiled", "acs-engine-autoscaler", "acs-engine-autoscaler",
