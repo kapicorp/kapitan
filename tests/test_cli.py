@@ -386,7 +386,7 @@ class CliFuncsTest(unittest.TestCase):
     @patch.object(vaultkv.VaultSecret,'_decrypt')
     def test_cli_secret_write_vault(self,mock_reveal):
         """
-        run $ kapitan refs --write vault:test_secret
+        run $ kapitan refs --write vaultkv:test_secret
         and $ kapitan refs --reveal -f sometest_file
         """
         test_secret_content = "foo:secret_test_key"
@@ -423,9 +423,8 @@ class CliFuncsTest(unittest.TestCase):
  
     @patch.object(vaultkv.VaultSecret,'_decrypt')
     def test_cli_secret_write_base64_vault(self,mock_reveal):
- 
         """
-        run $ kapitan refs --write vault:test_secret --base64
+        run $ kapitan refs --write vaultkv:test_secret --base64
         and $ kapitan refs --reveal -f sometest_file
         """
         test_secret_content = "foo:secret_test_key"
@@ -433,7 +432,7 @@ class CliFuncsTest(unittest.TestCase):
         test_secret_content_value = "secret_value"
         test_secret_file = tempfile.mktemp()
         with open(test_secret_file, "w") as fp:
-            fp.write(test_secret_content)
+            fp.write(test_secret_content_b64)
  
         sys.argv = ["kapitan", "refs", "--write", "vaultkv:test_secret","--base64",
                     "-f", test_secret_file, "--refs-path", REFS_PATH,

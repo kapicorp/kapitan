@@ -160,7 +160,7 @@ class VaultSecret(Base64Ref):
         """
         Set vault parameter and encoding of data
         """
-        self.data = data.rstrip()
+        self.data = data
         self.parameter = kwargs.get('parameter')
         super().__init__(self.data,**kwargs)
         self.type_name = 'vaultkv'
@@ -237,7 +237,7 @@ class VaultSecret(Base64Ref):
         try:
             client = vault_obj(self.parameter)
             # token will comprise of two parts path_in_vault:key
-            data = self.data.decode('utf-8').split(':')
+            data = self.data.rstrip().decode('utf-8').split(':')
             return_data = ''
             if self.parameter.get('engine') == 'kv':
                 response = client.secrets.kv.v1.read_secret(path=data[0],
@@ -276,7 +276,6 @@ class VaultBackend(Base64RefBackend):
         "init VaultBackend ref backend type"
         super().__init__(path, ref_type)
         self.type_name = 'vaultkv'
-        self.ref_type = ref_type
         self.target_name = target_name
         self.inventory_path = inventory_path
 

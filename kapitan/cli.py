@@ -652,6 +652,7 @@ def secret_update_validate(args, ref_controller):
                 if not vaultkv:
                     logger.debug("secret_update_validate: target: %s has no inventory vaultkv parameter 'auth', skipping %s", target_name, token_path)
                     continue
+                secret_obj = ref_controller[token_path]
 
             else:
                 logger.info("Invalid secret %s, could not get type, skipping", token_path)
