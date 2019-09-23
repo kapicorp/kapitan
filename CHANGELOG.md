@@ -1,3 +1,13 @@
+## 0.24.1-rc.3:
+- Add yq to the docker images (#375)
+
+## 0.24.1-rc.2:
+- Update all Dockerfiles to use multi-stage builds (#370)
+
+## 0.24.1-rc.1:
+- Add additional content type header for fetching GZIP files (#364)
+- Fix Helm binding errors in docker (#359)
+
 ## 0.24.0:
 - Add standalone binary to github releases
 - Upgrade some packages in requirements.txt (#344)
@@ -276,7 +286,7 @@ Mac: `brew install libyaml`
 
 ## 0.10.0:
 - Supports reading targets from the inventory as well as target files
-- Breaking change: the keys in compile items changed, see https://github.com/deepmind/kapitan/pull/22
+- Breaking change: the keys in compile items changed, see (#22)
 
 ## 0.9.19:
 - checks for gpg key expiry

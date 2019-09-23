@@ -4,7 +4,7 @@ parameters:
       target: nginx-ingress-helm-params
       namespace: temp
     compile:
-      - output_path: chart
+      - output_path: .
         input_type: helm
         input_paths:
           - charts/nginx-ingress

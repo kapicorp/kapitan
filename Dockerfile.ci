@@ -1,35 +1,78 @@
-FROM sparkprime/jsonnet AS jsonnet
+# /bin/terraform
+FROM hashicorp/terraform:0.12.8 AS terraform-binary
 
-FROM golang:1.12 AS promtool
+# /bin/promtool
+FROM quay.io/prometheus/prometheus:v2.12.0 AS prometheus-binary
 
-RUN go get -u github.com/prometheus/prometheus/cmd/promtool
+# Build the Helm binding
+FROM golang:1.12-stretch AS helm-builder
 
-FROM google/cloud-sdk:alpine
+RUN mkdir /kapitan
+WORKDIR /kapitan
 
-RUN apk add --no-cache python3-dev git g++ make libstdc++ gnupg musl-dev util-linux openssl openssl-dev libffi-dev coreutils yaml-dev jq ncurses && \
-    python3 -m ensurepip && \
-    rm -rf /usr/lib/python*/ensurepip && \
-    pip3 install --upgrade pip setuptools yq && \
-    if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
-    if [[ ! -e /usr/bin/python ]]; then ln -sf /usr/bin/python3 /usr/bin/python; fi && \
-    rm -rf /root/.cache
+COPY ./kapitan ./kapitan
+COPY ./MANIFEST.in ./MANIFEST.in
+COPY ./requirements.txt ./requirements.txt
+COPY ./setup.py ./setup.py
 
-COPY setup.py requirements.txt MANIFEST.in /kapitan/
-COPY kapitan /kapitan/kapitan/
-RUN pip3 install -e /kapitan
+RUN chmod +x ./kapitan/inputs/helm/build.sh \
+    && ./kapitan/inputs/helm/build.sh
 
-ENV TERRAFORM_VERSION=0.11.13
-ENV TERRAFORM_URL=https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-RUN curl -o /tmp/terraform_${TERRAFORM_VERSION}.zip ${TERRAFORM_URL} && \
-        unzip -d /usr/local/bin /tmp/terraform_${TERRAFORM_VERSION}.zip && \
-        rm /tmp/terraform_${TERRAFORM_VERSION}.zip
+# Build final image
+FROM python:3.7-stretch
 
-RUN gcloud components install kubectl
+ARG CLOUD_SDK_VERSION=262.0.0
 
+ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
 ENV KAPP_URL=https://github.com/k14s/kapp/releases/download/v0.11.0/kapp-linux-amd64
 ENV KBLD_URL=https://github.com/k14s/kbld/releases/download/v0.11.0/kbld-linux-amd64
-RUN curl -L -o /usr/local/bin/kapp ${KAPP_URL} && chmod +x /usr/local/bin/kapp
-RUN curl -L -o /usr/local/bin/kbld ${KBLD_URL} && chmod +x /usr/local/bin/kbld
+ENV PATH="/opt/venv/bin:${PATH}"
 
-COPY --from=jsonnet /usr/local/bin/jsonnet /usr/local/bin/
-COPY --from=promtool /go/bin/promtool /usr/local/bin/
+COPY --from=terraform-binary /bin/terraform /usr/bin/terraform
+COPY --from=prometheus-binary /bin/promtool /user/bin/promtool
+COPY --from=helm-builder /kapitan /kapitan
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        apt-transport-https \
+        bash \
+        build-essential \
+        curl \
+        git \
+        jq \
+        lsb-release \
+        gnupg \
+        wget \
+        zip \
+    && export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" \
+    && echo "deb https://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" > /etc/apt/sources.list.d/google-cloud-sdk.list \
+    && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
+    && apt-get update \
+    && apt-get install -y \
+        google-cloud-sdk=${CLOUD_SDK_VERSION}-0 \
+        kubectl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    # If True, anonymous statistics on SDK usage will not be collected.
+    && gcloud config set core/disable_usage_reporting true \
+    # If True, Cloud SDK will not automatically check for updates.
+    && gcloud config set component_manager/disable_update_check true \
+    # Metrics namespace for server side analytics
+    && gcloud config set metrics/environment github_docker_image \
+    && python -m venv /opt/venv \
+    && pip install --upgrade pip yq \
+    && pip install -r ./kapitan/requirements.txt \
+    && ./kapitan/kapitan/inputs/helm/build.sh \
+    && pip install ./kapitan \
+    && rm -rf ./kapitan \
+    && curl -L -o /usr/local/bin/kapp ${KAPP_URL} \
+    && chmod +x /usr/local/bin/kapp \
+    && curl -L -o /usr/local/bin/kbld ${KBLD_URL} \
+    && chmod +x /usr/local/bin/kbld \
+    && gcloud --version \
+    && kubectl version --client \
+    && terraform --version
+
+VOLUME ["/root/.config"]
+
+CMD ["/bin/bash"]
