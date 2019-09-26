@@ -396,7 +396,7 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_secret_content)
  
         sys.argv = ["kapitan", "refs", "--write", "vaultkv:test_secret",
-                    "-f", test_secret_file, "--refs-path", REFS_PATH, "--auth", "token"]
+                    "-f", test_secret_file, "--refs-path", REFS_PATH, "--vault-auth", "token"]
         main()
  
         test_tag_content = "revealing: ?{vaultkv:test_secret}"
@@ -431,7 +431,7 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_secret_content_b64)
  
         sys.argv = ["kapitan", "refs", "--write", "vaultkv:test_secret","--base64",
-                    "-f", test_secret_file, "--refs-path", REFS_PATH, "--auth", "token"]
+                    "-f", test_secret_file, "--refs-path", REFS_PATH, "--vault-auth", "token"]
         main()
  
         test_tag_content = "revealing: ?{vaultkv:test_secret}"

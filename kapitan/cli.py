@@ -202,8 +202,8 @@ def main():
     refs_parser.add_argument('--key', '-K', help='set KMS key',
                              default=from_dot_kapitan('refs', 'key', ''),
                              metavar='KEY')
-    refs_parser.add_argument('--auth', help='set authentication type for vaultkv secrets',
-                             default=from_dot_kapitan('refs', 'auth', ''),
+    refs_parser.add_argument('--vault-auth', help='set authentication type for vaultkv secrets',
+                             default=from_dot_kapitan('refs', 'vault-auth', ''),
                              metavar='AUTH')
     refs_parser.add_argument('--refs-path', help='set refs path, default is "./refs"',
                              default=from_dot_kapitan('refs', 'refs-path', './refs'))
@@ -467,13 +467,13 @@ def ref_write(args, ref_controller):
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
             parameter = kap_inv_params['secrets']['vaultkv']
-        if args.auth:
-            parameter['auth'] = args.auth
+        if args.vault_auth:
+            parameter['auth'] = args.vault_auth
         if parameter.get('auth') is None:
             raise KapitanError("No Authentication type parameter specified. Specify it"
-                               " in parameters.kapitan.secrets.vaultkv.auth and use --target-name or use --auth")
+                               " in parameters.kapitan.secrets.vaultkv.auth and use --target-name or use --vault-auth")
 
-        secret_obj = VaultSecret(_data, vault_client_param=parameter, encoding=encoding)
+        secret_obj = VaultSecret(_data, vault_params=parameter, encoding=encoding)
         tag = '?{{vaultkv:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
 

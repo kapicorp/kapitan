@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"hashicorp vault secrets module"
+"hashicorp vault kv secrets module"
 
 import base64
 import errno
@@ -161,7 +161,7 @@ class VaultSecret(Base64Ref):
         Set vault parameter and encoding of data
         """
         self.data = data
-        self.vault_client_param = kwargs.get('vault_client_param')
+        self.vault_params = kwargs.get('vault_params')
         super().__init__(self.data,**kwargs)
         self.type_name = 'vaultkv'
 
@@ -180,7 +180,7 @@ class VaultSecret(Base64Ref):
             if target_inv is None:
                 raise ValueError('target_inv not set')
 
-            ref_params.kwargs['vault_client_param'] = target_inv['parameters']['kapitan']['secrets']['vaultkv']
+            ref_params.kwargs['vault_params'] = target_inv['parameters']['kapitan']['secrets']['vaultkv']
             return cls(data, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create VaultSecret: vaultkv parameters missing")
@@ -210,17 +210,17 @@ class VaultSecret(Base64Ref):
         :returns: secret in plain text
         """
         try:
-            client = vault_obj(self.vault_client_param)
+            client = vault_obj(self.vault_params)
             # token will comprise of two parts path_in_vault:key
             data = self.data.rstrip().decode('utf-8').split(':')
             return_data = ''
-            if self.vault_client_param.get('engine') == 'kv':
+            if self.vault_params.get('engine') == 'kv':
                 response = client.secrets.kv.v1.read_secret(path=data[0],
-                                                            mount_point=self.vault_client_param.get('mount','secret'))
+                                                            mount_point=self.vault_params.get('mount','secret'))
                 return_data = response['data'][data[1]]
             else:
                 response = client.secrets.kv.v2.read_secret_version(path=data[0],
-                                                                    mount_point=self.vault_client_param.get('mount','secret'))
+                                                                    mount_point=self.vault_params.get('mount','secret'))
                 return_data = response['data']['data'][data[1]]
             client.adapter.close()
         except Forbidden:
@@ -244,7 +244,7 @@ class VaultSecret(Base64Ref):
         Returns dict with keys/values to be serialised.
         """
         return {"data": self.data, "encoding": self.encoding,
-                "type": self.type_name, "vault_client_param": self.vault_client_param}
+                "type": self.type_name, "vault_params": self.vault_params}
 
 class VaultBackend(Base64RefBackend):
     def __init__(self, path, ref_type=VaultSecret):
