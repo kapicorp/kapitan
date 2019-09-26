@@ -35,7 +35,7 @@ The entire string __"foo:hello"__ is base64 encoded and stored in the secret_ins
 data: Zm9vOmhlbGxvCg==  
 encoding: original  
 type: vaultkv  
-vault_client_param:  
+vault_params:  
   auth: token
 ```  
   

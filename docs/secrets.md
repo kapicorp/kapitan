@@ -13,7 +13,7 @@ If you want to get started with secrets but don't have a GPG or KMS setup, you c
 
 The usual flow of creating and using an encrypted secret with kapitan is:
 
-#### 1. Define your GPG recipients or KMS key 
+#### 1. Define your GPG recipients, Vault client parameters or KMS key 
 
 This is done in the inventory under `parameters.kapitan.secrets`. 
 
@@ -35,6 +35,7 @@ parameters:
       awskms:
         key: 'alias/nameOfKey'
       vaultkv:
+        VAULT_ADDR: http://127.0.0.1:8200
         auth: token
 ```
 
@@ -70,7 +71,7 @@ rsapublic - Derives an RSA public key from a revealed private key i.e. `|reveal:
 ```
 
 *Note*: If you use `|reveal:/path/secret`, when changing the `/path/secret` file make sure you also delete any secrets referencing `/path/secret` so kapitan can regenerate them.
-*Note*: `vaultkv` can't be used to generate secrets automatically, manually create the secret using the command line.
+*Note*: `vaultkv` can't be used to generate secrets automatically for now, manually create the secret using the command line.
 
 #### 3. Reference your secrets in your classes/targets and run `kapitan compile`
 
@@ -139,3 +140,36 @@ $ kapitan secrets --write gpg:components/secrets/mysql_secrets -t prod -f secret
 To reference `secret_foo`inside this file, you can specify it in the inventory as follows:
 
 `secret_foo: ${gpg:components/secrets/mysql_secrets@mysql_passwords.secret_foo}`
+
+### Vaultkv Secret Backend - Addons
+
+Considering a key-value pair like `my_key`:`my_secret` in the path `secret/foo/bar` in a kv-v2(KV version 2) secret engine on the vault server, to use this as a secret use:  
+
+```shell  
+$ echo "foo/bar:my_key"  | kapitan secrets --write vaultkv:path/to/secret_inside_kapitan -t <target_name> -f -  
+```  
+
+Parameters in the secret file are collected from the inventory of the target we gave from CLI `-t <target_name>`. If target isn't provided then kapitan will identify the variables from the environment when revealing secret.
+
+Environment variables that can be defined in kapitan inventory are `VAULT_ADDR`, `VAULT_NAMESPACE`, `VAULT_SKIP_VERIFY`, `VAULT_CLIENT_CERT`, `VAULT_CLIENT_KEY`, `VAULT_CAPATH` & `VAULT_CACERT`.  
+Extra parameters that can be defined in inventory are:  
+* `auth`: specify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`  
+* `mount`: specify the mount point of key's path. e.g if path=`alpha-secret/foo/bar` then `mount: alpha-secret` (default `secret`)  
+* `engine`: secret engine used, either `kv-v2` or `kv` (default `kv-v2`)  
+Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID`.  
+
+```yaml  
+parameters:
+  kapitan:
+    secrets:
+      vaultkv:
+        auth: userpass
+        engine: kv-v2
+        mount: team-alpha-secret
+        VAULT_ADDR: http://127.0.0.1:8200
+        VAULT_NAMESPACE: CICD-alpha
+        VAULT_SKIP_VERIFY: false
+        VAULT_CLIENT_KEY: /path/to/key
+        VAULT_CLIENT_CERT: /path/to/cert
+```
+
