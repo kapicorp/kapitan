@@ -202,6 +202,9 @@ def main():
     refs_parser.add_argument('--key', '-K', help='set KMS key',
                              default=from_dot_kapitan('refs', 'key', ''),
                              metavar='KEY')
+    refs_parser.add_argument('--auth', help='set authentication type for vaultkv secrets',
+                             default=from_dot_kapitan('refs', 'auth', ''),
+                             metavar='AUTH')
     refs_parser.add_argument('--refs-path', help='set refs path, default is "./refs"',
                              default=from_dot_kapitan('refs', 'refs-path', './refs'))
     refs_parser.add_argument('--verbose', '-v',
@@ -309,7 +312,7 @@ def main():
         if not args.ignore_version_check:
             check_version()
 
-        ref_controller = RefController(args.refs_path,inventory_path=args.inventory_path)
+        ref_controller = RefController(args.refs_path)
         # cache controller for use in reveal_maybe jinja2 filter
         cached.ref_controller_obj = ref_controller
         cached.revealer_obj = Revealer(ref_controller)
@@ -357,8 +360,7 @@ def main():
         sys.exit(1)
 
     elif cmd == 'refs':
-        ref_controller = RefController(args.refs_path,target_name=args.target_name,
-                                       inventory_path=args.inventory_path)
+        ref_controller = RefController(args.refs_path)
 
         if args.write is not None:
             ref_write(args, ref_controller)
@@ -465,11 +467,13 @@ def ref_write(args, ref_controller):
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
             parameter = kap_inv_params['secrets']['vaultkv']
+        if args.auth:
+            parameter['auth'] = args.auth
         if parameter.get('auth') is None:
             raise KapitanError("No Authentication type parameter specified. Specify it"
-                               " in parameters.kapitan.secrets.vaultkv.auth and use --target-name or -t")
+                               " in parameters.kapitan.secrets.vaultkv.auth and use --target-name or use --auth")
 
-        secret_obj = VaultSecret(_data, parameter=parameter, encoding=encoding)
+        secret_obj = VaultSecret(_data, vault_client_param=parameter, encoding=encoding)
         tag = '?{{vaultkv:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
 

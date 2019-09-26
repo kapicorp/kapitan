@@ -161,7 +161,7 @@ class VaultSecret(Base64Ref):
         Set vault parameter and encoding of data
         """
         self.data = data
-        self.parameter = kwargs.get('parameter')
+        self.vault_client_param = kwargs.get('vault_client_param')
         super().__init__(self.data,**kwargs)
         self.type_name = 'vaultkv'
 
@@ -180,37 +180,14 @@ class VaultSecret(Base64Ref):
             if target_inv is None:
                 raise ValueError('target_inv not set')
 
-            ref_params.kwargs['parameter'] = target_inv['parameters']['kapitan']['secrets']['vaultkv']
+            ref_params.kwargs['vault_client_param'] = target_inv['parameters']['kapitan']['secrets']['vaultkv']
             return cls(data, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create VaultSecret: vaultkv parameters missing")
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
-        """
-        return a new Ref from file at ref_full_path
-        the data key in the file must be base64 encoded
-        """
-        try:
-            with open(ref_full_path) as fp:
-                obj = yaml.load(fp, Loader=YamlLoader)
-                _kwargs = {key: value for key, value in obj.items() if key not in ('data', 'from_base64')}
-                inv = inventory_reclass(kwargs['inventory_path'])
-                target_inv = inv['nodes'][kwargs['target_name']]
-                if target_inv is None:
-                    raise ValueError('target not set')
-
-                _kwargs['parameter'] = target_inv['parameters']['kapitan']['secrets']['vaultkv']
-                kwargs.update(_kwargs)
-                return cls(obj['data'], from_base64=True, **kwargs)
-
-        except IOError as ex:
-            if ex.errno == errno.ENOENT:
-                logger.debug("no such file or directory {}".format(kwargs['inventory_path']))
-                return None
-
-        except KeyError:
-            raise VaultError("Could not fetch VaultSecret: vaultkv parameters missing")
+        return super().from_path(ref_full_path, encrypt=False)
 
     def reveal(self):
         """
@@ -222,9 +199,7 @@ class VaultSecret(Base64Ref):
                 self.data = base64.b64decode(self.data, validate=True)
 
         except b_error:
-            exit(
-                "non-alphabet characters in the data"
-            )
+            exit("non-alphabet characters in the data")
 
         return self._decrypt()
 
@@ -235,17 +210,17 @@ class VaultSecret(Base64Ref):
         :returns: secret in plain text
         """
         try:
-            client = vault_obj(self.parameter)
+            client = vault_obj(self.vault_client_param)
             # token will comprise of two parts path_in_vault:key
             data = self.data.rstrip().decode('utf-8').split(':')
             return_data = ''
-            if self.parameter.get('engine') == 'kv':
+            if self.vault_client_param.get('engine') == 'kv':
                 response = client.secrets.kv.v1.read_secret(path=data[0],
-                                                            mount_point=self.parameter.get('mount','secret'))
+                                                            mount_point=self.vault_client_param.get('mount','secret'))
                 return_data = response['data'][data[1]]
             else:
                 response = client.secrets.kv.v2.read_secret_version(path=data[0],
-                                                                    mount_point=self.parameter.get('mount','secret'))
+                                                                    mount_point=self.vault_client_param.get('mount','secret'))
                 return_data = response['data']['data'][data[1]]
             client.adapter.close()
         except Forbidden:
@@ -269,26 +244,10 @@ class VaultSecret(Base64Ref):
         Returns dict with keys/values to be serialised.
         """
         return {"data": self.data, "encoding": self.encoding,
-                "type": self.type_name}
+                "type": self.type_name, "vault_client_param": self.vault_client_param}
 
 class VaultBackend(Base64RefBackend):
-    def __init__(self, path, target_name, inventory_path, ref_type=VaultSecret):
+    def __init__(self, path, ref_type=VaultSecret):
         "init VaultBackend ref backend type"
         super().__init__(path, ref_type)
         self.type_name = 'vaultkv'
-        self.target_name = target_name
-        self.inventory_path = inventory_path
-
-    def __getitem__(self, ref_path):
-        full_ref_path = os.path.join(self.path, ref_path)
-        ref = self.ref_type.from_path(full_ref_path, target_name=self.target_name,
-                                      inventory_path=self.inventory_path)
-
-        if ref:
-            ref.path = ref_path
-            ref_path_data = "{}{}".format(ref.path, ref.data)
-            ref.hash = hashlib.sha256(ref_path_data.encode()).hexdigest()
-            ref.token = "{}:{}:{}".format(ref.type_name, ref.path, ref.hash[:8])
-            return ref
-
-        raise KeyError(ref_path)

@@ -35,6 +35,8 @@ The entire string __"foo:hello"__ is base64 encoded and stored in the secret_ins
 data: Zm9vOmhlbGxvCg==  
 encoding: original  
 type: vaultkv  
+vault_client_param:  
+  auth: token
 ```  
   
 Encoding tells the type of data given to kapitan, if it is `original` then after decoding base64 we'll get the original secret and if it is `base64` then after decoding once we still have a base64 encoded secret and have to decode again.  
@@ -96,10 +98,10 @@ spec:
           name: cod
 ``` 
   
-Only the user with the required tokens/permissions can reveal the secrets. Please note that the roles and permissions will be handled at the Vault level. We need not worry about it within Kapitan. Also, it is mandatory to provide a target name since the parameters would be loaded from the inventory. Use the following command to reveal the secrets:  
+Only the user with the required tokens/permissions can reveal the secrets. Please note that the roles and permissions will be handled at the Vault level. We need not worry about it within Kapitan. Use the following command to reveal the secrets:  
 
 ```shell  
-$ kapitan secrets --reveal -f compile/file/containing/secret -t dev-sea
+$ kapitan secrets --reveal -f compile/file/containing/secret 
 ```  
 
 Following is the result of the cod-deployment.md file after Kapitan reveal.

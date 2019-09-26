@@ -31,8 +31,7 @@ from kapitan.refs.secrets.vaultkv import VaultSecret, vault_obj
 
 # Create temporary folder
 REFS_HOME = tempfile.mkdtemp()
-REF_CONTROLLER = RefController(REFS_HOME,target_name='minikube-mysql',
-                               inventory_path=os.path.join('.','examples','kubernetes','inventory'))
+REF_CONTROLLER = RefController(REFS_HOME)
 REVEALER = Revealer(REF_CONTROLLER)
 # Create Vault docker container
 client = docker.from_env()
@@ -127,7 +126,7 @@ class VaultSecretTest(unittest.TestCase):
         )
         env = {'auth':'token'}
         file_data = "foo:some_random_value".encode()
-        REF_CONTROLLER[tag] = VaultSecret(file_data,parameter=env,encoding='original')
+        REF_CONTROLLER[tag] = VaultSecret(file_data,vault_client_param=env,encoding='original')
         # confirming secret file exists
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME,'secret/batman')),
                         msg="Secret file doesn't exist")
@@ -154,7 +153,7 @@ class VaultSecretTest(unittest.TestCase):
         )
         env = {'auth':'token'}
         file_data = "foo:some_random_value".encode()
-        REF_CONTROLLER[tag] = VaultSecret(file_data,parameter=env,encoding='base64')
+        REF_CONTROLLER[tag] = VaultSecret(file_data,vault_client_param=env,encoding='base64')
         # confirming secret file exists
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME,'secret/batman')),
                         msg="Secret file doesn't exist")

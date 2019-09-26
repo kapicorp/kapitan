@@ -355,15 +355,13 @@ class RevealedObj(object):
 
 
 class RefController(object):
-    def __init__(self, path,target_name = '',inventory_path = './inventory'):
+    def __init__(self, path):
         """
         gets and sets tags for ref type objects.
         auto registers backends
         """
         self.backends = {}
         self.path = path
-        self.target_name = target_name
-        self.inventory_path = inventory_path
 
     def register_backend(self, backend):
         "register backend type"
@@ -392,8 +390,7 @@ class RefController(object):
                 self.register_backend(AWSKMSBackend(self.path))
             elif type_name == 'vaultkv':
                 from kapitan.refs.secrets.vaultkv import VaultBackend
-                self.register_backend(VaultBackend(self.path,target_name=self.target_name,
-                                                   inventory_path=self.inventory_path))
+                self.register_backend(VaultBackend(self.path))
             else:
                 raise RefBackendError('no backend for ref type: {}'.format(type_name))
         return self.backends[type_name]
