@@ -456,24 +456,22 @@ def ref_write(args, ref_controller):
     elif token_name.startswith("vaultkv:"):
         type_name, token_path = token_name.split(":")
         _data = data.encode()
-        parameter = {}
+        vault_params = {}
         encoding = 'original'
-        if args.base64:
-            encoding = 'base64'
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
             kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
             if 'secrets' not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            parameter = kap_inv_params['secrets']['vaultkv']
+            vault_params = kap_inv_params['secrets']['vaultkv']
         if args.vault_auth:
-            parameter['auth'] = args.vault_auth
-        if parameter.get('auth') is None:
+            vault_params['auth'] = args.vault_auth
+        if vault_params.get('auth') is None:
             raise KapitanError("No Authentication type parameter specified. Specify it"
                                " in parameters.kapitan.secrets.vaultkv.auth and use --target-name or use --vault-auth")
 
-        secret_obj = VaultSecret(_data, vault_params=parameter, encoding=encoding)
+        secret_obj = VaultSecret(_data, vault_params)
         tag = '?{{vaultkv:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
 

@@ -5,7 +5,7 @@ Kapitan can manage secrets with the following key management services:
 - GPG
 - Google Cloud KMS (beta)
 - AWS KMS (beta)
-- Vaultkv (beta)
+- Vaultkv (read only support)
 
 If you want to get started with secrets but don't have a GPG or KMS setup, you can also use the secret `ref` type. Note that `ref` is not encrypted and is intended for development purposes only. *Do not use ref secrets if you're storing sensitive information!*
 
@@ -141,7 +141,7 @@ To reference `secret_foo`inside this file, you can specify it in the inventory a
 
 `secret_foo: ${gpg:components/secrets/mysql_secrets@mysql_passwords.secret_foo}`
 
-### Vaultkv Secret Backend - Addons
+### Vaultkv Secret Backend (Read Only) - Addons
 
 Considering a key-value pair like `my_key`:`my_secret` in the path `secret/foo/bar` in a kv-v2(KV version 2) secret engine on the vault server, to use this as a secret use:  
 

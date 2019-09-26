@@ -156,12 +156,12 @@ class VaultSecret(Base64Ref):
     """
     Hashicorp Vault support for KV Secret Engine
     """
-    def __init__(self, data, **kwargs):
+    def __init__(self, data, vault_params, **kwargs):
         """
         Set vault parameter and encoding of data
         """
         self.data = data
-        self.vault_params = kwargs.get('vault_params')
+        self.vault_params = vault_params
         super().__init__(self.data,**kwargs)
         self.type_name = 'vaultkv'
 
@@ -195,9 +195,7 @@ class VaultSecret(Base64Ref):
         """
         # can't use super().reveal() as we want bytes
         try:
-            if self.encoding == 'base64':
-                self.data = base64.b64decode(self.data, validate=True)
-
+            self.data = base64.b64decode(self.data, validate=True)
         except b_error:
             exit("non-alphabet characters in the data")
 
@@ -212,7 +210,7 @@ class VaultSecret(Base64Ref):
         try:
             client = vault_obj(self.vault_params)
             # token will comprise of two parts path_in_vault:key
-            data = self.data.rstrip().decode('utf-8').split(':')
+            data = self.data.decode('utf-8').rstrip().split(':')
             return_data = ''
             if self.vault_params.get('engine') == 'kv':
                 response = client.secrets.kv.v1.read_secret(path=data[0],
