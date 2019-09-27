@@ -248,7 +248,7 @@ class Revealer(object):
             revealed_yaml = yaml.load(plaintext, Loader=YamlLoader)
             if not isinstance(revealed_yaml, dict):
                 raise RefError("revealed secret is not in yaml, cannot access sub-variable"
-                               "at {}".format(subvar_path))
+                               " at {}".format(subvar_path))
             return self._get_value_in_yaml_path(revealed_yaml, subvar_path)
 
     @lru_cache(maxsize=256)
@@ -388,6 +388,9 @@ class RefController(object):
             elif type_name == 'awskms':
                 from kapitan.refs.secrets.awskms import AWSKMSBackend
                 self.register_backend(AWSKMSBackend(self.path))
+            elif type_name == 'vaultkv':
+                from kapitan.refs.secrets.vaultkv import VaultBackend
+                self.register_backend(VaultBackend(self.path))
             else:
                 raise RefBackendError('no backend for ref type: {}'.format(type_name))
         return self.backends[type_name]

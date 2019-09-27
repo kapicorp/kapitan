@@ -27,6 +27,10 @@ parameters:
         - manifests/mysql_service_simple.yml
       kind: service
       version: 1.14.0
+    # For vaultkv secrets it is important to declare auth in parameters
+    secrets:
+      vaultkv:
+        auth: token
   mysql:
     storage: 10G
     storage_class: standard
@@ -44,3 +48,6 @@ parameters:
 
         password_subvar: ?{gpg:targets/${target_name}/mysql/subvars@var1.password}
         password_sha256_subvar: ?{gpg:targets/${target_name}/mysql/subvars@var2.password_sha256}
+
+        # This secret requires a running vault instance & vaultkv parameters either in inventory or environment
+        # password_vaultkv: ?{vaultkv:targets/${target_name}/mysql/vault_secret}

@@ -34,6 +34,7 @@ from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
+from kapitan.refs.secrets.vaultkv import VaultSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.resources import (inventory_reclass, resource_callbacks,
                                search_imports)
@@ -201,6 +202,9 @@ def main():
     refs_parser.add_argument('--key', '-K', help='set KMS key',
                              default=from_dot_kapitan('refs', 'key', ''),
                              metavar='KEY')
+    refs_parser.add_argument('--vault-auth', help='set authentication type for vaultkv secrets',
+                             default=from_dot_kapitan('refs', 'vault-auth', ''),
+                             metavar='AUTH')
     refs_parser.add_argument('--refs-path', help='set refs path, default is "./refs"',
                              default=from_dot_kapitan('refs', 'refs-path', './refs'))
     refs_parser.add_argument('--verbose', '-v',
@@ -400,7 +404,7 @@ def ref_write(args, ref_controller):
             recipients = kap_inv_params['secrets']['gpg']['recipients']
         if not recipients:
             raise KapitanError("No GPG recipients specified. Use --recipients or specify them in " +
-                               "parameters.kapitan.secrets.gpg.recipients and use --target")
+                               "parameters.kapitan.secrets.gpg.recipients and use --target-name")
         secret_obj = GPGSecret(data, recipients, encode_base64=args.base64)
         tag = '?{{gpg:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
@@ -416,7 +420,7 @@ def ref_write(args, ref_controller):
 
             key = kap_inv_params['secrets']['gkms']['key']
         if not key:
-            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target")
+            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target-name")
         secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
         tag = '?{{gkms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
@@ -432,7 +436,7 @@ def ref_write(args, ref_controller):
 
             key = kap_inv_params['secrets']['awskms']['key']
         if not key:
-            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.awskms.key and use --target")
+            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.awskms.key and use --target-name")
         secret_obj = AWSKMSSecret(data, key, encode_base64=args.base64)
         tag = '?{{awskms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
@@ -449,6 +453,28 @@ def ref_write(args, ref_controller):
         tag = '?{{base64:{}}}'.format(token_path)
         ref_controller[tag] = ref_obj
 
+    elif token_name.startswith("vaultkv:"):
+        type_name, token_path = token_name.split(":")
+        _data = data.encode()
+        vault_params = {}
+        encoding = 'original'
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
+            if 'secrets' not in kap_inv_params:
+                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+
+            vault_params = kap_inv_params['secrets']['vaultkv']
+        if args.vault_auth:
+            vault_params['auth'] = args.vault_auth
+        if vault_params.get('auth') is None:
+            raise KapitanError("No Authentication type parameter specified. Specify it"
+                               " in parameters.kapitan.secrets.vaultkv.auth and use --target-name or use --vault-auth")
+
+        secret_obj = VaultSecret(_data, vault_params)
+        tag = '?{{vaultkv:{}}}'.format(token_path)
+        ref_controller[tag] = secret_obj
+
     elif token_name.startswith("plain:"):
         type_name, token_path = token_name.split(":")
         _data = data.encode()
@@ -462,7 +488,7 @@ def ref_write(args, ref_controller):
         ref_controller[tag] = ref_obj
 
     else:
-        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/base64/plain:{name}".format(name=token_name))
+        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms/vaultkv/base64/plain:{name}".format(name=token_name))
 
 
 def secret_update(args, ref_controller):
@@ -570,6 +596,10 @@ def secret_update_validate(args, ref_controller):
             awskey = kap_inv_params['secrets']['awskms']['key']
         except KeyError:
             awskey = None
+        try:
+            vaultkv = kap_inv_params['secrets']['vaultkv']['auth']
+        except KeyError:
+            vaultkv = None
 
         for token_path in token_paths:
             if token_path.startswith("?{gpg:"):
@@ -619,6 +649,12 @@ def secret_update_validate(args, ref_controller):
                     else:
                         secret_obj.update_key(awskey)
                         ref_controller[token_path] = secret_obj
+
+            elif token_path.startswith("?{vaultkv:"):
+                if not vaultkv:
+                    logger.debug("secret_update_validate: target: %s has no inventory vaultkv parameter 'auth', skipping %s", target_name, token_path)
+                    continue
+                secret_obj = ref_controller[token_path]
 
             else:
                 logger.info("Invalid secret %s, could not get type, skipping", token_path)

@@ -23,7 +23,9 @@ import shutil
 import subprocess
 import sys
 import unittest
+from unittest.mock import patch
 
+from kapitan.refs.secrets import vaultkv
 from kapitan.cli import main
 
 REFS_PATH = tempfile.mkdtemp()
@@ -379,6 +381,40 @@ class CliFuncsTest(unittest.TestCase):
                 revealing2: {}
                 """
         self.assertEqual(expected.format("hello", "world"), stdout.getvalue())
+        os.remove(test_tag_file)
+
+    @patch.object(vaultkv.VaultSecret,'_decrypt')
+    def test_cli_secret_write_vault(self,mock_reveal):
+        """
+        run $ kapitan refs --write vaultkv:test_secret
+        and $ kapitan refs --reveal -f sometest_file
+        """
+        test_secret_content = "foo:secret_test_key"
+        test_secret_content_value = "secret_value"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+ 
+        sys.argv = ["kapitan", "refs", "--write", "vaultkv:test_secret",
+                    "-f", test_secret_file, "--refs-path", REFS_PATH, "--vault-auth", "token"]
+        main()
+ 
+        test_tag_content = "revealing: ?{vaultkv:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+
+        mock_reveal.return_value = test_secret_content_value
+        sys.argv = ["kapitan", "refs", "--reveal",
+                    "-f", test_tag_file, "--refs-path", REFS_PATH]
+
+         # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("revealing: {value}".format(value=test_secret_content_value),
+                         stdout.getvalue())
+ 
         os.remove(test_tag_file)
 
     def test_cli_searchvar(self):
