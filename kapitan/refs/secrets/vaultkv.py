@@ -201,6 +201,12 @@ class VaultSecret(Base64Ref):
 
         return self._decrypt()
 
+    def create_secret(self,value):
+        """
+        Authenticate with vault & create the secret having <path>@<key>
+        equivalent of '$ vault kv put <path> <key>=<value>'
+        """
+
     def _decrypt(self):
         """
         Authenticate with Vault server & returns value of the key from secret
