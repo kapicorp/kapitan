@@ -1,0 +1,10 @@
+parameters:
+  kapitan:
+    compile:
+    - input_paths:
+      - components/other_component/
+      input_type: kadet
+      output_path: kadet_output
+      output_type: yaml
+  your_component:
+    some_parameter: true

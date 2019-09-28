@@ -21,7 +21,8 @@ import unittest
 import tempfile
 import os
 
-from kapitan.initialiser import initialise_skeleton
+from kapitan.initialiser import Initialiser
+from kapitan.utils import directory_hash
 
 logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -30,19 +31,39 @@ logger = logging.getLogger(__name__)
 class InitTest(unittest.TestCase):
     def test_init(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
-            initialise_skeleton(directory=tmp_dir)
+            init = Initialiser(directory=tmp_dir,
+                                targets=[],
+                                input_types=[],
+                                inventory_path='./inventory')
+            init.generate_copy()
 
             template_dir = os.path.join(
                 os.getcwd(), 'kapitan', 'inputs', 'templates')
 
             diff_files = []
-            
+
             for root, dirs, files in os.walk(tmp_dir):
                 diff_files += files
-            
+
             for root, dirs, files in os.walk(template_dir):
                 for f in files:
                     if f in diff_files:
                         diff_files.remove(f)
 
             self.assertEqual(len(diff_files), 0)
+
+    def test_parameterized_init(self):
+        for input_type in ['jinja2', 'jsonnet', 'kadet']:
+            with tempfile.TemporaryDirectory() as tmp_dir:
+                init = Initialiser(directory=tmp_dir,
+                                    targets=['dev', 'staging', 'prod'],
+                                    input_types=[input_type],
+                                    inventory_path='./inventory')
+                init.generate_copy()
+                init_dir_hash = directory_hash(tmp_dir)
+
+                test_init_dir = os.path.join(os.getcwd(),
+                                            "tests/test_parameterized_init/{}".format(input_type))
+                test_init_dir_hash = directory_hash(test_init_dir)
+
+                self.assertEqual(init_dir_hash, test_init_dir_hash)

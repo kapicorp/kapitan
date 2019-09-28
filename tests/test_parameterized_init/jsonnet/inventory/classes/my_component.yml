@@ -1,0 +1,10 @@
+parameters:
+  kapitan:
+    compile:
+    - input_paths:
+      - components/my_component/my_component.jsonnet
+      input_type: jsonnet
+      output_path: jsonnet_output
+      output_type: yaml
+  your_component:
+    some_parameter: true

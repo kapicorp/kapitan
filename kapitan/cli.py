@@ -28,7 +28,7 @@ import sys
 import yaml
 from kapitan import cached
 from kapitan.errors import KapitanError, RefHashMismatchError
-from kapitan.initialiser import initialise_skeleton
+from kapitan.initialiser import Initialiser
 from kapitan.lint import start_lint
 from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
@@ -241,6 +241,13 @@ def main():
 
     init_parser = subparser.add_parser('init',
                                        help='initialize a directory with the recommended kapitan project skeleton.')
+    init_parser.add_argument('--verbose', '-v', help='set verbose mode',
+                                action='store_true',
+                                default=from_dot_kapitan('init', 'verbose', False))
+    init_parser.add_argument('--target-name', help='provide a target-name ex: name1,name2',
+                                default=from_dot_kapitan('init', 'verbose', ""))
+    init_parser.add_argument('--compile-input', help='provide a target-name ex: jinja2,jsonnet,kadet',
+                                default=from_dot_kapitan('init', 'verbose', ""))
     init_parser.add_argument('--directory',
                              default=from_dot_kapitan('init', 'directory', '.'),
                              help='set path, in which to generate the project skeleton,'
@@ -353,7 +360,9 @@ def main():
                    args.search_secrets, args.refs_path, args.compiled_path)
 
     elif cmd == 'init':
-        initialise_skeleton(args.directory)
+        init = Initialiser(args.directory, args.targets, args.input_types, args.inventory_path)
+        init.generate_copy()
+        init.list_directory()
 
     elif cmd == 'secrets':
         logger.error("Secrets have been renamed to refs, please refer to: '$ kapitan refs --help'")

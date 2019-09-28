@@ -1,0 +1,14 @@
+parameters:
+  kapitan:
+    compile:
+    - input_paths:
+      - templates/scripts
+      input_type: jinja2
+      output_path: scripts
+    - input_paths:
+      - templates/docs
+      input_type: jinja2
+      output_path: .
+      output_type: yaml
+  your_component:
+    some_parameter: true
