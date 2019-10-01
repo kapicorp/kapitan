@@ -116,6 +116,7 @@ jinja2_template - renders the jinja2 file with context specified
 sha256_string - returns sha256 of string
 gzip_b64 - returns base64 encoded gzip of obj
 inventory - returns a dictionary with the inventory for target
+jsonschema - validates obj with schema, returns object with 'valid' and 'reason' keys
 ```
 
 ##### Jinja2 jsonnet templating
