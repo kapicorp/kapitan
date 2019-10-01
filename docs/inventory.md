@@ -6,7 +6,7 @@ Inventory is a hierarchical database of variables that are passed to the targets
 
 By default, Kapitan will look for an `inventory/` directory to render the inventory from.
 
-There are 2 types of objects inside the inventory; [inventory classes](#inventory-classes) and [inventory targets](#inventory-targets). 
+There are 2 types of objects inside the inventory; [inventory classes](#inventory-classes) and [inventory targets](#inventory-targets).
 
 ### Inventory Classes
 
@@ -70,13 +70,13 @@ parameters:
     users:
       root:
         # If 'secrets/targets/${target_name}/mysql/password' doesn't exist, it will gen a random b64-encoded password
-        password: ?{gpg:targets/${target_name}/mysql/password|randomstr|base64}
-        # password: ?{gkms:targets/${target_name}/mysql/password|randomstr|base64}
-        # password: ?{awskms:targets/${target_name}/mysql/password|randomstr|base64}
+        password: ?{gpg:targets/${target_name}/mysql/password||randomstr|base64}
+        # password: ?{gkms:targets/${target_name}/mysql/password||randomstr|base64}
+        # password: ?{awskms:targets/${target_name}/mysql/password||randomstr|base64}
 
         # Generates the sha256 checksum of the previously declared B64'ed password
         # It's base64'ed again so that it can be used in kubernetes secrets
-        password_sha256: ?{gpg:targets/${target_name}/mysql/password_sha256|reveal:targets/${target_name}/mysql/password|sha256|base64}
+        password_sha256: ?{gpg:targets/${target_name}/mysql/password_sha256||reveal:targets/${target_name}/mysql/password|sha256|base64}
   kapitan:
     compile:
     - output_path: manifests
@@ -118,7 +118,7 @@ parameters:
     replicas: 2
 ```
 
-Targets can also be defined inside the `inventory`. 
+Targets can also be defined inside the `inventory`.
 
 **Note**: Each target must contain the property `parameters.kapitan.vars.target` whose value equals to the name of the target file. For example, for the target `inventory/targets/minikube-es.yml`, the rendered inventory must contain:
 

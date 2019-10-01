@@ -17,15 +17,15 @@
 "gpg secrets tests"
 
 import os
-import unittest
 import tempfile
+import unittest
 
 import kapitan.cached as cached
-from kapitan.refs.base import RefController, RefParams, Revealer
-from kapitan.refs.secrets.gpg import gpg_obj, GPGSecret, GPG_KWARGS, GPG_TARGET_FINGERPRINTS
-
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from kapitan.refs.base import RefController, RefParams, Revealer
+from kapitan.refs.secrets.gpg import (GPG_KWARGS, GPG_TARGET_FINGERPRINTS,
+                                      GPGSecret, gpg_obj)
 
 # set GNUPGHOME for test_cli
 GNUPGHOME = tempfile.mkdtemp()
@@ -81,7 +81,7 @@ class GPGSecretsTest(unittest.TestCase):
     def test_gpg_function_rsa(self):
         "write rsa (private and public), confirm secret file exists, reveal and check"
 
-        tag = '?{gpg:secret/rsa|rsa}'
+        tag = '?{gpg:secret/rsa||rsa}'
         REF_CONTROLLER[tag] = RefParams()
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'secret/rsa')))
 
@@ -96,7 +96,7 @@ class GPGSecretsTest(unittest.TestCase):
 
         REVEALER._reveal_tag_without_subvar.cache_clear()
         # Test with parameter key_size=2048
-        tag = '?{gpg:secret/rsa|rsa:2048}'
+        tag = '?{gpg:secret/rsa||rsa:2048}'
         REF_CONTROLLER[tag] = RefParams()
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
 
@@ -109,7 +109,7 @@ class GPGSecretsTest(unittest.TestCase):
         self.assertEqual(private_key.key_size, 2048)
 
         # Test rsapublic with previous private key as the parameter
-        tag_rsapublic = '?{gpg:secret/rsapublic|reveal:secret/rsa|rsapublic}'
+        tag_rsapublic = '?{gpg:secret/rsapublic||reveal:secret/rsa|rsapublic}'
         REF_CONTROLLER[tag_rsapublic] = RefParams()
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'secret/rsa')))
 

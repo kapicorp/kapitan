@@ -19,14 +19,14 @@ import errno
 import hashlib
 import json
 import logging
+import os
 import re
 import sys
-import os
 from functools import lru_cache
-import yaml
 
-from kapitan.errors import RefFromFuncError, RefBackendError, RefError
-from kapitan.errors import RefHashMismatchError
+import yaml
+from kapitan.errors import (RefBackendError, RefError, RefFromFuncError,
+                            RefHashMismatchError)
 from kapitan.refs.functions import eval_func
 from kapitan.utils import PrettyDumper, list_all_paths
 
@@ -37,8 +37,8 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
-REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@]+)([\|\w\:\.\-\/]+)?=*})"
+# e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token||func:param1:param2}
+REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@]+)([\|\|\w\:\.\-\/]+)?=*})"
 REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
 
@@ -397,7 +397,7 @@ class RefController(object):
 
     def tag_type(self, tag):
         "returns ref type for tag"
-        # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2} or ?{ref:my/secret/token:deadbeef}
+        # ?{ref:my/secret/token} or ?{ref:my/secret/token||func:param1:param2} or ?{ref:my/secret/token:deadbeef}
         _, token, _ = self.tag_params(tag)
         return self.token_type(token)
 
@@ -468,8 +468,8 @@ class RefController(object):
         evals and updates context ctx for func_str
         returns evaluated ctx
         """
-        assert(func_str.startswith('|'))
-        funcs = func_str[1:].split('|')
+        assert(func_str.startswith('||'))
+        funcs = func_str[2:].split('|')
 
         for func in funcs:
             func_name, *func_params = func.strip().split(':')
