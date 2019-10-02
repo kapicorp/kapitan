@@ -1,5 +1,5 @@
 # kapitan dependencies
-jsonnet==0.13.0
+jsonnet==0.14.0
 pyyaml>=5.1
 Jinja2>=2.10
 jsonschema==3.0.2
@@ -13,8 +13,8 @@ addict==2.2.1
 yamllint>=1.15.0
 cffi
 rfc3987==1.3.8
-GitPython==2.1.11
-hvac==0.9.2
+GitPython==3.0.3
+hvac==0.9.5
 docker==4.0.2
 # Reclass dependencies
 pyparsing
