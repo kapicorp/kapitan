@@ -17,32 +17,30 @@
 "kapitan targets"
 import json
 import logging
+import multiprocessing
 import os
 import shutil
 import sys
-import multiprocessing
 import tempfile
+import time
 from collections import defaultdict
+from functools import partial
 
 import jsonschema
 import yaml
-import time
-from functools import partial
-
+from kapitan import cached
 from kapitan.dependency_manager.base import fetch_dependencies
-from kapitan.resources import inventory_reclass
-from kapitan.utils import hashable_lru_cache
-from kapitan.utils import directory_hash, dictionary_hash
-from kapitan.errors import KapitanError, CompileError, InventoryError
+from kapitan.errors import CompileError, InventoryError, KapitanError
+from kapitan.inputs.helm import Helm
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
-from kapitan.inputs.helm import Helm
-from kapitan import cached
+from kapitan.resources import inventory_reclass
+from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
+from kapitan.validator.kubernetes_validator import (
+    DEFAULT_KUBERNETES_VERSION, KubernetesManifestValidator)
 
 from reclass.errors import NotFoundError, ReclassException
-
-from kapitan.validator.kubernetes_validator import KubernetesManifestValidator, DEFAULT_KUBERNETES_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -395,7 +393,7 @@ def valid_target_obj(target_obj):
                             "properties": {
                                 "input_type": {
                                     "enum": ["jinja2", "helm"]
-                                } 
+                                }
                             }
                         }
                     ],
@@ -459,7 +457,7 @@ def valid_target_obj(target_obj):
                     "allOf": [
                         {
                             "if": {
-                                "properties": { "type": { "enum": ["http", "https"] } }
+                                "properties": {"type": {"enum": ["http", "https"]}}
                             },
                             "then": {
                                 "properties": {

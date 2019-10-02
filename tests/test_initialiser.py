@@ -17,9 +17,9 @@
 "init tests"
 
 import logging
-import unittest
-import tempfile
 import os
+import tempfile
+import unittest
 
 from kapitan.initialiser import initialise_skeleton
 
@@ -36,10 +36,10 @@ class InitTest(unittest.TestCase):
                 os.getcwd(), 'kapitan', 'inputs', 'templates')
 
             diff_files = []
-            
+
             for root, dirs, files in os.walk(tmp_dir):
                 diff_files += files
-            
+
             for root, dirs, files in os.walk(template_dir):
                 for f in files:
                     if f in diff_files:
