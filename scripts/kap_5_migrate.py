@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
-from io import StringIO
-import re
 import os
+import re
 import sys
+from io import StringIO
 
 
 def update_secrets(file_path):
@@ -28,6 +28,8 @@ def update_secrets(file_path):
 def update_inventory(file_path):
     temp_buf = StringIO()
     REF_TOKEN_TAG_PATTERN = re.compile(r"(\?{([\w\:\.\-\/@]+)([\|\w\:\.\-\/]+)?=*})")
+    TOKEN_TAG_PATTERN = re.compile(r"(\?{([^|]+)([\|].*)?=*})")
+
     updated = False
 
     def ref_to_base64(match_obj):
@@ -37,9 +39,17 @@ def update_inventory(file_path):
         else:
             return tag
 
+    def single_to_double(match_obj):
+        tag, token, funcs = match_obj.groups()
+        if not (funcs is None):
+            return tag.replace('|', '||', 1)
+        else:
+            return tag
+
     with open(file_path) as fp:
         for line in fp:
             _line = REF_TOKEN_TAG_PATTERN.sub(ref_to_base64, line)
+            _line = TOKEN_TAG_PATTERN.sub(single_to_double, _line)
             temp_buf.write(_line)
             if not updated and (line != _line):  # only set updated once
                 updated = True
@@ -62,16 +72,20 @@ def pre_warning():
     print("""
     KAP-5 MIGRATION SCRIPT
 
-    WARNING: This will update your 'ref' type secret objects!
+    WARNING: This will update your 'ref' type secret objects and your inventory secret declaration!
 
     KAP-5 discontinues 'ref' type secrets and introduces 'base64' type instead.
+    Along with that we also changed the first | in secret references to || to
+    better signify it's closer to a logical OR.
 
     If you have any ref type secrets like in this form: ?{ref:path/to/thing}
     you will want to run this script when upgrading to Kapitan v0.25
     Kapitan v0.25 requires your ref type secrets to be 'base64' instead ?{base64:path/to/thing}
 
     This script will update any 'ref' types found in --secrets-path and --inventory-path
-    and will overwrite them with the new 'base64' type
+    and will overwrite them with the new 'base64' type.
+    It will also update all secrets in the inventory from ?{type:path/to/thing|function1|function2} to
+    ?{type:path/to/thing||function1|function2}.
     """)
 
     response = input("Do you want to proceed? (\"yes\" to continue): ")
