@@ -101,10 +101,6 @@ def main():
     compile_parser.add_argument('--validate',
                                 help='validate compile output against schemas as specified in inventory',
                                 action='store_true', default=from_dot_kapitan('compile', 'validate', False))
-    compile_parser.add_argument('--targets', '-t', help='targets to compile, default is all',
-                                type=str, nargs='+',
-                                default=from_dot_kapitan('compile', 'targets', []),
-                                metavar='TARGET')
     compile_parser.add_argument('--parallelism', '-p', type=int,
                                 default=from_dot_kapitan('compile', 'parallelism', 4),
                                 metavar='INT',
@@ -137,6 +133,16 @@ def main():
     compile_parser.add_argument('--schemas-path',
                                 default=from_dot_kapitan('validate', 'schemas-path', './schemas'),
                                 help='set schema cache path, default is "./schemas"')
+
+    compile_selector_parser = compile_parser.add_mutually_exclusive_group()
+    compile_selector_parser.add_argument('--targets', '-t', help='targets to compile, default is all',
+                                type=str, nargs='+',
+                                default=from_dot_kapitan('compile', 'targets', []),
+                                metavar='TARGET')
+    compile_selector_parser.add_argument('--labels', '-l', help='compile targets matching the labels, default is all',
+                                type=str, nargs='*',
+                                default=from_dot_kapitan('compile', 'labels', []),
+                                metavar='key=value')
 
     inventory_parser = subparser.add_parser('inventory', help='show inventory')
     inventory_parser.add_argument('--target-name', '-t',
@@ -318,7 +324,7 @@ def main():
         cached.revealer_obj = Revealer(ref_controller)
 
         compile_targets(args.inventory_path, search_paths, args.output_path,
-                        args.parallelism, args.targets, ref_controller,
+                        args.parallelism, args.targets, args.labels, ref_controller,
                         prune=(args.prune), indent=args.indent, reveal=args.reveal,
                         cache=args.cache, cache_paths=args.cache_paths,
                         fetch_dependencies=args.fetch, validate=args.validate,

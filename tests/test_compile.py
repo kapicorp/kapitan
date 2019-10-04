@@ -21,6 +21,7 @@ import os
 import sys
 import io
 import contextlib
+import shutil
 from kapitan.cli import main
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
@@ -81,6 +82,24 @@ class CompileKubernetesTest(unittest.TestCase):
         error_message = "Target missing: target \"{}\" is missing parameters.kapitan.vars.target\n" \
                         "This parameter should be set to the target name"
         self.assertTrue(error_message.format(target_filename), ie.exception.args[0])
+
+    def test_compile_specific_target(self):
+        shutil.rmtree("compiled")
+        sys.argv = ["kapitan", "compile", "-t", "minikube-mysql"]
+        main()
+        self.assertTrue(os.path.exists("compiled/minikube-mysql") and not os.path.exists("compiled/minikube-es"))
+        # Reset compiled dir
+        sys.argv = ["kapitan", "compile"]
+        main()
+
+    def test_compile_target_with_label(self):
+        shutil.rmtree("compiled")
+        sys.argv = ["kapitan", "compile", "-l", "type=kadet"]
+        main()
+        self.assertTrue(os.path.exists("compiled/minikube-nginx-kadet") and not os.path.exists("compiled/minikube-nginx-jsonnet"))
+        # Reset compiled dir
+        sys.argv = ["kapitan", "compile"]
+        main()
 
     def tearDown(self):
         os.chdir(os.getcwd() + '/../../')

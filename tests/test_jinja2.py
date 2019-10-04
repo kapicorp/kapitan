@@ -176,7 +176,7 @@ class Jinja2FiltersTest(unittest.TestCase):
             f.write("{{ my_ref_tag_var|reveal_maybe }}".encode("UTF-8"))
             f.seek(0)
 
-            # new argparse namespace with --reveal and --secrets-path values
+            # new argparse namespace with --reveal and --refs-path values
             namespace = namedtuple('Namespace', [])
             namespace.reveal = False
             namespace.refs_path = tempfile.mkdtemp()
@@ -200,7 +200,7 @@ class Jinja2FiltersTest(unittest.TestCase):
             f.write("{{ my_var|reveal_maybe }}".encode("UTF-8"))
             f.seek(0)
 
-            # new argparse namespace with --reveal and --secrets-path values
+            # new argparse namespace with --reveal and --refs-path values
             namespace = namedtuple('Namespace', [])
             namespace.reveal = True
             namespace.refs_path = tempfile.mkdtemp()
