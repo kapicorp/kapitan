@@ -8,3 +8,5 @@ parameters:
         input_type: jsonnet
         input_paths:
         - components/nginx-jsonnet/main.jsonnet
+    labels:
+      type: jsonnet

@@ -45,7 +45,7 @@ from reclass.errors import NotFoundError, ReclassException
 logger = logging.getLogger(__name__)
 
 
-def compile_targets(inventory_path, search_paths, output_path, parallel, targets, ref_controller, **kwargs):
+def compile_targets(inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs):
     """
     Searches and loads target files, and runs compile_target() on a
     multiprocessing pool with parallel number of processes.
@@ -53,7 +53,7 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix='.kapitan')
-    updated_targets = targets
+    updated_targets = search_targets(inventory_path, targets, labels)
     # If --cache is set
     if kwargs.get('cache'):
         additional_cache_paths = kwargs.get('cache_paths')
@@ -304,6 +304,43 @@ def load_target_inventory(inventory_path, targets):
             pass
 
     return target_objs
+
+
+def search_targets(inventory_path, targets, labels):
+    """returns a list of targets where the labels match, otherwise just return the original targets"""
+    if not labels:
+        return targets
+
+    try:
+        labels_dict = dict(label.split('=') for label in labels)
+    except ValueError:
+        logger.error("Compile error: Failed to parse labels, should be formatted like: kapitan compile -l env=prod app=example")
+        sys.exit(1)
+
+    targets_found = []
+    inv = inventory_reclass(inventory_path)
+
+    for target_name in inv['nodes']:
+        matched_all_labels = False
+        for label, value in labels_dict.items():
+            try:
+                if inv['nodes'][target_name]['parameters']['kapitan']['labels'][label] == value:
+                    matched_all_labels = True
+                    continue
+            except KeyError:
+                logger.debug("search_targets: label %s=%s didn't match target %s", label, value, target_name)
+
+            matched_all_labels = False
+            break
+
+        if matched_all_labels:
+            targets_found.append(target_name)
+
+    if len(targets_found) == 0:
+        logger.error("No targets found with labels: {}".format(labels))
+        sys.exit(1)
+
+    return targets_found
 
 
 def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
