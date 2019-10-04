@@ -1,3 +1,16 @@
+## 0.25.0-rc.1:
+- Add yq to the docker images (#375)
+- Update all Dockerfiles to use multi-stage builds (#370)
+- Add additional content type header for fetching GZIP files (#364)
+- Fix Helm binding errors in docker (#359)
+- Jsonschema function for jsonnet (#380)
+- Fix issue 381: Document .kapitan and update jsonnet, git and hvac dependencies (#383)
+- Vault secret backend added - read-only (#310)
+
+#### Breaking:
+- Move to Kap5 ref types (#334)
+- Fix issue #277: Change first '|' operator in secrets functions with '||' (#382)
+
 ## 0.24.1-rc.3:
 - Add yq to the docker images (#375)
 
