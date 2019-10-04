@@ -21,7 +21,7 @@ import os
 import tempfile
 import unittest
 
-from kapitan.errors import RefFromFuncError, RefHashMismatchError, RefError
+from kapitan.errors import RefError, RefFromFuncError, RefHashMismatchError
 from kapitan.refs.base import PlainRef, RefController, RefParams, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.utils import get_entropy
@@ -104,11 +104,11 @@ class Base64RefsTest(unittest.TestCase):
 
     def test_base64_ref_tag_func_name(self):
         "check ref tag func name is correct"
-        tag = '?{base64:my/ref5|randomstr}'
+        tag = '?{base64:my/ref5||randomstr}'
         tag, token, func_str = REF_CONTROLLER.tag_params(tag)
-        self.assertEqual(tag, '?{base64:my/ref5|randomstr}')
+        self.assertEqual(tag, '?{base64:my/ref5||randomstr}')
         self.assertEqual(token, 'base64:my/ref5')
-        self.assertEqual(func_str, '|randomstr')
+        self.assertEqual(func_str, '||randomstr')
 
     def test_base64_ref_path(self):
         "check ref tag path is correct"
@@ -126,7 +126,7 @@ class Base64RefsTest(unittest.TestCase):
         check new ref tag with function raises RefFromFuncError
         and then creates it using RefParams()
         """
-        tag = '?{base64:my/ref7|randomstr}'
+        tag = '?{base64:my/ref7||randomstr}'
         with self.assertRaises(RefFromFuncError):
             REF_CONTROLLER[tag]
         try:
@@ -218,7 +218,7 @@ class Base64RefsTest(unittest.TestCase):
     def test_ref_function_randomstr(self):
         "write randomstr to secret, confirm ref file exists, reveal and check"
 
-        tag = '?{base64:ref/randomstr|randomstr}'
+        tag = '?{base64:ref/randomstr||randomstr}'
         REF_CONTROLLER[tag] = RefParams()
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'ref/base64')))
 
@@ -230,7 +230,7 @@ class Base64RefsTest(unittest.TestCase):
         self.assertTrue(get_entropy(revealed) > 4)
 
         # Test with parameter nbytes=16, correlating with string length 16
-        tag = '?{base64:ref/randomstr|randomstr:16}'
+        tag = '?{base64:ref/randomstr||randomstr:16}'
         REF_CONTROLLER[tag] = RefParams()
         REVEALER._reveal_tag_without_subvar.cache_clear()
         revealed = REVEALER.reveal_raw_file(file_with_tags)
@@ -239,7 +239,7 @@ class Base64RefsTest(unittest.TestCase):
     def test_ref_function_base64(self):
         "write randomstr to ref and base64, confirm ref file exists, reveal and check"
 
-        tag = '?{base64:ref/base64|randomstr|base64}'
+        tag = '?{base64:ref/base64||randomstr|base64}'
         REF_CONTROLLER[tag] = RefParams()
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'ref/base64')))
 
@@ -253,7 +253,7 @@ class Base64RefsTest(unittest.TestCase):
     def test_ref_function_sha256(self):
         "write randomstr to ref and sha256, confirm ref file exists, reveal and check"
 
-        tag = '?{base64:ref/sha256|randomstr|sha256}'
+        tag = '?{base64:ref/sha256||randomstr|sha256}'
         REF_CONTROLLER[tag] = RefParams()
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'ref/sha256')))
 
