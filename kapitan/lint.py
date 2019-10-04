@@ -23,6 +23,7 @@ from pprint import pformat
 
 from kapitan.errors import KapitanError
 from kapitan.utils import list_all_paths
+
 from yamllint import linter
 from yamllint.config import YamlLintConfig
 
@@ -71,7 +72,7 @@ def start_lint(fail_on_warning, skip_class_checks, skip_yamllint, inventory_path
     if skip_class_checks and skip_yamllint and not search_secrets:
         logger.info("Nothing to check. Remove --skip-class-checks or add --search-secrets to lint secrets")
         sys.exit(1)
-    
+
     status_yamllint = 0
     status_secrets = 0
     status_class_checks = 0
@@ -185,6 +186,7 @@ def lint_unused_classes(inventory_path):
 
     return checks_sum
 
+
 def lint_yamllint(inventory_path):
     """ Run yamllint on all yaml files in inventory
     Args:
@@ -212,7 +214,7 @@ def lint_yamllint(inventory_path):
                 except EnvironmentError as e:
                     logger.error(e)
                     sys.exit(-1)
-  
+
                 if len(problems) > 0:
                     checks_sum += len(problems)
                     logger.info("File {} has the following issues:".format(path))

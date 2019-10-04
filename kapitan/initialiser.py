@@ -18,11 +18,10 @@
 
 import logging
 import os
-import sys
-import shutil
 from distutils.dir_util import copy_tree
 
 logger = logging.getLogger(__name__)
+
 
 def initialise_skeleton(directory):
     """ Initialises a directory with a recommended skeleton structure

@@ -16,23 +16,24 @@
 
 "kapitan resources"
 
+import base64
 import errno
-from functools import partial
+import gzip
+import io
 import json
 import logging
 import os
-import io
-import gzip
-import base64
-import reclass
-import reclass.core
-from reclass.errors import ReclassException, NotFoundError
-import yaml
+from functools import partial
 
-from kapitan.utils import render_jinja2_file, sha256_string
+import kapitan.cached as cached
+import yaml
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError
-import kapitan.cached as cached
+from kapitan.utils import render_jinja2_file, sha256_string
+
+import reclass
+import reclass.core
+from reclass.errors import NotFoundError, ReclassException
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ def resource_callbacks(search_paths):
             "gzip_b64": (("obj",), gzip_b64),
             "yaml_dump": (("obj",), yaml_dump),
             "yaml_load": (("name",),
-                                partial(yaml_load, search_paths)),
+                          partial(yaml_load, search_paths)),
             }
 
 
@@ -101,12 +102,13 @@ def jinja2_render_file(search_paths, name, ctx):
 
     raise IOError("jinja2 failed to render, could not find file: {}".format(_full_path))
 
+
 def yaml_load(search_paths, name):
     """returns content of yaml file as json string"""
     for path in search_paths:
         _full_path = os.path.join(path, name)
         logger.debug("yaml_load trying file %s", _full_path)
-        if os.path.exists(_full_path) and ( name.endswith(".yml") or name.endswith(".yaml") ):
+        if os.path.exists(_full_path) and (name.endswith(".yml") or name.endswith(".yaml")):
             logger.debug("yaml_load found file at %s", _full_path)
             try:
                 with open(_full_path) as f:
@@ -115,6 +117,7 @@ def yaml_load(search_paths, name):
                 raise CompileError("Parse yaml failed to parse {}: {}".format(_full_path, e))
 
     raise IOError("could not find any input yaml file: {}".format(_full_path))
+
 
 def read_file(search_paths, name):
     """return content of file in name"""

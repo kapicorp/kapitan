@@ -15,34 +15,26 @@
 "hashicorp vault kv secrets module"
 
 import base64
-import errno
-import hashlib
 import logging
 import os
-import re
 from binascii import Error as b_error
-from sys import argv, exit
-
-import hvac
-import yaml
-from hvac.exceptions import Forbidden, InvalidPath
+from sys import exit
 
 from kapitan import cached
 from kapitan.errors import KapitanError
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
-from kapitan.resources import inventory_reclass
 
-try:
-    from yaml import CSafeLoader as YamlLoader
-except ImportError:
-    from yaml import SafeLoader as YamlLoader
+import hvac
+from hvac.exceptions import Forbidden, InvalidPath
 
 logger = logging.getLogger(__name__)
+
 
 class VaultError(KapitanError):
     """Generic vault errors"""
     pass
+
 
 def get_env(parameter):
     """
@@ -70,16 +62,16 @@ def get_env(parameter):
     """
     client_parameters = {}
     client_parameters['url'] = parameter.get('VAULT_ADDR',
-                                             os.getenv('VAULT_ADDR',default=''))
+                                             os.getenv('VAULT_ADDR', default=''))
     client_parameters['namespace'] = parameter.get('VAULT_NAMESPACE',
-                                             os.getenv('VAULT_NAMESPACE',default=''))
+                                             os.getenv('VAULT_NAMESPACE', default=''))
     # VERIFY VAULT SERVER TLS CERTIFICATE
-    skip_verify = parameter.get('VAULT_SKIP_VERIFY', os.getenv('VAULT_SKIP_VERIFY',default=''))
+    skip_verify = parameter.get('VAULT_SKIP_VERIFY', os.getenv('VAULT_SKIP_VERIFY', default=''))
 
     if skip_verify.lower() == 'false':
-        cert = parameter.get('VAULT_CACERT', os.getenv('VAULT_CACERT',default=''))
+        cert = parameter.get('VAULT_CACERT', os.getenv('VAULT_CACERT', default=''))
         if not cert:
-            cert_path = parameter.get('VAULT_CAPATH', os.getenv('VAULT_CAPATH',default=''))
+            cert_path = parameter.get('VAULT_CAPATH', os.getenv('VAULT_CAPATH', default=''))
             if not cert_path:
                 raise Exception('Neither VAULT_CACERT nor VAULT_CAPATH specified')
             client_parameters['verify'] = cert_path
@@ -89,10 +81,10 @@ def get_env(parameter):
         client_parameters['verify'] = False
 
     # CLIENT CERTIFICATE FOR TLS AUTHENTICATION
-    client_key = parameter.get('VAULT_CLIENT_KEY', os.getenv('VAULT_CLIENT_KEY',default=''))
-    client_cert = parameter.get('VAULT_CLIENT_CERT', os.getenv('VAULT_CLIENT_CERT',default='')) 
+    client_key = parameter.get('VAULT_CLIENT_KEY', os.getenv('VAULT_CLIENT_KEY', default=''))
+    client_cert = parameter.get('VAULT_CLIENT_CERT', os.getenv('VAULT_CLIENT_CERT', default=''))
     if client_key != '' and client_cert != '':
-        client_parameters['cert'] = (client_cert,client_key)
+        client_parameters['cert'] = (client_cert, client_key)
     return client_parameters
 
 def vault_obj(vault_parameters):
@@ -107,17 +99,17 @@ def vault_obj(vault_parameters):
     env = get_env(vault_parameters)
 
     client = hvac.Client(
-        **{k:v for k,v in env.items() if k is not 'auth'}
+        **{k: v for k, v in env.items() if k is not 'auth'}
     )
 
     auth_type = vault_parameters['auth']
     # GET TOKEN EITHER FROM ENVIRONMENT OF FILE
-    if auth_type in ['token','github']:
+    if auth_type in ['token', 'github']:
         env['token'] = os.getenv('VAULT_TOKEN')
         if not env['token']:
             try:
-                token_file = os.path.join(os.path.expanduser('~'),'.vault-token')
-                with open(token_file,'r') as f:
+                token_file = os.path.join(os.path.expanduser('~'), '.vault-token')
+                with open(token_file, 'r') as f:
                     env['token'] = f.read()
                 if env['token'] == '':
                     raise VaultError('{file} is empty'.format(file=token_file))
@@ -128,8 +120,8 @@ def vault_obj(vault_parameters):
         client.token = env['token']
     elif auth_type == 'ldap':
         client.auth.ldap.login(
-            username = os.getenv('VAULT_USERNAME'),
-            password = os.getenv('VAULT_PASSWORD')
+            username=os.getenv('VAULT_USERNAME'),
+            password=os.getenv('VAULT_PASSWORD')
         )
     elif auth_type == 'userpass':
         client.auth_userpass(
@@ -162,7 +154,7 @@ class VaultSecret(Base64Ref):
         """
         self.data = data
         self.vault_params = vault_params
-        super().__init__(self.data,**kwargs)
+        super().__init__(self.data, **kwargs)
         self.type_name = 'vaultkv'
 
     @classmethod
@@ -214,11 +206,11 @@ class VaultSecret(Base64Ref):
             return_data = ''
             if self.vault_params.get('engine') == 'kv':
                 response = client.secrets.kv.v1.read_secret(path=data[0],
-                                                            mount_point=self.vault_params.get('mount','secret'))
+                                                            mount_point=self.vault_params.get('mount', 'secret'))
                 return_data = response['data'][data[1]]
             else:
                 response = client.secrets.kv.v2.read_secret_version(path=data[0],
-                                                                    mount_point=self.vault_params.get('mount','secret'))
+                                                                    mount_point=self.vault_params.get('mount', 'secret'))
                 return_data = response['data']['data'][data[1]]
             client.adapter.close()
         except Forbidden:

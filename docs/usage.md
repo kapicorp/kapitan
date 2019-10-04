@@ -75,21 +75,8 @@ optional arguments:
 
 ## Using `.kapitan` config file
 
-These parameters can also be defined in a local `.kapitan` file, for example:
+These parameters can also be defined in a local `.kapitan` file per project directory, for example:
 
-```
-$ cat .kapitan
-
-compile:
-  indent: 4
-  parallelism: 8
-```
-
-This is equivalent to running:
-
-```
-kapitan compile --indent 4 --parallelism 8
-```
 
 To enforce the kapitan version used for compilation (for consistency and safety), you can add `version` to `.kapitan`:
 
@@ -105,3 +92,35 @@ $ cat .kapitan
 version: 0.21
 ```
 
+You can also permanently define all command line flags in the `.kapitan` config file. For example:
+
+```
+$ cat .kapitan
+version: 0.21
+
+compile:
+  indent: 4
+  parallelism: 8
+```
+
+would be equivalent to running:
+
+```
+kapitan compile --indent 4 --parallelism 8
+```
+
+or
+
+```
+$ cat .kapitan
+version: 0.21
+
+inventory:
+  inventory-path: ./some_path
+```
+
+which would be equivalent to always running:
+
+```
+kapitan inventory --inventory-path=./some_path
+```

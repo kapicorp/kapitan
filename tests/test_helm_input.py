@@ -17,13 +17,13 @@
 "helm input tests"
 import os
 import sys
-import unittest
 import tempfile
-import yaml
+import unittest
 
-from kapitan.inputs.helm import Helm
+import yaml
 from kapitan.cached import reset_cache
 from kapitan.cli import main
+from kapitan.inputs.helm import Helm
 
 helm_binding_exists = True
 try:

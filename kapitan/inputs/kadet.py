@@ -14,16 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from addict import Dict
-import logging
-from importlib.util import module_from_spec, spec_from_file_location
 import json
+import logging
 import os
 import sys
-import yaml
+from importlib.util import module_from_spec, spec_from_file_location
 
+import yaml
+from addict import Dict
 from kapitan.errors import CompileError
-from kapitan.inputs.base import InputType, CompiledFile
+from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.resources import inventory as inventory_func
 from kapitan.utils import prune_empty
 
@@ -124,10 +124,10 @@ class Kadet(InputType):
                                   indent=indent) as fp:
                     fp.write_yaml(item_value)
             elif output == 'plain':
-              file_path = os.path.join(compile_path, '%s' % item_key)
-              with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
+                file_path = os.path.join(compile_path, '%s' % item_key)
+                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
                                 indent=indent) as fp:
-                fp.write(item_value)
+                    fp.write(item_value)
             else:
                 raise ValueError('output is neither "json", "yaml" or "plain"')
             logger.debug("Pruned output for: %s", file_path)

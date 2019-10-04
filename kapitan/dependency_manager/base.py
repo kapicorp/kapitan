@@ -1,18 +1,19 @@
+import hashlib
+import logging
 import os
+import re
+import tarfile
 import tempfile
 from collections import defaultdict
-import logging
 from distutils.dir_util import copy_tree
 from functools import partial
 from shutil import copyfile
-import hashlib
-import tarfile
-import re
 from zipfile import ZipFile
-from git import Repo
 
 from kapitan.errors import GitSubdirNotFoundError
 from kapitan.utils import make_request
+
+from git import Repo
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +166,7 @@ def fetch_http_source(source, save_dir):
         basename = os.path.basename(source)
         # to avoid collisions between basename(source)
         path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
-        full_save_path = os.path.join(save_dir,  path_hash + basename)
+        full_save_path = os.path.join(save_dir, path_hash + basename)
         with open(full_save_path, 'wb') as f:
             f.write(content)
         return content_type
