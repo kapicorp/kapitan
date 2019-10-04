@@ -79,7 +79,8 @@ class Helm(InputType):
                     item_path = os.path.join(compile_path, rel_file_name)
                     os.makedirs(os.path.dirname(item_path), exist_ok=True)
                     with CompiledFile(item_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name) as fp:
-                        fp.write(f.read())
+                        yml_obj = yaml.safe_load_all(f)
+                        fp.write_yaml(yml_obj)
                         logger.debug("Wrote file %s to %s", full_file_name, item_path)
 
         self.helm_values_file = None  # reset this
