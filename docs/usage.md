@@ -83,6 +83,35 @@ optional arguments:
                         compile targets matching the labels, default is all
 ```
 
+## Selective target compilation
+
+If you only want to compile a subset or specific targets, you can use the two kapitan compile flags `--targets, -t` or `--labels, -l`.
+
+#### Specific target(s)
+
+```
+$ cd examples/kubernetes
+$ kapitan compile -t minikube-mysql
+Compiled minikube-mysql (0.43s)
+```
+
+#### Using labels
+
+```
+$ cd examples/kubernetes
+
+$ cat inventory/classes/component/nginx-kadet.yml  # Inherited by minikube-nginx-kadet target
+parameters:
+  ...
+  kapitan:
+    ...
+    labels:
+      type: kadet
+
+$ kapitan compile -l type=kadet
+Compiled minikube-nginx-kadet (0.14s)
+```
+
 ## Using `.kapitan` config file
 
 These parameters can also be defined in a local `.kapitan` file per project directory, for example:
