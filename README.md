@@ -10,6 +10,7 @@ Use Kapitan to manage your Kubernetes manifests, your documentation, your Terraf
 * **Main Blog, articles and tutorials**: [Kapitan Blog](https://medium.com/kapitan-blog)
 * **Slack** [`#kapitan`](https://kubernetes.slack.com)
 * **Website** [**`https://kapitan.dev`**](https://kapitan.dev)
+* **Mailing List** [kapitan-discuss@googlegroups.com](mailto:kapitan-discuss@googlegroups.com)
 * **London Meetup Group** [London Kapitan Meetup](https://www.meetup.com/London-Kapitan-Meetup/)
 
 
