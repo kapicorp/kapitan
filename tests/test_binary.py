@@ -29,19 +29,19 @@ from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.utils import directory_hash
 
-SECRETS_PATH = tempfile.mkdtemp()
-BINARY_PATH = 'dist/kapitan'
+REFS_PATH = tempfile.mkdtemp()
+BINARY_PATH = 'bindist/kapitan-linux-amd64'
 
 
 @unittest.skipIf(not os.path.exists(BINARY_PATH), 'kapitan binary not found')
 class BinaryTest(unittest.TestCase):
     def test_cli_secret_validate_targets(self):
         """
-        run $ kapitan secrets --validate-targets
+        run $ kapitan refs --validate-targets
         expect 0 (success) exit status code
         """
-        argv = ["kapitan", "secrets", "--validate-targets",
-                "--secrets-path", "examples/kubernetes/secrets/targets/",
+        argv = ["kapitan", "refs", "--validate-targets",
+                "--refs-path", "examples/kubernetes/refs/targets/",
                 "--inventory-path", "examples/kubernetes/inventory/"]
         with self.assertRaises(SystemExit) as cm:
             sys.argv = argv
@@ -52,8 +52,8 @@ class BinaryTest(unittest.TestCase):
 
     def test_cli_secret_write_reveal_gkms(self):
         """
-        run $ kapitan secrets --write gkms:test_secret
-        and $ kapitan secrets --reveal
+        run $ kapitan refs --write gkms:test_secret
+        and $ kapitan refs --reveal
         using mock KMS key
         """
         test_secret_content = "mock"
@@ -61,9 +61,9 @@ class BinaryTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        argv = [BINARY_PATH, "secrets", "--write", "gkms:test_secret",
+        argv = [BINARY_PATH, "refs", "--write", "gkms:test_secret",
                 "-f", test_secret_file,
-                "--secrets-path", SECRETS_PATH,
+                "--refs-path", REFS_PATH,
                 "--key", "mock"]
         subprocess.run(argv)
 
@@ -71,9 +71,9 @@ class BinaryTest(unittest.TestCase):
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        argv = [BINARY_PATH, "secrets", "--reveal",
+        argv = [BINARY_PATH, "refs", "--reveal",
                 "-f", test_tag_file,
-                "--secrets-path", SECRETS_PATH]
+                "--refs-path", REFS_PATH]
 
         result = subprocess.run(argv, stdout=subprocess.PIPE)
         self.assertEqual("revealing: {}".format(test_secret_content),
@@ -83,8 +83,8 @@ class BinaryTest(unittest.TestCase):
 
     def test_cli_secret_write_reveal_awskms(self):
         """
-        run $ kapitan secrets --write awskms:test_secret
-        and $ kapitan secrets --reveal
+        run $ kapitan refs --write awskms:test_secret
+        and $ kapitan refs --reveal
         using mock KMS key
         """
         test_secret_content = "mock"
@@ -92,9 +92,9 @@ class BinaryTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        argv = [BINARY_PATH, "secrets", "--write", "awskms:test_secret",
+        argv = [BINARY_PATH, "refs", "--write", "awskms:test_secret",
                 "-f", test_secret_file,
-                "--secrets-path", SECRETS_PATH,
+                "--refs-path", REFS_PATH,
                 "--key", "mock"]
         subprocess.run(argv)
 
@@ -102,9 +102,9 @@ class BinaryTest(unittest.TestCase):
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        argv = [BINARY_PATH, "secrets", "--reveal",
+        argv = [BINARY_PATH, "refs", "--reveal",
                 "-f", test_tag_file,
-                "--secrets-path", SECRETS_PATH]
+                "--refs-path", REFS_PATH]
         result = subprocess.run(argv, stdout=subprocess.PIPE)
         self.assertEqual("revealing: {}".format(test_secret_content),
                          result.stdout.decode('utf-8'))
@@ -113,25 +113,25 @@ class BinaryTest(unittest.TestCase):
 
     def test_cli_secret_write_ref(self):
         """
-        run $ kapitan secrets --write ref:test_secret
-        and $ kapitan secrets --reveal -f sometest_file
+        run $ kapitan refs --write base64:test_secret
+        and $ kapitan refs --reveal -f sometest_file
         """
         test_secret_content = "secret_value!"
         test_secret_file = tempfile.mktemp()
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        argv = [BINARY_PATH, "secrets", "--write", "ref:test_secret",
+        argv = [BINARY_PATH, "refs", "--write", "base64:test_secret",
                 "-f", test_secret_file,
-                "--secrets-path", SECRETS_PATH]
+                "--refs-path", REFS_PATH]
         subprocess.run(argv)
-        test_tag_content = "revealing: ?{ref:test_secret}"
+        test_tag_content = "revealing: ?{base64:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        argv = [BINARY_PATH, "secrets", "--reveal",
+        argv = [BINARY_PATH, "refs", "--reveal",
                 "-f", test_tag_file,
-                "--secrets-path", SECRETS_PATH]
+                "--refs-path", REFS_PATH]
         result = subprocess.run(argv, stdout=subprocess.PIPE)
         self.assertEqual("revealing: {}".format(test_secret_content),
                          result.stdout.decode('utf-8'))
@@ -140,8 +140,8 @@ class BinaryTest(unittest.TestCase):
 
     def test_cli_secret_write_base64_ref(self):
         """
-        run $ kapitan secrets --write ref:test_secret --base64
-        and $ kapitan secrets --reveal -f sometest_file
+        run $ kapitan refs --write base64:test_secret --base64
+        and $ kapitan refs --reveal -f sometest_file
         """
         test_secret_content = "secret_value!"
         test_secret_content_b64 = base64.b64encode(test_secret_content.encode())
@@ -149,18 +149,18 @@ class BinaryTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        argv = [BINARY_PATH, "secrets", "--write", "ref:test_secret",
+        argv = [BINARY_PATH, "refs", "--write", "base64:test_secret",
                 "--base64", "-f", test_secret_file,
-                "--secrets-path", SECRETS_PATH]
+                "--refs-path", REFS_PATH]
         subprocess.run(argv)
 
-        test_tag_content = "revealing: ?{ref:test_secret}"
+        test_tag_content = "revealing: ?{base64:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        argv = [BINARY_PATH, "secrets", "--reveal",
+        argv = [BINARY_PATH, "refs", "--reveal",
                 "-f", test_tag_file,
-                "--secrets-path", SECRETS_PATH]
+                "--refs-path", REFS_PATH]
 
         result = subprocess.run(argv, stdout=subprocess.PIPE)
         self.assertEqual("revealing: {}".format(test_secret_content_b64.decode()),
@@ -170,8 +170,8 @@ class BinaryTest(unittest.TestCase):
 
     def test_cli_secret_subvar_ref(self):
         """
-        run $ kapitan secrets --write ref:test_secret
-        and $ kapitan secrets --reveal -f sometest_file
+        run $ kapitan refs --write base64:test_secret
+        and $ kapitan refs --reveal -f sometest_file
         """
         test_secret_content = """
         var1:
@@ -183,20 +183,20 @@ class BinaryTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        argv = [BINARY_PATH, "secrets", "--write", "ref:test_secret_subvar",
+        argv = [BINARY_PATH, "refs", "--write", "base64:test_secret_subvar",
                 "-f", test_secret_file,
-                "--secrets-path", SECRETS_PATH]
+                "--refs-path", REFS_PATH]
         subprocess.run(argv)
         test_tag_content = """
-        revealing1: ?{ref:test_secret_subvar@var1.var2}
-        revealing2: ?{ref:test_secret_subvar@var3.var4}
+        revealing1: ?{base64:test_secret_subvar@var1.var2}
+        revealing2: ?{base64:test_secret_subvar@var3.var4}
         """
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        argv = [BINARY_PATH, "secrets", "--reveal",
+        argv = [BINARY_PATH, "refs", "--reveal",
                 "-f", test_tag_file,
-                "--secrets-path", SECRETS_PATH]
+                "--refs-path", REFS_PATH]
 
         result = subprocess.run(argv, stdout=subprocess.PIPE)
         expected = """
@@ -242,7 +242,7 @@ class BinaryTest(unittest.TestCase):
                          stdout.getvalue())
 
     def tearDown(self):
-        shutil.rmtree(SECRETS_PATH, ignore_errors=True)
+        shutil.rmtree(REFS_PATH, ignore_errors=True)
 
 
 @unittest.skipIf(not os.path.exists(BINARY_PATH), 'kapitan binary not found')
