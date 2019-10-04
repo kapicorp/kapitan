@@ -13,6 +13,7 @@ require (
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
-	k8s.io/apimachinery v0.0.0-20190727130956-f97a4e5b4abc // indirect
+	golang.org/x/crypto v0.0.0-20191002192127-34f69633bfdc // indirect
+	k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655 // indirect
 	k8s.io/helm v2.14.2+incompatible // indirect
 )
