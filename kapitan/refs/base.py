@@ -205,24 +205,24 @@ class Revealer(object):
     def _reveal_dir(self, dirname):
         """
         returns tuple with yaml, json, and raw concatenated output for revealed file types
-        it does not walk through the dir structure as it skips directories inside dirname
+        recurses through subdirectories in dirname
         """
         out_yaml = ''
         out_json = ''
         out_raw = ''
+
         # find yaml/json/raw files and concatenate output per type
-        for f in os.listdir(dirname):
-            full_path = os.path.join(dirname, f)
-            if not os.path.isfile(full_path):
-                pass
-            if f.endswith('.yml') or f.endswith('.yaml'):
-                out, _ = self._reveal_file(full_path)
+        for fpath in list_all_paths(dirname):
+            if not os.path.isfile(fpath):
+                continue
+            if fpath.endswith('.yml') or fpath.endswith('.yaml'):
+                out, _ = self._reveal_file(fpath)
                 out_yaml += out
-            elif f.endswith('.json'):
-                out, _ = self._reveal_file(full_path)
-                out_json += self._reveal_file(full_path)
+            elif fpath.endswith('.json'):
+                out, _ = self._reveal_file(fpath)
+                out_json += self._reveal_file(fpath)
             else:
-                out, _ = self._reveal_file(full_path)
+                out, _ = self._reveal_file(fpath)
                 out_raw += out
 
         return out_yaml, out_json, out_raw
