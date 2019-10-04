@@ -34,13 +34,16 @@ Additional parameters are available for each positional argument. For example:
 
 ```
 $ kapitan compile -h
-usage: kapitan compile [-h] [--search-paths JPATH [JPATH ...]] [--verbose]
-                       [--prune] [--quiet] [--output-path PATH]
-                       [--targets TARGET [TARGET ...]] [--parallelism INT]
-                       [--indent INT] [--secrets-path SECRETS_PATH] [--reveal]
+usage: kapitan compile [-h] [--search-paths JPATH [JPATH ...]]
+                       [--jinja2-filters FPATH] [--verbose] [--prune]
+                       [--quiet] [--output-path PATH] [--fetch] [--validate]
+                       [--parallelism INT] [--indent INT]
+                       [--refs-path REFS_PATH] [--reveal]
                        [--inventory-path INVENTORY_PATH] [--cache]
                        [--cache-paths PATH [PATH ...]]
-                       [--ignore-version-check]
+                       [--ignore-version-check] [--schemas-path SCHEMAS_PATH]
+                       [--targets TARGET [TARGET ...] | --labels
+                       [key=value [key=value ...]]]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -53,15 +56,16 @@ optional arguments:
   --prune               prune jsonnet output
   --quiet               set quiet mode, only critical output
   --output-path PATH    set output path, default is "."
-  --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
-                        targets to compile, default is all
+  --fetch               fetches external dependencies
+  --validate            validate compile output against schemas as specified
+                        in inventory
   --parallelism INT, -p INT
                         Number of concurrent compile processes, default is 4
   --indent INT, -i INT  Indentation spaces for YAML/JSON, default is 2
-  --secrets-path SECRETS_PATH
-                        set secrets path, default is "./secrets"
-  --reveal              reveal secrets (warning: this will write sensitive
-                        data)
+  --refs-path REFS_PATH
+                        set refs path, default is "./refs"
+  --reveal              reveal refs (warning: this will potentially write
+                        sensitive data)
   --inventory-path INVENTORY_PATH
                         set inventory path, default is "./inventory"
   --cache, -c           enable compilation caching to .kapitan_cache, default
@@ -71,6 +75,12 @@ optional arguments:
                         []
   --ignore-version-check
                         ignore the version from .kapitan
+  --schemas-path SCHEMAS_PATH
+                        set schema cache path, default is "./schemas"
+  --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
+                        targets to compile, default is all
+  --labels [key=value [key=value ...]], -l [key=value [key=value ...]]
+                        compile targets matching the labels, default is all
 ```
 
 ## Using `.kapitan` config file
