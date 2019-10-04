@@ -7,6 +7,17 @@ local secret = import "./secret.jsonnet";
 
 local name = inv.parameters.mysql.instance_name;
 
+// sample jsonschema for mysql inventory parameters
+local schema = { type: "object",
+                 properties: {
+                   storage: { type: "string", pattern: "^[0-9]+[MGT]{1}$"},
+                   image: { type: "string" },
+                 }};
+// run jsonschema validation
+local validation = kap.jsonschema(inv.parameters.mysql, schema);
+// assert valid, otherwise error with validation.reason
+assert validation.valid: validation.reason;
+
 {
   local c = self,
 

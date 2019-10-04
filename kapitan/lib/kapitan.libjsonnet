@@ -7,4 +7,5 @@
   yaml_dump(obj):: std.native("yaml_dump")(std.toString(obj)),
   sha256(obj):: std.native("sha256_string")(std.toString(obj)),
   gzip_b64(obj):: std.native("gzip_b64")(std.toString(obj)),
+  jsonschema(obj, schema_obj):: std.native("jsonschema_validate")(std.toString(obj), std.toString(schema_obj)),
 }

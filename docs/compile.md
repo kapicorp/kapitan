@@ -116,6 +116,52 @@ jinja2_template - renders the jinja2 file with context specified
 sha256_string - returns sha256 of string
 gzip_b64 - returns base64 encoded gzip of obj
 inventory - returns a dictionary with the inventory for target
+jsonschema - validates obj with schema, returns object with 'valid' and 'reason' keys
+```
+##### Jsonschema validation from jsonnet
+
+Given the follow example inventory:
+
+```
+mysql:
+  storage: 10G
+  storage_class: standard
+  image: mysql:latest
+```
+
+The yaml inventory structure can be validated with the new `jsonschema()` function:
+
+```
+local schema = {
+    type: "object",
+    properties: {
+        storage: { type: "string", pattern: "^[0-9]+[MGT]{1}$"},
+        image: { type: "string" },
+    }
+};
+// run jsonschema validation
+local validation = kap.jsonschema(inv.parameters.mysql, schema);
+// assert valid, otherwise error with validation.reason
+assert validation.valid: validation.reason;
+```
+
+If `validation.valid` is not true, it will then fail compilation and display `validation.reason`.
+
+For example, if defining the `storage` value with an invalid pattern (`10Z`), compile fails:
+
+```
+Jsonnet error: failed to compile /code/components/mysql/main.jsonnet:
+ RUNTIME ERROR: '10Z' does not match '^[0-9]+[MGT]{1}$'
+
+Failed validating 'pattern' in schema['properties']['storage']:
+    {'pattern': '^[0-9]+[MGT]{1}$', 'type': 'string'}
+
+On instance['storage']:
+    '10Z'
+
+/code/mysql/main.jsonnet:(19:1)-(43:2)
+
+Compile error: failed to compile target: minikube-mysql
 ```
 
 ##### Jinja2 jsonnet templating
