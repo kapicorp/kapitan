@@ -1,5 +1,5 @@
 # /bin/terraform
-FROM hashicorp/terraform:0.12.8 AS terraform-binary
+FROM hashicorp/terraform:0.12.10 AS terraform-binary
 
 # /bin/promtool
 FROM quay.io/prometheus/prometheus:v2.12.0 AS prometheus-binary
