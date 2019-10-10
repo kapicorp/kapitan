@@ -119,6 +119,61 @@ class CliFuncsTest(unittest.TestCase):
 
         os.remove(test_tag_file)
 
+
+    def test_cli_ref_reveal_recursive_dir(self):
+        """
+        run $ kapitan refs --reveal -f /some/dir
+        where /some/dir has manifests in nested dirs:
+        /some/dir/1.yml
+        /some/dir/another/2.yml
+        /some/dir/another/dir/3.yml
+        """
+        # create 3 refs
+        for ref_count in range(1,4):
+            ref_content = "I am ref{}!".format(ref_count)
+            ref_file = tempfile.mktemp()
+            with open(ref_file, "w") as fp:
+                fp.write(ref_content)
+
+            sys.argv = ["kapitan", "refs", "--write", "base64:test_ref_{}".format(ref_count),
+                        "-f", ref_file,
+                        "--refs-path", REFS_PATH]
+            main()
+
+        # create nested dir structure with unrevealed manifests
+        unrevealed_dir = tempfile.mkdtemp()
+        ref_content = """---\nref_value_{}: {}\n"""
+
+        some_dir = os.path.join(unrevealed_dir, "some/dir")
+        some_dir_other = os.path.join(unrevealed_dir, "some/dir/another")
+        some_dir_another = os.path.join(unrevealed_dir, "some/dir/another/dir")
+        os.makedirs(some_dir)
+        os.makedirs(some_dir_other)
+        os.makedirs(some_dir_another)
+
+        # write manifests in nested dirs
+        expected_output = ""
+        for dir_path in enumerate((some_dir, some_dir_other, some_dir_another), 1):
+            count, path = dir_path
+            manifest_path = os.path.join(path, "{}.yml".format(count))
+            with open(manifest_path, "w") as f:
+                ref = "?{{base64:test_ref_{}}}".format(count)
+                f.write(ref_content.format(count, ref))
+
+            # set expected revealed output
+            expected_ref_rev = "I am ref{}!".format(count)
+            expected_output += ref_content.format(count, expected_ref_rev)
+
+        sys.argv = ["kapitan", "refs", "--reveal",
+                    "-f", some_dir,
+                    "--refs-path", REFS_PATH]
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual(expected_output, stdout.getvalue())
+
+
     def test_cli_secret_validate_targets(self):
         """
         run $ kapitan refs --validate-targets
