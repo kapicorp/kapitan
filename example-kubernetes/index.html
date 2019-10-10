@@ -644,15 +644,15 @@
 <p>Therefore, when you run <code>kapitan compile</code>, under the <code>compiled</code> folder that kapitan generates, you will see three folders named after these targets.</p>
 <p><code>classes</code> is a folder that contains yaml files used as the "base class" in the hierarchical inventory database. The values defined here are inherited by the target files. For more explanation on how this works, look at the <a href="../inventory/">inventory documentation</a>. Notice how the classes are nicely divided up into components and clusters, such as nginx and mysql, in order to clearly define what components each target should contain and to make the classes reusable.</p>
 <p>For example, take a look at <code>targets/nginx.yml</code>:</p>
-<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">classes</span><span class="p p-Indicator">:</span>
+<div class="highlight"><pre><span></span><span class="nt">classes</span><span class="p">:</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">common</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">cluster.minikube</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">component.namespace</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">component.nginx</span>
 
-<span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">target_name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-nginx</span>
-  <span class="l l-Scalar l-Scalar-Plain">namespace</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
+<span class="nt">parameters</span><span class="p">:</span>
+  <span class="nt">target_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-nginx</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
 </pre></div>
 
 <p>This target inherits values from four files under <code>classes</code> folder:</p>
@@ -665,14 +665,14 @@
 <p><em>Note: that some of these classes themselves may inherit from other classes.</em></p>
 <p>And the way classes are defined makes it easy to identify what components and clusters this target should contain and belong to!</p>
 <p>Let's take a close look now at <code>component/namespace.yml</code>:</p>
-<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">namespace</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
-  <span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">compile</span><span class="p p-Indicator">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">pre-deploy</span>
-      <span class="l l-Scalar l-Scalar-Plain">input_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">jsonnet</span>
-      <span class="l l-Scalar l-Scalar-Plain">output_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yaml</span>
-      <span class="l l-Scalar l-Scalar-Plain">input_paths</span><span class="p p-Indicator">:</span>
+<div class="highlight"><pre><span></span><span class="nt">parameters</span><span class="p">:</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
+  <span class="nt">kapitan</span><span class="p">:</span>
+    <span class="nt">compile</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">pre-deploy</span>
+      <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">jsonnet</span>
+      <span class="nt">output_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yaml</span>
+      <span class="nt">input_paths</span><span class="p">:</span>
         <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">components/namespace/main.jsonnet</span>
 </pre></div>
 
@@ -718,29 +718,29 @@ local p = inventory.parameters;
 </pre></div>
 
 <p>We have "00_namespace" and "10_serviceaccount" as the keys. These will become files under <code>compiled/minikube-nginx/pre-deploy</code>, since <code>pre-deploy</code> is the <code>input_paths</code> declared in the inventory. For instance, <code>00_namespace.yml</code> would look like this:</p>
-<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
-<span class="l l-Scalar l-Scalar-Plain">kind</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">Namespace</span>
-<span class="l l-Scalar l-Scalar-Plain">metadata</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">annotations</span><span class="p p-Indicator">:</span> <span class="p p-Indicator">{}</span>
-  <span class="l l-Scalar l-Scalar-Plain">labels</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-nginx</span>
-  <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-nginx</span>
-  <span class="l l-Scalar l-Scalar-Plain">namespace</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-nginx</span>
-<span class="l l-Scalar l-Scalar-Plain">spec</span><span class="p p-Indicator">:</span> <span class="p p-Indicator">{}</span>
+<div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Namespace</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">annotations</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+  <span class="nt">labels</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-nginx</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-nginx</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-nginx</span>
+<span class="nt">spec</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
 </pre></div>
 
 <h3 id="templates-docs-scripts">templates, docs, scripts</h3>
 <p>These folders contain jinja2 template files. For example, <code>component.elasticsearch</code> contains:</p>
-<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">compile</span><span class="p p-Indicator">:</span>
+<div class="highlight"><pre><span></span><span class="nt">kapitan</span><span class="p">:</span>
+  <span class="nt">compile</span><span class="p">:</span>
   <span class="c1"># other items abbreviated for clarity</span>
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">scripts</span>
-    <span class="l l-Scalar l-Scalar-Plain">input_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">jinja2</span>
-    <span class="l l-Scalar l-Scalar-Plain">input_paths</span><span class="p p-Indicator">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">scripts</span>
+    <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">jinja2</span>
+    <span class="nt">input_paths</span><span class="p">:</span>
       <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">scripts</span>
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">.</span>
-    <span class="l l-Scalar l-Scalar-Plain">input_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">jinja2</span>
-    <span class="l l-Scalar l-Scalar-Plain">input_paths</span><span class="p p-Indicator">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">.</span>
+    <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">jinja2</span>
+    <span class="nt">input_paths</span><span class="p">:</span>
       <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">docs/elasticsearch/README.md</span>
 </pre></div>
 
@@ -748,31 +748,31 @@ local p = inventory.parameters;
 <h3 id="secrets">secrets</h3>
 <p>This folder contains secrets created manually by the user, or automatically by kapitan. Refer to <a href="../secrets/">secrets management</a> for how it works.</p>
 <p>In this example, the configuration, such as the recipients, is declared in <code>inventory/classes/common.yml</code>:</p>
-<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">vars</span><span class="p p-Indicator">:</span>
-      <span class="l l-Scalar l-Scalar-Plain">target</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
-      <span class="l l-Scalar l-Scalar-Plain">namespace</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
-    <span class="l l-Scalar l-Scalar-Plain">secrets</span><span class="p p-Indicator">:</span>
-      <span class="l l-Scalar l-Scalar-Plain">gpg</span><span class="p p-Indicator">:</span>
-        <span class="l l-Scalar l-Scalar-Plain">recipients</span><span class="p p-Indicator">:</span>
-          <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">example@kapitan.dev</span>
-            <span class="l l-Scalar l-Scalar-Plain">fingerprint</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C</span>
+<div class="highlight"><pre><span></span><span class="nt">parameters</span><span class="p">:</span>
+  <span class="nt">kapitan</span><span class="p">:</span>
+    <span class="nt">vars</span><span class="p">:</span>
+      <span class="nt">target</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
+      <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
+    <span class="nt">secrets</span><span class="p">:</span>
+      <span class="nt">gpg</span><span class="p">:</span>
+        <span class="nt">recipients</span><span class="p">:</span>
+          <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">example@kapitan.dev</span>
+            <span class="nt">fingerprint</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C</span>
 </pre></div>
 
 <p>The references to the secrets are declared in <code>inventory/classes/component/mysql</code>, which is inherited by the target <strong>minikube-mysql</strong>. After running <code>kapitan compile</code>, some of the generated manifests contain the references to secrets. For example, have a look at <code>compiled/minikube-mysql/manifests/mysql_secret.yml</code>:</p>
-<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
-<span class="l l-Scalar l-Scalar-Plain">data</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">MYSQL_ROOT_PASSWORD</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">?{gpg:targets/minikube-mysql/mysql/password:ec3d54de}</span>
-  <span class="l l-Scalar l-Scalar-Plain">MYSQL_ROOT_PASSWORD_SHA256</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">?{gpg:targets/minikube-mysql/mysql/password_sha256:122d2732}</span>
-<span class="l l-Scalar l-Scalar-Plain">kind</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">Secret</span>
-<span class="l l-Scalar l-Scalar-Plain">metadata</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">annotations</span><span class="p p-Indicator">:</span> <span class="p p-Indicator">{}</span>
-  <span class="l l-Scalar l-Scalar-Plain">labels</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">example-mysql</span>
-  <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">example-mysql</span>
-  <span class="l l-Scalar l-Scalar-Plain">namespace</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-mysql</span>
-<span class="l l-Scalar l-Scalar-Plain">type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">Opaque</span>
+<div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">data</span><span class="p">:</span>
+  <span class="nt">MYSQL_ROOT_PASSWORD</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">?{gpg:targets/minikube-mysql/mysql/password:ec3d54de}</span>
+  <span class="nt">MYSQL_ROOT_PASSWORD_SHA256</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">?{gpg:targets/minikube-mysql/mysql/password_sha256:122d2732}</span>
+<span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Secret</span>
+<span class="nt">metadata</span><span class="p">:</span>
+  <span class="nt">annotations</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+  <span class="nt">labels</span><span class="p">:</span>
+    <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">example-mysql</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">example-mysql</span>
+  <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-mysql</span>
+<span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Opaque</span>
 </pre></div>
 
 <p><code>MYSQL_ROOT_PASSWORD</code> refers to the secret stored in <code>secrets/targets/minikube-mysql/mysql/password</code> and so on.</p>

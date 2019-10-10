@@ -430,6 +430,33 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#selective-target-compilation" title="Selective target compilation" class="md-nav__link">
+    Selective target compilation
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#specific-targets" title="Specific target(s)" class="md-nav__link">
+    Specific target(s)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-labels" title="Using labels" class="md-nav__link">
+    Using labels
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-kapitan-config-file" title="Using .kapitan config file" class="md-nav__link">
     Using .kapitan config file
   </a>
@@ -509,6 +536,33 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#selective-target-compilation" title="Selective target compilation" class="md-nav__link">
+    Selective target compilation
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#specific-targets" title="Specific target(s)" class="md-nav__link">
+    Specific target(s)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-labels" title="Using labels" class="md-nav__link">
+    Using labels
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-kapitan-config-file" title="Using .kapitan config file" class="md-nav__link">
     Using .kapitan config file
   </a>
@@ -564,13 +618,16 @@ optional arguments:
 
 <p>Additional parameters are available for each positional argument. For example:</p>
 <div class="highlight"><pre><span></span>$ kapitan compile -h
-usage: kapitan compile [-h] [--search-paths JPATH [JPATH ...]] [--verbose]
-                       [--prune] [--quiet] [--output-path PATH]
-                       [--targets TARGET [TARGET ...]] [--parallelism INT]
-                       [--indent INT] [--secrets-path SECRETS_PATH] [--reveal]
+usage: kapitan compile [-h] [--search-paths JPATH [JPATH ...]]
+                       [--jinja2-filters FPATH] [--verbose] [--prune]
+                       [--quiet] [--output-path PATH] [--fetch] [--validate]
+                       [--parallelism INT] [--indent INT]
+                       [--refs-path REFS_PATH] [--reveal]
                        [--inventory-path INVENTORY_PATH] [--cache]
                        [--cache-paths PATH [PATH ...]]
-                       [--ignore-version-check]
+                       [--ignore-version-check] [--schemas-path SCHEMAS_PATH]
+                       [--targets TARGET [TARGET ...] | --labels
+                       [key=value [key=value ...]]]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -583,15 +640,16 @@ optional arguments:
   --prune               prune jsonnet output
   --quiet               set quiet mode, only critical output
   --output-path PATH    set output path, default is &quot;.&quot;
-  --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
-                        targets to compile, default is all
+  --fetch               fetches external dependencies
+  --validate            validate compile output against schemas as specified
+                        in inventory
   --parallelism INT, -p INT
                         Number of concurrent compile processes, default is 4
   --indent INT, -i INT  Indentation spaces for YAML/JSON, default is 2
-  --secrets-path SECRETS_PATH
-                        set secrets path, default is &quot;./secrets&quot;
-  --reveal              reveal secrets (warning: this will write sensitive
-                        data)
+  --refs-path REFS_PATH
+                        set refs path, default is &quot;./refs&quot;
+  --reveal              reveal refs (warning: this will potentially write
+                        sensitive data)
   --inventory-path INVENTORY_PATH
                         set inventory path, default is &quot;./inventory&quot;
   --cache, -c           enable compilation caching to .kapitan_cache, default
@@ -601,21 +659,39 @@ optional arguments:
                         []
   --ignore-version-check
                         ignore the version from .kapitan
+  --schemas-path SCHEMAS_PATH
+                        set schema cache path, default is &quot;./schemas&quot;
+  --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
+                        targets to compile, default is all
+  --labels [key=value [key=value ...]], -l [key=value [key=value ...]]
+                        compile targets matching the labels, default is all
+</pre></div>
+
+<h2 id="selective-target-compilation">Selective target compilation</h2>
+<p>If you only want to compile a subset or specific targets, you can use the two kapitan compile flags <code>--targets, -t</code> or <code>--labels, -l</code>.</p>
+<h4 id="specific-targets">Specific target(s)</h4>
+<div class="highlight"><pre><span></span>$ cd examples/kubernetes
+$ kapitan compile -t minikube-mysql
+Compiled minikube-mysql (0.43s)
+</pre></div>
+
+<h4 id="using-labels">Using labels</h4>
+<div class="highlight"><pre><span></span>$ cd examples/kubernetes
+
+$ cat inventory/classes/component/nginx-kadet.yml  # Inherited by minikube-nginx-kadet target
+parameters:
+  ...
+  kapitan:
+    ...
+    labels:
+      type: kadet
+
+$ kapitan compile -l type=kadet
+Compiled minikube-nginx-kadet (0.14s)
 </pre></div>
 
 <h2 id="using-kapitan-config-file">Using <code>.kapitan</code> config file</h2>
-<p>These parameters can also be defined in a local <code>.kapitan</code> file, for example:</p>
-<div class="highlight"><pre><span></span>$ cat .kapitan
-
-compile:
-  indent: 4
-  parallelism: 8
-</pre></div>
-
-<p>This is equivalent to running:</p>
-<div class="highlight"><pre><span></span>kapitan compile --indent 4 --parallelism 8
-</pre></div>
-
+<p>These parameters can also be defined in a local <code>.kapitan</code> file per project directory, for example:</p>
 <p>To enforce the kapitan version used for compilation (for consistency and safety), you can add <code>version</code> to <code>.kapitan</code>:</p>
 <div class="highlight"><pre><span></span>$ cat .kapitan
 version: 0.21.0
@@ -624,6 +700,31 @@ version: 0.21.0
 <p>Or to skip all minor version checks:</p>
 <div class="highlight"><pre><span></span>$ cat .kapitan
 version: 0.21
+</pre></div>
+
+<p>You can also permanently define all command line flags in the <code>.kapitan</code> config file. For example:</p>
+<div class="highlight"><pre><span></span>$ cat .kapitan
+version: 0.21
+
+compile:
+  indent: 4
+  parallelism: 8
+</pre></div>
+
+<p>would be equivalent to running:</p>
+<div class="highlight"><pre><span></span>kapitan compile --indent 4 --parallelism 8
+</pre></div>
+
+<p>or</p>
+<div class="highlight"><pre><span></span>$ cat .kapitan
+version: 0.21
+
+inventory:
+  inventory-path: ./some_path
+</pre></div>
+
+<p>which would be equivalent to always running:</p>
+<div class="highlight"><pre><span></span>kapitan inventory --inventory-path=./some_path
 </pre></div>
                 
                   

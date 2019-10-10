@@ -566,10 +566,10 @@ The <code>self.body()</code> method is reserved for setting self.root on instant
 
 <p>compiles into:</p>
 <div class="highlight"><pre><span></span><span class="nn">---</span>
-<span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">myapp</span>
-<span class="l l-Scalar l-Scalar-Plain">inner</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">foo</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">bar</span>
-<span class="l l-Scalar l-Scalar-Plain">list</span><span class="p p-Indicator">:</span>
+<span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">myapp</span>
+<span class="nt">inner</span><span class="p">:</span>
+  <span class="nt">foo</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bar</span>
+<span class="nt">list</span><span class="p">:</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">3</span>
@@ -598,10 +598,10 @@ The <code>self.update_root()</code> method allows importing a YAML/JSON file to 
 <p>MyApp's skeleton can be set instead like this:
 <div class="highlight"><pre><span></span><span class="c1">#skel.yml</span>
 <span class="nn">---</span>
-<span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">myapp</span>
-<span class="l l-Scalar l-Scalar-Plain">inner</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">foo</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">bar</span>
-<span class="l l-Scalar l-Scalar-Plain">list</span><span class="p p-Indicator">:</span>
+<span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">myapp</span>
+<span class="nt">inner</span><span class="p">:</span>
+  <span class="nt">foo</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bar</span>
+<span class="nt">list</span><span class="p">:</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">3</span>
@@ -644,11 +644,11 @@ The <code>self.update_root()</code> method allows importing a YAML/JSON file to 
 </pre></div>
 compiles to:</p>
 <div class="highlight"><pre><span></span><span class="nn">---</span>
-<span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">otherapp1</span>
-<span class="l l-Scalar l-Scalar-Plain">inner</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">foo</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">bar2</span>
-<span class="l l-Scalar l-Scalar-Plain">replicas</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
-<span class="l l-Scalar l-Scalar-Plain">size</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">otherapp1</span>
+<span class="nt">inner</span><span class="p">:</span>
+  <span class="nt">foo</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bar2</span>
+<span class="nt">replicas</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="nt">size</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3</span>
 </pre></div>
 
 <h2 id="components">Components</h2>
@@ -672,15 +672,15 @@ compiles to:</p>
 <p>An inventory class must be created for <code>tinyapp</code>:</p>
 <div class="highlight"><pre><span></span><span class="c1"># inventory/classes/components/tinyapp.yml</span>
 
-<span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">tinyapp</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">replicas</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
-  <span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">compile</span><span class="p p-Indicator">:</span>
-    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">manifests</span>
-      <span class="l l-Scalar l-Scalar-Plain">input_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">kadet</span>
-      <span class="l l-Scalar l-Scalar-Plain">output_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yaml</span>
-      <span class="l l-Scalar l-Scalar-Plain">input_paths</span><span class="p p-Indicator">:</span>
+<span class="nt">parameters</span><span class="p">:</span>
+  <span class="nt">tinyapp</span><span class="p">:</span>
+    <span class="nt">replicas</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+  <span class="nt">kapitan</span><span class="p">:</span>
+    <span class="nt">compile</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">manifests</span>
+      <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kadet</span>
+      <span class="nt">output_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yaml</span>
+      <span class="nt">input_paths</span><span class="p">:</span>
         <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">components/tinyapp</span>
 </pre></div>
 

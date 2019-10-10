@@ -520,12 +520,12 @@ The plan is to have this validation feature extendable to other outputs as well,
 <p>Author: @yoshi-1224</p>
 <h2 id="specification">Specification</h2>
 <p>The following inventory will validate the structure of Kubernetes Service manifest file in <output_path>.</p>
-<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">validate</span><span class="p p-Indicator">:</span>
-       <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">output_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">kubernetes.service</span> 
-         <span class="l l-Scalar l-Scalar-Plain">version</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">1.6.6</span>
-         <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">relative/path/in/target</span>
+<div class="highlight"><pre><span></span><span class="nt">parameters</span><span class="p">:</span>
+  <span class="nt">kapitan</span><span class="p">:</span>
+    <span class="nt">validate</span><span class="p">:</span>
+       <span class="p p-Indicator">-</span> <span class="nt">output_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kubernetes.service</span> 
+         <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1.6.6</span>
+         <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">relative/path/in/target</span>
 </pre></div>
 
 <p><code>version</code> parameter is optional: if omitted, the version will be set to the stable release of kubernetes (tbc).</p>

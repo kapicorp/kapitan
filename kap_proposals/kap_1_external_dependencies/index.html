@@ -519,21 +519,21 @@
 <p>Author: @yoshi-1224</p>
 <h2 id="specification">Specification</h2>
 <p>Specify the files to be fetched as follows:</p>
-<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span>
- <span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">dependencies</span><span class="p p-Indicator">:</span>
-   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">git | http[s]</span>
-     <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path&gt;</span>
-     <span class="l l-Scalar l-Scalar-Plain">source</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;git/http[s]_url&gt;</span>    
+<div class="highlight"><pre><span></span><span class="nt">parameters</span><span class="p">:</span>
+ <span class="nt">kapitan</span><span class="p">:</span>
+  <span class="nt">dependencies</span><span class="p">:</span>
+   <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">git | http[s]</span>
+     <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path&gt;</span>
+     <span class="nt">source</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;git/http[s]_url&gt;</span>    
 </pre></div>
 
 <p>The output path is the path to save the dependency into. For example, it could be <code>/components/external/manifest.jsonnet</code>. Then, the user can specify the fetched file as a <code>kapitan.compile</code> item along with the locally-created files.  </p>
 <p>Git type may also include <code>ref</code> and <code>subdir</code> parameters as illustrated below:</p>
-<div class="highlight"><pre><span></span><span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">git</span>
-  <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path&gt;</span>
-  <span class="l l-Scalar l-Scalar-Plain">source</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;git_url&gt;</span>
-  <span class="l l-Scalar l-Scalar-Plain">subdir</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">relative/path/in/repository</span>
-  <span class="l l-Scalar l-Scalar-Plain">ref</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;commit_hash/branch/tag&gt;</span>
+<div class="highlight"><pre><span></span><span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">git</span>
+  <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path&gt;</span>
+  <span class="nt">source</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;git_url&gt;</span>
+  <span class="nt">subdir</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">relative/path/in/repository</span>
+  <span class="nt">ref</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;commit_hash/branch/tag&gt;</span>
 </pre></div>
 
 <p>If the file already exists at <code>output_path</code>, the fetch will be skipped. For fresh fetch of the dependencies, users may add <code>--fetch</code> option as follows:</p>

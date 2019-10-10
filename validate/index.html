@@ -624,23 +624,23 @@ validate:
 
 <h3 id="example">Example</h3>
 <p>Refer to the <code>minikube-es</code> inventory in <a href="#kapitan-inventory">kapitan inventory</a>. To validate the schema of the compiled StatefulSet manifest at <code>compiled/minikube-es/manifests/es-client.yml</code> (created by <code>components/elasticsearch/main.jsonnet</code>), add <code>kapitan.validate</code> parameters in <code>minikube-es</code> inventory:</p>
-<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">vars</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">target</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
-    <span class="l l-Scalar l-Scalar-Plain">namespace</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
-  <span class="l l-Scalar l-Scalar-Plain">compile</span><span class="p p-Indicator">:</span>
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">output_path</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">manifests</span>
-    <span class="l l-Scalar l-Scalar-Plain">input_type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">jsonnet</span>
-    <span class="l l-Scalar l-Scalar-Plain">input_paths</span><span class="p p-Indicator">:</span>
+<div class="highlight"><pre><span></span><span class="nt">kapitan</span><span class="p">:</span>
+  <span class="nt">vars</span><span class="p">:</span>
+    <span class="nt">target</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
+    <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
+  <span class="nt">compile</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">manifests</span>
+    <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">jsonnet</span>
+    <span class="nt">input_paths</span><span class="p">:</span>
       <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">components/elasticsearch/main.jsonnet</span>
 
     <span class="c1">### other inputs abbreviated for clarity ###</span>
-  <span class="l l-Scalar l-Scalar-Plain">validate</span><span class="p p-Indicator">:</span>
-  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">output_paths</span><span class="p p-Indicator">:</span>
+  <span class="nt">validate</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">output_paths</span><span class="p">:</span>
       <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">manifests/es-client.yml</span>
-    <span class="l l-Scalar l-Scalar-Plain">type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">kubernetes</span>
-    <span class="l l-Scalar l-Scalar-Plain">kind</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">statefulset</span> <span class="c1"># note that it is in lowercase</span>
-    <span class="l l-Scalar l-Scalar-Plain">version</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">1.14.0</span> <span class="c1"># optional, defaults to 1.14.0</span>
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kubernetes</span>
+    <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">statefulset</span> <span class="c1"># note that it is in lowercase</span>
+    <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1.14.0</span> <span class="c1"># optional, defaults to 1.14.0</span>
 </pre></div>
 
 <p>Then run:</p>

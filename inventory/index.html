@@ -686,7 +686,7 @@
 <h2 id="overview">Overview</h2>
 <p>Inventory is a hierarchical database of variables that are passed to the targets during compilation.</p>
 <p>By default, Kapitan will look for an <code>inventory/</code> directory to render the inventory from.</p>
-<p>There are 2 types of objects inside the inventory; <a href="#inventory-classes">inventory classes</a> and <a href="#inventory-targets">inventory targets</a>. </p>
+<p>There are 2 types of objects inside the inventory; <a href="#inventory-classes">inventory classes</a> and <a href="#inventory-targets">inventory targets</a>.</p>
 <h3 id="inventory-classes">Inventory Classes</h3>
 <p>Classes define variables that are shared across many targets. You can have, for example, a <code>component.elasticsearch</code> class with all the default values for targets using elasticsearch. Or a <code>production</code> or <code>dev</code> class to enable / disable certain features based on the type of target.</p>
 <p>You can always override values further up the tree (i.e. in the inventory target file or in a class that inherits another class)</p>
@@ -737,13 +737,13 @@ parameters:
     users:
       root:
         # If &#39;secrets/targets/${target_name}/mysql/password&#39; doesn&#39;t exist, it will gen a random b64-encoded password
-        password: ?{gpg:targets/${target_name}/mysql/password|randomstr|base64}
-        # password: ?{gkms:targets/${target_name}/mysql/password|randomstr|base64}
-        # password: ?{awskms:targets/${target_name}/mysql/password|randomstr|base64}
+        password: ?{gpg:targets/${target_name}/mysql/password||randomstr|base64}
+        # password: ?{gkms:targets/${target_name}/mysql/password||randomstr|base64}
+        # password: ?{awskms:targets/${target_name}/mysql/password||randomstr|base64}
 
         # Generates the sha256 checksum of the previously declared B64&#39;ed password
         # It&#39;s base64&#39;ed again so that it can be used in kubernetes secrets
-        password_sha256: ?{gpg:targets/${target_name}/mysql/password_sha256|reveal:targets/${target_name}/mysql/password|sha256|base64}
+        password_sha256: ?{gpg:targets/${target_name}/mysql/password_sha256||reveal:targets/${target_name}/mysql/password|sha256|base64}
   kapitan:
     compile:
     - output_path: manifests
@@ -780,12 +780,12 @@ parameters:
     replicas: 2
 </pre></div>
 
-<p>Targets can also be defined inside the <code>inventory</code>. </p>
+<p>Targets can also be defined inside the <code>inventory</code>.</p>
 <p><strong>Note</strong>: Each target must contain the property <code>parameters.kapitan.vars.target</code> whose value equals to the name of the target file. For example, for the target <code>inventory/targets/minikube-es.yml</code>, the rendered inventory must contain:</p>
-<div class="highlight"><pre><span></span><span class="l l-Scalar l-Scalar-Plain">parameters</span><span class="p p-Indicator">:</span>
-  <span class="l l-Scalar l-Scalar-Plain">kapitan</span><span class="p p-Indicator">:</span>
-    <span class="l l-Scalar l-Scalar-Plain">vars</span><span class="p p-Indicator">:</span>
-      <span class="l l-Scalar l-Scalar-Plain">target</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-es</span>
+<div class="highlight"><pre><span></span><span class="nt">parameters</span><span class="p">:</span>
+  <span class="nt">kapitan</span><span class="p">:</span>
+    <span class="nt">vars</span><span class="p">:</span>
+      <span class="nt">target</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-es</span>
 </pre></div>
 
 <h3 id="kapitan-specific-inventory-values-parameterskapitan">kapitan-specific inventory values: <code>parameters.kapitan</code></h3>
