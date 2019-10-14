@@ -37,6 +37,8 @@ class CompileKubernetesTest(unittest.TestCase):
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-c"]
         main()
+        # Compile again to verify caching works as expected
+        main()
         os.remove('./compiled/.kapitan_cache')
         compiled_dir_hash = directory_hash(os.getcwd() + '/compiled')
         test_compiled_dir_hash = directory_hash(os.getcwd() + '/../../tests/test_kubernetes_compiled')
