@@ -51,24 +51,31 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
     multiprocessing pool with parallel number of processes.
     kwargs are passed to compile_target()
     """
+    # temp_path will hold compiled items
+    temp_path = tempfile.mkdtemp(suffix='.kapitan')
+
+    updated_targets = targets
+    try:
+        updated_targets = search_targets(inventory_path, targets, labels)
+    except CompileError as e:
+        logger.error(e)
+        sys.exit(1)
+
+    # If --cache is set
+    if kwargs.get('cache'):
+        additional_cache_paths = kwargs.get('cache_paths')
+        generate_inv_cache_hashes(inventory_path, targets, additional_cache_paths)
+
+        if not targets:
+            updated_targets = changed_targets(inventory_path, output_path)
+            logger.debug("Changed targets since last compilation: %s", updated_targets)
+            if len(updated_targets) == 0:
+                logger.info("No changes since last compilation.")
+                return
+
     pool = multiprocessing.Pool(parallel)
 
     try:
-        # temp_path will hold compiled items
-        temp_path = tempfile.mkdtemp(suffix='.kapitan')
-        updated_targets = search_targets(inventory_path, targets, labels)
-        # If --cache is set
-        if kwargs.get('cache'):
-            additional_cache_paths = kwargs.get('cache_paths')
-            generate_inv_cache_hashes(inventory_path, targets, additional_cache_paths)
-
-            if not targets:
-                updated_targets = changed_targets(inventory_path, output_path)
-                logger.debug("Changed targets since last compilation: %s", updated_targets)
-                if len(updated_targets) == 0:
-                    logger.info("No changes since last compilation.")
-                    return
-
         target_objs = load_target_inventory(inventory_path, updated_targets)
 
         # append "compiled" to output_path so we can safely overwrite it
