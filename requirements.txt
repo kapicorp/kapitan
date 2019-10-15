@@ -2,7 +2,7 @@
 jsonnet==0.14.0
 pyyaml>=5.1
 Jinja2>=2.10
-jsonschema==3.0.2
+jsonschema==3.1.1
 python-gnupg==0.4.5
 six>=1.12.0
 cryptography>=2.6.1
@@ -15,6 +15,6 @@ cffi
 rfc3987==1.3.8
 GitPython==3.0.3
 hvac==0.9.5
-docker==4.0.2
+docker==4.1.0
 # Reclass dependencies
 pyparsing

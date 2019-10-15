@@ -1,3 +1,23 @@
+## 0.25.0:
+- Add support for revealing files in subdirectories (#386)
+- Upgrade to TF 0.12.10 in Dockerfile.ci (#391)
+- Label selectors for compilation (#388)
+- Normalise helm compile (#385)
+- Jsonschema function for jsonnet (#380)
+- Fix issue 381: Document .kapitan and update jsonnet, git and hvac dependencies (#383)
+- Vault secret backend added - read-only (#310)
+- Add yq to the docker images (#375)
+- Update all Dockerfiles to use multi-stage builds (#370)
+- Add additional content type header for fetching GZIP files (#364)
+- Fix Helm binding errors in docker (#359)
+- Restore old order in compile_targets to fix process fork issue (#396)
+
+#### Breaking:
+For these breaking changes, run `./scripts/kap_5_migrate.py` to help you migrate the majority of secrets.
+
+- Move to Kap5 ref types (#334)
+- Fix issue #277: Change first '|' operator in secrets functions with '||' (#382)
+
 ## 0.25.0-rc.2:
 - Add support for revealing files in subdirectories (#386)
 - Upgrade to TF 0.12.10 in Dockerfile.ci (#391)
