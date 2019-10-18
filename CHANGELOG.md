@@ -1,3 +1,6 @@
+## 0.25.2:
+- Update wrong path for binaries (#400)
+
 ## 0.25.1:
 - Add jsonnet back to dockerfile.ci (#398)
 
