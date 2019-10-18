@@ -32,9 +32,9 @@ ENV KBLD_URL=https://github.com/k14s/kbld/releases/download/v0.11.0/kbld-linux-a
 ENV PATH="/opt/venv/bin:${PATH}"
 
 COPY --from=terraform-binary /bin/terraform /usr/bin/terraform
-COPY --from=jsonnet-binary /opt/bitnami/jsonnet/bin/jsonnet /user/bin/jsonnet
-COPY --from=jsonnet-binary /opt/bitnami/jsonnet/bin/jsonnetfmt /user/bin/jsonnetfmt
-COPY --from=prometheus-binary /bin/promtool /user/bin/promtool
+COPY --from=jsonnet-binary /opt/bitnami/jsonnet/bin/jsonnet /usr/bin/jsonnet
+COPY --from=jsonnet-binary /opt/bitnami/jsonnet/bin/jsonnetfmt /usr/bin/jsonnetfmt
+COPY --from=prometheus-binary /bin/promtool /usr/bin/promtool
 COPY --from=helm-builder /kapitan /kapitan
 
 RUN apt-get update \
