@@ -1,3 +1,6 @@
+## 0.25.1:
+- Add jsonnet back to dockerfile.ci (#398)
+
 ## 0.25.0:
 - Add support for revealing files in subdirectories (#386)
 - Upgrade to TF 0.12.10 in Dockerfile.ci (#391)
