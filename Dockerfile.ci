@@ -1,5 +1,8 @@
 # /bin/terraform
-FROM hashicorp/terraform:0.12.10 AS terraform-binary
+FROM hashicorp/terraform:0.12.11 AS terraform-binary
+
+# /bin/jsonnet
+FROM bitnami/jsonnet:0.14.0 as jsonnet-binary
 
 # /bin/promtool
 FROM quay.io/prometheus/prometheus:v2.12.0 AS prometheus-binary
@@ -29,6 +32,8 @@ ENV KBLD_URL=https://github.com/k14s/kbld/releases/download/v0.11.0/kbld-linux-a
 ENV PATH="/opt/venv/bin:${PATH}"
 
 COPY --from=terraform-binary /bin/terraform /usr/bin/terraform
+COPY --from=jsonnet-binary /opt/bitnami/jsonnet/bin/jsonnet /user/bin/jsonnet
+COPY --from=jsonnet-binary /opt/bitnami/jsonnet/bin/jsonnetfmt /user/bin/jsonnetfmt
 COPY --from=prometheus-binary /bin/promtool /user/bin/promtool
 COPY --from=helm-builder /kapitan /kapitan
 
