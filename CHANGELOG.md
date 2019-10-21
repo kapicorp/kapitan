@@ -1,5 +1,6 @@
 ## 0.25.2:
 - Update wrong path for binaries (#400)
+- Fix template for kapitan init so that the results compiles out of the box (#403)
 
 ## 0.25.1:
 - Add jsonnet back to dockerfile.ci (#398)
