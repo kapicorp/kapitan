@@ -1,5 +1,5 @@
 # /bin/terraform
-FROM hashicorp/terraform:0.12.11 AS terraform-binary
+FROM hashicorp/terraform:0.12.12 AS terraform-binary
 
 # /bin/jsonnet
 FROM bitnami/jsonnet:0.14.0 as jsonnet-binary
@@ -22,12 +22,12 @@ RUN chmod +x ./kapitan/inputs/helm/build.sh \
     && ./kapitan/inputs/helm/build.sh
 
 # Build final image
-FROM python:3.7-stretch
+FROM python:3.7-buster
 
-ARG CLOUD_SDK_VERSION=262.0.0
+ARG CLOUD_SDK_VERSION=267.0.0
 
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
-ENV KAPP_URL=https://github.com/k14s/kapp/releases/download/v0.11.0/kapp-linux-amd64
+ENV KAPP_URL=https://github.com/k14s/kapp/releases/download/v0.14.0/kapp-linux-amd64
 ENV KBLD_URL=https://github.com/k14s/kbld/releases/download/v0.11.0/kbld-linux-amd64
 ENV PATH="/opt/venv/bin:${PATH}"
 
@@ -43,10 +43,11 @@ RUN apt-get update \
         bash \
         build-essential \
         curl \
+        docker.io \
         git \
+        gnupg \
         jq \
         lsb-release \
-        gnupg \
         wget \
         zip \
     && export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" \
