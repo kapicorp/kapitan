@@ -1,3 +1,6 @@
+## 0.25.3:
+- Update Dockerfile.ci to debian 10, latest terraform, gcloud sdk and docker (#406)
+
 ## 0.25.2:
 - Update wrong path for binaries (#400)
 - Fix template for kapitan init so that the results compiles out of the box (#403)
