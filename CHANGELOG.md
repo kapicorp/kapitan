@@ -1,3 +1,6 @@
+## 0.25.4:
+- Add bsdmainutils to Dockerfile.ci
+
 ## 0.25.3:
 - Update Dockerfile.ci to debian 10, latest terraform, gcloud sdk and docker (#406)
 
