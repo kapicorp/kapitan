@@ -18,3 +18,9 @@ hvac==0.9.5
 docker==4.1.0
 # Reclass dependencies
 pyparsing
+# azure dependencies
+azure-common==1.1.23
+azure-core===1.0.0b4
+azure-identity==1.0.0b4
+azure-keyvault==1.1.0
+azure-nspkg==3.0.2

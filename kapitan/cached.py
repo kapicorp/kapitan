@@ -21,6 +21,7 @@ inv_cache = {}
 gpg_obj = None
 gkms_obj = None
 awskms_obj = None
+azkms_obj = None
 dot_kapitan = {}
 ref_controller_obj = None
 revealer_obj = None

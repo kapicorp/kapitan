@@ -34,6 +34,7 @@ from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
+from kapitan.refs.secrets.azkms import AzureKMSSecret
 from kapitan.refs.secrets.vaultkv import VaultSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.resources import (inventory_reclass, resource_callbacks,
@@ -208,6 +209,14 @@ def main():
     refs_parser.add_argument('--key', '-K', help='set KMS key',
                              default=from_dot_kapitan('refs', 'key', ''),
                              metavar='KEY')
+    #
+    # for azure KMS, key is got from the other component defs
+    refs_parser.add_argument('--vault', help='azure vault url ()',
+                             default=from_dot_kapitan('refs', 'vault', 'overridden by env AZ_VAULT_URL'),
+                             metavar='VAULT')
+    #
+    # for azure KMS
+
     refs_parser.add_argument('--vault-auth', help='set authentication type for vaultkv secrets',
                              default=from_dot_kapitan('refs', 'vault-auth', ''),
                              metavar='AUTH')
@@ -430,6 +439,32 @@ def ref_write(args, ref_controller):
         secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
         tag = '?{{gkms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
+#
+# Azure KMS marker -- remove it
+#
+    elif token_name.startswith("azkms:"):
+        type_name, token_path = token_name.split(":")
+        key = args.key
+        vault = args.vault
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
+            if 'secrets' not in kap_inv_params:
+                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+
+            key = kap_inv_params['secrets']['azkms']['key']
+            vault = kap_inv_params['secrets']['azkms']['vault']
+        if not key:
+            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.azkms.key and use --target-name")
+        if not vault:
+            raise KapitanError("No KMS vault specified. Use --vault or specify it in parameters.kapitan.secrets.azkms.vault and use --target-name")
+        secret_obj = AzureKMSSecret(data, vault, key, encode_base64=args.base64)
+        tag = '?{{azkms:{}}}'.format(token_path)
+        ref_controller[tag] = secret_obj
+
+#
+# Azure KMS marker -- remove it
+#
 
     elif token_name.startswith("awskms:"):
         type_name, token_path = token_name.split(":")
@@ -536,6 +571,34 @@ def secret_update(args, ref_controller):
         secret_obj = ref_controller[tag]
         secret_obj.update_key(key)
         ref_controller[tag] = secret_obj
+    #
+    # Azure KMS marker -- remove it
+    #
+
+    elif token_name.startswith("azkms:"):
+        key = args.key
+        vault = args.vault
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
+            if 'secrets' not in kap_inv_params:
+                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+
+            key = kap_inv_params['secrets']['azkms']['key']
+            vault = kap_inv_params['secrets']['azkms']['vault']
+        if not key:
+            raise KapitanError("No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.azkms.key and use --target")
+        if not vault:
+            raise KapitanError("No Azure KMS vault specified. Use --vault or specify it in parameters.kapitan.secrets.azkms.key and use --target")
+        type_name, token_path = token_name.split(":")
+        tag = '?{{azkms:{}}}'.format(token_path)
+        secret_obj = ref_controller[tag]
+        secret_obj.update_key(key)
+        secret_obj.update_key(vault)
+        ref_controller[tag] = secret_obj
+    #
+    # Azure KMS marker -- remove it
+    #
 
     elif token_name.startswith("awskms:"):
         key = args.key
@@ -594,6 +657,16 @@ def secret_update_validate(args, ref_controller):
             recipients = kap_inv_params['secrets']['gpg']['recipients']
         except KeyError:
             recipients = None
+        #
+        # Azure KMS marker -- remove it
+        #
+        try:
+            azkey = kap_inv_params['secrets']['azkms']['key']
+        except KeyError:
+            azkey = None
+        #
+        # Azure KMS marker -- remove it
+        #
         try:
             gkey = kap_inv_params['secrets']['gkms']['key']
         except KeyError:
@@ -642,6 +715,26 @@ def secret_update_validate(args, ref_controller):
                     else:
                         secret_obj.update_key(gkey)
                         ref_controller[token_path] = secret_obj
+
+            #
+            # Azure KMS marker -- remove it
+            #
+            elif token_path.startswith("?{azkms:"):
+                if not azkey:
+                    logger.debug("secret_update_validate: target: %s has no inventory azkms key, skipping %s", target_name, token_path)
+                    continue
+                secret_obj = ref_controller[token_path]
+                if azkey != secret_obj.key:
+                    if args.validate_targets:
+                        logger.info("%s key mismatch", token_path)
+                        ret_code = 1
+                    else:
+                        secret_obj.update_key(azkey)
+                        ref_controller[token_path] = secret_obj
+
+            #
+            # Azure KMS marker -- remove it
+            #
 
             elif token_path.startswith("?{awskms:"):
                 if not awskey:

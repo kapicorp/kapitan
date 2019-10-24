@@ -29,6 +29,7 @@ from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import HttpResponseError
 from azure.keyvault.keys.crypto import EncryptionAlgorithm
 
+
 logger = logging.getLogger(__name__)
 
 # We are using default credentials as defined in the link:
@@ -48,25 +49,23 @@ class AzureKMSError(KapitanError):
     pass
 
 
-def azkms_obj():
+def azkms_obj(key, vault):
+
     if not cached.azkms_obj:
         # If --verbose is set, show requests from az api calls (which are actually logging.INFO)
         if logger.getEffectiveLevel() > logging.DEBUG:
             # TODO: set DEBUG for azure.* packages
-            logging.setLevel(logging.ERROR)
-
-        assert len(os.environ.get('AZ_VAULT_URL')) != 0, "Please export environment variable AZ_VAULT_URL "
-        assert len(os.environ.get('AZ_KEY_NAME')) != 0, "Please export an environment variable AZ_KEY_NAME "
-
+            logger.setLevel(logging.DEBUG)
         try:
             _credential = DefaultAzureCredential()
-            _key_client = KeyClient(vault_endpoint='ttps://{0}.vault.azure.net'.format(os.environ.get('AZ_VAULT_URL')),
+            _key_client = KeyClient(vault_endpoint='https://{0}.vault.azure.net'.format(vault),
                                         credential=_credential)
-            cached.azkms_obj = _key_client.get_cryptography_client(_key_client.get_key(os.environ.get('AZ_KEY_NAME')),
-                                                        credentials=_credential)
+            cached.azkms_obj = _key_client.get_cryptography_client(_key_client.get_key(key),
+                                                        credentials=_credential,
+                                                        logging_enable=True)
         except HttpResponseError as he:
             raise AzureKMSError(he)
-    return cached.gkms_obj
+    return cached.azkms_obj
 
 
 class AzureKMSSecret(Base64Ref):
@@ -79,16 +78,18 @@ class AzureKMSSecret(Base64Ref):
         set encode_base64 to True to base64 encode data before encrypting and writing
         set encrypt to False if loading data that is already encrypted and base64
         """
+        self.key = key or os.environ.get('AZ_KEY_NAME')
+        self.vault = vault or os.environ.get('AZ_VAULT_URL')
+
         if encrypt:
-            self._encrypt(data, encode_base64)
+            self._encrypt(data, key, vault, encode_base64)
             if encode_base64:
                 kwargs["encoding"] = "base64"
         else:
             self.data = data
-            self.key = key if key else os.environ.get('AZ_KEY_NAME')
-            self.vault = key if vault else os.environ.get('AZ_VAULT_URL')
         super().__init__(self.data, **kwargs)
         self.type_name = 'azkms'
+
 
     @classmethod
     def from_params(cls, data, ref_params):
@@ -108,7 +109,7 @@ class AzureKMSSecret(Base64Ref):
 
             key = target_inv['parameters']['kapitan']['secrets']['azkms']['key']
             vault = target_inv['parameters']['kapitan']['secrets']['azkms']['vault']
-            return cls(data, key, **ref_params.kwargs)
+            return cls(data, key, vault, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create AzureKMSSecret: target_name missing")
 
@@ -123,7 +124,7 @@ class AzureKMSSecret(Base64Ref):
         """
         # can't use super().reveal() as we want bytes
         ref_data = base64.b64decode(self.data)
-        return self._decrypt(ref_data)
+        return self._decrypt(ref_data, self.key, self.vault)
 
     def update_key(self, key):
         """
@@ -141,7 +142,7 @@ class AzureKMSSecret(Base64Ref):
         self.data = base64.b64encode(self.data).decode()
         return True
 
-    def _encrypt(self, data, key, encode_base64):
+    def _encrypt(self, data, key, vault, encode_base64):
         """
         encrypts data
         set encode_base64 to True to base64 encode data before writing
@@ -153,8 +154,8 @@ class AzureKMSSecret(Base64Ref):
             _data = base64.b64encode(data.encode())
             self.encoding = "base64"
         else:
-            # To guarantee _data is bytes
-            if isinstance(data, str):
+             # To guarantee _data is bytes
+             if isinstance(data, str):
                 _data = data.encode()
         try:
             ciphertext = ""
@@ -165,33 +166,39 @@ class AzureKMSSecret(Base64Ref):
             #
             # TODO: Get the encryption algo, currently hardcoded to EncryptionAlgorithm.rsa_oaep_256
             #
-                _cipher = azkms_obj().encrypt(
+                _cipher = azkms_obj(key, vault).encrypt(
                     EncryptionAlgorithm.rsa_oaep_256,
-                    base64.b64encode(_data).decode('ascii'))
-
-                ciphertext = base64.b64decode(_cipher.encode('ascii'))
+                    _data)
+                ciphertext = base64.b64encode(_cipher.ciphertext)
 
             self.data = ciphertext
             self.key = key
+            self.vault = vault
 
         except Exception as e:
             raise AzureKMSError(e)
 
-    def _decrypt(self, data):
+    def _decrypt(self, data, key, vault):
         """decrypt data"""
+        # check if b64 encoded
+        encode_base64 = self.encoding == 'base64'
         try:
             plaintext = ""
             # Mocking decrypted response for tests
             if self.key == "mock":
                 plaintext = "mock".encode()
             else:
-                _btxt = azkms_obj().decrypt(
+                _btxt = azkms_obj(key, vault).decrypt(
                     EncryptionAlgorithm.rsa_oaep_256,
-                    base64.b64encode(data).decode('ascii'))
+                    base64.b64decode(data))
 
-                plaintext = base64.b64decode(_btxt['plaintext'].encode('ascii'))
 
-            return plaintext.decode()
+                if encode_base64:
+                    plaintext = base64.b64decode(_btxt.decrypted_bytes).decode()
+                else:
+                    plaintext = _btxt.decrypted_bytes.decode()
+
+            return plaintext
 
         except Exception as e:
             raise AzureKMSError(e)
@@ -200,12 +207,15 @@ class AzureKMSSecret(Base64Ref):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding,
-                "key": self.key, "type": self.type_name}
+        return {"data": self.data,
+                "encoding": self.encoding,
+                "key": self.key,
+                "vault": self.vault,
+                "type": self.type_name}
 
 
-class GoogleKMSBackend(Base64RefBackend):
-    def __init__(self, path, ref_type=AzureKMSError):
+class AzKMSBackend(Base64RefBackend):
+    def __init__(self, path, ref_type=AzureKMSSecret):
         "init AzureKMSBackend ref backend type"
         super().__init__(path, ref_type)
         self.type_name = 'azkms'
