@@ -1,0 +1,5 @@
+parameters:
+    secrets:
+      azkms:
+        key: 'ach520-key'
+        vault: 'https://ao-anirban-kv.vault.azure.net'
