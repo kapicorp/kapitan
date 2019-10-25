@@ -70,6 +70,7 @@ class PlainRef(object):
                 obj = yaml.load(fp, Loader=YamlLoader)
                 _kwargs = {key: value for key, value in obj.items() if key not in ('data',)}
                 kwargs.update(_kwargs)
+                logger.debug(' -- from path {} -- '.format(obj['data']))
                 return cls(obj['data'], **kwargs)
 
         except IOError as ex:
@@ -388,11 +389,9 @@ class RefController(object):
             elif type_name == 'awskms':
                 from kapitan.refs.secrets.awskms import AWSKMSBackend
                 self.register_backend(AWSKMSBackend(self.path))
-            # AzKMSBackend
             elif type_name == 'azkms':
                 from kapitan.refs.secrets.azkms import AzKMSBackend
                 self.register_backend(AzKMSBackend(self.path))
-            # AzKMSBackend
             elif type_name == 'vaultkv':
                 from kapitan.refs.secrets.vaultkv import VaultBackend
                 self.register_backend(VaultBackend(self.path))

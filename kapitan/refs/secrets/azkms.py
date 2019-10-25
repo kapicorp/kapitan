@@ -18,6 +18,8 @@ import os
 import base64
 import logging
 import warnings
+from enum import Enum, auto
+
 
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan.refs.base import RefError
@@ -38,10 +40,26 @@ logger = logging.getLogger(__name__)
 # export AZURE_CLIENT_ID="generated app id"
 # export AZURE_CLIENT_SECRET="random password"
 # export AZURE_TENANT_ID="tenant id"
-# export AZ_VAULT_URL=<vault name>
+# export AZ_VAULT=<vault name>
 # export AZ_KEY_NAME=<name of the key used to ecrypt/decrypt
 # Remember to set the permissions -
 # az keyvault set-policy --name my-key-vault --spn $AZURE_CLIENT_ID --key-permissions get encrypt decrypt
+
+
+class EncryptionAlgorithm(str, Enum):
+    """Encryption algorithms"""
+
+    rsa_oaep = "RSA-OAEP"
+    rsa_oaep_256 = "RSA-OAEP-256"
+    rsa1_5 = "RSA1_5"
+
+    # an old classic
+    @staticmethod
+    def value_of(value):
+        for m, mm in EncryptionAlgorithm.__members__.items():
+            if m == value:
+                return EncryptionAlgorithm.__getattr__(m)
+
 
 
 class AzureKMSError(KapitanError):
@@ -69,24 +87,34 @@ def azkms_obj(key, vault):
 
 
 class AzureKMSSecret(Base64Ref):
-    def __init__(self, data, vault, key,
+    def __init__(self, data,
+                 vault,
+                 key,
+                 encryption_algorithm,
                  encrypt=True,
                  encode_base64=False, **kwargs):
         """
         encrypts data with key, vault defined in inventory
-        or picks out environemtn vars AZ_KEY_NAME, AZ_VAULT_URL
+        or picks out environment vars AZ_KEY_NAME, AZ_VAULT
+        default encryption_algo = EncryptionAlgorithm.rsa_oaep_256
         set encode_base64 to True to base64 encode data before encrypting and writing
         set encrypt to False if loading data that is already encrypted and base64
         """
-        self.key = key or os.environ.get('AZ_KEY_NAME')
-        self.vault = vault or os.environ.get('AZ_VAULT_URL')
 
         if encrypt:
-            self._encrypt(data, key, vault, encode_base64)
+            self._encrypt(data,
+                          key,
+                          vault,
+                          encryption_algorithm,
+                          encode_base64)
             if encode_base64:
                 kwargs["encoding"] = "base64"
         else:
             self.data = data
+            self.key = key or os.environ.get('AZ_KEY_NAME')
+            self.vault = vault or os.environ.get('AZ_VAULT')
+            self.encryption_algorithm = EncryptionAlgorithm.value_of(encryption_algorithm)
+
         super().__init__(self.data, **kwargs)
         self.type_name = 'azkms'
 
@@ -109,7 +137,8 @@ class AzureKMSSecret(Base64Ref):
 
             key = target_inv['parameters']['kapitan']['secrets']['azkms']['key']
             vault = target_inv['parameters']['kapitan']['secrets']['azkms']['vault']
-            return cls(data, key, vault, **ref_params.kwargs)
+            encryption_algorithm = target_inv['parameters']['kapitan']['secrets']['azkms']['encryption_algorithm']
+            return cls(data, key, vault, encryption_algorithm, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create AzureKMSSecret: target_name missing")
 
@@ -124,7 +153,7 @@ class AzureKMSSecret(Base64Ref):
         """
         # can't use super().reveal() as we want bytes
         ref_data = base64.b64decode(self.data)
-        return self._decrypt(ref_data, self.key, self.vault)
+        return self._decrypt(ref_data, self.key, self.vault, self.encryption_algorithm)
 
     def update_key(self, key):
         """
@@ -142,13 +171,18 @@ class AzureKMSSecret(Base64Ref):
         self.data = base64.b64encode(self.data).decode()
         return True
 
-    def _encrypt(self, data, key, vault, encode_base64):
+    def _encrypt(self, data,
+                 key,
+                 vault,
+                 encryption_algorithm,
+                 encode_base64):
         """
         encrypts data
         set encode_base64 to True to base64 encode data before writing
         """
         assert isinstance(key, str)
         _data = data
+        _encryption_algorithm = EncryptionAlgorithm.value_of(encryption_algorithm)
         self.encoding = "original"
         if encode_base64:
             _data = base64.b64encode(data.encode())
@@ -167,18 +201,21 @@ class AzureKMSSecret(Base64Ref):
             # TODO: Get the encryption algo, currently hardcoded to EncryptionAlgorithm.rsa_oaep_256
             #
                 _cipher = azkms_obj(key, vault).encrypt(
-                    EncryptionAlgorithm.rsa_oaep_256,
+                    _encryption_algorithm,
                     _data)
                 ciphertext = base64.b64encode(_cipher.ciphertext)
 
             self.data = ciphertext
             self.key = key
             self.vault = vault
-
+            self.encryption_algorithm = _encryption_algorithm
         except Exception as e:
             raise AzureKMSError(e)
 
-    def _decrypt(self, data, key, vault):
+    def _decrypt(self, data,
+                 key,
+                 vault,
+                 encryption_algorithm):
         """decrypt data"""
         # check if b64 encoded
         encode_base64 = self.encoding == 'base64'
@@ -189,9 +226,8 @@ class AzureKMSSecret(Base64Ref):
                 plaintext = "mock".encode()
             else:
                 _btxt = azkms_obj(key, vault).decrypt(
-                    EncryptionAlgorithm.rsa_oaep_256,
+                    encryption_algorithm,
                     base64.b64decode(data))
-
 
                 if encode_base64:
                     plaintext = base64.b64decode(_btxt.decrypted_bytes).decode()
@@ -199,7 +235,6 @@ class AzureKMSSecret(Base64Ref):
                     plaintext = _btxt.decrypted_bytes.decode()
 
             return plaintext
-
         except Exception as e:
             raise AzureKMSError(e)
 
@@ -211,6 +246,7 @@ class AzureKMSSecret(Base64Ref):
                 "encoding": self.encoding,
                 "key": self.key,
                 "vault": self.vault,
+                "encryption_algorithm": self.encryption_algorithm.name,
                 "type": self.type_name}
 
 
