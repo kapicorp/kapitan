@@ -47,18 +47,22 @@ logger = logging.getLogger(__name__)
 
 
 class EncryptionAlgorithm(str, Enum):
-    """Encryption algorithms"""
+    """
+    copied from https://raw.githubusercontent.com/Azure/azure-sdk-for-python/e0d093ccdd0a1afdc9d71d1fb17367de22c3328f/sdk/keyvault/azure-keyvault-keys/azure/keyvault/keys/crypto/_enums.py
+    Encryption algorithms
+    """
+    #TODO : import the module so that it depends on
 
     rsa_oaep = "RSA-OAEP"
     rsa_oaep_256 = "RSA-OAEP-256"
     rsa1_5 = "RSA1_5"
 
-    # an old classic
+    # an old recepie using java style attribuet access for Enum's
     @staticmethod
     def value_of(value):
-        for m, mm in EncryptionAlgorithm.__members__.items():
-            if m == value:
-                return EncryptionAlgorithm.__getattr__(m)
+        for _attribute_name, _ in EncryptionAlgorithm.__members__.items():
+            if _attribute_name == value:
+                return EncryptionAlgorithm.__getattr__(_attribute_name)
 
 
 

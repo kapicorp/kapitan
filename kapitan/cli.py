@@ -461,7 +461,7 @@ def ref_write(args, ref_controller):
         if not vault:
             raise KapitanError("No KMS vault specified. Use --azure-vault or specify it in parameters.kapitan.secrets.azkms.vault and use --target-name")
         if not encryption_algorithm:
-            raise KapitanError("No KMS vault specified. Use --azure-key-algo or specify it in parameters.kapitan.secrets.azkms.vault and use --target-name")
+            raise KapitanError("No KMS Key Algorithm specified. Use --azure-key-algo or specify it in parameters.kapitan.secrets.azkms.encryption_algorithm and use --target-name")
         secret_obj = AzureKMSSecret(data, vault, key, encryption_algorithm,  encode_base64=args.base64)
         tag = '?{{azkms:{}}}'.format(token_path)
         ref_controller[tag] = secret_obj
@@ -656,7 +656,6 @@ def secret_update_validate(args, ref_controller):
             recipients = kap_inv_params['secrets']['gpg']['recipients']
         except KeyError:
             recipients = None
-        # TODO: same key but in a different vault (check ..)
         try:
             azkey = kap_inv_params['secrets']['azkms']['key']
         except KeyError:
