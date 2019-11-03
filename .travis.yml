@@ -1,10 +1,22 @@
 language: python
 cache: pip
-matrix:
+jobs:
   include:
-  - python: 3.7
+  - stage: ubuntu-test-deploy
+    python: 3.7
     dist: xenial
     sudo: true
+  - stage: osx-deploy
+    if: tag IS present
+    language: shell
+    osx_image: xcode11.2 # Python 3.7.4 running on macOS 10.14.4
+    os: osx
+    before_install: skip  # TODO: find out what is required on osx
+    script:  # no tests
+      - make build_helm_binding
+    after_success: true  # overwrite after_success and do nothing
+    after_deploy: skip
+
 branches:
   only:
     - master
@@ -56,7 +68,8 @@ deploy:
       secure: VFZDeLYUZ/Fs+NTbIW7DjbANhqAtlbZTzsWods6MuSN3DmGibZwNBpHfNN/hCfJEBCKvmWBEzF2R14Pau+GMZAYaP0N0pCRuO8wtlXGe4ygc5bff4Y93BA98sTh/eRnLf+jsI+acliBWlm0WCRWDMsxfzhZTgWDO/IBdOrzwno5BqEeXbvsqe6MG9z3BLvp8t7WkI67NPoJfRGve7twb1VLMCLlRwXJwxefxgYHcH3pImhx4CMVjXKEMr4jQIMh+mlGA+aMhTAM/If2X3fhdbiA9KNNQ0FrZFLOw0iCLCYzaCHGm70eSMlXJr2kqEjzdZkR2J4TxnJqghTrnNVeXg917vtlFrTnJUxeOSQl3s3LOOQ0vM2wob8y+oPWYz7zw+KKqs8hA4crE7CngQmPGJvWQfYEGtW/5Zc9j+T/yplq5Zwqbe3ibsQ54V8jr6LU4IcLLXgT3qii13Zpg7pILQ+ObOge8c20EeUd6+HhBt9+5K0S67/GgSoa2Nd5+g4XgvEO95ncMZkWztNidk1ygVn00TLK5Dn8UHSaEoxlGXCfgVphzV1//MpOeJn67kQWxHvJxgqVfHAsbL2dlXMux/cuv+UQlRPQsw+8A18hpTUWcxRl7cLm9bMedW14CCtEmSWikanY/2lBEwFIjYndOu7v4VY4L3aNs6EsHrinoLVA=
     file:
       - CHANGELOG.md
-      - bindist/kapitan-linux-amd64
+      - bindist/kapitan-linux-*
+      - kapitan/inputs/helm/libtemplate_*.so
     prerelease: $PRERELEASE
     on:
       tags: true
@@ -70,5 +83,6 @@ deploy:
       secure: GBENUUiSJWHqQNU6NnKrbWSDIoTTPsowV9oME3eTXFOcyvZLL5W0xs5TwOXZxPyz0eaQ20F+o9rT8jiuhe9laA3gDnID109wznuRwY1uGsWP2xolRwZIDeikBS/V7LSrvm69IDGbBuyakWOS0Z1GgPKW3NZzJRYnWhwRolxgqrXmCtK5yiPBHMWRlwn+KPpjGkDKufw47PKOomxScmSeXv3wRk85azWbriNFbtnbymqGut2VqccdbWrQPZ9VaKPbOolnOA6XC95ib4sMyXzpTpwVfsPeBSlYQoCNr6G4QQ3P8x93/twFwFSTGoGqqF5qa8xsvu7KyinjBZvzsTYdTq/2KTKhogSQRkxhcIR+bWBguGWyim1zptbHI0NYPhAEwOtwWT94lXPaisDyCIgCXmMm9f68ViJ4qpfD6o1qaQ+iSmHq16Q+p3CAstKTbUhIEKZomkVwPc7M9D2vUj+LphdGGn8Qp2rbz/jbkfJjVhNJRYrhJuCwtK7O2icf5fgLHruhFKBYeiNepAbF9wyleAREYGBoiw2PT2c0RUYyX+ITrNLsEcV7EzfT7qOm3Pl/ONQ9VV3IaXXWExpOvPdSl3toyAAPqYJ0Zsv23l4PIIY/g6VREyhtGQx2P8ZCGYVfVa+dd1FVH0hfXIsKnmsp0+Y1cpFb1pBa/XWlXRwjxZw=
     on:
       tags: true
+      condition: $TRAVIS_OS_NAME = linux  # only deploy to pypi from ubuntu
 after_deploy:
   - bash ./scripts/after_deploy.sh
