@@ -21,7 +21,7 @@ import jsonschema
 import unittest
 import os
 
-from kapitan.resources import yaml_dump, gzip_b64, yaml_load, jsonschema_validate
+from kapitan.resources import yaml_dump, yaml_dump_stream, gzip_b64, yaml_load, jsonschema_validate
 from kapitan.utils import sha256_string, prune_empty
 
 
@@ -30,6 +30,11 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         """dump json string to yaml"""
         yaml = yaml_dump("{\"key\":\"value\"}")
         self.assertEqual(yaml, "key: value\n")
+
+    def test_yaml_dump_stream(self):
+        """dump json string to yaml"""
+        yaml = yaml_dump_stream("[{\"key\":\"value\"},{\"key\":\"value\"}]")
+        self.assertEqual(yaml, "key: value\n---\nkey: value\n")
 
     def test_yaml_load(self):
         """
