@@ -110,6 +110,7 @@ In addition, importing `kapitan.libjsonnet` makes available the following native
 
 ```
 yaml_load - returns a json string of the specified yaml file
+yaml_load_stream - returns a list of json strings of the specified yaml file
 yaml_dump - returns a string yaml from a json string
 file_read - reads the file specified
 jinja2_template - renders the jinja2 file with context specified

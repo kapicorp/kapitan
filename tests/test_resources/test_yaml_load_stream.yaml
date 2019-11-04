@@ -1,0 +1,12 @@
+---
+test1:
+  key: value
+  array:
+    - ele1
+    - ele2
+---
+test2:
+  key: value
+  array:
+    - ele1
+    - ele2
