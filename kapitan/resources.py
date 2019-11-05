@@ -60,6 +60,7 @@ def resource_callbacks(search_paths):
             "sha256_string": (("obj",), sha256_string),
             "gzip_b64": (("obj",), gzip_b64),
             "yaml_dump": (("obj",), yaml_dump),
+            "yaml_dump_stream": (("obj",), yaml_dump_stream),
             "yaml_load": (("name",),
                           partial(yaml_load, search_paths)),
             "yaml_load_stream": (("name",),
@@ -88,6 +89,12 @@ def yaml_dump(obj):
     """Dumps jsonnet obj as yaml"""
     _obj = json.loads(obj)
     return yaml.safe_dump(_obj, default_flow_style=False)
+
+
+def yaml_dump_stream(obj):
+    """Dumps jsonnet obj as yaml stream"""
+    _obj = json.loads(obj)
+    return yaml.safe_dump_all(_obj, default_flow_style=False)
 
 
 def gzip_b64(obj):
