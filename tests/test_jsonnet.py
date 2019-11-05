@@ -21,7 +21,7 @@ import jsonschema
 import unittest
 import os
 
-from kapitan.resources import yaml_dump, yaml_dump_stream, gzip_b64, yaml_load, jsonschema_validate
+from kapitan.resources import yaml_dump, yaml_dump_stream, yaml_load_stream, gzip_b64, yaml_load, jsonschema_validate
 from kapitan.utils import sha256_string, prune_empty
 
 
@@ -45,6 +45,17 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         json = yaml_load([current_pwd], "test_resources/test_yaml_load.yaml")
         expected_output = """{"test": {"key": "value", "array": ["ele1", "ele2"]}}"""
         self.assertEqual(json, expected_output)
+
+    def test_yaml_load_stream(self):
+        """
+            This tests the yaml_load_stream function.
+            It converts the yaml file in test_resources/ to a json string
+        """
+        current_pwd = os.path.dirname(__file__)
+        json = yaml_load_stream([current_pwd], "test_resources/test_yaml_load_stream.yaml")
+        expected_output = """[{"test1": {"key": "value", "array": ["ele1", "ele2"]}}, {"test2": {"key": "value", "array": ["ele1", "ele2"]}}]"""
+        self.assertEqual(json, expected_output)
+
 
     def test_sha256_string(self):
         """sha256 hex digest for string"""

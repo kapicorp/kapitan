@@ -63,6 +63,8 @@ def resource_callbacks(search_paths):
             "yaml_dump_stream": (("obj",), yaml_dump_stream),
             "yaml_load": (("name",),
                           partial(yaml_load, search_paths)),
+            "yaml_load_stream": (("name",),
+                          partial(yaml_load_stream, search_paths)),
             "jsonschema_validate": (("obj", "schema_obj"), jsonschema_validate),
             }
 
@@ -142,6 +144,24 @@ def yaml_load(search_paths, name):
                 raise CompileError("Parse yaml failed to parse {}: {}".format(_full_path, e))
 
     raise IOError("could not find any input yaml file: {}".format(_full_path))
+
+
+def yaml_load_stream(search_paths, name):
+    """returns contents of yaml file as generator"""
+    for path in search_paths:
+        _full_path = os.path.join(path, name)
+        logger.debug("yaml_load_stream trying file %s", _full_path)
+        if os.path.exists(_full_path) and (name.endswith(".yml") or name.endswith(".yaml")):
+            logger.debug("yaml_load_stream found file at %s", _full_path)
+            try:
+                with open(_full_path) as f:
+                    _obj = yaml.load_all(f.read(), Loader=yaml.SafeLoader)
+                    return json.dumps(list(_obj))
+            except Exception as e:
+                raise CompileError("Parse yaml failed to parse {}: {}".format(_full_path, e))
+
+    raise IOError("could not find any input yaml file: {}".format(_full_path))
+
 
 
 def read_file(search_paths, name):
