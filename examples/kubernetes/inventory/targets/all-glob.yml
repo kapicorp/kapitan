@@ -1,0 +1,60 @@
+
+classes:
+  - common
+  - cluster.minikube
+
+parameters:
+  target_name: all-glob
+
+  elasticsearch:
+    image: "quay.io/pires/docker-elasticsearch-kubernetes:5.5.0"
+    java_opts: "-Xms512m -Xmx512m"
+    replicas: 1
+    masters: 1
+    roles:
+      ingest:
+        image: ${elasticsearch:image}
+        java_opts: ${elasticsearch:java_opts}
+        replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}
+      master:
+        image: ${elasticsearch:image}
+        java_opts: ${elasticsearch:java_opts}
+        replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}
+      data:
+        image: ${elasticsearch:image}
+        java_opts: ${elasticsearch:java_opts}
+        replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}
+      client:
+        image: ${elasticsearch:image}
+        java_opts: ${elasticsearch:java_opts}
+        replicas: ${elasticsearch:replicas}
+        masters: ${elasticsearch:masters}
+
+  mysql:
+    instance_name: glob_instance
+    image: mysql:latest
+    storage_class: standard
+    storage: 10G
+    users:
+      root:
+        password: ?{base64:targets/${target_name}/mysql/password||randomstr|base64}
+        password_sha256: ?{base64:targets/${target_name}/mysql/password_sha256||reveal:targets/${target_name}/mysql/password|sha256|base64}
+        password_subvar: ?{base64:targets/${target_name}/mysql/subvars@var1.password}
+        password_sha256_subvar: ?{base64:targets/${target_name}/mysql/subvars@var2.password_sha256}
+
+  nginx:
+    image: nginx:1:15.8
+    replicas: 2
+
+  # compile all main.jsonnet in components/
+  kapitan:
+    compile:
+      - output_path: manifests
+        input_type: jsonnet
+        input_paths:
+          - components/*/main.jsonnet
+        output_type: yaml
+
