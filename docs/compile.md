@@ -13,7 +13,8 @@ parameters:
     - output_path: <output_path_in_target_dir>
       input_type: jinja | jsonnet | kadet | helm
       input_paths:
-      	- path/to/input/dir/or/file
+        - path/to/input/dir/or/file
+        - globbed/path/*/main.jsonnet
       output_type: <output_type_specific_to_input_type>
 ```
 
