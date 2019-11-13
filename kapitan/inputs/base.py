@@ -14,14 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import collections
 import glob
 import itertools
 import json
 import logging
 import os
-import yaml
+from collections.abc import Mapping
 
+import yaml
 from kapitan.errors import CompileError, KapitanError
 from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper
@@ -118,7 +118,7 @@ class CompilingFile(object):
         else:
             self.revealer.compile_obj(obj, target_name=target_name)
 
-        if isinstance(obj, collections.Mapping):
+        if isinstance(obj, Mapping):
             yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
         else:
             yaml.dump_all(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
