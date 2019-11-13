@@ -14,11 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import collections
+import glob
+import itertools
+import json
 import logging
 import os
 import yaml
-import json
-import collections
 
 from kapitan.errors import CompileError, KapitanError
 from kapitan.refs.base import Revealer
@@ -41,7 +43,10 @@ class InputType(object):
         """
         input_type = comp_obj["input_type"]
         assert input_type == self.type_name
-        input_paths = comp_obj["input_paths"]
+
+        # expand any globbed paths
+        globbed_paths = [glob.glob(input_path) for input_path in comp_obj["input_paths"]]
+        input_paths = list(itertools.chain.from_iterable(globbed_paths))
 
         for input_path in input_paths:
             self.compile_input_path(input_path, comp_obj, ext_vars, **kwargs)
