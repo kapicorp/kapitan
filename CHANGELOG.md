@@ -1,3 +1,9 @@
+## 0.25.5:
+- add input_paths globbing support (#419)
+- add kap.yaml_load_stream() function (#416)
+- new yaml_dump_stream() native jsonnet function (#415)
+- Add mysql client, openssh-client to Dockerfile.ci (#413)
+
 ## 0.25.4:
 - Add bsdmainutils to Dockerfile.ci
 

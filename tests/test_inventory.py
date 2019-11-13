@@ -17,6 +17,7 @@
 "inventory tests"
 
 import unittest
+
 from kapitan.resources import inventory
 
 
