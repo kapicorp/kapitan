@@ -78,6 +78,44 @@ class GPGSecretsTest(unittest.TestCase):
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
         self.assertEqual("I am a file with a c3VwZXIgc2VjcmV0IHZhbHVl", revealed)
 
+    def test_gpg_function_ed25519(self):
+        "write ed25519 (private and public), confirm secret file exists, reveal and check"
+
+        tag = '?{gpg:secret/ed25519||ed25519}'
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'secret/ed25519')))
+
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, 'w') as fp:
+            fp.write('?{gpg:secret/ed25519}')
+        revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
+        try:
+            serialization.load_pem_private_key(revealed.encode(), password=None, backend=default_backend())
+        except ValueError:
+            raise Exception("Failed to decode ed25519 private key")
+
+        REVEALER._reveal_tag_without_subvar.cache_clear()
+        tag = '?{gpg:secret/ed25519||ed25519}'
+        REF_CONTROLLER[tag] = RefParams()
+        revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
+
+        try:
+            private_key = serialization.load_pem_private_key(revealed.encode(), password=None,
+                                                             backend=default_backend())
+        except ValueError:
+            raise Exception("Failed to decode ed25519 private key")
+
+        # Test 'publickey' with previous private key as the parameter
+        tag_ed25519public = '?{gpg:secret/ed25519public||reveal:secret/ed25519|publickey}'
+        REF_CONTROLLER[tag_ed25519public] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, 'secret/ed25519')))
+
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, 'w') as fp:
+            fp.write('?{gpg:secret/ed25519public}')
+        revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
+        self.assertEqual(revealed.splitlines()[0], "-----BEGIN PUBLIC KEY-----")
+
     def test_gpg_function_rsa(self):
         "write rsa (private and public), confirm secret file exists, reveal and check"
 

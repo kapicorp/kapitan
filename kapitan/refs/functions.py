@@ -21,7 +21,7 @@ import secrets  # python secrets module
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
 from kapitan.errors import RefError
 
 logger = logging.getLogger(__name__)
@@ -32,8 +32,10 @@ def eval_func(func_name, ctx, *func_params):
     func_lookup = {
         'randomstr': randomstr,
         'sha256': sha256,
+        'ed25519': ed25519_private_key,
         'rsa': rsa_private_key,
         'rsapublic': rsa_public_key,
+        'publickey': public_key,
         'reveal': reveal
     }
 
@@ -64,6 +66,16 @@ def sha256(ctx, salt=''):
         raise RefError("Ref error: eval_func: nothing to sha256 hash; try "
                        "something like '|randomstr|sha256'")
 
+def ed25519_private_key(ctx):
+    """sets ctx.data to a ed25519 private key"""
+
+    key = ed25519.Ed25519PrivateKey.generate()
+
+    ctx.data = str(key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    ), "utf-8")
 
 def rsa_private_key(ctx, key_size='4096'):
     """sets ctx.data to a RSA private key of key_size, default 4096"""
@@ -84,6 +96,14 @@ def rsa_public_key(ctx):
     if not ctx.data:
         raise RefError("Ref error: eval_func: RSA public key cannot be derived; try "
                        "something like '|reveal:path/to/encrypted_private_key|rsapublic'")
+
+    public_key(ctx)
+
+def public_key(ctx):
+    """Derives RSA public key from revealed private key"""
+    if not ctx.data:
+        raise RefError("Ref error: eval_func: public key cannot be derived; try "
+                       "something like '|reveal:path/to/encrypted_private_key|publickey'")
 
     data_dec = ctx.data
     if ctx.ref_encoding == 'base64':
