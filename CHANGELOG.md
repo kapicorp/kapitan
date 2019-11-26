@@ -1,3 +1,7 @@
+## 0.26.0-rc.0:
+- Support for ed25519 public/private keys in refs (#422)
+- New copy input type (#423)
+
 ## 0.25.5:
 - add input_paths globbing support (#419)
 - add kap.yaml_load_stream() function (#416)
