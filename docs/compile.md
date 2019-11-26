@@ -11,7 +11,7 @@ parameters:
   kapitan:
     compile:
     - output_path: <output_path_in_target_dir>
-      input_type: jinja | jsonnet | kadet | helm
+      input_type: jinja | jsonnet | kadet | helm | copy
       input_paths:
         - path/to/input/dir/or/file
         - globbed/path/*/main.jsonnet
@@ -26,6 +26,7 @@ Kapitan supports the following input template types:
 - [jsonnet](#jsonnet)
 - [kadet](#kadet) (alpha)
 - [helm](#helm) (alpha)
+- [copy](#copy)
 
 
 ### jinja
@@ -296,3 +297,10 @@ This requires Go >= 1.12.
 This binding supports helm subcharts. However, since the [external dependency manager](external_dependencies.md) does not parse `requirements.yaml` in order to detect chart dependencies, you are required to manually download the entire chart including the parent charts.
 
 *Supported output types:* N/A (no need to specify `output_type`)
+
+### Copy
+
+This input type simply copies the input templates to the output directory without any rendering/processing.
+For Copy, `input_paths` can be either a file or a directory: in case of a directory, all the templates in the directory will be copied and outputted to `output_path`.
+
+*Supported output types*: N/A (no need to specify `output_type`)

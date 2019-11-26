@@ -35,6 +35,7 @@ from kapitan.inputs.helm import Helm
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
+from kapitan.inputs.copy import Copy
 from kapitan.resources import inventory_reclass
 from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
 from kapitan.validator.kubernetes_validator import (
@@ -359,6 +360,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
     jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
     kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
     helm_compiler = Helm(compile_path, search_paths, ref_controller)
+    copy_compiler = Copy(compile_path, search_paths, ref_controller)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
@@ -375,8 +377,10 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             if 'helm_params' in comp_obj:
                 helm_compiler.set_helm_params(comp_obj['helm_params'])
             input_compiler = helm_compiler
+        elif input_type == "copy":
+            input_compiler = copy_compiler
         else:
-            err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet, helm"
+            err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet, helm, copy"
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)
@@ -424,7 +428,7 @@ def valid_target_obj(target_obj):
                         {
                             "properties": {
                                 "input_type": {
-                                    "enum": ["jsonnet", "kadet"]
+                                    "enum": ["jsonnet", "kadet", "copy"]
                                 },
                                 "output_type": {
                                     "enum": ["yaml", "json", "plain"]

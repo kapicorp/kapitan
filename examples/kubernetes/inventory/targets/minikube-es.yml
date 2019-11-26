@@ -2,6 +2,7 @@ classes:
   - common
   - cluster.minikube
   - component.elasticsearch
+  - component.busybox
 
 parameters:
   target_name: minikube-es
