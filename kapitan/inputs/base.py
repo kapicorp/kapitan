@@ -38,44 +38,42 @@ class InputType(object):
 
     def compile_obj(self, comp_obj, ext_vars, **kwargs):
         """
-        run compile_input_path() for each input_path in comp_obj
-        kwargss are passed into compile_input_path()
+        Expand globbed input paths, taking into account provided search paths
+        and run compile_input_path() for each resolved input_path.
+        kwargs are passed into compile_input_path()
         """
         input_type = comp_obj["input_type"]
         assert input_type == self.type_name
 
-        # expand any globbed paths
-        globbed_paths = [glob.glob(input_path) for input_path in comp_obj["input_paths"]]
-        input_paths = list(itertools.chain.from_iterable(globbed_paths))
+        # expand any globbed paths, taking into account provided search paths
+        input_paths = []
+        for input_path in comp_obj["input_paths"]:
+            globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
+            inputs = list(itertools.chain.from_iterable(globbed_paths))
+            if len(inputs) == 0:
+                raise CompileError("Compile error: {} for target: {} not found in "
+                                   "search_paths: {}".format(input_path, ext_vars["target"], self.search_paths))
+            input_paths.extend(inputs)
 
         for input_path in input_paths:
             self.compile_input_path(input_path, comp_obj, ext_vars, **kwargs)
 
     def compile_input_path(self, input_path, comp_obj, ext_vars, **kwargs):
         """
-        compile and validate input_path in comp_obj
+        Compile validated input_path in comp_obj
         kwargs are passed into compile_file()
         """
         target_name = ext_vars["target"]
         output_path = comp_obj["output_path"]
         output_type = comp_obj.get("output_type", self.default_output_type())
-        file_found = False
 
-        for path in self.search_paths:
-            compile_file_sp = os.path.join(path, input_path)
-            if os.path.exists(compile_file_sp):
-                file_found = True
-                logger.debug("Compiling %s", compile_file_sp)
-                try:
-                    _compile_path = os.path.join(self.compile_path, target_name, output_path)
-                    self.compile_file(compile_file_sp, _compile_path, ext_vars, output=output_type,
-                                      target_name=target_name, **kwargs)
-                except KapitanError as e:
-                    raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
-
-        if not file_found:
-            raise CompileError("Compile error: {} for target: {} not found in "
-                               "search_paths: {}".format(input_path, target_name, self.search_paths))
+        logger.debug("Compiling %s", input_path)
+        try:
+            _compile_path = os.path.join(self.compile_path, target_name, output_path)
+            self.compile_file(input_path, _compile_path, ext_vars, output=output_type,
+                              target_name=target_name, **kwargs)
+        except KapitanError as e:
+            raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
 
     def make_compile_dirs(self, target_name, output_path):
         """make compile dirs, skips if dirs exist"""
