@@ -1,3 +1,6 @@
+## 0.26.0-rc.1:
+- Fix input_paths globbing when search paths are defined (#426)
+
 ## 0.26.0-rc.0:
 - Support for ed25519 public/private keys in refs (#422)
 - New copy input type (#423)
