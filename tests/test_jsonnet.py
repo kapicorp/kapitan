@@ -17,12 +17,12 @@
 "jsonnet tests"
 
 import json
-import jsonschema
-import unittest
 import os
+import unittest
 
-from kapitan.resources import yaml_dump, yaml_dump_stream, yaml_load_stream, gzip_b64, yaml_load, jsonschema_validate
-from kapitan.utils import sha256_string, prune_empty
+from kapitan.resources import (gzip_b64, jsonschema_validate, yaml_dump,
+                               yaml_dump_stream, yaml_load, yaml_load_stream)
+from kapitan.utils import prune_empty, sha256_string
 
 
 class JsonnetNativeFuncsTest(unittest.TestCase):
@@ -55,7 +55,6 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         json = yaml_load_stream([current_pwd], "test_resources/test_yaml_load_stream.yaml")
         expected_output = """[{"test1": {"key": "value", "array": ["ele1", "ele2"]}}, {"test2": {"key": "value", "array": ["ele1", "ele2"]}}]"""
         self.assertEqual(json, expected_output)
-
 
     def test_sha256_string(self):
         """sha256 hex digest for string"""

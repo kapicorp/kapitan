@@ -21,11 +21,11 @@ import errno
 import gzip
 import io
 import json
-import jsonschema
 import logging
 import os
 from functools import partial
 
+import jsonschema
 import kapitan.cached as cached
 import yaml
 from kapitan import __file__ as kapitan_install_path
@@ -82,7 +82,7 @@ def jsonschema_validate(obj, schema_obj):
         jsonschema.validate(_obj, _schema_obj, format_checker=jsonschema.FormatChecker())
         return {"valid": True, "reason": ""}
     except jsonschema.ValidationError as e:
-        return {"valid": False, "reason": ""+str(e)}
+        return {"valid": False, "reason": "" + str(e)}
 
 
 def yaml_dump(obj):
@@ -161,7 +161,6 @@ def yaml_load_stream(search_paths, name):
                 raise CompileError("Parse yaml failed to parse {}: {}".format(_full_path, e))
 
     raise IOError("could not find any input yaml file: {}".format(_full_path))
-
 
 
 def read_file(search_paths, name):
