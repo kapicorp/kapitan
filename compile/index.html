@@ -439,6 +439,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#copy" title="Copy" class="md-nav__link">
+    Copy
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -766,6 +773,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#copy" title="Copy" class="md-nav__link">
+    Copy
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -798,9 +812,10 @@
   <span class="nt">kapitan</span><span class="p">:</span>
     <span class="nt">compile</span><span class="p">:</span>
     <span class="p p-Indicator">-</span> <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path_in_target_dir&gt;</span>
-      <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">jinja | jsonnet | kadet | helm</span>
+      <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">jinja | jsonnet | kadet | helm | copy</span>
       <span class="nt">input_paths</span><span class="p">:</span>
         <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">path/to/input/dir/or/file</span>
+        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">globbed/path/*/main.jsonnet</span>
       <span class="nt">output_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_type_specific_to_input_type&gt;</span>
 </pre></div>
 
@@ -811,6 +826,7 @@
 <li><a href="#jsonnet">jsonnet</a></li>
 <li><a href="#kadet">kadet</a> (alpha)</li>
 <li><a href="#helm">helm</a> (alpha)</li>
+<li><a href="#copy">copy</a></li>
 </ul>
 <h3 id="jinja">jinja</h3>
 <p>This renders jinja2 templates, typically stored in <code>templates/</code> directory, such as README, scripts and config files. Refer to <a href="http://jinja.palletsprojects.com/en/2.10.x/templates/">jinja2 docs</a> to understand how the template engine works.</p>
@@ -844,7 +860,7 @@ reveal_maybe - reveal ref/secret tag only if `compile --reveal` flag is set e.g.
 <p>You can also provide path to your custom filter modules in CLI. By default, you can put your filters in <code>lib/jinja2_filters.py</code> and they will automatically get loaded.</p>
 <h3 id="jsonnet">jsonnet</h3>
 <p>Jsonnet is a superset of json format that includes features such as conditionals, variables and imports. Refer to <a href="https://jsonnet.org/learning/tutorial.html">jsonnet docs</a> to understand how it works.</p>
-<p>Note that unlike jinja2 templates, one jsonnet template can output multiple files (one per object declared in the file).</p>
+<p>Note: unlike jinja2 templates, one jsonnet template can output multiple files (one per object declared in the file).</p>
 <p><em>Supported output types:</em></p>
 <ul>
 <li>yaml (default)</li>
@@ -856,7 +872,7 @@ reveal_maybe - reveal ref/secret tag only if `compile --reveal` flag is set e.g.
 local inventory = kap.inventory();
 </pre></div>
 
-<p>The first line is required to access the kapitan inventory values. </p>
+<p>The first line is required to access the kapitan inventory values.</p>
 <p>On the second line, <code>inventory()</code> callback is used to initialise a local variable through which inventory values for this target can be referenced. For example, the script below</p>
 <div class="highlight"><pre><span></span>local kap = import &quot;lib/kapitan.libjsonnet&quot;;
 local inventory = kap.inventory();
@@ -866,11 +882,15 @@ local inventory = kap.inventory();
 }
 </pre></div>
 
-<p>imports the inventory for the target you're compiling and returns the java_opts for the elasticsearch data role. </p>
+<p>imports the inventory for the target you're compiling and returns the java_opts for the elasticsearch data role.</p>
+<p>Note: The dictionary keys of the jsonnet object are used as filenames for the generated output files.
+If your jsonnet is not a dictionary, but is a valid json(net) object, then the output filename will be the same as the input filename. E.g. <code>'my_string'</code> is inside <code>templates/input_file.jsonnet</code> so the generated output file will be named <code>input_file.json</code> for example and will contain <code>"my_string"</code>.</p>
 <h4 id="callback-functions">Callback functions</h4>
 <p>In addition, importing <code>kapitan.libjsonnet</code> makes available the following native_callback functions gluing reclass to jsonnet (amongst others):</p>
 <div class="highlight"><pre><span></span>yaml_load - returns a json string of the specified yaml file
+yaml_load_stream - returns a list of json strings of the specified yaml file
 yaml_dump - returns a string yaml from a json string
+yaml_dump_stream - returns a string yaml stream from a json string
 file_read - reads the file specified
 jinja2_template - renders the jinja2 file with context specified
 sha256_string - returns sha256 of string
@@ -952,7 +972,7 @@ Compile error: failed to compile target: minikube-mysql
         <span class="nt">release_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;chart_release_name&gt;</span>
 </pre></div>
 
-<p><code>helm_values</code> is an object containing values specified that will override the default values in the input chart. This has exactly the same effect as specifying <code>--values custom_values.yml</code> for <code>helm template</code> command where <code>custom_values.yml</code> structure mirrors that of <code>helm_values</code>. </p>
+<p><code>helm_values</code> is an object containing values specified that will override the default values in the input chart. This has exactly the same effect as specifying <code>--values custom_values.yml</code> for <code>helm template</code> command where <code>custom_values.yml</code> structure mirrors that of <code>helm_values</code>.</p>
 <p><code>helm_params</code> correspond to the options for <code>helm template</code> as follows:</p>
 <ul>
 <li>
@@ -969,7 +989,7 @@ Compile error: failed to compile target: minikube-mysql
 </ul>
 <p>See the <a href="https://helm.sh/docs/helm/#helm-template">helm doc</a> for further detail.</p>
 <h4 id="example">Example</h4>
-<p>Let's use <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">nginx-ingress</a> helm chart as the input. Using <a href="../external_dependencies/">kapitan dependency manager</a>, this chart can be fetched via a URL as listed in <a href="https://helm.nginx.com/stable/index.yaml">https://helm.nginx.com/stable/index.yaml</a>. </p>
+<p>Let's use <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">nginx-ingress</a> helm chart as the input. Using <a href="../external_dependencies/">kapitan dependency manager</a>, this chart can be fetched via a URL as listed in <a href="https://helm.nginx.com/stable/index.yaml">https://helm.nginx.com/stable/index.yaml</a>.</p>
 <p><em>On a side note, <code>https://helm.nginx.com/stable/</code> is the chart repository URL which you would <code>helm repo add</code>, and this repository should contain <code>index.yaml</code> that lists out all the available charts and their URLs. By locating this <code>index.yaml</code> file, you can locate all the charts available in the repository.</em></p>
 <p>We can use version 0.3.3 found at <a href="https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz">https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz</a>. We can create a simple target file as <code>inventory/targets/nginx-from-chart.yml</code> whose content is as follows:</p>
 <div class="highlight"><pre><span></span><span class="nt">parameters</span><span class="p">:</span>
@@ -1005,7 +1025,7 @@ Compiled nginx-from-chart <span class="o">(</span><span class="m">0</span>.07s<s
 </pre></div>
 
 <p>The chart is fetched before compile, which creates <code>components/charts/nginx-ingress</code> folder that is used as the <code>input_paths</code>  for the helm input type. To confirm if the <code>helm_values</code> actually has overridden the default values, we can try:</p>
-<div class="highlight"><pre><span></span>$ grep <span class="s2">&quot;my-controller&quot;</span> compiled/nginx-from-chart/nginx-ingress/templates/controller-deployment.yaml 
+<div class="highlight"><pre><span></span>$ grep <span class="s2">&quot;my-controller&quot;</span> compiled/nginx-from-chart/nginx-ingress/templates/controller-deployment.yaml
   name: my-controller
       app: my-controller
         app: my-controller
@@ -1021,6 +1041,10 @@ Compiled nginx-from-chart <span class="o">(</span><span class="m">0</span>.07s<s
 <h4 id="helm-subcharts">Helm subcharts</h4>
 <p>This binding supports helm subcharts. However, since the <a href="../external_dependencies/">external dependency manager</a> does not parse <code>requirements.yaml</code> in order to detect chart dependencies, you are required to manually download the entire chart including the parent charts.</p>
 <p><em>Supported output types:</em> N/A (no need to specify <code>output_type</code>)</p>
+<h3 id="copy">Copy</h3>
+<p>This input type simply copies the input templates to the output directory without any rendering/processing.
+For Copy, <code>input_paths</code> can be either a file or a directory: in case of a directory, all the templates in the directory will be copied and outputted to <code>output_path</code>.</p>
+<p><em>Supported output types</em>: N/A (no need to specify <code>output_type</code>)</p>
                 
                   
                 
