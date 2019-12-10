@@ -60,6 +60,8 @@ class Jsonnet(InputType):
 
         if not isinstance(output_obj, dict):
             tmp_output_obj = output_obj
+            # assume that the output filename is the
+            # same as the input jsonnet filename
             filename = os.path.splitext(os.path.basename(file_path))[0]
             output_obj = {}
             output_obj[filename] = tmp_output_obj
