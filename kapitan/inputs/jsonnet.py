@@ -58,11 +58,11 @@ class Jsonnet(InputType):
             output_obj = prune_empty(output_obj)
             logger.debug("Pruned output for: %s", file_path)
 
-        if isinstance(output_obj, str):
-            output_str = output_obj
+        if not isinstance(output_obj, dict):
+            tmp_output_obj = output_obj
             filename = os.path.splitext(os.path.basename(file_path))[0]
             output_obj = {}
-            output_obj[filename] = output_str
+            output_obj[filename] = tmp_output_obj
 
         for item_key, item_value in output_obj.items():
             # write each item to disk
