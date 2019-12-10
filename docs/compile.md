@@ -75,7 +75,7 @@ You can also provide path to your custom filter modules in CLI. By default, you 
 
 Jsonnet is a superset of json format that includes features such as conditionals, variables and imports. Refer to [jsonnet docs](https://jsonnet.org/learning/tutorial.html) to understand how it works.
 
-Note that unlike jinja2 templates, one jsonnet template can output multiple files (one per object declared in the file).
+Note: unlike jinja2 templates, one jsonnet template can output multiple files (one per object declared in the file).
 
 *Supported output types:*
 
@@ -91,7 +91,7 @@ local kap = import "lib/kapitan.libjsonnet";
 local inventory = kap.inventory();
 ```
 
-The first line is required to access the kapitan inventory values. 
+The first line is required to access the kapitan inventory values.
 
 On the second line, `inventory()` callback is used to initialise a local variable through which inventory values for this target can be referenced. For example, the script below
 
@@ -104,7 +104,10 @@ local inventory = kap.inventory();
 }
 ```
 
-imports the inventory for the target you're compiling and returns the java_opts for the elasticsearch data role. 
+imports the inventory for the target you're compiling and returns the java_opts for the elasticsearch data role.
+
+Note: The dictionary keys of the jsonnet object are used as filenames for the generated output files.
+If your jsonnet is not a dictionary, but is a valid json(net) object, then the output filename will be the same as the input filename. E.g. `'my_string'` is inside `templates/input_file.jsonnet` so the generated output file will be named `input_file.json` for example and will contain `"my_string"`.
 
 #### Callback functions
 
@@ -213,7 +216,7 @@ parameters:
       	release_name: <chart_release_name>
 ```
 
-`helm_values` is an object containing values specified that will override the default values in the input chart. This has exactly the same effect as specifying `--values custom_values.yml` for `helm template` command where `custom_values.yml` structure mirrors that of `helm_values`. 
+`helm_values` is an object containing values specified that will override the default values in the input chart. This has exactly the same effect as specifying `--values custom_values.yml` for `helm template` command where `custom_values.yml` structure mirrors that of `helm_values`.
 
 `helm_params` correspond to the options for `helm template` as follows:
 
@@ -231,7 +234,7 @@ See the [helm doc](https://helm.sh/docs/helm/#helm-template) for further detail.
 
 #### Example
 
-Let's use [nginx-ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress) helm chart as the input. Using [kapitan dependency manager](external_dependencies.md), this chart can be fetched via a URL as listed in <https://helm.nginx.com/stable/index.yaml>. 
+Let's use [nginx-ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress) helm chart as the input. Using [kapitan dependency manager](external_dependencies.md), this chart can be fetched via a URL as listed in <https://helm.nginx.com/stable/index.yaml>.
 
 *On a side note, `https://helm.nginx.com/stable/` is the chart repository URL which you would `helm repo add`, and this repository should contain `index.yaml` that lists out all the available charts and their URLs. By locating this `index.yaml` file, you can locate all the charts available in the repository.*
 
@@ -275,7 +278,7 @@ Compiled nginx-from-chart (0.07s)
 The chart is fetched before compile, which creates `components/charts/nginx-ingress` folder that is used as the `input_paths`  for the helm input type. To confirm if the `helm_values` actually has overridden the default values, we can try:
 
 ```shell
-$ grep "my-controller" compiled/nginx-from-chart/nginx-ingress/templates/controller-deployment.yaml 
+$ grep "my-controller" compiled/nginx-from-chart/nginx-ingress/templates/controller-deployment.yaml
   name: my-controller
       app: my-controller
         app: my-controller
