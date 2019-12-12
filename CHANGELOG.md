@@ -1,3 +1,9 @@
+## 0.26.0:
+- Fix issue #431: jsonnet compile fails for a single string that isn't an object with items in it. (#432)
+- Fix input_paths globbing when search paths are defined (#426)
+- Support for ed25519 public/private keys in refs (#422)
+- New copy input type (#423)
+
 ## 0.26.0-rc.1:
 - Fix input_paths globbing when search paths are defined (#426)
 
