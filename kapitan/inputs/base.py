@@ -131,7 +131,7 @@ class CompilingFile(object):
         if reveal:
             obj = self.revealer.reveal_obj(obj)
         else:
-           obj = self.revealer.compile_obj(obj, target_name=target_name)
+            obj = self.revealer.compile_obj(obj, target_name=target_name)
         json.dump(obj, self.fp, indent=indent)
         logger.debug("Wrote %s", self.fp.name)
 
