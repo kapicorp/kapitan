@@ -112,9 +112,9 @@ class CompilingFile(object):
         reveal = self.kwargs.get('reveal', False)
         target_name = self.kwargs.get('target_name', None)
         if reveal:
-            self.revealer.reveal_obj(obj)
+            obj = self.revealer.reveal_obj(obj)
         else:
-            self.revealer.compile_obj(obj, target_name=target_name)
+            obj = self.revealer.compile_obj(obj, target_name=target_name)
 
         if isinstance(obj, Mapping):
             yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
@@ -129,9 +129,9 @@ class CompilingFile(object):
         reveal = self.kwargs.get('reveal', False)
         target_name = self.kwargs.get('target_name', None)
         if reveal:
-            self.revealer.reveal_obj(obj)
+            obj = self.revealer.reveal_obj(obj)
         else:
-            self.revealer.compile_obj(obj, target_name=target_name)
+            obj = self.revealer.compile_obj(obj, target_name=target_name)
         json.dump(obj, self.fp, indent=indent)
         logger.debug("Wrote %s", self.fp.name)
 

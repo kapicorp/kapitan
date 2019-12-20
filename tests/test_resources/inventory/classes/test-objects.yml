@@ -1,0 +1,13 @@
+parameters:
+  kapitan:
+    compile:
+    - output_path: .
+      input_type: jsonnet
+      output_type: json
+      input_paths:
+        - templates/single_object.jsonnet
+        - templates/list.jsonnet
+        - templates/onekey_component_plainref.jsonnet
+        - templates/simple_component_plainref.jsonnet
+        - templates/string_component_plainref.jsonnet
+
