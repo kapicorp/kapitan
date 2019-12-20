@@ -21,6 +21,7 @@ import os
 import sys
 import io
 import contextlib
+import glob
 import shutil
 from kapitan.cli import main
 from kapitan.utils import directory_hash
@@ -29,6 +30,25 @@ from kapitan.targets import validate_matching_target_name
 from kapitan.resources import inventory_reclass
 from kapitan.errors import InventoryError
 
+
+class CompileTestResourcesTestObjs(unittest.TestCase):
+    def setUp(self):
+        os.chdir(os.getcwd() + '/tests/test_resources/')
+
+    def test_compile(self):
+        sys.argv = ["kapitan", "compile", "-t", "test-objects"]
+        main()
+
+    def test_plain_ref_revealed(self):
+        "check plain refs are revealed in test-objects"
+        for g in glob.glob("compiled/test-objects/*.json"):
+            with open(g) as f:
+                self.assertTrue('?{plain:' not in f.read())
+
+
+    def tearDown(self):
+        os.chdir(os.getcwd() + '/../../')
+        reset_cache()
 
 class CompileKubernetesTest(unittest.TestCase):
     def setUp(self):

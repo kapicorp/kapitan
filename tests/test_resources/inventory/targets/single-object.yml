@@ -1,7 +1,0 @@
-classes:
-  - single_object
-
-parameters:
-  kapitan:
-    vars:
-      target: single-object
