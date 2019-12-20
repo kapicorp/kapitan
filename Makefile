@@ -44,6 +44,13 @@ codestyle:
 	flake8 --ignore E501 . --exclude=reclass
 	@echo
 
+.PHONY: format_codestyle
+format_codestyle:
+	which black || echo "Install black with pip3 install --user black"
+	# ignores line length and reclass related errors
+	black -l 110 -t py37 --exclude reclass .
+	@echo
+
 .PHONY: build_binary
 build_binary:
 	scripts/build-binary.sh

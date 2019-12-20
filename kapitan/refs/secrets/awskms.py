@@ -25,12 +25,13 @@ from kapitan.errors import KapitanError
 
 class AWSKMSError(KapitanError):
     """Generic AWS KMS errors"""
+
     pass
 
 
 def awskms_obj():
     if not cached.awskms_obj:
-        cached.awskms_obj = boto3.session.Session().client('kms')
+        cached.awskms_obj = boto3.session.Session().client("kms")
     return cached.awskms_obj
 
 
@@ -49,7 +50,7 @@ class AWSKMSSecret(Base64Ref):
             self.data = data
             self.key = key
         super().__init__(self.data, **kwargs)
-        self.type_name = 'awskms'
+        self.type_name = "awskms"
 
     @classmethod
     def from_params(cls, data, ref_params):
@@ -58,15 +59,15 @@ class AWSKMSSecret(Base64Ref):
         key will be grabbed from the inventory via target_name
         """
         try:
-            target_name = ref_params.kwargs['target_name']
+            target_name = ref_params.kwargs["target_name"]
             if target_name is None:
-                raise ValueError('target_name not set')
+                raise ValueError("target_name not set")
 
-            target_inv = cached.inv['nodes'].get(target_name, None)
+            target_inv = cached.inv["nodes"].get(target_name, None)
             if target_inv is None:
-                raise ValueError('target_inv not set')
+                raise ValueError("target_inv not set")
 
-            key = target_inv['parameters']['kapitan']['secrets']['awskms']['key']
+            key = target_inv["parameters"]["kapitan"]["secrets"]["awskms"]["key"]
             return cls(data, key, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create AWSKMSSecret: target_name missing")
@@ -93,7 +94,7 @@ class AWSKMSSecret(Base64Ref):
             return False
 
         data_dec = self.reveal()
-        encode_base64 = self.encoding == 'base64'
+        encode_base64 = self.encoding == "base64"
         if encode_base64:
             data_dec = base64.b64decode(data_dec).decode()
         self._encrypt(data_dec, key, encode_base64)
@@ -122,7 +123,7 @@ class AWSKMSSecret(Base64Ref):
                 ciphertext = base64.b64encode("mock".encode())
             else:
                 response = awskms_obj().encrypt(KeyId=key, Plaintext=_data)
-                ciphertext = base64.b64encode(response['CiphertextBlob'])
+                ciphertext = base64.b64encode(response["CiphertextBlob"])
             self.data = ciphertext
             self.key = key
 
@@ -138,7 +139,7 @@ class AWSKMSSecret(Base64Ref):
                 plaintext = "mock".encode()
             else:
                 response = awskms_obj().decrypt(CiphertextBlob=base64.b64decode(data))
-                plaintext = response['Plaintext']
+                plaintext = response["Plaintext"]
 
             return plaintext.decode()
 
@@ -149,12 +150,11 @@ class AWSKMSSecret(Base64Ref):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding,
-                "key": self.key, "type": self.type_name}
+        return {"data": self.data, "encoding": self.encoding, "key": self.key, "type": self.type_name}
 
 
 class AWSKMSBackend(Base64RefBackend):
     def __init__(self, path, ref_type=AWSKMSSecret):
         "init AWSKMSBackend ref backend type"
         super().__init__(path, ref_type)
-        self.type_name = 'awskms'
+        self.type_name = "awskms"

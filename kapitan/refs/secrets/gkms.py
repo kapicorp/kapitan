@@ -32,6 +32,7 @@ warnings.filterwarnings("ignore", "Your application has authenticated using end 
 
 class GoogleKMSError(KapitanError):
     """Generic Google KMS errors"""
+
     pass
 
 
@@ -39,8 +40,8 @@ def gkms_obj():
     if not cached.gkms_obj:
         # If --verbose is set, show requests from googleapiclient (which are actually logging.INFO)
         if logger.getEffectiveLevel() > logging.DEBUG:
-            logging.getLogger('googleapiclient.discovery').setLevel(logging.ERROR)
-        kms_client = gcloud.build('cloudkms', 'v1', cache_discovery=False)
+            logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
+        kms_client = gcloud.build("cloudkms", "v1", cache_discovery=False)
         cached.gkms_obj = kms_client.projects().locations().keyRings().cryptoKeys()
     return cached.gkms_obj
 
@@ -60,7 +61,7 @@ class GoogleKMSSecret(Base64Ref):
             self.data = data
             self.key = key
         super().__init__(self.data, **kwargs)
-        self.type_name = 'gkms'
+        self.type_name = "gkms"
 
     @classmethod
     def from_params(cls, data, ref_params):
@@ -69,15 +70,15 @@ class GoogleKMSSecret(Base64Ref):
         key will be grabbed from the inventory via target_name
         """
         try:
-            target_name = ref_params.kwargs['target_name']
+            target_name = ref_params.kwargs["target_name"]
             if target_name is None:
-                raise ValueError('target_name not set')
+                raise ValueError("target_name not set")
 
-            target_inv = cached.inv['nodes'].get(target_name, None)
+            target_inv = cached.inv["nodes"].get(target_name, None)
             if target_inv is None:
-                raise ValueError('target_inv not set')
+                raise ValueError("target_inv not set")
 
-            key = target_inv['parameters']['kapitan']['secrets']['gkms']['key']
+            key = target_inv["parameters"]["kapitan"]["secrets"]["gkms"]["key"]
             return cls(data, key, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create GoogleKMSSecret: target_name missing")
@@ -104,7 +105,7 @@ class GoogleKMSSecret(Base64Ref):
             return False
 
         data_dec = self.reveal()
-        encode_base64 = self.encoding == 'base64'
+        encode_base64 = self.encoding == "base64"
         if encode_base64:
             data_dec = base64.b64decode(data_dec).decode()
         self._encrypt(data_dec, key, encode_base64)
@@ -133,10 +134,10 @@ class GoogleKMSSecret(Base64Ref):
                 ciphertext = base64.b64encode("mock".encode())
             else:
                 request = gkms_obj().encrypt(
-                    name=key,
-                    body={'plaintext': base64.b64encode(_data).decode('ascii')})
+                    name=key, body={"plaintext": base64.b64encode(_data).decode("ascii")}
+                )
                 response = request.execute()
-                ciphertext = base64.b64decode(response['ciphertext'].encode('ascii'))
+                ciphertext = base64.b64decode(response["ciphertext"].encode("ascii"))
 
             self.data = ciphertext
             self.key = key
@@ -153,10 +154,10 @@ class GoogleKMSSecret(Base64Ref):
                 plaintext = "mock".encode()
             else:
                 request = gkms_obj().decrypt(
-                    name=self.key,
-                    body={'ciphertext': base64.b64encode(data).decode('ascii')})
+                    name=self.key, body={"ciphertext": base64.b64encode(data).decode("ascii")}
+                )
                 response = request.execute()
-                plaintext = base64.b64decode(response['plaintext'].encode('ascii'))
+                plaintext = base64.b64decode(response["plaintext"].encode("ascii"))
 
             return plaintext.decode()
 
@@ -167,12 +168,11 @@ class GoogleKMSSecret(Base64Ref):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding,
-                "key": self.key, "type": self.type_name}
+        return {"data": self.data, "encoding": self.encoding, "key": self.key, "type": self.type_name}
 
 
 class GoogleKMSBackend(Base64RefBackend):
     def __init__(self, path, ref_type=GoogleKMSSecret):
         "init GoogleKMSBackend ref backend type"
         super().__init__(path, ref_type)
-        self.type_name = 'gkms'
+        self.type_name = "gkms"

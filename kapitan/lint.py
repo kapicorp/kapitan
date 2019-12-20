@@ -56,7 +56,15 @@ rules:
 """
 
 
-def start_lint(fail_on_warning, skip_class_checks, skip_yamllint, inventory_path, search_secrets, secrets_path, compiled_path):
+def start_lint(
+    fail_on_warning,
+    skip_class_checks,
+    skip_yamllint,
+    inventory_path,
+    search_secrets,
+    secrets_path,
+    compiled_path,
+):
     """ Runs all lint operations available
     Args:
         fail_on_warning (bool): if set to True, function will exit if any warning is found
@@ -79,7 +87,8 @@ def start_lint(fail_on_warning, skip_class_checks, skip_yamllint, inventory_path
 
     if not os.path.isdir(inventory_path):
         logger.info(
-            "\nInventory path is invalid or not provided, skipping yamllint and orphan class checks\n")
+            "\nInventory path is invalid or not provided, skipping yamllint and orphan class checks\n"
+        )
     else:
         if not skip_yamllint:
             logger.info("\nRunning yamllint on all inventory files...\n")
@@ -114,7 +123,7 @@ def lint_orphan_secrets(compiled_path, secrets_path):
     secrets_paths = set()
     for path in list_all_paths(secrets_path):
         if os.path.isfile(path):
-            path = path[len(secrets_path) + 1:]
+            path = path[len(secrets_path) + 1 :]
             secrets_paths.add(path)
 
     logger.debug("Collected # of paths: {}".format(len(secrets_paths)))
@@ -130,7 +139,11 @@ def lint_orphan_secrets(compiled_path, secrets_path):
 
     checks_sum = len(secrets_paths)
     if checks_sum > 0:
-        logger.info("No usage found for the following {} secrets files:\n{}\n".format(len(secrets_paths), pformat(secrets_paths)))
+        logger.info(
+            "No usage found for the following {} secrets files:\n{}\n".format(
+                len(secrets_paths), pformat(secrets_paths)
+            )
+        )
 
     return checks_sum
 
@@ -152,8 +165,8 @@ def lint_unused_classes(inventory_path):
     logger.debug("Find unused classes from {}".format(classes_dir))
     class_paths = set()
     for path in list_all_paths(classes_dir):
-        if os.path.isfile(path) and (path.endswith('.yml') or path.endswith('.yaml')):
-            path = path[len(classes_dir):]
+        if os.path.isfile(path) and (path.endswith(".yml") or path.endswith(".yaml")):
+            path = path[len(classes_dir) :]
             path = path.replace(".yml", "").replace(".yaml", "").replace("/", ".")
             class_paths.add(path)
 
@@ -182,7 +195,11 @@ def lint_unused_classes(inventory_path):
 
     checks_sum = len(class_paths)
     if checks_sum > 0:
-        logger.info("No usage found for the following {} classes:\n{}\n".format(len(class_paths), pformat(class_paths)))
+        logger.info(
+            "No usage found for the following {} classes:\n{}\n".format(
+                len(class_paths), pformat(class_paths)
+            )
+        )
 
     return checks_sum
 
@@ -196,9 +213,9 @@ def lint_yamllint(inventory_path):
     """
     logger.debug("Running yamllint for " + inventory_path)
 
-    if os.path.isfile('.yamllint'):
+    if os.path.isfile(".yamllint"):
         logger.info("Loading values from .yamllint found.")
-        conf = YamlLintConfig(file='.yamllint')
+        conf = YamlLintConfig(file=".yamllint")
     else:
         logger.info(".yamllint not found. Using default values")
         conf = YamlLintConfig(yamllint_config)

@@ -30,15 +30,15 @@ def initialise_skeleton(directory):
     """
 
     current_pwd = os.path.dirname(__file__)
-    templates_directory = os.path.join(current_pwd, 'inputs', 'templates')
+    templates_directory = os.path.join(current_pwd, "inputs", "templates")
 
     copy_tree(templates_directory, directory)
 
     logger.info("Populated {} with:".format(directory))
     for dirName, subdirList, fileList in os.walk(directory):
-        logger.info('{}'.format(dirName))
+        logger.info("{}".format(dirName))
         for fname in fileList:
-            logger.info('\t {}'.format(fname))
+            logger.info("\t {}".format(fname))
         # Remove the first entry in the list of sub-directories
         # if there are any sub-directories present
         if len(subdirList) > 0:

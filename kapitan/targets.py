@@ -45,14 +45,16 @@ from reclass.errors import NotFoundError, ReclassException
 logger = logging.getLogger(__name__)
 
 
-def compile_targets(inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs):
+def compile_targets(
+    inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs
+):
     """
     Searches and loads target files, and runs compile_target() on a
     multiprocessing pool with parallel number of processes.
     kwargs are passed to compile_target()
     """
     # temp_path will hold compiled items
-    temp_path = tempfile.mkdtemp(suffix='.kapitan')
+    temp_path = tempfile.mkdtemp(suffix=".kapitan")
 
     updated_targets = targets
     try:
@@ -62,8 +64,8 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
         sys.exit(1)
 
     # If --cache is set
-    if kwargs.get('cache'):
-        additional_cache_paths = kwargs.get('cache_paths')
+    if kwargs.get("cache"):
+        additional_cache_paths = kwargs.get("cache_paths")
         generate_inv_cache_hashes(inventory_path, targets, additional_cache_paths)
 
         if not targets:
@@ -80,13 +82,18 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
 
         # append "compiled" to output_path so we can safely overwrite it
         compile_path = os.path.join(output_path, "compiled")
-        worker = partial(compile_target, search_paths=search_paths, compile_path=temp_path, ref_controller=ref_controller,
-                         **kwargs)
+        worker = partial(
+            compile_target,
+            search_paths=search_paths,
+            compile_path=temp_path,
+            ref_controller=ref_controller,
+            **kwargs,
+        )
 
         if not target_objs:
             raise CompileError("Error: no targets found")
 
-        if kwargs.get('fetch_dependencies', False):
+        if kwargs.get("fetch_dependencies", False):
             fetch_dependencies(target_objs, pool)
 
         # compile_target() returns None on success
@@ -113,9 +120,11 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
             logger.debug("Copied %s into %s", temp_path, compile_path)
 
         # validate the compiled outputs
-        if kwargs.get('validate', False):
+        if kwargs.get("validate", False):
             validate_map = create_validate_mapping(target_objs, compile_path)
-            worker = partial(schema_validate_kubernetes_output, cache_dir=kwargs.get('schemas_path', './schemas'))
+            worker = partial(
+                schema_validate_kubernetes_output, cache_dir=kwargs.get("schemas_path", "./schemas")
+            )
             [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
 
         # Save inventory and folders cache
@@ -164,45 +173,53 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
     """
     inv = inventory_reclass(inventory_path)
     cached.inv_cache = {}
-    cached.inv_cache['inventory'] = {}
-    cached.inv_cache['folder'] = {}
+    cached.inv_cache["inventory"] = {}
+    cached.inv_cache["folder"] = {}
 
     if targets:
         for target in targets:
             try:
-                cached.inv_cache['inventory'][target] = {}
-                cached.inv_cache['inventory'][target]['classes'] = dictionary_hash(inv['nodes'][target]['classes'])
-                cached.inv_cache['inventory'][target]['parameters'] = dictionary_hash(inv['nodes'][target]['parameters'])
+                cached.inv_cache["inventory"][target] = {}
+                cached.inv_cache["inventory"][target]["classes"] = dictionary_hash(
+                    inv["nodes"][target]["classes"]
+                )
+                cached.inv_cache["inventory"][target]["parameters"] = dictionary_hash(
+                    inv["nodes"][target]["parameters"]
+                )
             except KeyError:
                 raise CompileError("target not found: {}".format(target))
     else:
-        for target in inv['nodes']:
-            cached.inv_cache['inventory'][target] = {}
-            cached.inv_cache['inventory'][target]['classes'] = dictionary_hash(inv['nodes'][target]['classes'])
-            cached.inv_cache['inventory'][target]['parameters'] = dictionary_hash(inv['nodes'][target]['parameters'])
+        for target in inv["nodes"]:
+            cached.inv_cache["inventory"][target] = {}
+            cached.inv_cache["inventory"][target]["classes"] = dictionary_hash(
+                inv["nodes"][target]["classes"]
+            )
+            cached.inv_cache["inventory"][target]["parameters"] = dictionary_hash(
+                inv["nodes"][target]["parameters"]
+            )
 
-            compile_obj = inv['nodes'][target]['parameters']['kapitan']['compile']
+            compile_obj = inv["nodes"][target]["parameters"]["kapitan"]["compile"]
             for obj in compile_obj:
-                for input_path in obj['input_paths']:
-                    base_folder = os.path.dirname(input_path).split('/')[0]
-                    if base_folder == '':
-                        base_folder = os.path.basename(input_path).split('/')[0]
+                for input_path in obj["input_paths"]:
+                    base_folder = os.path.dirname(input_path).split("/")[0]
+                    if base_folder == "":
+                        base_folder = os.path.basename(input_path).split("/")[0]
 
-                    if base_folder not in cached.inv_cache['folder'].keys():
+                    if base_folder not in cached.inv_cache["folder"].keys():
                         if os.path.exists(base_folder) and os.path.isdir(base_folder):
-                            cached.inv_cache['folder'][base_folder] = directory_hash(base_folder)
+                            cached.inv_cache["folder"][base_folder] = directory_hash(base_folder)
 
                 # Cache additional folders set by --cache-paths
                 for path in cache_paths:
-                    if path not in cached.inv_cache['folder'].keys():
+                    if path not in cached.inv_cache["folder"].keys():
                         if os.path.exists(path) and os.path.isdir(path):
-                            cached.inv_cache['folder'][path] = directory_hash(path)
+                            cached.inv_cache["folder"][path] = directory_hash(path)
 
         # Most commonly changed but not referenced in input_paths
-        for common in ('lib', 'vendor', 'secrets'):
-            if common not in cached.inv_cache['folder'].keys():
+        for common in ("lib", "vendor", "secrets"):
+            if common not in cached.inv_cache["folder"].keys():
                 if os.path.exists(common) and os.path.isdir(common):
-                    cached.inv_cache['folder'][common] = directory_hash(common)
+                    cached.inv_cache["folder"][common] = directory_hash(common)
 
 
 def changed_targets(inventory_path, output_path):
@@ -219,15 +236,15 @@ def changed_targets(inventory_path, output_path):
             except Exception:
                 raise CompileError("Failed to load kapitan cache: %s", saved_inv_cache_path)
 
-    targets_list = list(inv['nodes'])
+    targets_list = list(inv["nodes"])
 
     # If .kapitan_cache doesn't exist or failed to load, recompile all targets
     if not saved_inv_cache:
         return targets_list
     else:
-        for key, hash in cached.inv_cache['folder'].items():
+        for key, hash in cached.inv_cache["folder"].items():
             try:
-                if hash != saved_inv_cache['folder'][key]:
+                if hash != saved_inv_cache["folder"][key]:
                     logger.debug("%s folder hash changed, recompiling all targets", key)
                     return targets_list
             except KeyError:
@@ -237,10 +254,16 @@ def changed_targets(inventory_path, output_path):
 
         for target in targets_list:
             try:
-                if cached.inv_cache['inventory'][target]['classes'] != saved_inv_cache['inventory'][target]['classes']:
+                if (
+                    cached.inv_cache["inventory"][target]["classes"]
+                    != saved_inv_cache["inventory"][target]["classes"]
+                ):
                     logger.debug("classes hash changed in %s, recompiling", target)
                     targets.append(target)
-                elif cached.inv_cache['inventory'][target]['parameters'] != saved_inv_cache['inventory'][target]['parameters']:
+                elif (
+                    cached.inv_cache["inventory"][target]["parameters"]
+                    != saved_inv_cache["inventory"][target]["parameters"]
+                ):
                     logger.debug("parameters hash changed in %s, recompiling", target)
                     targets.append(target)
             except KeyError:
@@ -265,18 +288,22 @@ def save_inv_cache(compile_path, targets):
                 pass
 
             if saved_inv_cache:
-                if 'inventory' not in saved_inv_cache:
-                    saved_inv_cache['inventory'] = {}
+                if "inventory" not in saved_inv_cache:
+                    saved_inv_cache["inventory"] = {}
             else:
                 saved_inv_cache = {}
-                saved_inv_cache['inventory'] = {}
+                saved_inv_cache["inventory"] = {}
 
             for target in targets:
-                if target not in saved_inv_cache['inventory']:
-                    saved_inv_cache['inventory'][target] = {}
+                if target not in saved_inv_cache["inventory"]:
+                    saved_inv_cache["inventory"][target] = {}
 
-                saved_inv_cache['inventory'][target]['classes'] = cached.inv_cache['inventory'][target]['classes']
-                saved_inv_cache['inventory'][target]['parameters'] = cached.inv_cache['inventory'][target]['parameters']
+                saved_inv_cache["inventory"][target]["classes"] = cached.inv_cache["inventory"][target][
+                    "classes"
+                ]
+                saved_inv_cache["inventory"][target]["parameters"] = cached.inv_cache["inventory"][target][
+                    "parameters"
+                ]
 
             with open(inv_cache_path, "w") as f:
                 logger.debug("Saved .kapitan_cache for targets: %s", targets)
@@ -297,11 +324,11 @@ def load_target_inventory(inventory_path, targets):
     if targets:
         targets_list = targets
     else:
-        targets_list = inv['nodes']
+        targets_list = inv["nodes"]
 
     for target_name in targets_list:
         try:
-            target_obj = inv['nodes'][target_name]['parameters']['kapitan']
+            target_obj = inv["nodes"][target_name]["parameters"]["kapitan"]
             valid_target_obj(target_obj)
             validate_matching_target_name(target_name, target_obj, inventory_path)
             logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
@@ -319,18 +346,20 @@ def search_targets(inventory_path, targets, labels):
         return targets
 
     try:
-        labels_dict = dict(label.split('=') for label in labels)
+        labels_dict = dict(label.split("=") for label in labels)
     except ValueError:
-        raise CompileError("Compile error: Failed to parse labels, should be formatted like: kapitan compile -l env=prod app=example")
+        raise CompileError(
+            "Compile error: Failed to parse labels, should be formatted like: kapitan compile -l env=prod app=example"
+        )
 
     targets_found = []
     inv = inventory_reclass(inventory_path)
 
-    for target_name in inv['nodes']:
+    for target_name in inv["nodes"]:
         matched_all_labels = False
         for label, value in labels_dict.items():
             try:
-                if inv['nodes'][target_name]['parameters']['kapitan']['labels'][label] == value:
+                if inv["nodes"][target_name]["parameters"]["kapitan"]["labels"][label] == value:
                     matched_all_labels = True
                     continue
             except KeyError:
@@ -371,15 +400,15 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
         elif input_type == "kadet":
             input_compiler = kadet_compiler
         elif input_type == "helm":
-            if 'helm_values' in comp_obj:
-                helm_compiler.dump_helm_values(comp_obj['helm_values'])
-            if 'helm_params' in comp_obj:
-                helm_compiler.set_helm_params(comp_obj['helm_params'])
+            if "helm_values" in comp_obj:
+                helm_compiler.dump_helm_values(comp_obj["helm_values"])
+            if "helm_params" in comp_obj:
+                helm_compiler.set_helm_params(comp_obj["helm_params"])
             input_compiler = helm_compiler
         elif input_type == "copy":
             input_compiler = copy_compiler
         else:
-            err_msg = "Invalid input_type: \"{}\". Supported input_types: jsonnet, jinja2, kadet, helm, copy"
+            err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy'
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)
@@ -416,33 +445,23 @@ def valid_target_obj(target_obj):
                             "properties": {
                                 "namespace": {"type": "string"},
                                 "name_template": {"type": "string"},
-                                "release_name": {"type": "string"}
+                                "release_name": {"type": "string"},
                             },
-                            "additionalProperties": False
-                        }
+                            "additionalProperties": False,
+                        },
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
                     "oneOf": [
                         {
                             "properties": {
-                                "input_type": {
-                                    "enum": ["jsonnet", "kadet", "copy"]
-                                },
-                                "output_type": {
-                                    "enum": ["yaml", "json", "plain"]
-                                }
+                                "input_type": {"enum": ["jsonnet", "kadet", "copy"]},
+                                "output_type": {"enum": ["yaml", "json", "plain"]},
                             },
                         },
-                        {
-                            "properties": {
-                                "input_type": {
-                                    "enum": ["jinja2", "helm"]
-                                }
-                            }
-                        }
+                        {"properties": {"input_type": {"enum": ["jinja2", "helm"]}}},
                     ],
-                }
+                },
             },
             "validate": {
                 "type": "array",
@@ -450,10 +469,7 @@ def valid_target_obj(target_obj):
                     "type": "object",
                     "properties": {
                         "output_paths": {"type": "array"},
-                        "type": {
-                            "type": "string",
-                            "enum": ["kubernetes"]
-                        },
+                        "type": {"type": "string", "enum": ["kubernetes"]},
                         "kind": {"type": "string"},
                         "version": {"type": "string"},
                     },
@@ -461,68 +477,46 @@ def valid_target_obj(target_obj):
                     "minItems": 1,
                     "allOf": [
                         {
-                            "if": {
-                                "properties": {"type": {"const": "kubernetes"}}
-                            },
+                            "if": {"properties": {"type": {"const": "kubernetes"}}},
                             "then": {
-                                "properties": {
-                                    "type": {
-                                    },
-                                    "kind": {
-                                    },
-                                    "output_paths": {
-                                    },
-                                    "version": {
-                                    }
-                                },
+                                "properties": {"type": {}, "kind": {}, "output_paths": {}, "version": {}},
                                 "additionalProperties": False,
                                 "required": ["kind"],
-                            }
+                            },
                         },
-                    ]
-                }
+                    ],
+                },
             },
             "dependencies": {
                 "type": "array",
                 "items": {
                     "type": "object",
                     "properties": {
-                        "type": {
-                            "type": "string",
-                            "enum": ["git", "http", "https"]
-                        },
+                        "type": {"type": "string", "enum": ["git", "http", "https"]},
                         "output_path": {"type": "string"},
                         "source": {"type": "string"},
                         "subdir": {"type": "string"},
                         "ref": {"type": "string"},
-                        "unpack": {"type": "boolean"}
+                        "unpack": {"type": "boolean"},
                     },
                     "required": ["type", "output_path", "source"],
                     "additionalProperties": False,
                     "allOf": [
                         {
-                            "if": {
-                                "properties": {"type": {"enum": ["http", "https"]}}
-                            },
+                            "if": {"properties": {"type": {"enum": ["http", "https"]}}},
                             "then": {
                                 "properties": {
-                                    "type": {
-                                    },
-                                    "source": {
-                                        "format": "uri"
-                                    },
-                                    "output_path": {
-                                    },
-                                    "unpack": {
-                                    }
-
+                                    "type": {},
+                                    "source": {"format": "uri"},
+                                    "output_path": {},
+                                    "unpack": {},
                                 },
-                                "additionalProperties": False
-                            }
+                                "additionalProperties": False,
+                            },
                         },
-                    ]
-                }
-            }
+                    ],
+                },
+            },
         },
         "required": ["compile"],
     }
@@ -530,8 +524,11 @@ def valid_target_obj(target_obj):
     try:
         jsonschema.validate(target_obj, schema, format_checker=jsonschema.FormatChecker())
     except jsonschema.exceptions.ValidationError as e:
-        raise InventoryError('Invalid inventory structure\n\nError: {}\nOn instance:\n{}'.
-                             format(e.message, json.dumps(e.instance, indent=2, sort_keys=False)))
+        raise InventoryError(
+            "Invalid inventory structure\n\nError: {}\nOn instance:\n{}".format(
+                e.message, json.dumps(e.instance, indent=2, sort_keys=False)
+            )
+        )
 
 
 def validate_matching_target_name(target_filename, target_obj, inventory_path):

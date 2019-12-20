@@ -40,8 +40,7 @@ class Copy(InputType):
                     shutil.copy2(file_path, compile_path)
                 else:
                     os.makedirs(compile_path, exist_ok=True)
-                    shutil.copy2(file_path, os.path.join(
-                        compile_path, os.path.basename(file_path)))
+                    shutil.copy2(file_path, os.path.join(compile_path, os.path.basename(file_path)))
             else:
                 if os.path.exists(compile_path):
                     shutil.rmtree(compile_path)

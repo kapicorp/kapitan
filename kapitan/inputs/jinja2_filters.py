@@ -34,21 +34,21 @@ logger = logging.getLogger(__name__)
 
 def load_jinja2_filters(env):
     """Load Jinja2 custom filters into env"""
-    env.filters['sha256'] = utils.sha256_string
-    env.filters['b64encode'] = base64_encode
-    env.filters['b64decode'] = base64_decode
-    env.filters['yaml'] = to_yaml
-    env.filters['fileglob'] = fileglob
-    env.filters['bool'] = to_bool
-    env.filters['to_datetime'] = to_datetime
-    env.filters['strftime'] = strftime
-    env.filters['regex_replace'] = regex_replace
-    env.filters['regex_escape'] = regex_escape
-    env.filters['regex_search'] = regex_search
-    env.filters['regex_findall'] = regex_findall
-    env.filters['reveal_maybe'] = reveal_maybe
-    env.filters['ternary'] = ternary
-    env.filters['shuffle'] = randomize_list
+    env.filters["sha256"] = utils.sha256_string
+    env.filters["b64encode"] = base64_encode
+    env.filters["b64decode"] = base64_decode
+    env.filters["yaml"] = to_yaml
+    env.filters["fileglob"] = fileglob
+    env.filters["bool"] = to_bool
+    env.filters["to_datetime"] = to_datetime
+    env.filters["strftime"] = strftime
+    env.filters["regex_replace"] = regex_replace
+    env.filters["regex_escape"] = regex_escape
+    env.filters["regex_search"] = regex_search
+    env.filters["regex_findall"] = regex_findall
+    env.filters["reveal_maybe"] = reveal_maybe
+    env.filters["ternary"] = ternary
+    env.filters["shuffle"] = randomize_list
 
 
 def load_module_from_path(env, path):
@@ -57,13 +57,12 @@ def load_module_from_path(env, path):
     filter name is same as that of function
     """
     try:
-        module_name = os.path.basename(path).split('.')[0]
+        module_name = os.path.basename(path).split(".")[0]
         custom_filter_spec = util.spec_from_file_location(module_name, path)
         custom_filter_module = util.module_from_spec(custom_filter_spec)
         custom_filter_spec.loader.exec_module(custom_filter_module)
         for function in dir(custom_filter_module):
-            if isinstance(getattr(custom_filter_module, function),
-                          types.FunctionType):
+            if isinstance(getattr(custom_filter_module, function), types.FunctionType):
                 logger.debug("custom filter loaded from {}".format(path))
                 env.filters[function] = getattr(custom_filter_module, function)
     except Exception as e:
@@ -86,7 +85,7 @@ def load_jinja2_filters_from_file(env, jinja2_filters):
 # Custom filters
 def reveal_maybe(ref_tag):
     "Will reveal ref_tag if valid and --reveal flag is used"
-    if cached.args['compile'].reveal:
+    if cached.args["compile"].reveal:
         return cached.revealer_obj.reveal_raw(ref_tag)
     else:
         return ref_tag
@@ -116,7 +115,7 @@ def to_bool(a):
         return a
     if isinstance(a, string_types):
         a = a.lower()
-    if a in ('yes', 'on', '1', 'true', 1):
+    if a in ("yes", "on", "1", "true", 1):
         return True
     return False
 
@@ -131,11 +130,11 @@ def strftime(string_format, second=None):
         try:
             second = int(second)
         except Exception:
-            raise CompileError('Invalid value for epoch value ({})'.format(second))
+            raise CompileError("Invalid value for epoch value ({})".format(second))
     return time.strftime(string_format, time.localtime(second))
 
 
-def regex_replace(value='', pattern='', replacement='', ignorecase=False):
+def regex_replace(value="", pattern="", replacement="", ignorecase=False):
     """Perform a `re.sub` returning a string"""
     if ignorecase:
         flags = re.I
@@ -154,19 +153,19 @@ def regex_search(value, regex, *args, **kwargs):
     """Perform re.search and return the list of matches or a backref"""
     groups = list()
     for arg in args:
-        if arg.startswith('\\g'):
-            match = re.match(r'\\g<(\S+)>', arg).group(1)
+        if arg.startswith("\\g"):
+            match = re.match(r"\\g<(\S+)>", arg).group(1)
             groups.append(match)
-        elif arg.startswith('\\'):
-            match = int(re.match(r'\\(\d+)', arg).group(1))
+        elif arg.startswith("\\"):
+            match = int(re.match(r"\\(\d+)", arg).group(1))
             groups.append(match)
         else:
-            raise CompileError('Unknown argument')
+            raise CompileError("Unknown argument")
 
     flags = 0
-    if kwargs.get('ignorecase'):
+    if kwargs.get("ignorecase"):
         flags |= re.I
-    if kwargs.get('multiline'):
+    if kwargs.get("multiline"):
         flags |= re.M
 
     match = re.search(regex, value, flags)

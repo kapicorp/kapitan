@@ -24,29 +24,31 @@ from kapitan.inputs.kadet import BaseObj, Dict
 
 class KadetTestObj(BaseObj):
     def new(self):
-        self.need('name', 'Need a name string')
-        self.need('size', 'Need a size int')
+        self.need("name", "Need a name string")
+        self.need("size", "Need a size int")
 
     def body(self):
         self.root.name = self.kwargs.name
         self.root.size = self.kwargs.size
         self.root.first_key = 1
         self.root.nested.first_key = 2
-        self.root['traditional_key'] = 3
-        self.root.with_dict = {'A': 'dict'}
-        self.root.with_baseobj_init_as = BaseObj.from_dict({'init': 'as'})
+        self.root["traditional_key"] = 3
+        self.root.with_dict = {"A": "dict"}
+        self.root.with_baseobj_init_as = BaseObj.from_dict({"init": "as"})
         bobj = BaseObj()
         bobj.root.inside = "BaseObj"
         self.root.with_baseobj = bobj
-        self.root.with_another_dict = Dict({'Another': 'Dict'})
+        self.root.with_another_dict = Dict({"Another": "Dict"})
 
 
 class KadetTestObjWithInner(KadetTestObj):
     def body(self):
         super().body()
-        class Inner(BaseObj): # noqa E306
+
+        class Inner(BaseObj):  # noqa E306
             def body(self):
                 self.root.i_am_inside = True
+
         self.root.inner = Inner()
 
 
@@ -58,7 +60,7 @@ class KadetTest(unittest.TestCase):
         self.assertEqual(output, desired_output)
 
     def test_to_dict(self):
-        kobj = KadetTestObj(name='testObj', size=5)
+        kobj = KadetTestObj(name="testObj", size=5)
         output = kobj.to_dict()
         desired_output = {
             "name": "testObj",
@@ -74,7 +76,7 @@ class KadetTest(unittest.TestCase):
         self.assertEqual(output, desired_output)
 
     def test_inner(self):
-        kobj = KadetTestObjWithInner(name='testWithInnerObj', size=6)
+        kobj = KadetTestObjWithInner(name="testWithInnerObj", size=6)
         output = kobj.to_dict()
         desired_output = {
             "name": "testWithInnerObj",
@@ -91,11 +93,12 @@ class KadetTest(unittest.TestCase):
         self.assertEqual(output, desired_output)
 
     def test_lists(self):
-        kobj = KadetTestObj(name='testObj', size=5)
-        kobj.root.with_lists = [Dict({"i_am_inside_a_list": True}),
-                                BaseObj.from_dict({"me": "too"}),
-                                BaseObj.from_dict({"list_of_objs": [BaseObj.from_dict(dict(a=1, b=2)),
-                                                                    Dict(dict(c=3, d=4))]})]
+        kobj = KadetTestObj(name="testObj", size=5)
+        kobj.root.with_lists = [
+            Dict({"i_am_inside_a_list": True}),
+            BaseObj.from_dict({"me": "too"}),
+            BaseObj.from_dict({"list_of_objs": [BaseObj.from_dict(dict(a=1, b=2)), Dict(dict(c=3, d=4))]}),
+        ]
         output = kobj.to_dict()
         desired_output = {
             "name": "testObj",
@@ -107,8 +110,11 @@ class KadetTest(unittest.TestCase):
             "with_baseobj_init_as": {"init": "as"},
             "with_baseobj": {"inside": "BaseObj"},
             "with_another_dict": {"Another": "Dict"},
-            "with_lists": [{"i_am_inside_a_list": True}, {"me": "too"},
-                           {"list_of_objs": [{"a": 1, "b": 2}, {"c": 3, "d": 4}]}]
+            "with_lists": [
+                {"i_am_inside_a_list": True},
+                {"me": "too"},
+                {"list_of_objs": [{"a": 1, "b": 2}, {"c": 3, "d": 4}]},
+            ],
         }
         self.assertEqual(output, desired_output)
 
@@ -118,7 +124,7 @@ class KadetTest(unittest.TestCase):
 
     def test_update_root_yaml(self):
         yaml_file = tempfile.mktemp(suffix=".yml")
-        with open(yaml_file, 'w') as fp:
+        with open(yaml_file, "w") as fp:
             fp.write("this: that\nlist: [1,2,3]\n")
 
         class KadetObjFromYaml(BaseObj):
@@ -131,7 +137,7 @@ class KadetTest(unittest.TestCase):
 
     def test_update_root_json(self):
         json_file = tempfile.mktemp(suffix=".json")
-        with open(json_file, 'w') as fp:
+        with open(json_file, "w") as fp:
             fp.write('{"this": "that", "list": [1,2,3]}')
 
         class KadetObjFromYaml(BaseObj):
@@ -144,7 +150,7 @@ class KadetTest(unittest.TestCase):
 
     def test_from_json(self):
         json_file = tempfile.mktemp()
-        with open(json_file, 'w') as fp:
+        with open(json_file, "w") as fp:
             fp.write('{"this": "that", "list": [1,2,3]}')
 
         kobj = BaseObj.from_json(json_file)
@@ -154,7 +160,7 @@ class KadetTest(unittest.TestCase):
 
     def test_from_yaml(self):
         yaml_file = tempfile.mktemp()
-        with open(yaml_file, 'w') as fp:
+        with open(yaml_file, "w") as fp:
             fp.write("this: that\nlist: [1,2,3]\n")
 
         kobj = BaseObj.from_yaml(yaml_file)

@@ -51,22 +51,18 @@ def resource_callbacks(search_paths):
     search_paths can be used by the native functions to access files
     """
 
-    return {"jinja2_render_file": (("name", "ctx"),
-                                   partial(jinja2_render_file, search_paths)),
-            "inventory": (("target", "inv_path"),
-                          partial(inventory, search_paths)),
-            "file_read": (("name",),
-                          partial(read_file, search_paths)),
-            "sha256_string": (("obj",), sha256_string),
-            "gzip_b64": (("obj",), gzip_b64),
-            "yaml_dump": (("obj",), yaml_dump),
-            "yaml_dump_stream": (("obj",), yaml_dump_stream),
-            "yaml_load": (("name",),
-                          partial(yaml_load, search_paths)),
-            "yaml_load_stream": (("name",),
-                          partial(yaml_load_stream, search_paths)),
-            "jsonschema_validate": (("obj", "schema_obj"), jsonschema_validate),
-            }
+    return {
+        "jinja2_render_file": (("name", "ctx"), partial(jinja2_render_file, search_paths)),
+        "inventory": (("target", "inv_path"), partial(inventory, search_paths)),
+        "file_read": (("name",), partial(read_file, search_paths)),
+        "sha256_string": (("obj",), sha256_string),
+        "gzip_b64": (("obj",), gzip_b64),
+        "yaml_dump": (("obj",), yaml_dump),
+        "yaml_dump_stream": (("obj",), yaml_dump_stream),
+        "yaml_load": (("name",), partial(yaml_load, search_paths)),
+        "yaml_load_stream": (("name",), partial(yaml_load_stream, search_paths)),
+        "jsonschema_validate": (("obj", "schema_obj"), jsonschema_validate),
+    }
 
 
 def jsonschema_validate(obj, schema_obj):
@@ -101,7 +97,7 @@ def gzip_b64(obj):
     """returns base64-encoded gzip-compressed obj"""
     obj_bytes = obj.encode("UTF-8")
     buf = io.BytesIO()
-    with gzip.GzipFile(fileobj=buf, mode='wb', compresslevel=9, mtime=0) as f:
+    with gzip.GzipFile(fileobj=buf, mode="wb", compresslevel=9, mtime=0) as f:
         f.write(obj_bytes)
     compressed_obj = buf.getvalue()
     return base64.b64encode(compressed_obj).decode("UTF-8")
@@ -170,7 +166,7 @@ def read_file(search_paths, name):
         logger.debug("read_file trying file %s", full_path)
         if os.path.exists(full_path):
             logger.debug("read_file found file at %s", full_path)
-            with io.open(full_path, newline='') as f:
+            with io.open(full_path, newline="") as f:
                 return f.read()
 
     raise IOError("Could not find file {}".format(name))
@@ -211,8 +207,7 @@ def search_imports(cwd, import_str, search_paths):
     # with a non existent import
     normalised_path = os.path.normpath(full_import_path)
 
-    logger.debug("cwd:%s import_str:%s basename:%s -> norm:%s",
-                 cwd, import_str, basename, normalised_path)
+    logger.debug("cwd:%s import_str:%s basename:%s -> norm:%s", cwd, import_str, basename, normalised_path)
 
     normalised_path_content = ""
     with open(normalised_path) as f:
@@ -257,19 +252,20 @@ def inventory_reclass(inventory_path):
     """
 
     if not cached.inv:
-        reclass_config = {'storage_type': 'yaml_fs',
-                          'inventory_base_uri': inventory_path,
-                          'nodes_uri': os.path.join(inventory_path, 'targets'),
-                          'classes_uri': os.path.join(inventory_path, 'classes'),
-                          'compose_node_name': False
-                          }
+        reclass_config = {
+            "storage_type": "yaml_fs",
+            "inventory_base_uri": inventory_path,
+            "nodes_uri": os.path.join(inventory_path, "targets"),
+            "classes_uri": os.path.join(inventory_path, "classes"),
+            "compose_node_name": False,
+        }
 
         try:
-            cfg_file = os.path.join(inventory_path, 'reclass-config.yml')
+            cfg_file = os.path.join(inventory_path, "reclass-config.yml")
             with open(cfg_file) as reclass_cfg:
                 reclass_config = yaml.load(reclass_cfg, Loader=YamlLoader)
                 # normalise relative nodes_uri and classes_uri paths
-                for uri in ('nodes_uri', 'classes_uri'):
+                for uri in ("nodes_uri", "classes_uri"):
                     uri_val = reclass_config.get(uri)
                     uri_path = os.path.join(inventory_path, uri_val)
                     normalised_path = os.path.normpath(uri_path)
@@ -281,11 +277,13 @@ def inventory_reclass(inventory_path):
                 logger.debug("Using reclass inventory config defaults")
 
         try:
-            storage = reclass.get_storage(reclass_config['storage_type'],
-                                          reclass_config['nodes_uri'],
-                                          reclass_config['classes_uri'],
-                                          reclass_config['compose_node_name'])
-            class_mappings = reclass_config.get('class_mappings')  # this defaults to None (disabled)
+            storage = reclass.get_storage(
+                reclass_config["storage_type"],
+                reclass_config["nodes_uri"],
+                reclass_config["classes_uri"],
+                reclass_config["compose_node_name"],
+            )
+            class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
             _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
 
             cached.inv = _reclass.inventory()

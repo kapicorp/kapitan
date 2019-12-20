@@ -36,8 +36,7 @@ class InitTest(unittest.TestCase):
             sys.argv = ["kapitan", "init", "--directory", tmp_dir]
             main()
 
-            template_dir = os.path.join(
-                os.getcwd(), 'kapitan', 'inputs', 'templates')
+            template_dir = os.path.join(os.getcwd(), "kapitan", "inputs", "templates")
 
             diff_files = []
 
