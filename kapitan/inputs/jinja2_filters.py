@@ -14,22 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import yaml
 import base64
-import glob
-import os
 import datetime
-import time
-import re
-import types
+import glob
 import logging
-
-from six import string_types
-from random import Random, shuffle
+import os
+import re
+import time
+import types
 from importlib import util
+from random import Random, shuffle
 
+import yaml
+from kapitan import cached, utils
 from kapitan.errors import CompileError
-from kapitan import utils, cached
+from six import string_types
 
 logger = logging.getLogger(__name__)
 

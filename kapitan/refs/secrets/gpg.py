@@ -15,14 +15,14 @@
 "gpg secrets module"
 
 import base64
-import gnupg
 import logging
 import time
 
-from kapitan.refs.base import RefError
-from kapitan.refs.base64 import Base64Ref, Base64RefBackend
+import gnupg
 from kapitan import cached
 from kapitan.errors import KapitanError
+from kapitan.refs.base import RefError
+from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class GPGSecret(Base64Ref):
                 raise ValueError('target_inv not set')
 
             if 'secrets' not in target_inv['parameters']['kapitan']:
-                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
+                raise KapitanError(f"parameters.kapitan.secrets not defined in inventory of target {target_name}")
 
             recipients = target_inv['parameters']['kapitan']['secrets']['gpg']['recipients']
 
@@ -199,8 +199,9 @@ def fingerprint_non_expired(recipient_name):
             if (not key['expires']) or (time.time() < int(key['expires'])):
                 return key['fingerprint']
             else:
-                logger.debug("Key for recipient: %s with fingerprint: %s has expired, skipping",
-                             recipient_name, key['fingerprint'])
-        raise GPGError("Could not find valid key for recipient: %s" % recipient_name)
+                logger.debug(
+                    f"Key for recipient: {recipient_name} with fingerprint: {key['fingerprint']} has expired, skipping")
+        raise GPGError(
+            f"Could not find valid key for recipient: {recipient_name}")
     except IndexError as iexp:
         raise iexp

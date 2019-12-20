@@ -17,8 +17,8 @@
 import base64
 import errno
 import logging
-import yaml
 
+import yaml
 from kapitan.refs.base import PlainRef, PlainRefBackend
 
 try:
@@ -50,7 +50,7 @@ class Base64Ref(PlainRef):
 
     def compile(self):
         # XXX will only work if object read via backend
-        return "?{{{}:{}:{}}}".format(self.type_name, self.path, self.hash[:8])
+        return f"?{{{self.type_name}:{self.path}:{self.hash[:8]}}}"
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):

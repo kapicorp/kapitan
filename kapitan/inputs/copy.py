@@ -47,7 +47,7 @@ class Copy(InputType):
                     shutil.rmtree(compile_path)
                 shutil.copytree(file_path, compile_path)
         except OSError as e:
-            logger.exception("Input dir not copied. Error: {}".format(e))
+            logger.exception(f"Input dir not copied. Error: {e}")
 
     def default_output_type(self):
         # no output_type options for copy

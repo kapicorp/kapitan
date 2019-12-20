@@ -31,11 +31,11 @@ import yaml
 from kapitan import cached
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
+from kapitan.inputs.copy import Copy
 from kapitan.inputs.helm import Helm
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
-from kapitan.inputs.copy import Copy
 from kapitan.resources import inventory_reclass
 from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
 from kapitan.validator.kubernetes_validator import (
@@ -135,7 +135,7 @@ def compile_targets(inventory_path, search_paths, output_path, parallel, targets
         logger.debug("Compile pool terminated")
         # only print traceback for errors we don't know about
         if not isinstance(e, KapitanError):
-            logger.exception("Unknown (Non-Kapitan) Error occured")
+            logger.exception("Unknown (Non-Kapitan) Error occurred")
 
         logger.error("\n")
         logger.error(e)
@@ -539,20 +539,21 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
     """Throws *InventoryError* if parameters.kapitan.vars.target is not set,
     or target does not have a corresponding yaml file in *inventory_path*
     """
-    logger.debug("validating target name matches the name of yml file%s", target_filename)
+    logger.debug(
+        f"validating target name matches the name of yml file {target_filename}")
     try:
         target_name = target_obj["vars"]["target"]
     except KeyError:
-        error_message = "Target missing: target \"{}\" is missing parameters.kapitan.vars.target\n" \
-                        "This parameter should be set to the target name"
-        raise InventoryError(error_message.format(target_filename))
+        error_message = (f"Target missing: target \"{target_filename}\" is missing parameters.kapitan.vars.target\n"
+                         "This parameter should be set to the target name")
+        raise InventoryError(error_message)
 
     if target_filename != target_name:
         target_path = os.path.join(os.path.abspath(inventory_path), "targets")
 
-        error_message = "Target \"{}\" is missing the corresponding yml file in {}\n" \
-                        "Target name should match the name of the target yml file in inventory"
-        raise InventoryError(error_message.format(target_name, target_path))
+        error_message = (f"Target \"{target_name}\" is missing the corresponding yml file in {target_path}\n"
+                         "Target name should match the name of the target yml file in inventory")
+        raise InventoryError(error_message)
 
 
 def schema_validate_compiled(targets, compiled_path, inventory_path, schema_cache_path, parallel):
@@ -560,12 +561,12 @@ def schema_validate_compiled(targets, compiled_path, inventory_path, schema_cach
     validates compiled output according to schemas specified in the inventory
     """
     if not os.path.isdir(compiled_path):
-        logger.error("compiled-path {} not found".format(compiled_path))
+        logger.error(f"compiled-path {compiled_path} not found")
         sys.exit(1)
 
     if not os.path.isdir(schema_cache_path):
         os.makedirs(schema_cache_path)
-        logger.info("created schema-cache-path at {}".format(schema_cache_path))
+        logger.info(f"created schema-cache-path at {schema_cache_path}")
 
     worker = partial(schema_validate_kubernetes_output, cache_dir=schema_cache_path)
     pool = multiprocessing.Pool(parallel)
@@ -607,7 +608,7 @@ def create_validate_mapping(target_objs, compiled_path):
     for target_obj in target_objs:
         target_name = target_obj['vars']['target']
         if 'validate' not in target_obj:
-            logger.debug("target '{}' does not have 'validate' parameter. skipping".format(target_name))
+            logger.debug("target '{}' does not have 'validate' parameter in inventory. skipping".format(target_name))
             continue
 
         for validate_item in target_obj['validate']:
@@ -618,12 +619,12 @@ def create_validate_mapping(target_objs, compiled_path):
                 for output_path in validate_item['output_paths']:
                     full_output_path = os.path.join(compiled_path, target_name, output_path)
                     if not os.path.isfile(full_output_path):
-                        logger.warning("{} does not exist for target '{}'. skipping".
-                                       format(output_path, target_name))
+                        logger.warning(f"{output_path} does not exist for target '{target_name}'. skipping")
                         continue
                     validate_files_map[kind_version_pair].append(full_output_path)
             else:
-                logger.warning('type {} is not supported for validation. skipping'.format(validate_type))
+                logger.warning(
+                    f"type {validate_type} is not supported for validation. skipping")
 
     return validate_files_map
 

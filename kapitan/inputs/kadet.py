@@ -129,7 +129,8 @@ class Kadet(InputType):
                                 indent=indent) as fp:
                     fp.write(item_value)
             else:
-                raise ValueError('output is neither "json", "yaml" or "plain"')
+                raise ValueError(
+                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'")
             logger.debug("Pruned output for: %s", file_path)
 
     def default_output_type(self):
