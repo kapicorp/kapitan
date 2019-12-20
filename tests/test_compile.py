@@ -45,7 +45,6 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
             with open(g) as f:
                 self.assertTrue('?{plain:' not in f.read())
 
-
     def tearDown(self):
         os.chdir(os.getcwd() + '/../../')
         reset_cache()
