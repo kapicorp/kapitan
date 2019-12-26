@@ -3,7 +3,14 @@
 cd $(dirname "$0")
 pwd
 
-so_name="libtemplate.so"
+# append platform name to the .so file name, corresponding to python's platform.system()
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    os_suffix="Linux"
+elif [[ "$OSTYPE" == "darwin" ]]; then
+    os_suffix="Darwin"
+fi
+
+so_name="libtemplate_$os_suffix.so"
 
 # Compile the binding if a Go runtime exists
 if [[ -z $(which go) ]]; then

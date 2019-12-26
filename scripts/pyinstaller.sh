@@ -10,7 +10,7 @@ output_name='kapitan-linux-amd64'
 pyi-makespec kapitan/"$entry".py --onefile \
     --add-data kapitan/reclass/reclass:reclass \
     --add-data kapitan/lib:kapitan/lib \
-    --add-data kapitan/inputs/helm/libtemplate.so:kapitan/inputs/helm \
+    --add-data kapitan/inputs/helm/libtemplate_Linux.so:kapitan/inputs/helm \
     --hidden-import pyparsing --hidden-import jsonschema \
     --exclude-module doctest --exclude-module pydoc
 pyinstaller "$entry".spec --clean

@@ -23,10 +23,11 @@ class Helm(InputType):
 
     def initialise_binding(self):
         """returns the dl_opened library (.so file) if exists, otherwise None"""
-        if platform.system() not in ('Linux', 'Darwin'):  # TODO: later add binding for Mac
+        if platform.system() not in ('Linux', 'Darwin'):
             return None
-        # binding_path is kapitan/inputs/helm/libtemplate.so
-        binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "libtemplate.so")
+        # binding_path is kapitan/inputs/helm/libtemplate_<platform.system()>.so
+        binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    "libtemplate_{}.so".format(platform.system()))
         if not os.path.exists(binding_path):
             logger.debug('The helm binding does not exist at {}'.format(binding_path))
             return None
@@ -55,8 +56,8 @@ class Helm(InputType):
             target_name: default None, set to current target being compiled
         """
         if not self.lib:
-            raise HelmBindingUnavailableError("Helm binding is not supported for {}."
-                                              "\nOr the binding does not exist.".format(platform.system()))
+            raise HelmBindingUnavailableError("Helm binding is not supported for {},"
+                                              "\nor the binding does not exist.".format(platform.system()))
 
         reveal = kwargs.get('reveal', False)
         target_name = kwargs.get('target_name', None)
