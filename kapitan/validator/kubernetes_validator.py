@@ -6,8 +6,7 @@ import jsonschema
 import requests
 import yaml
 from kapitan import defaults
-from kapitan.errors import (KubernetesManifestValidationError,
-                            RequestUnsuccessfulError)
+from kapitan.errors import KubernetesManifestValidationError, RequestUnsuccessfulError
 from kapitan.utils import make_request
 from kapitan.validator.base import Validator
 
@@ -24,8 +23,8 @@ class KubernetesManifestValidator(Validator):
         'kind' and 'version' in kwargs.
         raises KubernetesManifestValidationError encountering the first validation error
         """
-        kind = kwargs.get('kind')
-        version = kwargs.get('version', defaults.DEFAULT_KUBERNETES_VERSION)
+        kind = kwargs.get("kind")
+        version = kwargs.get("version", defaults.DEFAULT_KUBERNETES_VERSION)
         schema = self._get_schema(kind, version)
         validator = jsonschema.Draft4Validator(schema)
         for validate_path in validate_paths:
@@ -81,7 +80,7 @@ class KubernetesManifestValidator(Validator):
         return yaml.safe_load(content)
 
     def _get_request_url(self, kind, version):
-        return 'https://kubernetesjsonschema.dev/' + defaults.FILE_PATH_FORMAT.format(version, kind)
+        return "https://kubernetesjsonschema.dev/" + defaults.FILE_PATH_FORMAT.format(version, kind)
 
     def _get_cache_path(self, kind, version):
         return os.path.join(self.cache_dir, defaults.FILE_PATH_FORMAT.format(version, kind))

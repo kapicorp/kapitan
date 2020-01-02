@@ -191,8 +191,7 @@ def search_imports(cwd, import_str, search_paths):
         # if found, set as full_import_path
         if os.path.exists(_full_import_path):
             full_import_path = _full_import_path
-            logger.debug(
-                f"import_str: {import_str} found in search_path: {install_path}")
+            logger.debug(f"import_str: {import_str} found in search_path: {install_path}")
         else:
             # if import_str not found, search in search_paths
             for path in search_paths:
@@ -233,8 +232,7 @@ def inventory(search_paths, target, inventory_path="inventory/"):
             break
 
     if not inv_path_exists:
-        raise InventoryError(
-            f"Inventory not found in search paths: {search_paths}")
+        raise InventoryError(f"Inventory not found in search paths: {search_paths}")
 
     if target is None:
         return inventory_reclass(full_inv_path)["nodes"]

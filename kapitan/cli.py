@@ -36,12 +36,19 @@ from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.refs.secrets.vaultkv import VaultSecret
-from kapitan.resources import (inventory_reclass, resource_callbacks,
-                               search_imports)
+from kapitan.resources import inventory_reclass, resource_callbacks, search_imports
 from kapitan.targets import compile_targets, schema_validate_compiled
-from kapitan.utils import (PrettyDumper, check_version, deep_get, fatal_error,
-                           flatten_dict, from_dot_kapitan, jsonnet_file,
-                           search_target_token_paths, searchvar)
+from kapitan.utils import (
+    PrettyDumper,
+    check_version,
+    deep_get,
+    fatal_error,
+    flatten_dict,
+    from_dot_kapitan,
+    jsonnet_file,
+    search_target_token_paths,
+    searchvar,
+)
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
 logger = logging.getLogger(__name__)
@@ -53,84 +60,148 @@ def main():
     parser.add_argument("--version", action="version", version=VERSION)
     subparser = parser.add_subparsers(help="commands")
 
-    eval_parser = subparser.add_parser('eval', help='evaluate jsonnet file')
-    eval_parser.add_argument('jsonnet_file', type=str)
-    eval_parser.add_argument('--output', type=str,
-                             choices=('yaml', 'json'),
-                             default=from_dot_kapitan('eval', 'output', 'yaml'),
-                             help='set output format, default is "yaml"')
-    eval_parser.add_argument('--vars', type=str,
-                             default=from_dot_kapitan('eval', 'vars', []),
-                             nargs='*',
-                             metavar='VAR',
-                             help='set variables')
-    eval_parser.add_argument('--search-paths', '-J', type=str, nargs='+',
-                             default=from_dot_kapitan('eval', 'search-paths', ['.']),
-                             metavar='JPATH',
-                             help='set search paths, default is ["."]')
+    eval_parser = subparser.add_parser("eval", help="evaluate jsonnet file")
+    eval_parser.add_argument("jsonnet_file", type=str)
+    eval_parser.add_argument(
+        "--output",
+        type=str,
+        choices=("yaml", "json"),
+        default=from_dot_kapitan("eval", "output", "yaml"),
+        help='set output format, default is "yaml"',
+    )
+    eval_parser.add_argument(
+        "--vars",
+        type=str,
+        default=from_dot_kapitan("eval", "vars", []),
+        nargs="*",
+        metavar="VAR",
+        help="set variables",
+    )
+    eval_parser.add_argument(
+        "--search-paths",
+        "-J",
+        type=str,
+        nargs="+",
+        default=from_dot_kapitan("eval", "search-paths", ["."]),
+        metavar="JPATH",
+        help='set search paths, default is ["."]',
+    )
 
-    compile_parser = subparser.add_parser('compile', help='compile targets')
-    compile_parser.add_argument('--search-paths', '-J', type=str, nargs='+',
-                                default=from_dot_kapitan('compile', 'search-paths', ['.', 'lib']),
-                                metavar='JPATH',
-                                help='set search paths, default is ["."]')
-    compile_parser.add_argument('--jinja2-filters', '-J2F', type=str,
-                                default=from_dot_kapitan('compile', 'jinja2-filters',
-                                                         defaults.DEFAULT_JINJA2_FILTERS_PATH),
-                                metavar='FPATH',
-                                help='load custom jinja2 filters from any file, default is to put\
-                                them inside lib/jinja2_filters.py')
-    compile_parser.add_argument('--verbose', '-v', help='set verbose mode',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'verbose', False))
-    compile_parser.add_argument('--prune', help='prune jsonnet output',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'prune', False))
-    compile_parser.add_argument('--quiet', help='set quiet mode, only critical output',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'quiet', False))
-    compile_parser.add_argument('--output-path', type=str,
-                                default=from_dot_kapitan('compile', 'output-path', '.'),
-                                metavar='PATH',
-                                help='set output path, default is "."')
-    compile_parser.add_argument('--fetch',
-                                help='fetches external dependencies', action='store_true',
-                                default=from_dot_kapitan('compile', 'fetch', False))
-    compile_parser.add_argument('--validate',
-                                help='validate compile output against schemas as specified in inventory',
-                                action='store_true', default=from_dot_kapitan('compile', 'validate', False))
-    compile_parser.add_argument('--parallelism', '-p', type=int,
-                                default=from_dot_kapitan('compile', 'parallelism', 4),
-                                metavar='INT',
-                                help='Number of concurrent compile processes, default is 4')
-    compile_parser.add_argument('--indent', '-i', type=int,
-                                default=from_dot_kapitan('compile', 'indent', 2),
-                                metavar='INT',
-                                help='Indentation spaces for YAML/JSON, default is 2')
-    compile_parser.add_argument('--refs-path', help='set refs path, default is "./refs"',
-                                default=from_dot_kapitan('compile', 'refs-path', './refs'))
-    compile_parser.add_argument('--reveal',
-                                help='reveal refs (warning: this will potentially write sensitive data)',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'reveal', False))
-    compile_parser.add_argument('--inventory-path',
-                                default=from_dot_kapitan('compile', 'inventory-path', './inventory'),
-                                help='set inventory path, default is "./inventory"')
-    compile_parser.add_argument('--cache', '-c',
-                                help='enable compilation caching to .kapitan_cache, default is False',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'cache', False))
-    compile_parser.add_argument('--cache-paths', type=str, nargs='+',
-                                default=from_dot_kapitan('compile', 'cache-paths', []),
-                                metavar='PATH',
-                                help='cache additional paths to .kapitan_cache, default is []')
-    compile_parser.add_argument('--ignore-version-check',
-                                help='ignore the version from .kapitan',
-                                action='store_true',
-                                default=from_dot_kapitan('compile', 'ignore-version-check', False))
-    compile_parser.add_argument('--schemas-path',
-                                default=from_dot_kapitan('validate', 'schemas-path', './schemas'),
-                                help='set schema cache path, default is "./schemas"')
+    compile_parser = subparser.add_parser("compile", help="compile targets")
+    compile_parser.add_argument(
+        "--search-paths",
+        "-J",
+        type=str,
+        nargs="+",
+        default=from_dot_kapitan("compile", "search-paths", [".", "lib"]),
+        metavar="JPATH",
+        help='set search paths, default is ["."]',
+    )
+    compile_parser.add_argument(
+        "--jinja2-filters",
+        "-J2F",
+        type=str,
+        default=from_dot_kapitan("compile", "jinja2-filters", defaults.DEFAULT_JINJA2_FILTERS_PATH),
+        metavar="FPATH",
+        help="load custom jinja2 filters from any file, default is to put\
+                                them inside lib/jinja2_filters.py",
+    )
+    compile_parser.add_argument(
+        "--verbose",
+        "-v",
+        help="set verbose mode",
+        action="store_true",
+        default=from_dot_kapitan("compile", "verbose", False),
+    )
+    compile_parser.add_argument(
+        "--prune",
+        help="prune jsonnet output",
+        action="store_true",
+        default=from_dot_kapitan("compile", "prune", False),
+    )
+    compile_parser.add_argument(
+        "--quiet",
+        help="set quiet mode, only critical output",
+        action="store_true",
+        default=from_dot_kapitan("compile", "quiet", False),
+    )
+    compile_parser.add_argument(
+        "--output-path",
+        type=str,
+        default=from_dot_kapitan("compile", "output-path", "."),
+        metavar="PATH",
+        help='set output path, default is "."',
+    )
+    compile_parser.add_argument(
+        "--fetch",
+        help="fetches external dependencies",
+        action="store_true",
+        default=from_dot_kapitan("compile", "fetch", False),
+    )
+    compile_parser.add_argument(
+        "--validate",
+        help="validate compile output against schemas as specified in inventory",
+        action="store_true",
+        default=from_dot_kapitan("compile", "validate", False),
+    )
+    compile_parser.add_argument(
+        "--parallelism",
+        "-p",
+        type=int,
+        default=from_dot_kapitan("compile", "parallelism", 4),
+        metavar="INT",
+        help="Number of concurrent compile processes, default is 4",
+    )
+    compile_parser.add_argument(
+        "--indent",
+        "-i",
+        type=int,
+        default=from_dot_kapitan("compile", "indent", 2),
+        metavar="INT",
+        help="Indentation spaces for YAML/JSON, default is 2",
+    )
+    compile_parser.add_argument(
+        "--refs-path",
+        help='set refs path, default is "./refs"',
+        default=from_dot_kapitan("compile", "refs-path", "./refs"),
+    )
+    compile_parser.add_argument(
+        "--reveal",
+        help="reveal refs (warning: this will potentially write sensitive data)",
+        action="store_true",
+        default=from_dot_kapitan("compile", "reveal", False),
+    )
+    compile_parser.add_argument(
+        "--inventory-path",
+        default=from_dot_kapitan("compile", "inventory-path", "./inventory"),
+        help='set inventory path, default is "./inventory"',
+    )
+    compile_parser.add_argument(
+        "--cache",
+        "-c",
+        help="enable compilation caching to .kapitan_cache, default is False",
+        action="store_true",
+        default=from_dot_kapitan("compile", "cache", False),
+    )
+    compile_parser.add_argument(
+        "--cache-paths",
+        type=str,
+        nargs="+",
+        default=from_dot_kapitan("compile", "cache-paths", []),
+        metavar="PATH",
+        help="cache additional paths to .kapitan_cache, default is []",
+    )
+    compile_parser.add_argument(
+        "--ignore-version-check",
+        help="ignore the version from .kapitan",
+        action="store_true",
+        default=from_dot_kapitan("compile", "ignore-version-check", False),
+    )
+    compile_parser.add_argument(
+        "--schemas-path",
+        default=from_dot_kapitan("validate", "schemas-path", "./schemas"),
+        help='set schema cache path, default is "./schemas"',
+    )
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
     compile_selector_parser.add_argument(
@@ -533,9 +604,13 @@ def ref_write(args, ref_controller):
         recipients = [dict((("name", name),)) for name in args.recipients]
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
-            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
-            if 'secrets' not in kap_inv_params:
-                raise KapitanError("parameters.kapitan.secrets not defined in inventory of target {}".format(args.target_name))
+            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            if "secrets" not in kap_inv_params:
+                raise KapitanError(
+                    "parameters.kapitan.secrets not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
 
             recipients = kap_inv_params["secrets"]["gpg"]["recipients"]
         if not recipients:
@@ -552,9 +627,13 @@ def ref_write(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
-            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
-            if 'secrets' not in kap_inv_params:
-                raise KapitanError("parameters.kapitan.secrets not defined in inventory of target {}".format(args.target_name))
+            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            if "secrets" not in kap_inv_params:
+                raise KapitanError(
+                    "parameters.kapitan.secrets not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
 
             key = kap_inv_params["secrets"]["gkms"]["key"]
         if not key:
@@ -570,9 +649,13 @@ def ref_write(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
-            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
-            if 'secrets' not in kap_inv_params:
-                raise KapitanError("parameters.kapitan.secrets not defined in inventory of target {}".format(args.target_name))
+            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            if "secrets" not in kap_inv_params:
+                raise KapitanError(
+                    "parameters.kapitan.secrets not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
 
             key = kap_inv_params["secrets"]["awskms"]["key"]
         if not key:
@@ -602,9 +685,13 @@ def ref_write(args, ref_controller):
         encoding = "original"
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
-            kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
-            if 'secrets' not in kap_inv_params:
-                raise KapitanError("parameters.kapitan.secrets not defined in inventory of target {}".format(args.target_name))
+            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            if "secrets" not in kap_inv_params:
+                raise KapitanError(
+                    "parameters.kapitan.secrets not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
 
             vault_params = kap_inv_params["secrets"]["vaultkv"]
         if args.vault_auth:

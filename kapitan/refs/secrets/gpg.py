@@ -88,8 +88,10 @@ class GPGSecret(Base64Ref):
             if target_inv is None:
                 raise ValueError("target_inv not set")
 
-            if 'secrets' not in target_inv['parameters']['kapitan']:
-                raise KapitanError(f"parameters.kapitan.secrets not defined in inventory of target {target_name}")
+            if "secrets" not in target_inv["parameters"]["kapitan"]:
+                raise KapitanError(
+                    f"parameters.kapitan.secrets not defined in inventory of target {target_name}"
+                )
 
             recipients = target_inv["parameters"]["kapitan"]["secrets"]["gpg"]["recipients"]
 
@@ -208,8 +210,8 @@ def fingerprint_non_expired(recipient_name):
                 return key["fingerprint"]
             else:
                 logger.debug(
-                    f"Key for recipient: {recipient_name} with fingerprint: {key['fingerprint']} has expired, skipping")
-        raise GPGError(
-            f"Could not find valid key for recipient: {recipient_name}")
+                    f"Key for recipient: {recipient_name} with fingerprint: {key['fingerprint']} has expired, skipping"
+                )
+        raise GPGError(f"Could not find valid key for recipient: {recipient_name}")
     except IndexError as iexp:
         raise iexp

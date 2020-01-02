@@ -35,11 +35,11 @@ before_install:
 
 install:
   - pip3 install -r requirements.txt
-  - pip3 install coverage
+  - pip3 install coverage black
 
 script:
   - make build_helm_binding
-  - make test && make test_coverage
+  - make test && make test_coverage && make test_formatting
   - make build_binary
   - make test_binary
 

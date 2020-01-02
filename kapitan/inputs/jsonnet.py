@@ -106,7 +106,9 @@ class Jsonnet(InputType):
                 ) as fp:
                     fp.write(item_value)
             else:
-                raise ValueError(f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'")
+                raise ValueError(
+                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'"
+                )
 
     def default_output_type(self):
         return "yaml"

@@ -38,7 +38,9 @@ class KubernetesValidatorTest(unittest.TestCase):
         version = "1.14.0"
         downloaded_schema = self.validator._get_schema_from_web(kind, version)
         self.validator._cache_schema(kind, version, downloaded_schema)
-        self.assertTrue(os.path.isfile(os.path.join(self.cache_dir, defaults.FILE_PATH_FORMAT.format(version, kind))))
+        self.assertTrue(
+            os.path.isfile(os.path.join(self.cache_dir, defaults.FILE_PATH_FORMAT.format(version, kind)))
+        )
 
     def test_load_from_cache(self):
         kind = "deployment"

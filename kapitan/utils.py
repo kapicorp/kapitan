@@ -33,13 +33,10 @@ import requests
 import yaml
 from kapitan import cached, defaults
 from kapitan.errors import CompileError
-from kapitan.inputs.jinja2_filters import (load_jinja2_filters,
-                                           load_jinja2_filters_from_file)
+from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
 from kapitan.version import VERSION
 
 "random utils"
-
-
 
 
 logger = logging.getLogger(__name__)
@@ -65,8 +62,7 @@ def hashable_lru_cache(func):
         try:
             return json.loads(value)
         except Exception:
-            logger.debug(
-                f"hashable_lru_cache: {value} not serialiseable, using generic lru_cache instead")
+            logger.debug(f"hashable_lru_cache: {value} not serialiseable, using generic lru_cache instead")
             return value
 
     def func_with_serialized_params(*args, **kwargs):
@@ -185,8 +181,7 @@ def jsonnet_file(file_path, **kwargs):
     try:
         return jsonnet.evaluate_file(file_path, **kwargs)
     except Exception as e:
-        raise CompileError(
-            f"Jsonnet error: failed to compile {file_path}:\n {e}")
+        raise CompileError(f"Jsonnet error: failed to compile {file_path}:\n {e}")
 
 
 def prune_empty(d):
@@ -305,12 +300,10 @@ def searchvar(flat_var, inventory_path, pretty_print):
 def directory_hash(directory):
     """Return the sha256 hash for the file contents of a directory"""
     if not os.path.exists(directory):
-        raise IOError(
-            f"utils.directory_hash failed, {directory} dir doesn't exist")
+        raise IOError(f"utils.directory_hash failed, {directory} dir doesn't exist")
 
     if not os.path.isdir(directory):
-        raise IOError(
-            f"utils.directory_hash failed, {directory} is not a directory")
+        raise IOError(f"utils.directory_hash failed, {directory} is not a directory")
 
     try:
         hash = sha256()
@@ -434,18 +427,16 @@ def check_version():
 
             # If .kapitan version is greater than current version
             if result == "greater":
-                print(
-                    f"Upgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n")
+                print(f"Upgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n")
             # If .kapitan version is lower than current version
             elif result == "lower":
+                print(f"Option 1: You can update the version in .kapitan to '{VERSION}' and recompile\n")
                 print(
-                    f"Option 1: You can update the version in .kapitan to '{VERSION}' and recompile\n")
-                print(f"Option 2: Downgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n")
+                    f"Option 2: Downgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n"
+                )
 
-            print(
-                f"Docker: docker pull deepmind/kapitan:{dot_kapitan_version}")
-            print(
-                f"Pip (user): pip3 install --user --upgrade kapitan=={dot_kapitan_version}\n")
+            print(f"Docker: docker pull deepmind/kapitan:{dot_kapitan_version}")
+            print(f"Pip (user): pip3 install --user --upgrade kapitan=={dot_kapitan_version}\n")
             print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
             print(
                 "If you know what you're doing, you can skip this check by adding '--ignore-version-check'."
@@ -473,7 +464,7 @@ def search_target_token_paths(target_secrets_path, targets):
                     # Backwards compatible with gpg secrets that didn't have type in yaml
                     secret_type = "gpg"
                 secret_path = f"?{{{secret_type}:{secret_path}}}"
-            logger.debug('search_target_token_paths: found %s', secret_path)
+            logger.debug("search_target_token_paths: found %s", secret_path)
             target_files[target_name].append(secret_path)
     return target_files
 

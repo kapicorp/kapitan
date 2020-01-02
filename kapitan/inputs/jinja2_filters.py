@@ -32,6 +32,7 @@ from six import string_types
 
 logger = logging.getLogger(__name__)
 
+
 def load_jinja2_filters(env):
     """Load Jinja2 custom filters into env"""
     env.filters["sha256"] = utils.sha256_string

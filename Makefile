@@ -21,6 +21,12 @@ test_coverage:
 	coverage run --source=kapitan --omit="*reclass*" -m unittest discover
 	coverage report --fail-under=64 -m
 
+.PHONY: test_formatting
+test_formatting:
+	@echo ----- Testing code formatting -----
+	black -l 110 -t py37 --check --exclude "reclass|helm_binding.py" .
+	@echo
+
 .PHONY: release
 release:
 ifeq ($(version),)
@@ -37,18 +43,11 @@ package:
 clean:
 	rm -rf dist/ build/ kapitan.egg-info/ bindist/
 
-.PHONY: codestyle
-codestyle:
-	which flake8 || echo "Install flake8 with pip3 install --user flake8"
-	# ignores line length and reclass related errors
-	flake8 --ignore E501 . --exclude=reclass
-	@echo
-
 .PHONY: format_codestyle
 format_codestyle:
 	which black || echo "Install black with pip3 install --user black"
-	# ignores line length and reclass related errors
-	black -l 110 -t py37 --exclude reclass .
+	# ignores line length and reclass
+	black -l 110 -t py37 --exclude "reclass|helm_binding.py" .
 	@echo
 
 .PHONY: build_binary

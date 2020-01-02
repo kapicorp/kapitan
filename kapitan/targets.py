@@ -535,20 +535,23 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
     """Throws *InventoryError* if parameters.kapitan.vars.target is not set,
     or target does not have a corresponding yaml file in *inventory_path*
     """
-    logger.debug(
-        f"validating target name matches the name of yml file {target_filename}")
+    logger.debug(f"validating target name matches the name of yml file {target_filename}")
     try:
         target_name = target_obj["vars"]["target"]
     except KeyError:
-        error_message = (f"Target missing: target \"{target_filename}\" is missing parameters.kapitan.vars.target\n"
-                         "This parameter should be set to the target name")
+        error_message = (
+            f'Target missing: target "{target_filename}" is missing parameters.kapitan.vars.target\n'
+            "This parameter should be set to the target name"
+        )
         raise InventoryError(error_message)
 
     if target_filename != target_name:
         target_path = os.path.join(os.path.abspath(inventory_path), "targets")
 
-        error_message = (f"Target \"{target_name}\" is missing the corresponding yml file in {target_path}\n"
-                         "Target name should match the name of the target yml file in inventory")
+        error_message = (
+            f'Target "{target_name}" is missing the corresponding yml file in {target_path}\n'
+            "Target name should match the name of the target yml file in inventory"
+        )
         raise InventoryError(error_message)
 
 
@@ -602,25 +605,28 @@ def create_validate_mapping(target_objs, compiled_path):
     """
     validate_files_map = defaultdict(list)
     for target_obj in target_objs:
-        target_name = target_obj['vars']['target']
-        if 'validate' not in target_obj:
-            logger.debug("target '{}' does not have 'validate' parameter in inventory. skipping".format(target_name))
+        target_name = target_obj["vars"]["target"]
+        if "validate" not in target_obj:
+            logger.debug(
+                "target '{}' does not have 'validate' parameter in inventory. skipping".format(target_name)
+            )
             continue
 
-        for validate_item in target_obj['validate']:
-            validate_type = validate_item['type']
-            if validate_type == 'kubernetes':
-                kind_version_pair = (validate_item['kind'],
-                                     validate_item.get('version', defaults.DEFAULT_KUBERNETES_VERSION))
-                for output_path in validate_item['output_paths']:
+        for validate_item in target_obj["validate"]:
+            validate_type = validate_item["type"]
+            if validate_type == "kubernetes":
+                kind_version_pair = (
+                    validate_item["kind"],
+                    validate_item.get("version", defaults.DEFAULT_KUBERNETES_VERSION),
+                )
+                for output_path in validate_item["output_paths"]:
                     full_output_path = os.path.join(compiled_path, target_name, output_path)
                     if not os.path.isfile(full_output_path):
                         logger.warning(f"{output_path} does not exist for target '{target_name}'. skipping")
                         continue
                     validate_files_map[kind_version_pair].append(full_output_path)
             else:
-                logger.warning(
-                    f"type {validate_type} is not supported for validation. skipping")
+                logger.warning(f"type {validate_type} is not supported for validation. skipping")
 
     return validate_files_map
 

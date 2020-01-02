@@ -26,8 +26,7 @@ from contextlib import contextmanager
 from functools import lru_cache
 
 import yaml
-from kapitan.errors import (RefBackendError, RefError, RefFromFuncError,
-                            RefHashMismatchError)
+from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashMismatchError
 from kapitan.refs.functions import eval_func
 from kapitan.utils import PrettyDumper, list_all_paths
 
@@ -361,7 +360,6 @@ class RevealedObj(object):
 
 
 class RefController(object):
-
     @contextmanager
     def detailedException(self, ref_key):
         try:
@@ -466,7 +464,9 @@ class RefController(object):
             if ref.hash[:8] == hash:
                 return ref
             else:
-                raise RefHashMismatchError("{}: token hash does not match with stored reference hash: {}".format(token, ref.token))
+                raise RefHashMismatchError(
+                    "{}: token hash does not match with stored reference hash: {}".format(token, ref.token)
+                )
         else:
             return None
 
@@ -523,7 +523,9 @@ class RefController(object):
                 except KeyError:
                     # if func is set and ref doesnt exist,
                     # raise RefFromFuncError to indicate new ref needs to be created
-                    raise RefFromFuncError(f"{token}: does not exist and must be created from function: {func_str}")
+                    raise RefFromFuncError(
+                        f"{token}: does not exist and must be created from function: {func_str}"
+                    )
 
         raise KeyError(f"{tag}: ref not found")
 
@@ -548,7 +550,7 @@ class RefController(object):
                 if ctx.encode_base64:
                     b64_data = base64.b64encode(ctx.data.encode())
                     # TODO encoding needs a better place other than kwargs
-                    value.kwargs['encoding'] = 'base64'
+                    value.kwargs["encoding"] = "base64"
                     ref_obj = ref_type.from_params(b64_data, value)
                 else:
                     ref_obj = ref_type.from_params(ctx.data, value)
