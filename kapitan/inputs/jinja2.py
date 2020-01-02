@@ -17,7 +17,7 @@
 import logging
 import os
 
-from kapitan.inputs.base import InputType, CompiledFile
+from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.resources import inventory
 from kapitan.utils import render_jinja2
 
@@ -47,7 +47,6 @@ class Jinja2(InputType):
 
         for item_key, item_value in render_jinja2(file_path, context, jinja2_filters=jinja2_filters).items():
             full_item_path = os.path.join(compile_path, item_key)
-            os.makedirs(os.path.dirname(full_item_path), exist_ok=True)
 
             with CompiledFile(
                 full_item_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name
