@@ -29,12 +29,11 @@ from hashlib import sha256
 
 import _jsonnet as jsonnet
 import jinja2
-import kapitan.cached as cached
 import requests
 import yaml
+from kapitan import cached, defaults
 from kapitan.errors import CompileError
-from kapitan.inputs.jinja2_filters import (DEFAULT_JINJA2_FILTERS_PATH,
-                                           load_jinja2_filters,
+from kapitan.inputs.jinja2_filters import (load_jinja2_filters,
                                            load_jinja2_filters_from_file)
 from kapitan.version import VERSION
 
@@ -117,7 +116,7 @@ def sha256_string(string):
     return sha256(string.encode("UTF-8")).hexdigest()
 
 
-def render_jinja2_file(name, context, jinja2_filters=DEFAULT_JINJA2_FILTERS_PATH):
+def render_jinja2_file(name, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH):
     """Render jinja2 file name with context"""
     path, filename = os.path.split(name)
     env = jinja2.Environment(
@@ -132,7 +131,7 @@ def render_jinja2_file(name, context, jinja2_filters=DEFAULT_JINJA2_FILTERS_PATH
     return env.get_template(filename).render(context)
 
 
-def render_jinja2(path, context, jinja2_filters=DEFAULT_JINJA2_FILTERS_PATH):
+def render_jinja2(path, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH):
     """
     Render files in path with context
     Returns a dict where the is key is the filename (with subpath)

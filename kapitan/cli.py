@@ -26,10 +26,9 @@ import os
 import sys
 
 import yaml
-from kapitan import cached
+from kapitan import cached, defaults
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.initialiser import initialise_skeleton
-from kapitan.inputs.jinja2_filters import DEFAULT_JINJA2_FILTERS_PATH
 from kapitan.lint import start_lint
 from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
@@ -78,7 +77,7 @@ def main():
                                 help='set search paths, default is ["."]')
     compile_parser.add_argument('--jinja2-filters', '-J2F', type=str,
                                 default=from_dot_kapitan('compile', 'jinja2-filters',
-                                                         DEFAULT_JINJA2_FILTERS_PATH),
+                                                         defaults.DEFAULT_JINJA2_FILTERS_PATH),
                                 metavar='FPATH',
                                 help='load custom jinja2 filters from any file, default is to put\
                                 them inside lib/jinja2_filters.py')

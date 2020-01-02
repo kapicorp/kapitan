@@ -14,15 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from shutil import copyfile
 import sys
-import unittest
 import tempfile
+import unittest
+from shutil import copyfile
+
 import yaml
+from kapitan import defaults
 from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.errors import KubernetesManifestValidationError
-from kapitan.validator.kubernetes_validator import KubernetesManifestValidator, FILE_PATH_FORMAT
+from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
 
 class KubernetesValidatorTest(unittest.TestCase):
@@ -36,7 +38,7 @@ class KubernetesValidatorTest(unittest.TestCase):
         version = '1.14.0'
         downloaded_schema = self.validator._get_schema_from_web(kind, version)
         self.validator._cache_schema(kind, version, downloaded_schema)
-        self.assertTrue(os.path.isfile(os.path.join(self.cache_dir, FILE_PATH_FORMAT.format(version, kind))))
+        self.assertTrue(os.path.isfile(os.path.join(self.cache_dir, defaults.FILE_PATH_FORMAT.format(version, kind))))
 
     def test_load_from_cache(self):
         kind = 'deployment'

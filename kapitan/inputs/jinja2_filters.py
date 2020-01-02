@@ -26,15 +26,11 @@ from importlib import util
 from random import Random, shuffle
 
 import yaml
-from kapitan import cached, utils
+from kapitan import cached, defaults, utils
 from kapitan.errors import CompileError
 from six import string_types
 
 logger = logging.getLogger(__name__)
-
-# default path from where user defined custom filters are read
-DEFAULT_JINJA2_FILTERS_PATH = os.path.join('lib', 'jinja2_filters.py')
-
 
 def load_jinja2_filters(env):
     """Load Jinja2 custom filters into env"""
@@ -81,7 +77,7 @@ def load_jinja2_filters_from_file(env, jinja2_filters):
     else try to load module (which will throw error in case of non existence of file)
     """
     jinja2_filters = os.path.normpath(jinja2_filters)
-    if jinja2_filters == DEFAULT_JINJA2_FILTERS_PATH:
+    if jinja2_filters == defaults.DEFAULT_JINJA2_FILTERS_PATH:
         if not os.path.isfile(jinja2_filters):
             return
     load_module_from_path(env, jinja2_filters)

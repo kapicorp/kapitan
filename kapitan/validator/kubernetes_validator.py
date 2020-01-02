@@ -1,21 +1,15 @@
+import logging
 import os
 from functools import lru_cache
 
+import jsonschema
 import requests
 import yaml
-import logging
-import jsonschema
-
-from kapitan.errors import RequestUnsuccessfulError, KubernetesManifestValidationError
-from kapitan.validator.base import Validator
+from kapitan import defaults
+from kapitan.errors import (KubernetesManifestValidationError,
+                            RequestUnsuccessfulError)
 from kapitan.utils import make_request
-
-DEFAULT_KUBERNETES_VERSION = '1.14.0'
-# standalone is used for standalone json schema (i.e. without external $refs)
-# strict is used as it behaves similarly to kubectl
-# see https://github.com/garethr/kubernetes-json-schema#kubernetes-json-schemas for more info
-SCHEMA_TYPE = 'standalone-strict'
-FILE_PATH_FORMAT = 'v{}-%s/{}.json' % SCHEMA_TYPE
+from kapitan.validator.base import Validator
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +25,7 @@ class KubernetesManifestValidator(Validator):
         raises KubernetesManifestValidationError encountering the first validation error
         """
         kind = kwargs.get('kind')
-        version = kwargs.get('version', DEFAULT_KUBERNETES_VERSION)
+        version = kwargs.get('version', defaults.DEFAULT_KUBERNETES_VERSION)
         schema = self._get_schema(kind, version)
         validator = jsonschema.Draft4Validator(schema)
         for validate_path in validate_paths:
@@ -83,7 +77,7 @@ class KubernetesManifestValidator(Validator):
         return yaml.safe_load(content)
 
     def _get_request_url(self, kind, version):
-        return 'https://kubernetesjsonschema.dev/' + FILE_PATH_FORMAT.format(version, kind)
+        return 'https://kubernetesjsonschema.dev/' + defaults.FILE_PATH_FORMAT.format(version, kind)
 
     def _get_cache_path(self, kind, version):
-        return os.path.join(self.cache_dir, FILE_PATH_FORMAT.format(version, kind))
+        return os.path.join(self.cache_dir, defaults.FILE_PATH_FORMAT.format(version, kind))

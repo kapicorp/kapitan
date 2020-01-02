@@ -28,7 +28,7 @@ from functools import partial
 
 import jsonschema
 import yaml
-from kapitan import cached
+from kapitan import cached, defaults
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
@@ -38,8 +38,7 @@ from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
 from kapitan.resources import inventory_reclass
 from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
-from kapitan.validator.kubernetes_validator import (
-    DEFAULT_KUBERNETES_VERSION, KubernetesManifestValidator)
+from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
 from reclass.errors import NotFoundError, ReclassException
 
@@ -615,7 +614,7 @@ def create_validate_mapping(target_objs, compiled_path):
             validate_type = validate_item['type']
             if validate_type == 'kubernetes':
                 kind_version_pair = (validate_item['kind'],
-                                     validate_item.get('version', DEFAULT_KUBERNETES_VERSION))
+                                     validate_item.get('version', defaults.DEFAULT_KUBERNETES_VERSION))
                 for output_path in validate_item['output_paths']:
                     full_output_path = os.path.join(compiled_path, target_name, output_path)
                     if not os.path.isfile(full_output_path):
