@@ -195,8 +195,8 @@ def search_imports(cwd, import_str, search_paths):
         # if found, set as full_import_path
         if os.path.exists(_full_import_path):
             full_import_path = _full_import_path
-            logger.debug("import_str: %s found in search_path: %s",
-                         import_str, install_path)
+            logger.debug(
+                f"import_str: {import_str} found in search_path: {install_path}")
         else:
             # if import_str not found, search in search_paths
             for path in search_paths:
@@ -204,8 +204,7 @@ def search_imports(cwd, import_str, search_paths):
                 # if found, set as full_import_path
                 if os.path.exists(_full_import_path):
                     full_import_path = _full_import_path
-                    logger.debug("import_str: %s found in search_path: %s",
-                                 import_str, path)
+                    logger.debug(f"import_str: {import_str} found in search_path: {path}")
                     break
 
     # if the above search did not find anything, let jsonnet error
@@ -239,7 +238,8 @@ def inventory(search_paths, target, inventory_path="inventory/"):
             break
 
     if not inv_path_exists:
-        raise InventoryError("Inventory not found in search paths: {}".format(search_paths))
+        raise InventoryError(
+            f"Inventory not found in search paths: {search_paths}")
 
     if target is None:
         return inventory_reclass(full_inv_path)["nodes"]
@@ -274,7 +274,7 @@ def inventory_reclass(inventory_path):
                     uri_path = os.path.join(inventory_path, uri_val)
                     normalised_path = os.path.normpath(uri_path)
                     reclass_config.update({uri: normalised_path})
-                logger.debug("Using reclass inventory config at: %s", cfg_file)
+                logger.debug(f"Using reclass inventory config at: {cfg_file}")
         except IOError as ex:
             # If file does not exist, ignore
             if ex.errno == errno.ENOENT:

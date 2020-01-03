@@ -26,7 +26,7 @@ import os
 import sys
 
 import yaml
-from kapitan import cached
+from kapitan import cached, defaults
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.initialiser import initialise_skeleton
 from kapitan.lint import start_lint
@@ -34,12 +34,11 @@ from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
-from kapitan.refs.secrets.vaultkv import VaultSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
+from kapitan.refs.secrets.vaultkv import VaultSecret
 from kapitan.resources import (inventory_reclass, resource_callbacks,
                                search_imports)
 from kapitan.targets import compile_targets, schema_validate_compiled
-from kapitan.inputs.jinja2_filters import DEFAULT_JINJA2_FILTERS_PATH
 from kapitan.utils import (PrettyDumper, check_version, deep_get, fatal_error,
                            flatten_dict, from_dot_kapitan, jsonnet_file,
                            search_target_token_paths, searchvar)
@@ -78,7 +77,7 @@ def main():
                                 help='set search paths, default is ["."]')
     compile_parser.add_argument('--jinja2-filters', '-J2F', type=str,
                                 default=from_dot_kapitan('compile', 'jinja2-filters',
-                                                         DEFAULT_JINJA2_FILTERS_PATH),
+                                                         defaults.DEFAULT_JINJA2_FILTERS_PATH),
                                 metavar='FPATH',
                                 help='load custom jinja2 filters from any file, default is to put\
                                 them inside lib/jinja2_filters.py')
@@ -405,7 +404,7 @@ def ref_write(args, ref_controller):
             inv = inventory_reclass(args.inventory_path)
             kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
             if 'secrets' not in kap_inv_params:
-                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+                raise KapitanError("parameters.kapitan.secrets not defined in inventory of target {}".format(args.target_name))
 
             recipients = kap_inv_params['secrets']['gpg']['recipients']
         if not recipients:
@@ -422,7 +421,7 @@ def ref_write(args, ref_controller):
             inv = inventory_reclass(args.inventory_path)
             kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
             if 'secrets' not in kap_inv_params:
-                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+                raise KapitanError("parameters.kapitan.secrets not defined in inventory of target {}".format(args.target_name))
 
             key = kap_inv_params['secrets']['gkms']['key']
         if not key:
@@ -438,7 +437,7 @@ def ref_write(args, ref_controller):
             inv = inventory_reclass(args.inventory_path)
             kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
             if 'secrets' not in kap_inv_params:
-                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+                raise KapitanError("parameters.kapitan.secrets not defined in inventory of target {}".format(args.target_name))
 
             key = kap_inv_params['secrets']['awskms']['key']
         if not key:
@@ -468,7 +467,7 @@ def ref_write(args, ref_controller):
             inv = inventory_reclass(args.inventory_path)
             kap_inv_params = inv['nodes'][args.target_name]['parameters']['kapitan']
             if 'secrets' not in kap_inv_params:
-                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+                raise KapitanError("parameters.kapitan.secrets not defined in inventory of target {}".format(args.target_name))
 
             vault_params = kap_inv_params['secrets']['vaultkv']
         if args.vault_auth:

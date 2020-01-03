@@ -16,29 +16,30 @@
 
 from __future__ import print_function
 
-import requests
-
-"random utils"
-
-import logging
-import os
-import sys
-import stat
 import collections
 import json
-import jinja2
-import _jsonnet as jsonnet
-import yaml
+import logging
 import math
+import os
+import stat
+import sys
 from collections import Counter, defaultdict
 from functools import lru_cache, wraps
 from hashlib import sha256
 
-from kapitan.version import VERSION
+import _jsonnet as jsonnet
+import jinja2
+import requests
+import yaml
+from kapitan import cached, defaults
 from kapitan.errors import CompileError
-from kapitan.inputs.jinja2_filters import (load_jinja2_filters, load_jinja2_filters_from_file,
-                                           DEFAULT_JINJA2_FILTERS_PATH)
-import kapitan.cached as cached
+from kapitan.inputs.jinja2_filters import (load_jinja2_filters,
+                                           load_jinja2_filters_from_file)
+from kapitan.version import VERSION
+
+"random utils"
+
+
 
 
 logger = logging.getLogger(__name__)
@@ -64,7 +65,8 @@ def hashable_lru_cache(func):
         try:
             return json.loads(value)
         except Exception:
-            logger.debug("hashable_lru_cache: %s not serialiseable, using generic lru_cache instead", value)
+            logger.debug(
+                f"hashable_lru_cache: {value} not serialiseable, using generic lru_cache instead")
             return value
 
     def func_with_serialized_params(*args, **kwargs):
@@ -114,7 +116,7 @@ def sha256_string(string):
     return sha256(string.encode("UTF-8")).hexdigest()
 
 
-def render_jinja2_file(name, context, jinja2_filters=DEFAULT_JINJA2_FILTERS_PATH):
+def render_jinja2_file(name, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH):
     """Render jinja2 file name with context"""
     path, filename = os.path.split(name)
     env = jinja2.Environment(
@@ -129,7 +131,7 @@ def render_jinja2_file(name, context, jinja2_filters=DEFAULT_JINJA2_FILTERS_PATH
     return env.get_template(filename).render(context)
 
 
-def render_jinja2(path, context, jinja2_filters=DEFAULT_JINJA2_FILTERS_PATH):
+def render_jinja2(path, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH):
     """
     Render files in path with context
     Returns a dict where the is key is the filename (with subpath)
@@ -163,7 +165,7 @@ def render_jinja2(path, context, jinja2_filters=DEFAULT_JINJA2_FILTERS_PATH):
                     "mode": file_mode(render_path)
                 }
             except Exception as e:
-                raise CompileError("Jinja2 error: failed to render {}: {}".format(render_path, e))
+                raise CompileError(f"Jinja2 error: failed to render {render_path}: {e}")
 
     return rendered
 
@@ -182,7 +184,8 @@ def jsonnet_file(file_path, **kwargs):
     try:
         return jsonnet.evaluate_file(file_path, **kwargs)
     except Exception as e:
-        raise CompileError("Jsonnet error: failed to compile {}:\n {}".format(file_path, e))
+        raise CompileError(
+            f"Jsonnet error: failed to compile {file_path}:\n {e}")
 
 
 def prune_empty(d):
@@ -300,10 +303,12 @@ def searchvar(flat_var, inventory_path, pretty_print):
 def directory_hash(directory):
     """Return the sha256 hash for the file contents of a directory"""
     if not os.path.exists(directory):
-        raise IOError("utils.directory_hash failed, {} dir doesn't exist".format(directory))
+        raise IOError(
+            f"utils.directory_hash failed, {directory} dir doesn't exist")
 
     if not os.path.isdir(directory):
-        raise IOError("utils.directory_hash failed, {} is not a directory".format(directory))
+        raise IOError(
+            f"utils.directory_hash failed, {directory} is not a directory")
 
     try:
         hash = sha256()
@@ -320,9 +325,9 @@ def directory_hash(directory):
                             binary_file_hash = sha256(f.read())
                             hash.update(binary_file_hash.hexdigest().encode("UTF-8"))
                     else:
-                        raise CompileError("utils.directory_hash failed to open {}: {}".format(file_path, e))
+                        raise CompileError(f"utils.directory_hash failed to open {file_path}: {e}")
     except Exception as e:
-        raise CompileError("utils.directory_hash failed: {}".format(e))
+        raise CompileError(f"utils.directory_hash failed: {e}")
 
     return hash.hexdigest()
 
@@ -422,19 +427,23 @@ def check_version():
             result = compare_versions(dot_kapitan_version, VERSION)
             if result == "equal":
                 return
-            print("{}Current version: {}".format(termcolor.WARNING, VERSION))
-            print("Version in .kapitan: {}{}\n".format(dot_kapitan_version, termcolor.ENDC))
+            print(f"{termcolor.WARNING}Current version: {VERSION}")
+            print(f"Version in .kapitan: {dot_kapitan_version}{termcolor.ENDC}\n")
 
             # If .kapitan version is greater than current version
             if result == "greater":
-                print("Upgrade kapitan to '{}' in order to keep results consistent:\n".format(dot_kapitan_version))
+                print(
+                    f"Upgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n")
             # If .kapitan version is lower than current version
             elif result == "lower":
-                print("Option 1: You can update the version in .kapitan to '{}' and recompile\n".format(VERSION))
-                print("Option 2: Downgrade kapitan to '{}' in order to keep results consistent:\n".format(dot_kapitan_version))
+                print(
+                    f"Option 1: You can update the version in .kapitan to '{VERSION}' and recompile\n")
+                print(f"Option 2: Downgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n")
 
-            print("Docker: docker pull deepmind/kapitan:{}".format(dot_kapitan_version))
-            print("Pip (user): pip3 install --user --upgrade kapitan=={}\n".format(dot_kapitan_version))
+            print(
+                f"Docker: docker pull deepmind/kapitan:{dot_kapitan_version}")
+            print(
+                f"Pip (user): pip3 install --user --upgrade kapitan=={dot_kapitan_version}\n")
             print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
             print("If you know what you're doing, you can skip this check by adding '--ignore-version-check'.")
             sys.exit(1)
@@ -459,7 +468,7 @@ def search_target_token_paths(target_secrets_path, targets):
                 except KeyError:
                     # Backwards compatible with gpg secrets that didn't have type in yaml
                     secret_type = "gpg"
-                secret_path = "?{{{}:{}}}".format(secret_type, secret_path)
+                secret_path = f"?{{{secret_type}:{secret_path}}}"
             logger.debug('search_target_token_paths: found %s', secret_path)
             target_files[target_name].append(secret_path)
     return target_files
