@@ -23,10 +23,9 @@ import unittest
 from time import sleep
 
 import docker
+import hvac
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.vaultkv import VaultSecret, vault_obj
-
-import hvac
 
 # Create temporary folder
 REFS_HOME = tempfile.mkdtemp()
@@ -38,6 +37,7 @@ client = docker.from_env()
 env = {
     "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'
 }
+
 vault_container = client.containers.run(
     image="vault",
     cap_add=["IPC_LOCK"],
@@ -48,17 +48,17 @@ vault_container = client.containers.run(
     command="server",
 )
 
-# make sure the container is up & running before testing
-while vault_container.status != "running":
-    sleep(2)
-    vault_container.reload()
-
 
 class VaultSecretTest(unittest.TestCase):
     "Test Vault Secret"
 
     @classmethod
     def setUpClass(cls):
+        # make sure the container is up & running before testing
+        while vault_container.status != "running":
+            sleep(2)
+            vault_container.reload()
+
         # Initialize vault, unseal, mount secret engine & add auth
         cls.client = hvac.Client()
         init = cls.client.sys.initialize()
@@ -90,6 +90,8 @@ class VaultSecretTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.client.adapter.close()
         vault_container.stop()
+        client.close()
+
         shutil.rmtree(REFS_HOME, ignore_errors=True)
         for i in ["ROOT_TOKEN", "TOKEN", "USERNAME", "PASSWORD", "ROLE_ID", "SECRET_ID"]:
             del os.environ["VAULT_" + i]

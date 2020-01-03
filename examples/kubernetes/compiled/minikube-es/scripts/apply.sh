@@ -19,5 +19,5 @@ DIR=$(dirname ${BASH_SOURCE[0]})
 for SECTION in pre-deploy manifests
 do
   echo "## run kubectl apply for ${SECTION}"
-  kapitan secrets --reveal -f ${DIR}/../${SECTION}/ | ${DIR}/kubectl.sh apply -f - | column -t
+  kapitan refs --reveal -f ${DIR}/../${SECTION}/ | ${DIR}/kubectl.sh apply -f - | column -t
 done

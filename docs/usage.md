@@ -17,7 +17,7 @@ positional arguments:
     compile             compile targets
     inventory           show inventory
     searchvar           show all inventory files where var is declared
-    secrets             manage secrets
+    refs                manage secrets
     lint                linter for inventory and secrets
     init                initialize a directory with the recommended kapitan
                         project skeleton.

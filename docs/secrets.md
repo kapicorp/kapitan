@@ -44,7 +44,7 @@ parameters:
 ##### Manually via command line:
 
 ```shell
-$ kapitan secrets --write <secret_type>:path/to/secret/file -t <target_name> -f <secret_file>
+$ kapitan refs --write <secret_type>:path/to/secret/file -t <target_name> -f <secret_file>
 ```
 
 ​	where `<secret_type>` can be any of:
@@ -97,7 +97,7 @@ During compile, kapitan will search for the path `targets/${target_name}/mysql/p
 You can reveal the secrets referenced in the outputs of `kapitan compile` via:
 
 ```
-$ kapitan secrets --reveal -f path/to/rendered/template
+$ kapitan refs --reveal -f path/to/rendered/template
 ```
 
 For example, `compiled/minikube-mysql/manifests/mysql_secret.yml` with the following content:
@@ -120,14 +120,14 @@ type: Opaque
 can be revealed as follows:
 
 ```
-$ kapitan secrets --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
+$ kapitan refs --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
 ```
 
 This will substitute the referenced secrets with the actual decrypted secrets stored at the referenced paths and display the file content.
 
 ## Secret sub-variables
 
-As illustrated above, one file corresponds to one secret. It is now possible for users who would like to reduce the decryption overhead to manually create a yaml file that contains multiple secrets, each of which can be referenced by its object key. For example, consider the secret file `secrets/mysql_secrets`:
+As illustrated above, one file corresponds to one secret. It is now possible for users who would like to reduce the decryption overhead to manually create a yaml file that contains multiple secrets, each of which can be referenced by its object key. For example, consider the secret file `refs/mysql_secrets`:
 
 ```yaml
 mysql_passwords:
@@ -138,7 +138,7 @@ mysql_passwords:
 This can be manually encrypted by:
 
 ```
-$ kapitan secrets --write gpg:components/secrets/mysql_secrets -t prod -f secrets/mysql_secrets
+$ kapitan refs --write gpg:components/secrets/mysql_secrets -t prod -f secrets/mysql_secrets
 ```
 
 To reference `secret_foo`inside this file, you can specify it in the inventory as follows:
@@ -150,7 +150,7 @@ To reference `secret_foo`inside this file, you can specify it in the inventory a
 Considering a key-value pair like `my_key`:`my_secret` in the path `secret/foo/bar` in a kv-v2(KV version 2) secret engine on the vault server, to use this as a secret use:
 
 ```shell
-$ echo "foo/bar:my_key"  | kapitan secrets --write vaultkv:path/to/secret_inside_kapitan -t <target_name> -f -
+$ echo "foo/bar:my_key"  | kapitan refs --write vaultkv:path/to/secret_inside_kapitan -t <target_name> -f -
 ```
 
 Parameters in the secret file are collected from the inventory of the target we gave from CLI `-t <target_name>`. If target isn't provided then kapitan will identify the variables from the environment when revealing secret.
