@@ -16,11 +16,10 @@
 
 "Project description variables"
 
-PROJECT_NAME = 'kapitan'
-VERSION = '0.26.0'
-DESCRIPTION = ('Generic templated configuration management for Kubernetes, '
-               'Terraform and other things')
-AUTHOR = 'Ricardo Amaro'
-AUTHOR_EMAIL = 'ramaro@google.com'
-LICENCE = 'Apache License 2.0'
-URL = 'https://github.com/deepmind/kapitan'
+PROJECT_NAME = "kapitan"
+VERSION = "0.26.0"
+DESCRIPTION = "Generic templated configuration management for Kubernetes, " "Terraform and other things"
+AUTHOR = "Ricardo Amaro"
+AUTHOR_EMAIL = "ramaro@google.com"
+LICENCE = "Apache License 2.0"
+URL = "https://github.com/deepmind/kapitan"

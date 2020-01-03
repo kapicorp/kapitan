@@ -33,13 +33,10 @@ import requests
 import yaml
 from kapitan import cached, defaults
 from kapitan.errors import CompileError
-from kapitan.inputs.jinja2_filters import (load_jinja2_filters,
-                                           load_jinja2_filters_from_file)
+from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
 from kapitan.version import VERSION
 
 "random utils"
-
-
 
 
 logger = logging.getLogger(__name__)
@@ -65,8 +62,7 @@ def hashable_lru_cache(func):
         try:
             return json.loads(value)
         except Exception:
-            logger.debug(
-                f"hashable_lru_cache: {value} not serialiseable, using generic lru_cache instead")
+            logger.debug(f"hashable_lru_cache: {value} not serialiseable, using generic lru_cache instead")
             return value
 
     def func_with_serialized_params(*args, **kwargs):
@@ -79,7 +75,9 @@ def hashable_lru_cache(func):
     @wraps(func)
     def lru_decorator(*args, **kwargs):
         _args = tuple([json.dumps(arg, sort_keys=True) if type(arg) in (list, dict) else arg for arg in args])
-        _kwargs = {k: json.dumps(v, sort_keys=True) if type(v) in (list, dict) else v for k, v in kwargs.items()}
+        _kwargs = {
+            k: json.dumps(v, sort_keys=True) if type(v) in (list, dict) else v for k, v in kwargs.items()
+        }
         return cached_function(*_args, **_kwargs)
 
     lru_decorator.cache_info = cached_function.cache_info
@@ -88,14 +86,14 @@ def hashable_lru_cache(func):
 
 
 class termcolor:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
 
 
 def normalise_join_path(dirname, path):
@@ -121,10 +119,10 @@ def render_jinja2_file(name, context, jinja2_filters=defaults.DEFAULT_JINJA2_FIL
     path, filename = os.path.split(name)
     env = jinja2.Environment(
         undefined=jinja2.StrictUndefined,
-        loader=jinja2.FileSystemLoader(path or './'),
+        loader=jinja2.FileSystemLoader(path or "./"),
         trim_blocks=True,
         lstrip_blocks=True,
-        extensions=['jinja2.ext.do'],
+        extensions=["jinja2.ext.do"],
     )
     load_jinja2_filters(env)
     load_jinja2_filters_from_file(env, jinja2_filters)
@@ -151,18 +149,17 @@ def render_jinja2(path, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_
 
     for root, _, files in walk_root_files:
         for f in files:
-            if f.startswith('.'):
-                logger.debug('render_jinja2: ignoring file %s', f)
+            if f.startswith("."):
+                logger.debug("render_jinja2: ignoring file %s", f)
                 continue
             render_path = os.path.join(root, f)
             logger.debug("render_jinja2 rendering %s", render_path)
             # get subpath and filename, strip any leading/trailing /
-            name = render_path[len(os.path.commonprefix([root, path])):].strip('/')
+            name = render_path[len(os.path.commonprefix([root, path])) :].strip("/")
             try:
                 rendered[name] = {
-                    "content": render_jinja2_file(render_path, context,
-                                                  jinja2_filters=jinja2_filters),
-                    "mode": file_mode(render_path)
+                    "content": render_jinja2_file(render_path, context, jinja2_filters=jinja2_filters),
+                    "mode": file_mode(render_path),
                 }
             except Exception as e:
                 raise CompileError(f"Jinja2 error: failed to render {render_path}: {e}")
@@ -184,8 +181,7 @@ def jsonnet_file(file_path, **kwargs):
     try:
         return jsonnet.evaluate_file(file_path, **kwargs)
     except Exception as e:
-        raise CompileError(
-            f"Jsonnet error: failed to compile {file_path}:\n {e}")
+        raise CompileError(f"Jsonnet error: failed to compile {file_path}:\n {e}")
 
 
 def prune_empty(d):
@@ -211,11 +207,12 @@ class PrettyDumper(yaml.SafeDumper):
     By default, they are indendented at the same level as the key on the previous line
     More info on https://stackoverflow.com/questions/25108581/python-yaml-dump-bad-indentation
     """
+
     def increase_indent(self, flow=False, indentless=False):
         return super(PrettyDumper, self).increase_indent(flow, False)
 
 
-def flatten_dict(d, parent_key='', sep='.'):
+def flatten_dict(d, parent_key="", sep="."):
     """Flatten nested elements in a dictionary"""
     items = []
     for k, v in d.items():
@@ -248,8 +245,8 @@ def deep_get(dictionary, keys, previousKey=None):
         else:
             if isinstance(dictionary, dict):
                 # If we find nothing, check for globbing, loop and match with dict keys
-                if '*' in keys[0]:
-                    key_lower = keys[0].replace('*', '').lower()
+                if "*" in keys[0]:
+                    key_lower = keys[0].replace("*", "").lower()
                     for dict_key in dictionary.keys():
                         if key_lower in dict_key.lower():
                             # If we're at the last key in the chain, return matched value
@@ -282,7 +279,7 @@ def searchvar(flat_var, inventory_path, pretty_print):
     keys = flat_var.split(".")
     for full_path in list_all_paths(inventory_path):
         if full_path.endswith(".yml") or full_path.endswith(".yaml"):
-            with open(full_path, 'r') as fd:
+            with open(full_path, "r") as fd:
                 data = yaml.load(fd, Loader=YamlLoader)
                 value = deep_get(data, keys)
                 if value is not None:
@@ -297,18 +294,16 @@ def searchvar(flat_var, inventory_path, pretty_print):
             print()
     else:
         for i in output:
-            print('{0!s:{length}} {1!s}'.format(*i, length=maxlength + 2))
+            print("{0!s:{length}} {1!s}".format(*i, length=maxlength + 2))
 
 
 def directory_hash(directory):
     """Return the sha256 hash for the file contents of a directory"""
     if not os.path.exists(directory):
-        raise IOError(
-            f"utils.directory_hash failed, {directory} dir doesn't exist")
+        raise IOError(f"utils.directory_hash failed, {directory} dir doesn't exist")
 
     if not os.path.isdir(directory):
-        raise IOError(
-            f"utils.directory_hash failed, {directory} is not a directory")
+        raise IOError(f"utils.directory_hash failed, {directory} is not a directory")
 
     try:
         hash = sha256()
@@ -316,12 +311,12 @@ def directory_hash(directory):
             for names in sorted(files):
                 file_path = os.path.join(root, names)
                 try:
-                    with open(file_path, 'r') as f:
+                    with open(file_path, "r") as f:
                         file_hash = sha256(f.read().encode("UTF-8"))
                         hash.update(file_hash.hexdigest().encode("UTF-8"))
                 except Exception as e:
                     if isinstance(e, UnicodeDecodeError):
-                        with open(file_path, 'rb') as f:
+                        with open(file_path, "rb") as f:
                             binary_file_hash = sha256(f.read())
                             hash.update(binary_file_hash.hexdigest().encode("UTF-8"))
                     else:
@@ -341,7 +336,7 @@ def get_entropy(s):
     """Computes and returns the Shannon Entropy for string 's'"""
     length = float(len(s))
     # https://en.wiktionary.org/wiki/Shannon_entropy
-    entropy = - sum(count / length * math.log(count / length, 2) for count in Counter(s).values())
+    entropy = -sum(count / length * math.log(count / length, 2) for count in Counter(s).values())
     return round(entropy, 2)
 
 
@@ -432,20 +427,20 @@ def check_version():
 
             # If .kapitan version is greater than current version
             if result == "greater":
-                print(
-                    f"Upgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n")
+                print(f"Upgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n")
             # If .kapitan version is lower than current version
             elif result == "lower":
+                print(f"Option 1: You can update the version in .kapitan to '{VERSION}' and recompile\n")
                 print(
-                    f"Option 1: You can update the version in .kapitan to '{VERSION}' and recompile\n")
-                print(f"Option 2: Downgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n")
+                    f"Option 2: Downgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n"
+                )
 
-            print(
-                f"Docker: docker pull deepmind/kapitan:{dot_kapitan_version}")
-            print(
-                f"Pip (user): pip3 install --user --upgrade kapitan=={dot_kapitan_version}\n")
+            print(f"Docker: docker pull deepmind/kapitan:{dot_kapitan_version}")
+            print(f"Pip (user): pip3 install --user --upgrade kapitan=={dot_kapitan_version}\n")
             print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
-            print("If you know what you're doing, you can skip this check by adding '--ignore-version-check'.")
+            print(
+                "If you know what you're doing, you can skip this check by adding '--ignore-version-check'."
+            )
             sys.exit(1)
     except KeyError:
         pass
@@ -458,18 +453,18 @@ def search_target_token_paths(target_secrets_path, targets):
     """
     target_files = defaultdict(list)
     for full_path in list_all_paths(target_secrets_path):
-        secret_path = full_path[len(target_secrets_path) + 1:]
+        secret_path = full_path[len(target_secrets_path) + 1 :]
         target_name = secret_path.split("/")[0]
         if target_name in targets and os.path.isfile(full_path):
             with open(full_path) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
                 try:
-                    secret_type = obj['type']
+                    secret_type = obj["type"]
                 except KeyError:
                     # Backwards compatible with gpg secrets that didn't have type in yaml
                     secret_type = "gpg"
                 secret_path = f"?{{{secret_type}:{secret_path}}}"
-            logger.debug('search_target_token_paths: found %s', secret_path)
+            logger.debug("search_target_token_paths: found %s", secret_path)
             target_files[target_name].append(secret_path)
     return target_files
 
@@ -478,7 +473,7 @@ def make_request(source):
     """downloads the http file at source and returns it's content"""
     r = requests.get(source)
     if r.ok:
-        return r.content, r.headers['Content-Type']
+        return r.content, r.headers["Content-Type"]
     else:
         r.raise_for_status()
     return None, None

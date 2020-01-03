@@ -40,19 +40,23 @@ class Jsonnet(InputType):
             target_name: default None, set to current target being compiled
             indent: default 2
         """
+
         def _search_imports(cwd, imp):
             return search_imports(cwd, imp, self.search_paths)
 
-        json_output = jsonnet_file(file_path, import_callback=_search_imports,
-                                   native_callbacks=resource_callbacks(self.search_paths),
-                                   ext_vars=ext_vars)
+        json_output = jsonnet_file(
+            file_path,
+            import_callback=_search_imports,
+            native_callbacks=resource_callbacks(self.search_paths),
+            ext_vars=ext_vars,
+        )
         output_obj = json.loads(json_output)
 
-        output = kwargs.get('output', 'yaml')
-        prune = kwargs.get('prune', False)
-        reveal = kwargs.get('reveal', False)
-        target_name = kwargs.get('target_name', None)
-        indent = kwargs.get('indent', 2)
+        output = kwargs.get("output", "yaml")
+        prune = kwargs.get("prune", False)
+        reveal = kwargs.get("reveal", False)
+        target_name = kwargs.get("target_name", None)
+        indent = kwargs.get("indent", 2)
 
         if prune:
             output_obj = prune_empty(output_obj)
@@ -68,23 +72,43 @@ class Jsonnet(InputType):
 
         for item_key, item_value in output_obj.items():
             # write each item to disk
-            if output == 'json':
-                file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
-                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
-                                  indent=indent) as fp:
+            if output == "json":
+                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
+                with CompiledFile(
+                    file_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                    indent=indent,
+                ) as fp:
                     fp.write_json(item_value)
-            elif output == 'yaml':
-                file_path = os.path.join(compile_path, '%s.%s' % (item_key, "yml"))
-                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
-                                  indent=indent) as fp:
+            elif output == "yaml":
+                file_path = os.path.join(compile_path, "%s.%s" % (item_key, "yml"))
+                with CompiledFile(
+                    file_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                    indent=indent,
+                ) as fp:
                     fp.write_yaml(item_value)
-            elif output == 'plain':
-                file_path = os.path.join(compile_path, '%s' % item_key)
-                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
-                                  indent=indent) as fp:
+            elif output == "plain":
+                file_path = os.path.join(compile_path, "%s" % item_key)
+                with CompiledFile(
+                    file_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                    indent=indent,
+                ) as fp:
                     fp.write(item_value)
             else:
-                raise ValueError(f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'")
+                raise ValueError(
+                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'"
+                )
 
     def default_output_type(self):
         return "yaml"

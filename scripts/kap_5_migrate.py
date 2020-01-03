@@ -13,15 +13,15 @@ def update_secrets(file_path):
 
     with open(file_path) as fp:
         for line in fp:
-            if line == 'type: ref\n':
-                temp_buf.write('type: base64\n')
+            if line == "type: ref\n":
+                temp_buf.write("type: base64\n")
                 if not updated:  # only set updated once
                     updated = True
             else:
                 temp_buf.write(line)
     if updated:
         print(">>> updating:", file_path)
-        with open(file_path, 'w') as fp:
+        with open(file_path, "w") as fp:
             fp.write(temp_buf.getvalue())
 
 
@@ -34,15 +34,15 @@ def update_inventory(file_path):
 
     def ref_to_base64(match_obj):
         tag, token, _ = match_obj.groups()
-        if token.startswith('ref:'):
-            return "?{base64"+token[3:]+"}"
+        if token.startswith("ref:"):
+            return "?{base64" + token[3:] + "}"
         else:
             return tag
 
     def single_to_double(match_obj):
         tag, token, funcs = match_obj.groups()
         if not (funcs is None):
-            return tag.replace('|', '||', 1)
+            return tag.replace("|", "||", 1)
         else:
             return tag
 
@@ -55,7 +55,7 @@ def update_inventory(file_path):
                 updated = True
     if updated:
         print(">>> updating:", file_path)
-        with open(file_path, 'w') as fp:
+        with open(file_path, "w") as fp:
             fp.write(temp_buf.getvalue())
 
 
@@ -64,12 +64,13 @@ def find_files(path):
         raise Exception("path is not a directory or doesn't exist")
     for root, _, files in os.walk(path):
         for f in files:
-            if not f.startswith('.'):
+            if not f.startswith("."):
                 yield os.path.join(root, f)
 
 
 def pre_warning():
-    print("""
+    print(
+        """
     KAP-5 MIGRATION SCRIPT
 
     WARNING: This will update your 'ref' type secret objects and your inventory secret declaration!
@@ -86,16 +87,18 @@ def pre_warning():
     and will overwrite them with the new 'base64' type.
     It will also update all secrets in the inventory from ?{type:path/to/thing|function1|function2} to
     ?{type:path/to/thing||function1|function2}.
-    """)
+    """
+    )
 
-    response = input("Do you want to proceed? (\"yes\" to continue): ")
+    response = input('Do you want to proceed? ("yes" to continue): ')
     if response != "yes":
         print("aborting...")
         sys.exit(1)
 
 
 def post_warning():
-    print("""
+    print(
+        """
     Now that your ref types are updated into base64 types, you will need to:
 
     1. ensure you have installed Kapitan v0.25.
@@ -104,19 +107,17 @@ def post_warning():
     4. note that the command '$ kapitan secrets' is now '$ kapitan refs'.
     5. note that the flag in '$ kapitan compile --secrets-path' is now '$ kapitan compile --refs-path'.
     6. run '$ kapitan compile' again and review any changes. Only 'ref' to 'base64' changes are expected.
-    """)
+    """
+    )
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog='Kapitan KAP-5 migration',
-                                     description='Updates ref secret types into base64 ref types')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        prog="Kapitan KAP-5 migration", description="Updates ref secret types into base64 ref types"
+    )
 
-    parser.add_argument('--secrets-path', type=str,
-                        default='./secrets',
-                        help='set secrets path')
-    parser.add_argument('--inventory-path', type=str,
-                        default='./inventory',
-                        help='set inventory path')
+    parser.add_argument("--secrets-path", type=str, default="./secrets", help="set secrets path")
+    parser.add_argument("--inventory-path", type=str, default="./inventory", help="set inventory path")
 
     args = parser.parse_args()
 

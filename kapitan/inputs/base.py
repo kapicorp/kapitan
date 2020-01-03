@@ -51,8 +51,10 @@ class InputType(object):
             globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
             inputs = list(itertools.chain.from_iterable(globbed_paths))
             if len(inputs) == 0:
-                raise CompileError("Compile error: {} for target: {} not found in "
-                                   "search_paths: {}".format(input_path, ext_vars["target"], self.search_paths))
+                raise CompileError(
+                    "Compile error: {} for target: {} not found in "
+                    "search_paths: {}".format(input_path, ext_vars["target"], self.search_paths)
+                )
             input_paths.extend(inputs)
 
         for input_path in input_paths:
@@ -70,8 +72,9 @@ class InputType(object):
         logger.debug("Compiling %s", input_path)
         try:
             _compile_path = os.path.join(self.compile_path, target_name, output_path)
-            self.compile_file(input_path, _compile_path, ext_vars, output=output_type,
-                              target_name=target_name, **kwargs)
+            self.compile_file(
+                input_path, _compile_path, ext_vars, output=output_type, target_name=target_name, **kwargs
+            )
         except KapitanError as e:
             raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
 
@@ -99,8 +102,8 @@ class CompilingFile(object):
 
     def write(self, data):
         """write data into file"""
-        reveal = self.kwargs.get('reveal', False)
-        target_name = self.kwargs.get('target_name', None)
+        reveal = self.kwargs.get("reveal", False)
+        target_name = self.kwargs.get("target_name", None)
         if reveal:
             self.fp.write(self.revealer.reveal_raw(data))
         else:
@@ -108,9 +111,9 @@ class CompilingFile(object):
 
     def write_yaml(self, obj):
         """recursively compile or reveal refs and convert obj to yaml and write to file"""
-        indent = self.kwargs.get('indent', 2)
-        reveal = self.kwargs.get('reveal', False)
-        target_name = self.kwargs.get('target_name', None)
+        indent = self.kwargs.get("indent", 2)
+        reveal = self.kwargs.get("reveal", False)
+        target_name = self.kwargs.get("target_name", None)
         if reveal:
             obj = self.revealer.reveal_obj(obj)
         else:
@@ -125,9 +128,9 @@ class CompilingFile(object):
 
     def write_json(self, obj):
         """recursively hash or reveal refs and convert obj to json and write to file"""
-        indent = self.kwargs.get('indent', 2)
-        reveal = self.kwargs.get('reveal', False)
-        target_name = self.kwargs.get('target_name', None)
+        indent = self.kwargs.get("indent", 2)
+        reveal = self.kwargs.get("reveal", False)
+        target_name = self.kwargs.get("target_name", None)
         if reveal:
             obj = self.revealer.reveal_obj(obj)
         else:

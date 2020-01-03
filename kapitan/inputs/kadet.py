@@ -44,14 +44,16 @@ def module_from_path(path, check_name=None):
         raise FileNotFoundError("path: {} must be an existing directory".format(path))
 
     module_name = os.path.basename(os.path.normpath(path))
-    init_path = os.path.join(path, '__init__.py')
-    spec = spec_from_file_location('kadet_component_{}'.format(module_name), init_path)
+    init_path = os.path.join(path, "__init__.py")
+    spec = spec_from_file_location("kadet_component_{}".format(module_name), init_path)
     mod = module_from_spec(spec)
 
     if spec is None:
         raise ModuleNotFoundError("Could not load module in path {}".format(path))
     if check_name is not None and check_name != module_name:
-        raise ModuleNotFoundError("Module name {} does not match check_name {}".format(module_name, check_name))
+        raise ModuleNotFoundError(
+            "Module name {} does not match check_name {}".format(module_name, check_name)
+        )
 
     return mod, spec
 
@@ -87,25 +89,25 @@ class Kadet(InputType):
             target_name: default None, set to current target being compiled
             indent: default 2
         """
-        output = kwargs.get('output', 'yaml')
-        prune = kwargs.get('prune', False)
-        reveal = kwargs.get('reveal', False)
-        target_name = kwargs.get('target_name', None)
-        indent = kwargs.get('indent', 2)
+        output = kwargs.get("output", "yaml")
+        prune = kwargs.get("prune", False)
+        reveal = kwargs.get("reveal", False)
+        target_name = kwargs.get("target_name", None)
+        indent = kwargs.get("indent", 2)
 
         # These will be updated per target
         # XXX At the moment we have no other way of setting externals for modules...
         global search_paths
         search_paths = self.search_paths
         global inventory
-        inventory = lambda: Dict(inventory_func(self.search_paths, target_name)) # noqa E731
+        inventory = lambda: Dict(inventory_func(self.search_paths, target_name))  # noqa E731
         global inventory_global
-        inventory_global = lambda: Dict(inventory_func(self.search_paths, None)) # noqa E731
+        inventory_global = lambda: Dict(inventory_func(self.search_paths, None))  # noqa E731
 
         kadet_module, spec = module_from_path(file_path)
         sys.modules[spec.name] = kadet_module
         spec.loader.exec_module(kadet_module)
-        logger.debug('Kadet.compile_file: spec.name: %s', spec.name)
+        logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
 
         output_obj = kadet_module.main().to_dict()
         if prune:
@@ -113,24 +115,43 @@ class Kadet(InputType):
 
         for item_key, item_value in output_obj.items():
             # write each item to disk
-            if output == 'json':
-                file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
-                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
-                                  indent=indent) as fp:
+            if output == "json":
+                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
+                with CompiledFile(
+                    file_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                    indent=indent,
+                ) as fp:
                     fp.write_json(item_value)
-            elif output == 'yaml':
-                file_path = os.path.join(compile_path, '%s.%s' % (item_key, "yml"))
-                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
-                                  indent=indent) as fp:
+            elif output == "yaml":
+                file_path = os.path.join(compile_path, "%s.%s" % (item_key, "yml"))
+                with CompiledFile(
+                    file_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                    indent=indent,
+                ) as fp:
                     fp.write_yaml(item_value)
-            elif output == 'plain':
-                file_path = os.path.join(compile_path, '%s' % item_key)
-                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
-                                indent=indent) as fp:
+            elif output == "plain":
+                file_path = os.path.join(compile_path, "%s" % item_key)
+                with CompiledFile(
+                    file_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                    indent=indent,
+                ) as fp:
                     fp.write(item_value)
             else:
                 raise ValueError(
-                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'")
+                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'"
+                )
             logger.debug("Pruned output for: %s", file_path)
 
     def default_output_type(self):

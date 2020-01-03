@@ -60,30 +60,25 @@ def test_dirs_bootstrap_helper():
 
 
 class CopyTest(unittest.TestCase):
-
     def setUp(self):
         try:
             shutil.rmtree(test_path)
         except FileNotFoundError:
             pass
 
-        self.copy_compiler = Copy(
-            compile_path, search_path, ref_controller)
+        self.copy_compiler = Copy(compile_path, search_path, ref_controller)
 
     def test_copy_file_folder(self):
         test_dirs_bootstrap_helper()
-        self.copy_compiler.compile_file(
-            test_file_path, compile_path, None)
-        self.test_file_hash = hashlib.sha1(
-            test_file_content.encode()).digest()
+        self.copy_compiler.compile_file(test_file_path, compile_path, None)
+        self.test_file_hash = hashlib.sha1(test_file_content.encode()).digest()
         with open(test_file_compiled_path) as f:
             test_file_compiled_hash = hashlib.sha1(f.read().encode()).digest()
             self.assertEqual(self.test_file_hash, test_file_compiled_hash)
 
     def test_copy_folder_folder(self):
         test_dirs_bootstrap_helper()
-        self.copy_compiler.compile_file(
-            file_path, compile_path, None)
+        self.copy_compiler.compile_file(file_path, compile_path, None)
         file_path_hash = directory_hash(file_path)
         compile_path_hash = directory_hash(compile_path)
         self.assertEqual(file_path_hash, compile_path_hash)
@@ -96,7 +91,6 @@ class CopyTest(unittest.TestCase):
 
 
 class CompileCopyTest(unittest.TestCase):
-
     def setUp(self):
         os.chdir(os.path.join(os.getcwd(), "examples", "kubernetes"))
 

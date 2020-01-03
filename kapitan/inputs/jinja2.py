@@ -36,22 +36,22 @@ class Jinja2(InputType):
             reveal: default False, set to reveal refs on compile
             target_name: default None, set to current target being compiled
         """
-        reveal = kwargs.get('reveal', False)
-        target_name = kwargs.get('target_name', None)
+        reveal = kwargs.get("reveal", False)
+        target_name = kwargs.get("target_name", None)
 
         # set ext_vars and inventory for jinja2 context
         context = ext_vars.copy()
         context["inventory"] = inventory(self.search_paths, target_name)
         context["inventory_global"] = inventory(self.search_paths, None)
-        jinja2_filters = kwargs.get('jinja2_filters')
+        jinja2_filters = kwargs.get("jinja2_filters")
 
-        for item_key, item_value in render_jinja2(file_path, context,
-                                                  jinja2_filters=jinja2_filters).items():
+        for item_key, item_value in render_jinja2(file_path, context, jinja2_filters=jinja2_filters).items():
             full_item_path = os.path.join(compile_path, item_key)
             os.makedirs(os.path.dirname(full_item_path), exist_ok=True)
 
-            with CompiledFile(full_item_path, self.ref_controller, mode="w", reveal=reveal,
-                              target_name=target_name) as fp:
+            with CompiledFile(
+                full_item_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name
+            ) as fp:
                 fp.write(item_value["content"])
                 mode = item_value["mode"]
                 os.chmod(full_item_path, mode)

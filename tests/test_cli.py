@@ -39,7 +39,7 @@ if os.environ.get("GNUPGHOME", None) is None:
 
 class CliFuncsTest(unittest.TestCase):
     def setUp(self):
-        example_key = 'examples/kubernetes/refs/example@kapitan.dev.key'
+        example_key = "examples/kubernetes/refs/example@kapitan.dev.key"
         example_key = os.path.join(os.getcwd(), example_key)
         example_key_ownertrust = tempfile.mktemp()
 
@@ -62,26 +62,31 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = ["kapitan", "refs", "--write", "gpg:test_secret",
-                    "-f", test_secret_file,
-                    "--refs-path", REFS_PATH,
-                    "--recipients", "example@kapitan.dev"]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "gpg:test_secret",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+            "--recipients",
+            "example@kapitan.dev",
+        ]
         main()
 
         test_tag_content = "revealing: ?{gpg:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal",
-                    "-f", test_tag_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             main()
-        self.assertEqual("revealing: {}".format(test_secret_content),
-                         stdout.getvalue())
+        self.assertEqual("revealing: {}".format(test_secret_content), stdout.getvalue())
 
         os.remove(test_tag_file)
 
@@ -96,19 +101,26 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = ["kapitan", "refs", "--write", "gpg:test_secretb64",
-                    "-f", test_secret_file, "--base64",
-                    "--refs-path", REFS_PATH,
-                    "--recipients", "example@kapitan.dev"]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "gpg:test_secretb64",
+            "-f",
+            test_secret_file,
+            "--base64",
+            "--refs-path",
+            REFS_PATH,
+            "--recipients",
+            "example@kapitan.dev",
+        ]
         main()
 
         test_tag_content = "?{gpg:test_secretb64}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal",
-                    "-f", test_tag_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
@@ -119,7 +131,6 @@ class CliFuncsTest(unittest.TestCase):
 
         os.remove(test_tag_file)
 
-
     def test_cli_ref_reveal_recursive_dir(self):
         """
         run $ kapitan refs --reveal -f /some/dir
@@ -129,15 +140,22 @@ class CliFuncsTest(unittest.TestCase):
         /some/dir/another/dir/3.yml
         """
         # create 3 refs
-        for ref_count in range(1,4):
+        for ref_count in range(1, 4):
             ref_content = "I am ref{}!".format(ref_count)
             ref_file = tempfile.mktemp()
             with open(ref_file, "w") as fp:
                 fp.write(ref_content)
 
-            sys.argv = ["kapitan", "refs", "--write", "base64:test_ref_{}".format(ref_count),
-                        "-f", ref_file,
-                        "--refs-path", REFS_PATH]
+            sys.argv = [
+                "kapitan",
+                "refs",
+                "--write",
+                "base64:test_ref_{}".format(ref_count),
+                "-f",
+                ref_file,
+                "--refs-path",
+                REFS_PATH,
+            ]
             main()
 
         # create nested dir structure with unrevealed manifests
@@ -164,15 +182,12 @@ class CliFuncsTest(unittest.TestCase):
             expected_ref_rev = "I am ref{}!".format(count)
             expected_output += ref_content.format(count, expected_ref_rev)
 
-        sys.argv = ["kapitan", "refs", "--reveal",
-                    "-f", some_dir,
-                    "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", some_dir, "--refs-path", REFS_PATH]
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             main()
         self.assertEqual(expected_output, stdout.getvalue())
-
 
     def test_cli_secret_validate_targets(self):
         """
@@ -180,9 +195,15 @@ class CliFuncsTest(unittest.TestCase):
         expect 0 (success) exit status code
         """
         with self.assertRaises(SystemExit) as cm:
-            sys.argv = ["kapitan", "refs", "--validate-targets",
-                        "--refs-path", "examples/kubernetes/refs/targets/",
-                        "--inventory-path", "examples/kubernetes/inventory/"]
+            sys.argv = [
+                "kapitan",
+                "refs",
+                "--validate-targets",
+                "--refs-path",
+                "examples/kubernetes/refs/targets/",
+                "--inventory-path",
+                "examples/kubernetes/inventory/",
+            ]
             main()
         self.assertEqual(cm.exception.code, 0)
 
@@ -197,26 +218,31 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = ["kapitan", "refs", "--write", "gkms:test_secret",
-                    "-f", test_secret_file,
-                    "--refs-path", REFS_PATH,
-                    "--key", "mock"]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "gkms:test_secret",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+            "--key",
+            "mock",
+        ]
         main()
 
         test_tag_content = "revealing: ?{gkms:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal",
-                    "-f", test_tag_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             main()
-        self.assertEqual("revealing: {}".format(test_secret_content),
-                         stdout.getvalue())
+        self.assertEqual("revealing: {}".format(test_secret_content), stdout.getvalue())
 
         os.remove(test_tag_file)
 
@@ -231,26 +257,31 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = ["kapitan", "refs", "--write", "awskms:test_secret",
-                    "-f", test_secret_file,
-                    "--refs-path", REFS_PATH,
-                    "--key", "mock"]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "awskms:test_secret",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+            "--key",
+            "mock",
+        ]
         main()
 
         test_tag_content = "revealing: ?{awskms:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal",
-                    "-f", test_tag_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             main()
-        self.assertEqual("revealing: {}".format(test_secret_content),
-                         stdout.getvalue())
+        self.assertEqual("revealing: {}".format(test_secret_content), stdout.getvalue())
 
         os.remove(test_tag_file)
 
@@ -264,25 +295,29 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = ["kapitan", "refs", "--write", "plain:test_secret",
-                    "-f", test_secret_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "plain:test_secret",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+        ]
         main()
 
         test_tag_content = "revealing: ?{plain:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal",
-                    "-f", test_tag_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             main()
-        self.assertEqual("revealing: {}".format(test_secret_content),
-                         stdout.getvalue())
+        self.assertEqual("revealing: {}".format(test_secret_content), stdout.getvalue())
 
         os.remove(test_tag_file)
 
@@ -296,25 +331,29 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = ["kapitan", "refs", "--write", "base64:test_secret",
-                    "-f", test_secret_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "base64:test_secret",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+        ]
         main()
 
         test_tag_content = "revealing: ?{base64:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal",
-                    "-f", test_tag_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             main()
-        self.assertEqual("revealing: {}".format(test_secret_content),
-                         stdout.getvalue())
+        self.assertEqual("revealing: {}".format(test_secret_content), stdout.getvalue())
 
         os.remove(test_tag_file)
 
@@ -329,25 +368,30 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = ["kapitan", "refs", "--write", "base64:test_secret",
-                    "--base64", "-f", test_secret_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "base64:test_secret",
+            "--base64",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+        ]
         main()
 
         test_tag_content = "revealing: ?{base64:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal",
-                    "-f", test_tag_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             main()
-        self.assertEqual("revealing: {}".format(test_secret_content_b64.decode()),
-                         stdout.getvalue())
+        self.assertEqual("revealing: {}".format(test_secret_content_b64.decode()), stdout.getvalue())
 
         os.remove(test_tag_file)
 
@@ -366,9 +410,16 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = ["kapitan", "refs", "--write", "base64:test_secret_subvar",
-                    "-f", test_secret_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "base64:test_secret_subvar",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+        ]
         main()
 
         test_tag_content = """
@@ -378,9 +429,7 @@ class CliFuncsTest(unittest.TestCase):
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal",
-                    "-f", test_tag_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
@@ -409,10 +458,18 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = ["kapitan", "refs", "--write", "gpg:test_secret_subvar",
-                    "-f", test_secret_file,
-                    "--refs-path", REFS_PATH,
-                    "--recipients", "example@kapitan.dev"]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "gpg:test_secret_subvar",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+            "--recipients",
+            "example@kapitan.dev",
+        ]
         main()
 
         test_tag_content = """
@@ -422,9 +479,7 @@ class CliFuncsTest(unittest.TestCase):
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal",
-                    "-f", test_tag_file,
-                    "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
@@ -438,7 +493,7 @@ class CliFuncsTest(unittest.TestCase):
         self.assertEqual(expected.format("hello", "world"), stdout.getvalue())
         os.remove(test_tag_file)
 
-    @patch.object(vaultkv.VaultSecret, '_decrypt')
+    @patch.object(vaultkv.VaultSecret, "_decrypt")
     def test_cli_secret_write_vault(self, mock_reveal):
         """
         run $ kapitan refs --write vaultkv:test_secret
@@ -450,8 +505,18 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = ["kapitan", "refs", "--write", "vaultkv:test_secret",
-                    "-f", test_secret_file, "--refs-path", REFS_PATH, "--vault-auth", "token"]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "vaultkv:test_secret",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+            "--vault-auth",
+            "token",
+        ]
         main()
 
         test_tag_content = "revealing: ?{vaultkv:test_secret}"
@@ -460,15 +525,13 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_tag_content)
 
         mock_reveal.return_value = test_secret_content_value
-        sys.argv = ["kapitan", "refs", "--reveal",
-                    "-f", test_tag_file, "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             main()
-        self.assertEqual("revealing: {value}".format(value=test_secret_content_value),
-                         stdout.getvalue())
+        self.assertEqual("revealing: {value}".format(value=test_secret_content_value), stdout.getvalue())
 
         os.remove(test_tag_file)
 
@@ -476,8 +539,13 @@ class CliFuncsTest(unittest.TestCase):
         """
         run $ kapitan searchvar mysql.replicas
         """
-        sys.argv = ["kapitan", "searchvar", "mysql.replicas",
-                    "--inventory-path", "examples/kubernetes/inventory/"]
+        sys.argv = [
+            "kapitan",
+            "searchvar",
+            "mysql.replicas",
+            "--inventory-path",
+            "examples/kubernetes/inventory/",
+        ]
 
         # set stdout as string
         stdout = io.StringIO()
@@ -489,15 +557,23 @@ class CliFuncsTest(unittest.TestCase):
         """
         run $ kapitan inventory -t minikube-es -F -p cluster
         """
-        sys.argv = ["kapitan", "inventory", "-t", "minikube-es", "-F", "-p", "cluster",
-                    "--inventory-path", "examples/kubernetes/inventory/"]
+        sys.argv = [
+            "kapitan",
+            "inventory",
+            "-t",
+            "minikube-es",
+            "-F",
+            "-p",
+            "cluster",
+            "--inventory-path",
+            "examples/kubernetes/inventory/",
+        ]
 
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             main()
-        self.assertEqual("id: minikube\nname: minikube\ntype: minikube\nuser: minikube\n",
-                         stdout.getvalue())
+        self.assertEqual("id: minikube\nname: minikube\ntype: minikube\nuser: minikube\n", stdout.getvalue())
 
     def tearDown(self):
         shutil.rmtree(REFS_PATH, ignore_errors=True)

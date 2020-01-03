@@ -38,6 +38,7 @@ GPG_TARGET_FINGERPRINTS = {}
 
 class GPGError(Exception):
     """Generic GPG errors"""
+
     pass
 
 
@@ -63,9 +64,9 @@ class GPGSecret(Base64Ref):
                 kwargs["encoding"] = "base64"
         else:
             self.data = data
-            self.recipients = [{'fingerprint': f} for f in fingerprints]  # TODO move to .load() method
+            self.recipients = [{"fingerprint": f} for f in fingerprints]  # TODO move to .load() method
         super().__init__(self.data, **kwargs)
-        self.type_name = 'gpg'
+        self.type_name = "gpg"
 
     @classmethod
     def from_params(cls, data, ref_params):
@@ -76,21 +77,23 @@ class GPGSecret(Base64Ref):
         try:
             # XXX only used for testing
             if GPG_TARGET_FINGERPRINTS:
-                _fingerprints = [{'fingerprint': v} for _, v in GPG_TARGET_FINGERPRINTS.items()]
+                _fingerprints = [{"fingerprint": v} for _, v in GPG_TARGET_FINGERPRINTS.items()]
                 return cls(data, _fingerprints, **ref_params.kwargs)
 
-            target_name = ref_params.kwargs['target_name']
+            target_name = ref_params.kwargs["target_name"]
             if target_name is None:
-                raise ValueError('target_name not set')
+                raise ValueError("target_name not set")
 
-            target_inv = cached.inv['nodes'].get(target_name, None)
+            target_inv = cached.inv["nodes"].get(target_name, None)
             if target_inv is None:
-                raise ValueError('target_inv not set')
+                raise ValueError("target_inv not set")
 
-            if 'secrets' not in target_inv['parameters']['kapitan']:
-                raise KapitanError(f"parameters.kapitan.secrets not defined in inventory of target {target_name}")
+            if "secrets" not in target_inv["parameters"]["kapitan"]:
+                raise KapitanError(
+                    f"parameters.kapitan.secrets not defined in inventory of target {target_name}"
+                )
 
-            recipients = target_inv['parameters']['kapitan']['secrets']['gpg']['recipients']
+            recipients = target_inv["parameters"]["kapitan"]["secrets"]["gpg"]["recipients"]
 
             return cls(data, recipients, **ref_params.kwargs)
         except KeyError:
@@ -115,11 +118,11 @@ class GPGSecret(Base64Ref):
         returns True if recipients are different and secret is updated, False otherwise
         """
         fingerprints = lookup_fingerprints(recipients)
-        if set(fingerprints) == set([r['fingerprint'] for r in self.recipients]):
+        if set(fingerprints) == set([r["fingerprint"] for r in self.recipients]):
             return False
 
         data_dec = self.reveal()
-        encode_base64 = self.encoding == 'base64'
+        encode_base64 = self.encoding == "base64"
         if encode_base64:
             data_dec = base64.b64decode(data_dec).decode()
         self._encrypt(data_dec, fingerprints, encode_base64)
@@ -140,7 +143,7 @@ class GPGSecret(Base64Ref):
         enc = gpg_obj().encrypt(_data, fingerprints, sign=True, armor=False, **GPG_KWARGS)
         if enc.ok:
             self.data = enc.data
-            self.recipients = [{'fingerprint': f} for f in fingerprints]
+            self.recipients = [{"fingerprint": f} for f in fingerprints]
         else:
             raise GPGError(enc.status)
 
@@ -156,23 +159,27 @@ class GPGSecret(Base64Ref):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding,
-                "recipients": self.recipients, "type": self.type_name}
+        return {
+            "data": self.data,
+            "encoding": self.encoding,
+            "recipients": self.recipients,
+            "type": self.type_name,
+        }
 
 
 class GPGBackend(Base64RefBackend):
     def __init__(self, path, ref_type=GPGSecret):
         "init GPGBackend ref backend type"
         super().__init__(path, ref_type)
-        self.type_name = 'gpg'
+        self.type_name = "gpg"
 
 
 def lookup_fingerprints(recipients):
     """returns a list of fingerprints for recipients obj"""
     lookedup = []
     for recipient in recipients:
-        fingerprint = recipient.get('fingerprint')
-        name = recipient.get('name')
+        fingerprint = recipient.get("fingerprint")
+        name = recipient.get("name")
         if fingerprint is None:
             lookedup_fingerprint = fingerprint_non_expired(name)
             lookedup.append(lookedup_fingerprint)
@@ -189,19 +196,22 @@ def fingerprint_non_expired(recipient_name):
     try:
         keys = gpg_obj().list_keys(keys=(recipient_name,))
         for key in keys:
-            if 'expires' not in key:
-                logger.info("Invalid dictionary structure for key for recipient: %s with fingerprint: %s",
-                            recipient_name, key['fingerprint'])
+            if "expires" not in key:
+                logger.info(
+                    "Invalid dictionary structure for key for recipient: %s with fingerprint: %s",
+                    recipient_name,
+                    key["fingerprint"],
+                )
                 continue
 
             # if 'expires' is indefinite (meaning it is an empty string) OR
             # if 'expires' key is set and time is in the future, return
-            if (not key['expires']) or (time.time() < int(key['expires'])):
-                return key['fingerprint']
+            if (not key["expires"]) or (time.time() < int(key["expires"])):
+                return key["fingerprint"]
             else:
                 logger.debug(
-                    f"Key for recipient: {recipient_name} with fingerprint: {key['fingerprint']} has expired, skipping")
-        raise GPGError(
-            f"Could not find valid key for recipient: {recipient_name}")
+                    f"Key for recipient: {recipient_name} with fingerprint: {key['fingerprint']} has expired, skipping"
+                )
+        raise GPGError(f"Could not find valid key for recipient: {recipient_name}")
     except IndexError as iexp:
         raise iexp

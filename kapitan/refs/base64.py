@@ -36,8 +36,8 @@ class Base64Ref(PlainRef):
         set from_base64 to load already base64 encoded data
         """
         super().__init__(data, **kwargs)
-        self.type_name = 'base64'
-        self.encoding = kwargs.get('encoding', 'original')
+        self.type_name = "base64"
+        self.encoding = kwargs.get("encoding", "original")
         # TODO data should be bytes only
         if from_base64:
             self.data = data
@@ -61,9 +61,9 @@ class Base64Ref(PlainRef):
         try:
             with open(ref_full_path) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
-                _kwargs = {key: value for key, value in obj.items() if key not in ('data', 'from_base64')}
+                _kwargs = {key: value for key, value in obj.items() if key not in ("data", "from_base64")}
                 kwargs.update(_kwargs)
-                return cls(obj['data'], from_base64=True, **kwargs)
+                return cls(obj["data"], from_base64=True, **kwargs)
 
         except IOError as ex:
             if ex.errno == errno.ENOENT:
@@ -73,11 +73,10 @@ class Base64Ref(PlainRef):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding,
-                "type": self.type_name}
+        return {"data": self.data, "encoding": self.encoding, "type": self.type_name}
 
 
 class Base64RefBackend(PlainRefBackend):
     def __init__(self, path, ref_type=Base64Ref):
         super().__init__(path, ref_type)
-        self.type_name = 'base64'
+        self.type_name = "base64"

@@ -26,8 +26,7 @@ from contextlib import contextmanager
 from functools import lru_cache
 
 import yaml
-from kapitan.errors import (RefBackendError, RefError, RefFromFuncError,
-                            RefHashMismatchError)
+from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashMismatchError
 from kapitan.refs.functions import eval_func
 from kapitan.utils import PrettyDumper, list_all_paths
 
@@ -48,8 +47,8 @@ class PlainRef(object):
         """
         writes plain data
         """
-        self.type_name = 'plain'
-        self.encoding = kwargs.get('encoding', 'original')
+        self.type_name = "plain"
+        self.encoding = kwargs.get("encoding", "original")
         self.data = data
 
     def reveal(self):
@@ -69,9 +68,9 @@ class PlainRef(object):
         try:
             with open(ref_full_path) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
-                _kwargs = {key: value for key, value in obj.items() if key not in ('data',)}
+                _kwargs = {key: value for key, value in obj.items() if key not in ("data",)}
                 kwargs.update(_kwargs)
-                return cls(obj['data'], **kwargs)
+                return cls(obj["data"], **kwargs)
 
         except IOError as ex:
             if ex.errno == errno.ENOENT:
@@ -84,10 +83,10 @@ class PlainRef(object):
         """
         # default encoding to 'original'
         # TODO encoding needs a better place other than kwargs
-        encoding = ref_params.kwargs.get('encoding', 'original')
-        if encoding == 'original':
+        encoding = ref_params.kwargs.get("encoding", "original")
+        if encoding == "original":
             return cls(data.encode(), **ref_params.kwargs)
-        elif encoding == 'base64':
+        elif encoding == "base64":
             # data already bytes encoded
             return cls(data, **ref_params.kwargs)
 
@@ -95,8 +94,7 @@ class PlainRef(object):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data.decode(), "encoding": self.encoding,
-                "type": self.type_name}
+        return {"data": self.data.decode(), "encoding": self.encoding, "type": self.type_name}
 
 
 class RefParams(object):
@@ -110,7 +108,7 @@ class PlainRefBackend(object):
     def __init__(self, path, ref_type=PlainRef):
         "Get and create PlainRefs"
         self.path = path
-        self.type_name = 'plain'
+        self.type_name = "plain"
         self.ref_type = ref_type
 
     def __getitem__(self, ref_path):
@@ -129,11 +127,11 @@ class PlainRefBackend(object):
         raise KeyError(ref_path)
 
     def __setitem__(self, ref_path, ref_obj):
-        assert(isinstance(ref_obj, self.ref_type))
+        assert isinstance(ref_obj, self.ref_type)
         full_ref_path = os.path.join(self.path, ref_path)
         os.makedirs(os.path.dirname(full_ref_path), exist_ok=True)
 
-        with open(full_ref_path, 'w') as fp:
+        with open(full_ref_path, "w") as fp:
             yaml.safe_dump(ref_obj.dump(), stream=fp, default_flow_style=False)
 
     def __contains__(self, ref_path):
@@ -145,7 +143,7 @@ class PlainRefBackend(object):
 
     def __iter__(self):
         for full_path in list_all_paths(self.path):
-            ref_path = full_path[len(self.path):]
+            ref_path = full_path[len(self.path) :]
             yield ref_path
 
     def iteritems(self):
@@ -171,12 +169,12 @@ class Revealer(object):
         elif os.path.isdir(path):
             content_yaml, content_json, content_raw = self._reveal_dir(path)
             revealed_objs = []
-            if content_yaml != '':
-                revealed_objs.append(RevealedObj(content_yaml, 'yaml'))
-            elif content_json != '':
-                revealed_objs.append(RevealedObj(content_json, 'json'))
-            elif content_raw != '':
-                revealed_objs.append(RevealedObj(content_raw, 'raw'))
+            if content_yaml != "":
+                revealed_objs.append(RevealedObj(content_yaml, "yaml"))
+            elif content_json != "":
+                revealed_objs.append(RevealedObj(content_json, "json"))
+            elif content_raw != "":
+                revealed_objs.append(RevealedObj(content_raw, "raw"))
             return revealed_objs
         else:
             raise FileNotFoundError(path)
@@ -186,40 +184,44 @@ class Revealer(object):
         detects filename by extension (.yml/.yaml, .json or otherwise raw)
         reveals secrets in content
         """
-        if filename.endswith('.yml') or filename.endswith('.yaml'):
+        if filename.endswith(".yml") or filename.endswith(".yaml"):
             logger.debug("Revealer: revealing yml file: %s", filename)
             with open(filename) as fp:
                 obj = [o for o in yaml.load_all(fp, Loader=YamlLoader)]
                 rev_obj = self.reveal_obj(obj)
-                return yaml.dump_all(rev_obj, Dumper=PrettyDumper, default_flow_style=False,
-                                     explicit_start=True), 'yaml'
-        elif filename.endswith('.json'):
+                return (
+                    yaml.dump_all(
+                        rev_obj, Dumper=PrettyDumper, default_flow_style=False, explicit_start=True
+                    ),
+                    "yaml",
+                )
+        elif filename.endswith(".json"):
             logger.debug("Revealer: revealing json file: %s", filename)
             with open(filename) as fp:
                 obj = json.load(fp)
                 rev_obj = self.reveal_obj(obj)
-                return json.dumps(rev_obj, indent=4, sort_keys=True), 'json'
+                return json.dumps(rev_obj, indent=4, sort_keys=True), "json"
         else:
             logger.debug("Revealer: revealing raw file: %s", filename)
-            return self.reveal_raw_file(filename), 'raw'
+            return self.reveal_raw_file(filename), "raw"
 
     def _reveal_dir(self, dirname):
         """
         returns tuple with yaml, json, and raw concatenated output for revealed file types
         recurses through subdirectories in dirname
         """
-        out_yaml = ''
-        out_json = ''
-        out_raw = ''
+        out_yaml = ""
+        out_json = ""
+        out_raw = ""
 
         # find yaml/json/raw files and concatenate output per type
         for fpath in list_all_paths(dirname):
             if not os.path.isfile(fpath):
                 continue
-            if fpath.endswith('.yml') or fpath.endswith('.yaml'):
+            if fpath.endswith(".yml") or fpath.endswith(".yaml"):
                 out, _ = self._reveal_file(fpath)
                 out_yaml += out
-            elif fpath.endswith('.json'):
+            elif fpath.endswith(".json"):
                 out, _ = self._reveal_file(fpath)
                 out_json += self._reveal_file(fpath)
             else:
@@ -234,22 +236,22 @@ class Revealer(object):
         m = re.search(REF_TOKEN_SUBVAR_PATTERN, tag)
         if m is None:
             # no subvar pattern is found
-            logger.debug("Revealer: no sub-variable path was matched in \"{}\"".format(tag))
+            logger.debug('Revealer: no sub-variable path was matched in "{}"'.format(tag))
             return self._reveal_tag_without_subvar(tag)
 
         else:
             subvar_path = m.groups()
             # strip away the @
             subvar_path = subvar_path[0][1:]
-            logger.debug("Revealer: sub-variable path \"{}\" matched in tag {}".
-                         format(subvar_path, tag))
+            logger.debug('Revealer: sub-variable path "{}" matched in tag {}'.format(subvar_path, tag))
             tag_without_yaml_path = re.sub(REF_TOKEN_SUBVAR_PATTERN, "", tag)
 
             plaintext = self._reveal_tag_without_subvar(tag_without_yaml_path)
             revealed_yaml = yaml.load(plaintext, Loader=YamlLoader)
             if not isinstance(revealed_yaml, dict):
-                raise RefError("revealed secret is not in yaml, cannot access sub-variable"
-                               " at {}".format(subvar_path))
+                raise RefError(
+                    "revealed secret is not in yaml, cannot access sub-variable" " at {}".format(subvar_path)
+                )
             return self._get_value_in_yaml_path(revealed_yaml, subvar_path)
 
     @lru_cache(maxsize=256)
@@ -260,7 +262,7 @@ class Revealer(object):
 
     def _get_value_in_yaml_path(self, d, yaml_path):
         """using the sub-variable path as nested keys, returns the value in the dictionary"""
-        keys = yaml_path.split('.')
+        keys = yaml_path.split(".")
         value = d
         for key in keys:
             value = value[key]
@@ -269,6 +271,7 @@ class Revealer(object):
 
     def _compile_replace_match_with_args(self, **kwargs):
         """returns compile_replace_match function with kwargs"""
+
         def compile_replace_match(match_obj):
             """returns compile ref value from tag in match_obj"""
             tag, _, _ = match_obj.groups()
@@ -293,7 +296,7 @@ class Revealer(object):
         set filename=None to read stdin
         returns string with revealed content
         """
-        out_raw = ''
+        out_raw = ""
         if filename is None:
             for line in sys.stdin:
                 revealed = self.regex.sub(self._reveal_replace_match, line)
@@ -350,13 +353,13 @@ class Revealer(object):
 
 class RevealedObj(object):
     "Content and content type object type"
+
     def __init__(self, content, content_type):
         self.content = content
         self.content_type = content_type
 
 
 class RefController(object):
-
     @contextmanager
     def detailedException(self, ref_key):
         try:
@@ -374,7 +377,7 @@ class RefController(object):
 
     def register_backend(self, backend):
         "register backend type"
-        assert(isinstance(backend, PlainRefBackend))
+        assert isinstance(backend, PlainRefBackend)
         self.backends[backend.type_name] = backend
 
     def _get_backend(self, type_name):
@@ -382,23 +385,29 @@ class RefController(object):
         try:
             return self.backends[type_name]
         except KeyError:
-            if type_name == 'plain':
+            if type_name == "plain":
                 from kapitan.refs.base import PlainRefBackend
+
                 self.register_backend(PlainRefBackend(self.path))
-            elif type_name == 'base64':
+            elif type_name == "base64":
                 from kapitan.refs.base64 import Base64RefBackend
+
                 self.register_backend(Base64RefBackend(self.path))
-            elif type_name == 'gpg':
+            elif type_name == "gpg":
                 from kapitan.refs.secrets.gpg import GPGBackend
+
                 self.register_backend(GPGBackend(self.path))
-            elif type_name == 'gkms':
+            elif type_name == "gkms":
                 from kapitan.refs.secrets.gkms import GoogleKMSBackend
+
                 self.register_backend(GoogleKMSBackend(self.path))
-            elif type_name == 'awskms':
+            elif type_name == "awskms":
                 from kapitan.refs.secrets.awskms import AWSKMSBackend
+
                 self.register_backend(AWSKMSBackend(self.path))
-            elif type_name == 'vaultkv':
+            elif type_name == "vaultkv":
                 from kapitan.refs.secrets.vaultkv import VaultBackend
+
                 self.register_backend(VaultBackend(self.path))
             else:
                 raise RefBackendError(f"no backend for ref type: {type_name}")
@@ -430,13 +439,13 @@ class RefController(object):
 
     def token_type_name(self, token):
         "returns ref type name for token"
-        attrs = token.split(':')
+        attrs = token.split(":")
         type_name = attrs[0]
 
         return type_name
 
     def _get_from_token(self, token):
-        attrs = token.split(':')
+        attrs = token.split(":")
 
         # "type_name:path/to/ref"
         if len(attrs) == 2:
@@ -455,18 +464,20 @@ class RefController(object):
             if ref.hash[:8] == hash:
                 return ref
             else:
-                raise RefHashMismatchError("{}: token hash does not match with stored reference hash: {}".format(token, ref.token))
+                raise RefHashMismatchError(
+                    "{}: token hash does not match with stored reference hash: {}".format(token, ref.token)
+                )
         else:
             return None
 
     def _set_to_token(self, token, ref_obj):
-        attrs = token.split(':')
+        attrs = token.split(":")
 
         if len(attrs) == 2:
             type_name = attrs[0]
             path = attrs[1]
             backend = self._get_backend(type_name)
-            assert(isinstance(ref_obj, backend.ref_type))
+            assert isinstance(ref_obj, backend.ref_type)
             backend[path] = ref_obj
         else:
             raise RefError(f"{token}: is not a valid token")
@@ -476,12 +487,12 @@ class RefController(object):
         evals and updates context ctx for func_str
         returns evaluated ctx
         """
-        assert(func_str.startswith('||'))
-        funcs = func_str[2:].split('|')
+        assert func_str.startswith("||")
+        funcs = func_str[2:].split("|")
 
         for func in funcs:
-            func_name, *func_params = func.strip().split(':')
-            if func_name == 'base64':  # not a real function
+            func_name, *func_params = func.strip().split(":")
+            if func_name == "base64":  # not a real function
                 ctx.encode_base64 = True
             else:
                 try:
@@ -512,7 +523,9 @@ class RefController(object):
                 except KeyError:
                     # if func is set and ref doesnt exist,
                     # raise RefFromFuncError to indicate new ref needs to be created
-                    raise RefFromFuncError(f"{token}: does not exist and must be created from function: {func_str}")
+                    raise RefFromFuncError(
+                        f"{token}: does not exist and must be created from function: {func_str}"
+                    )
 
         raise KeyError(f"{tag}: ref not found")
 
@@ -537,7 +550,7 @@ class RefController(object):
                 if ctx.encode_base64:
                     b64_data = base64.b64encode(ctx.data.encode())
                     # TODO encoding needs a better place other than kwargs
-                    value.kwargs['encoding'] = 'base64'
+                    value.kwargs["encoding"] = "base64"
                     ref_obj = ref_type.from_params(b64_data, value)
                 else:
                     ref_obj = ref_type.from_params(ctx.data, value)

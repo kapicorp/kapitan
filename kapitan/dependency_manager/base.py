@@ -44,9 +44,11 @@ def fetch_dependencies(target_objs, pool):
                 source_uri = item["source"]
                 if "root_dir" in DEPENDENCY_OUTPUT_CONFIG:
                     # should only be used in test environment
-                    item["output_path"] = os.path.join(DEPENDENCY_OUTPUT_CONFIG["root_dir"], item["output_path"])
+                    item["output_path"] = os.path.join(
+                        DEPENDENCY_OUTPUT_CONFIG["root_dir"], item["output_path"]
+                    )
                 output_path = item["output_path"]
-                if os.path.exists(os.path.abspath(output_path)) and not item.get('unpack', False):
+                if os.path.exists(os.path.abspath(output_path)) and not item.get("unpack", False):
                     # if unpack: True, then allow the user to specify the parent directory as output_path where the
                     # files will be extracted to
                     logger.info("Dependency {} : already exists. Ignoring".format(output_path))
@@ -85,20 +87,22 @@ def fetch_git_dependency(dep_mapping, save_dir):
         repo = Repo(repo_path)
         output_path = dep["output_path"]
         copy_src_path = repo_path
-        if 'ref' in dep:
-            ref = dep['ref']
+        if "ref" in dep:
+            ref = dep["ref"]
             repo.git.checkout(ref)
         else:
             repo = Repo(repo_path)
             repo.git.checkout("master")  # default ref
 
-        if 'subdir' in dep:
-            sub_dir = dep['subdir']
+        if "subdir" in dep:
+            sub_dir = dep["subdir"]
             full_subdir = os.path.join(repo_path, sub_dir)
             if os.path.isdir(full_subdir):
                 copy_src_path = full_subdir
             else:
-                raise GitSubdirNotFoundError("Dependency {} : subdir {} not found in repo".format(source, sub_dir))
+                raise GitSubdirNotFoundError(
+                    "Dependency {} : subdir {} not found in repo".format(source, sub_dir)
+                )
 
         if not os.path.exists(os.path.abspath(output_path)):
             copy_tree(copy_src_path, output_path)
@@ -109,7 +113,7 @@ def fetch_git_source(source, save_dir):
     """clones a git repository at source and saves into save_dir"""
     logger.info("Dependency {} : fetching now".format(source))
     Repo.clone_from(source, os.path.join(save_dir, os.path.basename(source)))
-    logger.info('Dependency {} : successfully fetched'.format(source))
+    logger.info("Dependency {} : successfully fetched".format(source))
 
 
 def fetch_http_dependency(dep_mapping, save_dir):
@@ -123,22 +127,22 @@ def fetch_http_dependency(dep_mapping, save_dir):
     copy_src_path = os.path.join(save_dir, path_hash + os.path.basename(source))
     for dep in deps:
         output_path = dep["output_path"]
-        if dep.get('unpack', False):
+        if dep.get("unpack", False):
             # ensure that the directory we are extracting to exists
             os.makedirs(output_path, exist_ok=True)
             is_unpacked = False
-            if content_type == 'application/x-tar':
+            if content_type == "application/x-tar":
                 tar = tarfile.open(copy_src_path)
                 tar.extractall(path=output_path)
                 tar.close()
                 is_unpacked = True
-            elif content_type == 'application/zip':
+            elif content_type == "application/zip":
                 zfile = ZipFile(copy_src_path)
                 zfile.extractall(output_path)
                 zfile.close()
                 is_unpacked = True
-            elif content_type in ['application/octet-stream', 'application/x-gzip']:
-                if re.search(r'(\.tar\.gz|\.tgz)$', source):
+            elif content_type in ["application/octet-stream", "application/x-gzip"]:
+                if re.search(r"(\.tar\.gz|\.tgz)$", source):
                     tar = tarfile.open(copy_src_path)
                     tar.extractall(path=output_path)
                     tar.close()
@@ -146,12 +150,15 @@ def fetch_http_dependency(dep_mapping, save_dir):
             if is_unpacked:
                 logger.info("Dependency {} : extracted to {}".format(source, output_path))
             else:
-                logger.info("Dependency {} : Content-Type {} is not supported for unpack. Ignoring save".
-                            format(source, content_type))
+                logger.info(
+                    "Dependency {} : Content-Type {} is not supported for unpack. Ignoring save".format(
+                        source, content_type
+                    )
+                )
         else:
             # we are downloading a single file
             parent_dir = os.path.dirname(output_path)
-            if parent_dir != '':
+            if parent_dir != "":
                 os.makedirs(parent_dir, exist_ok=True)
             copyfile(copy_src_path, output_path)
             logger.info("Dependency {} : saved to {}".format(source, output_path))
@@ -167,7 +174,7 @@ def fetch_http_source(source, save_dir):
         # to avoid collisions between basename(source)
         path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
         full_save_path = os.path.join(save_dir, path_hash + basename)
-        with open(full_save_path, 'wb') as f:
+        with open(full_save_path, "wb") as f:
             f.write(content)
         return content_type
     else:

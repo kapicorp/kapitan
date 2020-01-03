@@ -35,16 +35,17 @@ git submodule update --init
 
 Run `make test` to run all tests. If you modify anything in the `examples/` folder
 make sure you replicate the compiled result of that in `tests/test_kubernetes_compiled`.
-If you add new features, run `make test_coverage` to make sure the test coverage remains
-at current or better levels.
+If you add new features, run `make test_coverage && make test_formatting` to make sure the
+test coverage remains at current or better levels and that code formatting is applied.
 
 If you would like to evaluate your changes by running your version of Kapitan, you can do
 that by running `bin/kapitan` from this repository or even setting an alias to it.
 
 ## Code Style
 
-Try to fix warnings from `make codestyle` before submitting to make sure you adhere to the
-[Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/).
+Run `make format_codestyle` before submitting to make sure you adhere to the
+[Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/). Python Black is used to
+apply the formatting so make sure you have it installed with `pip3 install black`.
 
 ## Releasing
 

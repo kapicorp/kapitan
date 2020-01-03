@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 class VaultError(KapitanError):
     """Generic vault errors"""
+
     pass
 
 
@@ -61,31 +62,32 @@ def get_env(parameter):
         :type namespace: str
     """
     client_parameters = {}
-    client_parameters['url'] = parameter.get('VAULT_ADDR',
-                                             os.getenv('VAULT_ADDR', default=''))
-    client_parameters['namespace'] = parameter.get('VAULT_NAMESPACE',
-                                             os.getenv('VAULT_NAMESPACE', default=''))
+    client_parameters["url"] = parameter.get("VAULT_ADDR", os.getenv("VAULT_ADDR", default=""))
+    client_parameters["namespace"] = parameter.get(
+        "VAULT_NAMESPACE", os.getenv("VAULT_NAMESPACE", default="")
+    )
     # VERIFY VAULT SERVER TLS CERTIFICATE
-    skip_verify = parameter.get('VAULT_SKIP_VERIFY', os.getenv('VAULT_SKIP_VERIFY', default=''))
+    skip_verify = parameter.get("VAULT_SKIP_VERIFY", os.getenv("VAULT_SKIP_VERIFY", default=""))
 
-    if skip_verify.lower() == 'false':
-        cert = parameter.get('VAULT_CACERT', os.getenv('VAULT_CACERT', default=''))
+    if skip_verify.lower() == "false":
+        cert = parameter.get("VAULT_CACERT", os.getenv("VAULT_CACERT", default=""))
         if not cert:
-            cert_path = parameter.get('VAULT_CAPATH', os.getenv('VAULT_CAPATH', default=''))
+            cert_path = parameter.get("VAULT_CAPATH", os.getenv("VAULT_CAPATH", default=""))
             if not cert_path:
-                raise Exception('Neither VAULT_CACERT nor VAULT_CAPATH specified')
-            client_parameters['verify'] = cert_path
+                raise Exception("Neither VAULT_CACERT nor VAULT_CAPATH specified")
+            client_parameters["verify"] = cert_path
         else:
-            client_parameters['verify'] = cert
+            client_parameters["verify"] = cert
     else:
-        client_parameters['verify'] = False
+        client_parameters["verify"] = False
 
     # CLIENT CERTIFICATE FOR TLS AUTHENTICATION
-    client_key = parameter.get('VAULT_CLIENT_KEY', os.getenv('VAULT_CLIENT_KEY', default=''))
-    client_cert = parameter.get('VAULT_CLIENT_CERT', os.getenv('VAULT_CLIENT_CERT', default=''))
-    if client_key != '' and client_cert != '':
-        client_parameters['cert'] = (client_cert, client_key)
+    client_key = parameter.get("VAULT_CLIENT_KEY", os.getenv("VAULT_CLIENT_KEY", default=""))
+    client_cert = parameter.get("VAULT_CLIENT_CERT", os.getenv("VAULT_CLIENT_CERT", default=""))
+    if client_key != "" and client_cert != "":
+        client_parameters["cert"] = (client_cert, client_key)
     return client_parameters
+
 
 def vault_obj(vault_parameters):
     """
@@ -98,43 +100,32 @@ def vault_obj(vault_parameters):
     """
     env = get_env(vault_parameters)
 
-    client = hvac.Client(
-        **{k: v for k, v in env.items() if k is not 'auth'}
-    )
+    client = hvac.Client(**{k: v for k, v in env.items() if k is not "auth"})
 
-    auth_type = vault_parameters['auth']
+    auth_type = vault_parameters["auth"]
     # GET TOKEN EITHER FROM ENVIRONMENT OF FILE
-    if auth_type in ['token', 'github']:
-        env['token'] = os.getenv('VAULT_TOKEN')
-        if not env['token']:
+    if auth_type in ["token", "github"]:
+        env["token"] = os.getenv("VAULT_TOKEN")
+        if not env["token"]:
             try:
-                token_file = os.path.join(os.path.expanduser('~'), '.vault-token')
-                with open(token_file, 'r') as f:
-                    env['token'] = f.read()
-                if env['token'] == '':
-                    raise VaultError('{file} is empty'.format(file=token_file))
+                token_file = os.path.join(os.path.expanduser("~"), ".vault-token")
+                with open(token_file, "r") as f:
+                    env["token"] = f.read()
+                if env["token"] == "":
+                    raise VaultError("{file} is empty".format(file=token_file))
             except IOError:
                 VaultError("Cannot read file {file}".format(file=token_file))
     # DIFFERENT LOGIN METHOD BASED ON AUTHENTICATION TYPE
-    if auth_type == 'token':
-        client.token = env['token']
-    elif auth_type == 'ldap':
-        client.auth.ldap.login(
-            username=os.getenv('VAULT_USERNAME'),
-            password=os.getenv('VAULT_PASSWORD')
-        )
-    elif auth_type == 'userpass':
-        client.auth_userpass(
-            username=os.getenv('VAULT_USERNAME'),
-            password=os.getenv('VAULT_PASSWORD')
-        )
-    elif auth_type == 'approle':
-        client.auth_approle(
-            os.getenv('VAULT_ROLE_ID'),
-            secret_id=os.getenv('VAULT_SECRET_ID')
-        )
-    elif auth_type == 'github':
-        client.auth.github.login(token=env['token'])
+    if auth_type == "token":
+        client.token = env["token"]
+    elif auth_type == "ldap":
+        client.auth.ldap.login(username=os.getenv("VAULT_USERNAME"), password=os.getenv("VAULT_PASSWORD"))
+    elif auth_type == "userpass":
+        client.auth_userpass(username=os.getenv("VAULT_USERNAME"), password=os.getenv("VAULT_PASSWORD"))
+    elif auth_type == "approle":
+        client.auth_approle(os.getenv("VAULT_ROLE_ID"), secret_id=os.getenv("VAULT_SECRET_ID"))
+    elif auth_type == "github":
+        client.auth.github.login(token=env["token"])
     else:
         raise "Authentication type '{auth}' not supported".format(auth=auth_type)
 
@@ -148,6 +139,7 @@ class VaultSecret(Base64Ref):
     """
     Hashicorp Vault support for KV Secret Engine
     """
+
     def __init__(self, data, vault_params, **kwargs):
         """
         Set vault parameter and encoding of data
@@ -155,7 +147,7 @@ class VaultSecret(Base64Ref):
         self.data = data
         self.vault_params = vault_params
         super().__init__(self.data, **kwargs)
-        self.type_name = 'vaultkv'
+        self.type_name = "vaultkv"
 
     @classmethod
     def from_params(cls, data, ref_params):
@@ -164,15 +156,15 @@ class VaultSecret(Base64Ref):
         parameters will be grabbed from the inventory via target_name
         """
         try:
-            target_name = ref_params.kwargs['target_name']
+            target_name = ref_params.kwargs["target_name"]
             if target_name is None:
-                raise ValueError('target_name not set')
+                raise ValueError("target_name not set")
 
-            target_inv = cached.inv['nodes'].get(target_name, None)
+            target_inv = cached.inv["nodes"].get(target_name, None)
             if target_inv is None:
-                raise ValueError('target_inv not set')
+                raise ValueError("target_inv not set")
 
-            ref_params.kwargs['vault_params'] = target_inv['parameters']['kapitan']['secrets']['vaultkv']
+            ref_params.kwargs["vault_params"] = target_inv["parameters"]["kapitan"]["secrets"]["vaultkv"]
             return cls(data, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create VaultSecret: vaultkv parameters missing")
@@ -202,42 +194,45 @@ class VaultSecret(Base64Ref):
         try:
             client = vault_obj(self.vault_params)
             # token will comprise of two parts path_in_vault:key
-            data = self.data.decode('utf-8').rstrip().split(':')
-            return_data = ''
-            if self.vault_params.get('engine') == 'kv':
-                response = client.secrets.kv.v1.read_secret(path=data[0],
-                                                            mount_point=self.vault_params.get('mount', 'secret'))
-                return_data = response['data'][data[1]]
+            data = self.data.decode("utf-8").rstrip().split(":")
+            return_data = ""
+            if self.vault_params.get("engine") == "kv":
+                response = client.secrets.kv.v1.read_secret(
+                    path=data[0], mount_point=self.vault_params.get("mount", "secret")
+                )
+                return_data = response["data"][data[1]]
             else:
-                response = client.secrets.kv.v2.read_secret_version(path=data[0],
-                                                                    mount_point=self.vault_params.get('mount', 'secret'))
-                return_data = response['data']['data'][data[1]]
+                response = client.secrets.kv.v2.read_secret_version(
+                    path=data[0], mount_point=self.vault_params.get("mount", "secret")
+                )
+                return_data = response["data"]["data"][data[1]]
             client.adapter.close()
         except Forbidden:
             VaultError(
-                'Permission Denied. '+
-                'make sure the token is authorised to access {path} on Vault'.format( path=data[0])
+                "Permission Denied. "
+                + "make sure the token is authorised to access {path} on Vault".format(path=data[0])
             )
         except InvalidPath:
-            VaultError(
-                '{path} does not exist on Vault secret'.format(path=data[0])
-            )
+            VaultError("{path} does not exist on Vault secret".format(path=data[0]))
 
-        if return_data is '':
-            VaultError(
-                "'{key}' doesn't exist on '{path}'".format(key=data[1], path=data[0])
-            )
+        if return_data is "":
+            VaultError("'{key}' doesn't exist on '{path}'".format(key=data[1], path=data[0]))
         return return_data
 
     def dump(self):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding,
-                "type": self.type_name, "vault_params": self.vault_params}
+        return {
+            "data": self.data,
+            "encoding": self.encoding,
+            "type": self.type_name,
+            "vault_params": self.vault_params,
+        }
+
 
 class VaultBackend(Base64RefBackend):
     def __init__(self, path, ref_type=VaultSecret):
         "init VaultBackend ref backend type"
         super().__init__(path, ref_type)
-        self.type_name = 'vaultkv'
+        self.type_name = "vaultkv"

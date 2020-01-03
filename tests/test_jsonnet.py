@@ -20,20 +20,26 @@ import json
 import os
 import unittest
 
-from kapitan.resources import (gzip_b64, jsonschema_validate, yaml_dump,
-                               yaml_dump_stream, yaml_load, yaml_load_stream)
+from kapitan.resources import (
+    gzip_b64,
+    jsonschema_validate,
+    yaml_dump,
+    yaml_dump_stream,
+    yaml_load,
+    yaml_load_stream,
+)
 from kapitan.utils import prune_empty, sha256_string
 
 
 class JsonnetNativeFuncsTest(unittest.TestCase):
     def test_yaml_dump(self):
         """dump json string to yaml"""
-        yaml = yaml_dump("{\"key\":\"value\"}")
+        yaml = yaml_dump('{"key":"value"}')
         self.assertEqual(yaml, "key: value\n")
 
     def test_yaml_dump_stream(self):
         """dump json string to yaml"""
-        yaml = yaml_dump_stream("[{\"key\":\"value\"},{\"key\":\"value\"}]")
+        yaml = yaml_dump_stream('[{"key":"value"},{"key":"value"}]')
         self.assertEqual(yaml, "key: value\n---\nkey: value\n")
 
     def test_yaml_load(self):
@@ -76,12 +82,12 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         """validate valid obj with jsonschema"""
         dictionary = {"msg": "hello, world!", "array": [1, 2]}
         schema = {
-                    "type": "object",
-                    "properties": {
-                        "msg": {"type": "string"},
-                        "array": {"type": "array", "contains": {"type": "number"}},
-                        }
-                    }
+            "type": "object",
+            "properties": {
+                "msg": {"type": "string"},
+                "array": {"type": "array", "contains": {"type": "number"}},
+            },
+        }
         validation = jsonschema_validate(json.dumps(dictionary), json.dumps(schema))
 
         self.assertTrue(validation["valid"])
@@ -91,12 +97,12 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         """validate invalid obj with jsonschema"""
         dictionary = {"msg": "hello, world!", "array": ["a", "b", "c"]}
         schema = {
-                    "type": "object",
-                    "properties": {
-                        "msg": {"type": "string"},
-                        "array": {"type": "array", "contains": {"type": "number"}},
-                        }
-                    }
+            "type": "object",
+            "properties": {
+                "msg": {"type": "string"},
+                "array": {"type": "array", "contains": {"type": "number"}},
+            },
+        }
         validation = jsonschema_validate(json.dumps(dictionary), json.dumps(schema))
 
         self.assertFalse(validation["valid"])
