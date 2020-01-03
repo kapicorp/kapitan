@@ -12,7 +12,7 @@ The following tree shows what this directory looks like (only showing tree level
 ├── inventory
 ├── lib
 ├── scripts
-├── secrets
+├── refs
 └── templates
 ```
 
@@ -131,7 +131,7 @@ local p = inventory.parameters;
 }
 ```
 
-The first two lines import libjsonnet files under `lib` folder: this is the folder that contains helper files used inside templates. For example, `kapitan.libjsonnet` allows you to access inventory values inside jsonnet templates, and `kube.libjsonnet` defines functions to generate popular kubernetes manifests. 
+The first two lines import libjsonnet files under `lib` folder: this is the folder that contains helper files used inside templates. For example, `kapitan.libjsonnet` allows you to access inventory values inside jsonnet templates, and `kube.libjsonnet` defines functions to generate popular kubernetes manifests.
 
 The actual object defined in `components/namespace/main.jsonnet` looks like this:
 
@@ -212,6 +212,6 @@ metadata:
 type: Opaque
 ```
 
-`MYSQL_ROOT_PASSWORD` refers to the secret stored in `secrets/targets/minikube-mysql/mysql/password` and so on.
+`MYSQL_ROOT_PASSWORD` refers to the secret stored in `refs/targets/minikube-mysql/mysql/password` and so on.
 
-You may reveal the secrets by running `kapitan secrets --reveal -f mysql_secret.yml` and use the manifest by piping the output to kubectl!
+You may reveal the secrets by running `kapitan refs --reveal -f mysql_secret.yml` and use the manifest by piping the output to kubectl!

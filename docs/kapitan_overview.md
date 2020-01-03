@@ -31,7 +31,7 @@ The bare minimum structure that makes use of kapitan features may look as follow
 │       ├── dev.yml
 │       ├── staging.yml
 │       └── prod.yml
-├── secrets
+├── refs
 │   ├── targets
 │   │   ├── prod
 │   │   │   └── password
@@ -43,11 +43,11 @@ The bare minimum structure that makes use of kapitan features may look as follow
 - `templates`: stores Jinja2 and Kadet templates
 - `inventory/targets`: stores target files
 - `inventory/classes`: stores inventory values to be inherited by targets
-- `secrets`: stores secrets referenced inside the inventory
+- `refs`: stores secrets referenced inside the inventory
 
 #### Example: kubernetes deployment
 
-Refer to the structure below for more production-like uses of kapitan for kubernetes deployment: 
+Refer to the structure below for more production-like uses of kapitan for kubernetes deployment:
 
 ```
 .
@@ -79,7 +79,7 @@ Refer to the structure below for more production-like uses of kapitan for kubern
 │       ├── dev-cluster1-elasticsearch.yml
 │       ├── prod-cluster1-elasticsearch.yml
 │       └── prod-cluster2-frontend.yml
-├── secrets
+├── refs
 │   ├── targets
 │   │   ├── prod-cluster1-elasticsearch
 │   │   │   └── password

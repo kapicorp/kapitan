@@ -23,7 +23,6 @@ from pprint import pformat
 
 from kapitan.errors import KapitanError
 from kapitan.utils import list_all_paths
-
 from yamllint import linter
 from yamllint.config import YamlLintConfig
 
@@ -72,7 +71,7 @@ def start_lint(
         skip_yamllint (bool): whether to skip checking yaml files for lint problems
         inventory_path (string): path to your inventory/ folder
         search_secrets (bool): whether to search for secret related warnings or not
-        secrets_path (string): path to your secrets/ folder
+        secrets_path (string): path to your refs/ folder
         compiled_path (string): path to your compiled/ folder
     Yields:
         checks_sum (int): the number of lint warnings found
@@ -110,12 +109,12 @@ def start_lint(
 
 
 def lint_orphan_secrets(compiled_path, secrets_path):
-    """ Checks your secrets/ folder for unused secrets files by:
+    """ Checks your refs/ folder for unused secrets files by:
         - iterating the secrets_path/ dir and extracting all secrets names from the file paths
         - does a text search over the entire compiled_path/ to find usages of those secrets
     Args:
         compiled_path (string): path to your compiled/ folder
-        secrets_path (string): path to your secrets/ folder
+        secrets_path (string): path to your refs/ folder
     Yields:
         checks_sum (int): the number of orphan secrets found
     """

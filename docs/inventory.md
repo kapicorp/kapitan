@@ -69,7 +69,7 @@ parameters:
     image: mysql:latest
     users:
       root:
-        # If 'secrets/targets/${target_name}/mysql/password' doesn't exist, it will gen a random b64-encoded password
+        # If 'refs/targets/${target_name}/mysql/password' doesn't exist, it will gen a random b64-encoded password
         password: ?{gpg:targets/${target_name}/mysql/password||randomstr|base64}
         # password: ?{gkms:targets/${target_name}/mysql/password||randomstr|base64}
         # password: ?{awskms:targets/${target_name}/mysql/password||randomstr|base64}
@@ -236,7 +236,7 @@ parameters:
     address: https://localhost:8200
 ```
 
-Use `kapitan lint` to checkup on your inventory/secrets.
+Use `kapitan lint` to checkup on your inventory or refs.
 
 ### kapitan searchvar
 
