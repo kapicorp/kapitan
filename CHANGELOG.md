@@ -1,4 +1,4 @@
-## 0.26.1-rc.0:
+## 0.26.1-rc.1:
 - Fix issue #434 Output as a string does not interpolate secrets (#438)
 - Upgrade to Cloud SDK version 274.0.0 (#441)
 - Fix issue #445: Explicitly create directories for all outputted CompiledFile objects. (#446)
