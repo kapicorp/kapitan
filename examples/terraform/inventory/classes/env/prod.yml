@@ -8,6 +8,7 @@ parameters:
 
   logging:
     logging_bucket_name: bucket-for-logs-archive
+    logging_storage_prefix: example
 
   resources:
     kms:

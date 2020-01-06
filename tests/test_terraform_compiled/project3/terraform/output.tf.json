@@ -2,7 +2,7 @@
   "data": {
     "template_file": {
       "readme": {
-        "template": "# project3\n|   |   |\n| - | - |\n| **region** | europe-west2 |\n| **zone**   | europe-west2-a |\n| **url**         | https://console.cloud.google.com/home/dashboard?project=project3 |\n\nResources managed by terraform in this project:\n\n  * container\n\n\n## CONTAINER\n  * cluster2\n    * endpoint: ${google_container_cluster.cluster2.endpoint}\n    * setup command: `gcloud container clusters get-credentials cluster2 --zone europe-west2-a --project project3`\n\n"
+        "template": "# project3\n|   |   |\n| - | - |\n| **region** | europe-west2 |\n| **zone**   | europe-west2-a |\n| **url**         | https://console.cloud.google.com/home/dashboard?project=project3 |\n\nResources managed by terraform in this project:\n\n  * container\n  * iam\n  * pubsub\n\n\n## CONTAINER\n  * cluster2\n    * endpoint: ${google_container_cluster.cluster2.endpoint}\n    * setup command: `gcloud container clusters get-credentials cluster2 --zone europe-west2-a --project project3`\n\n"
       }
     }
   },

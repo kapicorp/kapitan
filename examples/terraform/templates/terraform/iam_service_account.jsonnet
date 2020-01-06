@@ -8,9 +8,9 @@ local p = inv.parameters;
     # Generate resouce name with valid characters
     # Receive:
     #   role: roles/owner
-    #   member: "group:user@google.com"
+    #   member: "group:user@domain.com"
     # Return
-    #   owner_user_googlecom
+    #   owner_user_domaincom
     assert std.type(role) == "string";
     assert std.type(member) == "string";
     local role_clean = std.strReplace(std.split(role, "/")[1], ".", "");

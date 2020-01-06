@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 
 set -e           # If a command fails, the whole script exit
 set -u           # Treat unset variables as an error, and immediately exit.
@@ -10,4 +11,5 @@ source "${DIR}"/common.sh
 ########################################################################################
 # MAIN
 
-"${TERRAFORM}" "$@"
+mkdir -p "$OUTPUT_DIR"
+"${TERRAFORM}" output README > "${OUTPUT_DIR}"/README.md
