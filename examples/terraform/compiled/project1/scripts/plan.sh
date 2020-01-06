@@ -10,4 +10,5 @@ source "${DIR}"/common.sh
 ########################################################################################
 # MAIN
 
-"${TERRAFORM}" "$@"
+check_tf_initialized
+"${TERRAFORM}" plan -lock=false "$@"
