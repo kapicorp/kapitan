@@ -104,6 +104,7 @@ class CompilingFile(object):
         """write data into file"""
         reveal = self.kwargs.get("reveal", False)
         target_name = self.kwargs.get("target_name", None)
+
         if reveal:
             self.fp.write(self.revealer.reveal_raw(data))
         else:
@@ -148,6 +149,10 @@ class CompiledFile(object):
 
     def __enter__(self):
         mode = self.kwargs.get("mode", "r")
+
+        # make sure directory for file exists
+        os.makedirs(os.path.dirname(self.name), exist_ok=True)
+
         self.fp = open(self.name, mode)
         return CompilingFile(self, self.fp, self.ref_controller, **self.kwargs)
 
