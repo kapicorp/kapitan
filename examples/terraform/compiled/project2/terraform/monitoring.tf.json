@@ -1,0 +1,61 @@
+{
+  "resource": {
+    "google_monitoring_alert_policy": {
+      "instance_uptime": {
+        "combiner": "OR",
+        "conditions": [
+          {
+            "condition_threshold": {
+              "aggregations": [
+                {
+                  "alignment_period": "60s",
+                  "per_series_aligner": "ALIGN_RATE"
+                }
+              ],
+              "comparison": "COMPARISON_LT",
+              "duration": "180s",
+              "filter": "metric.type=\"compute.googleapis.com/instance/uptime\" resource.type=\"gce_instance\"",
+              "threshold_value": 0.9,
+              "trigger": {
+                "count": 1
+              }
+            },
+            "display_name": "Uptime < 900ms/s"
+          }
+        ],
+        "depends_on": [
+          "google_project_service.enable_stackdriver_service"
+        ],
+        "display_name": "Instance Uptime Alert",
+        "documentation": {
+          "content": "Alert whenever an instance's uptime falls under 900ms/s"
+        },
+        "notification_channels": [
+          "${google_monitoring_notification_channel.some_email.name}"
+        ],
+        "project": "project2"
+      }
+    },
+    "google_monitoring_notification_channel": {
+      "some_email": {
+        "depends_on": [
+          "google_project_service.enable_stackdriver_service"
+        ],
+        "description": "Notify via email",
+        "display_name": "someemail@domain.com",
+        "enabled": true,
+        "labels": {
+          "email_address": "someemail@domain.com"
+        },
+        "project": "project2",
+        "type": "email"
+      }
+    }
+  },
+  "variable": {
+    "pagerduty_integration_key": {
+      "default": "",
+      "type": "string"
+    }
+  }
+}

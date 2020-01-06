@@ -3,7 +3,6 @@
 ########################################
 classes:
   - type.terraform
-  - provider.gcp
 
 ########################################
 # override variables defined in any of

@@ -17,10 +17,15 @@ parameters:
   # List of allowed values for different resources
   # These values are used in different assert methods in the templates
   valid_values:
-
     # Updated list below with:
     # gcloud compute zones list
     zones:
       - europe-west2-a
       - europe-west2-b
       - europe-west2-c
+
+  org_id: 123456789012 # some valid organization ID
+
+  kapitan:
+    labels:
+      env: ${env}

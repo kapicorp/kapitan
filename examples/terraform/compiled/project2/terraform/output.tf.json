@@ -2,7 +2,7 @@
   "data": {
     "template_file": {
       "readme": {
-        "template": "# project2\n|   |   |\n| - | - |\n| **region** | europe-west2 |\n| **zone**   | europe-west2-a |\n| **url**         | https://console.cloud.google.com/home/dashboard?project=project2 |\n\nResources managed by terraform in this project:\n\n  * container\n\n\n## CONTAINER\n  * cluster1\n    * endpoint: ${google_container_cluster.cluster1.endpoint}\n    * setup command: `gcloud container clusters get-credentials cluster1 --zone europe-west2-a --project project2`\n  * cluster2\n    * endpoint: ${google_container_cluster.cluster2.endpoint}\n    * setup command: `gcloud container clusters get-credentials cluster2 --zone europe-west2-a --project project2`\n\n"
+        "template": "# project2\n|   |   |\n| - | - |\n| **region** | europe-west2 |\n| **zone**   | europe-west2-a |\n| **url**         | https://console.cloud.google.com/home/dashboard?project=project2 |\n\nResources managed by terraform in this project:\n\n  * cloudbuild\n  * container\n  * kms\n  * logging\n  * monitoring\n  * storage\n\n\n## CONTAINER\n  * cluster1\n    * endpoint: ${google_container_cluster.cluster1.endpoint}\n    * setup command: `gcloud container clusters get-credentials cluster1 --zone europe-west2-a --project project2`\n  * cluster2\n    * endpoint: ${google_container_cluster.cluster2.endpoint}\n    * setup command: `gcloud container clusters get-credentials cluster2 --zone europe-west2-a --project project2`\n\n"
       }
     }
   },

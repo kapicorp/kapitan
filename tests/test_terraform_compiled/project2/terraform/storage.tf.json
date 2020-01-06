@@ -1,0 +1,52 @@
+{
+  "data": {
+    "google_iam_policy": {}
+  },
+  "resource": {
+    "google_storage_bucket": {
+      "bucket-for-logs-archive": {
+        "depends_on": [
+          "google_project.project2"
+        ],
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "lifecycle_rule": [
+          {
+            "action": [
+              {
+                "type": "Delete"
+              }
+            ],
+            "condition": [
+              {
+                "age": 365,
+                "with_state": "LIVE"
+              }
+            ]
+          }
+        ],
+        "location": "europe-west2",
+        "name": "bucket-for-logs-archive",
+        "retention_policy": {
+          "is_locked": true,
+          "retention_period": 31536000
+        },
+        "storage_class": "REGIONAL",
+        "versioning": {
+          "enabled": false
+        }
+      }
+    },
+    "google_storage_bucket_acl": {
+      "bucket-for-logs-archive": {
+        "bucket": "bucket-for-logs-archive",
+        "depends_on": [
+          "google_storage_bucket.bucket-for-logs-archive"
+        ],
+        "predefined_acl": "projectPrivate"
+      }
+    },
+    "google_storage_bucket_iam_policy": {}
+  }
+}

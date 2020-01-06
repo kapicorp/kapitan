@@ -1,0 +1,26 @@
+{
+  "resource": {
+    "google_cloudbuild_trigger": {
+      "Some_Repo": {
+        "depends_on": [
+          "google_project_service.enable_cloudbuild_service"
+        ],
+        "description": "Some Repo",
+        "filename": "repo_folder/cloudbuild.yaml",
+        "trigger_template": {
+          "branch_name": "^master|^releases/.*|^test/.*$",
+          "repo_name": "some-repo"
+        }
+      }
+    },
+    "google_project_service": {
+      "enable_cloudbuild_service": {
+        "depends_on": [
+          "google_project.project2"
+        ],
+        "disable_on_destroy": true,
+        "service": "cloudbuild.googleapis.com"
+      }
+    }
+  }
+}
