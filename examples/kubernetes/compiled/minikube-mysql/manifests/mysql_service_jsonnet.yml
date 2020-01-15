@@ -1,14 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  annotations: {}
   labels:
     name: example-mysql-jsonnet
   name: example-mysql-jsonnet
   namespace: minikube-mysql
 spec:
   clusterIP: None
-  loadBalancerSourceRanges: []
   ports:
     - name: mysql
       port: 3306

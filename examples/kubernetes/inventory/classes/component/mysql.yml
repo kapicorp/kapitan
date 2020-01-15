@@ -3,6 +3,7 @@ parameters:
     compile:
     - output_path: manifests
       input_type: jsonnet
+      prune: true
       input_paths:
         - components/mysql/main.jsonnet
       output_type: yaml
