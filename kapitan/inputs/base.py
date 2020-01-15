@@ -68,12 +68,14 @@ class InputType(object):
         target_name = ext_vars["target"]
         output_path = comp_obj["output_path"]
         output_type = comp_obj.get("output_type", self.default_output_type())
+        prune_input = comp_obj.get("prune", kwargs.get("prune", False))
 
         logger.debug("Compiling %s", input_path)
         try:
             _compile_path = os.path.join(self.compile_path, target_name, output_path)
             self.compile_file(
-                input_path, _compile_path, ext_vars, output=output_type, target_name=target_name, **kwargs
+                input_path, _compile_path, ext_vars,
+                output=output_type, target_name=target_name, prune_input=prune_input, **kwargs
             )
         except KapitanError as e:
             raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
