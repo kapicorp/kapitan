@@ -12,6 +12,7 @@ parameters:
     compile:
     - output_path: <output_path_in_target_dir>
       input_type: jinja | jsonnet | kadet | helm | copy
+      prune: <boolean> (Default: global --prune)
       input_paths:
         - path/to/input/dir/or/file
         - globbed/path/*/main.jsonnet
