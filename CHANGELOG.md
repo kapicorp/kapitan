@@ -1,3 +1,6 @@
+## 0.26.1-rc.2:
+- Enable prune, per compile target (#451)
+
 ## 0.26.1-rc.1:
 - Fix issue #434 Output as a string does not interpolate secrets (#438)
 - Upgrade to Cloud SDK version 274.0.0 (#441)
