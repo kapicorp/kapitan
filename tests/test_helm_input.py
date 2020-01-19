@@ -167,6 +167,25 @@ class HelmInputTest(unittest.TestCase):
                 property, "--configmap={}/{}".format(namespace, release_name + "-nginx-ingress-my-controller")
             )
 
+    def test_compile_with_refs(self):
+        temp = tempfile.mkdtemp()
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx-ingress", "--reveal"]
+        main()
+        controller_deployment_file = os.path.join(
+            temp, "compiled", "nginx-ingress", "nginx-ingress", "templates", "controller-deployment.yaml"
+        )
+        self.assertTrue(os.path.isfile(controller_deployment_file))
+        with open(controller_deployment_file, "r") as fp:
+            manifest = yaml.safe_load(fp.read())
+            args = next(
+                iter(
+                    c["args"]
+                    for c in manifest["spec"]["template"]["spec"]["containers"]
+                    if c["name"] == "nginx-ingress-my-controller"
+                )
+            )
+            self.assertIn("--election-id=super_secret_ID", args)
+
     def tearDown(self):
         os.chdir("../../")
         reset_cache()

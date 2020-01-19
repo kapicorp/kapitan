@@ -1,5 +1,10 @@
 parameters:
   kapitan:
+    secrets:
+      gpg:
+        recipients:
+          - name: example@kapitan.dev
+            fingerprint: D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C
     vars:
       target: nginx-ingress
       namespace: temp
@@ -11,5 +16,6 @@ parameters:
         helm_values:
           controller:
             name: my-controller
+            electionID: ?{gpg:targets/nginx-ingress/electionID||randomstr|base64}
             image:
               repository: custom_repo
