@@ -24,7 +24,7 @@ RUN chmod +x ./kapitan/inputs/helm/build.sh \
 # Build final image
 FROM python:3.7-buster
 
-ARG CLOUD_SDK_VERSION=274.0.0
+ARG CLOUD_SDK_VERSION=276.0.0
 
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
 ENV KAPP_URL=https://github.com/k14s/kapp/releases/download/v0.14.0/kapp-linux-amd64
@@ -43,6 +43,7 @@ RUN apt-get update \
         bash \
         bsdmainutils \
         build-essential \
+        net-tools \
         curl \
         docker.io \
         git \
