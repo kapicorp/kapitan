@@ -1,3 +1,12 @@
+## 0.26.1:
+- Enable prune, per compile target (#451)
+- Install net-tools in CI Image
+- Fix issue #434 Output as a string does not interpolate secrets (#438)
+- Upgrade to Cloud SDK version 274.0.0 (#441)
+- Fix issue #445: Explicitly create directories for all outputted CompiledFile objects. (#446)
+- Add key info for RefBackendError for easier debugging (#439)
+- Update python dependencies to latest versions (#447)
+
 ## 0.26.1-rc.2:
 - Enable prune, per compile target (#451)
 
