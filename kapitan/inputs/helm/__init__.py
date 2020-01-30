@@ -88,7 +88,7 @@ class Helm(InputType):
                     with CompiledFile(
                         item_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name
                     ) as fp:
-                        yml_obj = yaml.safe_load_all(f)
+                        yml_obj = list(yaml.safe_load_all(f))
                         fp.write_yaml(yml_obj)
                         logger.debug("Wrote file %s to %s", full_file_name, item_path)
 
