@@ -19,7 +19,7 @@ test:
 test_coverage:
 	@echo ----- Testing code coverage -----
 	coverage run --source=kapitan --omit="*reclass*" -m unittest discover
-	coverage report --fail-under=64 -m
+	coverage report --fail-under=65 -m
 
 .PHONY: test_formatting
 test_formatting:

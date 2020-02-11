@@ -1,14 +1,14 @@
 # /bin/terraform
-FROM hashicorp/terraform:0.12.12 AS terraform-binary
+FROM hashicorp/terraform:0.12.20 AS terraform-binary
 
 # /bin/jsonnet
 FROM bitnami/jsonnet:0.14.0 as jsonnet-binary
 
 # /bin/promtool
-FROM quay.io/prometheus/prometheus:v2.12.0 AS prometheus-binary
+FROM quay.io/prometheus/prometheus:v2.15.2 AS prometheus-binary
 
 # Build the Helm binding
-FROM golang:1.12-stretch AS helm-builder
+FROM golang:1.13-stretch AS helm-builder
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
@@ -27,8 +27,8 @@ FROM python:3.7-buster
 ARG CLOUD_SDK_VERSION=276.0.0
 
 ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
-ENV KAPP_URL=https://github.com/k14s/kapp/releases/download/v0.14.0/kapp-linux-amd64
-ENV KBLD_URL=https://github.com/k14s/kbld/releases/download/v0.11.0/kbld-linux-amd64
+ENV KAPP_URL=https://github.com/k14s/kapp/releases/download/v0.19.0/kapp-linux-amd64
+ENV KBLD_URL=https://github.com/k14s/kbld/releases/download/v0.13.0/kbld-linux-amd64
 ENV PATH="/opt/venv/bin:${PATH}"
 
 COPY --from=terraform-binary /bin/terraform /usr/bin/terraform
