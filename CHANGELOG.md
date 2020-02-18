@@ -1,3 +1,6 @@
+## 0.27.0:
+- Update all dependency versions
+
 ## 0.26.1:
 - Enable prune, per compile target (#451)
 - Install net-tools in CI Image
