@@ -1,20 +1,20 @@
 # kapitan dependencies
-jsonnet==0.14.0
-pyyaml>=5.2
-Jinja2>=2.10.3
+jsonnet==0.15.0
+pyyaml>=5.3
+Jinja2>=2.11.1
 jsonschema==3.2.0
 python-gnupg==0.4.5
-six>=1.13.0
+six>=1.14.0
 cryptography>=2.8
 google-api-python-client==1.7.11
-boto3>=1.10.46
+boto3>=1.12.1
 requests==2.22.0
 addict==2.2.1
 yamllint>=1.20.0
 cffi
 rfc3987==1.3.8
-GitPython==3.0.5
+GitPython==3.0.8
 hvac==0.9.6
-docker==4.1.0
+docker==4.2.0
 # Reclass dependencies
 pyparsing
