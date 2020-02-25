@@ -319,7 +319,9 @@ def load_target_inventory(inventory_path, targets):
 
     for target_name in targets_list:
         try:
-            target_obj = inv["nodes"][target_name]["parameters"]["kapitan"]
+            inv_target = inv["nodes"][target_name]
+            target_obj = inv_target["parameters"]["kapitan"]
+            target_obj["target_full_path"] = inv_target["__reclass__"]["node"].replace("./", "")
             valid_target_obj(target_obj)
             validate_matching_target_name(target_name, target_obj, inventory_path)
             logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
@@ -405,7 +407,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
         input_compiler.make_compile_dirs(target_name, output_path)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 
-    logger.info("Compiled %s (%.2fs)", target_name, time.time() - start)
+    logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
 
 
 @hashable_lru_cache
