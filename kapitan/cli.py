@@ -488,9 +488,8 @@ def main():
             check_version()
 
         ref_controller = RefController(args.refs_path)
-        # cache controller for use in reveal_maybe jinja2 filter
         cached.ref_controller_obj = ref_controller
-        cached.revealer_obj = Revealer(ref_controller)
+        cached.revealer_obj = Revealer(ref_controller, reveal=args.reveal, targets=args.targets)
 
         compile_targets(
             args.inventory_path,
@@ -499,10 +498,8 @@ def main():
             args.parallelism,
             args.targets,
             args.labels,
-            ref_controller,
             prune=(args.prune),
             indent=args.indent,
-            reveal=args.reveal,
             cache=args.cache,
             cache_paths=args.cache_paths,
             fetch_dependencies=args.fetch,

@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 class Jsonnet(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller):
-        super().__init__("jsonnet", compile_path, search_paths, ref_controller)
+    def __init__(self, compile_path, search_paths):
+        super().__init__("jsonnet", compile_path, search_paths)
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """
@@ -27,8 +27,6 @@ class Jsonnet(InputType):
         kwargs:
             output: default 'yaml', accepts 'json'
             prune: default False, accepts True
-            reveal: default False, set to reveal refs on compile
-            target_name: default None, set to current target being compiled
             indent: default 2
         """
 
@@ -45,8 +43,6 @@ class Jsonnet(InputType):
 
         output = kwargs.get("output", "yaml")
         prune = kwargs.get("prune_input", False)
-        reveal = kwargs.get("reveal", False)
-        target_name = kwargs.get("target_name", None)
         indent = kwargs.get("indent", 2)
 
         if prune:
@@ -65,36 +61,15 @@ class Jsonnet(InputType):
             # write each item to disk
             if output == "json":
                 file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
-                with CompiledFile(
-                    file_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
+                with CompiledFile(file_path, mode="w", indent=indent) as fp:
                     fp.write_json(item_value)
             elif output == "yaml":
                 file_path = os.path.join(compile_path, "%s.%s" % (item_key, "yml"))
-                with CompiledFile(
-                    file_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
+                with CompiledFile(file_path, mode="w", indent=indent) as fp:
                     fp.write_yaml(item_value)
             elif output == "plain":
                 file_path = os.path.join(compile_path, "%s" % item_key)
-                with CompiledFile(
-                    file_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
+                with CompiledFile(file_path, mode="w", indent=indent) as fp:
                     fp.write(item_value)
             else:
                 raise ValueError(

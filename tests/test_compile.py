@@ -16,14 +16,16 @@ import glob
 import shutil
 from kapitan.cli import main
 from kapitan.utils import directory_hash
-from kapitan.cached import reset_cache
+import kapitan.cached as cached
 from kapitan.targets import validate_matching_target_name
-from kapitan.resources import inventory_reclass
-from kapitan.errors import InventoryError
+from kapitan.resources import inventory_reclass, reveal_or_compile_refs
+from kapitan.errors import InventoryError, RefError
+from kapitan.refs.base import Revealer, RefController
 
 
 class CompileTestResourcesTestObjs(unittest.TestCase):
     def setUp(self):
+        cached.reset_cache()
         os.chdir(os.getcwd() + "/tests/test_resources/")
 
     def test_compile(self):
@@ -38,11 +40,12 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
 
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")
-        reset_cache()
+        cached.reset_cache()
 
 
 class CompileKubernetesTest(unittest.TestCase):
     def setUp(self):
+        cached.reset_cache()
         os.chdir(os.getcwd() + "/examples/kubernetes/")
 
     def test_compile(self):
@@ -86,13 +89,11 @@ class CompileKubernetesTest(unittest.TestCase):
 
     def test_compile_vars_target_missing(self):
         inventory_path = "inventory"
-        target_filename = "minikube-es"
-        target_obj = inventory_reclass(inventory_path)["nodes"][target_filename]["parameters"]["kapitan"]
-        # delete vars.target
-        del target_obj["vars"]["target"]
+        target_filename = "not-a-real-target"
+        inv = inventory_reclass(inventory_path)
 
         with self.assertRaises(InventoryError) as ie:
-            validate_matching_target_name(target_filename, target_obj, inventory_path)
+            validate_matching_target_name(target_filename, inv, inventory_path)
 
         error_message = (
             'Target missing: target "{}" is missing parameters.kapitan.vars.target\n'
@@ -123,13 +124,62 @@ class CompileKubernetesTest(unittest.TestCase):
         sys.argv = ["kapitan", "compile"]
         main()
 
+    def test_inventory_reveal_or_compile(self):
+        inventory_path = "inventory"
+        refs_path = "refs"
+
+        # Build inventory
+        ref_controller = RefController("refs")
+        cached.ref_controller_obj = ref_controller
+        cached.revealer_obj = Revealer(ref_controller, reveal=False)
+
+        inv = inventory_reclass(inventory_path)
+        self.assertEqual(
+            inv["nodes"]["minikube-mysql"]["parameters"]["mysql"]["users"]["root"]["password"],
+            "?{gpg:targets/minikube-mysql/mysql/password:ec3d54de}",
+        )
+
+    def test_inventory_reveal_or_compile_with_targets(self):
+        inventory_path = "inventory"
+        refs_path = "refs"
+        target_filename = "minikube-es"
+
+        # Build inventory
+        ref_controller = RefController(refs_path)
+        cached.ref_controller_obj = ref_controller
+        cached.revealer_obj = Revealer(ref_controller, reveal=False, targets=[target_filename])
+        inv = inventory_reclass(inventory_path)
+
+        self.assertEqual(
+            inv["nodes"]["minikube-mysql"]["parameters"]["mysql"]["users"]["root"]["password"],
+            "?{gpg:targets/minikube-mysql/mysql/password||randomstr|base64}",
+        )
+        self.assertEqual(
+            inv["nodes"][target_filename]["parameters"]["elasticsearch"]["replicas"], 2,
+        )
+
+    def test_inventory_reveal_or_compile_with_invalid_ref(self):
+        inventory_path = "inventory"
+        refs_path = "refs"
+
+        # Build inventory
+        ref_controller = RefController(refs_path)
+        cached.ref_controller_obj = ref_controller
+        cached.revealer_obj = Revealer(ref_controller, reveal=False)
+        inv = inventory_reclass(inventory_path)
+        inv["nodes"]["minikube-es"]["secret"] = "?{gkms:secret/value}"
+
+        # Try compiling refs...
+        self.assertRaises(RefError, reveal_or_compile_refs, inv)
+
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")
-        reset_cache()
+        cached.reset_cache()
 
 
 class CompileTerraformTest(unittest.TestCase):
     def setUp(self):
+        cached.reset_cache()
         os.chdir(os.getcwd() + "/examples/terraform/")
 
     def test_compile(self):
@@ -141,11 +191,12 @@ class CompileTerraformTest(unittest.TestCase):
 
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")
-        reset_cache()
+        cached.reset_cache()
 
 
 class PlainOutputTest(unittest.TestCase):
     def setUp(self):
+        cached.reset_cache()
         os.chdir(os.getcwd() + "/examples/docker/")
 
     def test_compile(self):
@@ -157,4 +208,4 @@ class PlainOutputTest(unittest.TestCase):
 
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")
-        reset_cache()
+        cached.reset_cache()

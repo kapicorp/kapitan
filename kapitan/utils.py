@@ -7,7 +7,6 @@
 
 from __future__ import print_function
 
-import collections
 import json
 import logging
 import math
@@ -15,6 +14,7 @@ import os
 import stat
 import sys
 from collections import Counter, defaultdict
+from collections.abc import MutableMapping
 from functools import lru_cache, wraps
 from hashlib import sha256
 
@@ -208,7 +208,7 @@ def flatten_dict(d, parent_key="", sep="."):
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
-        if isinstance(v, collections.MutableMapping):
+        if isinstance(v, MutableMapping):
             items.extend(flatten_dict(v, new_key, sep=sep).items())
         else:
             items.append((new_key, v))
