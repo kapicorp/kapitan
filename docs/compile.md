@@ -11,7 +11,7 @@ parameters:
   kapitan:
     compile:
     - output_path: <output_path_in_target_dir>
-      input_type: jinja | jsonnet | kadet | helm | copy
+      input_type: jinja2 | jsonnet | kadet | helm | copy
       prune: <boolean> (Default: global --prune)
       input_paths:
         - path/to/input/dir/or/file
@@ -23,14 +23,14 @@ parameters:
 
 Kapitan supports the following input template types:
 
-- [jinja](#jinja)
+- [jinja2](#jinja2)
 - [jsonnet](#jsonnet)
 - [kadet](#kadet) (alpha)
 - [helm](#helm) (alpha)
 - [copy](#copy)
 
 
-### jinja
+### jinja2
 
 This renders jinja2 templates, typically stored in `templates/` directory, such as README, scripts and config files. Refer to [jinja2 docs](http://jinja.palletsprojects.com/en/2.10.x/templates/) to understand how the template engine works.
 
