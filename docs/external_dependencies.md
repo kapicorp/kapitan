@@ -28,13 +28,13 @@ Use `--fetch` option to fetch the dependencies:
 $ kapitan compile --fetch
 ```
 
-This will download the dependencies and store them at their respective `output_path`. Dependencies whose `output_path` already exists will be skipped (except for cases where files are extracted from an archive using `unpack: True`).
+This will download the dependencies and store them at their respective `output_path`.
 
 ## Git type
 
 Git types can fetch external dependencies available via HTTP/HTTPS or SSH URLs. This is useful for fetching repositories or their sub-directories, as well as accessing them in specific commits and branches (refs).
 
-**Note**: git types require git binary on your system. 
+**Note**: git types require git binary on your system.
 
 ### Usage
 
@@ -90,7 +90,7 @@ Note that even if you are not using `subdir` parameter, you can and should speci
 
 ## HTTP type
 
-http[s] types can fetch external dependencies available at `http://` or `https://` URL. 
+http[s] types can fetch external dependencies available at `http://` or `https://` URL.
 
 ### Usage
 

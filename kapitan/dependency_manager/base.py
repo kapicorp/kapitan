@@ -29,7 +29,6 @@ def fetch_dependencies(target_objs, pool):
     """
     parses through the dependencies parameters in target_objs and fetches them
     all dependencies are first fetched into tmp dir, after which they are copied to their respective output_path.
-    dependencies whose output_path already exists are skipped
     """
     temp_dir = tempfile.mkdtemp()
     # there could be multiple dependency items per source_uri due to reclass inheritance or
@@ -52,11 +51,6 @@ def fetch_dependencies(target_objs, pool):
                         DEPENDENCY_OUTPUT_CONFIG["root_dir"], item["output_path"]
                     )
                 output_path = item["output_path"]
-                if os.path.exists(os.path.abspath(output_path)) and not item.get("unpack", False):
-                    # if unpack: True, then allow the user to specify the parent directory as output_path where the
-                    # files will be extracted to
-                    logger.info("Dependency {} : already exists. Ignoring".format(output_path))
-                    continue
 
                 if output_path in deps_output_paths[source_uri]:
                     # if the output_path is duplicated for the same source_uri
