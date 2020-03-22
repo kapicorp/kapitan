@@ -32,7 +32,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -40,17 +40,17 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/application.0284f74d.css">
+      <link rel="stylesheet" href="../assets/stylesheets/application.adb8469c.css">
       
       
     
     
-      <script src="../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
         <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono&display=fallback">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
         <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
       
     
@@ -77,7 +77,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#kubernetes-example" tabindex="1" class="md-skip">
+      <a href="#kubernetes-example" tabindex="0" class="md-skip">
         Skip to content
       </a>
     
@@ -86,7 +86,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href=".." title="Kapitan documentation" class="md-header-nav__button md-logo">
+        <a href=".." title="Kapitan documentation" aria-label="Kapitan documentation" class="md-header-nav__button md-logo">
           
             <i class="md-icon"></i>
           
@@ -117,7 +117,7 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <input type="text" class="md-search__input" aria-label="search" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
       <label class="md-icon md-search__icon" for="__search"></label>
       <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
         &#xE5CD;
@@ -169,7 +169,7 @@
         
       
       
-      <main class="md-main">
+      <main class="md-main" role="main">
         <div class="md-main__inner md-grid" data-md-component="container">
           
             
@@ -466,7 +466,7 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#directory-structure" title="Directory structure" class="md-nav__link">
+  <a href="#directory-structure" class="md-nav__link">
     Directory structure
   </a>
   
@@ -474,28 +474,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#inventory" title="inventory" class="md-nav__link">
+  <a href="#inventory" class="md-nav__link">
     inventory
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#components" title="components" class="md-nav__link">
+  <a href="#components" class="md-nav__link">
     components
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#templates-docs-scripts" title="templates, docs, scripts" class="md-nav__link">
+  <a href="#templates-docs-scripts" class="md-nav__link">
     templates, docs, scripts
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#secrets" title="secrets" class="md-nav__link">
+  <a href="#secrets" class="md-nav__link">
     secrets
   </a>
   
@@ -543,7 +543,7 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#directory-structure" title="Directory structure" class="md-nav__link">
+  <a href="#directory-structure" class="md-nav__link">
     Directory structure
   </a>
   
@@ -551,28 +551,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#inventory" title="inventory" class="md-nav__link">
+  <a href="#inventory" class="md-nav__link">
     inventory
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#components" title="components" class="md-nav__link">
+  <a href="#components" class="md-nav__link">
     components
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#templates-docs-scripts" title="templates, docs, scripts" class="md-nav__link">
+  <a href="#templates-docs-scripts" class="md-nav__link">
     templates, docs, scripts
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#secrets" title="secrets" class="md-nav__link">
+  <a href="#secrets" class="md-nav__link">
     secrets
   </a>
   
@@ -606,19 +606,19 @@
 <p>Here, we walk through how kapitan could be used to help create kubernetes manifests, whose values are customized for each target according to the inventory structure. The example folder can be found in our repository on Github at <a href="https://github.com/deepmind/kapitan/tree/master/examples/kubernetes">https://github.com/deepmind/kapitan/tree/master/examples/kubernetes</a>.</p>
 <h2 id="directory-structure">Directory structure</h2>
 <p>The following tree shows what this directory looks like (only showing tree level 1):</p>
-<div class="highlight"><pre><span></span>├── components
+<div class="highlight"><pre><span></span><code>├── components
 ├── docs
 ├── inventory
 ├── lib
 ├── scripts
-├── secrets
+├── refs
 └── templates
-</pre></div>
+</code></pre></div>
 
 <p>We will describe the role of each folder in the following sections.</p>
 <h3 id="inventory">inventory</h3>
 <p>This folder contains the inventory values used to render the templates for each target. The structure of this folder is as follows:</p>
-<div class="highlight"><pre><span></span>.
+<div class="highlight"><pre><span></span><code>.
 ├── classes
 │   ├── cluster
 │   │   ├── common.yml
@@ -633,7 +633,7 @@
     ├── minikube-es.yml
     ├── minikube-mysql.yml
     └── minikube-nginx.yml
-</pre></div>
+</code></pre></div>
 
 <p>The required sub-folder is <code>targets</code>: during compile, kapitan searches for the yaml files under <code>targets</code> in order to identify the targets. In this example, there are three targets:</p>
 <ul>
@@ -644,7 +644,7 @@
 <p>Therefore, when you run <code>kapitan compile</code>, under the <code>compiled</code> folder that kapitan generates, you will see three folders named after these targets.</p>
 <p><code>classes</code> is a folder that contains yaml files used as the "base class" in the hierarchical inventory database. The values defined here are inherited by the target files. For more explanation on how this works, look at the <a href="../inventory/">inventory documentation</a>. Notice how the classes are nicely divided up into components and clusters, such as nginx and mysql, in order to clearly define what components each target should contain and to make the classes reusable.</p>
 <p>For example, take a look at <code>targets/nginx.yml</code>:</p>
-<div class="highlight"><pre><span></span><span class="nt">classes</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">common</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">cluster.minikube</span>
   <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">component.namespace</span>
@@ -653,7 +653,7 @@
 <span class="nt">parameters</span><span class="p">:</span>
   <span class="nt">target_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-nginx</span>
   <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
-</pre></div>
+</code></pre></div>
 
 <p>This target inherits values from four files under <code>classes</code> folder:</p>
 <ul>
@@ -665,7 +665,7 @@
 <p><em>Note: that some of these classes themselves may inherit from other classes.</em></p>
 <p>And the way classes are defined makes it easy to identify what components and clusters this target should contain and belong to!</p>
 <p>Let's take a close look now at <code>component/namespace.yml</code>:</p>
-<div class="highlight"><pre><span></span><span class="nt">parameters</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
   <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
   <span class="nt">kapitan</span><span class="p">:</span>
     <span class="nt">compile</span><span class="p">:</span>
@@ -674,13 +674,13 @@
       <span class="nt">output_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yaml</span>
       <span class="nt">input_paths</span><span class="p">:</span>
         <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">components/namespace/main.jsonnet</span>
-</pre></div>
+</code></pre></div>
 
 <p>As we see, this file declares a <code>kapitan.compile</code> item whose input path (i.e. the template file) is <code>components/namespace/main.jsonnet</code> which, when rendered, will generate yaml file(s) under <code>compiled/minikube-nginx/pre-deploy</code>.</p>
 <p>Don't confuse the <code>components</code> folder with <code>inventory/classes/components</code> folder: the former contains the actual templates, while the latter contains inventory classes.</p>
 <h3 id="components">components</h3>
 <p>This folder contains the template files as discussed above, typically jsonnet and kadet files. The tree of this directory looks as follows:</p>
-<div class="highlight"><pre><span></span>.
+<div class="highlight"><pre><span></span><code>.
 ├── elasticsearch
 │   ├── elasticsearch.container.jsonnet
 │   ├── elasticsearch.statefulset.jsonnet
@@ -694,11 +694,11 @@
 │   └── main.jsonnet
 └── nginx
     └── __init__.py
-</pre></div>
+</code></pre></div>
 
 <p>Notice how the directory structure corresponds to that of <code>inventory/classes/components</code> in order to make it easy to identify which templates are used for which components.</p>
 <p>As mentioned above, we know that the target <strong>minikube-nginx</strong> inherits from <code>component.namespace</code>. Let's take a look at <code>components/namespace/main.jsonnet</code>:</p>
-<div class="highlight"><pre><span></span>local kube = import &quot;lib/kube.libjsonnet&quot;;
+<div class="highlight"><pre><span></span><code>local kube = import &quot;lib/kube.libjsonnet&quot;;
 local kap = import &quot;lib/kapitan.libjsonnet&quot;;
 local inventory = kap.inventory();
 local p = inventory.parameters;
@@ -707,18 +707,18 @@ local p = inventory.parameters;
     &quot;00_namespace&quot;: kube.Namespace(p.namespace),
     &quot;10_serviceaccount&quot;: kube.ServiceAccount(&quot;default&quot;)
 }
-</pre></div>
+</code></pre></div>
 
-<p>The first two lines import libjsonnet files under <code>lib</code> folder: this is the folder that contains helper files used inside templates. For example, <code>kapitan.libjsonnet</code> allows you to access inventory values inside jsonnet templates, and <code>kube.libjsonnet</code> defines functions to generate popular kubernetes manifests. </p>
+<p>The first two lines import libjsonnet files under <code>lib</code> folder: this is the folder that contains helper files used inside templates. For example, <code>kapitan.libjsonnet</code> allows you to access inventory values inside jsonnet templates, and <code>kube.libjsonnet</code> defines functions to generate popular kubernetes manifests.</p>
 <p>The actual object defined in <code>components/namespace/main.jsonnet</code> looks like this:</p>
-<div class="highlight"><pre><span></span>{
+<div class="highlight"><pre><span></span><code>{
     &quot;00_namespace&quot;: kube.Namespace(p.namespace),
     &quot;10_serviceaccount&quot;: kube.ServiceAccount(&quot;default&quot;)
 }
-</pre></div>
+</code></pre></div>
 
 <p>We have "00_namespace" and "10_serviceaccount" as the keys. These will become files under <code>compiled/minikube-nginx/pre-deploy</code>, since <code>pre-deploy</code> is the <code>input_paths</code> declared in the inventory. For instance, <code>00_namespace.yml</code> would look like this:</p>
-<div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">kind</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Namespace</span>
 <span class="nt">metadata</span><span class="p">:</span>
   <span class="nt">annotations</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
@@ -727,11 +727,11 @@ local p = inventory.parameters;
   <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-nginx</span>
   <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-nginx</span>
 <span class="nt">spec</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-</pre></div>
+</code></pre></div>
 
 <h3 id="templates-docs-scripts">templates, docs, scripts</h3>
 <p>These folders contain jinja2 template files. For example, <code>component.elasticsearch</code> contains:</p>
-<div class="highlight"><pre><span></span><span class="nt">kapitan</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><span class="nt">kapitan</span><span class="p">:</span>
   <span class="nt">compile</span><span class="p">:</span>
   <span class="c1"># other items abbreviated for clarity</span>
   <span class="p p-Indicator">-</span> <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">scripts</span>
@@ -742,13 +742,13 @@ local p = inventory.parameters;
     <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">jinja2</span>
     <span class="nt">input_paths</span><span class="p">:</span>
       <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">docs/elasticsearch/README.md</span>
-</pre></div>
+</code></pre></div>
 
 <p>Since <code>component.elasticsearch</code> is inherited by the target <strong>minikube-es</strong>, this generates files under <code>compiled/minikube-es/scripts</code> and <code>compiled/minikube-es/README.md</code>.</p>
 <h3 id="secrets">secrets</h3>
 <p>This folder contains secrets created manually by the user, or automatically by kapitan. Refer to <a href="../secrets/">secrets management</a> for how it works.</p>
 <p>In this example, the configuration, such as the recipients, is declared in <code>inventory/classes/common.yml</code>:</p>
-<div class="highlight"><pre><span></span><span class="nt">parameters</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
   <span class="nt">kapitan</span><span class="p">:</span>
     <span class="nt">vars</span><span class="p">:</span>
       <span class="nt">target</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
@@ -758,10 +758,10 @@ local p = inventory.parameters;
         <span class="nt">recipients</span><span class="p">:</span>
           <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">example@kapitan.dev</span>
             <span class="nt">fingerprint</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C</span>
-</pre></div>
+</code></pre></div>
 
 <p>The references to the secrets are declared in <code>inventory/classes/component/mysql</code>, which is inherited by the target <strong>minikube-mysql</strong>. After running <code>kapitan compile</code>, some of the generated manifests contain the references to secrets. For example, have a look at <code>compiled/minikube-mysql/manifests/mysql_secret.yml</code>:</p>
-<div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">data</span><span class="p">:</span>
   <span class="nt">MYSQL_ROOT_PASSWORD</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">?{gpg:targets/minikube-mysql/mysql/password:ec3d54de}</span>
   <span class="nt">MYSQL_ROOT_PASSWORD_SHA256</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">?{gpg:targets/minikube-mysql/mysql/password_sha256:122d2732}</span>
@@ -773,12 +773,13 @@ local p = inventory.parameters;
   <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">example-mysql</span>
   <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">minikube-mysql</span>
 <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Opaque</span>
-</pre></div>
+</code></pre></div>
 
-<p><code>MYSQL_ROOT_PASSWORD</code> refers to the secret stored in <code>secrets/targets/minikube-mysql/mysql/password</code> and so on.</p>
-<p>You may reveal the secrets by running <code>kapitan secrets --reveal -f mysql_secret.yml</code> and use the manifest by piping the output to kubectl!</p>
+<p><code>MYSQL_ROOT_PASSWORD</code> refers to the secret stored in <code>refs/targets/minikube-mysql/mysql/password</code> and so on.</p>
+<p>You may reveal the secrets by running <code>kapitan refs --reveal -f mysql_secret.yml</code> and use the manifest by piping the output to kubectl!</p>
                 
                   
+                
                 
               
               
@@ -820,9 +821,9 @@ local p = inventory.parameters;
       <div class="md-footer-copyright">
         
         powered by
-        <a href="https://www.mkdocs.org">MkDocs</a>
+        <a href="https://www.mkdocs.org" target="_blank" rel="noopener">MkDocs</a>
         and
-        <a href="https://squidfunk.github.io/mkdocs-material/">
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
           Material for MkDocs</a>
       </div>
       
@@ -832,9 +833,9 @@ local p = inventory.parameters;
       
     </div>
     
-      <script src="../assets/javascripts/application.245445c6.js"></script>
+      <script src="../assets/javascripts/application.c33a9706.js"></script>
       
-      <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:".."}})</script>
       
     
   </body>

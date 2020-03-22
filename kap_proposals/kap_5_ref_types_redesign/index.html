@@ -32,7 +32,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.0">
+      <meta name="generator" content="mkdocs-1.1, mkdocs-material-4.6.3">
     
     
       
@@ -40,17 +40,17 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/application.0284f74d.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/application.adb8469c.css">
       
       
     
     
-      <script src="../../assets/javascripts/modernizr.74668098.js"></script>
+      <script src="../../assets/javascripts/modernizr.86422ebf.js"></script>
     
     
       
         <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono&display=fallback">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
         <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
       
     
@@ -77,7 +77,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#ref-types-redesign" tabindex="1" class="md-skip">
+      <a href="#ref-types-redesign" tabindex="0" class="md-skip">
         Skip to content
       </a>
     
@@ -86,7 +86,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../.." title="Kapitan documentation" class="md-header-nav__button md-logo">
+        <a href="../.." title="Kapitan documentation" aria-label="Kapitan documentation" class="md-header-nav__button md-logo">
           
             <i class="md-icon"></i>
           
@@ -117,7 +117,7 @@
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <input type="text" class="md-search__input" aria-label="search" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
       <label class="md-icon md-search__icon" for="__search"></label>
       <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
         &#xE5CD;
@@ -169,7 +169,7 @@
         
       
       
-      <main class="md-main">
+      <main class="md-main" role="main">
         <div class="md-main__inner md-grid" data-md-component="container">
           
             
@@ -469,7 +469,7 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#proposal" title="Proposal" class="md-nav__link">
+  <a href="#proposal" class="md-nav__link">
     Proposal
   </a>
   
@@ -477,21 +477,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#plain-backend" title="plain backend" class="md-nav__link">
+  <a href="#plain-backend" class="md-nav__link">
     plain backend
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#base64-backend" title="base64 backend" class="md-nav__link">
+  <a href="#base64-backend" class="md-nav__link">
     base64 backend
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#refs-path" title="Refs path" class="md-nav__link">
+  <a href="#refs-path" class="md-nav__link">
     Refs path
   </a>
   
@@ -503,7 +503,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#background" title="Background" class="md-nav__link">
+  <a href="#background" class="md-nav__link">
     Background
   </a>
   
@@ -511,21 +511,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#kapitan-secrets" title="Kapitan Secrets" class="md-nav__link">
+  <a href="#kapitan-secrets" class="md-nav__link">
     Kapitan Secrets
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#kapitan-secrets-example" title="Kapitan Secrets example" class="md-nav__link">
+  <a href="#kapitan-secrets-example" class="md-nav__link">
     Kapitan Secrets example
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#secret-backend-comparison" title="Secret Backend Comparison" class="md-nav__link">
+  <a href="#secret-backend-comparison" class="md-nav__link">
     Secret Backend Comparison
   </a>
   
@@ -615,20 +615,20 @@ by removing the <code>ref</code> backend and introducting new backends:</p>
 <p>A new <code>plain</code> backend type is introduced and will compile into revealed state instead of a hashed tag.</p>
 <p>A new <code>base64</code> backend type will store a base64 encoded value as the backend suggests (replacing the old badly named <code>ref</code> backend).</p>
 <p>The command line for secrets will be instead:</p>
-<div class="highlight"><pre><span></span>$ kapitan refs --write gpg:my/secret1 ...
+<div class="highlight"><pre><span></span><code>$ kapitan refs --write gpg:my/secret1 ...
 $ kapitan refs --write base64:my/file ...
 $ kapitan refs --write plain:my/info ...
-</pre></div>
+</code></pre></div>
 
 <h3 id="plain-backend">plain backend</h3>
 <p>The <code>plain</code> backend type will allow referring to external state by updating refs programmatically (e.g. in your pipeline)</p>
 <p>For example, one can update the value of an environment variable and use <code>?{plain:my/user}</code> as a reference in a template:</p>
-<div class="highlight"><pre><span></span>$ <span class="nb">echo</span> <span class="nv">$USER</span> <span class="p">|</span> kapitan refs --write plain:my/user -f -
-</pre></div>
+<div class="highlight"><pre><span></span><code>$ <span class="nb">echo</span> <span class="nv">$USER</span> <span class="p">|</span> kapitan refs --write plain:my/user -f -
+</code></pre></div>
 
 <p>Or update a docker image value as ref <code>?{plain:images/dev/envoy}</code>:</p>
-<div class="highlight"><pre><span></span>$ <span class="nb">echo</span> <span class="s1">&#39;envoyproxy/envoy:v1.10.0&#39;</span> <span class="p">|</span> kapitan refs --write plain:images/dev/envoy -f -
-</pre></div>
+<div class="highlight"><pre><span></span><code>$ <span class="nb">echo</span> <span class="s1">&#39;envoyproxy/envoy:v1.10.0&#39;</span> <span class="p">|</span> kapitan refs --write plain:images/dev/envoy -f -
+</code></pre></div>
 
 <p>These references will be compiled into their values instead of hashed tags.</p>
 <h3 id="base64-backend">base64 backend</h3>
@@ -642,33 +642,33 @@ Except that this time, the name is representative of what is actually happening 
 <p>On compile, secret tags are updated into hashed tags which validate and instruct <code>Kapitan</code> how to reveal tags into decrypted or encoded information.</p>
 <h3 id="kapitan-secrets-example">Kapitan Secrets example</h3>
 <p>The following command creates a GPG encrypted secret with the contents of <em>file.txt</em> for recipient <code>ramaro@google.com</code> to read:</p>
-<div class="highlight"><pre><span></span>$ kapitan secrets --write gpg:my/secret1 -f file.txt --recipients ramaro@google.com
-</pre></div>
+<div class="highlight"><pre><span></span><code>$ kapitan secrets --write gpg:my/secret1 -f file.txt --recipients ramaro@google.com
+</code></pre></div>
 
 <p>This secret can be referred to in a jsonnet compoment:</p>
-<div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
     <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;app&quot;</span><span class="p">,</span>
     <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;test_app&quot;</span><span class="p">,</span>
     <span class="nt">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;user_one&quot;</span><span class="p">,</span>
     <span class="nt">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;?{gpg:my/secret1}&quot;</span>
 <span class="p">}</span>
-</pre></div>
+</code></pre></div>
 
 <p>When this compoment is compiled, it looks like (note the hashed tag):</p>
-<div class="highlight"><pre><span></span><span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">app</span>
+<div class="highlight"><pre><span></span><code><span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">app</span>
 <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">test_app</span>
 <span class="nt">username</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">user_one</span>
 <span class="nt">password</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">?{gpg:my/secret1:deadbeef}</span>
-</pre></div>
+</code></pre></div>
 
 <p>A user with the required permissions can reveal the compiled component:</p>
-<div class="highlight"><pre><span></span>$ kapitan secrets --reveal -f compiled/mytarget/manifests/component.yml
+<div class="highlight"><pre><span></span><code>$ kapitan secrets --reveal -f compiled/mytarget/manifests/component.yml
 
 type: app
 name: test_app
 username: user_one
 password: secret_content_of_file.txt
-</pre></div>
+</code></pre></div>
 
 <h3 id="secret-backend-comparison">Secret Backend Comparison</h3>
 <p>Kapitan today offers multiple secret backends:</p>
@@ -714,6 +714,7 @@ the need of setting up the encryption backends tooling (gpg, gcloud, boto, etc..
                 
                   
                 
+                
               
               
                 
@@ -733,9 +734,9 @@ the need of setting up the encryption backends tooling (gpg, gcloud, boto, etc..
       <div class="md-footer-copyright">
         
         powered by
-        <a href="https://www.mkdocs.org">MkDocs</a>
+        <a href="https://www.mkdocs.org" target="_blank" rel="noopener">MkDocs</a>
         and
-        <a href="https://squidfunk.github.io/mkdocs-material/">
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
           Material for MkDocs</a>
       </div>
       
@@ -745,9 +746,9 @@ the need of setting up the encryption backends tooling (gpg, gcloud, boto, etc..
       
     </div>
     
-      <script src="../../assets/javascripts/application.245445c6.js"></script>
+      <script src="../../assets/javascripts/application.c33a9706.js"></script>
       
-      <script>app.initialize({version:"1.0.4",url:{base:"../.."}})</script>
+      <script>app.initialize({version:"1.1",url:{base:"../.."}})</script>
       
     
   </body>
