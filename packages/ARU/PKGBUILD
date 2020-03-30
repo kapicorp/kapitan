@@ -1,0 +1,21 @@
+pkgname=kapitan
+pkgver=0.27.0
+pkgrel=1
+pkgdesc="Generic templated configuration management for Kubernetes, Terraform and other things"
+arch=('any')
+license=('Apache')
+url="https://kapitan.dev/"
+depends=('python' 'python-setuptools')
+provides=("kapitan")
+conflicts=("kapitan")
+source=("https://github.com/deepmind/kapitan/archive/v${pkgver}.tar.gz")
+md5sums=('3840e3501581c68a09055288ba17d9b9')
+build() {
+        cd $srcdir/kapitan-$pkgver
+        python setup.py build
+}
+package() {
+        cd $srcdir/kapitan-$pkgver
+        python setup.py install --root="${pkgdir}/" --optimize=1 --skip-build
+        install -Dm644 LICENSES/Apache-2.0.txt "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
