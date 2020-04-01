@@ -241,7 +241,7 @@ class Jinja2ExternalFilterTest(unittest.TestCase):
             context = {"inventory": inv}
             f.seek(0)
             actual_output = render_jinja2_file(
-                f.name, context, "./examples/kubernetes/lib/custom_jinja2_filter.py"
+                f.name, context, jinja2_filters="./examples/kubernetes/lib/custom_jinja2_filter.py"
             )
             expected_output = base64_encode(cluster_name)
             self.assertEqual(actual_output, expected_output)

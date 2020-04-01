@@ -1,0 +1,6 @@
+classes:
+  - common
+  - component.labels
+
+parameters:
+  target_name: labels

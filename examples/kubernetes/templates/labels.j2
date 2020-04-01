@@ -1,0 +1,5 @@
+{% macro common(component) -%}
+app.kubernetes.io/name: {{ component.name }}
+app.kubernetes.io/version: {{ component.version }}
+app.kubernetes.io/managed-by: {{ managed_by }}
+{%- endmacro %}

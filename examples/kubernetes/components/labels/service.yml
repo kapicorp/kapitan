@@ -1,0 +1,13 @@
+{% set params = inventory.parameters %}{% import 'templates/labels.j2' as labels with context  -%}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ params.postgres.name }}
+  namespace: {{ namespace }}
+  labels:
+    {{ labels.common(params.postgres) | indent(4)  }}
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+    name: postgres
