@@ -105,7 +105,7 @@ def sha256_string(string):
     return sha256(string.encode("UTF-8")).hexdigest()
 
 
-def render_jinja2_file(name, context, search_paths=None, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH):
+def render_jinja2_file(name, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH, search_paths=None):
     """Render jinja2 file name with context"""
     path, filename = os.path.split(name)
     search_paths = [path or "./"] + (search_paths or [])
@@ -121,7 +121,7 @@ def render_jinja2_file(name, context, search_paths=None, jinja2_filters=defaults
     return env.get_template(filename).render(context)
 
 
-def render_jinja2(path, context, search_paths=None, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH):
+def render_jinja2(path, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH, search_paths=None):
     """
     Render files in path with context
     Returns a dict where the is key is the filename (with subpath)
@@ -151,7 +151,7 @@ def render_jinja2(path, context, search_paths=None, jinja2_filters=defaults.DEFA
             try:
                 rendered[name] = {
                     "content": render_jinja2_file(
-                        render_path, context, search_paths, jinja2_filters=jinja2_filters
+                        render_path, context, jinja2_filters=jinja2_filters, search_paths=search_paths
                     ),
                     "mode": file_mode(render_path),
                 }

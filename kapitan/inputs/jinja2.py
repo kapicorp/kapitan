@@ -37,7 +37,7 @@ class Jinja2(InputType):
         jinja2_filters = kwargs.get("jinja2_filters")
 
         for item_key, item_value in render_jinja2(
-            file_path, context, self.search_paths, jinja2_filters=jinja2_filters
+            file_path, context, jinja2_filters=jinja2_filters, search_paths=self.search_paths
         ).items():
             full_item_path = os.path.join(compile_path, item_key)
 

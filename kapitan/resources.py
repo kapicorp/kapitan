@@ -110,7 +110,7 @@ def jinja2_render_file(search_paths, name, ctx):
         if os.path.exists(_full_path):
             logger.debug("jinja2_render_file found file at %s", _full_path)
             try:
-                return render_jinja2_file(_full_path, ctx, search_paths)
+                return render_jinja2_file(_full_path, ctx, search_paths=search_paths)
             except Exception as e:
                 raise CompileError("Jsonnet jinja2 failed to render {}: {}".format(_full_path, e))
 
