@@ -1,3 +1,158 @@
+## 0.27.0:
+- Update all dependency versions
+
+## 0.26.1:
+- Enable prune, per compile target (#451)
+- Install net-tools in CI Image
+- Fix issue #434 Output as a string does not interpolate secrets (#438)
+- Upgrade to Cloud SDK version 274.0.0 (#441)
+- Fix issue #445: Explicitly create directories for all outputted CompiledFile objects. (#446)
+- Add key info for RefBackendError for easier debugging (#439)
+- Update python dependencies to latest versions (#447)
+
+## 0.26.1-rc.2:
+- Enable prune, per compile target (#451)
+
+## 0.26.1-rc.1:
+- Fix issue #434 Output as a string does not interpolate secrets (#438)
+- Upgrade to Cloud SDK version 274.0.0 (#441)
+- Fix issue #445: Explicitly create directories for all outputted CompiledFile objects. (#446)
+- Add key info for RefBackendError for easier debugging (#439)
+- Update python dependencies to latest versions (#447)
+
+## 0.26.0:
+- Fix issue #431: jsonnet compile fails for a single string that isn't an object with items in it. (#432)
+- Fix input_paths globbing when search paths are defined (#426)
+- Support for ed25519 public/private keys in refs (#422)
+- New copy input type (#423)
+
+## 0.26.0-rc.1:
+- Fix input_paths globbing when search paths are defined (#426)
+
+## 0.26.0-rc.0:
+- Support for ed25519 public/private keys in refs (#422)
+- New copy input type (#423)
+
+## 0.25.5:
+- add input_paths globbing support (#419)
+- add kap.yaml_load_stream() function (#416)
+- new yaml_dump_stream() native jsonnet function (#415)
+- Add mysql client, openssh-client to Dockerfile.ci (#413)
+
+## 0.25.4:
+- Add bsdmainutils to Dockerfile.ci
+
+## 0.25.3:
+- Update Dockerfile.ci to debian 10, latest terraform, gcloud sdk and docker (#406)
+
+## 0.25.2:
+- Update wrong path for binaries (#400)
+- Fix template for kapitan init so that the results compiles out of the box (#403)
+
+## 0.25.1:
+- Add jsonnet back to dockerfile.ci (#398)
+
+## 0.25.0:
+- Add support for revealing files in subdirectories (#386)
+- Upgrade to TF 0.12.10 in Dockerfile.ci (#391)
+- Label selectors for compilation (#388)
+- Normalise helm compile (#385)
+- Jsonschema function for jsonnet (#380)
+- Fix issue 381: Document .kapitan and update jsonnet, git and hvac dependencies (#383)
+- Vault secret backend added - read-only (#310)
+- Add yq to the docker images (#375)
+- Update all Dockerfiles to use multi-stage builds (#370)
+- Add additional content type header for fetching GZIP files (#364)
+- Fix Helm binding errors in docker (#359)
+- Restore old order in compile_targets to fix process fork issue (#396)
+
+#### Breaking:
+For these breaking changes, run `./scripts/kap_5_migrate.py` to help you migrate the majority of secrets.
+
+- Move to Kap5 ref types (#334)
+- Fix issue #277: Change first '|' operator in secrets functions with '||' (#382)
+
+## 0.25.0-rc.2:
+- Add support for revealing files in subdirectories (#386)
+- Upgrade to TF 0.12.10 in Dockerfile.ci (#391)
+- Label selectors for compilation (#388)
+- Normalise helm compile (#385)
+
+## 0.25.0-rc.1:
+- Jsonschema function for jsonnet (#380)
+- Fix issue 381: Document .kapitan and update jsonnet, git and hvac dependencies (#383)
+- Vault secret backend added - read-only (#310)
+
+#### Breaking:
+- Move to Kap5 ref types (#334)
+- Fix issue #277: Change first '|' operator in secrets functions with '||' (#382)
+
+## 0.24.1-rc.3:
+- Add yq to the docker images (#375)
+
+## 0.24.1-rc.2:
+- Update all Dockerfiles to use multi-stage builds (#370)
+
+## 0.24.1-rc.1:
+- Add additional content type header for fetching GZIP files (#364)
+- Fix Helm binding errors in docker (#359)
+
+## 0.24.0:
+- Add standalone binary to github releases
+- Upgrade some packages in requirements.txt (#344)
+- Upgrade kapp and kbld to v0.11.0 (#344)
+- Fix dependency manager's behavior for files to unpack (#342)
+- creating standalone binary for kapitan (#323)
+- Add reveal_maybe custom jinja2 filter (#332)
+- Add support to import Helm input type (#307)
+- Make boto3 requirement more flexible (#320)
+- Add kubernetes manifest validation (#317)
+- Improve json schema validation error display for inventory (#318)
+- Multi-document yaml outputs (#308)
+- Add external dependency management (#304)
+- Fix bug in resources.py when passing config to reclass (#296)
+- Fix requests version to circumvent urllib3 version conflict (#300)
+- Upgrade to jsonnet 0.13.0 (#309)
+- Add kapp and kbld to kapitan-ci (#314)
+- Implement secret sub-variables (#282)
+
+## 0.24.0-rc.6:
+- Testing github release of standalone binary
+
+## 0.24.0-rc.4:
+- Upgrade some packages in requirements.txt (#344)
+- Upgrade kapp and kbld to v0.11.0 (#344)
+- Fix dependency manager's behavior for files to unpack (#342)
+- creating standalone binary for kapitan (#323)
+
+## 0.24.0-rc.3:
+- Add reveal_maybe custom jinja2 filter (#332)
+- Add support to import Helm input type (#307)
+
+## 0.24.0-rc.2:
+- Make boto3 requirement more flexible (#320)
+- Add kubernetes manifest validation (#317)
+- Improve json schema validation error display for inventory (#318)
+- Multi-document yaml outputs (#308)
+
+## 0.24.0-rc.1:
+- Add external dependency management (#304)
+
+## 0.24.0-rc.0:
+- Fix bug in resources.py when passing config to reclass (#296)
+- Fix requests version to circumvent urllib3 version conflict (#300)
+- Upgrade to jsonnet 0.13.0 (#309)
+- Add kapp and kbld to kapitan-ci (#314)
+- Implement secret sub-variables (#282)
+
+## 0.23.1:
+- Fix pypi package by including requirements.txt (#287)
+- Make jsonnet & kadet support plain text output_type (#288)
+- Fallback to reclass 1.5.6 because of regression (#284)
+- Add parseYaml function in jsonnet (#263)
+- Add support for specifying custom jinja2 filters (#267)
+- Update minor dependencies (#283)
+
 ## 0.23.1-rc.1:
 - Fallback to reclass 1.5.6 because of regression (#284)
 
@@ -220,7 +375,7 @@ Mac: `brew install libyaml`
 
 ## 0.10.0:
 - Supports reading targets from the inventory as well as target files
-- Breaking change: the keys in compile items changed, see https://github.com/deepmind/kapitan/pull/22
+- Breaking change: the keys in compile items changed, see (#22)
 
 ## 0.9.19:
 - checks for gpg key expiry

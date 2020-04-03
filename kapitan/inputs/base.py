@@ -1,24 +1,18 @@
 #!/usr/bin/env python3
-#
-# Copyright 2019 The Kapitan Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
+# Copyright 2019 The Kapitan Authors
+# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan@google.com>
+#
+# SPDX-License-Identifier: Apache-2.0
+
+import glob
+import itertools
+import json
 import logging
 import os
-import yaml
-import json
+from collections.abc import Mapping
 
+import yaml
 from kapitan.errors import CompileError, KapitanError
 from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper
@@ -35,41 +29,52 @@ class InputType(object):
 
     def compile_obj(self, comp_obj, ext_vars, **kwargs):
         """
-        run compile_input_path() for each input_path in comp_obj
-        kwargss are passed into compile_input_path()
+        Expand globbed input paths, taking into account provided search paths
+        and run compile_input_path() for each resolved input_path.
+        kwargs are passed into compile_input_path()
         """
         input_type = comp_obj["input_type"]
         assert input_type == self.type_name
-        input_paths = comp_obj["input_paths"]
+
+        # expand any globbed paths, taking into account provided search paths
+        input_paths = []
+        for input_path in comp_obj["input_paths"]:
+            globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
+            inputs = list(itertools.chain.from_iterable(globbed_paths))
+            if len(inputs) == 0:
+                raise CompileError(
+                    "Compile error: {} for target: {} not found in "
+                    "search_paths: {}".format(input_path, ext_vars["target"], self.search_paths)
+                )
+            input_paths.extend(inputs)
 
         for input_path in input_paths:
             self.compile_input_path(input_path, comp_obj, ext_vars, **kwargs)
 
     def compile_input_path(self, input_path, comp_obj, ext_vars, **kwargs):
         """
-        compile and validate input_path in comp_obj
+        Compile validated input_path in comp_obj
         kwargs are passed into compile_file()
         """
         target_name = ext_vars["target"]
         output_path = comp_obj["output_path"]
         output_type = comp_obj.get("output_type", self.default_output_type())
-        file_found = False
+        prune_input = comp_obj.get("prune", kwargs.get("prune", False))
 
-        for path in self.search_paths:
-            compile_file_sp = os.path.join(path, input_path)
-            if os.path.exists(compile_file_sp):
-                file_found = True
-                logger.debug("Compiling %s", compile_file_sp)
-                try:
-                    _compile_path = os.path.join(self.compile_path, target_name, output_path)
-                    self.compile_file(compile_file_sp, _compile_path, ext_vars, output=output_type,
-                                      target_name=target_name, **kwargs)
-                except KapitanError as e:
-                    raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
-
-        if not file_found:
-            raise CompileError("Compile error: {} for target: {} not found in "
-                               "search_paths: {}".format(input_path, target_name, self.search_paths))
+        logger.debug("Compiling %s", input_path)
+        try:
+            _compile_path = os.path.join(self.compile_path, target_name, output_path)
+            self.compile_file(
+                input_path,
+                _compile_path,
+                ext_vars,
+                output=output_type,
+                target_name=target_name,
+                prune_input=prune_input,
+                **kwargs,
+            )
+        except KapitanError as e:
+            raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
 
     def make_compile_dirs(self, target_name, output_path):
         """make compile dirs, skips if dirs exist"""
@@ -95,8 +100,9 @@ class CompilingFile(object):
 
     def write(self, data):
         """write data into file"""
-        reveal = self.kwargs.get('reveal', False)
-        target_name = self.kwargs.get('target_name', None)
+        reveal = self.kwargs.get("reveal", False)
+        target_name = self.kwargs.get("target_name", None)
+
         if reveal:
             self.fp.write(self.revealer.reveal_raw(data))
         else:
@@ -104,25 +110,30 @@ class CompilingFile(object):
 
     def write_yaml(self, obj):
         """recursively compile or reveal refs and convert obj to yaml and write to file"""
-        indent = self.kwargs.get('indent', 2)
-        reveal = self.kwargs.get('reveal', False)
-        target_name = self.kwargs.get('target_name', None)
+        indent = self.kwargs.get("indent", 2)
+        reveal = self.kwargs.get("reveal", False)
+        target_name = self.kwargs.get("target_name", None)
         if reveal:
-            self.revealer.reveal_obj(obj)
+            obj = self.revealer.reveal_obj(obj)
         else:
-            self.revealer.compile_obj(obj, target_name=target_name)
-        yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+            obj = self.revealer.compile_obj(obj, target_name=target_name)
+
+        if isinstance(obj, Mapping):
+            yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+        else:
+            yaml.dump_all(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+
         logger.debug("Wrote %s", self.fp.name)
 
     def write_json(self, obj):
         """recursively hash or reveal refs and convert obj to json and write to file"""
-        indent = self.kwargs.get('indent', 2)
-        reveal = self.kwargs.get('reveal', False)
-        target_name = self.kwargs.get('target_name', None)
+        indent = self.kwargs.get("indent", 2)
+        reveal = self.kwargs.get("reveal", False)
+        target_name = self.kwargs.get("target_name", None)
         if reveal:
-            self.revealer.reveal_obj(obj)
+            obj = self.revealer.reveal_obj(obj)
         else:
-            self.revealer.compile_obj(obj, target_name=target_name)
+            obj = self.revealer.compile_obj(obj, target_name=target_name)
         json.dump(obj, self.fp, indent=indent)
         logger.debug("Wrote %s", self.fp.name)
 
@@ -136,6 +147,10 @@ class CompiledFile(object):
 
     def __enter__(self):
         mode = self.kwargs.get("mode", "r")
+
+        # make sure directory for file exists
+        os.makedirs(os.path.dirname(self.name), exist_ok=True)
+
         self.fp = open(self.name, mode)
         return CompilingFile(self, self.fp, self.ref_controller, **self.kwargs)
 

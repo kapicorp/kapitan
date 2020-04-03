@@ -1,0 +1,16 @@
+{
+  "resource": {
+    "google_project_iam_member": {
+      "containerdeveloper_someemail_googlegroupcom": {
+        "depends_on": [
+          "google_project.project3"
+        ],
+        "lifecycle": {
+          "create_before_destroy": true
+        },
+        "member": "group:someemail@googlegroup.com",
+        "role": "roles/container.developer"
+      }
+    }
+  }
+}

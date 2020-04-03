@@ -3,7 +3,9 @@
 *.bak
 build/
 dist/
+bindist/
 _site/
+site/
 kapitan.egg-info/
 tags
 .python-version

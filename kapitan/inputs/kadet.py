@@ -1,29 +1,20 @@
 #!/usr/bin/env python3
-#
-# Copyright 2019 The Kapitan Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
-from addict import Dict
-import logging
-from importlib.util import module_from_spec, spec_from_file_location
+# Copyright 2019 The Kapitan Authors
+# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan@google.com>
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import json
+import logging
 import os
 import sys
-import yaml
+from importlib.util import module_from_spec, spec_from_file_location
 
+import yaml
+from addict import Dict
 from kapitan.errors import CompileError
-from kapitan.inputs.base import InputType, CompiledFile
+from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.resources import inventory as inventory_func
 from kapitan.utils import prune_empty
 
@@ -44,14 +35,16 @@ def module_from_path(path, check_name=None):
         raise FileNotFoundError("path: {} must be an existing directory".format(path))
 
     module_name = os.path.basename(os.path.normpath(path))
-    init_path = os.path.join(path, '__init__.py')
-    spec = spec_from_file_location('kadet_component_{}'.format(module_name), init_path)
+    init_path = os.path.join(path, "__init__.py")
+    spec = spec_from_file_location("kadet_component_{}".format(module_name), init_path)
     mod = module_from_spec(spec)
 
     if spec is None:
         raise ModuleNotFoundError("Could not load module in path {}".format(path))
     if check_name is not None and check_name != module_name:
-        raise ModuleNotFoundError("Module name {} does not match check_name {}".format(module_name, check_name))
+        raise ModuleNotFoundError(
+            "Module name {} does not match check_name {}".format(module_name, check_name)
+        )
 
     return mod, spec
 
@@ -87,25 +80,25 @@ class Kadet(InputType):
             target_name: default None, set to current target being compiled
             indent: default 2
         """
-        output = kwargs.get('output', 'yaml')
-        prune = kwargs.get('prune', False)
-        reveal = kwargs.get('reveal', False)
-        target_name = kwargs.get('target_name', None)
-        indent = kwargs.get('indent', 2)
+        output = kwargs.get("output", "yaml")
+        prune = kwargs.get("prune", False)
+        reveal = kwargs.get("reveal", False)
+        target_name = kwargs.get("target_name", None)
+        indent = kwargs.get("indent", 2)
 
         # These will be updated per target
         # XXX At the moment we have no other way of setting externals for modules...
         global search_paths
         search_paths = self.search_paths
         global inventory
-        inventory = lambda: Dict(inventory_func(self.search_paths, target_name)) # noqa E731
+        inventory = lambda: Dict(inventory_func(self.search_paths, target_name))  # noqa E731
         global inventory_global
-        inventory_global = lambda: Dict(inventory_func(self.search_paths, None)) # noqa E731
+        inventory_global = lambda: Dict(inventory_func(self.search_paths, None))  # noqa E731
 
         kadet_module, spec = module_from_path(file_path)
         sys.modules[spec.name] = kadet_module
         spec.loader.exec_module(kadet_module)
-        logger.debug('Kadet.compile_file: spec.name: %s', spec.name)
+        logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
 
         output_obj = kadet_module.main().to_dict()
         if prune:
@@ -113,18 +106,43 @@ class Kadet(InputType):
 
         for item_key, item_value in output_obj.items():
             # write each item to disk
-            if output == 'json':
-                file_path = os.path.join(compile_path, '%s.%s' % (item_key, output))
-                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
-                                  indent=indent) as fp:
+            if output == "json":
+                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
+                with CompiledFile(
+                    file_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                    indent=indent,
+                ) as fp:
                     fp.write_json(item_value)
-            elif output == 'yaml':
-                file_path = os.path.join(compile_path, '%s.%s' % (item_key, "yml"))
-                with CompiledFile(file_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name,
-                                  indent=indent) as fp:
+            elif output == "yaml":
+                file_path = os.path.join(compile_path, "%s.%s" % (item_key, "yml"))
+                with CompiledFile(
+                    file_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                    indent=indent,
+                ) as fp:
                     fp.write_yaml(item_value)
+            elif output == "plain":
+                file_path = os.path.join(compile_path, "%s" % item_key)
+                with CompiledFile(
+                    file_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                    indent=indent,
+                ) as fp:
+                    fp.write(item_value)
             else:
-                raise ValueError('output is neither "json" or "yaml"')
+                raise ValueError(
+                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'"
+                )
             logger.debug("Pruned output for: %s", file_path)
 
     def default_output_type(self):

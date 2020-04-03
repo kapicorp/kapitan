@@ -1,0 +1,7 @@
+classes:
+  - provider.gcp
+
+# Class automatically applied to all targets inside folder inventory/target/dev
+
+parameters:
+  env: dev

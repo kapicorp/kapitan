@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations: {}
+  labels:
+    name: minikube-nginx-jsonnet
+  name: minikube-nginx-jsonnet
+  namespace: minikube-nginx-jsonnet
+spec: {}

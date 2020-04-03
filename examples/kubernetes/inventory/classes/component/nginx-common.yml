@@ -1,0 +1,13 @@
+parameters:
+  nginx:
+    image: nginx:1:15.8
+  kapitan:
+    compile:
+      - output_path: .
+        input_type: jinja2
+        input_paths:
+        - docs/nginx/README.md
+      - output_path: .
+        input_type: jinja2
+        input_paths:
+        - components/nginx-deploy.sh

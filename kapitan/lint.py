@@ -1,18 +1,9 @@
 #!/usr/bin/env python3
-#
+
 # Copyright 2019 The Kapitan Authors
+# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan@google.com>
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
 
 "lint module"
 
@@ -55,7 +46,15 @@ rules:
 """
 
 
-def start_lint(fail_on_warning, skip_class_checks, skip_yamllint, inventory_path, search_secrets, secrets_path, compiled_path):
+def start_lint(
+    fail_on_warning,
+    skip_class_checks,
+    skip_yamllint,
+    inventory_path,
+    search_secrets,
+    secrets_path,
+    compiled_path,
+):
     """ Runs all lint operations available
     Args:
         fail_on_warning (bool): if set to True, function will exit if any warning is found
@@ -63,7 +62,7 @@ def start_lint(fail_on_warning, skip_class_checks, skip_yamllint, inventory_path
         skip_yamllint (bool): whether to skip checking yaml files for lint problems
         inventory_path (string): path to your inventory/ folder
         search_secrets (bool): whether to search for secret related warnings or not
-        secrets_path (string): path to your secrets/ folder
+        secrets_path (string): path to your refs/ folder
         compiled_path (string): path to your compiled/ folder
     Yields:
         checks_sum (int): the number of lint warnings found
@@ -71,14 +70,15 @@ def start_lint(fail_on_warning, skip_class_checks, skip_yamllint, inventory_path
     if skip_class_checks and skip_yamllint and not search_secrets:
         logger.info("Nothing to check. Remove --skip-class-checks or add --search-secrets to lint secrets")
         sys.exit(1)
-    
+
     status_yamllint = 0
     status_secrets = 0
     status_class_checks = 0
 
     if not os.path.isdir(inventory_path):
         logger.info(
-            "\nInventory path is invalid or not provided, skipping yamllint and orphan class checks\n")
+            "\nInventory path is invalid or not provided, skipping yamllint and orphan class checks\n"
+        )
     else:
         if not skip_yamllint:
             logger.info("\nRunning yamllint on all inventory files...\n")
@@ -100,12 +100,12 @@ def start_lint(fail_on_warning, skip_class_checks, skip_yamllint, inventory_path
 
 
 def lint_orphan_secrets(compiled_path, secrets_path):
-    """ Checks your secrets/ folder for unused secrets files by:
+    """ Checks your refs/ folder for unused secrets files by:
         - iterating the secrets_path/ dir and extracting all secrets names from the file paths
         - does a text search over the entire compiled_path/ to find usages of those secrets
     Args:
         compiled_path (string): path to your compiled/ folder
-        secrets_path (string): path to your secrets/ folder
+        secrets_path (string): path to your refs/ folder
     Yields:
         checks_sum (int): the number of orphan secrets found
     """
@@ -113,7 +113,7 @@ def lint_orphan_secrets(compiled_path, secrets_path):
     secrets_paths = set()
     for path in list_all_paths(secrets_path):
         if os.path.isfile(path):
-            path = path[len(secrets_path) + 1:]
+            path = path[len(secrets_path) + 1 :]
             secrets_paths.add(path)
 
     logger.debug("Collected # of paths: {}".format(len(secrets_paths)))
@@ -129,7 +129,11 @@ def lint_orphan_secrets(compiled_path, secrets_path):
 
     checks_sum = len(secrets_paths)
     if checks_sum > 0:
-        logger.info("No usage found for the following {} secrets files:\n{}\n".format(len(secrets_paths), pformat(secrets_paths)))
+        logger.info(
+            "No usage found for the following {} secrets files:\n{}\n".format(
+                len(secrets_paths), pformat(secrets_paths)
+            )
+        )
 
     return checks_sum
 
@@ -151,8 +155,8 @@ def lint_unused_classes(inventory_path):
     logger.debug("Find unused classes from {}".format(classes_dir))
     class_paths = set()
     for path in list_all_paths(classes_dir):
-        if os.path.isfile(path) and (path.endswith('.yml') or path.endswith('.yaml')):
-            path = path[len(classes_dir):]
+        if os.path.isfile(path) and (path.endswith(".yml") or path.endswith(".yaml")):
+            path = path[len(classes_dir) :]
             path = path.replace(".yml", "").replace(".yaml", "").replace("/", ".")
             class_paths.add(path)
 
@@ -181,9 +185,14 @@ def lint_unused_classes(inventory_path):
 
     checks_sum = len(class_paths)
     if checks_sum > 0:
-        logger.info("No usage found for the following {} classes:\n{}\n".format(len(class_paths), pformat(class_paths)))
+        logger.info(
+            "No usage found for the following {} classes:\n{}\n".format(
+                len(class_paths), pformat(class_paths)
+            )
+        )
 
     return checks_sum
+
 
 def lint_yamllint(inventory_path):
     """ Run yamllint on all yaml files in inventory
@@ -194,9 +203,9 @@ def lint_yamllint(inventory_path):
     """
     logger.debug("Running yamllint for " + inventory_path)
 
-    if os.path.isfile('.yamllint'):
+    if os.path.isfile(".yamllint"):
         logger.info("Loading values from .yamllint found.")
-        conf = YamlLintConfig(file='.yamllint')
+        conf = YamlLintConfig(file=".yamllint")
     else:
         logger.info(".yamllint not found. Using default values")
         conf = YamlLintConfig(yamllint_config)
@@ -212,7 +221,7 @@ def lint_yamllint(inventory_path):
                 except EnvironmentError as e:
                     logger.error(e)
                     sys.exit(-1)
-  
+
                 if len(problems) > 0:
                     checks_sum += len(problems)
                     logger.info("File {} has the following issues:".format(path))

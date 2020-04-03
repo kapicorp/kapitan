@@ -1,0 +1,81 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  annotations: {}
+  labels:
+    name: glob_instance
+  name: glob_instance
+  namespace: all-glob
+spec:
+  replicas: 1
+  serviceName: glob_instance
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        name: glob_instance
+    spec:
+      containers:
+        - args: []
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: MYSQL_ROOT_PASSWORD
+                  name: glob_instance
+          image: mysql:latest
+          imagePullPolicy: Always
+          name: mysql
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts: []
+      imagePullSecrets: []
+      initContainers: []
+      volumes: []
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        annotations:
+          volume.beta.kubernetes.io/storage-class: standard
+        labels:
+          name: data
+        name: data
+        namespace: all-glob
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10G
+---
+apiVersion: v1
+data:
+  MYSQL_ROOT_PASSWORD: ?{base64:targets/all-glob/mysql/password:3192c15c}
+  MYSQL_ROOT_PASSWORD_SHA256: ?{base64:targets/all-glob/mysql/password_sha256:a18bc263}
+kind: Secret
+metadata:
+  annotations: {}
+  labels:
+    name: glob_instance
+  name: glob_instance
+  namespace: all-glob
+type: Opaque
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: glob_instance
+  name: glob_instance
+  namespace: all-glob
+spec:
+  clusterIP: None
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+  selector:
+    name: glob_instance
+  type: ClusterIP

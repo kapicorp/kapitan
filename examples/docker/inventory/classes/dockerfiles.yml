@@ -1,0 +1,15 @@
+parameters:
+  your_component:
+    some_parameter: true
+  kapitan:
+    compile:
+      - output_path: jsonnet
+        input_type: jsonnet
+        output_type: plain
+        input_paths:
+          - components/jsonnet/jsonnet.jsonnet
+      - output_path: kadet
+        input_type: kadet
+        output_type: plain
+        input_paths:
+          - components/kadet

@@ -15,21 +15,33 @@ notifications:
   email:
     on_success: change
     on_failure: always
+
 before_install:
+  # Loop until update succeeds (timeouts can occur)
+  - sudo sed -e '/postgresql/ s/^#*/#/' -i /etc/apt/sources.list.d/*
   - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y;
+  - sudo add-apt-repository ppa:longsleep/golang-backports -y
   # workaround for https://travis-ci.community/t/then-sudo-apt-get-update-failed-public-key-is-not-available-no-pubkey-6b05f25d762e3157-in-ubuntu-xenial/1728
   - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
   # Loop until update succeeds (timeouts can occur)
-  - travis_retry $(! sudo apt-get -qq update 2>&1 |grep Failed)
+  - travis_retry $(! sudo apt-get -qq update 2>&1 | grep Failed)
   - sudo apt-get install -y g++-4.9
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.9
-  - sudo apt-get install -y gnupg2
+  - sudo apt-get install -y gnupg2 git
+  - sudo apt-get install -y golang-1.12
+  - export PATH="/usr/lib/go-1.12/bin:$PATH"
+  - export GOROOT=/usr/lib/go-1.12
+  - go version
+
 install:
   - pip3 install -r requirements.txt
-  - pip3 install coverage
+  - pip3 install coverage black
 
 script:
-  - make test && make test_coverage
+  - make build_helm_binding
+  - make test && make test_coverage && make test_formatting
+  - make build_binary
+  - make test_binary
 
 after_success:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ]; then bash ./scripts/inc_version.sh; fi
@@ -42,7 +54,9 @@ deploy:
   - provider: releases
     api_key:
       secure: VFZDeLYUZ/Fs+NTbIW7DjbANhqAtlbZTzsWods6MuSN3DmGibZwNBpHfNN/hCfJEBCKvmWBEzF2R14Pau+GMZAYaP0N0pCRuO8wtlXGe4ygc5bff4Y93BA98sTh/eRnLf+jsI+acliBWlm0WCRWDMsxfzhZTgWDO/IBdOrzwno5BqEeXbvsqe6MG9z3BLvp8t7WkI67NPoJfRGve7twb1VLMCLlRwXJwxefxgYHcH3pImhx4CMVjXKEMr4jQIMh+mlGA+aMhTAM/If2X3fhdbiA9KNNQ0FrZFLOw0iCLCYzaCHGm70eSMlXJr2kqEjzdZkR2J4TxnJqghTrnNVeXg917vtlFrTnJUxeOSQl3s3LOOQ0vM2wob8y+oPWYz7zw+KKqs8hA4crE7CngQmPGJvWQfYEGtW/5Zc9j+T/yplq5Zwqbe3ibsQ54V8jr6LU4IcLLXgT3qii13Zpg7pILQ+ObOge8c20EeUd6+HhBt9+5K0S67/GgSoa2Nd5+g4XgvEO95ncMZkWztNidk1ygVn00TLK5Dn8UHSaEoxlGXCfgVphzV1//MpOeJn67kQWxHvJxgqVfHAsbL2dlXMux/cuv+UQlRPQsw+8A18hpTUWcxRl7cLm9bMedW14CCtEmSWikanY/2lBEwFIjYndOu7v4VY4L3aNs6EsHrinoLVA=
-    file: CHANGELOG.md
+    file:
+      - CHANGELOG.md
+      - bindist/kapitan-linux-amd64
     prerelease: $PRERELEASE
     on:
       tags: true

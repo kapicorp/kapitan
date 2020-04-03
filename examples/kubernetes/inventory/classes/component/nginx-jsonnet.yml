@@ -1,0 +1,12 @@
+parameters:
+  nginx:
+    replicas: 1
+  kapitan:
+    compile:
+      - output_path: manifests
+        output_type: yaml
+        input_type: jsonnet
+        input_paths:
+        - components/nginx-jsonnet/main.jsonnet
+    labels:
+      type: jsonnet

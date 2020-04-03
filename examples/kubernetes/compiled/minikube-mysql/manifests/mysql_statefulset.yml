@@ -1,7 +1,6 @@
 apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
-  annotations: {}
   labels:
     name: example-mysql
   name: example-mysql
@@ -11,13 +10,11 @@ spec:
   serviceName: example-mysql
   template:
     metadata:
-      annotations: {}
       labels:
         name: example-mysql
     spec:
       containers:
-        - args: []
-          env:
+        - env:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -29,10 +26,6 @@ spec:
           ports:
             - containerPort: 3306
               name: mysql
-          volumeMounts: []
-      imagePullSecrets: []
-      initContainers: []
-      volumes: []
   volumeClaimTemplates:
     - apiVersion: v1
       kind: PersistentVolumeClaim

@@ -1,4 +1,5 @@
 from kapitan.inputs.kadet import BaseObj, inventory
+
 inv = inventory()
 
 

@@ -1,0 +1,49 @@
+classes:
+  - provider.gcp
+
+# Class automatically applied to all targets inside folder inventory/target/prod
+
+parameters:
+  env: prod
+
+  logging:
+    logging_bucket_name: bucket-for-logs-archive
+    logging_storage_prefix: example
+
+  resources:
+    kms:
+      kapitan:
+        keys:
+          - name: ${name}
+            rotation_period: 15780000s # 6 months
+
+    monitoring:
+      alerting_method: \${google_monitoring_notification_channel.some_email.name}
+      notification_channels:
+        - name: some_email
+          display_name: "someemail@domain.com"
+          type: email
+          labels:
+            email_address: "someemail@domain.com"
+          description: Notify via email
+          enabled: true
+      alert_policies:
+        - name: instance_uptime
+          display_name: "Instance Uptime Alert"
+          combiner: "OR"
+          conditions:
+            - display_name: "Uptime < 900ms/s"
+              condition_threshold:
+                aggregations:
+                  - alignment_period: 60s
+                    per_series_aligner: "ALIGN_RATE"
+                comparison: "COMPARISON_LT"
+                duration: "180s"
+                filter: "metric.type=\"compute.googleapis.com/instance/uptime\" resource.type=\"gce_instance\""
+                threshold_value: 0.9
+                trigger:
+                  count: 1
+          notification_channels:
+            - ${resources:monitoring:alerting_method}
+          documentation:
+            content: "Alert whenever an instance's uptime falls under 900ms/s"

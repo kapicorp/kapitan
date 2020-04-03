@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  annotations: {}
-  labels:
-    name: minikube-nginx
-  name: minikube-nginx
-  namespace: minikube-nginx
-spec: {}

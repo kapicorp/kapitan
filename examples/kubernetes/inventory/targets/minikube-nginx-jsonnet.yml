@@ -1,0 +1,9 @@
+classes:
+  - common
+  - cluster.minikube
+  - component.nginx-jsonnet
+  - component.nginx-common
+
+parameters:
+  target_name: minikube-nginx-jsonnet
+  namespace: ${target_name}

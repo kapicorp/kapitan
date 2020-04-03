@@ -1,0 +1,62 @@
+########################################
+# Classes to include in this target
+########################################
+classes:
+  - type.terraform
+
+########################################
+# override variables defined in any of
+# the classes above
+########################################
+parameters:
+  name: project3
+  region: europe-west2
+  zone: europe-west2-a
+
+  resources:
+    pubsub:
+      topics:
+        - name: "${name}-topic"
+          project: ${name}
+          message_storage_policy:
+            allowed_persistence_regions:
+              - ${region}
+      subscriptions:
+        - name: "${name}-sub"
+          project: ${name}
+          topic_name: "${name}-topic"
+
+    iam:
+      serviceaccounts:
+        - name: k8s-sa
+          member: "serviceAccount:k8s-sa@${name}.iam.gserviceaccount.com"
+          roles:
+            - "roles/logging.logWriter"
+            - "roles/monitoring.metricWriter"
+            - "roles/monitoring.viewer"
+            - "roles/compute.viewer"
+            - "roles/storage.objectViewer"
+            - "roles/stackdriver.resourceMetadata.writer"
+      bindings:
+        # container.developer needed for now to create the cloudsql-proxy deployment and port-forward
+        - role: roles/container.developer
+          members:
+            - "group:someemail@googlegroup.com"
+    container:
+
+      cluster2:
+        min_master_version: 1.9.2-gke.1
+        node_version: 1.9.2-gke.1
+        pools:
+
+          pool2a:
+            disk_size_gb: 100
+            image_type: COS
+            machine_type: n1-standard-2
+            node_count: 5
+
+          pool2b:
+            disk_size_gb: 100
+            image_type: COS
+            machine_type: n1-standard-4
+            node_count: 3

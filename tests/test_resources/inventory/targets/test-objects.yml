@@ -1,0 +1,8 @@
+classes:
+  - test-objects
+
+parameters:
+  my_plainref: ?{plain:my_plainref}
+  kapitan:
+    vars:
+      target: test-objects

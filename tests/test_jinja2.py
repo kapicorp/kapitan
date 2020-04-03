@@ -1,27 +1,23 @@
 #!/usr/bin/env python3
-#
+
 # Copyright 2019 The Kapitan Authors
+# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan@google.com>
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
 
 "jinja2 tests"
 
+import base64
 import unittest
 import tempfile
 import time
 from kapitan.utils import render_jinja2_file
 from kapitan.resources import inventory
 from kapitan.inputs.jinja2_filters import base64_encode
+from kapitan.refs.base import RefController, Revealer
+from kapitan.refs.base64 import Base64Ref
+from kapitan import cached
+from collections import namedtuple
 
 
 class Jinja2FiltersTest(unittest.TestCase):
@@ -30,7 +26,7 @@ class Jinja2FiltersTest(unittest.TestCase):
             f.write("{{ text|sha256 }}".encode("UTF-8"))
             f.seek(0)
             context = {"text": "this and that"}
-            output = 'e863c1ac42619a2b429a08775a6acd89ff4c2c6b8dae12e3461a5fa63b2f92f5'
+            output = "e863c1ac42619a2b429a08775a6acd89ff4c2c6b8dae12e3461a5fa63b2f92f5"
             self.assertEqual(render_jinja2_file(f.name, context), output)
 
     def test_base64_encode(self):
@@ -54,7 +50,7 @@ class Jinja2FiltersTest(unittest.TestCase):
             f.write("{{ text|yaml }}".encode("UTF-8"))
             f.seek(0)
             context = {"text": ["this", "that"]}
-            output = '- this\n- that\n'
+            output = "- this\n- that\n"
             self.assertEqual(render_jinja2_file(f.name, context), output)
 
     def test_fileglob(self):
@@ -138,6 +134,77 @@ class Jinja2FiltersTest(unittest.TestCase):
             context = {"text": array}
             self.assertNotEqual(render_jinja2_file(f.name, context), array)
 
+    def test_reveal_maybe_b64encode_tag(self):
+        """
+        creates ?{base64:some_value} and runs reveal_maybe|b64encode jinja2 filters
+        """
+        with tempfile.NamedTemporaryFile() as f:
+            f.write("{{ my_ref_tag_var|reveal_maybe|b64encode }}".encode("UTF-8"))
+            f.seek(0)
+
+            # new argparse namespace with --reveal and --refs-path values
+            namespace = namedtuple("Namespace", [])
+            namespace.reveal = True
+            namespace.refs_path = tempfile.mkdtemp()
+
+            # reveal_maybe uses cached, so inject namespace
+            cached.args["compile"] = namespace
+            cached.ref_controller_obj = RefController(cached.args["compile"].refs_path)
+            cached.revealer_obj = Revealer(cached.ref_controller_obj)
+
+            ref_tag = "?{base64:some_value}"
+            ref_value = b"sitar_rock!"
+            cached.ref_controller_obj[ref_tag] = Base64Ref(ref_value)
+            context = {"my_ref_tag_var": ref_tag}
+            ref_value_b64 = base64.b64encode(ref_value).decode()
+            self.assertEqual(render_jinja2_file(f.name, context), ref_value_b64)
+
+    def test_reveal_maybe_tag_no_reveal_flag(self):
+        """
+        creates ?{base64:some_value} and runs reveal_maybe jinja2 filters without --reveal flag
+        """
+        with tempfile.NamedTemporaryFile() as f:
+            f.write("{{ my_ref_tag_var|reveal_maybe }}".encode("UTF-8"))
+            f.seek(0)
+
+            # new argparse namespace with --reveal and --refs-path values
+            namespace = namedtuple("Namespace", [])
+            namespace.reveal = False
+            namespace.refs_path = tempfile.mkdtemp()
+
+            # reveal_maybe uses cached, so inject namespace
+            cached.args["compile"] = namespace
+            cached.ref_controller_obj = RefController(cached.args["compile"].refs_path)
+            cached.revealer_obj = Revealer(cached.ref_controller_obj)
+
+            ref_tag = "?{base64:some_value}"
+            ref_value = b"sitar_rock!"
+            cached.ref_controller_obj[ref_tag] = Base64Ref(ref_value)
+            context = {"my_ref_tag_var": ref_tag}
+            self.assertEqual(render_jinja2_file(f.name, context), "?{base64:some_value}")
+
+    def test_reveal_maybe_no_tag(self):
+        """
+        runs reveal_maybe jinja2 filter on data without ref tags
+        """
+        with tempfile.NamedTemporaryFile() as f:
+            f.write("{{ my_var|reveal_maybe }}".encode("UTF-8"))
+            f.seek(0)
+
+            # new argparse namespace with --reveal and --refs-path values
+            namespace = namedtuple("Namespace", [])
+            namespace.reveal = True
+            namespace.refs_path = tempfile.mkdtemp()
+
+            # reveal_maybe uses cached, so inject namespace
+            cached.args["compile"] = namespace
+            cached.ref_controller_obj = RefController(cached.args["compile"].refs_path)
+            cached.revealer_obj = Revealer(cached.ref_controller_obj)
+
+            var_value = "heavy_rock!"
+            context = {"my_var": var_value}
+            self.assertEqual(render_jinja2_file(f.name, context), var_value)
+
 
 class Jinja2ContextVars(unittest.TestCase):
     def test_inventory_context(self):
@@ -153,7 +220,10 @@ class Jinja2ContextVars(unittest.TestCase):
     def test_inventory_global_context(self):
         with tempfile.NamedTemporaryFile() as f:
             target_name = "minikube-es"
-            f.write("{{ inventory_global[\"%s\"].parameters.cluster.name }}".encode("UTF-8") % target_name.encode("UTF-8"))
+            f.write(
+                '{{ inventory_global["%s"].parameters.cluster.name }}'.encode("UTF-8")
+                % target_name.encode("UTF-8")
+            )
             cluster_name = "minikube"
             inv_global = inventory(["examples/kubernetes"], None)
             context = {"inventory_global": inv_global}
@@ -170,7 +240,8 @@ class Jinja2ExternalFilterTest(unittest.TestCase):
             inv = inventory(["examples/kubernetes"], target_name)
             context = {"inventory": inv}
             f.seek(0)
-            actual_output = render_jinja2_file(f.name, context, "./examples/kubernetes/lib/custom_jinja2_filter.py")
+            actual_output = render_jinja2_file(
+                f.name, context, "./examples/kubernetes/lib/custom_jinja2_filter.py"
+            )
             expected_output = base64_encode(cluster_name)
             self.assertEqual(actual_output, expected_output)
-            

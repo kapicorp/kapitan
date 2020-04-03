@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations: {}
+  labels:
+    name: nginx
+  name: nginx
+  namespace: all-glob
+spec:
+  minReadySeconds: 30
+  replicas: 2
+  revisionHistoryLimit: 10
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        name: nginx
+    spec:
+      containers:
+        - args: []
+          env: []
+          image: nginx:1:15.8
+          imagePullPolicy: Always
+          name: nginx
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts: []
+      imagePullSecrets: []
+      initContainers: []
+      volumes: []

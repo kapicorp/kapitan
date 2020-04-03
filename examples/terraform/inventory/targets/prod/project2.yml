@@ -1,0 +1,65 @@
+########################################
+# Classes to include in this target
+########################################
+classes:
+  - type.terraform
+
+########################################
+# override variables defined in any of
+# the classes above
+########################################
+parameters:
+  name: project2
+  region: europe-west2
+  zone: europe-west2-a
+
+  resources:
+    logging:
+      org_sinks:
+        - name: catch-all-sink
+          destination: "storage.googleapis.com/${logging:logging_bucket_name}"
+          include_children: true
+
+    storage:
+      - name: ${logging:logging_bucket_name}
+        storage_class: REGIONAL
+        versioning: false
+        restricted: false
+        lifecycle_rule:
+          - action:
+            - type: Delete
+            condition:
+            - age: 365 # ONE YEAR
+              with_state: "LIVE"
+        retention_policy:
+          is_locked: true
+          retention_period: 31536000 # 365 days in seconds
+
+    cloudbuild:
+      triggers:
+        - description: Some Repo
+          branch_name: ^master|^releases/.*|^test/.*$
+          filename: repo_folder/cloudbuild.yaml
+          repo_name: some-repo
+
+    container:
+
+      cluster1:
+        min_master_version: 1.9.2-gke.1
+        node_version: 1.9.2-gke.1
+        pools:
+          pool1a:
+            disk_size_gb: 100
+            image_type: COS
+            machine_type: n1-standard-2
+            node_count: 3
+
+      cluster2:
+        min_master_version: 1.9.2-gke.1
+        node_version: 1.9.2-gke.1
+        pools:
+          pool2a:
+            disk_size_gb: 100
+            image_type: COS
+            machine_type: n1-standard-2
+            node_count: 3
