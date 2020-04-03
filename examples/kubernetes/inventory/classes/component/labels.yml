@@ -1,0 +1,16 @@
+parameters:
+  postgres:
+    name: db
+    component: db
+    instance: postgres
+    version: "11.0"
+
+  kapitan:
+    vars:
+      target: ${target_name}
+      namespace: ${target_name}
+    compile:
+      - output_path: ./labels
+        input_type: jinja2
+        input_paths:
+          - components/labels/service.yml

@@ -6,6 +6,7 @@ parameters:
     vars:
       target: ${target_name}
       namespace: ${target_name}
+      managed_by: kapitan
     secrets:
       gpg:
         recipients:
