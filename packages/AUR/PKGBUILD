@@ -1,8 +1,8 @@
 pkgname=kapitan
 pkgver=0.27.0
 pkgrel=1
-pkgdesc="Generic templated configuration management for Kubernetes, Terraform and other things"
-arch=('any')
+pkgdesc='Generic templated configuration management for Kubernetes,  Terraform and other things'
+arch=('x86_64')
 license=('Apache')
 url="https://kapitan.dev/"
 depends=('python' 'python-setuptools')
