@@ -3,7 +3,7 @@
 ## Introduction
 
 Kapitan requires Python 3.6, and you need to be able to install the dependencies in the
-[requirements file](../requirements.txt).  However, sometimes this isn't entirely straightforward, and you may not be able or willing to install new versions of Python system-wide.
+[requirements file](https://github.com/deepmind/kapitan/blob/master/requirements.txt).  However, sometimes this isn't entirely straightforward, and you may not be able or willing to install new versions of Python system-wide.
 
 We do provide a [dockerfile](../Dockerfile) which you can use to run Kapitan in a container, but if this isn't practical or possible either, you may wish to use one of the following options:
 
