@@ -36,6 +36,7 @@ try:
 except ImportError:
     from yaml import SafeLoader as YamlLoader
 
+CACHE = {}
 
 def resource_callbacks(search_paths):
     """
@@ -212,7 +213,11 @@ def search_imports(cwd, import_str, search_paths):
     needs to be closured.
     """
     basename = os.path.basename(import_str)
-    full_import_path = os.path.join(cwd, import_str)
+    full_import_path = os.path.normpath(os.path.join(cwd, import_str))
+
+    
+    # if full_import_path in CACHE:
+    #     return full_import_path, CACHE[full_import_path]
 
     if not os.path.exists(full_import_path):
         # if import_str not found, search in install_path
@@ -241,6 +246,7 @@ def search_imports(cwd, import_str, search_paths):
     normalised_path_content = ""
     with open(normalised_path) as f:
         normalised_path_content = f.read()
+        # CACHE[normalised_path] = normalised_path_content
 
     return normalised_path, normalised_path_content
 
