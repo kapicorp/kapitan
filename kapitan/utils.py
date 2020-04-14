@@ -21,6 +21,8 @@ from collections import Counter, defaultdict
 from functools import lru_cache, wraps
 from hashlib import sha256
 
+import _gojsonnet as jsonnet
+# import _jsonnet as jsonnet
 import jinja2
 import requests
 import yaml
