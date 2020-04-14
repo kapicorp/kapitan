@@ -163,6 +163,13 @@ def main():
         default=from_dot_kapitan("compile", "reveal", False),
     )
     compile_parser.add_argument(
+        "--embed-refs",
+        help="embed ref contents",
+        action="store_true",
+        default=from_dot_kapitan("compile", "embed-refs", False),
+    )
+
+    compile_parser.add_argument(
         "--inventory-path",
         default=from_dot_kapitan("compile", "inventory-path", "./inventory"),
         help='set inventory path, default is "./inventory"',
@@ -487,7 +494,7 @@ def main():
         if not args.ignore_version_check:
             check_version()
 
-        ref_controller = RefController(args.refs_path)
+        ref_controller = RefController(args.refs_path, embed_refs=args.embed_refs)
         # cache controller for use in reveal_maybe jinja2 filter
         cached.ref_controller_obj = ref_controller
         cached.revealer_obj = Revealer(ref_controller)

@@ -96,17 +96,18 @@ class RefParams(object):
 
 
 class PlainRefBackend(object):
-    def __init__(self, path, ref_type=PlainRef):
+    def __init__(self, path, ref_type=PlainRef, **ref_kwargs):
         "Get and create PlainRefs"
         self.path = path
         self.type_name = "plain"
         self.ref_type = ref_type
+        self.ref_kwargs = ref_kwargs
 
     def __getitem__(self, ref_path):
         # remove the substring notation, if any
         ref_file_path = re.sub(REF_TOKEN_SUBVAR_PATTERN, "", ref_path)
         full_ref_path = os.path.join(self.path, ref_file_path)
-        ref = self.ref_type.from_path(full_ref_path)
+        ref = self.ref_type.from_path(full_ref_path, **self.ref_kwargs)
 
         if ref is not None:
             ref.path = ref_path
@@ -358,13 +359,14 @@ class RefController(object):
         except RefBackendError as e:
             raise RefBackendError(f"{e}\n  for key {ref_key}")
 
-    def __init__(self, path):
+    def __init__(self, path, **kwargs):
         """
         gets and sets tags for ref type objects.
         auto registers backends
         """
         self.backends = {}
         self.path = path
+        self.embed_refs = kwargs.get("embed_refs", False)
 
     def register_backend(self, backend):
         "register backend type"
@@ -376,6 +378,8 @@ class RefController(object):
         try:
             return self.backends[type_name]
         except KeyError:
+            # TODO XXX pass ref_kwargs on all backends ???
+            ref_kwargs = {"embed_refs": self.embed_refs}
             if type_name == "plain":
                 from kapitan.refs.base import PlainRefBackend
 
@@ -383,7 +387,7 @@ class RefController(object):
             elif type_name == "base64":
                 from kapitan.refs.base64 import Base64RefBackend
 
-                self.register_backend(Base64RefBackend(self.path))
+                self.register_backend(Base64RefBackend(self.path, **ref_kwargs))
             elif type_name == "gpg":
                 from kapitan.refs.secrets.gpg import GPGBackend
 
