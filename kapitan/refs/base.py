@@ -378,12 +378,11 @@ class RefController(object):
         try:
             return self.backends[type_name]
         except KeyError:
-            # TODO XXX pass ref_kwargs on all backends ???
             ref_kwargs = {"embed_refs": self.embed_refs}
             if type_name == "plain":
                 from kapitan.refs.base import PlainRefBackend
 
-                self.register_backend(PlainRefBackend(self.path))
+                self.register_backend(PlainRefBackend(self.path, **ref_kwargs))
             elif type_name == "base64":
                 from kapitan.refs.base64 import Base64RefBackend
 
@@ -391,19 +390,19 @@ class RefController(object):
             elif type_name == "gpg":
                 from kapitan.refs.secrets.gpg import GPGBackend
 
-                self.register_backend(GPGBackend(self.path))
+                self.register_backend(GPGBackend(self.path, **ref_kwargs))
             elif type_name == "gkms":
                 from kapitan.refs.secrets.gkms import GoogleKMSBackend
 
-                self.register_backend(GoogleKMSBackend(self.path))
+                self.register_backend(GoogleKMSBackend(self.path, **ref_kwargs))
             elif type_name == "awskms":
                 from kapitan.refs.secrets.awskms import AWSKMSBackend
 
-                self.register_backend(AWSKMSBackend(self.path))
+                self.register_backend(AWSKMSBackend(self.path, **ref_kwargs))
             elif type_name == "vaultkv":
                 from kapitan.refs.secrets.vaultkv import VaultBackend
 
-                self.register_backend(VaultBackend(self.path))
+                self.register_backend(VaultBackend(self.path, **ref_kwargs))
             else:
                 raise RefBackendError(f"no backend for ref type: {type_name}")
         return self.backends[type_name]
