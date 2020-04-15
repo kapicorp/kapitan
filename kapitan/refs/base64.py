@@ -31,6 +31,7 @@ class Base64Ref(PlainRef):
         self.type_name = "base64"
         self.encoding = kwargs.get("encoding", "original")
         self.embed_refs = kwargs.get("embed_refs", False)
+
         # TODO data should be bytes only
         if from_base64:
             self.data = data
@@ -41,13 +42,16 @@ class Base64Ref(PlainRef):
         # TODO data should be bytes only
         return base64.b64decode(self.data).decode()
 
+    def compile_embedded(self):
+        # TODO support subvars (@sub.var1)
+        dump_data = base64.b64encode(json.dumps(self.dump()).encode()).decode()
+        return f"?{{{self.type_name}:{dump_data}:embedded}}"
+
     def compile(self):
         # XXX will only work if object read via backend
 
         if self.embed_refs:
-            # TODO support subvars (@sub.var1)
-            dump_data = base64.b64encode(json.dumps(self.dump()).encode()).decode()
-            return f"?{{{self.type_name}:{dump_data}:embedded}}"
+            return self.compile_embedded()
 
         return f"?{{{self.type_name}:{self.path}:{self.hash[:8]}}}"
 

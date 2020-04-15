@@ -163,7 +163,7 @@ class GoogleKMSSecret(Base64Ref):
 
 
 class GoogleKMSBackend(Base64RefBackend):
-    def __init__(self, path, ref_type=GoogleKMSSecret):
+    def __init__(self, path, ref_type=GoogleKMSSecret, **ref_kwargs):
         "init GoogleKMSBackend ref backend type"
-        super().__init__(path, ref_type)
+        super().__init__(path, ref_type, **ref_kwargs)
         self.type_name = "gkms"
