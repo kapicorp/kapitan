@@ -145,7 +145,7 @@ class AWSKMSSecret(Base64Ref):
 
 
 class AWSKMSBackend(Base64RefBackend):
-    def __init__(self, path, ref_type=AWSKMSSecret):
+    def __init__(self, path, ref_type=AWSKMSSecret, **ref_kwargs):
         "init AWSKMSBackend ref backend type"
-        super().__init__(path, ref_type)
+        super().__init__(path, ref_type, **ref_kwargs)
         self.type_name = "awskms"

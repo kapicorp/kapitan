@@ -223,7 +223,7 @@ class VaultSecret(Base64Ref):
 
 
 class VaultBackend(Base64RefBackend):
-    def __init__(self, path, ref_type=VaultSecret):
+    def __init__(self, path, ref_type=VaultSecret, **ref_kwargs):
         "init VaultBackend ref backend type"
-        super().__init__(path, ref_type)
+        super().__init__(path, ref_type, **ref_kwargs)
         self.type_name = "vaultkv"
