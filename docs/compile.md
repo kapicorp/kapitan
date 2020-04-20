@@ -190,20 +190,20 @@ It's up to you to decide what the output is.
 
 Kadet is an extensible input type that enables you to generate templates using python. The key benefit being the ability to utilize familiar programing principles while having access to kapitan's powerful inventory system. 
 
-A library that defines resources as classes using the Base Object class (BaseObj) is required. These can then be utilized within components to render output. 
+A library that defines resources as classes using the Base Object class is required. These can then be utilized within components to render output. 
 
-The following functions are provided by the class BaseObj.
+The following functions are provided by the class `BaseObj()`.
 
 Method definitions:
 
-* new: Provides parameter checking capabilities
-* body: Enables in-depth parameter configuration
+* `new()`: Provides parameter checking capabilities
+* `body()`: Enables in-depth parameter configuration
 
 Method functions:
 
-* root: Defines values that will be compiled into the output
-* need: Ability to check & define input parameters
-* update_root: Updates the template file associated with the class
+* `root()`: Defines values that will be compiled into the output
+* `need()`: Ability to check & define input parameters
+* `update_root()`: Updates the template file associated with the class
 
 A class can be a resource such as a kubernetes Deployment as shown here:
 
@@ -222,11 +222,11 @@ class Deployment(BaseObj):
         self.root.spec.template.spec.containers = self.kwargs.containers
 ```
 
-The deployment is an BaseObj which has two main functions. New can be used to perform parameter validation & template compilation. Body is utilized to set those parameters to be rendered. `self.root.metadata.name` is a direct reference to a key in the corresponding yaml.
+The deployment is an `BaseObj()` which has two main functions. New can be used to perform parameter validation & template compilation. Body is utilized to set those parameters to be rendered. `self.root.metadata.name` is a direct reference to a key in the corresponding yaml.
 
 We have established that you may define a library which holds information on classes that represent resource objects. The library is then utilized by defined components to generate the required output.
 
-Here we import `kubelib` using `load_from_search_paths`. We then use kubelib to access the defined object classes. In this instance the Deployment & Service resource class.
+Here we import `kubelib` using `load_from_search_paths()`. We then use kubelib to access the defined object classes. In this instance the Deployment & Service resource class.
 
 ```
 ...
@@ -248,7 +248,7 @@ def main():
 ```
 
 Kadet uses a library called [addict](https://github.com/mewwts/addict) to organise the parameters inline with the yaml templates.
-As shown above we create a BaseObject named output. We update the root of this output with the data structure returned from kubelib. This output is what is then returned to kapitan to be compiled into the desired output type.
+As shown above we create a `BaseObject()` named output. We update the root of this output with the data structure returned from kubelib. This output is what is then returned to kapitan to be compiled into the desired output type.
 
 For a deeper understanding of this input type please review the proposal document at [kadet](/kap_proposals/kap_0_kadet) & the examples located at `examples/kubernetes/components/nginx`.
 
