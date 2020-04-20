@@ -194,16 +194,16 @@ A library that defines resources as classes using the Base Object class (BaseObj
 
 The following functions are provided by the class BaseObj.
 
-Method definitions:<br/>
+Method definitions:
 
-* new: Provides parameter checking capabilities<br/>
-* body: Enables in-depth parameter configuration<br/>
+* new: Provides parameter checking capabilities
+* body: Enables in-depth parameter configuration
 
-Method functions:<br/>
+Method functions:
 
-* root: Defines values that will be compiled into the output<br/>
-* need: Ability to check & define input parameters<br/>
-* update_root: Updates the template file associated with the class<br/>
+* root: Defines values that will be compiled into the output
+* need: Ability to check & define input parameters
+* update_root: Updates the template file associated with the class
 
 A class can be a resource such as a kubernetes Deployment as shown here:
 
@@ -222,7 +222,7 @@ class Deployment(BaseObj):
         self.root.spec.template.spec.containers = self.kwargs.containers
 ```
 
-The deployment is an BaseObj which has two main funcations. New can be used to perform parameter validation & template compilation. Body is utilized to set those parameters to be rendered. `self.root.metadata.name` is a direct reference to a key in the corresponding yaml.
+The deployment is an BaseObj which has two main functions. New can be used to perform parameter validation & template compilation. Body is utilized to set those parameters to be rendered. `self.root.metadata.name` is a direct reference to a key in the corresponding yaml.
 
 We have established that you may define a library which holds information on classes that represent resource objects. The library is then utilized by defined components to generate the required output.
 
@@ -247,10 +247,10 @@ def main():
     return output
 ```
 
-Kadet uses a library called addict to organise the parameters inline with the yaml templates.
+Kadet uses a library called [addict](https://github.com/mewwts/addict) to organise the parameters inline with the yaml templates.
 As shown above we create a BaseObject named output. We update the root of this output with the data structure returned from kubelib. This output is what is then returned to kapitan to be compiled into the desired output type.
 
-For a deeper understanding of this input type please review the proposal document at [kadet](/kap_proposals/kap_0_kadet/) & the examples located at `examples/kubernetes/components/nginx`.
+For a deeper understanding of this input type please review the proposal document at [kadet](/kap_proposals/kap_0_kadet) & the examples located at `examples/kubernetes/components/nginx`.
 
 *Supported output types:*
 
