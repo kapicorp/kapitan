@@ -1,3 +1,9 @@
+## 0.27.1:
+- Display full path of target after compilation (#464)
+- Always re-pull dependencies with --fetch (#465)
+- Support search paths in jinja2 (#474)
+- This release might add extra whitespace to some of your jinja2 generated configurations.
+
 ## 0.27.1-rc.0:
 - Display full path of target after compilation (#464)
 - Always re-pull dependencies with --fetch (#465)
