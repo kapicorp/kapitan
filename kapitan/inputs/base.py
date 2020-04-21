@@ -118,12 +118,17 @@ class CompilingFile(object):
         else:
             obj = self.revealer.compile_obj(obj, target_name=target_name)
 
-        if isinstance(obj, Mapping):
-            yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
-        else:
-            yaml.dump_all(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+        if obj:
+            if isinstance(obj, Mapping):
+                yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+            else:
+                yaml.dump_all(
+                    obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False
+                )
 
-        logger.debug("Wrote %s", self.fp.name)
+            logger.debug("Wrote %s", self.fp.name)
+        else:
+            logger.debug("%s is Empty, skipped writing output", self.fp.name)
 
     def write_json(self, obj):
         """recursively hash or reveal refs and convert obj to json and write to file"""
@@ -134,8 +139,11 @@ class CompilingFile(object):
             obj = self.revealer.reveal_obj(obj)
         else:
             obj = self.revealer.compile_obj(obj, target_name=target_name)
-        json.dump(obj, self.fp, indent=indent)
-        logger.debug("Wrote %s", self.fp.name)
+        if obj:
+            json.dump(obj, self.fp, indent=indent)
+            logger.debug("Wrote %s", self.fp.name)
+        else:
+            logger.debug("%s is Empty, skipped writing output", self.fp.name)
 
 
 class CompiledFile(object):
