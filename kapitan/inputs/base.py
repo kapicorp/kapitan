@@ -126,7 +126,7 @@ class CompilingFile(object):
 
             logger.debug("Wrote %s", self.fp.name)
         else:
-            logger.debug("%s is None, didn't write", self.fp.name)
+            logger.debug("%s is Empty, skipped writing output", self.fp.name)
 
     def write_json(self, obj):
         """recursively hash or reveal refs and convert obj to json and write to file"""
@@ -141,7 +141,7 @@ class CompilingFile(object):
             json.dump(obj, self.fp, indent=indent)
             logger.debug("Wrote %s", self.fp.name)
         else:
-            logger.debug("%s is None, didn't write", self.fp.name)
+            logger.debug("%s is Empty, skipped writing output", self.fp.name)
 
 class CompiledFile(object):
     def __init__(self, name, ref_controller, **kwargs):
