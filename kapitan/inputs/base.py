@@ -122,7 +122,9 @@ class CompilingFile(object):
             if isinstance(obj, Mapping):
                 yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
             else:
-                yaml.dump_all(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+                yaml.dump_all(
+                    obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False
+                )
 
             logger.debug("Wrote %s", self.fp.name)
         else:
@@ -142,6 +144,7 @@ class CompilingFile(object):
             logger.debug("Wrote %s", self.fp.name)
         else:
             logger.debug("%s is Empty, skipped writing output", self.fp.name)
+
 
 class CompiledFile(object):
     def __init__(self, name, ref_controller, **kwargs):
