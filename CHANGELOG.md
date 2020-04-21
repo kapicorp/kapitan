@@ -1,3 +1,6 @@
+## 0.27.2:
+- Check if input obj is None before writing to disk (#485)
+
 ## 0.27.1:
 - Display full path of target after compilation (#464)
 - Always re-pull dependencies with --fetch (#465)
