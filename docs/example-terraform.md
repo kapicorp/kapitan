@@ -1,19 +1,19 @@
 # Terraform example
 
-We will be looking at how to use  kapitan to compile terraform files with Jsonnet as the input type. It's possible to use other input types, however Jsonnet is recommended. For example we could use the kadet input to generate terraform files but this would require 
-templates to be written in yaml then to rendered into json. Jsonnet is the most suitable input type as you will see due to its functional nature. The only appropriate output type is `json` since this is the format that terraform consumes.
+We will be looking at how to use Kapitan to compile terraform files with Jsonnet as the input type. It's possible to use other input types, however, Jsonnet is recommended. 
+For example, we could use the Kadet input to generate terraform files but this would require templates to be written in YAML then to rendered into JSON.
+Jsonnet is the most suitable input type as you will see due to its functional nature. The only appropriate output type is JSON since this is the format that Terraform consumes.
 
 ## Directory structure
 
-There is a number of examples available in `examples/terraform`. This will be our working directory for this documentation. The directory structure is as follows:
-
+There are several examples available in `examples/terraform`. This will be our working directory for this documentation. The directory structure is as follows:
 ```
 ├── inventory
 └── templates
 ```
 
-It is possible to further extend this locally to include a `lib` directory where a `terraform.libjsonnet` file can be stored for use. This is generally dependent on the project scope & organisational patterns. 
-We will describe in more detail the role of each these folders in the following sections.
+It is possible to further extend this locally to include a `lib` directory where a `terraform.libjsonnet` file can be stored for use. This is generally dependent on the project scope & organizational patterns. 
+We will describe in more detail the role of each of these folders in the following sections.
 
 ### inventory
 
@@ -40,11 +40,11 @@ This folder contains the inventory files used to render the templates for each t
         └── project3.yml
 ```
 
-The targets directory enables us to define various projects. We are able to specify each project as an environment such as `dev`, `staging` and `production` with each having unique parameters.
+The `targets` directory enables us to define various projects. We can specify each project as an environment such as `dev`, `staging` and `production` with each having unique parameters.
 
 The following is an example targets file. `type.terraform` is what defines the entry point into the main Jsonnet template file. The parameters in the file `inventory/targets/develop/project1.yml` will then be utilized to set the environmental specific provider/resource configuration.
-We define the default region & zone for terraform's provider configuration. The default dns ttl for the dns resource is also configured for the development environment. 
-
+We define the default region & zone for terraform's provider configuration. The default DNS TTL for the DNS resource is also configured for the development environment.
+ 
 ```yaml
 classes:
   - type.terraform
@@ -57,7 +57,7 @@ parameters:
   dns_default_ttl: 300
 ```
 
-In the following example we use a reclass configuration file to specify further parameters that we would like to merge into our project files. Thus we define nodes, which are stored in targets & environmental mandatory parameters stored in `classes/env/`.  The reclass config is shown below:
+In the following example, we use a reclass configuration file to specify further parameters that we would like to merge into our project files. Thus we define nodes, which are stored in targets & environmental mandatory parameters stored in `classes/env/`.  The reclass config is shown below:
 
 ```yaml
 storage_type: yaml_fs
@@ -124,7 +124,7 @@ The main thing to understand about terraform components is that they are strictl
 }
 ```
 
-Each individual Jsonnet file defines a resource and then it is imported. Jsonnet then filters through all the inventory parameters to find specific keys that have been defined. Lets take for example the cloudbuild resource: 
+Each Jsonnet file defines a resource and then it is imported. Jsonnet then filters through all the inventory parameters to find specific keys that have been defined. Let's take for example the cloud build resource: 
 
 ```json5
 local cloudbuild = import "cloudbuild.jsonnet";
@@ -184,4 +184,4 @@ kapitan can function with your CI/CD systems. It generally depends on your organ
 
 ### secrets
 
-Although there is no particular secrets in this instance. It is possible to utilize Kapitan secrets as defined in [secrets management](secrets.md). There is truly no limit to the extensibility of this tool .
+Although there are no particular secrets in this instance. It is possible to utilize Kapitan secrets as defined in [secrets management](secrets.md). There is truly no limit to the extensibility of this tool.
