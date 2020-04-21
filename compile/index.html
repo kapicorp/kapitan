@@ -961,7 +961,59 @@ Compile error: failed to compile target: minikube-mysql
 
 <p>It's up to you to decide what the output is.</p>
 <h3 id="kadet">kadet</h3>
-<p>This input type is experimental. See <a href="https://github.com/deepmind/kapitan/pull/190">https://github.com/deepmind/kapitan/pull/190</a> for its usage.</p>
+<p>Kadet is an extensible input type that enables you to generate templates using python. The key benefit being the ability to utilize familiar programing principles while having access to kapitan's powerful inventory system. </p>
+<p>A library that defines resources as classes using the Base Object class is required. These can then be utilized within components to render output. </p>
+<p>The following functions are provided by the class <code>BaseObj()</code>.</p>
+<p>Method definitions:</p>
+<ul>
+<li><code>new()</code>: Provides parameter checking capabilities</li>
+<li><code>body()</code>: Enables in-depth parameter configuration</li>
+</ul>
+<p>Method functions:</p>
+<ul>
+<li><code>root()</code>: Defines values that will be compiled into the output</li>
+<li><code>need()</code>: Ability to check &amp; define input parameters</li>
+<li><code>update_root()</code>: Updates the template file associated with the class</li>
+</ul>
+<p>A class can be a resource such as a kubernetes Deployment as shown here:</p>
+<div class="highlight"><pre><span></span><code>class Deployment(BaseObj):
+    def new(self):
+        self.need(&quot;name&quot;, &quot;name string needed&quot;)
+        self.need(&quot;labels&quot;, &quot;labels dict needed&quot;)
+        self.need(&quot;containers&quot;, &quot;containers dict needed&quot;)
+        self.update_root(&quot;lib/kubelib/deployment.yml&quot;)
+
+    def body(self):
+        self.root.metadata.name = self.kwargs.name
+        self.root.metadata.namespace = inv.parameters.target_name
+        self.root.spec.template.metadata.labels = self.kwargs.labels
+        self.root.spec.template.spec.containers = self.kwargs.containers
+</code></pre></div>
+
+<p>The deployment is an <code>BaseObj()</code> which has two main functions. New can be used to perform parameter validation &amp; template compilation. Body is utilized to set those parameters to be rendered. <code>self.root.metadata.name</code> is a direct reference to a key in the corresponding yaml.</p>
+<p>We have established that you may define a library which holds information on classes that represent resource objects. The library is then utilized by defined components to generate the required output.</p>
+<p>Here we import <code>kubelib</code> using <code>load_from_search_paths()</code>. We then use kubelib to access the defined object classes. In this instance the Deployment &amp; Service resource class.</p>
+<div class="highlight"><pre><span></span><code>...
+kubelib = kadet.load_from_search_paths(&quot;kubelib&quot;)
+...
+name = &quot;nginx&quot;
+labels = kadet.BaseObj.from_dict({&quot;app&quot;: name})
+nginx_container = kubelib.Container(
+    name=name, image=inv.parameters.nginx.image, ports=[{&quot;containerPort&quot;: 80}]
+)
+...
+def main():
+    output = kadet.BaseObj()
+    output.root.nginx_deployment = kubelib.Deployment(name=name, labels=labels, containers=[nginx_container])
+    output.root.nginx_service = kubelib.Service(
+        name=name, labels=labels, ports=[svc_port], selector=svc_selector
+    )
+    return output
+</code></pre></div>
+
+<p>Kadet uses a library called <a href="https://github.com/mewwts/addict">addict</a> to organise the parameters inline with the yaml templates.
+As shown above we create a <code>BaseObject()</code> named output. We update the root of this output with the data structure returned from kubelib. This output is what is then returned to kapitan to be compiled into the desired output type.</p>
+<p>For a deeper understanding of this input type please review the proposal document at <a href="/kap_proposals/kap_0_kadet">kadet</a> &amp; the examples located at <code>examples/kubernetes/components/nginx</code>.</p>
 <p><em>Supported output types:</em></p>
 <ul>
 <li>yaml (default)</li>
