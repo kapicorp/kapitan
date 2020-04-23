@@ -53,53 +53,46 @@ class Jsonnet(InputType):
             output_obj = prune_empty(output_obj)
             logger.debug("Pruned output for: %s", file_path)
 
-        if not isinstance(output_obj, dict):
-            tmp_output_obj = output_obj
-            # assume that the output filename is the
-            # same as the input jsonnet filename
-            filename = os.path.splitext(os.path.basename(file_path))[0]
-            output_obj = {}
-            output_obj[filename] = tmp_output_obj
-
-        for item_key, item_value in output_obj.items():
-            # write each item to disk
-            if output == "json":
-                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
-                with CompiledFile(
-                    file_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
-                    fp.write_json(item_value)
-            elif output == "yaml":
-                file_path = os.path.join(compile_path, "%s.%s" % (item_key, "yml"))
-                with CompiledFile(
-                    file_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
-                    fp.write_yaml(item_value)
-            elif output == "plain":
-                file_path = os.path.join(compile_path, "%s" % item_key)
-                with CompiledFile(
-                    file_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
-                    fp.write(item_value)
-            else:
-                raise ValueError(
-                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'"
-                )
+        if isinstance(output_obj, dict):
+            for item_key, item_value in output_obj.items():
+                # write each item to disk
+                if output == "json":
+                    file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
+                    with CompiledFile(
+                        file_path,
+                        self.ref_controller,
+                        mode="w",
+                        reveal=reveal,
+                        target_name=target_name,
+                        indent=indent,
+                    ) as fp:
+                        fp.write_json(item_value)
+                elif output == "yaml":
+                    file_path = os.path.join(compile_path, "%s.%s" % (item_key, "yml"))
+                    with CompiledFile(
+                        file_path,
+                        self.ref_controller,
+                        mode="w",
+                        reveal=reveal,
+                        target_name=target_name,
+                        indent=indent,
+                    ) as fp:
+                        fp.write_yaml(item_value)
+                elif output == "plain":
+                    file_path = os.path.join(compile_path, "%s" % item_key)
+                    with CompiledFile(
+                        file_path,
+                        self.ref_controller,
+                        mode="w",
+                        reveal=reveal,
+                        target_name=target_name,
+                        indent=indent,
+                    ) as fp:
+                        fp.write(item_value)
+                else:
+                    raise ValueError(
+                        f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'"
+                    )
 
     def default_output_type(self):
         return "yaml"
