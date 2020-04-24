@@ -21,6 +21,7 @@ nav:
   - Proposals: proposals.md
 - Examples:
     - Kubernetes: example-kubernetes.md
+    - Terraform: example-terraform.md
 
 
 markdown_extensions:
