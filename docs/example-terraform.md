@@ -1,8 +1,9 @@
 # Terraform example
 
 We will be looking at how to use Kapitan to compile terraform files with Jsonnet as the input type. It's possible to use other input types, however, Jsonnet is recommended. 
-For example, we could use the Kadet input to generate terraform files but this would require templates to be written in YAML then to rendered into JSON.
-Jsonnet is the most suitable input type as you will see due to its functional nature. The only appropriate output type is JSON since this is the format that Terraform consumes.
+For example, we could use the Kadet input to generate terraform files but this would require templates to be written in YAML then rendered into JSON.
+It is possible to allow Kadet to consume JSON as an input. This enables you to integrate your organizations pre-existing terraform JSON file's as templates.
+Jsonnet is the most straightforward input type as you will see due to its functional nature. The only appropriate output type is JSON since this is the format that Terraform consumes.
 
 ## Directory structure
 
@@ -12,7 +13,7 @@ There are several examples available in `examples/terraform`. This will be our w
 └── templates
 ```
 
-It is possible to further extend this locally to include a `lib` directory where a `terraform.libjsonnet` file can be stored for use. This is generally dependent on the project scope & organizational patterns. 
+It is possible to further extend this locally to include a `lib` directory where a `terraform.libjsonnet` file can be stored for use. This is generally dependent on the project scope and organizational patterns. 
 We will describe in more detail the role of each of these folders in the following sections.
 
 ### inventory
@@ -43,7 +44,7 @@ This folder contains the inventory files used to render the templates for each t
 The `targets` directory enables us to define various projects. We can specify each project as an environment such as `dev`, `staging` and `production` with each having unique parameters.
 
 The following is an example targets file. `type.terraform` is what defines the entry point into the main Jsonnet template file. The parameters in the file `inventory/targets/develop/project1.yml` will then be utilized to set the environmental specific provider/resource configuration.
-We define the default region & zone for terraform's provider configuration. The default DNS TTL for the DNS resource is also configured for the development environment.
+We define the default region and zone for terraform's provider configuration. The default DNS TTL for the DNS resource is also configured for the development environment.
  
 ```yaml
 classes:
@@ -57,7 +58,7 @@ parameters:
   dns_default_ttl: 300
 ```
 
-In the following example, we use a reclass configuration file to specify further parameters that we would like to merge into our project files. Thus we define nodes, which are stored in targets & environmental mandatory parameters stored in `classes/env/`.  The reclass config is shown below:
+In the following example, we use a reclass configuration file to specify further parameters that we would like to merge into our project files. Thus we define nodes, which are stored in targets and environmental mandatory parameters stored in `classes/env/`.  The reclass config is shown below:
 
 ```yaml
 storage_type: yaml_fs
@@ -141,7 +142,7 @@ Assuming that one of the configuration files for a specific environment has the 
 These parameters will then be interpreted by the `cloudbuild.jsonnet` template. 
 A file named `cloudbuild.tf.json` will then be compiled using the parameters associated with the `cloudbuild` parameter key. 
 
-It is important to understand that once you have a deeper understanding of Kapitan's capabilities, you can organize these files to a style & logic suitable for your organization.
+It is important to understand that once you have a deeper understanding of Kapitan's capabilities, you can organize these files to a style and logic suitable for your organization.
 
 ### templates, docs, scripts
 
@@ -179,9 +180,9 @@ export TF_DATA_DIR=$(realpath -m ${DIR}/../../../.TF_DATA_DIR/{{inventory.parame
 export OUTPUT_DIR=$(realpath -m ${DIR}/../../../output/{{inventory.parameters.name}}) # Folder for storing output files (preferable outside of compiled)
 ```
 
-It is good practice to utilize this method to improve integration with various CLI based tools. Scripts help to ensure terraform &
+It is good practice to utilize this method to improve integration with various CLI based tools. Scripts help to ensure terraform and
 kapitan can function with your CI/CD systems. It generally depends on your organizational workflows. 
 
 ### secrets
 
-Although there are no particular secrets in this instance. It is possible to utilize Kapitan secrets as defined in [secrets management](secrets.md). There is truly no limit to the extensibility of this tool.
+Although there are no particular secrets in this instance. It is possible to utilize Kapitan secrets as defined in [secrets management](secrets.md).
