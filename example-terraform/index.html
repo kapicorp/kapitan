@@ -36,7 +36,7 @@
     
     
       
-        <title>Kapitan Overview - Kapitan documentation</title>
+        <title>Terraform - Kapitan documentation</title>
       
     
     
@@ -77,7 +77,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#main-concepts" tabindex="0" class="md-skip">
+      <a href="#terraform-example" tabindex="0" class="md-skip">
         Skip to content
       </a>
     
@@ -103,7 +103,7 @@
             </span>
             <span class="md-header-nav__topic">
               
-                Kapitan Overview
+                Terraform
               
             </span>
           
@@ -236,12 +236,10 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+  <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
     
     <label class="md-nav__link" for="nav-3">
       Getting started
@@ -257,92 +255,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Kapitan Overview
-      </label>
-    
-    <a href="./" title="Kapitan Overview" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../kapitan_overview/" title="Kapitan Overview" class="md-nav__link">
       Kapitan Overview
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-  
-    <label class="md-nav__title" for="__toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#main-concepts" class="md-nav__link">
-    Main concepts
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#inventory" class="md-nav__link">
-    Inventory
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#components-templates" class="md-nav__link">
-    Components (templates)
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typical-folder-structure" class="md-nav__link">
-    Typical Folder Structure
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#kapitan-init" class="md-nav__link">
-    kapitan init
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-kubernetes-deployment" class="md-nav__link">
-    Example: kubernetes deployment
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-      
-      
-      
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -511,10 +428,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" checked>
     
     <label class="md-nav__link" for="nav-6">
       Examples
@@ -542,11 +461,83 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../example-terraform/" title="Terraform" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Terraform
+      </label>
+    
+    <a href="./" title="Terraform" class="md-nav__link md-nav__link--active">
       Terraform
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    Directory structure
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inventory" class="md-nav__link">
+    inventory
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#components" class="md-nav__link">
+    components
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#templates-docs-scripts" class="md-nav__link">
+    templates, docs, scripts
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    secrets
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -569,13 +560,15 @@
 <nav class="md-nav md-nav--secondary">
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">Table of contents</label>
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#main-concepts" class="md-nav__link">
-    Main concepts
+  <a href="#directory-structure" class="md-nav__link">
+    Directory structure
   </a>
   
     <nav class="md-nav">
@@ -583,41 +576,28 @@
         
           <li class="md-nav__item">
   <a href="#inventory" class="md-nav__link">
-    Inventory
+    inventory
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#components-templates" class="md-nav__link">
-    Components (templates)
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typical-folder-structure" class="md-nav__link">
-    Typical Folder Structure
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#kapitan-init" class="md-nav__link">
-    kapitan init
+  <a href="#components" class="md-nav__link">
+    components
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-kubernetes-deployment" class="md-nav__link">
-    Example: kubernetes deployment
+  <a href="#templates-docs-scripts" class="md-nav__link">
+    templates, docs, scripts
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    secrets
   </a>
   
 </li>
@@ -643,91 +623,160 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/deepmind/kapitan/edit/master/docs/kapitan_overview.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                  <a href="https://github.com/deepmind/kapitan/edit/master/docs/example-terraform.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
-                  <h1>Kapitan Overview</h1>
-                
-                <h3 id="main-concepts">Main concepts</h3>
-<p><img alt="kapitan_overview" src="../images/kapitan_overview.png" /></p>
-<h4 id="inventory">Inventory</h4>
-<p>Inventory is a hierarchical database of variables, defined in yaml files, that are passed to the targets during compilation. This will be explained in detail in the <a href="../inventory/">inventory</a> section of the documentation.</p>
-<h4 id="components-templates">Components (templates)</h4>
-<p>Components will receive the inventory values for each individual target and gets rendered and saved into the <code>compiled</code> directory. The types of available templates and how to use them is discussed in the <a href="../compile/">compile operation</a> section of the documentation.</p>
-<h3 id="typical-folder-structure">Typical Folder Structure</h3>
-<h4 id="kapitan-init">kapitan init</h4>
-<p>To start off a kapitan project, you can run <code>kapitan init --directory &lt;directory&gt;</code> to populate a new directory with the recommended kapitan folder structure.</p>
-<p>The bare minimum structure that makes use of kapitan features may look as follows:</p>
+                <h1 id="terraform-example">Terraform example</h1>
+<p>We will be looking at how to use Kapitan to compile terraform files with Jsonnet as the input type. It's possible to use other input types, however, Jsonnet is recommended. 
+For example, we could use the Kadet input to generate terraform files but this would require templates to be written in YAML then rendered into JSON.
+It is possible to allow Kadet to consume JSON as an input. This enables you to integrate your organizations pre-existing terraform JSON file's as templates.
+Jsonnet is the most straightforward input type as you will see due to its functional nature. The only appropriate output type is JSON since this is the format that Terraform consumes.</p>
+<h2 id="directory-structure">Directory structure</h2>
+<p>There are several examples available in <code>examples/terraform</code>. This will be our working directory for this documentation. The directory structure is as follows:
+<div class="highlight"><pre><span></span><code>├── inventory
+└── templates
+</code></pre></div></p>
+<p>It is possible to further extend this locally to include a <code>lib</code> directory where a <code>terraform.libjsonnet</code> file can be stored for use. This is generally dependent on the project scope and organizational patterns. 
+We will describe in more detail the role of each of these folders in the following sections.</p>
+<h3 id="inventory">inventory</h3>
+<p>This folder contains the inventory files used to render the templates for each target. The structure of this folder is as follows:</p>
 <div class="highlight"><pre><span></span><code>.
-├── components
-│   ├── mycomponent.jsonnet
-├── templates
-├── ├── README.md
-├── inventory
-│   ├── classes
-│   │   ├── common.yml
-│   └── targets
-│       ├── dev.yml
-│       ├── staging.yml
-│       └── prod.yml
-├── refs
-│   ├── targets
-│   │   ├── prod
-│   │   │   └── password
-└───├── common
-        └── example-com-tls.key
+├── classes
+│   ├── env
+│   │   ├── develop.yml
+│   │   ├── prod.yml
+│   │   └── sandbox.yml
+│   ├── provider
+│   │   └── gcp.yml
+│   └── type
+│       └── terraform.yml
+├── reclass-config.yml
+└── targets
+    ├── develop
+    │   └── project1.yml
+    ├── prod
+    │   └── project2.yml
+    └── sandbox
+        └── project3.yml
 </code></pre></div>
 
-<ul>
-<li><code>components</code>: stores jsonnet files each of which corresponds to an application (for example)</li>
-<li><code>templates</code>: stores Jinja2 and Kadet templates</li>
-<li><code>inventory/targets</code>: stores target files</li>
-<li><code>inventory/classes</code>: stores inventory values to be inherited by targets</li>
-<li><code>refs</code>: stores secrets referenced inside the inventory</li>
-</ul>
-<h4 id="example-kubernetes-deployment">Example: kubernetes deployment</h4>
-<p>Refer to the structure below for more production-like uses of kapitan for kubernetes deployment:</p>
-<div class="highlight"><pre><span></span><code>.
-├── components
-│   ├── elasticsearch
-│   │   ├── configmap.jsonnet
-│   │   ├── deployment.jsonnet
-│   │   ├── main.jsonnet
-│   │   └── service.jsonnet
-│   └── nginx
-│       ├── configmap.jsonnet
-│       ├── deployment.jsonnet
-│       ├── main.jsonnet
-│       ├── nginx.conf.j2
-│       └── service.jsonnet
-├── inventory
-│   ├── classes
-│   │   ├── cluster
-│   │   │   ├── cluster1.yml
-│   │   │   └── cluster2.yml
-│   │   ├── component
-│   │   │   ├── elasticsearch.yml
-│   │   │   ├── nginx.yml
-│   │   │   └── zookeeper.yml
-│   │   └── environment
-│   │       ├── dev.yml
-│   │       └── prod.yml
-│   └── targets
-│       ├── dev-cluster1-elasticsearch.yml
-│       ├── prod-cluster1-elasticsearch.yml
-│       └── prod-cluster2-frontend.yml
-├── refs
-│   ├── targets
-│   │   ├── prod-cluster1-elasticsearch
-│   │   │   └── password
-│   ├── common
-│   │   └── example-com-tls.key
-├── lib
-    ├── kapitan.libjsonnet
-    └── kube.libjsonnet
+<p>The <code>targets</code> directory enables us to define various projects. We can specify each project as an environment such as <code>dev</code>, <code>staging</code> and <code>production</code> with each having unique parameters.</p>
+<p>The following is an example targets file. <code>type.terraform</code> is what defines the entry point into the main Jsonnet template file. The parameters in the file <code>inventory/targets/develop/project1.yml</code> will then be utilized to set the environmental specific provider/resource configuration.
+We define the default region and zone for terraform's provider configuration. The default DNS TTL for the DNS resource is also configured for the development environment.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">type.terraform</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+  <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">project1</span>
+  <span class="nt">region</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">europe-west2</span>
+  <span class="nt">zone</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">europe-west2-a</span>
+
+  <span class="nt">dns_default_ttl</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">300</span>
 </code></pre></div>
 
-<p>The use of each file in this folder will become clear in the the subsequent documentations.</p>
+<p>In the following example, we use a reclass configuration file to specify further parameters that we would like to merge into our project files. Thus we define nodes, which are stored in targets and environmental mandatory parameters stored in <code>classes/env/</code>.  The reclass config is shown below:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">storage_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yaml_fs</span>
+<span class="nt">pretty_print</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="nt">output</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yaml</span>
+<span class="nt">inventory_base_uri</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">.</span>
+<span class="nt">nodes_uri</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">targets</span>
+<span class="nt">classes_uri</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">classes</span>
+<span class="nt">compose_node_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">class_mappings</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">develop/*                          env.develop</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">prod/*                             env.prod</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">sandbox/*                          env.sandbox</span>
+</code></pre></div>
+
+<p>The following class <code>provider.gcp</code> will be found in all files in this path since it is a common configuration for the cloud authentication module.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">provider.gcp</span>
+</code></pre></div>
+
+<p>Further classes that group parameters together can be included. To assist in further refining the configuration. </p>
+<h3 id="components">components</h3>
+<p>We tend to use components as a method to organize Jsonnet files. This is not mandatory since it is possible to configure Kapitan to look for input files wherever you would like.
+You can have these in any path just ensure you define that path in <code>inventory/classes/type/terraform.yml</code>.</p>
+<p>The templates folder is where the Jsonnet is located in this instance as shown below:</p>
+<div class="highlight"><pre><span></span><code>.
+├── cloudbuild.jsonnet
+├── dns.jsonnet
+├── iam.jsonnet
+├── iam_service_account.jsonnet
+├── kms.jsonnet
+├── kubernetes.jsonnet
+├── logging.jsonnet
+├── main.jsonnet
+├── monitoring.jsonnet
+├── org_iam.jsonnet
+├── output.jsonnet
+├── provider.jsonnet
+├── pubsub.jsonnet
+├── README.md.j2
+└── storage.jsonnet
+</code></pre></div>
+
+<p>The main thing to understand about terraform components is that they are strictly handled by Jsonnet for simplicity. The rendering logic is as follows:</p>
+<div class="highlight"><pre><span></span><code>{
+  &quot;output.tf&quot;: output,
+  &quot;provider.tf&quot;: provider,
+  [if name_in_resoures(&quot;cloudbuild&quot;) then &quot;cloudbuild.tf&quot;]: cloudbuild,
+  [if name_in_resoures(&quot;container&quot;) then &quot;kubernetes.tf&quot;]: kubernetes,
+  [if name_in_resoures(&quot;dns&quot;) then &quot;dns.tf&quot;]: dns,
+  [if name_in_resoures(&quot;iam&quot;) &amp;&amp; &quot;serviceaccounts&quot; in p.resources.iam then &quot;iam_service_account.tf&quot;]: iam_service_account,
+...
+  [if name_in_resoures(&quot;pubsub&quot;) then &quot;pubsub.tf&quot;]: pubsub,
+  [if name_in_resoures(&quot;storage&quot;) then &quot;storage.tf&quot;]: storage,
+}
+</code></pre></div>
+
+<p>Each Jsonnet file defines a resource and then it is imported. Jsonnet then filters through all the inventory parameters to find specific keys that have been defined. Let's take for example the cloud build resource: </p>
+<div class="highlight"><pre><span></span><code>local cloudbuild = import &quot;cloudbuild.jsonnet&quot;;
+...
+{
+  &quot;output.tf&quot;: output,
+  &quot;provider.tf&quot;: provider,
+  [if name_in_resoures(&quot;cloudbuild&quot;) then &quot;cloudbuild.tf&quot;]: cloudbuild,
+...
+}
+</code></pre></div>
+
+<p>Assuming that one of the configuration files for a specific environment has the parameter key <code>cloudbuild</code> set. 
+These parameters will then be interpreted by the <code>cloudbuild.jsonnet</code> template. 
+A file named <code>cloudbuild.tf.json</code> will then be compiled using the parameters associated with the <code>cloudbuild</code> parameter key. </p>
+<p>It is important to understand that once you have a deeper understanding of Kapitan's capabilities, you can organize these files to a style and logic suitable for your organization.</p>
+<h3 id="templates-docs-scripts">templates, docs, scripts</h3>
+<p>Jinja2 is used to generate documentation that sources information from kapitan's inventory. This enables the ability to have dynamic documentation based on your infrastructure configuration changes.
+In <code>templates/terraform</code> you will find <code>README.md.j2</code>. This is used to generate a <code>README.md</code> template to be utilized by terraform's output module.</p>
+<p>The following is what generates the documentation:</p>
+<div class="highlight"><pre><span></span><code>  data: {
+    template_file: {
+      readme: {
+        template: kap.jinja2_template(&quot;templates/terraform/README.md.j2&quot;, inv),
+      },
+    },
+  },
+
+  output: {
+    &quot;README.md&quot;: {
+      value: &quot;${data.template_file.readme.rendered}&quot;,
+      sensitive: true,
+    },
+  },
+</code></pre></div>
+
+<p>The function <code>kap.jinja2_template()</code> (imported from <code>kapitan.libjsonnet</code>) is used to convert and interpreter the <code>README.md.j2</code> file into a raw string using the inventory for evaluation logic.</p>
+<p>Based on the various parameters jinja2 decides which sections of the readme should be included. 
+When terraform runs it will use the output module to generate your desired <code>README.md</code> using information from terraform's state.</p>
+<p>Scripts are located in the <code>scripts</code> directory. They are compiled using jinja2 as the templating language. An example is as follows:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">TF_DATA_DIR</span><span class="o">=</span><span class="k">$(</span>realpath -m <span class="si">${</span><span class="nv">DIR</span><span class="si">}</span>/../../../.TF_DATA_DIR/<span class="o">{{</span>inventory.parameters.name<span class="o">}}</span><span class="k">)</span> <span class="c1"># Folder for TF initialization (preferable outside of compiled)</span>
+<span class="nb">export</span> <span class="nv">OUTPUT_DIR</span><span class="o">=</span><span class="k">$(</span>realpath -m <span class="si">${</span><span class="nv">DIR</span><span class="si">}</span>/../../../output/<span class="o">{{</span>inventory.parameters.name<span class="o">}}</span><span class="k">)</span> <span class="c1"># Folder for storing output files (preferable outside of compiled)</span>
+</code></pre></div>
+
+<p>It is good practice to utilize this method to improve integration with various CLI based tools. Scripts help to ensure terraform and
+kapitan can function with your CI/CD systems. It generally depends on your organizational workflows. </p>
+<h3 id="secrets">secrets</h3>
+<p>Although there are no particular secrets in this instance. It is possible to utilize Kapitan secrets as defined in <a href="../secrets/">secrets management</a>.</p>
                 
                   
                 
@@ -749,7 +798,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../contributing/" title="Contributing" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../example-kubernetes/" title="Kubernetes" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -758,25 +807,11 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Contributing
+                Kubernetes
               </span>
             </div>
           </a>
         
-        
-          <a href="../inventory/" title="Inventory" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Inventory
-              </span>
-            </div>
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
-            </div>
-          </a>
         
       </nav>
     </div>
