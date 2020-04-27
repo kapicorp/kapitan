@@ -21,6 +21,8 @@ from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashM
 from kapitan.refs.functions import eval_func
 from kapitan.utils import PrettyDumper, list_all_paths
 
+from pdb import set_trace
+
 try:
     from yaml import CSafeLoader as YamlLoader
 except ImportError:
@@ -29,7 +31,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token||func:param1:param2}
-REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@]+)([\|\|\w\:\.\-\/]+)?=*})"
+REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@=]+)([\|\|\w\:\.\-\/]+)?=*})"
 REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
 
@@ -437,6 +439,20 @@ class RefController(object):
         type_name = attrs[0]
 
         return type_name
+    
+    def ref_from_embedded(self, type_name, b64_path):
+        # unpack base64&json data from b64_path
+        # pass unpacked data, kwargs into a new ref
+        json_data  = base64.b64decode(path).decode()
+        json_data = json.loads(json_data)
+        backend = self._get_backend(type_name)
+        data = json_data.pop("data").encode()
+        encoding = json_data.pop("encoding")
+        is_base64 = (encoding == "base64")
+        json_data.pop("type")
+        ref = backend.ref_type(data, from_base64=is_base64, **json_data)
+        return ref
+
 
     def _get_from_token(self, token):
         attrs = token.split(":")
@@ -453,14 +469,18 @@ class RefController(object):
             type_name = attrs[0]
             path = attrs[1]
             hash = attrs[2]
-            backend = self._get_backend(type_name)
-            ref = backend[path]
-            if ref.hash[:8] == hash:
-                return ref
+
+            if hash == "embedded":
+                return ref_from_embedded(type_name, path)
             else:
-                raise RefHashMismatchError(
-                    "{}: token hash does not match with stored reference hash: {}".format(token, ref.token)
-                )
+                backend = self._get_backend(type_name)
+                ref = backend[path]
+                if ref.hash[:8] == hash:
+                    return ref
+                else:
+                    raise RefHashMismatchError(
+                        "{}: token hash does not match with stored reference hash: {}".format(token, ref.token)
+                    )
         else:
             return None
 
@@ -497,7 +517,7 @@ class RefController(object):
         return ctx
 
     def __getitem__(self, key):
-        # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2} or ?{ref:my/secret/token:deadbeef}
+        # ?{ref:my/secret/token} or ?{ref:my/secret/token||func:param1:param2} or ?{ref:my/secret/token:deadbeef}
         tag, token, func_str = self.tag_params(key)
 
         with self.detailedException(key):
