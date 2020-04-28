@@ -439,10 +439,10 @@ class RefController(object):
         type_name = attrs[0]
 
         return type_name
-    
+
     def ref_from_embedded(self, type_name, b64_path):
-        # unpack base64&json data from b64_path
-        # pass unpacked data, kwargs into a new ref
+        "returns ref from embedded (base64 and json) b64_path"
+        # deserialise base64 and json data from b64_path
         json_data  = base64.b64decode(path).decode()
         json_data = json.loads(json_data)
         backend = self._get_backend(type_name)
@@ -450,9 +450,10 @@ class RefController(object):
         encoding = json_data.pop("encoding")
         is_base64 = (encoding == "base64")
         json_data.pop("type")
+        # create new ref with deserialised data and remaining keys as kwargs
         ref = backend.ref_type(data, from_base64=is_base64, **json_data)
-        return ref
 
+        return ref
 
     def _get_from_token(self, token):
         attrs = token.split(":")
