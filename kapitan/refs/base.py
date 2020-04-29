@@ -244,9 +244,12 @@ class Revealer(object):
             revealed_yaml = yaml.load(plaintext, Loader=YamlLoader)
             if not isinstance(revealed_yaml, dict):
                 raise RefError(
-                    "revealed secret is not in yaml, cannot access sub-variable" " at {}".format(subvar_path)
+                        "Revealer: revealed secret is not in yaml, cannot access sub-variable" " at {}".format(subvar_path)
                 )
-            return self._get_value_in_yaml_path(revealed_yaml, subvar_path)
+            try:
+                return self._get_value_in_yaml_path(revealed_yaml, subvar_path)
+            except KeyError:
+                raise RefError(f"Revealer: cannot access {tag} sub-variable key {subvar_path}")
 
     @lru_cache(maxsize=256)
     def _reveal_tag_without_subvar(self, tag_without_subvar):
@@ -443,7 +446,7 @@ class RefController(object):
     def ref_from_embedded(self, type_name, b64_path):
         "returns ref from embedded (base64 and json) b64_path"
         # deserialise base64 and json data from b64_path
-        json_data  = base64.b64decode(path).decode()
+        json_data  = base64.b64decode(b64_path).decode()
         json_data = json.loads(json_data)
         backend = self._get_backend(type_name)
         data = json_data.pop("data").encode()
@@ -472,7 +475,7 @@ class RefController(object):
             hash = attrs[2]
 
             if hash == "embedded":
-                return ref_from_embedded(type_name, path)
+                return self.ref_from_embedded(type_name, path)
             else:
                 backend = self._get_backend(type_name)
                 ref = backend[path]
