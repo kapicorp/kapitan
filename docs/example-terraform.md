@@ -186,3 +186,11 @@ kapitan can function with your CI/CD systems. It generally depends on your organ
 ### secrets
 
 Although there are no particular secrets in this instance. It is possible to utilize Kapitan secrets as defined in [secrets management](secrets.md).
+
+### Collaboration
+
+In some situations you may find teams that are used to writing terraform in HCL. In such situations it may be difficult to adopt Kapitan into the companies workflows.
+We can however use terraform modules to simplify the integration process. This means teams which are used to writing in HCL will not need to completely adopt Jsonnet. 
+
+Modules can be imported into projects by defining them under the `modules` parameter key as shown in `inventory/targets/sandbox`. This means teams will only have to worry about coordinating parameter inputs for different projects.
+Jsonnet provides the ability to specify conventions and validation of input parameters. This provides peace of mind to infrastructure administrators around the tools usage.
