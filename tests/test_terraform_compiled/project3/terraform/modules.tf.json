@@ -1,0 +1,31 @@
+{
+  "module": {
+    "cloud_network": {
+      "network_name": "project3-vpc",
+      "project_id": "project3",
+      "routing_mode": "GLOBAL",
+      "source": "terraform-google-modules/network/google",
+      "subnets": [
+        {
+          "subnet_ip": "10.10.10.0/24",
+          "subnet_name": "subnet-01",
+          "subnet_region": "europe-west2"
+        },
+        {
+          "subnet_ip": "10.10.20.0/24",
+          "subnet_name": "subnet-02",
+          "subnet_region": "europe-west2"
+        }
+      ],
+      "version": "~> 2.3"
+    },
+    "cloud_router": {
+      "name": "project3-router",
+      "network": "project3-vpc",
+      "project": "project3",
+      "region": "europe-west2",
+      "source": "terraform-google-modules/cloud-router/google",
+      "version": "~> 0.1"
+    }
+  }
+}
