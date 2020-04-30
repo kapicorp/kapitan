@@ -1,0 +1,9 @@
+# action.yml
+name: 'kapitan'
+description: 'kapitan compile action for github'
+runs:
+  using: 'docker'
+  image: 'docker://deepmind/kapitan:ci'
+branding:
+  icon: life-buoy
+  color: red
