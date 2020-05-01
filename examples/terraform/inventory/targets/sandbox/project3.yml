@@ -60,3 +60,28 @@ parameters:
             image_type: COS
             machine_type: n1-standard-4
             node_count: 3
+
+  modules:
+    #https://registry.terraform.io/modules/terraform-google-modules/cloud-router/google/0.1.0
+    cloud_router:
+        source: "terraform-google-modules/cloud-router/google"
+        version: "~> 0.1"
+        name: "${name}-router"
+        project: ${name}
+        region: ${region}
+        network: "${name}-vpc"
+
+    #https://registry.terraform.io/modules/terraform-google-modules/network/google/2.3.0
+    cloud_network:
+        source: "terraform-google-modules/network/google"
+        version: "~> 2.3"
+        project_id: ${name}
+        network_name: "${name}-vpc"
+        routing_mode: "GLOBAL"
+        subnets:
+          - subnet_name: "subnet-01"
+            subnet_ip: "10.10.10.0/24"
+            subnet_region: "${region}"
+          - subnet_name: "subnet-02"
+            subnet_ip: "10.10.20.0/24"
+            subnet_region: "${region}"

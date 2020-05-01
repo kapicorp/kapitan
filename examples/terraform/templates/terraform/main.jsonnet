@@ -14,6 +14,7 @@ local output = import "output.jsonnet";
 local provider = import "provider.jsonnet";
 local pubsub = import "pubsub.jsonnet";
 local storage = import "storage.jsonnet";
+local modules = import "modules.jsonnet";
 
 local name_in_resoures(name) = "resources" in p && name in p.resources;
 
@@ -30,5 +31,6 @@ local name_in_resoures(name) = "resources" in p && name in p.resources;
   [if name_in_resoures("monitoring") then "monitoring.tf"]: monitoring,
   [if name_in_resoures("pubsub") then "pubsub.tf"]: pubsub,
   [if name_in_resoures("storage") then "storage.tf"]: storage,
+  [if "modules" in p then "modules.tf"]: modules
 
 }
