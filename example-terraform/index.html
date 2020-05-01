@@ -525,6 +525,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#collaboration" class="md-nav__link">
+    Collaboration
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -598,6 +605,13 @@
           <li class="md-nav__item">
   <a href="#secrets" class="md-nav__link">
     secrets
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#collaboration" class="md-nav__link">
+    Collaboration
   </a>
   
 </li>
@@ -777,6 +791,11 @@ When terraform runs it will use the output module to generate your desired <code
 kapitan can function with your CI/CD systems. It generally depends on your organizational workflows. </p>
 <h3 id="secrets">secrets</h3>
 <p>Although there are no particular secrets in this instance. It is possible to utilize Kapitan secrets as defined in <a href="../secrets/">secrets management</a>.</p>
+<h3 id="collaboration">Collaboration</h3>
+<p>In some situations you may find teams that are used to writing terraform in HCL. In such situations it may be difficult to adopt Kapitan into the companies workflows.
+We can however use terraform modules to simplify the integration process. This means teams which are used to writing in HCL will not need to completely adopt Jsonnet. </p>
+<p>Modules can be imported into projects by defining them under the <code>modules</code> parameter key as shown in <code>inventory/targets/sandbox</code>. This means teams will only have to worry about coordinating parameter inputs for different projects.
+Jsonnet provides the ability to specify conventions and validation of input parameters. This provides peace of mind to infrastructure administrators around the tools usage.</p>
                 
                   
                 
