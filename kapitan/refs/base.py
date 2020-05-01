@@ -42,6 +42,7 @@ class PlainRef(object):
         """
         self.type_name = "plain"
         self.encoding = kwargs.get("encoding", "original")
+        self.embedded_subvar_path = kwargs.get("embedded_subvar_path", None)
         self.data = data
 
     def reveal(self):
@@ -228,11 +229,31 @@ class Revealer(object):
         """returns decrypted value from tag in match_obj"""
         tag, _, _ = match_obj.groups()
         m = re.search(REF_TOKEN_SUBVAR_PATTERN, tag)
-        if m is None:
-            # no subvar pattern is found
-            logger.debug('Revealer: no sub-variable path was matched in "{}"'.format(tag))
-            return self._reveal_tag_without_subvar(tag)
 
+        if m is None:
+            # if this an embedded ref with subvar_path set
+            # grab from controller
+            ref = self.ref_controller[tag]
+            if ref.embedded_subvar_path is not None:
+                revealed_data = ref.reveal()
+                # this should be yaml, load and check
+                revealed_yaml = yaml.load(revealed_data, Loader=YamlLoader)
+                if not isinstance(revealed_yaml, dict):
+                    raise RefError("Revealer: revealed secret is not in yaml, "
+                                   "cannot access sub-variable at {}".format(ref.embedded_subvar_path))
+                try:
+                    logger.debug('Revealer: embedded sub-variable path "{}"'
+                                 'matched in tag {}'.format(ref.embedded_subvar_path, tag))
+                    return self._get_value_in_yaml_path(revealed_yaml, ref.embedded_subvar_path)
+                except KeyError:
+                    raise RefError("Revealer: cannot access {} sub-variable key {}".format(tag, subvar_path))
+
+            # else this is just a ref
+            else:
+                logger.debug('Revealer: no sub-variable path was matched in "{}"'.format(tag))
+                return self._reveal_tag_without_subvar(tag)
+
+        # this is a ref with subvar
         else:
             subvar_path = m.groups()
             # strip away the @
@@ -243,13 +264,12 @@ class Revealer(object):
             plaintext = self._reveal_tag_without_subvar(tag_without_yaml_path)
             revealed_yaml = yaml.load(plaintext, Loader=YamlLoader)
             if not isinstance(revealed_yaml, dict):
-                raise RefError(
-                        "Revealer: revealed secret is not in yaml, cannot access sub-variable" " at {}".format(subvar_path)
-                )
+                raise RefError("Revealer: revealed secret is not in yaml, "
+                               "cannot access {} sub-variable at {}".format(subvar_path, tag))
             try:
                 return self._get_value_in_yaml_path(revealed_yaml, subvar_path)
             except KeyError:
-                raise RefError(f"Revealer: cannot access {tag} sub-variable key {subvar_path}")
+                raise RefError("Revealer: cannot access {} sub-variable key {}".format(tag, subvar_path))
 
     @lru_cache(maxsize=256)
     def _reveal_tag_without_subvar(self, tag_without_subvar):
@@ -450,6 +470,7 @@ class RefController(object):
         json_data = json.loads(json_data)
         backend = self._get_backend(type_name)
         data = json_data.pop("data").encode()
+        data = base64.b64decode(data)
         encoding = json_data.pop("encoding")
         is_base64 = (encoding == "base64")
         json_data.pop("type")

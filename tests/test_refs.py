@@ -202,7 +202,7 @@ class Base64RefsTest(unittest.TestCase):
         revealed_data = REVEALER.reveal_raw(data)
         self.assertEqual("message here: world", revealed_data)
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(RefError):
             tag_subvar = "?{base64:ref/subvars@var3.varDoesntExist}"
             data = "message here: {}".format(tag_subvar)
             revealed_data = REVEALER.reveal_raw(data)
