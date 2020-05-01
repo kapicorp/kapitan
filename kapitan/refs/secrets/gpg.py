@@ -92,7 +92,7 @@ class GPGSecret(Base64Ref):
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
-        return super().from_path(ref_full_path, encrypt=False)
+        return super().from_path(ref_full_path, encrypt=False, **kwargs)
 
     def reveal(self):
         """

@@ -236,7 +236,7 @@ class Revealer(object):
             ref = self.ref_controller[tag]
             if ref.embedded_subvar_path is not None:
                 revealed_data = ref.reveal()
-                # this should be yaml, load and check
+                # this should be yaml, decode, load and check
                 revealed_yaml = yaml.load(revealed_data, Loader=YamlLoader)
                 if not isinstance(revealed_yaml, dict):
                     raise RefError("Revealer: revealed secret is not in yaml, "
@@ -407,6 +407,7 @@ class RefController(object):
             if type_name == "plain":
                 from kapitan.refs.base import PlainRefBackend
 
+                # XXX embed_refs in plain backend does nothing
                 self.register_backend(PlainRefBackend(self.path, **ref_kwargs))
             elif type_name == "base64":
                 from kapitan.refs.base64 import Base64RefBackend
@@ -469,13 +470,16 @@ class RefController(object):
         json_data  = base64.b64decode(b64_path).decode()
         json_data = json.loads(json_data)
         backend = self._get_backend(type_name)
-        data = json_data.pop("data").encode()
-        data = base64.b64decode(data)
-        encoding = json_data.pop("encoding")
-        is_base64 = (encoding == "base64")
+        # strip useless keys
+        json_data.pop("encoding")
         json_data.pop("type")
+
+        data = json_data.pop("data").encode()
         # create new ref with deserialised data and remaining keys as kwargs
-        ref = backend.ref_type(data, from_base64=is_base64, **json_data)
+        # note that encrypt=False is only for secret ref types, others will ignore
+        # from_base64 is True because data is always base64 encoded in embedded form
+        ref = backend.ref_type(data, encrypt=False, from_base64=True, **json_data)
+
 
         return ref
 
