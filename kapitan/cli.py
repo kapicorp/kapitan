@@ -168,6 +168,11 @@ def main():
         help='set inventory path, default is "./inventory"',
     )
     compile_parser.add_argument(
+        "--targets-path",
+        default=from_dot_kapitan("compile", "targets-path", "./inventory/targets"),
+        help='set targets path, default is "./inventory/targets"',
+    )
+    compile_parser.add_argument(
         "--cache",
         "-c",
         help="enable compilation caching to .kapitan_cache, default is False",
@@ -417,6 +422,11 @@ def main():
         help='set inventory path, default is "./inventory"',
     )
     validate_parser.add_argument(
+        "--targets-path",
+        default=from_dot_kapitan("compile", "targets-path", "./inventory/targets"),
+        help='set targets path, default is "./inventory/targets"',
+    )
+    validate_parser.add_argument(
         "--targets",
         "-t",
         help="targets to validate, default is all",
@@ -494,6 +504,7 @@ def main():
 
         compile_targets(
             args.inventory_path,
+            args.targets_path,
             search_paths,
             args.output_path,
             args.parallelism,
@@ -568,6 +579,7 @@ def main():
         schema_validate_compiled(
             args.targets,
             inventory_path=args.inventory_path,
+            targets_path=args.targets_path,
             compiled_path=args.compiled_path,
             schema_cache_path=args.schemas_path,
             parallel=args.parallelism,

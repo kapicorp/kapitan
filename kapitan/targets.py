@@ -37,7 +37,15 @@ logger = logging.getLogger(__name__)
 
 
 def compile_targets(
-    inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs
+    inventory_path,
+    targets_path,
+    search_paths,
+    output_path,
+    parallel,
+    targets,
+    labels,
+    ref_controller,
+    **kwargs,
 ):
     """
     Searches and loads target files, and runs compile_target() on a
@@ -49,7 +57,7 @@ def compile_targets(
 
     updated_targets = targets
     try:
-        updated_targets = search_targets(inventory_path, targets, labels)
+        updated_targets = search_targets(inventory_path, targets_path, targets, labels)
     except CompileError as e:
         logger.error(e)
         sys.exit(1)
@@ -57,10 +65,10 @@ def compile_targets(
     # If --cache is set
     if kwargs.get("cache"):
         additional_cache_paths = kwargs.get("cache_paths")
-        generate_inv_cache_hashes(inventory_path, targets, additional_cache_paths)
+        generate_inv_cache_hashes(inventory_path, targets_path, targets, additional_cache_paths)
 
         if not targets:
-            updated_targets = changed_targets(inventory_path, output_path)
+            updated_targets = changed_targets(inventory_path, targets_path, output_path)
             logger.debug("Changed targets since last compilation: %s", updated_targets)
             if len(updated_targets) == 0:
                 logger.info("No changes since last compilation.")
@@ -69,7 +77,7 @@ def compile_targets(
     pool = multiprocessing.Pool(parallel)
 
     try:
-        target_objs = load_target_inventory(inventory_path, updated_targets)
+        target_objs = load_target_inventory(inventory_path, targets_path, updated_targets)
 
         # append "compiled" to output_path so we can safely overwrite it
         compile_path = os.path.join(output_path, "compiled")
@@ -146,7 +154,7 @@ def compile_targets(
         logger.debug("Removed %s", temp_path)
 
 
-def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
+def generate_inv_cache_hashes(inventory_path, targets_path, targets, cache_paths):
     """
     generates the hashes for the inventory per target and jsonnet/jinja2 folders for caching purposes
     struct: {
@@ -162,7 +170,7 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
             ...
     }
     """
-    inv = inventory_reclass(inventory_path)
+    inv = inventory_reclass(inventory_path, targets_path)
     cached.inv_cache = {}
     cached.inv_cache["inventory"] = {}
     cached.inv_cache["folder"] = {}
@@ -213,10 +221,10 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
                     cached.inv_cache["folder"][common] = directory_hash(common)
 
 
-def changed_targets(inventory_path, output_path):
+def changed_targets(inventory_path, targets_path, output_path):
     """returns a list of targets that have changed since last compilation"""
     targets = []
-    inv = inventory_reclass(inventory_path)
+    inv = inventory_reclass(inventory_path, targets_path)
 
     saved_inv_cache = None
     saved_inv_cache_path = os.path.join(output_path, "compiled/.kapitan_cache")
@@ -306,10 +314,10 @@ def save_inv_cache(compile_path, targets):
                 yaml.dump(cached.inv_cache, stream=f, default_flow_style=False)
 
 
-def load_target_inventory(inventory_path, targets):
+def load_target_inventory(inventory_path, targets_path, targets):
     """returns a list of target objects from the inventory"""
     target_objs = []
-    inv = inventory_reclass(inventory_path)
+    inv = inventory_reclass(inventory_path, targets_path)
 
     # if '-t' is set on compile, only loop through selected targets
     if targets:
@@ -333,7 +341,7 @@ def load_target_inventory(inventory_path, targets):
     return target_objs
 
 
-def search_targets(inventory_path, targets, labels):
+def search_targets(inventory_path, targets_path, targets, labels):
     """returns a list of targets where the labels match, otherwise just return the original targets"""
     if not labels:
         return targets
@@ -346,7 +354,7 @@ def search_targets(inventory_path, targets, labels):
         )
 
     targets_found = []
-    inv = inventory_reclass(inventory_path)
+    inv = inventory_reclass(inventory_path, targets_path)
 
     for target_name in inv["nodes"]:
         matched_all_labels = False
@@ -548,7 +556,9 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
         raise InventoryError(error_message)
 
 
-def schema_validate_compiled(targets, compiled_path, inventory_path, schema_cache_path, parallel):
+def schema_validate_compiled(
+    targets, compiled_path, inventory_path, targets_path, schema_cache_path, parallel
+):
     """
     validates compiled output according to schemas specified in the inventory
     """
@@ -563,8 +573,11 @@ def schema_validate_compiled(targets, compiled_path, inventory_path, schema_cach
     worker = partial(schema_validate_kubernetes_output, cache_dir=schema_cache_path)
     pool = multiprocessing.Pool(parallel)
 
+    if targets_path == None:
+        targets_path = inventory_path
+
     try:
-        target_objs = load_target_inventory(inventory_path, targets)
+        target_objs = load_target_inventory(inventory_path, targets_path, targets)
         validate_map = create_validate_mapping(target_objs, compiled_path)
 
         [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]

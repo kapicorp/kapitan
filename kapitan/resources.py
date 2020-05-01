@@ -231,7 +231,7 @@ def inventory(search_paths, target, inventory_path="inventory/"):
     return inventory_reclass(full_inv_path)["nodes"][target]
 
 
-def inventory_reclass(inventory_path):
+def inventory_reclass(inventory_path, targets_path=None):
     """
     Runs a reclass inventory in inventory_path
     (same output as running ./reclass.py -b inv_base_uri/ --inventory)
@@ -240,11 +240,14 @@ def inventory_reclass(inventory_path):
     Returns a reclass style dictionary
     """
 
+    if not targets_path:
+        targets_path = os.path.join(inventory_path, "targets")
+
     if not cached.inv:
         reclass_config = {
             "storage_type": "yaml_fs",
             "inventory_base_uri": inventory_path,
-            "nodes_uri": os.path.join(inventory_path, "targets"),
+            "nodes_uri": targets_path,
             "classes_uri": os.path.join(inventory_path, "classes"),
             "compose_node_name": False,
         }
