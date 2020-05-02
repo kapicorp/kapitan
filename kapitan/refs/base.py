@@ -21,6 +21,8 @@ from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashM
 from kapitan.refs.functions import eval_func
 from kapitan.utils import PrettyDumper, list_all_paths
 
+from pdb import set_trace
+
 try:
     from yaml import CSafeLoader as YamlLoader
 except ImportError:
@@ -29,7 +31,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token||func:param1:param2}
-REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@]+)([\|\|\w\:\.\-\/]+)?=*})"
+REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@=]+)([\|\|\w\:\.\-\/]+)?=*})"
 REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
 
@@ -40,6 +42,7 @@ class PlainRef(object):
         """
         self.type_name = "plain"
         self.encoding = kwargs.get("encoding", "original")
+        self.embedded_subvar_path = kwargs.get("embedded_subvar_path", None)
         self.data = data
 
     def reveal(self):
@@ -96,17 +99,18 @@ class RefParams(object):
 
 
 class PlainRefBackend(object):
-    def __init__(self, path, ref_type=PlainRef):
+    def __init__(self, path, ref_type=PlainRef, **ref_kwargs):
         "Get and create PlainRefs"
         self.path = path
         self.type_name = "plain"
         self.ref_type = ref_type
+        self.ref_kwargs = ref_kwargs
 
     def __getitem__(self, ref_path):
         # remove the substring notation, if any
         ref_file_path = re.sub(REF_TOKEN_SUBVAR_PATTERN, "", ref_path)
         full_ref_path = os.path.join(self.path, ref_file_path)
-        ref = self.ref_type.from_path(full_ref_path)
+        ref = self.ref_type.from_path(full_ref_path, **self.ref_kwargs)
 
         if ref is not None:
             ref.path = ref_path
@@ -225,11 +229,31 @@ class Revealer(object):
         """returns decrypted value from tag in match_obj"""
         tag, _, _ = match_obj.groups()
         m = re.search(REF_TOKEN_SUBVAR_PATTERN, tag)
-        if m is None:
-            # no subvar pattern is found
-            logger.debug('Revealer: no sub-variable path was matched in "{}"'.format(tag))
-            return self._reveal_tag_without_subvar(tag)
 
+        if m is None:
+            # if this an embedded ref with subvar_path set
+            # grab from controller
+            ref = self.ref_controller[tag]
+            if ref.embedded_subvar_path is not None:
+                revealed_data = ref.reveal()
+                # this should be yaml, decode, load and check
+                revealed_yaml = yaml.load(revealed_data, Loader=YamlLoader)
+                if not isinstance(revealed_yaml, dict):
+                    raise RefError("Revealer: revealed secret is not in yaml, "
+                                   "cannot access sub-variable at {}".format(ref.embedded_subvar_path))
+                try:
+                    logger.debug('Revealer: embedded sub-variable path "{}"'
+                                 'matched in tag {}'.format(ref.embedded_subvar_path, tag))
+                    return self._get_value_in_yaml_path(revealed_yaml, ref.embedded_subvar_path)
+                except KeyError:
+                    raise RefError("Revealer: cannot access {} sub-variable key {}".format(tag, subvar_path))
+
+            # else this is just a ref
+            else:
+                logger.debug('Revealer: no sub-variable path was matched in "{}"'.format(tag))
+                return self._reveal_tag_without_subvar(tag)
+
+        # this is a ref with subvar
         else:
             subvar_path = m.groups()
             # strip away the @
@@ -240,10 +264,12 @@ class Revealer(object):
             plaintext = self._reveal_tag_without_subvar(tag_without_yaml_path)
             revealed_yaml = yaml.load(plaintext, Loader=YamlLoader)
             if not isinstance(revealed_yaml, dict):
-                raise RefError(
-                    "revealed secret is not in yaml, cannot access sub-variable" " at {}".format(subvar_path)
-                )
-            return self._get_value_in_yaml_path(revealed_yaml, subvar_path)
+                raise RefError("Revealer: revealed secret is not in yaml, "
+                               "cannot access {} sub-variable at {}".format(subvar_path, tag))
+            try:
+                return self._get_value_in_yaml_path(revealed_yaml, subvar_path)
+            except KeyError:
+                raise RefError("Revealer: cannot access {} sub-variable key {}".format(tag, subvar_path))
 
     @lru_cache(maxsize=256)
     def _reveal_tag_without_subvar(self, tag_without_subvar):
@@ -358,13 +384,14 @@ class RefController(object):
         except RefBackendError as e:
             raise RefBackendError(f"{e}\n  for key {ref_key}")
 
-    def __init__(self, path):
+    def __init__(self, path, **kwargs):
         """
         gets and sets tags for ref type objects.
         auto registers backends
         """
         self.backends = {}
         self.path = path
+        self.embed_refs = kwargs.get("embed_refs", False)
 
     def register_backend(self, backend):
         "register backend type"
@@ -376,30 +403,32 @@ class RefController(object):
         try:
             return self.backends[type_name]
         except KeyError:
+            ref_kwargs = {"embed_refs": self.embed_refs}
             if type_name == "plain":
                 from kapitan.refs.base import PlainRefBackend
 
-                self.register_backend(PlainRefBackend(self.path))
+                # XXX embed_refs in plain backend does nothing
+                self.register_backend(PlainRefBackend(self.path, **ref_kwargs))
             elif type_name == "base64":
                 from kapitan.refs.base64 import Base64RefBackend
 
-                self.register_backend(Base64RefBackend(self.path))
+                self.register_backend(Base64RefBackend(self.path, **ref_kwargs))
             elif type_name == "gpg":
                 from kapitan.refs.secrets.gpg import GPGBackend
 
-                self.register_backend(GPGBackend(self.path))
+                self.register_backend(GPGBackend(self.path, **ref_kwargs))
             elif type_name == "gkms":
                 from kapitan.refs.secrets.gkms import GoogleKMSBackend
 
-                self.register_backend(GoogleKMSBackend(self.path))
+                self.register_backend(GoogleKMSBackend(self.path, **ref_kwargs))
             elif type_name == "awskms":
                 from kapitan.refs.secrets.awskms import AWSKMSBackend
 
-                self.register_backend(AWSKMSBackend(self.path))
+                self.register_backend(AWSKMSBackend(self.path, **ref_kwargs))
             elif type_name == "vaultkv":
                 from kapitan.refs.secrets.vaultkv import VaultBackend
 
-                self.register_backend(VaultBackend(self.path))
+                self.register_backend(VaultBackend(self.path, **ref_kwargs))
             else:
                 raise RefBackendError(f"no backend for ref type: {type_name}")
         return self.backends[type_name]
@@ -435,6 +464,25 @@ class RefController(object):
 
         return type_name
 
+    def ref_from_embedded(self, type_name, b64_path):
+        "returns ref from embedded (base64 and json) b64_path"
+        # deserialise base64 and json data from b64_path
+        json_data  = base64.b64decode(b64_path).decode()
+        json_data = json.loads(json_data)
+        backend = self._get_backend(type_name)
+        # strip useless keys
+        json_data.pop("encoding")
+        json_data.pop("type")
+
+        data = json_data.pop("data").encode()
+        # create new ref with deserialised data and remaining keys as kwargs
+        # note that encrypt=False is only for secret ref types, others will ignore
+        # from_base64 is True because data is always base64 encoded in embedded form
+        ref = backend.ref_type(data, encrypt=False, from_base64=True, **json_data)
+
+
+        return ref
+
     def _get_from_token(self, token):
         attrs = token.split(":")
 
@@ -450,14 +498,18 @@ class RefController(object):
             type_name = attrs[0]
             path = attrs[1]
             hash = attrs[2]
-            backend = self._get_backend(type_name)
-            ref = backend[path]
-            if ref.hash[:8] == hash:
-                return ref
+
+            if hash == "embedded":
+                return self.ref_from_embedded(type_name, path)
             else:
-                raise RefHashMismatchError(
-                    "{}: token hash does not match with stored reference hash: {}".format(token, ref.token)
-                )
+                backend = self._get_backend(type_name)
+                ref = backend[path]
+                if ref.hash[:8] == hash:
+                    return ref
+                else:
+                    raise RefHashMismatchError(
+                        "{}: token hash does not match with stored reference hash: {}".format(token, ref.token)
+                    )
         else:
             return None
 
@@ -494,7 +546,7 @@ class RefController(object):
         return ctx
 
     def __getitem__(self, key):
-        # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2} or ?{ref:my/secret/token:deadbeef}
+        # ?{ref:my/secret/token} or ?{ref:my/secret/token||func:param1:param2} or ?{ref:my/secret/token:deadbeef}
         tag, token, func_str = self.tag_params(key)
 
         with self.detailedException(key):

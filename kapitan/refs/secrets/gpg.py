@@ -92,7 +92,7 @@ class GPGSecret(Base64Ref):
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
-        return super().from_path(ref_full_path, encrypt=False)
+        return super().from_path(ref_full_path, encrypt=False, **kwargs)
 
     def reveal(self):
         """
@@ -159,9 +159,9 @@ class GPGSecret(Base64Ref):
 
 
 class GPGBackend(Base64RefBackend):
-    def __init__(self, path, ref_type=GPGSecret):
+    def __init__(self, path, ref_type=GPGSecret, **ref_kwargs):
         "init GPGBackend ref backend type"
-        super().__init__(path, ref_type)
+        super().__init__(path, ref_type, **ref_kwargs)
         self.type_name = "gpg"
 
 
