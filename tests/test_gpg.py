@@ -35,7 +35,8 @@ GPG_KWARGS["passphrase"] = "testphrase"
 REFS_HOME = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_HOME)
 REVEALER = Revealer(REF_CONTROLLER)
-
+REF_CONTROLLER_EMBEDDED = RefController(REFS_HOME, embed_refs=True)
+REVEALER_EMBEDDED = Revealer(REF_CONTROLLER_EMBEDDED)
 
 class GPGSecretsTest(unittest.TestCase):
     "Test GPG secrets"
@@ -51,6 +52,20 @@ class GPGSecretsTest(unittest.TestCase):
             fp.write("I am a file with a ?{gpg:secret/sauce}")
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
         self.assertEqual("I am a file with a super secret value", revealed)
+
+    def test_gpg_write_embedded_reveal(self):
+        "write and compile embedded secret, confirm secret file exists, reveal and compare content"
+        tag = "?{gpg:secret/sauce}"
+        REF_CONTROLLER_EMBEDDED[tag] = GPGSecret("super secret value", [{"fingerprint": KEY.fingerprint}])
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "secret/sauce")))
+        ref_obj = REF_CONTROLLER_EMBEDDED[tag]
+
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, "w") as fp:
+            fp.write("I am a file with a {}".format(ref_obj.compile()))
+        revealed = REVEALER_EMBEDDED.reveal_raw_file(file_with_secret_tags)
+        self.assertEqual("I am a file with a super secret value", revealed)
+
 
     def test_gpg_base64_write_reveal(self):
         """
@@ -68,6 +83,25 @@ class GPGSecretsTest(unittest.TestCase):
             fp.write("I am a file with a ?{gpg:secret/sauce2}")
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
         self.assertEqual("I am a file with a c3VwZXIgc2VjcmV0IHZhbHVl", revealed)
+
+    def test_gpg_base64_write_embedded_reveal(self):
+        """
+        write and compile embedded secret for base64 encoded content, confirm secret file exists,
+        reveal and compare content
+        """
+        tag = "?{gpg:secret/sauce2}"
+        REF_CONTROLLER_EMBEDDED[tag] = GPGSecret(
+            "super secret value", [{"fingerprint": KEY.fingerprint}], encode_base64=True
+        )
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "secret/sauce2")))
+        ref_obj = REF_CONTROLLER_EMBEDDED[tag]
+
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, "w") as fp:
+            fp.write("I am a file with a {}".format(ref_obj.compile()))
+        revealed = REVEALER_EMBEDDED.reveal_raw_file(file_with_secret_tags)
+        self.assertEqual("I am a file with a c3VwZXIgc2VjcmV0IHZhbHVl", revealed)
+
 
     def test_gpg_function_ed25519(self):
         "write ed25519 (private and public), confirm secret file exists, reveal and check"

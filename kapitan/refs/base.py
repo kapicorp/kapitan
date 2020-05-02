@@ -246,7 +246,7 @@ class Revealer(object):
                                  'matched in tag {}'.format(ref.embedded_subvar_path, tag))
                     return self._get_value_in_yaml_path(revealed_yaml, ref.embedded_subvar_path)
                 except KeyError:
-                    raise RefError("Revealer: cannot access {} sub-variable key {}".format(tag, subvar_path))
+                    raise RefError("Revealer: cannot access {} sub-variable key {}".format(tag, ref.embedded_subvar_path))
 
             # else this is just a ref
             else:

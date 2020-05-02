@@ -20,6 +20,8 @@ from kapitan.utils import get_entropy
 REFS_HOME = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_HOME)
 REVEALER = Revealer(REF_CONTROLLER)
+REF_CONTROLLER_EMBEDDED = RefController(REFS_HOME, embed_refs=True)
+REVEALER_EMBEDDED = Revealer(REF_CONTROLLER_EMBEDDED)
 
 
 class Base64RefsTest(unittest.TestCase):
@@ -49,6 +51,16 @@ class Base64RefsTest(unittest.TestCase):
         compiled = ref_obj.compile()
         self.assertEqual(compiled, "?{base64:my/ref1:3342a45c}")
 
+    def test_base64_ref_embedded_compile(self):
+        "check ref embedded compile() output is valid"
+        tag = "?{base64:my/ref1}"
+        REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(b"ref 1 data")
+        ref_obj = REF_CONTROLLER_EMBEDDED[tag]
+        compiled_embedded = ref_obj.compile()
+        embedded_tag = ("?{base64:eyJkYXRhIjogImNtVm1JREVnWkdGMFlRPT0iLCAiZW5jb2"
+                "RpbmciOiAib3JpZ2luYWwiLCAidHlwZSI6ICJiYXNlNjQifQ==:embedded}")
+        self.assertEqual(compiled_embedded, embedded_tag)
+
     def test_base64_ref_recompile(self):
         "check ref recompile() output is valid"
         tag = "?{base64:my/ref1}"
@@ -69,6 +81,14 @@ class Base64RefsTest(unittest.TestCase):
         tag = "?{base64:my/ref2}"
         REF_CONTROLLER[tag] = Base64Ref(b"ref 2 data")
         ref_obj = REF_CONTROLLER[tag]
+        revealed = ref_obj.reveal()
+        self.assertEqual(revealed, "ref 2 data")
+
+    def test_base64_ref_embedded_reveal(self):
+        "check ref embedded reveal() output is valid"
+        tag = "?{base64:my/ref2}"
+        REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(b"ref 2 data")
+        ref_obj = REF_CONTROLLER_EMBEDDED[tag]
         revealed = ref_obj.reveal()
         self.assertEqual(revealed, "ref 2 data")
 
@@ -101,6 +121,20 @@ class Base64RefsTest(unittest.TestCase):
         self.assertEqual(tag, "?{base64:my/ref5||randomstr}")
         self.assertEqual(token, "base64:my/ref5")
         self.assertEqual(func_str, "||randomstr")
+
+    def test_base64_ref_embedded_attr(self):
+        "check embedded ref has embed_refs set to True"
+        tag = "?{base64:my/ref2}"
+        REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(b"ref 2 data")
+        ref_obj = REF_CONTROLLER_EMBEDDED[tag]
+        self.assertTrue(ref_obj.embed_refs)
+
+    def test_base64_ref_attr(self):
+        "check ref has embed_refs set to False"
+        tag = "?{base64:my/ref2}"
+        REF_CONTROLLER[tag] = Base64Ref(b"ref 2 data")
+        ref_obj = REF_CONTROLLER[tag]
+        self.assertFalse(ref_obj.embed_refs)
 
     def test_base64_ref_path(self):
         "check ref tag path is correct"
@@ -165,6 +199,52 @@ class Base64RefsTest(unittest.TestCase):
         self.assertEqual(ref_obj1.compile(), "?{base64:ref/subvars@var1:4357a29b}")
         self.assertEqual(ref_obj2.compile(), "?{base64:ref/subvars@var2:4357a29b}")
 
+    def test_compile_embedded_subvar_path(self):
+        """
+        test that embedded refs with sub-variables have
+        valid embedded_subvar_path key and value
+        """
+        subvar_tag = "?{base64:ref/subvars}"
+        subvar_tag_var1 = "?{base64:ref/subvars@var1}"
+        subvar_tag_var2 = "?{base64:ref/subvars@var2}"
+        subvar_tag_var3 = "?{base64:ref/subvars@var3.var4}"
+        REF_CONTROLLER_EMBEDDED[subvar_tag] = Base64Ref(b"I am not yaml, just testing")
+        REF_CONTROLLER_EMBEDDED[subvar_tag_var1] = Base64Ref(b"I am not yaml, just testing")
+        REF_CONTROLLER_EMBEDDED[subvar_tag_var2] = Base64Ref(b"I am not yaml, just testing")
+        ref_obj1 = REF_CONTROLLER_EMBEDDED[subvar_tag_var1]
+        ref_obj2 = REF_CONTROLLER_EMBEDDED[subvar_tag_var2]
+        ref_obj3 = REF_CONTROLLER_EMBEDDED[subvar_tag_var3]
+
+        self.assertTrue(ref_obj1.embed_refs)
+        self.assertTrue(ref_obj2.embed_refs)
+        self.assertTrue(ref_obj3.embed_refs)
+
+        # now get compiled embedded ref tags from controller
+        ref_obj1 = REF_CONTROLLER_EMBEDDED[ref_obj1.compile()]
+        ref_obj2 = REF_CONTROLLER_EMBEDDED[ref_obj2.compile()]
+        ref_obj3 = REF_CONTROLLER_EMBEDDED[ref_obj3.compile()]
+
+        # and validate meta data
+        self.assertEqual(ref_obj1.embedded_subvar_path, "var1")
+        self.assertEqual(ref_obj2.embedded_subvar_path, "var2")
+        self.assertEqual(ref_obj3.embedded_subvar_path, "var3.var4")
+
+
+    def test_compile_embedded_subvars(self):
+        """
+        test that embedded refs with sub-variables compile properly,
+        embedded refs with sub-variables will _not_ have equal compiled tags
+        """
+        subvar_tag = "?{base64:ref/subvars}"
+        subvar_tag_var1 = "?{base64:ref/subvars@var1}"
+        subvar_tag_var2 = "?{base64:ref/subvars@var2}"
+        REF_CONTROLLER_EMBEDDED[subvar_tag] = Base64Ref(b"I am not yaml, just testing")
+        REF_CONTROLLER_EMBEDDED[subvar_tag_var1] = Base64Ref(b"I am not yaml, just testing")
+        REF_CONTROLLER_EMBEDDED[subvar_tag_var2] = Base64Ref(b"I am not yaml, just testing")
+        ref_obj1 = REF_CONTROLLER_EMBEDDED[subvar_tag_var1]
+        ref_obj2 = REF_CONTROLLER_EMBEDDED[subvar_tag_var2]
+        self.assertNotEqual(ref_obj1.compile(), ref_obj2.compile())
+
     def test_reveal_subvars_raise_RefError(self):
         """
         test that reveal with sub-variable fails should the secret not
@@ -206,6 +286,41 @@ class Base64RefsTest(unittest.TestCase):
             tag_subvar = "?{base64:ref/subvars@var3.varDoesntExist}"
             data = "message here: {}".format(tag_subvar)
             revealed_data = REVEALER.reveal_raw(data)
+
+    def test_reveal_embedded_subvars(self):
+        "write yaml ref data, and access sub-variables in embedded compiled refs"
+        tag_to_save = "?{base64:ref/subvars}"
+        tag_var1 = "?{base64:ref/subvars@var1.var2}"
+        tag_var2 = "?{base64:ref/subvars@var3.var4}"
+        tag_var_doesnt_exist = "?{base64:ref/subvars@var3.varDoesntExist}"
+        yaml_secret = b"""
+        var1:
+          var2: hello
+        var3:
+          var4: world
+        """
+        REF_CONTROLLER_EMBEDDED[tag_to_save] = Base64Ref(yaml_secret)
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/subvars")))
+
+        REF_CONTROLLER_EMBEDDED[tag_var1] = Base64Ref(yaml_secret)
+        REF_CONTROLLER_EMBEDDED[tag_var2] = Base64Ref(yaml_secret)
+        REF_CONTROLLER_EMBEDDED[tag_var_doesnt_exist] = Base64Ref(yaml_secret)
+
+        ref_var1 = REF_CONTROLLER_EMBEDDED[tag_var1]
+        ref_var2 = REF_CONTROLLER_EMBEDDED[tag_var2]
+        ref_var_doesnt_exist = REF_CONTROLLER_EMBEDDED[tag_var_doesnt_exist]
+
+        data = "message here: {}".format(ref_var1.compile())
+        revealed_data = REVEALER_EMBEDDED.reveal_raw(data)
+        self.assertEqual("message here: hello", revealed_data)
+
+        data = "message here: {}".format(ref_var2.compile())
+        revealed_data = REVEALER_EMBEDDED.reveal_raw(data)
+        self.assertEqual("message here: world", revealed_data)
+
+        with self.assertRaises(RefError):
+            data = "message here: {}".format(ref_var_doesnt_exist.compile())
+            revealed_data = REVEALER_EMBEDDED.reveal_raw(data)
 
     def test_ref_function_randomstr(self):
         "write randomstr to secret, confirm ref file exists, reveal and check"
