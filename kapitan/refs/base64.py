@@ -45,9 +45,9 @@ class Base64Ref(PlainRef):
     def compile_embedded(self):
         dump = self.dump()
         # if subvar is set, save in 'embedded_subvar_path' key
-        subvar = self.path.split('@')
+        subvar = self.path.split("@")
         if len(subvar) > 1:
-            dump['embedded_subvar_path'] = subvar[1]
+            dump["embedded_subvar_path"] = subvar[1]
         dump_data = base64.b64encode(json.dumps(dump).encode()).decode()
         return f"?{{{self.type_name}:{dump_data}:embedded}}"
 

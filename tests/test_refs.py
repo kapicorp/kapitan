@@ -57,8 +57,10 @@ class Base64RefsTest(unittest.TestCase):
         REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(b"ref 1 data")
         ref_obj = REF_CONTROLLER_EMBEDDED[tag]
         compiled_embedded = ref_obj.compile()
-        embedded_tag = ("?{base64:eyJkYXRhIjogImNtVm1JREVnWkdGMFlRPT0iLCAiZW5jb2"
-                "RpbmciOiAib3JpZ2luYWwiLCAidHlwZSI6ICJiYXNlNjQifQ==:embedded}")
+        embedded_tag = (
+            "?{base64:eyJkYXRhIjogImNtVm1JREVnWkdGMFlRPT0iLCAiZW5jb2"
+            "RpbmciOiAib3JpZ2luYWwiLCAidHlwZSI6ICJiYXNlNjQifQ==:embedded}"
+        )
         self.assertEqual(compiled_embedded, embedded_tag)
 
     def test_base64_ref_recompile(self):
@@ -228,7 +230,6 @@ class Base64RefsTest(unittest.TestCase):
         self.assertEqual(ref_obj1.embedded_subvar_path, "var1")
         self.assertEqual(ref_obj2.embedded_subvar_path, "var2")
         self.assertEqual(ref_obj3.embedded_subvar_path, "var3.var4")
-
 
     def test_compile_embedded_subvars(self):
         """

@@ -21,7 +21,6 @@ from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashM
 from kapitan.refs.functions import eval_func
 from kapitan.utils import PrettyDumper, list_all_paths
 
-from pdb import set_trace
 
 try:
     from yaml import CSafeLoader as YamlLoader
@@ -239,14 +238,20 @@ class Revealer(object):
                 # this should be yaml, decode, load and check
                 revealed_yaml = yaml.load(revealed_data, Loader=YamlLoader)
                 if not isinstance(revealed_yaml, dict):
-                    raise RefError("Revealer: revealed secret is not in yaml, "
-                                   "cannot access sub-variable at {}".format(ref.embedded_subvar_path))
+                    raise RefError(
+                        "Revealer: revealed secret is not in yaml, "
+                        "cannot access sub-variable at {}".format(ref.embedded_subvar_path)
+                    )
                 try:
-                    logger.debug('Revealer: embedded sub-variable path "{}"'
-                                 'matched in tag {}'.format(ref.embedded_subvar_path, tag))
+                    logger.debug(
+                        'Revealer: embedded sub-variable path "{}"'
+                        "matched in tag {}".format(ref.embedded_subvar_path, tag)
+                    )
                     return self._get_value_in_yaml_path(revealed_yaml, ref.embedded_subvar_path)
                 except KeyError:
-                    raise RefError("Revealer: cannot access {} sub-variable key {}".format(tag, ref.embedded_subvar_path))
+                    raise RefError(
+                        "Revealer: cannot access {} sub-variable key {}".format(tag, ref.embedded_subvar_path)
+                    )
 
             # else this is just a ref
             else:
@@ -264,8 +269,10 @@ class Revealer(object):
             plaintext = self._reveal_tag_without_subvar(tag_without_yaml_path)
             revealed_yaml = yaml.load(plaintext, Loader=YamlLoader)
             if not isinstance(revealed_yaml, dict):
-                raise RefError("Revealer: revealed secret is not in yaml, "
-                               "cannot access {} sub-variable at {}".format(subvar_path, tag))
+                raise RefError(
+                    "Revealer: revealed secret is not in yaml, "
+                    "cannot access {} sub-variable at {}".format(subvar_path, tag)
+                )
             try:
                 return self._get_value_in_yaml_path(revealed_yaml, subvar_path)
             except KeyError:
@@ -467,7 +474,7 @@ class RefController(object):
     def ref_from_embedded(self, type_name, b64_path):
         "returns ref from embedded (base64 and json) b64_path"
         # deserialise base64 and json data from b64_path
-        json_data  = base64.b64decode(b64_path).decode()
+        json_data = base64.b64decode(b64_path).decode()
         json_data = json.loads(json_data)
         backend = self._get_backend(type_name)
         # strip useless keys
@@ -479,7 +486,6 @@ class RefController(object):
         # note that encrypt=False is only for secret ref types, others will ignore
         # from_base64 is True because data is always base64 encoded in embedded form
         ref = backend.ref_type(data, encrypt=False, from_base64=True, **json_data)
-
 
         return ref
 
@@ -508,7 +514,9 @@ class RefController(object):
                     return ref
                 else:
                     raise RefHashMismatchError(
-                        "{}: token hash does not match with stored reference hash: {}".format(token, ref.token)
+                        "{}: token hash does not match with stored reference hash: {}".format(
+                            token, ref.token
+                        )
                     )
         else:
             return None

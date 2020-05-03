@@ -38,6 +38,7 @@ REVEALER = Revealer(REF_CONTROLLER)
 REF_CONTROLLER_EMBEDDED = RefController(REFS_HOME, embed_refs=True)
 REVEALER_EMBEDDED = Revealer(REF_CONTROLLER_EMBEDDED)
 
+
 class GPGSecretsTest(unittest.TestCase):
     "Test GPG secrets"
 
@@ -65,7 +66,6 @@ class GPGSecretsTest(unittest.TestCase):
             fp.write("I am a file with a {}".format(ref_obj.compile()))
         revealed = REVEALER_EMBEDDED.reveal_raw_file(file_with_secret_tags)
         self.assertEqual("I am a file with a super secret value", revealed)
-
 
     def test_gpg_base64_write_reveal(self):
         """
@@ -101,7 +101,6 @@ class GPGSecretsTest(unittest.TestCase):
             fp.write("I am a file with a {}".format(ref_obj.compile()))
         revealed = REVEALER_EMBEDDED.reveal_raw_file(file_with_secret_tags)
         self.assertEqual("I am a file with a c3VwZXIgc2VjcmV0IHZhbHVl", revealed)
-
 
     def test_gpg_function_ed25519(self):
         "write ed25519 (private and public), confirm secret file exists, reveal and check"
