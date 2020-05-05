@@ -30,6 +30,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token||func:param1:param2}
+# e.g  ?{ref:basepayloadhere==:embedded} (for embedded refs)
 REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@=]+)([\|\|\w\:\.\-\/]+)?=*})"
 REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
@@ -239,7 +240,7 @@ class Revealer(object):
                 revealed_yaml = yaml.load(revealed_data, Loader=YamlLoader)
                 if not isinstance(revealed_yaml, dict):
                     raise RefError(
-                        "Revealer: revealed secret is not in yaml, "
+                        "Revealer: revealed secret is not in embedded yaml, "
                         "cannot access sub-variable at {}".format(ref.embedded_subvar_path)
                     )
                 try:
@@ -483,7 +484,7 @@ class RefController(object):
 
         data = json_data.pop("data").encode()
         # create new ref with deserialised data and remaining keys as kwargs
-        # note that encrypt=False is only for secret ref types, others will ignore
+        # note that encrypt=False is only for secret ref types, non secret refs (e.g. base64) will ignore
         # from_base64 is True because data is always base64 encoded in embedded form
         ref = backend.ref_type(data, encrypt=False, from_base64=True, **json_data)
 
@@ -555,6 +556,7 @@ class RefController(object):
 
     def __getitem__(self, key):
         # ?{ref:my/secret/token} or ?{ref:my/secret/token||func:param1:param2} or ?{ref:my/secret/token:deadbeef}
+        # e.g  ?{ref:basepayloadhere==:embedded} (for embedded refs)
         tag, token, func_str = self.tag_params(key)
 
         with self.detailedException(key):
