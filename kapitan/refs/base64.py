@@ -7,6 +7,7 @@
 
 import base64
 import errno
+import json
 import logging
 
 import yaml
@@ -29,6 +30,8 @@ class Base64Ref(PlainRef):
         super().__init__(data, **kwargs)
         self.type_name = "base64"
         self.encoding = kwargs.get("encoding", "original")
+        self.embed_refs = kwargs.get("embed_refs", False)
+
         # TODO data should be bytes only
         if from_base64:
             self.data = data
@@ -39,8 +42,21 @@ class Base64Ref(PlainRef):
         # TODO data should be bytes only
         return base64.b64decode(self.data).decode()
 
+    def compile_embedded(self):
+        dump = self.dump()
+        # if subvar is set, save path in 'embedded_subvar_path' key
+        subvar = self.path.split("@")
+        if len(subvar) > 1:
+            dump["embedded_subvar_path"] = subvar[1]
+        dump_data = base64.b64encode(json.dumps(dump).encode()).decode()
+        return f"?{{{self.type_name}:{dump_data}:embedded}}"
+
     def compile(self):
         # XXX will only work if object read via backend
+
+        if self.embed_refs:
+            return self.compile_embedded()
+
         return f"?{{{self.type_name}:{self.path}:{self.hash[:8]}}}"
 
     @classmethod
@@ -68,6 +84,6 @@ class Base64Ref(PlainRef):
 
 
 class Base64RefBackend(PlainRefBackend):
-    def __init__(self, path, ref_type=Base64Ref):
-        super().__init__(path, ref_type)
+    def __init__(self, path, ref_type=Base64Ref, **ref_kwargs):
+        super().__init__(path, ref_type, **ref_kwargs)
         self.type_name = "base64"
