@@ -20,7 +20,7 @@ check_tf_initialized() {
 check_installed() {
   CMD=$1
   if ! command -v "$CMD" > /dev/null; then
-      error "$CMD not installed. Exiting..."
+      echo "$CMD not installed. Exiting..."
   fi
 }
 

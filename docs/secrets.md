@@ -125,6 +125,22 @@ $ kapitan refs --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
 
 This will substitute the referenced secrets with the actual decrypted secrets stored at the referenced paths and display the file content.
 
+#### 5. Compile refs in embedded format
+
+This allows revealing compiled files without needing access to ref files by using:
+
+```
+$ kapitan compile --embed-refs
+```
+
+Compiled files containing refs will now have the references embedded in the compiled file under the following format (gkms backend used as an example):
+
+```
+?{gkms:ReallyLongBase64HereZ2FyZ2FiZQo=:embedded}
+```
+
+Which means that compiled outputs can now be completely distributed (e.g. in CI/CD systems that apply changes) without the need to access the refs directory.
+
 ## Secret sub-variables
 
 As illustrated above, one file corresponds to one secret. It is now possible for users who would like to reduce the decryption overhead to manually create a yaml file that contains multiple secrets, each of which can be referenced by its object key. For example, consider the secret file `refs/mysql_secrets`:

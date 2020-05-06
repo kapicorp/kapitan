@@ -1,3 +1,6 @@
+## 0.27.3-rc.0:
+- Compile refs in embedded format (#502)
+
 ## 0.27.2:
 - Check if input obj is None before writing to disk (#485)
 
