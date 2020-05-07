@@ -1,3 +1,6 @@
+## 0.27.3-rc.1:
+- Update pip dependencies to latest versions (#504)
+
 ## 0.27.3-rc.0:
 - Compile refs in embedded format (#502)
 

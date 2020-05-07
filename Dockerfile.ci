@@ -68,7 +68,7 @@ RUN apt-get update \
     # Metrics namespace for server side analytics
     && gcloud config set metrics/environment github_docker_image \
     && python -m venv /opt/venv \
-    && pip install --upgrade pip yq \
+    && pip install --upgrade pip yq wheel \
     && pip install -r ./kapitan/requirements.txt \
     && ./kapitan/kapitan/inputs/helm/build.sh \
     && pip install ./kapitan \
