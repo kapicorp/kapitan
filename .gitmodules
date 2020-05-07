@@ -1,0 +1,3 @@
+[submodule "kapitan/reclass"]
+	path = kapitan/reclass
+	url = https://github.com/kapicorp/reclass.git
