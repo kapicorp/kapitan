@@ -137,7 +137,10 @@ def compile_targets(
             logger.exception("Unknown (Non-Kapitan) Error occurred")
 
         logger.error("\n")
-        logger.error(e)
+        if kwargs.get("verbose"):
+            logger.exception(e)
+        else:
+            logger.error(e)
         sys.exit(1)
     finally:
         # always wait for other worker processes to terminate
