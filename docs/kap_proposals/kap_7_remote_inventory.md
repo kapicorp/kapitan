@@ -19,11 +19,17 @@ remoteInventory:
         output_path: <relative_output_path>
         ... type specific arguments
 ```
+
 The command for adding the remote inventories from the cli and fetching it will be:
+
 ``` $ kapitan inventory --fetch <output-path> <source> ```
+
 The command for only adding remote inventories to the .kapitan file from cli will be:
+
 ```$ kapitan inventory --add <inventory-name> <output-path> <source> ```
+
 The command for fetching all the inventory declared in .kapitan file will be:
+
 ```$ kapitan inventory --fetch-all```
 
 ## Copying inventory files to the output location
