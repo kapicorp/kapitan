@@ -516,6 +516,7 @@ def main():
             validate=args.validate,
             schemas_path=args.schemas_path,
             jinja2_filters=args.jinja2_filters,
+            verbose=hasattr(args, "verbose") and args.verbose,
         )
 
     elif cmd == "inventory":
