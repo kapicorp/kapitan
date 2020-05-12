@@ -1,3 +1,7 @@
+## 0.27.3-rc.2:
+- Show traceback to explain source of the issue (#507)
+- Handle function calling logic in argparse instead of using equals (#509)
+
 ## 0.27.3-rc.1:
 - Update pip dependencies to latest versions (#504)
 
