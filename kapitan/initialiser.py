@@ -14,19 +14,19 @@ from distutils.dir_util import copy_tree
 logger = logging.getLogger(__name__)
 
 
-def initialise_skeleton(directory):
+def initialise_skeleton(args):
     """ Initialises a directory with a recommended skeleton structure
     Args:
-        directory (string): path which to initialise, directory is assumed to exist
+        args.directory (string): path which to initialise, directory is assumed to exist
     """
 
     current_pwd = os.path.dirname(__file__)
     templates_directory = os.path.join(current_pwd, "inputs", "templates")
 
-    copy_tree(templates_directory, directory)
+    copy_tree(templates_directory, args.directory)
 
-    logger.info("Populated {} with:".format(directory))
-    for dirName, subdirList, fileList in os.walk(directory):
+    logger.info("Populated {} with:".format(args.directory))
+    for dirName, subdirList, fileList in os.walk(args.directory):
         logger.info("{}".format(dirName))
         for fname in fileList:
             logger.info("\t {}".format(fname))

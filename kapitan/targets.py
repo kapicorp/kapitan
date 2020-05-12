@@ -551,24 +551,24 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
         raise InventoryError(error_message)
 
 
-def schema_validate_compiled(targets, compiled_path, inventory_path, schema_cache_path, parallel):
+def schema_validate_compiled(args):
     """
     validates compiled output according to schemas specified in the inventory
     """
-    if not os.path.isdir(compiled_path):
-        logger.error(f"compiled-path {compiled_path} not found")
+    if not os.path.isdir(args.compiled_path):
+        logger.error(f"compiled-path {args.compiled_path} not found")
         sys.exit(1)
 
-    if not os.path.isdir(schema_cache_path):
-        os.makedirs(schema_cache_path)
-        logger.info(f"created schema-cache-path at {schema_cache_path}")
+    if not os.path.isdir(args.schemas_path):
+        os.makedirs(args.schemas_path)
+        logger.info(f"created schema-cache-path at {args.schemas_path}")
 
-    worker = partial(schema_validate_kubernetes_output, cache_dir=schema_cache_path)
-    pool = multiprocessing.Pool(parallel)
+    worker = partial(schema_validate_kubernetes_output, cache_dir=args.schemas_path)
+    pool = multiprocessing.Pool(args.parallelism)
 
     try:
-        target_objs = load_target_inventory(inventory_path, targets)
-        validate_map = create_validate_mapping(target_objs, compiled_path)
+        target_objs = load_target_inventory(args.inventory_path, args.targets)
+        validate_map = create_validate_mapping(target_objs, args.compiled_path)
 
         [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
         pool.close()

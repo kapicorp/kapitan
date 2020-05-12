@@ -46,15 +46,7 @@ rules:
 """
 
 
-def start_lint(
-    fail_on_warning,
-    skip_class_checks,
-    skip_yamllint,
-    inventory_path,
-    search_secrets,
-    secrets_path,
-    compiled_path,
-):
+def start_lint(args):
     """ Runs all lint operations available
     Args:
         fail_on_warning (bool): if set to True, function will exit if any warning is found
@@ -67,7 +59,7 @@ def start_lint(
     Yields:
         checks_sum (int): the number of lint warnings found
     """
-    if skip_class_checks and skip_yamllint and not search_secrets:
+    if args.skip_class_checks and args.skip_yamllint and not args.search_secrets:
         logger.info("Nothing to check. Remove --skip-class-checks or add --search-secrets to lint secrets")
         sys.exit(1)
 
@@ -75,25 +67,25 @@ def start_lint(
     status_secrets = 0
     status_class_checks = 0
 
-    if not os.path.isdir(inventory_path):
+    if not os.path.isdir(args.inventory_path):
         logger.info(
             "\nInventory path is invalid or not provided, skipping yamllint and orphan class checks\n"
         )
     else:
-        if not skip_yamllint:
+        if not args.skip_yamllint:
             logger.info("\nRunning yamllint on all inventory files...\n")
-            status_yamllint = lint_yamllint(inventory_path)
+            status_yamllint = lint_yamllint(args.inventory_path)
 
-        if not skip_class_checks:
+        if not args.skip_class_checks:
             logger.info("\nChecking for orphan classes in inventory...\n")
-            status_class_checks = lint_unused_classes(inventory_path)
+            status_class_checks = lint_unused_classes(args.inventory_path)
 
-    if search_secrets:
+    if args.search_secrets:
         logger.info("\nChecking for orphan secrets files...\n")
-        status_secrets = lint_orphan_secrets(compiled_path, secrets_path)
+        status_secrets = lint_orphan_secrets(args.compiled_path, args.secrets_path)
 
     checks_sum = status_secrets + status_class_checks + status_yamllint
-    if fail_on_warning and checks_sum > 0:
+    if args.fail_on_warning and checks_sum > 0:
         sys.exit(1)
 
     return checks_sum

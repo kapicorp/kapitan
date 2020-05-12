@@ -15,7 +15,6 @@ import unittest
 
 from kapitan.cached import reset_cache
 from kapitan.cli import main
-from kapitan.initialiser import initialise_skeleton
 
 logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
 logger = logging.getLogger(__name__)
