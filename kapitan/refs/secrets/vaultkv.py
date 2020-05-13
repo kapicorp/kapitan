@@ -91,7 +91,7 @@ def vault_obj(vault_parameters):
     """
     env = get_env(vault_parameters)
 
-    client = hvac.Client(**{k: v for k, v in env.items() if k is not "auth"})
+    client = hvac.Client(**{k: v for k, v in env.items() if k != "auth"})
 
     auth_type = vault_parameters["auth"]
     # GET TOKEN EITHER FROM ENVIRONMENT OF FILE
@@ -105,7 +105,7 @@ def vault_obj(vault_parameters):
                 if env["token"] == "":
                     raise VaultError("{file} is empty".format(file=token_file))
             except IOError:
-                VaultError("Cannot read file {file}".format(file=token_file))
+                raise VaultError("Cannot read file {file}".format(file=token_file))
     # DIFFERENT LOGIN METHOD BASED ON AUTHENTICATION TYPE
     if auth_type == "token":
         client.token = env["token"]
@@ -123,7 +123,7 @@ def vault_obj(vault_parameters):
     if client.is_authenticated():
         return client
     else:
-        VaultError("Vault Authentication Error, Environment Variables defined?")
+        raise VaultError("Vault Authentication Error, Environment Variables defined?")
 
 
 class VaultSecret(Base64Ref):
@@ -199,15 +199,15 @@ class VaultSecret(Base64Ref):
                 return_data = response["data"]["data"][data[1]]
             client.adapter.close()
         except Forbidden:
-            VaultError(
+            raise VaultError(
                 "Permission Denied. "
                 + "make sure the token is authorised to access {path} on Vault".format(path=data[0])
             )
         except InvalidPath:
-            VaultError("{path} does not exist on Vault secret".format(path=data[0]))
+            raise VaultError("{path} does not exist on Vault secret".format(path=data[0]))
 
-        if return_data is "":
-            VaultError("'{key}' doesn't exist on '{path}'".format(key=data[1], path=data[0]))
+        if return_data == "":
+            raise VaultError("'{key}' doesn't exist on '{path}'".format(key=data[1], path=data[0]))
         return return_data
 
     def dump(self):
