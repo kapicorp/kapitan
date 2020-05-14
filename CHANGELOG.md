@@ -1,3 +1,11 @@
+## 0.27.3:
+- Fix Vaultkv Error Handling (#512)
+- Fix Running init with kapitan binary doesn't work (#514)
+- Show traceback to explain source of the issue (#507)
+- Handle function calling logic in argparse instead of using equals (#509)
+- Update pip dependencies to latest versions (#504)
+- Compile refs in embedded format (#502)
+
 ## 0.27.3-rc.3:
 - Fix Vaultkv Error Handling (#512)
 - Fix Running init with kapitan binary doesn't work (#514)
