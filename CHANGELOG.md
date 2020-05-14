@@ -1,3 +1,7 @@
+## 0.27.3-rc.3:
+- Fix Vaultkv Error Handling (#512)
+- Fix Running init with kapitan binary doesn't work (#514)
+
 ## 0.27.3-rc.2:
 - Show traceback to explain source of the issue (#507)
 - Handle function calling logic in argparse instead of using equals (#509)
