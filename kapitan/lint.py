@@ -82,7 +82,7 @@ def start_lint(args):
 
     if args.search_secrets:
         logger.info("\nChecking for orphan secrets files...\n")
-        status_secrets = lint_orphan_secrets(args.compiled_path, args.secrets_path)
+        status_secrets = lint_orphan_secrets(args.compiled_path, args.refs_path)
 
     checks_sum = status_secrets + status_class_checks + status_yamllint
     if args.fail_on_warning and checks_sum > 0:

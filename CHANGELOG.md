@@ -1,3 +1,6 @@
+## 0.27.4:
+- Fix linter argument flag to refs-path instead of deprecated secrets-path (#516)
+
 ## 0.27.3:
 - Fix Vaultkv Error Handling (#512)
 - Fix Running init with kapitan binary doesn't work (#514)

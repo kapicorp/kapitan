@@ -31,7 +31,7 @@ class LinterTest(unittest.TestCase):
         args.skip_yamllint = False
         args.inventory_path = "./tests/test_resources/inventory"
         args.search_secrets = True
-        args.secrets_path = "./tests/test_resources/secrets"
+        args.refs_path = "./tests/test_resources/secrets"
         args.compiled_path = "./tests/test_resources/compiled"
 
         num_issues_found = start_lint(args)
