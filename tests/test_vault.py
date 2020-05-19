@@ -16,7 +16,7 @@ from time import sleep
 import docker
 import hvac
 from kapitan.refs.base import RefController, Revealer
-from kapitan.refs.secrets.vaultkv import VaultSecret, vault_obj
+from kapitan.refs.secrets.vaultkv import VaultSecret, VaultError, vault_obj
 
 # Create temporary folder
 REFS_HOME = tempfile.mkdtemp()
@@ -138,3 +138,22 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming secerts are correctly revealed
         self.assertEqual("File contents revealed: {}".format(secret["some_random_value"]), revealed)
+
+    def test_vault_missing_secret(self):
+        """
+        Access non existing secret, expect error
+        """
+        tag = "?{vaultkv:secret/joker}"
+        env = {"auth": "token"}
+        file_data = "foo:some_random_value".encode()
+        REF_CONTROLLER[tag] = VaultSecret(file_data, env)
+
+        # confirming secret file exists
+        self.assertTrue(
+            os.path.isfile(os.path.join(REFS_HOME, "secret/joker")), msg="Secret file doesn't exist"
+        )
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, "w") as fp:
+            fp.write("File contents revealed: {}".format(tag))
+        with self.assertRaises(VaultError):
+            REVEALER.reveal_raw_file(file_with_secret_tags)

@@ -123,9 +123,9 @@ if __name__ == "__main__":
 
     pre_warning()
 
-    print("searching for refs in secrets-path:", args.secrets_path)
+    print("searching for refs in secrets-path:", args.refs_path)
 
-    for file_path in find_files(args.secrets_path):
+    for file_path in find_files(args.refs_path):
         update_secrets(file_path)
 
     print()

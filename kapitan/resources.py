@@ -14,14 +14,16 @@ import io
 import json
 import logging
 import os
+import sys
 from functools import partial
 
 import jsonschema
 import kapitan.cached as cached
 import yaml
 from kapitan import __file__ as kapitan_install_path
-from kapitan.errors import CompileError, InventoryError
-from kapitan.utils import render_jinja2_file, sha256_string
+from kapitan import cached as cached
+from kapitan.errors import CompileError, InventoryError, KapitanError
+from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
 
 import reclass
 import reclass.core
@@ -229,6 +231,27 @@ def inventory(search_paths, target, inventory_path="inventory/"):
         return inventory_reclass(full_inv_path)["nodes"]
 
     return inventory_reclass(full_inv_path)["nodes"][target]
+
+
+def generate_inventory(args):
+    if args.pattern and args.target_name == "":
+        parser.error("--pattern requires --target_name")
+    try:
+        inv = inventory_reclass(args.inventory_path)
+        if args.target_name != "":
+            inv = inv["nodes"][args.target_name]
+            if args.pattern != "":
+                pattern = args.pattern.split(".")
+                inv = deep_get(inv, pattern)
+        if args.flat:
+            inv = flatten_dict(inv)
+            yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False)
+        else:
+            yaml.dump(inv, sys.stdout, Dumper=PrettyDumper, default_flow_style=False)
+    except Exception as e:
+        if not isinstance(e, KapitanError):
+            logger.exception("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        sys.exit(1)
 
 
 def inventory_reclass(inventory_path):

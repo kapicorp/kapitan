@@ -83,6 +83,10 @@ mkdocs gh-deploy -m "Commit message" -f ./mkdocs.yml -b gh-pages
 
 After it's pushed, create a PR that targets our gh-pages branch from your gh-pages branch.
 
+## Packaging extra resources in python package or binary
+
+To package any extra resources/files in the pip package or the kapitan binary, make sure you modify both `MANIFEST.in` and `scripts/pyinstaller.sh`.
+
 ## Contributor License Agreement
 
 Contributions to this project must be accompanied by a Contributor License

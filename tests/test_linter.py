@@ -15,17 +15,25 @@ from kapitan.lint import start_lint
 logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
 logger = logging.getLogger(__name__)
 
+"""Helper class for creating args"""
+
+
+class Object(object):
+    pass
+
 
 class LinterTest(unittest.TestCase):
     def test_lint(self):
-        num_issues_found = start_lint(
-            fail_on_warning=False,
-            skip_class_checks=False,
-            skip_yamllint=False,
-            inventory_path="./tests/test_resources/inventory",
-            search_secrets=True,
-            secrets_path="./tests/test_resources/secrets",
-            compiled_path="./tests/test_resources/compiled",
-        )
+
+        args = Object()
+        args.fail_on_warning = False
+        args.skip_class_checks = False
+        args.skip_yamllint = False
+        args.inventory_path = "./tests/test_resources/inventory"
+        args.search_secrets = True
+        args.refs_path = "./tests/test_resources/secrets"
+        args.compiled_path = "./tests/test_resources/compiled"
+
+        num_issues_found = start_lint(args)
         desired_output = 3
         self.assertEqual(num_issues_found, desired_output)

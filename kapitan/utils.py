@@ -266,12 +266,12 @@ def deep_get(dictionary, keys, previousKey=None):
     return value
 
 
-def searchvar(flat_var, inventory_path, pretty_print):
+def searchvar(args):
     """Show all inventory files where a given reclass variable is declared"""
     output = []
     maxlength = 0
-    keys = flat_var.split(".")
-    for full_path in list_all_paths(inventory_path):
+    keys = args.searchvar.split(".")
+    for full_path in list_all_paths(args.inventory_path):
         if full_path.endswith(".yml") or full_path.endswith(".yaml"):
             with open(full_path, "r") as fd:
                 data = yaml.load(fd, Loader=YamlLoader)
@@ -280,7 +280,7 @@ def searchvar(flat_var, inventory_path, pretty_print):
                     output.append((full_path, value))
                     if len(full_path) > maxlength:
                         maxlength = len(full_path)
-    if pretty_print:
+    if args.pretty_print:
         for i in output:
             print(i[0])
             for line in yaml.dump(i[1], default_flow_style=False).splitlines():
