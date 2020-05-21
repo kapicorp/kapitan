@@ -1,4 +1,6 @@
-# Kapitan: Generic templated configuration management for Kubernetes, Terraform and other things
+# Kapitan <img src="./docs/images/kapitan_logo.png" width="250" align="right">
+
+Generic templated configuration management for Kubernetes, Terraform and other things
 
 [![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
 
@@ -16,9 +18,7 @@ Use Kapitan to manage your Kubernetes manifests, your documentation, your Terraf
 
 How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](https://kapitan.dev/#faq)!
 
-<img src="./docs/images/kapitan_logo.png" width="250">
-
-# Main Features
+## Features
 
 * Use the Inventory as the single source of truth to tie together deployments, resources and documentation. [based on reclass](https://github.com/salt-formulas/reclass)
 * Use [Jsonnet](https://jsonnet.org/) or [Kadet (alpha)](https://github.com/deepmind/kapitan/pull/190) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
@@ -26,21 +26,21 @@ How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please lo
 * Manage secrets with GPG, AWS KMS or gCloud KMS and define who can access them, without compromising collaboration with other users.
 * Create dynamically generated documentation about a single deployment (i.e. ad-hoc instructions) or all deployments at once (i.e. global state of deployments)
 
-# Quickstart
+## Quickstart
 
 See https://kapitan.dev/#quickstart
 
-# Documentation
+## Documentation
 
 See https://kapitan.dev/ or `docs/README.md` in the source code.
 
-# Credits
+## Credits
 
 * [Jsonnet](https://github.com/google/jsonnet)
 * [Jinja2](http://jinja.pocoo.org/docs/2.9/)
 * [reclass](https://github.com/salt-formulas/reclass)
 
-# Related projects
+## Related projects
 
 * [sublime-jsonnet-syntax](https://github.com/gburiola/sublime-jsonnet-syntax) - Jsonnet syntax highlighting for Sublime Text
 * [language-jsonnet](https://github.com/google/language-jsonnet) - Jsonnet syntax highlighting for Atom
