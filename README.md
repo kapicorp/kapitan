@@ -1,4 +1,4 @@
-# Kapitan <img src="./docs/images/kapitan_logo.png" width="250" align="right">
+# Kapitan
 
 Generic templated configuration management for Kubernetes, Terraform and other things
 
@@ -15,6 +15,7 @@ Use Kapitan to manage your Kubernetes manifests, your documentation, your Terraf
 * **Mailing List** [kapitan-discuss@googlegroups.com](mailto:kapitan-discuss@googlegroups.com)
 * **London Meetup Group** [London Kapitan Meetup](https://www.meetup.com/London-Kapitan-Meetup/)
 
+<img src="./docs/images/kapitan_logo.png" width="250">
 
 How is it different from [`Helm`](https://github.com/kubernetes/helm)? Please look at our [FAQ](https://kapitan.dev/#faq)!
 
