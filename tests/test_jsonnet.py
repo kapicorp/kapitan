@@ -12,6 +12,7 @@ import os
 import unittest
 
 from kapitan.resources import (
+    file_exists,
     gzip_b64,
     jsonschema_validate,
     yaml_dump,
@@ -32,6 +33,13 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         """dump json string to yaml"""
         yaml = yaml_dump_stream('[{"key":"value"},{"key":"value"}]')
         self.assertEqual(yaml, "key: value\n---\nkey: value\n")
+
+    def test_file_exists(self):
+        """test that file_exists finds this test file"""
+        search_paths = [os.getcwd(), "./tests/"]
+        result = file_exists(search_paths, "test_jsonnet.py")
+        expected = {"exists": True, "path": "./tests/test_jsonnet.py"}
+        self.assertEqual(result, expected)
 
     def test_yaml_load(self):
         """
