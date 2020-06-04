@@ -6,24 +6,21 @@ Author: @alpharoy14
 
 ## Specification
 
-The configuration and declaration of remote inventories would be done in the hidden file `​.kapitan`.
+The configuration and declaration of remote inventories would be done in the inventory files.
 
 The file specifications are as follows:
 
 ```yaml
-remoteInventory:
-    -   name: <inventory_name> #user defined
-        type: <inventory_type> #git\https
-        source: <source_of_inventory>
-        output_path: <relative_output_path>
-        ... type specific arguments
+parameters:
+ kapitan:
+  inventory:
+   - type: <inventory_type> #git\https
+     source: <source_of_inventory>
+     output_path: <relative_output_path>
 ```
 
-The command for fetching a specific remote inventory declared in inventory configuration files will be:
-``` $ kapitan inventory --fetch <inventory-name> ```
+On executing the ``` $ kapitan compile``` command, first the remote inventories will be fetched followed by fetching of external dependencies and finally reclass will be used to compile.
 
-The command for fetching all the inventories declared in inventory configuration files will be:
-```$ kapitan inventory --fetch-all```
 
 ## Copying inventory files to the output location
 The output path is the path to save the inventory items into. The path is relative to the `inventory/` directory. For example, it could be `/classes/`. The contents of the fetched inventory will be recursively copied.
@@ -31,25 +28,23 @@ The output path is the path to save the inventory items into. The path is relati
 The fetched inventory files will be cached in the `.kapitan_cache` directory.
 
 ## Force fetching
-While fetching, the output path will be recursively checked to see if it contains any file with the same name. If so, kapitan will raise an error saying so.
+While fetching, the output path will be recursively checked to see if it contains any file with the same name. If so, kapitan will skip fetching it.
 
-To overwrite the files with the newly downloaded inventory items, we can add the --force flag to the fetch command, as shown below.
+To overwrite the files with the newly downloaded inventory items, we can add the `--force` flag to the compile command, as shown below.
 
-`$ kapitan inventory --fetch-all --force`
-`$ kapitan inventory --fetch <inventory-name> --force`
+`$ kapitan compile --force`
 
 ## URL type
-The URL type (Http/git) will be inferred from the <source> address. Depending on the URL type, the configuration file may have additional arguments.
+The URL type can be either git or http(s). Depending on the URL type, the configuration file may have additional arguments.
 
 E.g Git type may also include aditional `ref` parameter as illustrated below:
 
 ```yaml
-remoteInventory:
-    -   name: <inventory_name> #user defined
-        type: <inventory_type> #git\https
-        source: <source_of_inventory>
-        output_path: <relative_output_path>
-        ref: <commit_hash/branch/tag>
+inventory:
+ - type: git #git\https
+   source: <source_of_inventory>
+   output_path: <output_path>
+   ref: <commit_hash/branch/tag>
 ```
 
 ## Implementation details
