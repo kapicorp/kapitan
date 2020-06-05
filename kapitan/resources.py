@@ -48,6 +48,7 @@ def resource_callbacks(search_paths):
         "jinja2_render_file": (("name", "ctx"), partial(jinja2_render_file, search_paths)),
         "inventory": (("target", "inv_path"), partial(inventory, search_paths)),
         "file_read": (("name",), partial(read_file, search_paths)),
+        "file_exists": (("name",), partial(file_exists, search_paths)),
         "sha256_string": (("obj",), sha256_string),
         "gzip_b64": (("obj",), gzip_b64),
         "yaml_dump": (("obj",), yaml_dump),
@@ -163,6 +164,20 @@ def read_file(search_paths, name):
                 return f.read()
 
     raise IOError("Could not find file {}".format(name))
+
+
+def file_exists(search_paths, name):
+    """returns an object with keys:
+    - exists (true/false)
+    - path (will have the full path where the file was found)"""
+    for path in search_paths:
+        full_path = os.path.join(path, name)
+        logger.debug("file_exists trying file %s", full_path)
+        if os.path.exists(full_path):
+            logger.debug("file_exists found file at %s", full_path)
+            return {"exists": True, "path": full_path}
+
+    return {"exists": False, "path": ""}
 
 
 def search_imports(cwd, import_str, search_paths):
