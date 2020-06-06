@@ -120,6 +120,9 @@ yaml_load_stream - returns a list of json strings of the specified yaml file
 yaml_dump - returns a string yaml from a json string
 yaml_dump_stream - returns a string yaml stream from a json string
 file_read - reads the file specified
+file_exists - returns informative object if a file exists
+dir_files_list - returns a list of file in a dir
+dir_files_read - returns an object with keys - file_name and values - file contents
 jinja2_template - renders the jinja2 file with context specified
 sha256_string - returns sha256 of string
 gzip_b64 - returns base64 encoded gzip of obj

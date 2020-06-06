@@ -4,6 +4,8 @@
   yaml_load_stream(name):: std.native("yaml_load_stream")(name),
   file_read(name):: std.native("file_read")(name),
   file_exists(name):: std.native("file_exists")(name),
+  dir_files_list(name):: std.native("dir_files_list")(name),
+  dir_files_read(name):: std.native("dir_files_read")(name),
   inventory(target=std.extVar("target"), inv_path="inventory/"):: std.native("inventory")(target, inv_path),
   inventory_global(target=null, inv_path="inventory/"):: std.native("inventory")(target, inv_path),
   yaml_dump(obj):: std.native("yaml_dump")(std.toString(obj)),
