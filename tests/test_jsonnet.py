@@ -48,7 +48,7 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         search_paths = [os.getcwd(), "./tests/"]
         result = dir_files_list(search_paths, "test_jsonnet")
         expected = ["file1.txt", "file2.txt"]
-        self.assertEqual(result, expected)
+        self.assertEqual(result.sort(), expected.sort())
         with self.assertRaises(IOError):
             dir_files_list(search_paths, "non_existing_dir")
 
