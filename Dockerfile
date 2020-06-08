@@ -1,5 +1,5 @@
 # First build the Helm binding
-FROM golang:1.12.9-stretch AS helm-builder
+FROM golang:1.14.4-stretch AS helm-builder
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
@@ -11,6 +11,9 @@ COPY ./setup.py ./setup.py
 
 RUN chmod +x ./kapitan/inputs/helm/build.sh \
     && ./kapitan/inputs/helm/build.sh
+
+RUN chmod +x ./kapitan/dependency_manager/helm/build.sh \
+    && ./kapitan/dependency_manager/helm/build.sh
 
 # Build the virtualenv for Kapitan
 FROM python:3.7-slim-stretch AS python-builder
@@ -27,6 +30,7 @@ RUN apt-get update \
     && pip install --upgrade pip yq wheel \
     && pip install -r requirements.txt \
     && ./kapitan/inputs/helm/build.sh \
+    && ./kapitan/dependency_manager/helm/build.sh \
     && pip install .
 
 # Final image with virtualenv built in previous step
