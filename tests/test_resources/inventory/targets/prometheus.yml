@@ -1,0 +1,18 @@
+
+parameters:
+  kapitan:
+    vars:
+      target: prometheus
+
+    dependencies:
+      - type: helm
+        output_path: charts/prometheus
+        source: https://kubernetes-charts.storage.googleapis.com
+        version: 11.3.0
+        chart_name: prometheus
+    compile:
+      - input_type: helm
+        output_path: .
+        input_paths:
+          - charts/prometheus
+

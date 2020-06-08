@@ -488,12 +488,14 @@ def valid_target_obj(target_obj):
                 "items": {
                     "type": "object",
                     "properties": {
-                        "type": {"type": "string", "enum": ["git", "http", "https"]},
+                        "chart_name": {"type": "string"},
+                        "type": {"type": "string", "enum": ["git", "http", "https", "helm"]},
                         "output_path": {"type": "string"},
                         "source": {"type": "string"},
                         "subdir": {"type": "string"},
                         "ref": {"type": "string"},
                         "unpack": {"type": "boolean"},
+                        "version": {"type": "string"},
                     },
                     "required": ["type", "output_path", "source"],
                     "additionalProperties": False,
@@ -506,6 +508,20 @@ def valid_target_obj(target_obj):
                                     "source": {"format": "uri"},
                                     "output_path": {},
                                     "unpack": {},
+                                },
+                                "additionalProperties": False,
+                            },
+                        },
+                        {
+                            "if": {"properties": {"type": {"enum": ["helm"]}}},
+                            "then": {
+                                "properties": {
+                                    "type": {},
+                                    "source": {"format": "uri"},
+                                    "output_path": {},
+                                    "unpack": {},
+                                    "chart_name": {"type": "string"},
+                                    "version": {"type": "string"},
                                 },
                                 "additionalProperties": False,
                             },

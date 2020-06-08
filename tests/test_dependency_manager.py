@@ -16,6 +16,7 @@ from kapitan.dependency_manager.base import (
     fetch_git_source,
     fetch_http_source,
     fetch_git_dependency,
+    fetch_helm_chart,
     DEPENDENCY_OUTPUT_CONFIG,
 )
 
@@ -52,6 +53,19 @@ class DependencyManagerTest(unittest.TestCase):
         fetch_git_dependency((source, dep), temp_dir)
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
 
+    def test_fetch_helm_chart(self):
+        temp_dir = tempfile.mkdtemp()
+        output_dir = tempfile.mkdtemp()
+        output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
+        chart_name = "prometheus"
+        version = "11.3.0"
+        unique_chart_name = chart_name + "-" + version
+        dep = [{"output_path": output_chart_dir, "version": version, "chart_name": chart_name, "source": "https://kubernetes-charts.storage.googleapis.com"}]
+        fetch_helm_chart((unique_chart_name, dep), temp_dir)
+        self.assertTrue(os.path.isdir(output_chart_dir))
+        self.assertTrue(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
+        self.assertTrue(os.path.isdir(os.path.join(output_chart_dir, "charts", "kube-state-metrics")))
+
     def test_compile_fetch(self):
         temp = tempfile.mkdtemp()
         DEPENDENCY_OUTPUT_CONFIG["root_dir"] = temp
@@ -64,6 +78,7 @@ class DependencyManagerTest(unittest.TestCase):
             "-t",
             "nginx",
             "nginx-dev",
+            "prometheus",
             "-p",
             "4",
         ]
@@ -72,6 +87,7 @@ class DependencyManagerTest(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "kapitan-repository")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "charts", "prometheus")))
 
     def tearDown(self):
         os.chdir("../../")
