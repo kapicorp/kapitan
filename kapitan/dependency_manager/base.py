@@ -20,12 +20,13 @@ from kapitan.utils import make_request
 
 from git import Repo
 
+logger = logging.getLogger(__name__)
+
 try:
     from kapitan.dependency_manager.helm.helm_fetch_binding import ffi
-except ImportError:
+except ImportError as ie:
+    logger.debug("Error importing ffi from kapitan.dependency_manager.helm.helm_fetch_binding: {}".format(ie))
     pass  # make this feature optional
-
-logger = logging.getLogger(__name__)
 
 # this is used just to change the root directory of save_dir in testing
 DEPENDENCY_OUTPUT_CONFIG = {}
