@@ -356,6 +356,7 @@ class TestDependencyManager(unittest.TestCase):
             "-t",
             "nginx",
             "nginx-dev",
+            "prometheus",
             "-p",
             "4",
         ]
@@ -364,6 +365,7 @@ class TestDependencyManager(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "kapitan-repository")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "charts", "prometheus")))
 
     def tearDown(self):
         reset_cache()

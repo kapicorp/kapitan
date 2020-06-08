@@ -80,7 +80,7 @@ def fetch_dependencies(target_objs, pool):
     helm_worker = partial(fetch_helm_chart, save_dir=temp_dir)
     [p.get() for p in pool.imap_unordered(http_worker, http_deps.items()) if p]
     [p.get() for p in pool.imap_unordered(git_worker, git_deps.items()) if p]
-    [p.get() for p in pool.imap_unordered(helm_worker, helm_deps.items()) if p]    
+    [p.get() for p in pool.imap_unordered(helm_worker, helm_deps.items()) if p]
 
 
 def fetch_git_dependency(dep_mapping, save_dir):
@@ -190,6 +190,7 @@ def fetch_http_source(source, save_dir):
         logger.warning("Dependency {} : failed to fetch".format(source))
         return None
 
+
 def fetch_helm_chart(dep_mapping, save_dir):
     """
     downloads a helm chart and its subcharts from source then untars and moves it to save_dir
@@ -211,18 +212,25 @@ def fetch_helm_chart(dep_mapping, save_dir):
         res = lib.fetchHelmChart(c_repo_url, c_chart_name, c_version, c_destination_dir)
         response = ffi.string(res).decode("utf-8")
         if response != "":
-            logger.warning("Dependency helm chart {} and version {}: failed to fetch".format(chart_name, version))
+            logger.warning(
+                "Dependency helm chart {} and version {}: failed to fetch".format(chart_name, version)
+            )
         else:
-            logger.info("Dependency helm chart {} and version {}: successfully fetched".format(chart_name, version))
-            logger.info("Dependency helm chart {} and version {}: saved to {}".format(chart_name, version, destination_dir))
-
+            logger.info(
+                "Dependency helm chart {} and version {}: successfully fetched".format(chart_name, version)
+            )
+            logger.info(
+                "Dependency helm chart {} and version {}: saved to {}".format(
+                    chart_name, version, destination_dir
+                )
+            )
 
 
 def initialise_helm_fetch_binding():
     """returns the dl_opened library (.so file) if exists, otherwise None"""
     if platform.system() not in ("Linux", "Darwin"):  # TODO: later add binding for Mac
         return None
-    # binding_path is kapitan/inputs/helm/helm_fetch.so
+    # binding_path is kapitan/dependency_manager/helm/helm_fetch.so
     binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "helm/helm_fetch.so")
     if not os.path.exists(binding_path):
         logger.debug("The helm_fetch binding does not exist at {}".format(binding_path))

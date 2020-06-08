@@ -24,7 +24,7 @@ test_coverage:
 .PHONY: test_formatting
 test_formatting:
 	@echo ----- Testing code formatting -----
-	black -l 110 -t py37 --check --exclude "reclass|helm_binding.py|version.py" .
+	black -l 110 -t py37 --check --exclude "reclass|helm_binding.py|helm_fetch_binding.py|version.py" .
 	@echo
 
 .PHONY: release

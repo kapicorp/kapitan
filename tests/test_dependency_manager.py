@@ -49,7 +49,7 @@ class DependencyManagerTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         source = "https://github.com/deepmind/kapitan.git"
-        dep = [{"output_path": os.path.join(output_dir, "subdir"), "ref": "master", "subdir": "tests"}]
+        dep = [{"output_path": os.path.join(output_dir, "subdir"), "ref": "master", "subdir": "tests",}]
         fetch_git_dependency((source, dep), temp_dir)
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
 
@@ -60,7 +60,14 @@ class DependencyManagerTest(unittest.TestCase):
         chart_name = "prometheus"
         version = "11.3.0"
         unique_chart_name = chart_name + "-" + version
-        dep = [{"output_path": output_chart_dir, "version": version, "chart_name": chart_name, "source": "https://kubernetes-charts.storage.googleapis.com"}]
+        dep = [
+            {
+                "output_path": output_chart_dir,
+                "version": version,
+                "chart_name": chart_name,
+                "source": "https://kubernetes-charts.storage.googleapis.com",
+            }
+        ]
         fetch_helm_chart((unique_chart_name, dep), temp_dir)
         self.assertTrue(os.path.isdir(output_chart_dir))
         self.assertTrue(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
