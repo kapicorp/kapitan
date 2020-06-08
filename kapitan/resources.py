@@ -49,6 +49,8 @@ def resource_callbacks(search_paths):
         "inventory": (("target", "inv_path"), partial(inventory, search_paths)),
         "file_read": (("name",), partial(read_file, search_paths)),
         "file_exists": (("name",), partial(file_exists, search_paths)),
+        "dir_files_list": (("name",), partial(dir_files_list, search_paths)),
+        "dir_files_read": (("name",), partial(dir_files_read, search_paths)),
         "sha256_string": (("obj",), sha256_string),
         "gzip_b64": (("obj",), gzip_b64),
         "yaml_dump": (("obj",), yaml_dump),
@@ -178,6 +180,26 @@ def file_exists(search_paths, name):
             return {"exists": True, "path": full_path}
 
     return {"exists": False, "path": ""}
+
+
+def dir_files_list(search_paths, name):
+    """returns list of files in a dir"""
+    for path in search_paths:
+        full_path = os.path.join(path, name)
+        logger.debug("dir_files_list trying directory %s", full_path)
+        if os.path.exists(full_path):
+            return [f for f in os.listdir(full_path) if os.path.isfile(os.path.join(full_path, f))]
+    raise IOError("Could not find folder {}".format(name))
+
+
+def dir_files_read(search_paths, name):
+    """returns an object with key:
+    - file_name (contents of the file)"""
+    for path in search_paths:
+        full_path = os.path.join(path, name)
+        logger.debug("dir_files_list trying directory %s", full_path)
+        if os.path.exists(full_path):
+            return {f: read_file([full_path], f) for f in dir_files_list([full_path], "")}
 
 
 def search_imports(cwd, import_str, search_paths):

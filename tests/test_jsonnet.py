@@ -13,6 +13,8 @@ import unittest
 
 from kapitan.resources import (
     file_exists,
+    dir_files_list,
+    dir_files_read,
     gzip_b64,
     jsonschema_validate,
     yaml_dump,
@@ -39,6 +41,26 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         search_paths = [os.getcwd(), "./tests/"]
         result = file_exists(search_paths, "test_jsonnet.py")
         expected = {"exists": True, "path": "./tests/test_jsonnet.py"}
+        self.assertEqual(result, expected)
+
+    def test_dir_files_list(self):
+        """test if list of files in a dir"""
+        search_paths = [os.getcwd(), "./tests/"]
+        result = dir_files_list(search_paths, "test_jsonnet")
+        expected = ["file1.txt", "file2.txt"]
+        self.assertEqual(result, expected)
+        with self.assertRaises(IOError):
+            dir_files_list(search_paths, "non_existing_dir")
+
+    def test_dir_files_read(self):
+        """must result in dict with key:
+        - file_name (contents of the file)"""
+        search_paths = [os.getcwd(), "./tests/"]
+        result = dir_files_read(search_paths, "test_jsonnet")
+        expected = {
+            "file1.txt": "To be, or not to be: that is the question",
+            "file2.txt": "Nothing will come of nothing.",
+        }
         self.assertEqual(result, expected)
 
     def test_yaml_load(self):
