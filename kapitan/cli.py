@@ -82,6 +82,7 @@ def trigger_compile(args):
         reveal=args.reveal,
         cache=args.cache,
         cache_paths=args.cache_paths,
+        fetch_inventories=args.fetch,
         fetch_dependencies=args.fetch,
         validate=args.validate,
         schemas_path=args.schemas_path,
@@ -174,7 +175,7 @@ def main():
     )
     compile_parser.add_argument(
         "--fetch",
-        help="fetches external dependencies",
+        help="fetches remote inventories and external dependencies",
         action="store_true",
         default=from_dot_kapitan("compile", "fetch", False),
     )

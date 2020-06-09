@@ -20,6 +20,7 @@ from functools import partial
 import jsonschema
 import yaml
 from kapitan import cached, defaults
+from kapitan.remoteinventory.fetch import fetch_inventories
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
@@ -85,6 +86,9 @@ def compile_targets(
             raise CompileError("Error: no targets found")
 
         if kwargs.get("fetch_dependencies", False):
+            # TODO: implement recursive building of inventory
+            fetch_inventories(inventory_path, target_objs, pool)
+            target_objs = load_target_inventory(inventory_path, updated_targets)
             fetch_dependencies(target_objs, pool)
 
         # compile_target() returns None on success
