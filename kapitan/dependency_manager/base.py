@@ -71,7 +71,10 @@ def fetch_dependencies(target_objs, pool):
                 elif dependency_type in ("http", "https"):
                     http_deps[source_uri].append(item)
                 elif dependency_type == "helm":
-                    helm_deps[item["chart_name"] + "-" + item["version"]].append(item)
+                    version = item.get("version", "")
+                    if version == "":
+                        version = "latest"
+                    helm_deps[item["chart_name"] + "-" + version].append(item)
 
         except KeyError:
             continue
@@ -200,9 +203,14 @@ def fetch_helm_chart(dep_mapping, save_dir):
     unique_chart, deps = dep_mapping
     for dep in deps:
         chart_name = dep["chart_name"]
-        version = dep["version"]
+        version = dep.get("version", "")
         repo_url = dep["source"]
         destination_dir = dep["output_path"]
+
+        if version == "":
+            logger.info(
+                "Dependency helm chart {} being fetch with using latest version available".format(chart_name)
+            )
 
         logger.info("Dependency helm chart {} and version {}: fetching now".format(chart_name, version))
         c_chart_name = ffi.new("char[]", chart_name.encode("ascii"))
@@ -214,7 +222,7 @@ def fetch_helm_chart(dep_mapping, save_dir):
         response = ffi.string(res).decode("utf-8")
         if response != "":
             logger.warning(
-                "Dependency helm chart {} and version {}: failed to fetch".format(chart_name, version)
+                "Dependency helm chart {} and version {}: {}".format(chart_name, version, response)
             )
         else:
             logger.info(

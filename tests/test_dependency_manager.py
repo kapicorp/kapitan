@@ -73,6 +73,25 @@ class DependencyManagerTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
         self.assertTrue(os.path.isdir(os.path.join(output_chart_dir, "charts", "kube-state-metrics")))
 
+    def test_fetch_helm_chart_version_that_does_not_exist(self):
+        temp_dir = tempfile.mkdtemp()
+        output_dir = tempfile.mkdtemp()
+        output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
+        chart_name = "prometheus"
+        version = "10.7.0"
+        unique_chart_name = chart_name + "-" + version
+        dep = [
+            {
+                "output_path": output_chart_dir,
+                "version": version,
+                "chart_name": chart_name,
+                "source": "https://kubernetes-charts.storage.googleapis.com",
+            }
+        ]
+        fetch_helm_chart((unique_chart_name, dep), temp_dir)
+        self.assertFalse(os.path.isdir(output_chart_dir))
+        self.assertFalse(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
+
     def test_compile_fetch(self):
         temp = tempfile.mkdtemp()
         DEPENDENCY_OUTPUT_CONFIG["root_dir"] = temp
