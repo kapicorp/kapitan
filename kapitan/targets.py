@@ -523,6 +523,7 @@ def valid_target_obj(target_obj):
                                     "chart_name": {"type": "string"},
                                     "version": {"type": "string"},
                                 },
+                                "required": ["type", "output_path", "source", "chart_name"],
                                 "additionalProperties": False,
                             },
                         },
