@@ -356,7 +356,7 @@ class TestDependencyManager(unittest.TestCase):
             "-t",
             "nginx",
             "nginx-dev",
-            "prometheus",
+            "monitoring",
             "-p",
             "4",
         ]

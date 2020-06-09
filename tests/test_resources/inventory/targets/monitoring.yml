@@ -1,8 +1,7 @@
-
 parameters:
   kapitan:
     vars:
-      target: prometheus
+      target: monitoring
 
     dependencies:
       - type: helm
@@ -15,4 +14,10 @@ parameters:
         output_path: .
         input_paths:
           - charts/prometheus
+        helm_values:
+          alertmanager:
+            enabled: false
+        helm_params:
+          namespace: infra-prometheus
+          name_template: prometheus
 
