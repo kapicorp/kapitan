@@ -94,6 +94,25 @@ class Base64RefsTest(unittest.TestCase):
         revealed = ref_obj.reveal()
         self.assertEqual(revealed, "ref 2 data")
 
+    def test_base64_ref_embedded_reveal_encoding_original(self):
+        "check ref embedded reveal() encoding metadata is persisted"
+        tag = "?{base64:my/ref2}"
+        REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(b"ref 2 data")
+        ref_obj = REF_CONTROLLER_EMBEDDED[tag]
+        revealed = ref_obj.reveal()
+        self.assertEqual(revealed, "ref 2 data")
+        self.assertEqual(ref_obj.encoding, "original")
+
+    def test_base64_ref_embedded_reveal_encoding_base64(self):
+        "check ref embedded reveal() encoding metadata is persisted"
+        tag = "?{base64:my/ref3}"
+        REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(base64.b64encode(b"ref 3 data"),
+                                                 encoding="base64")
+        ref_obj = REF_CONTROLLER_EMBEDDED[tag]
+        revealed = ref_obj.reveal()
+        self.assertEqual(revealed, base64.b64encode(b"ref 3 data").decode())
+        self.assertEqual(ref_obj.encoding, "base64")
+
     def test_base64_ref_non_existent_raises_KeyError(self):
         "check RefController raises KeyError for non existent Base64Ref"
         tag = "?{base64:non/existent}"
