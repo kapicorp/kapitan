@@ -1,3 +1,9 @@
+## 0.28.0-rc.0:
+- Fix embedded refs encoding value (#523)
+- Add new Helm dependency input type (#520)
+- adding dir_files_list and dir_files_read in jsonnet (#519)
+- Add file_exists function to jsonnet (#518)
+
 ## 0.27.4:
 - Fix linter argument flag to refs-path instead of deprecated secrets-path (#516)
 
