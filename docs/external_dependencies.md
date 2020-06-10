@@ -152,3 +152,134 @@ This fetches the README.md file from the URL and save it locally.
 
 Another use case for http types is when we want to download an archive file, such as helm packages, and extract its content.
 Setting `unpack: True` will unpack zip or tar files onto the `output_path`. In such cases, set `output_path` to a folder where you extract the content, and not the file name. You can refer to [here](compile.md#example) for the example.
+
+
+## Helm type
+
+Fetches helm charts and any specific subcharts in the `requirements.yaml` file.
+Currently only works on linux with the `helm_fetch_binding`.
+
+### Usage
+
+```yaml
+parameters:
+  kapitan:
+    dependencies:
+    - type: helm
+      output_path: path/to/chart
+      source: http[s]://<helm_chart_repository_url>
+      version: <specific chart version>
+      chart_name: <name of chart>
+```
+
+
+### Example
+
+If we want to download the prometheus helm chart we simply add the dependency to the monitoring target.
+We want a specific version `11.3.0` so we put that in.
+
+```yaml
+parameters:
+  kapitan:
+    vars:
+      target: monitoring
+    dependencies:
+      - type: helm
+        output_path: charts/prometheus
+        source: https://kubernetes-charts.storage.googleapis.com
+        version: 11.3.0
+        chart_name: prometheus
+    compile:
+      - input_type: helm
+        output_path: .
+        input_paths:
+          - charts/prometheus
+        helm_values:
+      	  alertmanager:
+            enabled: false
+        helm_params:
+          namespace: monitoring
+          name_template: prometheus
+          release_name: prometheus
+```
+
+Then run:
+
+```shell
+$ kapitan compile --fetch -t monitoring
+Dependency helm chart prometheus and version 11.3.0: fetching now
+Dependency helm chart prometheus and version 11.3.0: successfully fetched
+Dependency helm chart prometheus and version 11.3.0: saved to charts/prometheus
+Compiled monitoring (1.48s)
+
+$ tree -L 3
+├── charts
+│   └── prometheus
+│       ├── Chart.yaml
+│       ├── README.md
+│       ├── charts
+│       ├── requirements.lock
+│       ├── requirements.yaml
+│       ├── templates
+│       └── values.yaml
+├── compiled
+│   ├── monitoring
+├── inventory
+    ├── classes
+        ├── common.yml
+        ├── component
+```
+
+If you simply want the latest chart available, either don't include the `version` key or specify an empty string.
+```yaml
+parameters:
+  kapitan:
+    vars:
+      target: monitoring
+    dependencies:
+      - type: helm
+        output_path: charts/prometheus
+        source: https://kubernetes-charts.storage.googleapis.com
+        version: ""
+        chart_name: prometheus
+    compile:
+      - input_type: helm
+        output_path: .
+        input_paths:
+          - charts/prometheus
+        helm_values:
+      	  alertmanager:
+            enabled: false
+        helm_params:
+          namespace: monitoring
+          name_template: prometheus
+          release_name: prometheus
+```
+
+Then run:
+
+```shell
+$ kapitan compile --fetch -t monitoring
+Dependency helm chart prometheus being fetch with using latest version available
+Dependency helm chart prometheus and version : fetching now
+Dependency helm chart prometheus and version : successfully fetched
+Dependency helm chart prometheus and version : saved to charts/prometheus
+Compiled monitoring (1.58s)
+
+$ tree -L 3
+├── charts
+│   └── prometheus
+│       ├── Chart.yaml
+│       ├── README.md
+│       ├── charts
+│       ├── requirements.lock
+│       ├── requirements.yaml
+│       ├── templates
+│       └── values.yaml
+├── compiled
+│   ├── monitoring
+├── inventory
+    ├── classes
+        ├── common.yml
+        ├── component
+```

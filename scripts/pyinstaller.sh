@@ -12,6 +12,7 @@ pyi-makespec kapitan/"$entry".py --onefile \
     --add-data kapitan/lib:kapitan/lib \
     --add-data kapitan/inputs/templates:kapitan/inputs/templates \
     --add-data kapitan/inputs/helm/libtemplate.so:kapitan/inputs/helm \
+    --add-data kapitan/dependency_manager/helm/helm_fetch.so:kapitan/dependency_manager/helm \
     --hidden-import pyparsing --hidden-import jsonschema \
     --exclude-module doctest --exclude-module pydoc
 pyinstaller "$entry".spec --clean

@@ -359,13 +359,12 @@ cd kapitan/inputs/helm
 ./build.sh
 ```
 
-This requires Go >= 1.12.
+This requires Go 1.14.
 
 #### Helm subcharts
 
-This binding supports helm subcharts. However, since the [external dependency manager](external_dependencies.md) does not parse `requirements.yaml` in order to detect chart dependencies, you are required to manually download the entire chart including the parent charts.
-
-*Supported output types:* N/A (no need to specify `output_type`)
+There is an [external dependency manager](external_dependencies.md) of type `helm` which enables you to specify helm
+charts to download, including subcharts.
 
 ### Copy
 

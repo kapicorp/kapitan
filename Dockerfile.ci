@@ -8,7 +8,7 @@ FROM bitnami/jsonnet:0.14.0 as jsonnet-binary
 FROM quay.io/prometheus/prometheus:v2.15.2 AS prometheus-binary
 
 # Build the Helm binding
-FROM golang:1.13-stretch AS helm-builder
+FROM golang:1.14.4-stretch AS helm-builder
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
@@ -20,6 +20,9 @@ COPY ./setup.py ./setup.py
 
 RUN chmod +x ./kapitan/inputs/helm/build.sh \
     && ./kapitan/inputs/helm/build.sh
+
+RUN chmod +x ./kapitan/dependency_manager/helm/build.sh \
+    && ./kapitan/dependency_manager/helm/build.sh
 
 # Build final image
 FROM python:3.7-buster
@@ -71,6 +74,7 @@ RUN apt-get update \
     && pip install --upgrade pip yq wheel \
     && pip install -r ./kapitan/requirements.txt \
     && ./kapitan/kapitan/inputs/helm/build.sh \
+    && ./kapitan/kapitan/dependency_manager/helm/build.sh \
     && pip install ./kapitan \
     && rm -rf ./kapitan \
     && curl -L -o /usr/local/bin/kapp ${KAPP_URL} \
