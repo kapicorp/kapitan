@@ -13,6 +13,7 @@ from kapitan.errors import GitFetchingError
 
 logger = logging.getLogger(__name__)
 
+
 def fetch_inventories(inventory_path, target_objs, pool):
     """Parses through the 'inventory' parameter in target_objs to fetch the remote
        inventories and stores it in a temporary directory before recursively
@@ -85,8 +86,8 @@ def fetch_git_inventories(inv_mapping, inventory_path, save_dir):
                 copy_src_path = full_subdir
             else:
                 raise GitSubdirNotFoundError(
-                "Inventory {} : subdir {} not found in repo".format(source, sub_dir)
-            )
+                    "Inventory {} : subdir {} not found in repo".format(source, sub_dir)
+                )
         # Recursively copy the fetched inventory files (src) to the output path (dst)
         # if those items doen't exist or if it's older than src
         copy_tree(copy_src_path, output_path, update=True)
@@ -101,9 +102,8 @@ def fetch_git_source(source, save_dir):
         logger.info("Inventory {} : successfully fetched".format(source))
     except GitCommandError as e:
         logger.error(e)
-        raise GitFetchingError(
-            "Inventory {} : fetching unsuccessful{}".format(source, e.stderr)
-    )
+        raise GitFetchingError("Inventory {} : fetching unsuccessful{}".format(source, e.stderr))
+
 
 def list_sources(target_objs):
     "returns list of all remote inventory sources"
@@ -117,4 +117,3 @@ def list_sources(target_objs):
         except KeyError:
             continue
     return sources
-

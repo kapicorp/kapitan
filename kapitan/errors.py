@@ -69,8 +69,10 @@ class GitSubdirNotFoundError(KapitanError):
 
     pass
 
+
 class GitFetchingError(KapitanError):
     """repo not found and permission error"""
+
     pass
 
 

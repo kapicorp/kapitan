@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 # list of sources of remote invenotries
 sources = []
 
+
 def compile_targets(
     inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs
 ):
