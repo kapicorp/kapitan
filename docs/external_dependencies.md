@@ -212,8 +212,22 @@ Dependency helm chart prometheus and version 11.3.0: successfully fetched
 Dependency helm chart prometheus and version 11.3.0: saved to charts/prometheus
 Compiled monitoring (1.48s)
 
-$ ls
-compiled inventory README.md
+$ tree -L 3
+├── charts
+│   └── prometheus
+│       ├── Chart.yaml
+│       ├── README.md
+│       ├── charts
+│       ├── requirements.lock
+│       ├── requirements.yaml
+│       ├── templates
+│       └── values.yaml
+├── compiled
+│   ├── monitoring
+├── inventory
+    ├── classes
+        ├── common.yml
+        ├── component
 ```
 
 If you simply want the latest chart available, either don't include the `version` key or specify an empty string.
@@ -252,6 +266,20 @@ Dependency helm chart prometheus and version : successfully fetched
 Dependency helm chart prometheus and version : saved to charts/prometheus
 Compiled monitoring (1.58s)
 
-$ ls
-compiled inventory README.md
+$ tree -L 3
+├── charts
+│   └── prometheus
+│       ├── Chart.yaml
+│       ├── README.md
+│       ├── charts
+│       ├── requirements.lock
+│       ├── requirements.yaml
+│       ├── templates
+│       └── values.yaml
+├── compiled
+│   ├── monitoring
+├── inventory
+    ├── classes
+        ├── common.yml
+        ├── component
 ```
