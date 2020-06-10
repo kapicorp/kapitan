@@ -11,3 +11,5 @@ tags
 .python-version
 .kapitan
 .coverage
+*.so
+*.h
