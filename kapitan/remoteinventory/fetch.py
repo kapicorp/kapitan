@@ -24,7 +24,7 @@ def fetch_inventories(inventory_path, target_objs, pool):
 
        :return: None
     """
-    temp_dir = tempfile.mkdtemp(dir=".kapitan_cache")
+    temp_dir = tempfile.mkdtemp()
 
     git_inventories = defaultdict(list)
     inv_output_path = defaultdict(set)
@@ -50,8 +50,6 @@ def fetch_inventories(inventory_path, target_objs, pool):
     git_worker = partial(fetch_git_inventories, inventory_path=inventory_path, save_dir=temp_dir)
     [p.get() for p in pool.imap_unordered(git_worker, git_inventories.items()) if p]
 
-    #wait for other worker processes to terminate
-    pool.join()
     rmtree(temp_dir)
     logger.debug("Removed {}".format(temp_dir))
 
@@ -107,4 +105,16 @@ def fetch_git_source(source, save_dir):
             "Inventory {} : fetching unsuccessful{}".format(source, e.stderr)
     )
 
+def list_sources(target_objs):
+    "returns list of all remote inventory sources"
+    sources = []
+    for target_obj in target_objs:
+        try:
+            invs = target_obj["inventories"]
+            for inv in invs:
+                source_uri = inv["source"]
+                sources.append(source_uri)
+        except KeyError:
+            continue
+    return sources
 

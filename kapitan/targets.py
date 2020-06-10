@@ -20,7 +20,7 @@ from functools import partial
 import jsonschema
 import yaml
 from kapitan import cached, defaults
-from kapitan.remoteinventory.fetch import fetch_inventories
+from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
@@ -36,6 +36,8 @@ from reclass.errors import NotFoundError, ReclassException
 
 logger = logging.getLogger(__name__)
 
+# list of sources of remote invenotries
+sources = []
 
 def compile_targets(
     inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs
@@ -47,6 +49,7 @@ def compile_targets(
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix=".kapitan")
+    global sources
 
     updated_targets = targets
     try:
@@ -85,10 +88,17 @@ def compile_targets(
         if not target_objs:
             raise CompileError("Error: no targets found")
 
+        if kwargs.get("fetch_inventories", False):
+            new_sources = list(set(list_sources(target_objs)) - set(sources))
+            while new_sources:
+                # TODO: make fetching more efficient so that only
+                # new inventories are downloaded
+                fetch_inventories(inventory_path, target_objs, pool)
+                target_objs = load_target_inventory(inventory_path, updated_targets)
+                sources.extend(new_sources)
+                new_sources = list(set(list_sources(target_objs)) - set(sources))
+
         if kwargs.get("fetch_dependencies", False):
-            # TODO: implement recursive building of inventory
-            fetch_inventories(inventory_path, target_objs, pool)
-            target_objs = load_target_inventory(inventory_path, updated_targets)
             fetch_dependencies(target_objs, pool)
 
         # compile_target() returns None on success
@@ -488,6 +498,35 @@ def valid_target_obj(target_obj):
                 },
             },
             "dependencies": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "enum": ["git", "http", "https"]},
+                        "output_path": {"type": "string"},
+                        "source": {"type": "string"},
+                        "subdir": {"type": "string"},
+                        "ref": {"type": "string"},
+                        "unpack": {"type": "boolean"},
+                    },
+                    "required": ["type", "output_path", "source"],
+                    "additionalProperties": False,
+                    "allOf": [
+                        {
+                            "if": {"properties": {"type": {"enum": ["http", "https"]}}},
+                            "then": {
+                                "properties": {
+                                    "type": {},
+                                    "source": {"format": "uri"},
+                                    "output_path": {},
+                                },
+                                "additionalProperties": False,
+                            },
+                        },
+                    ],
+                },
+            },
+            "inventories": {
                 "type": "array",
                 "items": {
                     "type": "object",
