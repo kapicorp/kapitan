@@ -519,6 +519,7 @@ def valid_target_obj(target_obj):
                                     "type": {},
                                     "source": {"format": "uri"},
                                     "output_path": {},
+                                    "unpack": {},
                                 },
                                 "additionalProperties": False,
                             },
