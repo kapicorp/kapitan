@@ -478,8 +478,8 @@ class RefController(object):
         json_data = base64.b64decode(b64_path).decode()
         json_data = json.loads(json_data)
         backend = self._get_backend(type_name)
+
         # strip useless keys
-        json_data.pop("encoding")
         json_data.pop("type")
 
         data = json_data.pop("data").encode()
