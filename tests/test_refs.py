@@ -106,8 +106,7 @@ class Base64RefsTest(unittest.TestCase):
     def test_base64_ref_embedded_reveal_encoding_base64(self):
         "check ref embedded reveal() encoding metadata is persisted"
         tag = "?{base64:my/ref3}"
-        REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(base64.b64encode(b"ref 3 data"),
-                                                 encoding="base64")
+        REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(base64.b64encode(b"ref 3 data"), encoding="base64")
         ref_obj = REF_CONTROLLER_EMBEDDED[tag]
         revealed = ref_obj.reveal()
         self.assertEqual(revealed, base64.b64encode(b"ref 3 data").decode())
