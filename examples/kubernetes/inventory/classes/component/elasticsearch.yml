@@ -35,7 +35,7 @@ parameters:
       input_type: jsonnet
       input_paths:
         - components/elasticsearch/main.jsonnet
-      output_type: yaml
+      output_type: yml
     - output_path: scripts
       input_type: jinja2
       input_paths:

@@ -1,6 +1,6 @@
 storage_type: yaml_fs
 pretty_print: true
-output: yaml
+output: yml
 inventory_base_uri: .
 nodes_uri: targets
 classes_uri: classes
