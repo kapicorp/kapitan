@@ -452,7 +452,7 @@ def valid_target_obj(target_obj):
                         {
                             "properties": {
                                 "input_type": {"enum": ["jsonnet", "kadet", "copy"]},
-                                "output_type": {"enum": ["yaml", "json", "plain"]},
+                                "output_type": {"enum": ["yml", "yaml", "json", "plain"]},
                             },
                         },
                         {"properties": {"input_type": {"enum": ["jinja2", "helm"]}}},

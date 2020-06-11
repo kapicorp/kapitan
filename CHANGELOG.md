@@ -1,3 +1,6 @@
+## 0.28.0-rc.1:
+- Allow using .yaml output file extension along with .yml (#525)
+
 ## 0.28.0-rc.0:
 - Fix embedded refs encoding value (#523)
 - Add new Helm dependency input type (#520)

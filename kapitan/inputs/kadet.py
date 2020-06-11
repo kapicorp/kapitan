@@ -117,8 +117,8 @@ class Kadet(InputType):
                     indent=indent,
                 ) as fp:
                     fp.write_json(item_value)
-            elif output == "yaml":
-                file_path = os.path.join(compile_path, "%s.%s" % (item_key, "yml"))
+            elif output in ["yml", "yaml"]:
+                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
                 with CompiledFile(
                     file_path,
                     self.ref_controller,
