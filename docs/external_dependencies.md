@@ -4,6 +4,7 @@ Kapitan is capable of fetching components stored in remote locations. This featu
 
 - [git type](#git-type)
 - [http type](#http-type)
+- [helm type](#helm-type)
 
 Some use cases of this feature may include:
 
