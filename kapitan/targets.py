@@ -36,9 +36,6 @@ from reclass.errors import NotFoundError, ReclassException
 
 logger = logging.getLogger(__name__)
 
-# list of sources of remote invenotries
-sources = []
-
 
 def compile_targets(
     inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs
@@ -50,7 +47,6 @@ def compile_targets(
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix=".kapitan")
-    global sources
 
     updated_targets = targets
     try:
@@ -90,14 +86,13 @@ def compile_targets(
             raise CompileError("Error: no targets found")
 
         if kwargs.get("fetch_inventories", False):
-            new_sources = list(set(list_sources(target_objs)) - set(sources))
+            new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
             while new_sources:
-                # TODO: make fetching more efficient so that only
-                # new inventories are downloaded
                 fetch_inventories(inventory_path, target_objs, pool)
+                cached.reset_inv()
                 target_objs = load_target_inventory(inventory_path, updated_targets)
-                sources.extend(new_sources)
-                new_sources = list(set(list_sources(target_objs)) - set(sources))
+                cached.inv_sources.update(new_sources)
+                new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
 
         if kwargs.get("fetch_dependencies", False):
             fetch_dependencies(target_objs, pool)

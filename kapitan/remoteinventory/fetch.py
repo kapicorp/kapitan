@@ -10,6 +10,7 @@ from git import Repo
 from git import GitCommandError
 from kapitan.errors import GitSubdirNotFoundError
 from kapitan.errors import GitFetchingError
+from kapitan import cached
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,8 @@ def fetch_inventories(inventory_path, target_objs, pool):
             for inv in inventories:
                 inv_type = inv["type"]
                 source_uri = inv["source"]
+                if source_uri in cached.inv_sources:
+                    continue
                 # output_path is relative to inventory_path
                 # ./inventory by default
                 output_path = os.path.join(inventory_path, inv["output_path"])
