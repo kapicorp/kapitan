@@ -1,0 +1,17 @@
+parameters:
+    kapitan:
+        vars:
+            target: remoteinv-example
+        inventories:
+            - type: git
+              output_path: targets/
+            #   source: https://github.com/deepmind/kapitan.git
+              source: git@github.com:AlphaRoy14/kapitan_tests
+              ref: master
+            #   subdir: kapitan/tests/test_remote_inventory/inventory_two/
+              subdir: inventory/targets
+        compile:
+            - output_path: .
+              input_type: jinja2
+              input_paths:
+                - templates/docs/README.md
