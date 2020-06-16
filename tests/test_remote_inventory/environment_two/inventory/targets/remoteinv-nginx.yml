@@ -1,15 +1,13 @@
 parameters:
     kapitan:
         vars:
-            target: remoteinv-example
+            target: remoteinv-nginx
         inventories:
             - type: git
-              output_path: targets/
-            #   source: https://github.com/deepmind/kapitan.git
-              source: git@github.com:AlphaRoy14/kapitan_tests
+              output_path: .
+              source: https://github.com/deepmind/kapitan.git
               ref: master
-            #   subdir: kapitan/tests/test_remote_inventory/inventory_two/
-              subdir: inventory/targets
+              subdir: kapitan/tests/test_resources/inventory/
         compile:
             - output_path: .
               input_type: jinja2
