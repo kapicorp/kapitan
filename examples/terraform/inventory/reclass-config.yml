@@ -5,6 +5,7 @@ inventory_base_uri: .
 nodes_uri: targets
 classes_uri: classes
 compose_node_name: false
+class_mappings_match_path: true
 class_mappings:
   - develop/*                          env.develop
   - prod/*                             env.prod
