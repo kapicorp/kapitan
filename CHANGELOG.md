@@ -1,3 +1,6 @@
+## 0.28.0-rc.2:
+- Update reclass and some pip dependencies. (#528)
+
 ## 0.28.0-rc.1:
 - Allow using .yaml output file extension along with .yml (#525)
 
