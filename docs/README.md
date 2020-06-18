@@ -103,7 +103,7 @@ Compiled minikube-es
 
 ### Kapitan features
 
-- [Secret management](secrets.md)
+- [References (formerly secrets)](secrets.md)
 - [Manifest validation](validate.md)
 - [External dependencies management](external_dependencies.md)
 

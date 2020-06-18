@@ -14,6 +14,7 @@ import unittest
 
 from kapitan.errors import RefError, RefFromFuncError, RefHashMismatchError
 from kapitan.refs.base import PlainRef, RefController, RefParams, Revealer
+from kapitan.refs.env import EnvRef, DEFAULT_ENV_REF_VAR_PREFIX
 from kapitan.refs.base64 import Base64Ref
 from kapitan.utils import get_entropy
 
@@ -42,6 +43,31 @@ class Base64RefsTest(unittest.TestCase):
         ref_obj = REF_CONTROLLER[tag]
         revealed = ref_obj.reveal()
         self.assertEqual(revealed, "ref 2 plain data")
+
+    def test_env_ref_compile(self):
+        "check env ref compile() output is valid"
+        tag = "?{env:my/ref1_env}"
+        REF_CONTROLLER[tag] = EnvRef(b"ref 1 env data")
+        ref_obj = REF_CONTROLLER[tag]
+        revealed = ref_obj.compile()
+        self.assertEqual(revealed, "?{env:my/ref1_env:877234e3}")
+
+    def test_env_ref_reveal_default(self):
+        "check env ref reveal() output is original plain env data when environment var is not set"
+        tag = "?{env:my/ref1_env}"
+        REF_CONTROLLER[tag] = EnvRef(b"ref 1 env data")
+        ref_obj = REF_CONTROLLER[tag]
+        revealed = ref_obj.reveal()
+        self.assertEqual(revealed, "ref 1 env data")
+
+    def test_env_ref_reveal_from_env(self):
+        "check env ref reveal() output is value of environment var data when environment var is set"
+        tag = "?{env:my/ref1_env}"
+        REF_CONTROLLER[tag] = EnvRef(b"ref 1 env data")
+        ref_obj = REF_CONTROLLER[tag]
+        os.environ["{}{}".format(DEFAULT_ENV_REF_VAR_PREFIX, "ref1_env")] = "ref 1 env data from EV"
+        revealed = ref_obj.reveal()
+        self.assertEqual(revealed, "ref 1 env data from EV")
 
     def test_base64_ref_compile(self):
         "check ref compile() output is valid"

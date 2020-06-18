@@ -7,6 +7,7 @@ import sys
 
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.refs.base import PlainRef, RefController, Revealer
+from kapitan.refs.env import EnvRef
 from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
@@ -164,6 +165,18 @@ def ref_write(args, ref_controller):
             encoding = "base64"
         ref_obj = PlainRef(_data, encoding=encoding)
         tag = "?{{plain:{}}}".format(token_path)
+        ref_controller[tag] = ref_obj
+
+    elif token_name.startswith("env:"):
+        type_name, token_path = token_name.split(":")
+        _data = data.encode()
+        encoding = "original"
+        if args.base64:
+            _data = base64.b64encode(_data).decode()
+            _data = _data.encode()
+            encoding = "base64"
+        ref_obj = EnvRef(_data, encoding=encoding)
+        tag = "?{{env:{}}}".format(token_path)
         ref_controller[tag] = ref_obj
 
     else:
