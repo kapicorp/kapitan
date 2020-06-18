@@ -16,6 +16,7 @@ import types
 from importlib import util
 from random import Random, shuffle
 
+import toml
 import yaml
 from kapitan import cached, defaults, utils
 from kapitan.errors import CompileError
@@ -30,6 +31,7 @@ def load_jinja2_filters(env):
     env.filters["b64encode"] = base64_encode
     env.filters["b64decode"] = base64_decode
     env.filters["yaml"] = to_yaml
+    env.filters["toml"] = to_toml
     env.filters["fileglob"] = fileglob
     env.filters["bool"] = to_bool
     env.filters["to_datetime"] = to_datetime
@@ -93,6 +95,10 @@ def base64_decode(string):
 
 def to_yaml(obj):
     return yaml.safe_dump(obj, default_flow_style=False)
+
+
+def to_toml(obj):
+    return toml.dumps(obj)
 
 
 # Following filters are from https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/filter/core.py

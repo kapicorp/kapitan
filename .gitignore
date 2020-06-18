@@ -13,3 +13,4 @@ tags
 .coverage
 *.so
 *.h
+.vscode/
