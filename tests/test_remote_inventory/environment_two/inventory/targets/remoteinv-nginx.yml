@@ -1,0 +1,15 @@
+parameters:
+    kapitan:
+        vars:
+            target: remoteinv-nginx
+        inventories:
+            - type: git
+              output_path: .
+              source: https://github.com/deepmind/kapitan.git
+              ref: master
+              subdir: kapitan/tests/test_resources/inventory/
+        compile:
+            - output_path: .
+              input_type: jinja2
+              input_paths:
+                - templates/docs/README.md
