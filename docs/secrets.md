@@ -170,7 +170,7 @@ To reference `secret_foo`inside this file, you can specify it in the inventory a
 
 It may be useful in some occasions when revealing references to have the values for the reference dynamically
 come from the environment in which Kapitan is executing. This backend provides such functionality. It will attempt
-to locate a value for a reference from the environment using a prefixed variable *`$KAPITAN_VARS_*`* convention
+to locate a value for a reference from the environment using a prefixed variable *`$KAPITAN_VAR_*`* convention
 and use this value with the refs command.
 
 ```shell
@@ -191,12 +191,9 @@ parameters:
 When using the above parameters reference, values would be consulted in the environment from the following
 variables:
 
-* `$KAPITAN_ENV_VARS_mysql_secret_foo`
-* `$KAPITAN_ENV_VARS_mysql_secret_bar`
+* `$KAPITAN_VAR_mysql_secret_foo`
+* `$KAPITAN_VAR_mysql_secret_bar`
 
-*Note*: Automatic creation of these references has not been tested. Please ensure the refs file is created before attempting to use it in your parameters structure.
-
-*Note*: Only flat string variables have been tested to work with this reference backend. Please do not attempt to use any other data structures with these refs.
 
 ### Vaultkv Secret Backend (Read Only) - Addons
 
