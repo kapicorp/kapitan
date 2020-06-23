@@ -1,3 +1,12 @@
+## 0.28.0:
+- Update reclass and some pip dependencies. (#528)
+- Allow using .yaml output file extension along with .yml (#525)
+  - Note: if you have .yaml files in your inventory instead of .yml, now kapitan should recognise them as expected. If you see changes in your compiled output just rename your .yaml files to .yml to keep the compiled diff identical.
+- Fix embedded refs encoding value (#523)
+- Add new Helm dependency input type (#520)
+- adding dir_files_list and dir_files_read in jsonnet (#519)
+- Add file_exists function to jsonnet (#518)
+
 ## 0.28.0-rc.2:
 - Update reclass and some pip dependencies. (#528)
 
