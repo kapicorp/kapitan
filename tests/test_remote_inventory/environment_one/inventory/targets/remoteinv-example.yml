@@ -7,7 +7,7 @@ parameters:
               output_path: targets/
               source: https://github.com/deepmind/kapitan.git
               ref: master
-              subdir: kapitan/tests/test_remote_inventory/environment_two/inventory/targets/
+              subdir: tests/test_remote_inventory/environment_two/inventory/targets/
         compile:
             - output_path: .
               input_type: jinja2
