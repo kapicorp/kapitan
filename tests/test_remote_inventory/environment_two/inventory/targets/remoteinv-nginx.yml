@@ -7,7 +7,7 @@ parameters:
               output_path: .
               source: https://github.com/deepmind/kapitan.git
               ref: master
-              subdir: kapitan/tests/test_resources/inventory/
+              subdir: tests/test_resources/inventory/
         compile:
             - output_path: .
               input_type: jinja2
