@@ -27,9 +27,9 @@ class EnvRef(PlainRef):
         """
         Attempt to locate the variable in the environment w/ the suffix.
         """
-        return os.getenv(
-            "{}{}".format(DEFAULT_ENV_REF_VAR_PREFIX, self.path.split("/")[-1]), default=self.data,
-        )
+        path_part = self.path.split("/")[-1]
+        var_key = "{}{}".format(DEFAULT_ENV_REF_VAR_PREFIX, path_part)
+        return os.getenv(var_key, default=os.getenv(var_key.upper(), default=self.data))
 
     def compile(self):
         """
