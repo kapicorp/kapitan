@@ -1,15 +1,16 @@
-# Kapitan secrets
+# Kapitan References (Formerly Secrets)
 
-Kapitan can manage secrets with the following key management services:
+Kapitan can manage references and secrets with the following key management services:
 
 - GPG
 - Google Cloud KMS (beta)
 - AWS KMS (beta)
+- Environment
 - Vaultkv (read only support)
 
 If you want to get started with secrets but don't have a GPG or KMS setup, you can also use the secret `ref` type. Note that `ref` is not encrypted and is intended for development purposes only. *Do not use ref secrets if you're storing sensitive information!*
 
-## Using secrets
+## Using Secrets
 
 The usual flow of creating and using an encrypted secret with kapitan is:
 
@@ -39,7 +40,7 @@ parameters:
         auth: token
 ```
 
-#### 2. Create your secret
+#### 2. Create Your Secret
 
 ##### Manually via command line:
 
@@ -74,7 +75,9 @@ rsapublic - Derives an RSA public key from a revealed private key i.e. `||reveal
 ```
 
 *Note*: The first operator here `||` is more similar to a logical OR. If the secret file doesn't exist, kapitan will generate it and apply the functions after the `||`. If the secret file already exists, no functions will run.
+
 *Note*: If you use `|reveal:/path/secret`, when changing the `/path/secret` file make sure you also delete any secrets referencing `/path/secret` so kapitan can regenerate them.
+
 *Note*: `vaultkv` can't be used to generate secrets automatically for now, manually create the secret using the command line.
 
 #### 3. Reference your secrets in your classes/targets and run `kapitan compile`
@@ -143,7 +146,7 @@ Which means that compiled outputs can now be completely distributed (e.g. in CI/
 
 You can also check out [Tesoro](https://github.com/kapicorp/tesoro) for Kubernetes which will reveal embedded secret refs in the cluster.
 
-## Secret sub-variables
+## Secret Sub-Variables
 
 As illustrated above, one file corresponds to one secret. It is now possible for users who would like to reduce the decryption overhead to manually create a yaml file that contains multiple secrets, each of which can be referenced by its object key. For example, consider the secret file `refs/mysql_secrets`:
 
@@ -162,6 +165,35 @@ $ kapitan refs --write gpg:components/secrets/mysql_secrets -t prod -f secrets/m
 To reference `secret_foo`inside this file, you can specify it in the inventory as follows:
 
 `secret_foo: ${gpg:components/secrets/mysql_secrets@mysql_passwords.secret_foo}`
+
+### Environment References Backend
+
+It may be useful in some occasions when revealing references to have the values for the reference dynamically
+come from the environment in which Kapitan is executing. This backend provides such functionality. It will attempt
+to locate a value for a reference from the environment using a prefixed variable *`$KAPITAN_VAR_*`* convention
+and use this value with the refs command.
+
+```shell
+$ echo "my_default_value" | kapitan refs --write env:path/to/secret_inside_kapitan -t <target_name> -f -
+```
+
+When this reference is created and then referred to in the parameters, it will use the last path component, from a
+split, to locate a variable in the current environment to use as the value. If this variable cannot be found in the
+environment, it will use the default value written to the refs file on the filesystem.
+
+```yaml
+parameters:
+  mysql_passwordS:
+    secret_foo: ?{env:my/mysql/mysql_secret_foo}
+    secret_bar: ?{env:my/mysql/mysql_secret_bar}
+```
+
+When using the above parameters reference, values would be consulted in the environment from the following
+variables:
+
+* `$KAPITAN_VAR_mysql_secret_foo`
+* `$KAPITAN_VAR_mysql_secret_bar`
+
 
 ### Vaultkv Secret Backend (Read Only) - Addons
 
@@ -194,4 +226,3 @@ parameters:
         VAULT_CLIENT_KEY: /path/to/key
         VAULT_CLIENT_CERT: /path/to/cert
 ```
-
