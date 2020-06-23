@@ -4,16 +4,18 @@ FROM golang:1.14.4-stretch AS helm-builder
 RUN mkdir /kapitan
 WORKDIR /kapitan
 
+COPY ./kapitan/inputs/helm ./kapitan/inputs/helm
+RUN chmod +x ./kapitan/inputs/helm/build.sh \
+    && ./kapitan/inputs/helm/build.sh
+
+COPY ./kapitan/dependency_manager/helm ./kapitan/dependency_manager/helm
+RUN chmod +x ./kapitan/dependency_manager/helm/build.sh \
+    && ./kapitan/dependency_manager/helm/build.sh
+
 COPY ./kapitan ./kapitan
 COPY ./MANIFEST.in ./MANIFEST.in
 COPY ./requirements.txt ./requirements.txt
 COPY ./setup.py ./setup.py
-
-RUN chmod +x ./kapitan/inputs/helm/build.sh \
-    && ./kapitan/inputs/helm/build.sh
-
-RUN chmod +x ./kapitan/dependency_manager/helm/build.sh \
-    && ./kapitan/dependency_manager/helm/build.sh
 
 # Build the virtualenv for Kapitan
 FROM python:3.7-slim-stretch AS python-builder
