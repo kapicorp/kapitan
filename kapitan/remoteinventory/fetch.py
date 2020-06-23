@@ -6,6 +6,7 @@ from distutils.dir_util import copy_tree
 from functools import partial
 from shutil import copyfile, rmtree
 from git import Repo
+import hashlib
 
 from git import GitCommandError
 from kapitan.errors import GitSubdirNotFoundError
@@ -94,7 +95,7 @@ def fetch_git_inventories(inv_mapping, inventory_path, save_dir):
         # Recursively copy the fetched inventory files (src) to the output path (dst)
         # if those items doen't exist or if it's older than src
         copy_tree(copy_src_path, output_path, update=True)
-        logger.info("Inventory {} : saves to {}".format(source, output_path))
+        logger.info("Inventory {} : saved to {}".format(source, output_path))
 
 
 def fetch_git_source(source, save_dir):
@@ -116,7 +117,15 @@ def list_sources(target_objs):
             invs = target_obj["inventories"]
             for inv in invs:
                 source_uri = inv["source"]
-                sources.append(source_uri)
+                source_hash = hashlib.sha256(source_uri.encode())
+                # hashing the source and subdir together for git sources
+                try:
+                    subdir = inv["subdir"]
+                    source_hash.update(subdir.encode())
+                except KeyError:
+                    continue
+
+                sources.append(source_hash.hexdigest()[:8])
         except KeyError:
             continue
     return sources
