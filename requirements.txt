@@ -1,6 +1,7 @@
 # kapitan dependencies
 jsonnet==0.16.0
 pyyaml>=5.3.1
+toml==0.10.1
 Jinja2>=2.11.2
 jsonschema==3.2.0
 python-gnupg==0.4.6
