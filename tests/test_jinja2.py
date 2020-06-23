@@ -45,6 +45,14 @@ class Jinja2FiltersTest(unittest.TestCase):
             output = "this and that"
             self.assertEqual(render_jinja2_file(f.name, context), output)
 
+    def test_toml(self):
+        with tempfile.NamedTemporaryFile() as f:
+            f.write("{{ text|toml }}".encode("UTF-8"))
+            f.seek(0)
+            context = {"text": {"foo": ["this", "that"]}}
+            output = 'foo = [ "this", "that",]\n'
+            self.assertEqual(render_jinja2_file(f.name, context), output)
+
     def test_yaml(self):
         with tempfile.NamedTemporaryFile() as f:
             f.write("{{ text|yaml }}".encode("UTF-8"))
