@@ -16,6 +16,7 @@ RUN chmod +x ./kapitan/dependency_manager/helm/build.sh \
 COPY ./kapitan ./kapitan
 COPY ./MANIFEST.in ./MANIFEST.in
 COPY ./requirements.txt ./requirements.txt
+COPY ./scripts/pyinstaller.sh ./pyinstaller.sh
 COPY ./setup.py ./setup.py
 
 
