@@ -1,3 +1,7 @@
+## 0.28.1-rc.0:
+- Add TOML Jinja2 Filters (#534)
+- Fix issues #535 and #536 by resolving relative paths in the copy input type and not clobbering the output dir (#539)
+
 ## 0.28.0:
 - Update reclass and some pip dependencies. (#528)
 - Allow using .yaml output file extension along with .yml (#525)
