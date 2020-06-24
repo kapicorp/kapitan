@@ -6,16 +6,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "copy tests"
-import os
-import sys
-import shutil
+import filecmp
 import hashlib
+import os
+import shutil
+import sys
 import unittest
 
 from kapitan.cli import main
-from kapitan.utils import directory_hash
 from kapitan.inputs.copy import Copy
-
+from kapitan.utils import directory_hash
 
 search_path = ""
 ref_controller = ""
@@ -85,19 +85,28 @@ class CompileCopyTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.path.join(os.getcwd(), "examples", "kubernetes"))
 
+    def validate_files_were_copied(self):
+        original_filepath = os.path.join("components", "busybox", "pod.yml")
+        copied_filepath = os.path.join("compiled", "busybox", "copy", "pod.yml")
+        self.assertTrue(filecmp.cmp(original_filepath, copied_filepath))
+
+        original_filepath = os.path.join("copy_target")
+        copied_filepath = os.path.join("compiled", "busybox", "copy", "copy_target")
+        self.assertTrue(filecmp.cmp(original_filepath, copied_filepath))
+
+        original_filepath = os.path.join("copy_target")
+        copied_filepath = os.path.join("compiled", "busybox", "copy_target")
+        self.assertTrue(filecmp.cmp(original_filepath, copied_filepath))
+
     def test_compiled_copy_target(self):
         sys.argv = ["kapitan", "compile", "-t", "busybox"]
         main()
-        file_path_hash = directory_hash(os.path.join("components", "busybox"))
-        compile_path_hash = directory_hash(os.path.join("compiled", "busybox", "copy"))
-        self.assertEqual(file_path_hash, compile_path_hash)
+        self.validate_files_were_copied()
 
     def test_compiled_copy_all_targets(self):
         sys.argv = ["kapitan", "compile"]
         main()
-        file_path_hash = directory_hash(os.path.join("components", "busybox"))
-        compile_path_hash = directory_hash(os.path.join("compiled", "busybox", "copy"))
-        self.assertEqual(file_path_hash, compile_path_hash)
+        self.validate_files_were_copied()
 
     def tearDown(self):
         os.chdir(os.path.join(os.getcwd(), "..", ".."))
