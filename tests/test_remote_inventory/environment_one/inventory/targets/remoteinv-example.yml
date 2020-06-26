@@ -1,7 +1,9 @@
+classes:
+  - mycommon
 parameters:
+    target_name: remoteinv-example
+    name_space: $(target_name)
     kapitan:
-        vars:
-            target: remoteinv-example
         inventories:
             - type: git
               output_path: targets/

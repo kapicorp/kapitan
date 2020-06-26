@@ -1,7 +1,9 @@
+classes:
+  - mycommon
 parameters:
+    target_name: remoteinv-nginx
+    namespace: $(target_name)
     kapitan:
-        vars:
-            target: remoteinv-nginx
         inventories:
             - type: git
               output_path: .
