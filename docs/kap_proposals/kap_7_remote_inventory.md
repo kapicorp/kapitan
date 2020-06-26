@@ -19,7 +19,7 @@ parameters:
      output_path: <relative_output_path>
 ```
 
-On executing the ``` $ kapitan compile``` command, first the remote inventories will be fetched followed by fetching of external dependencies and finally reclass will be used to compile.
+On executing the ``` $ kapitan compile --fetch``` command, first the remote inventories will be fetched followed by fetching of external dependencies and finally reclass will be used to compile.
 
 
 ## Copying inventory files to the output location

@@ -6,9 +6,14 @@ from distutils.dir_util import copy_tree
 from functools import partial
 from shutil import copyfile, rmtree
 from git import Repo
+import re
 import hashlib
+import tarfile
+from zipfile import ZipFile
+from py7zr import SevenZipFile
 
 from git import GitCommandError
+from kapitan.utils import make_request
 from kapitan.errors import GitSubdirNotFoundError
 from kapitan.errors import GitFetchingError
 from kapitan import cached
@@ -30,6 +35,9 @@ def fetch_inventories(inventory_path, target_objs, pool):
     temp_dir = tempfile.mkdtemp()
 
     git_inventories = defaultdict(list)
+    http_inventories = defaultdict(list)
+
+    # To ensure no dublicate output path
     inv_output_path = defaultdict(set)
 
     for target_obj in target_objs:
@@ -38,7 +46,15 @@ def fetch_inventories(inventory_path, target_objs, pool):
             for inv in inventories:
                 inv_type = inv["type"]
                 source_uri = inv["source"]
-                if source_uri in cached.inv_sources:
+                source_hash = hashlib.sha256(source_uri.encode())
+                # hashing the source and subdir together for git sources
+                # as different inventory items can have the same git uri
+                try:
+                    subdir = inv["subdir"]
+                    source_hash.update(subdir.encode())
+                except KeyError:
+                    pass
+                if source_hash in cached.inv_sources:
                     continue
                 # output_path is relative to inventory_path
                 # ./inventory by default
@@ -47,13 +63,18 @@ def fetch_inventories(inventory_path, target_objs, pool):
                     continue
                 else:
                     inv_output_path[source_uri].add(output_path)
+
                 if inv_type == "git":
                     git_inventories[source_uri].append(inv)
+                elif inv_type in ("http", "https"):
+                    http_inventories[source_uri].append(inv)
         except KeyError:
             continue
 
     git_worker = partial(fetch_git_inventories, inventory_path=inventory_path, save_dir=temp_dir)
+    http_worker = partial(fetch_http_inventories, inventory_path=inventory_path, save_dir=temp_dir)
     [p.get() for p in pool.imap_unordered(git_worker, git_inventories.items()) if p]
+    [p.get() for p in pool.imap_unordered(http_worker, http_inventories.items()) if p]
 
     rmtree(temp_dir)
     logger.debug("Removed {}".format(temp_dir))
@@ -61,7 +82,7 @@ def fetch_inventories(inventory_path, target_objs, pool):
 
 def fetch_git_inventories(inv_mapping, inventory_path, save_dir):
     """ Fetches remote inventories of git type as declared in target_objs
-        and recursively copies it to the output_path
+        and recursively copies it to the output_path stored in inv_mapping
 
         :param inv_mapping: tupple containing source and list of invetory variables
         :param inventory_path: default or user defined inventory path
@@ -109,6 +130,84 @@ def fetch_git_source(source, save_dir):
         raise GitFetchingError("Inventory {} : fetching unsuccessful{}".format(source, e.stderr))
 
 
+def fetch_http_inventories(inv_mapping, inventory_path, save_dir):
+    """Fetches inventory items over http[s] and saves it to save_dir which is later recursively
+       copied to the output_path stored in inv_mapping
+
+       :param inv_mapping: tupple containing source and list of invetory variables
+       :param inventory_path: default or user defined inventory path
+       :param save_dir: directory to same the fetched inventory items into
+
+       :returns: None
+    """
+    source, invs = inv_mapping
+    content_type = fetch_http_source(source, save_dir)
+    path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
+    copy_src_path = os.path.join(save_dir, path_hash + os.path.basename(source))
+    for inv in invs:
+        output_path = os.path.join(inventory_path, inv["output_path"])
+        if inv.get("unpack", False):
+            # ensure that the directory we are extracting to exists
+            os.makedirs(output_path, exist_ok=True)
+            is_unpacked = False
+            if content_type == "application/x-tar":
+                tar = tarfile.open(copy_src_path)
+                tar.extractall(path=output_path)
+                tar.close()
+                is_unpacked = True
+            elif content_type == "application/x-7z-compressed":
+                archive = SevenZipFile(copy_src_path, mode="r")
+                archive.extractall(path=output_path)
+                archive.close()
+                is_unpacked = True
+            elif content_type == "application/zip":
+                zfile = ZipFile(copy_src_path)
+                zfile.extractall(output_path)
+                zfile.close()
+                is_unpacked = True
+            elif content_type in ["application/octet-stream", "application/x-gzip"]:
+                if re.search(r"(\.tar\.gz|\.tgz)$", source):
+                    tar = tarfile.open(copy_src_path)
+                    tar.extractall(path=output_path)
+                    tar.close()
+                    is_unpacked = True
+            if is_unpacked:
+                logger.info("Inventory {} : extracted to {}".format(source, output_path))
+            else:
+                logger.info(
+                    "Inventory {} : Content-Type {} is not supported for unpack. Ignoring save".format(
+                        source, content_type
+                    )
+                )
+        else:
+            # we are downloading a single inventory item
+            parent_dir = os.path.dirname(output_path)
+            if parent_dir != "":
+                os.makedirs(parent_dir, exist_ok=True)
+            copyfile(copy_src_path, output_path)
+            logger.info("Inventory item {} : saved to {}".format(source, output_path))
+
+
+def fetch_http_source(source, save_dir):
+    """downloads a http[s] file from source and saves into save_dir
+       :returns: content_type
+    """
+    logger.info("Dependency {} : fetching now".format(source))
+    content, content_type = make_request(source)
+    logger.info("Dependency {} : successfully fetched".format(source))
+    if content is not None:
+        basename = os.path.basename(source)
+        # to avoid collisions between basename(source)
+        path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
+        full_save_path = os.path.join(save_dir, path_hash + basename)
+        with open(full_save_path, "wb") as f:
+            f.write(content)
+        return content_type
+    else:
+        logger.warning("Dependency {} : failed to fetch".format(source))
+        return None
+
+
 def list_sources(target_objs):
     "returns list of all remote inventory sources"
     sources = []
@@ -123,7 +222,7 @@ def list_sources(target_objs):
                     subdir = inv["subdir"]
                     source_hash.update(subdir.encode())
                 except KeyError:
-                    continue
+                    pass
 
                 sources.append(source_hash.hexdigest()[:8])
         except KeyError:

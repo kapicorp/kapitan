@@ -12,7 +12,11 @@ from kapitan.dependency_manager.base import DEPENDENCY_OUTPUT_CONFIG
 
 class RemoteInventoryTest(unittest.TestCase):
     def setUp(self):
-        os.chdir(os.path.join(os.path.abspath(os.path.dirname(__file__)), "test_remote_inventory", "environment_one"))
+        os.chdir(
+            os.path.join(
+                os.path.abspath(os.path.dirname(__file__)), "test_remote_inventory", "environment_one"
+            )
+        )
 
     def test_fetch_git_inventory(self):
         temp_dir = tempfile.mkdtemp()
@@ -35,8 +39,17 @@ class RemoteInventoryTest(unittest.TestCase):
         temp_output = tempfile.mkdtemp()
         temp_inv = tempfile.mkdtemp()
 
-        copy_tree(os.path.join(os.path.abspath(os.path.dirname(__file__)), "test_remote_inventory", "environment_one", "inventory"), temp_inv)
-        # DEPENDENCY_OUTPUT_CONFIG["root_dir"] = temp_dep
+        copy_tree(
+            os.path.join(
+                os.path.abspath(os.path.dirname(__file__)),
+                "test_remote_inventory",
+                "environment_one",
+                "inventory",
+            ),
+            temp_inv,
+        )
+        print(os.listdir(temp_inv))
+        print("\n\n\n\n")
         sys.argv = [
             "kapitan",
             "compile",
@@ -45,9 +58,11 @@ class RemoteInventoryTest(unittest.TestCase):
             temp_output,
             "--inventory-path",
             temp_inv,
-            "-t",
+            "--targets",
             "remoteinv-example",
             "remoteinv-nginx",
+            "-p",
+            "4"
         ]
         main()
 
@@ -62,3 +77,6 @@ class RemoteInventoryTest(unittest.TestCase):
     def tearDown(self):
         os.chdir("../../../")
         reset_cache()
+
+if __name__ == "__main__":
+    unittest.main()

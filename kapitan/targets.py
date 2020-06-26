@@ -86,6 +86,7 @@ def compile_targets(
             raise CompileError("Error: no targets found")
 
         if kwargs.get("fetch_inventories", False):
+            #new_source checks for new sources in fetched inventory items
             new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
             while new_sources:
                 fetch_inventories(inventory_path, target_objs, pool)
