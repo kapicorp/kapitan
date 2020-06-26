@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright 2019 The Kapitan Authors
-# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan@google.com>
+# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -14,6 +14,7 @@ import unittest
 
 from kapitan.errors import RefError, RefFromFuncError, RefHashMismatchError
 from kapitan.refs.base import PlainRef, RefController, RefParams, Revealer
+from kapitan.refs.env import EnvRef, DEFAULT_ENV_REF_VAR_PREFIX
 from kapitan.refs.base64 import Base64Ref
 from kapitan.utils import get_entropy
 
@@ -42,6 +43,31 @@ class Base64RefsTest(unittest.TestCase):
         ref_obj = REF_CONTROLLER[tag]
         revealed = ref_obj.reveal()
         self.assertEqual(revealed, "ref 2 plain data")
+
+    def test_env_ref_compile(self):
+        "check env ref compile() output is valid"
+        tag = "?{env:my/ref1_env}"
+        REF_CONTROLLER[tag] = EnvRef(b"ref 1 env data")
+        ref_obj = REF_CONTROLLER[tag]
+        revealed = ref_obj.compile()
+        self.assertEqual(revealed, "?{env:my/ref1_env:877234e3}")
+
+    def test_env_ref_reveal_default(self):
+        "check env ref reveal() output is original plain env data when environment var is not set"
+        tag = "?{env:my/ref1_env}"
+        REF_CONTROLLER[tag] = EnvRef(b"ref 1 env data")
+        ref_obj = REF_CONTROLLER[tag]
+        revealed = ref_obj.reveal()
+        self.assertEqual(revealed, "ref 1 env data")
+
+    def test_env_ref_reveal_from_env(self):
+        "check env ref reveal() output is value of environment var data when environment var is set"
+        tag = "?{env:my/ref1_env}"
+        REF_CONTROLLER[tag] = EnvRef(b"ref 1 env data")
+        ref_obj = REF_CONTROLLER[tag]
+        os.environ["{}{}".format(DEFAULT_ENV_REF_VAR_PREFIX, "ref1_env")] = "ref 1 env data from EV"
+        revealed = ref_obj.reveal()
+        self.assertEqual(revealed, "ref 1 env data from EV")
 
     def test_base64_ref_compile(self):
         "check ref compile() output is valid"
@@ -93,6 +119,24 @@ class Base64RefsTest(unittest.TestCase):
         ref_obj = REF_CONTROLLER_EMBEDDED[tag]
         revealed = ref_obj.reveal()
         self.assertEqual(revealed, "ref 2 data")
+
+    def test_base64_ref_embedded_reveal_encoding_original(self):
+        "check ref embedded reveal() encoding metadata is persisted"
+        tag = "?{base64:my/ref2}"
+        REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(b"ref 2 data")
+        ref_obj = REF_CONTROLLER_EMBEDDED[tag]
+        revealed = ref_obj.reveal()
+        self.assertEqual(revealed, "ref 2 data")
+        self.assertEqual(ref_obj.encoding, "original")
+
+    def test_base64_ref_embedded_reveal_encoding_base64(self):
+        "check ref embedded reveal() encoding metadata is persisted"
+        tag = "?{base64:my/ref3}"
+        REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(base64.b64encode(b"ref 3 data"), encoding="base64")
+        ref_obj = REF_CONTROLLER_EMBEDDED[tag]
+        revealed = ref_obj.reveal()
+        self.assertEqual(revealed, base64.b64encode(b"ref 3 data").decode())
+        self.assertEqual(ref_obj.encoding, "base64")
 
     def test_base64_ref_non_existent_raises_KeyError(self):
         "check RefController raises KeyError for non existent Base64Ref"

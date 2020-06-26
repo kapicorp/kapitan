@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright 2019 The Kapitan Authors
-# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan@google.com>
+# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -43,6 +43,14 @@ class Jinja2FiltersTest(unittest.TestCase):
             f.seek(0)
             context = {"text": "dGhpcyBhbmQgdGhhdA=="}
             output = "this and that"
+            self.assertEqual(render_jinja2_file(f.name, context), output)
+
+    def test_toml(self):
+        with tempfile.NamedTemporaryFile() as f:
+            f.write("{{ text|toml }}".encode("UTF-8"))
+            f.seek(0)
+            context = {"text": {"foo": ["this", "that"]}}
+            output = 'foo = [ "this", "that",]\n'
             self.assertEqual(render_jinja2_file(f.name, context), output)
 
     def test_yaml(self):

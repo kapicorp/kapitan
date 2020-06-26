@@ -6,13 +6,13 @@ parameters:
       prune: true
       input_paths:
         - components/mysql/main.jsonnet
-      output_type: yaml
+      output_type: yml
     - output_path: scripts
       input_type: jinja2
       input_paths:
         - scripts
     - output_path: .
-      output_type: yaml
+      output_type: yml
       input_type: jinja2
       input_paths:
         - docs/mysql/README.md

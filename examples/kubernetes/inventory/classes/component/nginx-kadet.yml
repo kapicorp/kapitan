@@ -5,7 +5,7 @@ parameters:
     compile:
     - output_path: manifests
       input_type: kadet
-      output_type: yaml
+      output_type: yml
       input_paths:
         - components/nginx-kadet/
     labels:

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 # Copyright 2019 The Kapitan Authors
-# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan@google.com>
+# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
 import os
 import shutil
+from distutils.dir_util import copy_tree
 
 from kapitan.inputs.base import InputType
 
@@ -33,9 +34,8 @@ class Copy(InputType):
                     os.makedirs(compile_path, exist_ok=True)
                     shutil.copy2(file_path, os.path.join(compile_path, os.path.basename(file_path)))
             else:
-                if os.path.exists(compile_path):
-                    shutil.rmtree(compile_path)
-                shutil.copytree(file_path, compile_path)
+                compile_path = os.path.abspath(compile_path)  # Resolve relative paths
+                copy_tree(file_path, compile_path)
         except OSError as e:
             logger.exception(f"Input dir not copied. Error: {e}")
 

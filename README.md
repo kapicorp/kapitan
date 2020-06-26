@@ -3,6 +3,8 @@
 Generic templated configuration management for Kubernetes, Terraform and other things.
 
 [![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
+![](https://img.shields.io/pypi/dm/kapitan)
+![](https://img.shields.io/docker/pulls/deepmind/kapitan)
 
 Kapitan is a tool to manage complex deployments using jsonnet, [kadet (alpha)](https://github.com/deepmind/kapitan/pull/190) and jinja2.
 
