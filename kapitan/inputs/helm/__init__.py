@@ -128,7 +128,7 @@ class Helm(InputType):
 
         char_dir_buf = ffi.new("char[]", chart_dir.encode("ascii"))
         output_path_buf = ffi.new("char[]", output_path.encode("ascii"))
-        
+
         helm_values_files = []
         if kwargs.get("helm_values_files", []):
             for file_name in kwargs["helm_values_files"]:
@@ -136,10 +136,16 @@ class Helm(InputType):
 
         helm_values_files_len = ffi.cast("int", len(helm_values_files))
         helm_values_files = ffi.new("char *[]", helm_values_files)
-        
 
         c_error_message = self.lib.renderChart(
-            char_dir_buf, output_path_buf, helm_values_file, namespace, release_name, name_template, helm_values_files, helm_values_files_len
+            char_dir_buf,
+            output_path_buf,
+            helm_values_file,
+            namespace,
+            release_name,
+            name_template,
+            helm_values_files,
+            helm_values_files_len,
         )
         error_message = ffi.string(c_error_message)  # this creates a copy as bytes
         self.lib.free(c_error_message)  # free the char* returned by go
