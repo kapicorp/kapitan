@@ -130,6 +130,19 @@ class HelmInputTest(unittest.TestCase):
             name = manifest["metadata"]["name"]
             self.assertEqual(name, "-nginx-ingress-my-controller")
 
+    def test_compile_with_helm_values_files(self):
+        temp = tempfile.mkdtemp()
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "monitoring-dev"]
+        main()
+        server_deployment_file = os.path.join(
+            temp, "compiled", "monitoring-dev", "prometheus", "templates", "server-deployment.yaml"
+        )
+        self.assertTrue(os.path.isfile(server_deployment_file))
+        with open(server_deployment_file, "r") as fp:
+            manifest = yaml.safe_load(fp.read())
+            name = manifest["metadata"]["name"]
+            self.assertEqual(name, "prometheus-dev-server")
+
     def test_compile_with_helm_params(self):
         temp = tempfile.mkdtemp()
         sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx-ingress-helm-params"]
