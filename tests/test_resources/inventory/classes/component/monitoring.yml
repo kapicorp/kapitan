@@ -15,6 +15,7 @@ parameters:
           alertmanager:
             enabled: false
         helm_values_files:
+          - helm_values_files/prometheus/common.yml
           - helm_values_files/prometheus/${kapitan:vars:env}.yml
         helm_params:
           namespace: infra-prometheus
