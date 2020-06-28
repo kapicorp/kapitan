@@ -132,16 +132,26 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_with_helm_values_files(self):
         temp = tempfile.mkdtemp()
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "monitoring-dev"]
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "monitoring-dev", "monitoring-prd"]
         main()
-        server_deployment_file = os.path.join(
+        dev_server_deployment_file = os.path.join(
             temp, "compiled", "monitoring-dev", "prometheus", "templates", "server-deployment.yaml"
         )
-        self.assertTrue(os.path.isfile(server_deployment_file))
-        with open(server_deployment_file, "r") as fp:
+        prd_server_deployment_file = os.path.join(
+            temp, "compiled", "monitoring-prd", "prometheus", "templates", "server-deployment.yaml"
+        )
+
+        self.assertTrue(os.path.isfile(dev_server_deployment_file))
+        with open(dev_server_deployment_file, "r") as fp:
             manifest = yaml.safe_load(fp.read())
             name = manifest["metadata"]["name"]
             self.assertEqual(name, "prometheus-dev-server")
+
+        self.assertTrue(os.path.isfile(prd_server_deployment_file))
+        with open(prd_server_deployment_file, "r") as fp:
+            manifest = yaml.safe_load(fp.read())
+            name = manifest["metadata"]["name"]
+            self.assertEqual(name, "prometheus-prd-server")
 
     def test_compile_with_helm_params(self):
         temp = tempfile.mkdtemp()
