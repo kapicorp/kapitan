@@ -863,6 +863,7 @@
 <p>We support the following custom filters for use in Jinja2 templates:</p>
 <div class="highlight"><pre><span></span><code>sha256 - SHA256 hashing of text e.g. {{ text | sha256 }}
 yaml - Dump text as YAML e.g. {{ text | yaml }}
+toml - Dump text as TOML e.g. {{ text | toml }}
 b64encode - base64 encode text e.g. {{ text | b64encode }}
 b64decode - base64 decode text e.g. {{ text | b64decode }}
 fileglob - return list of matched regular files for glob e.g. {{ ./path/file* | fileglob }}
@@ -913,6 +914,9 @@ yaml_load_stream - returns a list of json strings of the specified yaml file
 yaml_dump - returns a string yaml from a json string
 yaml_dump_stream - returns a string yaml stream from a json string
 file_read - reads the file specified
+file_exists - returns informative object if a file exists
+dir_files_list - returns a list of file in a dir
+dir_files_read - returns an object with keys - file_name and values - file contents
 jinja2_template - renders the jinja2 file with context specified
 sha256_string - returns sha256 of string
 gzip_b64 - returns base64 encoded gzip of obj
@@ -969,8 +973,8 @@ Compile error: failed to compile target: minikube-mysql
 
 <p>It's up to you to decide what the output is.</p>
 <h3 id="kadet">kadet</h3>
-<p>Kadet is an extensible input type that enables you to generate templates using python. The key benefit being the ability to utilize familiar programing principles while having access to kapitan's powerful inventory system. </p>
-<p>A library that defines resources as classes using the Base Object class is required. These can then be utilized within components to render output. </p>
+<p>Kadet is an extensible input type that enables you to generate templates using python. The key benefit being the ability to utilize familiar programing principles while having access to kapitan's powerful inventory system.</p>
+<p>A library that defines resources as classes using the Base Object class is required. These can then be utilized within components to render output.</p>
 <p>The following functions are provided by the class <code>BaseObj()</code>.</p>
 <p>Method definitions:</p>
 <ul>
@@ -1110,10 +1114,10 @@ Compiled nginx-from-chart <span class="o">(</span><span class="m">0</span>.07s<s
 ./build.sh
 </code></pre></div>
 
-<p>This requires Go &gt;= 1.12.</p>
+<p>This requires Go 1.14.</p>
 <h4 id="helm-subcharts">Helm subcharts</h4>
-<p>This binding supports helm subcharts. However, since the <a href="../external_dependencies/">external dependency manager</a> does not parse <code>requirements.yaml</code> in order to detect chart dependencies, you are required to manually download the entire chart including the parent charts.</p>
-<p><em>Supported output types:</em> N/A (no need to specify <code>output_type</code>)</p>
+<p>There is an <a href="../external_dependencies/">external dependency manager</a> of type <code>helm</code> which enables you to specify helm
+charts to download, including subcharts.</p>
 <h3 id="copy">Copy</h3>
 <p>This input type simply copies the input templates to the output directory without any rendering/processing.
 For Copy, <code>input_paths</code> can be either a file or a directory: in case of a directory, all the templates in the directory will be copied and outputted to <code>output_path</code>.</p>

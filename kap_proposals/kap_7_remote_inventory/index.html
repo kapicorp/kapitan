@@ -10,16 +10,16 @@
       
       
       
-      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <link rel="shortcut icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.1, mkdocs-material-5.1.5">
     
     
       
-        <title>Contributing - Kapitan documentation</title>
+        <title>Remote Inventory Federation - Kapitan documentation</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.df84b5fe.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.df84b5fe.min.css">
       
       
     
@@ -48,7 +48,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-to-contribute" class="md-skip">
+        <a href="#remote-inventory-federation" class="md-skip">
           Skip to content
         </a>
       
@@ -59,7 +59,7 @@
     
       <header class="md-header" data-md-component="header">
   <nav class="md-header-nav md-grid" aria-label="Header">
-    <a href=".." title="Kapitan documentation" class="md-header-nav__button md-logo" aria-label="Kapitan documentation">
+    <a href="../.." title="Kapitan documentation" class="md-header-nav__button md-logo" aria-label="Kapitan documentation">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
@@ -76,7 +76,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              Contributing
+              Remote Inventory Federation
             
           </span>
         </div>
@@ -146,7 +146,7 @@
                   <div class="md-sidebar__inner">
                     <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="Kapitan documentation" class="md-nav__button md-logo" aria-label="Kapitan documentation">
+    <a href="../.." title="Kapitan documentation" class="md-nav__button md-logo" aria-label="Kapitan documentation">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 003-3 3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
@@ -176,7 +176,7 @@
 
 
   <li class="md-nav__item">
-    <a href=".." title="Home" class="md-nav__link">
+    <a href="../.." title="Home" class="md-nav__link">
       Home
     </a>
   </li>
@@ -186,122 +186,11 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Contributing
-        <span class="md-nav__icon md-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
-        </span>
-      </label>
-    
-    <a href="./" title="Contributing" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../../contributing/" title="Contributing" class="md-nav__link">
       Contributing
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-      </span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#submitting-changes" class="md-nav__link">
-    Submitting changes
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#setting-up-environment" class="md-nav__link">
-    Setting up environment
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
-    Testing
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#code-style" class="md-nav__link">
-    Code Style
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#releasing" class="md-nav__link">
-    Releasing
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#updating-gh-pages-docs" class="md-nav__link">
-    Updating gh-pages docs
-  </a>
-  
-    <nav class="md-nav" aria-label="Updating gh-pages docs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-update-the-md-files" class="md-nav__link">
-    1. Update the .md files
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-submit-a-pr-for-gh-pages-branch-to-deploy-the-update" class="md-nav__link">
-    2. Submit a PR for gh-pages branch to deploy the update
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#packaging-extra-resources-in-python-package-or-binary" class="md-nav__link">
-    Packaging extra resources in python package or binary
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#contributor-license-agreement" class="md-nav__link">
-    Contributor License Agreement
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
     
@@ -336,7 +225,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../kapitan_overview/" title="Kapitan Overview" class="md-nav__link">
+    <a href="../../kapitan_overview/" title="Kapitan Overview" class="md-nav__link">
       Kapitan Overview
     </a>
   </li>
@@ -348,7 +237,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../inventory/" title="Inventory" class="md-nav__link">
+    <a href="../../inventory/" title="Inventory" class="md-nav__link">
       Inventory
     </a>
   </li>
@@ -360,7 +249,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../compile/" title="Compiling components/templates" class="md-nav__link">
+    <a href="../../compile/" title="Compiling components/templates" class="md-nav__link">
       Compiling components/templates
     </a>
   </li>
@@ -402,7 +291,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../secrets/" title="Secret management" class="md-nav__link">
+    <a href="../../secrets/" title="Secret management" class="md-nav__link">
       Secret management
     </a>
   </li>
@@ -414,7 +303,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../validate/" title="Manifest validation" class="md-nav__link">
+    <a href="../../validate/" title="Manifest validation" class="md-nav__link">
       Manifest validation
     </a>
   </li>
@@ -426,7 +315,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../external_dependencies/" title="External dependency management" class="md-nav__link">
+    <a href="../../external_dependencies/" title="External dependency management" class="md-nav__link">
       External dependency management
     </a>
   </li>
@@ -468,7 +357,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../CI/" title="Continuous Integration" class="md-nav__link">
+    <a href="../../CI/" title="Continuous Integration" class="md-nav__link">
       Continuous Integration
     </a>
   </li>
@@ -480,7 +369,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../pyenv-scl/" title="Set up kapitan on older Python systems" class="md-nav__link">
+    <a href="../../pyenv-scl/" title="Set up kapitan on older Python systems" class="md-nav__link">
       Set up kapitan on older Python systems
     </a>
   </li>
@@ -492,7 +381,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../usage/" title="Usage" class="md-nav__link">
+    <a href="../../usage/" title="Usage" class="md-nav__link">
       Usage
     </a>
   </li>
@@ -504,7 +393,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../proposals/" title="Proposals" class="md-nav__link">
+    <a href="../../proposals/" title="Proposals" class="md-nav__link">
       Proposals
     </a>
   </li>
@@ -546,7 +435,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../example-kubernetes/" title="Kubernetes" class="md-nav__link">
+    <a href="../../example-kubernetes/" title="Kubernetes" class="md-nav__link">
       Kubernetes
     </a>
   </li>
@@ -558,7 +447,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../example-terraform/" title="Terraform" class="md-nav__link">
+    <a href="../../example-terraform/" title="Terraform" class="md-nav__link">
       Terraform
     </a>
   </li>
@@ -595,78 +484,50 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#submitting-changes" class="md-nav__link">
-    Submitting changes
+  <a href="#specification" class="md-nav__link">
+    Specification
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#setting-up-environment" class="md-nav__link">
-    Setting up environment
+  <a href="#copying-inventory-files-to-the-output-location" class="md-nav__link">
+    Copying inventory files to the output location
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
-    Testing
+  <a href="#force-fetching" class="md-nav__link">
+    Force fetching
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#code-style" class="md-nav__link">
-    Code Style
+  <a href="#url-type" class="md-nav__link">
+    URL type
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#releasing" class="md-nav__link">
-    Releasing
+  <a href="#implementation-details" class="md-nav__link">
+    Implementation details
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#updating-gh-pages-docs" class="md-nav__link">
-    Updating gh-pages docs
-  </a>
-  
-    <nav class="md-nav" aria-label="Updating gh-pages docs">
+    <nav class="md-nav" aria-label="Implementation details">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-update-the-md-files" class="md-nav__link">
-    1. Update the .md files
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-submit-a-pr-for-gh-pages-branch-to-deploy-the-update" class="md-nav__link">
-    2. Submit a PR for gh-pages branch to deploy the update
+  <a href="#dependencies" class="md-nav__link">
+    Dependencies
   </a>
   
 </li>
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#packaging-extra-resources-in-python-package-or-binary" class="md-nav__link">
-    Packaging extra resources in python package or binary
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#contributor-license-agreement" class="md-nav__link">
-    Contributor License Agreement
-  </a>
   
 </li>
       
@@ -682,7 +543,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/deepmind/kapitan/edit/master/docs/contributing.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/deepmind/kapitan/edit/master/docs/kap_proposals/kap_7_remote_inventory.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
@@ -690,78 +551,45 @@
                   
                 
                 
-                <h1 id="how-to-contribute">How to Contribute</h1>
-<p>We'd love to accept your patches and contributions to this project. There are
-just a few small guidelines you need to follow.</p>
-<h2 id="submitting-changes">Submitting changes</h2>
-<p>We would like ask you to <a href="https://help.github.com/en/articles/fork-a-repo">fork</a>
-Kapitan project and create a <a href="https://help.github.com/articles/about-pull-requests/">Pull Request</a>
-targeting master branch. All submissions, including submissions by project members, require review.</p>
-<h2 id="setting-up-environment">Setting up environment</h2>
-<p>We highly recommend that you create a dedicated Python environment for Kapitan.
-There are multiple solutions:</p>
+                <h1 id="remote-inventory-federation">Remote Inventory Federation</h1>
+<p>This feature would add the ability to Kapitan to fetch parts of the inventory from remote locations (https/git). This would allow users to combine different inventories from different sources and build modular infrastructure reusable across various repos.</p>
+<p>Author: @alpharoy14</p>
+<h2 id="specification">Specification</h2>
+<p>The configuration and declaration of remote inventories would be done in the inventory files.</p>
+<p>The file specifications are as follows:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+ <span class="nt">kapitan</span><span class="p">:</span>
+  <span class="nt">inventory</span><span class="p">:</span>
+   <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;inventory_type&gt;</span> <span class="c1">#git\https</span>
+     <span class="nt">source</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;source_of_inventory&gt;</span>
+     <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;relative_output_path&gt;</span>
+</code></pre></div>
+
+<p>On executing the <code>$ kapitan compile</code> command, first the remote inventories will be fetched followed by fetching of external dependencies and finally reclass will be used to compile.</p>
+<h2 id="copying-inventory-files-to-the-output-location">Copying inventory files to the output location</h2>
+<p>The output path is the path to save the inventory items into. The path is relative to the <code>inventory/</code> directory. For example, it could be <code>/classes/</code>. The contents of the fetched inventory will be recursively copied.</p>
+<p>The fetched inventory files will be cached in the <code>.kapitan_cache</code> directory.</p>
+<h2 id="force-fetching">Force fetching</h2>
+<p>While fetching, the output path will be recursively checked to see if it contains any file with the same name. If so, kapitan will skip fetching it.</p>
+<p>To overwrite the files with the newly downloaded inventory items, we can add the <code>--force</code> flag to the compile command, as shown below.</p>
+<p><code>$ kapitan compile --force</code></p>
+<h2 id="url-type">URL type</h2>
+<p>The URL type can be either git or http(s). Depending on the URL type, the configuration file may have additional arguments.</p>
+<p>E.g Git type may also include aditional <code>ref</code> parameter as illustrated below:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">inventory</span><span class="p">:</span>
+ <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">git</span> <span class="c1">#git\https</span>
+   <span class="nt">source</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;source_of_inventory&gt;</span>
+   <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;output_path&gt;</span>
+   <span class="nt">ref</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;commit_hash/branch/tag&gt;</span>
+</code></pre></div>
+
+<h2 id="implementation-details">Implementation details</h2>
+<p>TODO</p>
+<h3 id="dependencies">Dependencies</h3>
 <ul>
-<li><a href="https://github.com/pyenv/pyenv">pyenv</a></li>
-<li><a href="https://virtualenv.pypa.io/en/latest/">virtualenv</a></li>
-<li><a href="https://docs.python.org/3/library/venv.html">venv</a></li>
+<li><a href="https://github.com/gitpython-developers/GitPython">GitPython</a> module (and git executable) for git type</li>
+<li>requests module for http[s]</li>
 </ul>
-<p>Once you've done it, please install all Kapitan's dependencies:</p>
-<div class="highlight"><pre><span></span><code>pip3 install -r requirements.txt
-</code></pre></div>
-
-<p>Because we are using a pinned version of reclass which is added as a submodule into Kapitan's
-repository, you need to pull it separately by executing the command below:</p>
-<div class="highlight"><pre><span></span><code>git submodule update --init
-</code></pre></div>
-
-<h2 id="testing">Testing</h2>
-<p>Run <code>make test</code> to run all tests. If you modify anything in the <code>examples/</code> folder
-make sure you replicate the compiled result of that in <code>tests/test_kubernetes_compiled</code>.
-If you add new features, run <code>make test_coverage &amp;&amp; make test_formatting</code> to make sure the
-test coverage remains at current or better levels and that code formatting is applied.</p>
-<p>If you would like to evaluate your changes by running your version of Kapitan, you can do
-that by running <code>bin/kapitan</code> from this repository or even setting an alias to it.</p>
-<h2 id="code-style">Code Style</h2>
-<p>Run <code>make format_codestyle</code> before submitting to make sure you adhere to the
-<a href="http://python.org/dev/peps/pep-0008/">Style Guide for Python (PEP8)</a>. Python Black is used to
-apply the formatting so make sure you have it installed with <code>pip3 install black</code>.</p>
-<h2 id="releasing">Releasing</h2>
-<ul>
-<li>Create a branch named <code>release-v&lt;NUMBER&gt;</code>. Use <code>v0.*.*-rc.*</code> if you want pre-release versions to be uploaded.</li>
-<li>Update CHANGELOG.md with the release changes.</li>
-<li>Once reviewed and merged, Travis will auto-release.</li>
-<li>The merge has to happen with a merge commit not with squash/rebase so that the commit message still mentions <code>deepmind/release-v*</code> inside.</li>
-</ul>
-<h2 id="updating-gh-pages-docs">Updating gh-pages docs</h2>
-<p>We use <a href="https://www.mkdocs.org/">mkdocs</a> to generate our gh-pages from <code>.md</code> files under docs/ folder.</p>
-<p>Updating our gh-pages is therefore a two-step process.</p>
-<h3 id="1-update-the-md-files">1. Update the <code>.md</code> files</h3>
-<p>Submit a PR for our master branch that updates the <code>.md</code> file(s). Test how the changes would look like when deployed to gh-pages by serving it on localhost:</p>
-<div class="highlight"><pre><span></span><code># from project root
-pip install mkdocs mkdocs-material pymdown-extensions markdown-include
-mkdocs build
-mkdocs serve
-# open http://127.0.0.1:8000
-</code></pre></div>
-
-<h3 id="2-submit-a-pr-for-gh-pages-branch-to-deploy-the-update">2. Submit a PR for gh-pages branch to deploy the update</h3>
-<p>Once the above PR has been merged, use <code>mkdocs gh-deploy</code> command to push the commit that updates the site content to your own gh-pages branch. Make sure that you already have this gh-pages branch in your fork that is up-to-date with our gh-pages branch such that the two branches share the commit history (otherwise Github would not allow PRs to be created).</p>
-<div class="highlight"><pre><span></span><code># locally, on master branch (which has your updated docs)
-mkdocs gh-deploy -m &quot;Commit message&quot; -f ./mkdocs.yml -b gh-pages
-</code></pre></div>
-
-<p>After it's pushed, create a PR that targets our gh-pages branch from your gh-pages branch.</p>
-<h2 id="packaging-extra-resources-in-python-package-or-binary">Packaging extra resources in python package or binary</h2>
-<p>To package any extra resources/files in the pip package or the kapitan binary, make sure you modify both <code>MANIFEST.in</code> and <code>scripts/pyinstaller.sh</code>.</p>
-<h2 id="contributor-license-agreement">Contributor License Agreement</h2>
-<p>Contributions to this project must be accompanied by a Contributor License
-Agreement. You (or your employer) retain the copyright to your contribution,
-this simply gives us permission to use and redistribute your contributions as
-part of the project. Head over to <a href="https://cla.developers.google.com/">https://cla.developers.google.com/</a> to see
-your current agreements on file or to sign a new one.</p>
-<p>You generally only need to submit a CLA once, so if you've already submitted one
-(even if it was for a different project), you probably don't need to do it
-again.</p>
                 
               
               
@@ -776,41 +604,6 @@ again.</p>
       
         
 <footer class="md-footer">
-  
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
-        
-          <a href=".." title="Home" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-            </div>
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                Home
-              </div>
-            </div>
-          </a>
-        
-        
-          <a href="../kapitan_overview/" title="Kapitan Overview" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Kapitan Overview
-              </div>
-            </div>
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -828,15 +621,15 @@ again.</p>
       
     </div>
     
-      <script src="../assets/javascripts/vendor.83fe6e3c.min.js"></script>
-      <script src="../assets/javascripts/bundle.7e1cb91c.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../../assets/javascripts/vendor.83fe6e3c.min.js"></script>
+      <script src="../../assets/javascripts/bundle.7e1cb91c.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
-          base: "..",
+          base: "../..",
           features: [],
           search: Object.assign({
-            worker: "../assets/javascripts/worker/search.37585f48.min.js"
+            worker: "../../assets/javascripts/worker/search.37585f48.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>

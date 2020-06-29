@@ -412,6 +412,33 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#helm-type" class="md-nav__link">
+    Helm type
+  </a>
+  
+    <nav class="md-nav" aria-label="Helm type">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage_3" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_2" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -642,6 +669,33 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#helm-type" class="md-nav__link">
+    Helm type
+  </a>
+  
+    <nav class="md-nav" aria-label="Helm type">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage_3" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_2" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -667,6 +721,7 @@
 <ul>
 <li><a href="#git-type">git type</a></li>
 <li><a href="#http-type">http type</a></li>
+<li><a href="#helm-type">helm type</a></li>
 </ul>
 <p>Some use cases of this feature may include:</p>
 <ul>
@@ -786,6 +841,121 @@ compiled inventory README.md
 <p>This fetches the README.md file from the URL and save it locally.</p>
 <p>Another use case for http types is when we want to download an archive file, such as helm packages, and extract its content.
 Setting <code>unpack: True</code> will unpack zip or tar files onto the <code>output_path</code>. In such cases, set <code>output_path</code> to a folder where you extract the content, and not the file name. You can refer to <a href="../compile/#example">here</a> for the example.</p>
+<h2 id="helm-type">Helm type</h2>
+<p>Fetches helm charts and any specific subcharts in the <code>requirements.yaml</code> file.
+Currently only works on linux with the <code>helm_fetch_binding</code>.</p>
+<h3 id="usage_3">Usage</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+  <span class="nt">kapitan</span><span class="p">:</span>
+    <span class="nt">dependencies</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
+      <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">path/to/chart</span>
+      <span class="nt">source</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">http[s]://&lt;helm_chart_repository_url&gt;</span>
+      <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;specific chart version&gt;</span>
+      <span class="nt">chart_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;name of chart&gt;</span>
+</code></pre></div>
+
+<h3 id="example_2">Example</h3>
+<p>If we want to download the prometheus helm chart we simply add the dependency to the monitoring target.
+We want a specific version <code>11.3.0</code> so we put that in.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+  <span class="nt">kapitan</span><span class="p">:</span>
+    <span class="nt">vars</span><span class="p">:</span>
+      <span class="nt">target</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">monitoring</span>
+    <span class="nt">dependencies</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
+        <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">charts/prometheus</span>
+        <span class="nt">source</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://kubernetes-charts.storage.googleapis.com</span>
+        <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">11.3.0</span>
+        <span class="nt">chart_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus</span>
+    <span class="nt">compile</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
+        <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">.</span>
+        <span class="nt">input_paths</span><span class="p">:</span>
+          <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">charts/prometheus</span>
+        <span class="nt">helm_values</span><span class="p">:</span>
+          <span class="nt">alertmanager</span><span class="p">:</span>
+            <span class="nt">enabled</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+        <span class="nt">helm_params</span><span class="p">:</span>
+          <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">monitoring</span>
+          <span class="nt">name_template</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus</span>
+          <span class="nt">release_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus</span>
+</code></pre></div>
+
+<p>Then run:</p>
+<div class="highlight"><pre><span></span><code>$ kapitan compile --fetch -t monitoring
+Dependency helm chart prometheus and version <span class="m">11</span>.3.0: fetching now
+Dependency helm chart prometheus and version <span class="m">11</span>.3.0: successfully fetched
+Dependency helm chart prometheus and version <span class="m">11</span>.3.0: saved to charts/prometheus
+Compiled monitoring <span class="o">(</span><span class="m">1</span>.48s<span class="o">)</span>
+
+$ tree -L <span class="m">3</span>
+├── charts
+│   └── prometheus
+│       ├── Chart.yaml
+│       ├── README.md
+│       ├── charts
+│       ├── requirements.lock
+│       ├── requirements.yaml
+│       ├── templates
+│       └── values.yaml
+├── compiled
+│   ├── monitoring
+├── inventory
+    ├── classes
+        ├── common.yml
+        ├── component
+</code></pre></div>
+
+<p>If you simply want the latest chart available, either don't include the <code>version</code> key or specify an empty string.
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+  <span class="nt">kapitan</span><span class="p">:</span>
+    <span class="nt">vars</span><span class="p">:</span>
+      <span class="nt">target</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">monitoring</span>
+    <span class="nt">dependencies</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
+        <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">charts/prometheus</span>
+        <span class="nt">source</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">https://kubernetes-charts.storage.googleapis.com</span>
+        <span class="nt">version</span><span class="p">:</span> <span class="s">&quot;&quot;</span>
+        <span class="nt">chart_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus</span>
+    <span class="nt">compile</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
+        <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">.</span>
+        <span class="nt">input_paths</span><span class="p">:</span>
+          <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">charts/prometheus</span>
+        <span class="nt">helm_values</span><span class="p">:</span>
+          <span class="nt">alertmanager</span><span class="p">:</span>
+            <span class="nt">enabled</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+        <span class="nt">helm_params</span><span class="p">:</span>
+          <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">monitoring</span>
+          <span class="nt">name_template</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus</span>
+          <span class="nt">release_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">prometheus</span>
+</code></pre></div></p>
+<p>Then run:</p>
+<div class="highlight"><pre><span></span><code>$ kapitan compile --fetch -t monitoring
+Dependency helm chart prometheus being fetch with using latest version available
+Dependency helm chart prometheus and version : fetching now
+Dependency helm chart prometheus and version : successfully fetched
+Dependency helm chart prometheus and version : saved to charts/prometheus
+Compiled monitoring <span class="o">(</span><span class="m">1</span>.58s<span class="o">)</span>
+
+$ tree -L <span class="m">3</span>
+├── charts
+│   └── prometheus
+│       ├── Chart.yaml
+│       ├── README.md
+│       ├── charts
+│       ├── requirements.lock
+│       ├── requirements.yaml
+│       ├── templates
+│       └── values.yaml
+├── compiled
+│   ├── monitoring
+├── inventory
+    ├── classes
+        ├── common.yml
+        ├── component
+</code></pre></div>
                 
               
               
