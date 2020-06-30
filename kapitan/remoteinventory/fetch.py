@@ -6,14 +6,10 @@ from distutils.dir_util import copy_tree
 from functools import partial
 from shutil import copyfile, rmtree
 from git import Repo
-import re
 import hashlib
-import tarfile
-from zipfile import ZipFile
-from py7zr import SevenZipFile
 
 from git import GitCommandError
-from kapitan.utils import make_request
+from kapitan.utils import make_request, unpack_downloaded_file
 from kapitan.errors import GitSubdirNotFoundError
 from kapitan.errors import GitFetchingError
 from kapitan import cached
@@ -49,11 +45,9 @@ def fetch_inventories(inventory_path, target_objs, pool):
                 source_hash = hashlib.sha256(source_uri.encode())
                 # hashing the source and subdir together for git sources
                 # as different inventory items can have the same git uri
-                try:
+                if "subdir" in inv:
                     subdir = inv["subdir"]
                     source_hash.update(subdir.encode())
-                except KeyError:
-                    pass
                 if source_hash in cached.inv_sources:
                     continue
                 # output_path is relative to inventory_path
@@ -149,28 +143,7 @@ def fetch_http_inventories(inv_mapping, inventory_path, save_dir):
         if inv.get("unpack", False):
             # ensure that the directory we are extracting to exists
             os.makedirs(output_path, exist_ok=True)
-            is_unpacked = False
-            if content_type == "application/x-tar":
-                tar = tarfile.open(copy_src_path)
-                tar.extractall(path=output_path)
-                tar.close()
-                is_unpacked = True
-            elif content_type == "application/x-7z-compressed":
-                archive = SevenZipFile(copy_src_path, mode="r")
-                archive.extractall(path=output_path)
-                archive.close()
-                is_unpacked = True
-            elif content_type == "application/zip":
-                zfile = ZipFile(copy_src_path)
-                zfile.extractall(output_path)
-                zfile.close()
-                is_unpacked = True
-            elif content_type in ["application/octet-stream", "application/x-gzip"]:
-                if re.search(r"(\.tar\.gz|\.tgz)$", source):
-                    tar = tarfile.open(copy_src_path)
-                    tar.extractall(path=output_path)
-                    tar.close()
-                    is_unpacked = True
+            is_unpacked = unpack_downloaded_file(copy_src_path, output_path, content_type)
             if is_unpacked:
                 logger.info("Inventory {} : extracted to {}".format(source, output_path))
             else:
@@ -218,11 +191,9 @@ def list_sources(target_objs):
                 source_uri = inv["source"]
                 source_hash = hashlib.sha256(source_uri.encode())
                 # hashing the source and subdir together for git sources
-                try:
+                if "subdir" in inv:
                     subdir = inv["subdir"]
                     source_hash.update(subdir.encode())
-                except KeyError:
-                    pass
 
                 sources.append(source_hash.hexdigest()[:8])
         except KeyError:

@@ -14,6 +14,10 @@ import math
 import os
 import stat
 import sys
+import re
+import tarfile
+from zipfile import ZipFile
+from py7zr import SevenZipFile
 from collections import Counter, defaultdict
 from functools import lru_cache, wraps
 from hashlib import sha256
@@ -471,3 +475,41 @@ def make_request(source):
     else:
         r.raise_for_status()
     return None, None
+
+
+def unpack_downloaded_file(file_path, output_path, content_type):
+    """unpacks files of various MIME type and stores it to the output_path"""
+    if content_type == "application/x-tar":
+        tar = tarfile.open(file_path)
+        tar.extractall(path=output_path)
+        tar.close()
+        is_unpacked = True
+    elif content_type == "application/x-7z-compressed":
+        archive = SevenZipFile(file_path, mode="r")
+        archive.extractall(path=output_path)
+        archive.close()
+        is_unpacked = True
+    elif content_type == "application/zip":
+        zfile = ZipFile(file_path)
+        zfile.extractall(output_path)
+        zfile.close()
+        is_unpacked = True
+    elif content_type in ["application/octet-stream", "application/x-gzip"]:
+        if re.search(r"(\.tar\.gz|\.tgz)$", file_path):
+            tar = tarfile.open(file_path)
+            tar.extractall(path=output_path)
+            tar.close()
+            is_unpacked = True
+        elif re.search(r"\.7z$", file_path):
+            archive = SevenZipFile(file_path, mode="r")
+            archive.extractall(path=output_path)
+            archive.close()
+            is_unpacked = True
+        else:
+            extension = re.findall(r"\..*$", file_path)[0]
+            logger.debug(f"file extension {extension} not suported")
+            is_unpacked = False
+    else:
+        logger.debug(f"content type {content_type} not suported")
+        is_unpacked = False
+    return is_unpacked
