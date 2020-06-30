@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: prometheus
+    chart: prometheus-11.3.0
+    component: node-exporter
+    heritage: Tiller
+    release: prometheus
+  name: prometheus-node-exporter
+  namespace: infra-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: prometheus
+      component: node-exporter
+      release: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        chart: prometheus-11.3.0
+        component: node-exporter
+        heritage: Tiller
+        release: prometheus
+    spec:
+      containers:
+        - args:
+            - --path.procfs=/host/proc
+            - --path.sysfs=/host/sys
+          image: prom/node-exporter:v0.18.1
+          imagePullPolicy: IfNotPresent
+          name: prometheus-node-exporter
+          ports:
+            - containerPort: 9100
+              hostPort: 9100
+              name: metrics
+          resources: {}
+          volumeMounts:
+            - mountPath: /host/proc
+              name: proc
+              readOnly: true
+            - mountPath: /host/sys
+              name: sys
+              readOnly: true
+      hostNetwork: true
+      hostPID: true
+      serviceAccountName: prometheus-node-exporter
+      volumes:
+        - hostPath:
+            path: /proc
+          name: proc
+        - hostPath:
+            path: /sys
+          name: sys
+  updateStrategy:
+    type: RollingUpdate

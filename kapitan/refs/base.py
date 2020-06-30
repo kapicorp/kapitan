@@ -1,5 +1,5 @@
 # Copyright 2019 The Kapitan Authors
-# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan@google.com>
+# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -17,7 +17,12 @@ from contextlib import contextmanager
 from functools import lru_cache
 
 import yaml
-from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashMismatchError
+from kapitan.errors import (
+    RefBackendError,
+    RefError,
+    RefFromFuncError,
+    RefHashMismatchError,
+)
 from kapitan.refs.functions import eval_func
 from kapitan.utils import PrettyDumper, list_all_paths
 
@@ -88,7 +93,11 @@ class PlainRef(object):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data.decode(), "encoding": self.encoding, "type": self.type_name}
+        return {
+            "data": self.data.decode(),
+            "encoding": self.encoding,
+            "type": self.type_name,
+        }
 
 
 class RefParams(object):
@@ -186,7 +195,7 @@ class Revealer(object):
                 rev_obj = self.reveal_obj(obj)
                 return (
                     yaml.dump_all(
-                        rev_obj, Dumper=PrettyDumper, default_flow_style=False, explicit_start=True
+                        rev_obj, Dumper=PrettyDumper, default_flow_style=False, explicit_start=True,
                     ),
                     "yaml",
                 )
@@ -417,6 +426,13 @@ class RefController(object):
 
                 # XXX embed_refs in plain backend does nothing
                 self.register_backend(PlainRefBackend(self.path, **ref_kwargs))
+
+            elif type_name == "env":
+                from kapitan.refs.env import EnvRefBackend
+
+                # embed_refs in env backend also does nothing
+                self.register_backend(EnvRefBackend(self.path, **ref_kwargs))
+
             elif type_name == "base64":
                 from kapitan.refs.base64 import Base64RefBackend
 
@@ -478,8 +494,8 @@ class RefController(object):
         json_data = base64.b64decode(b64_path).decode()
         json_data = json.loads(json_data)
         backend = self._get_backend(type_name)
+
         # strip useless keys
-        json_data.pop("encoding")
         json_data.pop("type")
 
         data = json_data.pop("data").encode()

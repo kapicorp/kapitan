@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright 2019 The Kapitan Authors
-# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan@google.com>
+# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -9,8 +9,9 @@
 Kapitan setup.py for PIP install
 """
 
-from setuptools import setup, find_packages
-from kapitan.version import PROJECT_NAME, VERSION, DESCRIPTION, URL, AUTHOR, AUTHOR_EMAIL, LICENCE
+from setuptools import find_packages, setup
+
+from kapitan.version import AUTHOR, AUTHOR_EMAIL, DESCRIPTION, LICENCE, PROJECT_NAME, URL, VERSION
 
 
 # From https://github.com/pypa/pip/issues/3610#issuecomment-356687173

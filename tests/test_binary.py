@@ -1,5 +1,5 @@
 # Copyright 2019 The Kapitan Authors
-# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan@google.com>
+# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -356,6 +356,7 @@ class TestDependencyManager(unittest.TestCase):
             "-t",
             "nginx",
             "nginx-dev",
+            "monitoring",
             "-p",
             "4",
         ]
@@ -364,6 +365,7 @@ class TestDependencyManager(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "kapitan-repository")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
+        self.assertTrue(os.path.isdir(os.path.join(temp, "charts", "prometheus")))
 
     def tearDown(self):
         reset_cache()

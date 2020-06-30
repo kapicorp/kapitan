@@ -56,5 +56,5 @@ parameters:
         input_type: jsonnet
         input_paths:
           - components/*/main.jsonnet
-        output_type: yaml
+        output_type: yml
 

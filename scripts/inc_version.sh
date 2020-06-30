@@ -27,7 +27,7 @@ sed -i.bak "s/VERSION =.*/VERSION = '$VERSION'/g" ./kapitan/version.py
 
 echomsg "Setup git"
 
-git config --local user.email "kapitan@google.com"
+git config --local user.email "kapitan-admins@googlegroups.com"
 git config --local user.name "Kapitan CI"
 
 echomsg "Increment version in kapitan/version.py"

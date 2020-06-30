@@ -55,6 +55,7 @@ We support the following custom filters for use in Jinja2 templates:
 ```
 sha256 - SHA256 hashing of text e.g. {{ text | sha256 }}
 yaml - Dump text as YAML e.g. {{ text | yaml }}
+toml - Dump text as TOML e.g. {{ text | toml }}
 b64encode - base64 encode text e.g. {{ text | b64encode }}
 b64decode - base64 decode text e.g. {{ text | b64decode }}
 fileglob - return list of matched regular files for glob e.g. {{ ./path/file* | fileglob }}
@@ -191,9 +192,9 @@ It's up to you to decide what the output is.
 
 ### kadet
 
-Kadet is an extensible input type that enables you to generate templates using python. The key benefit being the ability to utilize familiar programing principles while having access to kapitan's powerful inventory system. 
+Kadet is an extensible input type that enables you to generate templates using python. The key benefit being the ability to utilize familiar programing principles while having access to kapitan's powerful inventory system.
 
-A library that defines resources as classes using the Base Object class is required. These can then be utilized within components to render output. 
+A library that defines resources as classes using the Base Object class is required. These can then be utilized within components to render output.
 
 The following functions are provided by the class `BaseObj()`.
 
@@ -359,13 +360,12 @@ cd kapitan/inputs/helm
 ./build.sh
 ```
 
-This requires Go >= 1.12.
+This requires Go 1.14.
 
 #### Helm subcharts
 
-This binding supports helm subcharts. However, since the [external dependency manager](external_dependencies.md) does not parse `requirements.yaml` in order to detect chart dependencies, you are required to manually download the entire chart including the parent charts.
-
-*Supported output types:* N/A (no need to specify `output_type`)
+There is an [external dependency manager](external_dependencies.md) of type `helm` which enables you to specify helm
+charts to download, including subcharts.
 
 ### Copy
 
