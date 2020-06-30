@@ -1,13 +1,19 @@
+classes:
+  - mycommon
 parameters:
+    target_name: remoteinv-nginx
+    namespace: $(target_name)
     kapitan:
-        vars:
-            target: remoteinv-nginx
         inventories:
             - type: git
               output_path: .
               source: https://github.com/deepmind/kapitan.git
               ref: master
               subdir: tests/test_resources/inventory/
+            - type: https
+              output_path: classes/new_common.yml
+              source: https://raw.githubusercontent.com/deepmind/kapitan/master/tests/test_resources/inventory/classes/common.yml
+              unpack: False
         compile:
             - output_path: .
               input_type: jinja2

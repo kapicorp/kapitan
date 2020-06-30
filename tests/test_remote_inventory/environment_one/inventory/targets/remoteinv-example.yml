@@ -1,13 +1,19 @@
+classes:
+  - mycommon
 parameters:
+    target_name: remoteinv-example
+    name_space: $(target_name)
     kapitan:
-        vars:
-            target: remoteinv-example
         inventories:
             - type: git
               output_path: targets/
               source: https://github.com/deepmind/kapitan.git
               ref: master
               subdir: tests/test_remote_inventory/environment_two/inventory/targets/
+            - type: https
+              output_path: .
+              source: https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.tar.gz
+              unpack: True
         compile:
             - output_path: .
               input_type: jinja2
