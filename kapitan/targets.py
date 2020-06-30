@@ -79,6 +79,7 @@ def compile_targets(
             search_paths=search_paths,
             compile_path=temp_path,
             ref_controller=ref_controller,
+            inventory_path=inventory_path,
             **kwargs,
         )
 
@@ -384,14 +385,14 @@ def search_targets(inventory_path, targets, labels):
     return targets_found
 
 
-def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
+def compile_target(target_obj, search_paths, compile_path, ref_controller, inventory_path, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
 
-    jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller)
+    jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller, inventory_path)
     jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
     kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
     helm_compiler = Helm(compile_path, search_paths, ref_controller)

@@ -90,7 +90,7 @@ class RemoteInventoryTest(unittest.TestCase):
             temp_inv,
             "--targets",
             "remoteinv-example",
-            # "remoteinv-nginx",
+            "remoteinv-nginx",
             "zippedinv",
         ]
         main()
@@ -98,7 +98,7 @@ class RemoteInventoryTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(temp_inv, "targets", "remoteinv-nginx.yml")))
         self.assertTrue(os.path.isfile(os.path.join(temp_inv, "targets", "nginx.yml")))
         self.assertTrue(os.path.isfile(os.path.join(temp_inv, "targets", "nginx-dev.yml")))
-        # self.assertTrue(os.path.isdir(os.path.join(temp_output, "compiled", "remoteinv-nginx")))
+        self.assertTrue(os.path.isdir(os.path.join(temp_output, "compiled", "remoteinv-nginx")))
         self.assertTrue(os.path.isdir(os.path.join(temp_output, "compiled", "zippedinv")))
 
         rmtree(temp_inv)
