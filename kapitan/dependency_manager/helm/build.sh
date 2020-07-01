@@ -5,13 +5,24 @@ set -euo pipefail
 cd $(dirname "$0")
 pwd
 
-so_name="helm_fetch.so"
+# append platform name to the .so file name, corresponding to python's platform.system()
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    os_suffix="Linux"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    os_suffix="Darwin"
+fi
+
+so_name="helm_fetch_$os_suffix.so"
 
 # Compile the binding if a Go runtime exists
 if [[ -z $(which go) ]]; then
     echo "[WARN] go is not available on this system -- skipping Helm binding build!"
 else
-    go build -buildmode=c-shared -o $so_name helm_fetch.go
+    if [[ "$os_suffix" == "Linux" ]]; then
+        GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o $so_name helm_fetch.go
+    elif [[ "$os_suffix" == "Darwin" ]]; then
+        GOOS=darwin GOARCH=amd64 go build -buildmode=c-shared -o $so_name helm_fetch.go
+    fi
 fi
 
 # Validate that the compiled binding exists

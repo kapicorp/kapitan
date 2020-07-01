@@ -237,10 +237,11 @@ def fetch_helm_chart(dep_mapping, save_dir):
 
 def initialise_helm_fetch_binding():
     """returns the dl_opened library (.so file) if exists, otherwise None"""
-    if platform.system() not in ("Linux", "Darwin"):  # TODO: later add binding for Mac
+    if platform.system() not in ("Linux", "Darwin"):
         return None
-    # binding_path is kapitan/dependency_manager/helm/helm_fetch.so
-    binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "helm/helm_fetch.so")
+    # binding_path is kapitan/inputs/helm/helm_fetch_<platform.system()>.so
+    binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    "helm/helm_fetch_{}.so".format(platform.system()))
     if not os.path.exists(binding_path):
         logger.debug("The helm_fetch binding does not exist at {}".format(binding_path))
         return None
