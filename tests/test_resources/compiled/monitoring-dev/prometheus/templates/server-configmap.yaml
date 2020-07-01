@@ -100,8 +100,8 @@ metadata:
   labels:
     app: prometheus
     chart: prometheus-11.3.0
-    component: server
+    component: dev-server
     heritage: Tiller
     release: prometheus
-  name: prometheus-server
+  name: prometheus-dev-server
   namespace: infra-prometheus

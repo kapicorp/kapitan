@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: prometheus
+    chart: prometheus-11.3.0
+    component: dev-server
+    heritage: Tiller
+    release: prometheus
+  name: prometheus-dev-server
+  namespace: infra-prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+      component: dev-server
+      release: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        chart: prometheus-11.3.0
+        component: dev-server
+        heritage: Tiller
+        release: prometheus
+    spec:
+      containers:
+        - args:
+            - --storage.tsdb.retention.time=15d
+            - --config.file=/etc/config/prometheus.yml
+            - --storage.tsdb.path=/data
+            - --web.console.libraries=/etc/prometheus/console_libraries
+            - --web.console.templates=/etc/prometheus/consoles
+            - --web.enable-lifecycle
+          image: prom/prometheus:v2.18.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 30
+          name: prometheus-dev-server
+          ports:
+            - containerPort: 9090
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 30
+          resources: {}
+          volumeMounts:
+            - mountPath: /etc/config
+              name: config-volume
+            - mountPath: /data
+              name: storage-volume
+              subPath: ''
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 300
+      volumes:
+        - configMap:
+            name: prometheus-dev-server
+          name: config-volume
+        - name: storage-volume
+          persistentVolumeClaim:
+            claimName: prometheus-dev-server

@@ -7,7 +7,7 @@ def main():
     # declare functions to export
     ffi.cdef(
         """
-        char* renderChart(char* p0, char* p1, char* p2, char* p3, char* p4, char* p5);
+        char* renderChart(char* p0, char* p1, char* p2, char* p3, char* p4, char* p5, char** p6, int p7);
         void free(void* ptr);
     """
     )

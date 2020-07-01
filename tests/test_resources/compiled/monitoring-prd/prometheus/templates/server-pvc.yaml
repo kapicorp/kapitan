@@ -4,10 +4,10 @@ metadata:
   labels:
     app: prometheus
     chart: prometheus-11.3.0
-    component: server
+    component: prd-server
     heritage: Tiller
     release: prometheus
-  name: prometheus-server
+  name: prometheus-prd-server
   namespace: infra-prometheus
 spec:
   accessModes:

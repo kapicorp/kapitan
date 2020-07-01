@@ -1,0 +1,8 @@
+classes:
+  - component.monitoring
+
+parameters:
+  kapitan:
+    vars:
+      target: monitoring-dev
+      env: dev

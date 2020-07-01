@@ -400,6 +400,8 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
                 helm_compiler.dump_helm_values(comp_obj["helm_values"])
             if "helm_params" in comp_obj:
                 helm_compiler.set_helm_params(comp_obj["helm_params"])
+            if "helm_values_files" in comp_obj:
+                helm_compiler.set_helm_values_files(comp_obj["helm_values_files"])
             input_compiler = helm_compiler
         elif input_type == "copy":
             input_compiler = copy_compiler
@@ -436,6 +438,7 @@ def valid_target_obj(target_obj):
                         "output_path": {"type": "string"},
                         "output_type": {"type": "string"},
                         "helm_values": {"type": "object"},
+                        "helm_values_files": {"type": "array"},
                         "helm_params": {
                             "type": "object",
                             "properties": {
