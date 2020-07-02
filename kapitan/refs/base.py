@@ -319,6 +319,9 @@ class Revealer(object):
 
         return compile_replace_match
 
+    def reveal_raw_string(self, tag_string):
+        return self.regex.sub(self._reveal_replace_match, tag_string)
+
     def reveal_raw_file(self, filename):
         """
         read filename and reveal content (per line search and replace) with refs
@@ -328,12 +331,12 @@ class Revealer(object):
         out_raw = ""
         if filename is None:
             for line in sys.stdin:
-                revealed = self.regex.sub(self._reveal_replace_match, line)
+                revealed = self.reveal_raw_string(line)
                 out_raw += revealed
         else:
             with open(filename) as fp:
                 for line in fp:
-                    revealed = self.regex.sub(self._reveal_replace_match, line)
+                    revealed = self.reveal_raw_string(line)
                     out_raw += revealed
         return out_raw
 

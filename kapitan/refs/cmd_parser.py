@@ -259,8 +259,9 @@ def ref_reveal(args, ref_controller):
     revealer = Revealer(ref_controller)
     file_name = args.file
     reffile_name = args.ref_file
+    tag_name = args.tag
 
-    if file_name is None and reffile_name is None:
+    if file_name is None and reffile_name is None and tag_name is None:
         fatal_error("--file or --ref-file is required with --reveal")
     try:
         if file_name == "-" or reffile_name == "-":
@@ -272,6 +273,9 @@ def ref_reveal(args, ref_controller):
         elif reffile_name:
             ref = ref_controller.ref_from_ref_file(reffile_name)
             sys.stdout.write(ref.reveal())
+        elif tag_name:
+            out = revealer.reveal_raw_string(tag_name)
+            sys.stdout.write(out)
     except (RefHashMismatchError, KeyError):
         raise KapitanError("Reveal failed for file {name}".format(name=file_name))
 
