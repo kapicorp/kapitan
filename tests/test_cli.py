@@ -42,7 +42,6 @@ class CliFuncsTest(unittest.TestCase):
         subprocess.run(["gpg", "--import-ownertrust", example_key_ownertrust])
         os.remove(example_key_ownertrust)
 
-
     def test_cli_secret_reveal_tag(self):
         """
         run $ kapitan refs - -write gpg: test_secretb64 - -base64
@@ -73,8 +72,7 @@ class CliFuncsTest(unittest.TestCase):
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal", "--tag",
-            test_tag_content, "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "--tag", test_tag_content, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
@@ -382,9 +380,15 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
 
-        print(f"AAAA:{REFS_PATH}/test_secret")
-        sys.argv = ["kapitan", "refs", "--reveal", "--ref-file",
-                    REFS_PATH + "/test_secret", "--refs-path", REFS_PATH]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--reveal",
+            "--ref-file",
+            REFS_PATH + "/test_secret",
+            "--refs-path",
+            REFS_PATH,
+        ]
 
         # set stdout as string
         stdout = io.StringIO()

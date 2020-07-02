@@ -17,8 +17,7 @@ from contextlib import contextmanager
 from functools import lru_cache
 
 import yaml
-from kapitan.errors import (RefBackendError, RefError, RefFromFuncError,
-                            RefHashMismatchError)
+from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashMismatchError
 from kapitan.refs.functions import eval_func
 from kapitan.utils import PrettyDumper, list_all_paths
 
@@ -516,12 +515,10 @@ class RefController(object):
 
             backend = self._get_backend(type_name)
 
-
             # create new ref with deserialised data and remaining keys as kwargs
             # note that encrypt=False is only for secret ref types, non secret refs (e.g. base64) will ignore
             # from_base64 is True because data is always base64 encoded in embedded form
-            ref = backend.ref_type(data, encrypt=True,
-                                   from_base64=from_base64, **ref_file_obj)
+            ref = backend.ref_type(data, encrypt=True, from_base64=from_base64, **ref_file_obj)
         return ref
 
     def _get_from_token(self, token):
