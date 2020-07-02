@@ -7,8 +7,8 @@ import sys
 
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.refs.base import PlainRef, RefController, Revealer
-from kapitan.refs.env import EnvRef
 from kapitan.refs.base64 import Base64Ref
+from kapitan.refs.env import EnvRef
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
@@ -258,15 +258,20 @@ def ref_reveal(args, ref_controller):
     "Reveal secrets in file_name"
     revealer = Revealer(ref_controller)
     file_name = args.file
-    if file_name is None:
-        fatal_error("--file is required with --reveal")
+    reffile_name = args.ref_file
+
+    if file_name is None and reffile_name is None:
+        fatal_error("--file or --ref-file is required with --reveal")
     try:
-        if file_name == "-":
+        if file_name == "-" or reffile_name == "-":
             out = revealer.reveal_raw_file(None)
             sys.stdout.write(out)
         elif file_name:
             for rev_obj in revealer.reveal_path(file_name):
                 sys.stdout.write(rev_obj.content)
+        elif reffile_name:
+            ref = ref_controller.ref_from_ref_file(reffile_name)
+            sys.stdout.write(ref.reveal())
     except (RefHashMismatchError, KeyError):
         raise KapitanError("Reveal failed for file {name}".format(name=file_name))
 
