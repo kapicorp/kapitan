@@ -44,7 +44,7 @@ class CliFuncsTest(unittest.TestCase):
 
     def test_cli_secret_reveal_tag(self):
         """
-        run $ kapitan refs - -write gpg: test_secret
+        run $ kapitan refs --write gpg: test_secret
         and run $ kapitan refs --reveal --tag "?{gpg:test_secret}"
         with example@kapitan.dev recipient
         """
@@ -71,8 +71,7 @@ class CliFuncsTest(unittest.TestCase):
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal", "--tag",
-                    test_tag_content, "--refs-path", REFS_PATH]
+        sys.argv = ["kapitan", "refs", "--reveal", "--tag", test_tag_content, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
@@ -85,7 +84,7 @@ class CliFuncsTest(unittest.TestCase):
 
     def test_cli_secret_reveal_b64_tag(self):
         """
-        run $ kapitan refs - -write gpg: test_secretb64 --base64
+        run $ kapitan refs --write gpg: test_secretb64 --base64
         and run $ kapitan refs --reveal --tag "?{gpg:test_secretb64}"
         with example@kapitan.dev recipient
         """
