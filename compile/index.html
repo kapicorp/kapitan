@@ -1043,6 +1043,8 @@ As shown above we create a <code>BaseObject()</code> named output. We update the
         <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">&lt;chart_path&gt;</span>
       <span class="nt">helm_values</span><span class="p">:</span>
         <span class="l l-Scalar l-Scalar-Plain">&lt;object_with_values_to_override&gt;</span>
+      <span class="nt">helm_values_files</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">&lt;values_file_path&gt;</span>
       <span class="nt">helm_params</span><span class="p">:</span>
         <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;substitutes_.Release.Namespace&gt;</span>
         <span class="nt">name_template</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;namespace_template&gt;</span>
@@ -1050,6 +1052,10 @@ As shown above we create a <code>BaseObject()</code> named output. We update the
 </code></pre></div>
 
 <p><code>helm_values</code> is an object containing values specified that will override the default values in the input chart. This has exactly the same effect as specifying <code>--values custom_values.yml</code> for <code>helm template</code> command where <code>custom_values.yml</code> structure mirrors that of <code>helm_values</code>.</p>
+<p><code>helm_values_files</code> is an array containing the paths to <a href="https://helm.sh/docs/chart_template_guide/values_files/">helm values files</a> used as input for the chart. This has exactly the same effect as specifying <code>--file my_custom_values.yml</code> for the <code>helm template</code> command where <code>my_custom_values.yml</code> is a helm values file.
+If the same keys exist in <code>helm_values</code> and in multiple specified <code>helm_values_files</code>, the last indexed file in the <code>helm_values_files</code> will take precedence followed by the preceding <code>helm_values_files</code> and at the bottom the <code>helm_values</code> defined in teh compile block.
+There is an example in the tests. The <code>monitoring-dev</code>(kapitan/tests/test_resources/inventory/targets/monitoring-dev.yml) and <code>monitoring-prd</code>(kapitan/tests/test_resources/inventory/targets/monitoring-prd.yml) targets  both use the <code>monitoring</code>(tests/test_resources/inventory/classes/component/monitoring.yml) component.
+This component has helm chart input and takes a <code>common.yml</code> helm_values file which is "shared" by any target that uses the component and it also takes a dynamically defined file based on a kapitan variable defined in the target.</p>
 <p><code>helm_params</code> correspond to the options for <code>helm template</code> as follows:</p>
 <ul>
 <li>
