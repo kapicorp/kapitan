@@ -11,6 +11,7 @@ jobs:
       - name: Strip git ref prefix from tag version and store in TAG_VERSION
         run: |
           echo ::set-env name=TAG_VERSION::${GITHUB_REF#refs/*/v}
+          echo ::set-env name=REF_NAME::${GITHUB_REF#refs/*/}
       - name: Strip full version and just keep major part in MAJOR_VERSION VAR
         run: |
           echo ::set-env name=MAJOR_VERSION::${TAG_VERSION:0:4}
@@ -20,7 +21,7 @@ jobs:
         run: |
           echo ${{ env.TAG_VERSION }}
           echo ${{ env.MAJOR_VERSION }}
-      - name: "Build latest and versioned docker tags"
+      - name: "Build PR/latest/versioned tags"
         uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -29,6 +30,20 @@ jobs:
           add_git_labels: true
           tag_with_ref: true
           dockerfile: Dockerfile
+      - name: "Build PR/latest/versioned ci tags"
+        uses: docker/build-push-action@v1
+        if: github.ref != 'refs/heads/master'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: deepmind/kapitan
+          add_git_labels: true
+          tags: ${{ format('{0}-ci', env.REF_NAME ) }}
+          dockerfile: Dockerfile.ci
+      - name: "Test both Dockerfile and Dockerfile.ci in current ref"
+        run: |
+            docker run -t --rm deepmind/kapitan:${{ env.REF_NAME }} --version
+            docker run -t --rm deepmind/kapitan:${{ env.REF_NAME }}-ci kapitan --version
       - name: "Build major version tag"
         uses: docker/build-push-action@v1
         if: startsWith(github.ref, 'refs/tags/')
@@ -42,7 +57,7 @@ jobs:
 
       - name: "Build latest ci tag"
         uses: docker/build-push-action@v1
-        #if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
