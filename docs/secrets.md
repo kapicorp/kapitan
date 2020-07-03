@@ -128,6 +128,22 @@ $ kapitan refs --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
 
 This will substitute the referenced secrets with the actual decrypted secrets stored at the referenced paths and display the file content.
 
+You can also use:
+
+```
+$ kapitan refs --reveal --ref-file refs/targets/all-glob/mysql/password
+```
+
+or
+
+```
+$ kapitan refs --reveal --tag "?{base64:targets/all-glob/mysql/password}"
+$ # or
+$ kapitan refs --reveal --tag "?{base64:targets/all-glob/mysql/password:3192c15c}"
+```
+
+for more convenience.
+
 #### 5. Compile refs in embedded format
 
 This allows revealing compiled files without needing access to ref files by using:

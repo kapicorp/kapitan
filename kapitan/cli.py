@@ -376,6 +376,12 @@ def main():
         default=from_dot_kapitan("refs", "reveal", False),
     )
     refs_parser.add_argument(
+        "--tag", help='specify ref tag to reveal, e.g. "?{gkms:my/ref:123456}" ', metavar="REFTAG"
+    )
+    refs_parser.add_argument(
+        "--ref-file", "-rf", help='read ref file, set "-" for stdin', metavar="REFFILENAME"
+    )
+    refs_parser.add_argument(
         "--file", "-f", help='read file or directory, set "-" for stdin', metavar="FILENAME"
     )
     refs_parser.add_argument("--target-name", "-t", help="grab recipients from target name")
