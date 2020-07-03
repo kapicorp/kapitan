@@ -509,16 +509,14 @@ class RefController(object):
             ref_file_obj = yaml.safe_load(ref_file)
 
             type_name = ref_file_obj.pop("type")
-            encoding = ref_file_obj["encoding"]
             data = ref_file_obj.pop("data")
-            from_base64 = encoding == "base64"
 
             backend = self._get_backend(type_name)
 
             # create new ref with deserialised data and remaining keys as kwargs
             # note that encrypt=False is only for secret ref types, non secret refs (e.g. base64) will ignore
-            # from_base64 is True because data is always base64 encoded in embedded form
-            ref = backend.ref_type(data, encrypt=True, from_base64=from_base64, **ref_file_obj)
+            # from_base64 is True  because data is being loaded from a ref file where it is always base64
+            ref = backend.ref_type(data, encrypt=True, from_base64=True, **ref_file_obj)
         return ref
 
     def _get_from_token(self, token):
