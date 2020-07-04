@@ -4,6 +4,10 @@ all: clean package
 test:
 	@echo ----- Running python tests -----
 	python3 -m unittest discover
+
+.PHONY: test_docker
+# for local testing, CI/CD uses docker github action for testing/pushing images
+test_docker:
 	@echo ----- Testing build of docker image -----
 	docker build . --no-cache -t kapitan
 	@echo ----- Testing run of docker image -----
