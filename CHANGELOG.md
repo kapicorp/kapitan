@@ -1,4 +1,4 @@
-## 0.28.1-rc.2:
+## 0.28.1-rc.3:
 - Enable helm values files to be injected for input type "helm" (#545)
 - Fix issue #500: Add --ref-file or --tag to refs --reveal option. (#548)
 

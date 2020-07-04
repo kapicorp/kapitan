@@ -32,7 +32,6 @@ jobs:
           dockerfile: Dockerfile
       - name: "Build PR/latest/versioned ci tags"
         uses: docker/build-push-action@v1
-        if: github.ref != 'refs/heads/master'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -42,7 +41,8 @@ jobs:
           dockerfile: Dockerfile.ci
       - name: "Test both Dockerfile and Dockerfile.ci in current ref"
         run: |
-            docker run -t --rm deepmind/kapitan:${{ env.REF_NAME }} --version
+            [ ${{ env.REF_NAME }} == "master" ] && tagname="latest" || tagname=${{ env.REF_NAME }}
+            docker run -t --rm deepmind/kapitan:${tagname} --version
             docker run -t --rm deepmind/kapitan:${{ env.REF_NAME }}-ci kapitan --version
       - name: "Build major version tag"
         uses: docker/build-push-action@v1
