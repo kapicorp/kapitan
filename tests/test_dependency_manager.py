@@ -17,7 +17,6 @@ from kapitan.dependency_manager.base import (
     fetch_http_source,
     fetch_git_dependency,
     fetch_helm_chart,
-    DEPENDENCY_OUTPUT_CONFIG,
 )
 
 
@@ -94,7 +93,6 @@ class DependencyManagerTest(unittest.TestCase):
 
     def test_compile_fetch(self):
         temp = tempfile.mkdtemp()
-        DEPENDENCY_OUTPUT_CONFIG["root_dir"] = temp
         sys.argv = [
             "kapitan",
             "compile",

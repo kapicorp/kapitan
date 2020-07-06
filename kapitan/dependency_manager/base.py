@@ -28,11 +28,8 @@ except ImportError as ie:
     logger.debug("Error importing ffi from kapitan.dependency_manager.helm.helm_fetch_binding: {}".format(ie))
     pass  # make this feature optional
 
-# this is used just to change the root directory of save_dir in testing
-DEPENDENCY_OUTPUT_CONFIG = {}
 
-
-def fetch_dependencies(target_objs, pool):
+def fetch_dependencies(output_path, target_objs, pool):
     """
     parses through the dependencies parameters in target_objs and fetches them
     all dependencies are first fetched into tmp dir, after which they are copied to their respective output_path.
@@ -53,12 +50,11 @@ def fetch_dependencies(target_objs, pool):
             for item in dependencies:
                 dependency_type = item["type"]
                 source_uri = item["source"]
-                if "root_dir" in DEPENDENCY_OUTPUT_CONFIG:
-                    # should only be used in test environment
-                    item["output_path"] = os.path.join(
-                        DEPENDENCY_OUTPUT_CONFIG["root_dir"], item["output_path"]
-                    )
-                output_path = item["output_path"]
+
+                # point to the relative output path
+                output_path = os.path.join(output_path, item["output_path"])
+                logger.debug("Updated output_path from {} to {}".format(item["output_path"], output_path))
+                item["output_path"] = output_path
 
                 if output_path in deps_output_paths[source_uri]:
                     # if the output_path is duplicated for the same source_uri
@@ -77,6 +73,9 @@ def fetch_dependencies(target_objs, pool):
                     helm_deps[item["chart_name"] + "-" + version].append(item)
 
         except KeyError:
+            logger.debug(
+                "Target object {} has no 'dependencies' key, continuing".format(target_obj["vars"]["target"])
+            )
             continue
 
     git_worker = partial(fetch_git_dependency, save_dir=temp_dir)

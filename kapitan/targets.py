@@ -97,7 +97,7 @@ def compile_targets(
                 new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
 
         if kwargs.get("fetch_dependencies", False):
-            fetch_dependencies(target_objs, pool)
+            fetch_dependencies(output_path, target_objs, pool)
 
         # compile_target() returns None on success
         # so p is only not None when raising an exception
