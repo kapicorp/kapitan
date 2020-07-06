@@ -73,9 +73,6 @@ def fetch_inventories(inventory_path, target_objs, temp_dir, pool):
     [p.get() for p in pool.imap_unordered(git_worker, git_inventories.items()) if p]
     [p.get() for p in pool.imap_unordered(http_worker, http_inventories.items()) if p]
 
-    rmtree(temp_dir)
-    logger.debug("Removed {}".format(temp_dir))
-
 
 def list_sources(target_objs):
     "returns list of all remote inventory sources"
