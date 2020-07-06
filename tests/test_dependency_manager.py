@@ -32,7 +32,7 @@ class DependencyManagerTest(unittest.TestCase):
         ]
 
         for source in http_sources:
-            fetch_http_source(source, temp_dir)
+            fetch_http_source(source, temp_dir, item_type="dependency")
 
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "1c3a08e6" + "jsonnet.jsonnet")))
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "aff45ec8" + "__init__.py")))
@@ -41,7 +41,7 @@ class DependencyManagerTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         # TODO: also test git ssh urls
         git_source = "https://github.com/deepmind/kapitan.git"
-        fetch_git_source(git_source, temp_dir)
+        fetch_git_source(git_source, temp_dir, item_type="dependency")
         self.assertTrue(os.path.isdir(os.path.join(temp_dir, "kapitan.git", "kapitan")))
 
     def test_clone_repo_subdir(self):
