@@ -37,11 +37,14 @@ def fetch_inventories(inventory_path, target_objs, temp_dir, pool):
                 inv_type = inv["type"]
                 source_uri = inv["source"]
                 source_hash = hashlib.sha256(source_uri.encode())
-                # hashing the source and subdir together for git sources
+                # hashing the source, subdir and ref together for git sources
                 # as different inventory items can have the same git uri
                 if "subdir" in inv:
                     subdir = inv["subdir"]
                     source_hash.update(subdir.encode())
+                if "ref" in inv:
+                    ref = inv["ref"]
+                    source_hash = hashlib.sha256(ref.encode())
                 if source_hash in cached.inv_sources:
                     continue
                 # output_path is relative to inventory_path
@@ -51,6 +54,8 @@ def fetch_inventories(inventory_path, target_objs, temp_dir, pool):
                 inv["output_path"] = output_path
 
                 if output_path in inv_output_path[source_uri]:
+                # if the output_path is duplicated for the same source_uri
+                    logger.warning("skipping duplicate output path for uri {}".format(source_uri))
                     continue
                 else:
                     inv_output_path[source_uri].add(output_path)
@@ -81,10 +86,13 @@ def list_sources(target_objs):
             for inv in invs:
                 source_uri = inv["source"]
                 source_hash = hashlib.sha256(source_uri.encode())
-                # hashing the source and subdir together for git sources
+                # hashing the source, subdir, ref together to idenntify unique items
                 if "subdir" in inv:
                     subdir = inv["subdir"]
                     source_hash.update(subdir.encode())
+                if "ref" in inv:
+                    ref = inv["ref"]
+                    source_hash.update(ref.encode())
 
                 sources.append(source_hash.hexdigest()[:8])
         except KeyError:

@@ -58,6 +58,7 @@ def fetch_dependencies(output_path, target_objs, temp_dir, pool):
 
                 if output_path in deps_output_paths[source_uri]:
                     # if the output_path is duplicated for the same source_uri
+                    logger.warning("skipping duplicate output path for uri {}".format(source_uri))
                     continue
                 else:
                     deps_output_paths[source_uri].add(output_path)
