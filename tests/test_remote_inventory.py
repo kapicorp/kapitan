@@ -43,14 +43,14 @@ class RemoteInventoryTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
 
         http_sources = [
-            "https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.7z",
+            "https://github.com/deepmind/kapitan/archive/master.zip",
             "https://raw.githubusercontent.com/deepmind/kapitan/master/tests/test_resources/inventory/classes/common.yml",
             "https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.zip",
         ]
         for source in http_sources:
             fetch_http_source(source, temp_dir, item_type="inventory")
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "47c29a3binventory.7z")))
-        # self.assertTrue(os.path.isfile(os.path.join(temp_dir,"009a21cfmaster.zip")))
+
+        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "009a21cfmaster.zip")))
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "eac6ceb7common.yml")))
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "47c29a3binventory.zip")))
         rmtree(temp_dir)

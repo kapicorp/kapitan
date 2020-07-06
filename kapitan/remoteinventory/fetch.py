@@ -54,7 +54,7 @@ def fetch_inventories(inventory_path, target_objs, temp_dir, pool):
                 inv["output_path"] = output_path
 
                 if output_path in inv_output_path[source_uri]:
-                # if the output_path is duplicated for the same source_uri
+                    # if the output_path is duplicated for the same source_uri
                     logger.warning("skipping duplicate output path for uri {}".format(source_uri))
                     continue
                 else:
