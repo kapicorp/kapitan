@@ -51,17 +51,18 @@ def fetch_dependencies(output_path, target_objs, temp_dir, pool):
                 dependency_type = item["type"]
                 source_uri = item["source"]
 
-                # point to the relative output path
-                output_path = os.path.join(output_path, item["output_path"])
+                # The target key "output_path" is relative to the compile output path set by the user
+                # point to the full output path
+                full_output_path = os.path.join(output_path, item["output_path"])
                 logger.debug("Updated output_path from {} to {}".format(item["output_path"], output_path))
-                item["output_path"] = output_path
+                item["output_path"] = full_output_path
 
-                if output_path in deps_output_paths[source_uri]:
+                if full_output_path in deps_output_paths[source_uri]:
                     # if the output_path is duplicated for the same source_uri
                     logger.warning("skipping duplicate output path for uri {}".format(source_uri))
                     continue
                 else:
-                    deps_output_paths[source_uri].add(output_path)
+                    deps_output_paths[source_uri].add(full_output_path)
 
                 if dependency_type == "git":
                     git_deps[source_uri].append(item)
