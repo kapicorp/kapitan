@@ -1,9 +1,7 @@
 import os
-import tempfile
 import logging
 from collections import defaultdict
 from functools import partial
-from shutil import copyfile, rmtree
 import hashlib
 
 from kapitan import cached

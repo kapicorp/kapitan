@@ -5,13 +5,10 @@
 import hashlib
 import logging
 import os
-import re
-import tarfile
-import tempfile
 from collections import defaultdict
 from distutils.dir_util import copy_tree
 from functools import partial
-from shutil import copyfile
+from shutil import copyfile, rmtree
 import platform
 from git import GitCommandError
 from kapitan.errors import GitFetchingError
@@ -124,6 +121,9 @@ def fetch_git_dependency(dep_mapping, save_dir, item_type="dependency"):
             copy_tree(copy_src_path, output_path, update=True)
             logger.info("inventory {} : saved to {}".format(source, output_path))
 
+    rmtree(repo_path)
+    logger.debug("repo path {} deleted".format(repo_path))
+
 
 def fetch_git_source(source, save_dir, item_type):
     """clones a git repository at source and saves into save_dir"""
@@ -131,6 +131,9 @@ def fetch_git_source(source, save_dir, item_type):
     try:
         Repo.clone_from(source, os.path.join(save_dir, os.path.basename(source)))
         logger.info("{} {} : successfully fetched".format(item_type, source))
+        logger.debug(
+            "git clone saved temporarily to {}".format(os.path.join(save_dir, os.path.basename(source)))
+        )
     except GitCommandError as e:
         logger.error(e)
         raise GitFetchingError("{} {} : fetching unsuccessful\n{}".format(item_type, source, e.stderr))
