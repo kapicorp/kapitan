@@ -90,14 +90,14 @@ def compile_targets(
             # new_source checks for new sources in fetched inventory items
             new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
             while new_sources:
-                fetch_inventories(inventory_path, target_objs, pool)
+                fetch_inventories(inventory_path, target_objs, temp_path, pool)
                 cached.reset_inv()
                 target_objs = load_target_inventory(inventory_path, updated_targets)
                 cached.inv_sources.update(new_sources)
                 new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
 
         if kwargs.get("fetch_dependencies", False):
-            fetch_dependencies(output_path, target_objs, pool)
+            fetch_dependencies(output_path, target_objs, temp_path, pool)
 
         # compile_target() returns None on success
         # so p is only not None when raising an exception
