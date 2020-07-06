@@ -6,13 +6,12 @@ from shutil import rmtree, copytree
 from distutils.dir_util import copy_tree
 from kapitan.cached import reset_cache
 from kapitan.cli import main
-from kapitan.remoteinventory.fetch import (
+from kapitan.dependency_manager.base import (
+    fetch_git_dependency,
+    fetch_http_dependency,
     fetch_git_source,
-    fetch_git_inventories,
     fetch_http_source,
-    fetch_http_inventories,
 )
-from kapitan.dependency_manager.base import DEPENDENCY_OUTPUT_CONFIG
 
 
 class RemoteInventoryTest(unittest.TestCase):
@@ -26,7 +25,7 @@ class RemoteInventoryTest(unittest.TestCase):
     def test_fetch_git_inventory(self):
         temp_dir = tempfile.mkdtemp()
         git_source = "https://github.com/deepmind/kapitan.git"
-        fetch_git_source(git_source, temp_dir)
+        fetch_git_source(git_source, temp_dir, item_type="inventory")
         self.assertTrue(os.path.isdir(os.path.join(temp_dir, "kapitan.git", "kapitan")))
         rmtree(temp_dir)
 
@@ -35,7 +34,7 @@ class RemoteInventoryTest(unittest.TestCase):
         output_dir = tempfile.mkdtemp()
         git_source = "https://github.com/deepmind/kapitan.git"
         inv = [{"output_path": os.path.join(output_dir, "subdir"), "ref": "master", "subdir": "tests"}]
-        fetch_git_inventories((git_source, inv), "./inventory", temp_dir)
+        fetch_git_dependency((git_source, inv), temp_dir, item_type="inventory")
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
         rmtree(output_dir)
         rmtree(temp_dir)
@@ -49,7 +48,7 @@ class RemoteInventoryTest(unittest.TestCase):
             "https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.zip",
         ]
         for source in http_sources:
-            fetch_http_source(source, temp_dir)
+            fetch_http_source(source, temp_dir, item_type="inventory")
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "47c29a3binventory.7z")))
         # self.assertTrue(os.path.isfile(os.path.join(temp_dir,"009a21cfmaster.zip")))
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "eac6ceb7common.yml")))
@@ -61,7 +60,7 @@ class RemoteInventoryTest(unittest.TestCase):
         output_dir = tempfile.mkdtemp()
         http_source = "https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.tar.gz"
         inv = [{"output_path": os.path.join(output_dir, "subdir"), "unpack": "True"}]
-        fetch_http_inventories((http_source, inv), "./inventory", temp_dir)
+        fetch_http_dependency((http_source, inv), temp_dir, item_type="inventory")
 
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir", "targets")))
         rmtree(temp_dir)
