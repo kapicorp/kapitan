@@ -121,6 +121,7 @@ def fetch_git_dependency(dep_mapping, save_dir, item_type="dependency"):
             copy_tree(copy_src_path, output_path, update=True)
             logger.info("inventory {} : saved to {}".format(source, output_path))
 
+    # So that a differnt target can fetch an item of the same name
     rmtree(repo_path)
     logger.debug("repo path {} deleted".format(repo_path))
 

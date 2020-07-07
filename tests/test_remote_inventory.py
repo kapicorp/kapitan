@@ -23,6 +23,9 @@ class RemoteInventoryTest(unittest.TestCase):
         )
 
     def test_fetch_git_inventory(self):
+        """
+        test fetching of git inventories
+        """
         temp_dir = tempfile.mkdtemp()
         git_source = "https://github.com/deepmind/kapitan.git"
         fetch_git_source(git_source, temp_dir, item_type="inventory")
@@ -30,6 +33,9 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(temp_dir)
 
     def test_clone_inv_subdir(self):
+        """
+        test clonning of inventories from git and storing it in the output path
+        """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         git_source = "https://github.com/deepmind/kapitan.git"
@@ -40,6 +46,9 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(temp_dir)
 
     def test_fetch_http_inventory(self):
+        """
+        test fetching of inventories over http
+        """
         temp_dir = tempfile.mkdtemp()
 
         http_sources = [
@@ -56,8 +65,12 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(temp_dir)
 
     def test_unpack_http_inv(self):
+        """
+        test unpacking of remote inventories after downloading it over http
+        """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
+        # tar.gz file
         http_source = "https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.tar.gz"
         inv = [{"output_path": os.path.join(output_dir, "subdir"), "unpack": "True"}]
         fetch_http_dependency((http_source, inv), temp_dir, item_type="inventory")
@@ -67,6 +80,12 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(output_dir)
 
     def test_compile_fetch(self):
+        """ Run $ kapitan compile --fetch \
+            --output-path=some/dir/ \
+            --inventory-path=another/dir \
+            --targets remoteinv-example remoteinv-nginx zippedinv
+            were some/dir/ & another/dir/ are directories chosen by the user
+        """
         temp_output = tempfile.mkdtemp()
         temp_inv = tempfile.mkdtemp()
 
