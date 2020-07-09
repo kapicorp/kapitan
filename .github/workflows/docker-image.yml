@@ -11,7 +11,7 @@ jobs:
       - name: Strip git ref prefix from tag version and store in TAG_VERSION
         run: |
           echo ::set-env name=TAG_VERSION::${GITHUB_REF#refs/*/v}
-          echo ::set-env name=REF_NAME::${GITHUB_REF#refs/*/}
+          echo ::set-env name=REF_NAME::${GITHUB_REF##*/}
       - name: Strip full version and just keep major part in MAJOR_VERSION VAR
         run: |
           echo ::set-env name=MAJOR_VERSION::${TAG_VERSION:0:4}
@@ -21,8 +21,20 @@ jobs:
         run: |
           echo ${{ env.TAG_VERSION }}
           echo ${{ env.MAJOR_VERSION }}
-      - name: "Build PR/latest/versioned tags"
+          echo ${{ env.REF_NAME }}
+      - name: "Build PR/versioned tags"
+        if: github.ref != 'refs/heads/master'
         uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: deepmind/kapitan
+          add_git_labels: true
+          tags: ${{ format('{0}', env.REF_NAME ) }}
+          dockerfile: Dockerfile
+      - name: "Build latest tag"
+        uses: docker/build-push-action@v1
+        if: github.ref == 'refs/heads/master'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
