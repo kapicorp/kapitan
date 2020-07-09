@@ -49,7 +49,7 @@ class DependencyManagerTest(unittest.TestCase):
         output_dir = tempfile.mkdtemp()
         source = "https://github.com/deepmind/kapitan.git"
         dep = [{"output_path": os.path.join(output_dir, "subdir"), "ref": "master", "subdir": "tests",}]
-        fetch_git_dependency((source, dep), temp_dir)
+        fetch_git_dependency((source, dep), temp_dir, force=False)
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
 
     def test_fetch_helm_chart(self):

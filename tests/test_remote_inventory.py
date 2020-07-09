@@ -40,7 +40,7 @@ class RemoteInventoryTest(unittest.TestCase):
         output_dir = tempfile.mkdtemp()
         git_source = "https://github.com/deepmind/kapitan.git"
         inv = [{"output_path": os.path.join(output_dir, "subdir"), "ref": "master", "subdir": "tests"}]
-        fetch_git_dependency((git_source, inv), temp_dir, item_type="inventory")
+        fetch_git_dependency((git_source, inv), temp_dir, force=False, item_type="inventory")
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
         rmtree(output_dir)
         rmtree(temp_dir)
@@ -73,7 +73,7 @@ class RemoteInventoryTest(unittest.TestCase):
         # tar.gz file
         http_source = "https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.tar.gz"
         inv = [{"output_path": os.path.join(output_dir, "subdir"), "unpack": "True"}]
-        fetch_http_dependency((http_source, inv), temp_dir, item_type="inventory")
+        fetch_http_dependency((http_source, inv), temp_dir, force=False, item_type="inventory")
 
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir", "targets")))
         rmtree(temp_dir)
@@ -110,6 +110,7 @@ class RemoteInventoryTest(unittest.TestCase):
             "remoteinv-example",
             "remoteinv-nginx",
             "zippedinv",
+            "--force",
         ]
         main()
 
