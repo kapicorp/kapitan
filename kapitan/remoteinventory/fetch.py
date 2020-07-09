@@ -10,7 +10,7 @@ from kapitan.dependency_manager.base import fetch_git_dependency, fetch_http_dep
 logger = logging.getLogger(__name__)
 
 
-def fetch_inventories(inventory_path, target_objs, temp_dir, pool):
+def fetch_inventories(inventory_path, target_objs, temp_dir, force, pool):
     """Parses through the 'inventory' parameter in target_objs to fetch the remote
        inventories and stores it in a temporary directory before recursively
        copying it to the output_path (relative to the inventory path)
@@ -66,8 +66,8 @@ def fetch_inventories(inventory_path, target_objs, temp_dir, pool):
             logger.debug("Target object {} has no inventory key".format(target_obj["vars"]["target"]))
             continue
 
-    git_worker = partial(fetch_git_dependency, save_dir=temp_dir, item_type="inventory")
-    http_worker = partial(fetch_http_dependency, save_dir=temp_dir, item_type="inventory")
+    git_worker = partial(fetch_git_dependency, save_dir=temp_dir, force=force, item_type="inventory")
+    http_worker = partial(fetch_http_dependency, save_dir=temp_dir, force=force, item_type="inventory")
     [p.get() for p in pool.imap_unordered(git_worker, git_inventories.items()) if p]
     [p.get() for p in pool.imap_unordered(http_worker, http_inventories.items()) if p]
 

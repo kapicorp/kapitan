@@ -29,6 +29,9 @@ from kapitan import cached, defaults
 from kapitan.errors import CompileError
 from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
 from kapitan.version import VERSION
+from distutils.errors import DistutilsFileError
+from distutils.file_util import _copy_file_contents
+from distutils.dir_util import mkpath
 
 "random utils"
 
@@ -502,3 +505,67 @@ def unpack_downloaded_file(file_path, output_path, content_type):
         logger.warning(f"content type {content_type} not suported")
         is_unpacked = False
     return is_unpacked
+
+
+def safe_copy_file(src, dst):
+    """Copy a file from 'src' to 'dst'.
+
+    Similar to distutils.file_util.copy_file except
+    if the file exists in 'dst' it's not clobbered
+    or overwritten.
+
+    returns a tupple (src, val)
+    file not copied if val = 0 else 1
+    """
+
+    if not os.path.isfile(src):
+        raise DistutilsFileError("can't copy {}: doesn't exit or is not a regular file".format(src))
+
+    if os.path.isdir(dst):
+        dir = dst
+        dst = os.path.join(dst, os.path.basename(src))
+    else:
+        dir = os.path.dirname(dst)
+
+    if os.path.isfile(dst):
+        logger.warning("not updating {} (file already exists)".format(dst))
+        return (dst, 0)
+    _copy_file_contents(src, dst)
+    return (dst, 1)
+
+
+def safe_copy_tree(src, dst):
+    """Recursively copies the 'src' directory tree to 'dst'
+
+    Both 'src' and 'dst' must be directories.
+    similar to distutil.dir_util.copy_tree except
+    it doesn't overwite an existing file and doesn't
+    copy any file starting with "."
+
+    Returns a list of copied file paths.
+    """
+    if not os.path.isdir(src):
+        raise DistutilsFileError("cannot copy tree {}: not a directory".format(src))
+    try:
+        names = os.listdir(src)
+    except OSError as e:
+        raise DistutilsFileError("error listing files in {}: {}".format(src, e.strerror))
+
+    mkpath(dst)
+    outputs = []
+
+    for name in names:
+        src_name = os.path.join(src, name)
+        dst_name = os.path.join(dst, name)
+
+        if name.startswith("."):
+            logger.debug("not copying {}".format(src_name))
+            continue
+        if os.path.isdir(src_name):
+            outputs.extend(safe_copy_tree(src_name, dst_name))
+
+        else:
+            safe_copy_file(src_name, dst_name)
+            outputs.append(dst_name)
+
+    return outputs

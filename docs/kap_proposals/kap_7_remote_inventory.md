@@ -32,7 +32,7 @@ While fetching, the output path will be recursively checked to see if it contain
 
 To overwrite the files with the newly downloaded inventory items, we can add the `--force` flag to the compile command, as shown below.
 
-`$ kapitan compile --force`
+`$ kapitan compile --fetch --force`
 
 ## URL type
 The URL type can be either git or http(s). Depending on the URL type, the configuration file may have additional arguments.
