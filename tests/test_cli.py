@@ -42,6 +42,87 @@ class CliFuncsTest(unittest.TestCase):
         subprocess.run(["gpg", "--import-ownertrust", example_key_ownertrust])
         os.remove(example_key_ownertrust)
 
+    def test_cli_secret_reveal_tag(self):
+        """
+        run $ kapitan refs --write gpg: test_secret
+        and run $ kapitan refs --reveal --tag "?{gpg:test_secret}"
+        with example@kapitan.dev recipient
+        """
+        test_secret_content = "I am another secret!"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "gpg:test_secret",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+            "--recipients",
+            "example@kapitan.dev",
+        ]
+        main()
+
+        test_tag_content = "?{gpg:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        sys.argv = ["kapitan", "refs", "--reveal", "--tag", test_tag_content, "--refs-path", REFS_PATH]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        stdout = stdout.getvalue()
+        self.assertEqual(test_secret_content, stdout)
+
+        os.remove(test_tag_file)
+
+    def test_cli_secret_reveal_b64_tag(self):
+        """
+        run $ kapitan refs --write gpg: test_secretb64 --base64
+        and run $ kapitan refs --reveal --tag "?{gpg:test_secretb64}"
+        with example@kapitan.dev recipient
+        """
+        test_secret_content = "I am another secret!"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "gpg:test_secretb64",
+            "-f",
+            test_secret_file,
+            "--base64",
+            "--refs-path",
+            REFS_PATH,
+            "--recipients",
+            "example@kapitan.dev",
+        ]
+        main()
+
+        test_tag_content = "?{gpg:test_secretb64}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        sys.argv = ["kapitan", "refs", "--reveal", "--tag", test_tag_content, "--refs-path", REFS_PATH]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        stdout_base64 = base64.b64decode(stdout.getvalue()).decode()
+        self.assertEqual(test_secret_content, stdout_base64)
+
+        os.remove(test_tag_file)
+
     def test_cli_secret_write_reveal_gpg(self):
         """
         run $ kapitan refs --write gpg:test_secret
@@ -309,6 +390,51 @@ class CliFuncsTest(unittest.TestCase):
         with contextlib.redirect_stdout(stdout):
             main()
         self.assertEqual("revealing: {}".format(test_secret_content), stdout.getvalue())
+
+        os.remove(test_tag_file)
+
+    def test_cli_secret_ref_reveal_plain_ref(self):
+        """
+        run $ kapitan refs --write plain:test_secret
+        and $ kapitan refs --reveal --ref-file REFS_PATH/test_secret
+        """
+        test_secret_content = "secret_value!"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "plain:test_secret",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+        ]
+        main()
+
+        test_tag_content = "?{plain:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--reveal",
+            "--ref-file",
+            REFS_PATH + "/test_secret",
+            "--refs-path",
+            REFS_PATH,
+        ]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual(test_secret_content, stdout.getvalue())
 
         os.remove(test_tag_file)
 

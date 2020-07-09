@@ -1,3 +1,7 @@
+## 0.28.1-rc.3:
+- Enable helm values files to be injected for input type "helm" (#545)
+- Fix issue #500: Add --ref-file or --tag to refs --reveal option. (#548)
+
 ## 0.28.1-rc.0:
 - Add TOML Jinja2 Filters (#534)
 - Fix issues #535 and #536 by resolving relative paths in the copy input type and not clobbering the output dir (#539)

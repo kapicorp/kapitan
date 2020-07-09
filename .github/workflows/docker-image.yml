@@ -1,0 +1,99 @@
+name: Docker Build and Push
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout kapitan recursively
+        uses: actions/checkout@master
+        with:
+          submodules: 'recursive'
+      - name: Strip git ref prefix from tag version and store in TAG_VERSION
+        run: |
+          echo ::set-env name=TAG_VERSION::${GITHUB_REF#refs/*/v}
+          echo ::set-env name=REF_NAME::${GITHUB_REF##*/}
+      - name: Strip full version and just keep major part in MAJOR_VERSION VAR
+        run: |
+          echo ::set-env name=MAJOR_VERSION::${TAG_VERSION:0:4}
+      # Printing versions needs to be a separate step,
+      # as they aren't set during the previous two steps
+      - name: Print Versions
+        run: |
+          echo ${{ env.TAG_VERSION }}
+          echo ${{ env.MAJOR_VERSION }}
+          echo ${{ env.REF_NAME }}
+      - name: "Build PR/versioned tags"
+        if: github.ref != 'refs/heads/master'
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: deepmind/kapitan
+          add_git_labels: true
+          tags: ${{ format('{0}', env.REF_NAME ) }}
+          dockerfile: Dockerfile
+      - name: "Build latest tag"
+        uses: docker/build-push-action@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: deepmind/kapitan
+          add_git_labels: true
+          tag_with_ref: true
+          dockerfile: Dockerfile
+      - name: "Build PR/latest/versioned ci tags"
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: deepmind/kapitan
+          add_git_labels: true
+          tags: ${{ format('{0}-ci', env.REF_NAME ) }}
+          dockerfile: Dockerfile.ci
+      - name: "Test both Dockerfile and Dockerfile.ci in current ref"
+        run: |
+            [ ${{ env.REF_NAME }} == "master" ] && tagname="latest" || tagname=${{ env.REF_NAME }}
+            docker run -t --rm deepmind/kapitan:${tagname} --version
+            docker run -t --rm deepmind/kapitan:${{ env.REF_NAME }}-ci kapitan --version
+      - name: "Build major version tag"
+        uses: docker/build-push-action@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: deepmind/kapitan
+          add_git_labels: true
+          tags: ${{ format('{0}', env.MAJOR_VERSION ) }}
+          dockerfile: Dockerfile
+
+      - name: "Build latest ci tag"
+        uses: docker/build-push-action@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: deepmind/kapitan
+          add_git_labels: true
+          tags: ci
+          dockerfile: Dockerfile.ci
+      - name: "Build version ci tag"
+        uses: docker/build-push-action@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: deepmind/kapitan
+          add_git_labels: true
+          tags: ${{ format('{0}-ci', env.TAG_VERSION ) }}
+          dockerfile: Dockerfile.ci
+      - name: "Build major version ci tag"
+        uses: docker/build-push-action@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: deepmind/kapitan
+          add_git_labels: true
+          tags: ${{ format('{0}-ci', env.MAJOR_VERSION ) }}
+          dockerfile: Dockerfile.ci

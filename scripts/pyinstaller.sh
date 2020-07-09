@@ -22,6 +22,7 @@ pyi-makespec kapitan/"$entry".py --onefile \
     --add-data "kapitan/inputs/helm/libtemplate_$os_suffix.so:kapitan/inputs/helm" \
     --add-data "kapitan/dependency_manager/helm/helm_fetch_$os_suffix.so:kapitan/dependency_manager/helm" \
     --hidden-import pyparsing --hidden-import jsonschema \
+    --hidden-import 'pkg_resources.py2_warn' \
     --exclude-module doctest --exclude-module pydoc
 pyinstaller "$entry".spec --clean
 mv dist/$entry dist/$output_name
