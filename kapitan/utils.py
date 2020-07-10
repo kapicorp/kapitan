@@ -519,7 +519,7 @@ def safe_copy_file(src, dst):
     """
 
     if not os.path.isfile(src):
-        raise DistutilsFileError("can't copy {}: doesn't exit or is not a regular file".format(src))
+        raise DistutilsFileError("can't copy {}: doesn't exist or is not a regular file".format(src))
 
     if os.path.isdir(dst):
         dir = dst

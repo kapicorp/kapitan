@@ -11,9 +11,8 @@ from functools import partial
 from shutil import copyfile, rmtree
 import platform
 from git import GitCommandError
-from kapitan.errors import GitFetchingError
 
-from kapitan.errors import GitSubdirNotFoundError, HelmBindingUnavailableError
+from kapitan.errors import GitSubdirNotFoundError, GitFetchingError, HelmBindingUnavailableError
 from kapitan.utils import make_request, unpack_downloaded_file, safe_copy_tree, safe_copy_file
 
 from git import Repo
@@ -88,8 +87,9 @@ def fetch_dependencies(output_path, target_objs, temp_dir, force, pool):
 def fetch_git_dependency(dep_mapping, save_dir, force, item_type="dependency"):
     """
     fetches a git repository at source into save_dir, and copy the repository into output_path
-    ref is used to checkout if exists
+    ref is used to checkout if exists, fetches master branch by default
     only subdir is copied into output_path if specified
+
     """
     source, deps = dep_mapping
     fetch_git_source(source, save_dir, item_type)

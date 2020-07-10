@@ -29,7 +29,7 @@ class RemoteInventoryTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         git_source = "https://github.com/deepmind/kapitan.git"
         fetch_git_source(git_source, temp_dir, item_type="inventory")
-        self.assertTrue(os.path.isdir(os.path.join(temp_dir, "kapitan.git", "kapitan")))
+        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "kapitan.git", "README.md")))
         rmtree(temp_dir)
 
     def test_clone_inv_subdir(self):
@@ -83,8 +83,11 @@ class RemoteInventoryTest(unittest.TestCase):
         """ Run $ kapitan compile --fetch \
             --output-path=some/dir/ \
             --inventory-path=another/dir \
-            --targets remoteinv-example remoteinv-nginx zippedinv
+            --targets remoteinv-example remoteinv-nginx zippedinv\
+            --force
             were some/dir/ & another/dir/ are directories chosen by the user
+
+            Recursively force fetch inventories and compile
         """
         temp_output = tempfile.mkdtemp()
         temp_inv = tempfile.mkdtemp()
