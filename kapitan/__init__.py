@@ -26,9 +26,10 @@ def setup_logging(name=None, level=logging.INFO, force=False):
     if sys.version_info < (3, 8) and force:
         logging.getLogger(name).setLevel(level)
 
+
 # XXX in MacOS, updating logging level in __main__ doesn't work for python3.8+
 # XXX this is a hack that seems to work
-if '-v' in sys.argv or '--verbose' in sys.argv:
+if "-v" in sys.argv or "--verbose" in sys.argv:
     setup_logging(level=logging.DEBUG)
 else:
     setup_logging()

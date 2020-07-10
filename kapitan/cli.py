@@ -28,6 +28,7 @@ from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
 logger = logging.getLogger(__name__)
 
+
 def print_deprecated_secrets_msg(args):
     logger.error("Secrets have been renamed to refs, please refer to: '$ kapitan refs --help'")
     sys.exit(1)
