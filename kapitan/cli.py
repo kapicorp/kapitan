@@ -16,7 +16,7 @@ import os
 import sys
 
 import yaml
-from kapitan import cached, defaults
+from kapitan import cached, defaults, setup_logging
 from kapitan.initialiser import initialise_skeleton
 from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
@@ -27,7 +27,6 @@ from kapitan.utils import check_version, from_dot_kapitan, jsonnet_file, searchv
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
 logger = logging.getLogger(__name__)
-
 
 def print_deprecated_secrets_msg(args):
     logger.error("Secrets have been renamed to refs, please refer to: '$ kapitan refs --help'")
@@ -529,11 +528,9 @@ def main():
     cached.args[sys.argv[1]] = args
 
     if hasattr(args, "verbose") and args.verbose:
-        logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s")
+        setup_logging(level=logging.DEBUG, force=True)
     elif hasattr(args, "quiet") and args.quiet:
-        logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
-    else:
-        logging.basicConfig(level=logging.INFO, format="%(message)s")
+        setup_logging(level=logging.CRITICAL, force=True)
 
     # call chosen command
     args.func(args)
