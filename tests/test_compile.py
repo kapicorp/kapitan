@@ -41,6 +41,7 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
         os.chdir(os.getcwd() + "/../../")
         reset_cache()
 
+
 class CompileKadetTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/tests/test_resources/")
@@ -54,7 +55,7 @@ class CompileKadetTest(unittest.TestCase):
             with open(g, "r") as fp:
                 manifest = yaml.safe_load(fp.read())
                 namespace = manifest["metadata"]["namespace"]
-                team_name =  manifest["metadata"]["labels"]["team_name"]
+                team_name = manifest["metadata"]["labels"]["team_name"]
                 self.assertEqual(namespace, "ops")
                 self.assertEqual(team_name, "client-operations")
         # same kadet function was called with new params should have
@@ -63,14 +64,14 @@ class CompileKadetTest(unittest.TestCase):
             with open(g, "r") as fp:
                 manifest = yaml.safe_load(fp.read())
                 namespace = manifest["metadata"]["namespace"]
-                team_name =  manifest["metadata"]["labels"]["team_name"]
+                team_name = manifest["metadata"]["labels"]["team_name"]
                 self.assertEqual(namespace, "team-2")
                 self.assertEqual(team_name, "SRE")
 
-    
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")
         reset_cache()
+
 
 class CompileKubernetesTest(unittest.TestCase):
     def setUp(self):

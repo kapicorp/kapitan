@@ -8,13 +8,16 @@ import time
 
 inventory = kadet.inventory()
 
+
 def set_team_name(obj, team_name):
     obj.root.metadata["labels"]["team_name"] = team_name
     return obj
 
+
 def set_namespace(obj, namespace):
     obj.root.metadata["namespace"] = namespace
     return obj
+
 
 def main(kadet_params):
     team_name = kadet_params.get("team_name", "no-owner")
@@ -27,7 +30,7 @@ def main(kadet_params):
         input_paths = kadet_params.get("input_paths")
     else:
         raise ValueError("'input_paths' key not found in 'kadet_params'")
-    
+
     # get path where files have been compiled on this run
     target_name = inventory.parameters.kapitan.vars.target
     compile_path = kadet_params.get("compile_path")
@@ -59,7 +62,7 @@ def main(kadet_params):
                     o = set_team_name(o, team_name)
                     o = set_namespace(o, namespace)
                     objects_for_file.append(o)
-                all_objects.update({ file_name: objects_for_file })
+                all_objects.update({file_name: objects_for_file})
             fp.close()
 
     output = kadet.BaseObj()

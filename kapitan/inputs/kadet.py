@@ -70,7 +70,7 @@ class Kadet(InputType):
     def __init__(self, compile_path, search_paths, ref_controller):
         super().__init__("kadet", compile_path, search_paths, ref_controller)
         self.kadet_params = {}
-    
+
     def set_kadet_params(self, kadet_params):
         self.kadet_params = kadet_params
 
@@ -91,11 +91,10 @@ class Kadet(InputType):
         target_name = kwargs.get("target_name", None)
         indent = kwargs.get("indent", 2)
 
-
         kadet_params = self.kadet_params
         # set compile_path allowing kadet functions to have context on where files
         # are being compiled on the current kapitan run
-        kadet_params['compile_path'] = compile_path
+        kadet_params["compile_path"] = compile_path
         # reset between each compile if kadet component is used multiple times
         self.kadet_params = {}
 
@@ -121,10 +120,8 @@ class Kadet(InputType):
         elif len(kadet_arg_spec.args) == 0:
             output_obj = kadet_module.main().to_dict()
         else:
-            raise ValueError(
-                f"Kadet {spec.name} main parameters not equal to 1 or 0"
-            )
-        
+            raise ValueError(f"Kadet {spec.name} main parameters not equal to 1 or 0")
+
         if prune:
             output_obj = prune_empty(output_obj)
 
