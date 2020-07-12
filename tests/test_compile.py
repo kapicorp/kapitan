@@ -42,14 +42,15 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
         reset_cache()
 
 
-class CompileKadetTest(unittest.TestCase):
+class CompileTestResourcesTestKadet(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/tests/test_resources/")
 
-    def test_compile_with_kadet_params(self):
+    def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "kadet-test"]
         main()
 
+    def test_compile_with_kadet_params(self):
         # kadet_params propagate through and written out to file
         for g in glob.glob("compiled/kadet-test/test-1/*.yaml"):
             with open(g, "r") as fp:
