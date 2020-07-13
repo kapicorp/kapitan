@@ -18,12 +18,14 @@ def set_namespace(obj, namespace):
     obj.root.metadata["namespace"] = namespace
     return obj
 
+
 def get_root_path(path, target_name):
     drive, tail = os.path.split(path)
     if tail == target_name:
         return drive
     else:
         return get_root_path(drive, target_name)
+
 
 def main(kadet_params):
     team_name = kadet_params.get("team_name", "no-owner")
