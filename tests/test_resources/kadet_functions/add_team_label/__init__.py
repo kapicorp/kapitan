@@ -18,6 +18,12 @@ def set_namespace(obj, namespace):
     obj.root.metadata["namespace"] = namespace
     return obj
 
+def get_root_path(path, target_name):
+    drive, tail = os.path.split(path)
+    if tail == target_name:
+        return drive
+    else:
+        return get_root_path(drive, target_name)
 
 def main(kadet_params):
     team_name = kadet_params.get("team_name", "no-owner")
@@ -34,23 +40,13 @@ def main(kadet_params):
     # get path where files have been compiled on this run
     target_name = inventory.parameters.kapitan.vars.target
     compile_path = kadet_params.get("compile_path")
-    root_path = ""
-    for s in compile_path.split("/"):
-        if len(s) == 0:
-            continue
-        if s == target_name:
-            break
-        else:
-            root_path += "/" + s
-
-    target_compiled_dir = root_path + "/" + target_name
+    root_path = get_root_path(compile_path, target_name)
 
     all_objects = {}
     for ip in input_paths:
         output = kadet.BaseObj()
 
-        ip_file_path = os.path.abspath(target_compiled_dir + "/" + ip)
-
+        ip_file_path = os.path.join(root_path, target_name, ip)
         for file in glob.glob(ip_file_path + "/*.yaml", recursive=True):
             # remove file extension
             file_name = os.path.basename(file).replace(".yaml", "")
