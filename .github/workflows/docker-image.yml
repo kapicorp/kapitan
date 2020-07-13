@@ -31,6 +31,7 @@ jobs:
           repository: deepmind/kapitan
           add_git_labels: true
           tags: ${{ format('{0}', env.REF_NAME ) }}
+          push: ${{ github.head_ref == '' }} # push image only on non-pull_requests
           dockerfile: Dockerfile
       - name: "Build latest tag"
         uses: docker/build-push-action@v1
@@ -50,6 +51,7 @@ jobs:
           repository: deepmind/kapitan
           add_git_labels: true
           tags: ${{ format('{0}-ci', env.REF_NAME ) }}
+          push: ${{ github.head_ref == '' }} # push image only on non-pull_requests
           dockerfile: Dockerfile.ci
       - name: "Test both Dockerfile and Dockerfile.ci in current ref"
         run: |
