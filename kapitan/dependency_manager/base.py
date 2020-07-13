@@ -13,7 +13,13 @@ import platform
 from git import GitCommandError
 
 from kapitan.errors import GitSubdirNotFoundError, GitFetchingError, HelmBindingUnavailableError
-from kapitan.utils import make_request, unpack_downloaded_file, safe_copy_tree, safe_copy_file
+from kapitan.utils import (
+    make_request,
+    unpack_downloaded_file,
+    safe_copy_tree,
+    safe_copy_file,
+    normalise_join_path,
+)
 
 from git import Repo
 
@@ -49,13 +55,13 @@ def fetch_dependencies(output_path, target_objs, temp_dir, force, pool):
 
                 # The target key "output_path" is relative to the compile output path set by the user
                 # point to the full output path
-                full_output_path = os.path.join(output_path, item["output_path"])
+                full_output_path = normalise_join_path(output_path, item["output_path"])
                 logger.debug("Updated output_path from {} to {}".format(item["output_path"], output_path))
                 item["output_path"] = full_output_path
 
                 if full_output_path in deps_output_paths[source_uri]:
                     # if the output_path is duplicated for the same source_uri
-                    logger.warning("skipping duplicate output path for uri {}".format(source_uri))
+                    logger.warning("Skipping duplicate output path for uri {}".format(source_uri))
                     continue
                 else:
                     deps_output_paths[source_uri].add(full_output_path)
@@ -121,7 +127,7 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="dependency"):
 
     # So that a differnt target can fetch an item of the same name
     rmtree(repo_path)
-    logger.debug("repo path {} deleted".format(repo_path))
+    logger.debug("Repo path {} deleted".format(repo_path))
 
 
 def fetch_git_source(source, save_dir, item_type):
@@ -131,7 +137,7 @@ def fetch_git_source(source, save_dir, item_type):
         Repo.clone_from(source, os.path.join(save_dir, os.path.basename(source)))
         logger.info("{} {} : successfully fetched".format(item_type, source))
         logger.debug(
-            "git clone saved temporarily to {}".format(os.path.join(save_dir, os.path.basename(source)))
+            "Git clone saved temporarily to {}".format(os.path.join(save_dir, os.path.basename(source)))
         )
     except GitCommandError as e:
         logger.error(e)

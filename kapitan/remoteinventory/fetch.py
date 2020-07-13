@@ -6,6 +6,7 @@ import hashlib
 
 from kapitan import cached
 from kapitan.dependency_manager.base import fetch_git_dependency, fetch_http_dependency
+from kapitan.utils import normalise_join_path
 
 logger = logging.getLogger(__name__)
 
@@ -47,13 +48,13 @@ def fetch_inventories(inventory_path, target_objs, temp_dir, force, pool):
                     continue
                 # output_path is relative to inventory_path
                 # ./inventory by default
-                output_path = os.path.join(inventory_path, inv["output_path"])
+                output_path = normalise_join_path(inventory_path, inv["output_path"])
                 logger.debug("Updated output_path from {} to {}".format(inv["output_path"], output_path))
                 inv["output_path"] = output_path
 
                 if output_path in inv_output_path[source_uri]:
                     # if the output_path is duplicated for the same source_uri
-                    logger.warning("skipping duplicate output path for uri {}".format(source_uri))
+                    logger.warning("Skipping duplicate output path for uri {}".format(source_uri))
                     continue
                 else:
                     inv_output_path[source_uri].add(output_path)
@@ -92,7 +93,7 @@ def list_sources(target_objs):
                 sources.append(source_hash.hexdigest()[:8])
         except KeyError:
             logger.debug(
-                "listing sources: target object {} has no 'inventories' key, continuing".format(
+                "Listing sources: target object {} has no 'inventories' key, continuing".format(
                     target_obj["vars"]["target"]
                 )
             )

@@ -6,6 +6,9 @@ from shutil import rmtree, copytree
 from distutils.dir_util import copy_tree
 from kapitan.cached import reset_cache
 from kapitan.cli import main
+import yaml
+from kapitan.resources import yaml_load
+import json
 from kapitan.dependency_manager.base import (
     fetch_git_dependency,
     fetch_http_dependency,
@@ -123,6 +126,71 @@ class RemoteInventoryTest(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(temp_output, "compiled", "remoteinv-nginx")))
         self.assertTrue(os.path.isdir(os.path.join(temp_output, "compiled", "zippedinv")))
 
+        rmtree(temp_inv)
+        rmtree(temp_output)
+
+    def test_force_fetch(self):
+        """Test overwriting inventory items while using the --force flag
+
+        runs $ kapitan compile --fetch --output-path=temp_output\
+            --inventory-pat=temp_inv --targets remoteinv-example
+        runs $ kapitan compile --fetch --output-path=temp_output\
+            --inventory-pat=temp_inv --targets remoteinv-example --force
+        """
+
+        temp_output = tempfile.mkdtemp()
+        temp_inv = tempfile.mkdtemp()
+        copy_tree(
+            os.path.join(
+                os.path.abspath(os.path.dirname(__file__)),
+                "test_remote_inventory",
+                "environment_one",
+                "inventory",
+            ),
+            temp_inv,
+        )
+        sys.argv = [
+            "kapitan",
+            "compile",
+            "--fetch",
+            "--output-path",
+            temp_output,
+            "--inventory-path",
+            temp_inv,
+            "--targets",
+            "remoteinv-example",
+        ]
+        main()
+
+        fname = os.path.join(temp_inv, "targets", "zippedinv.yml")
+        data = json.loads(yaml_load([os.path.dirname(fname)], os.path.basename(fname)))
+        data["parameters"]["compression_type"] = "test"
+        with open(fname, "w") as yaml_file:
+            yaml_file.write(yaml.dump(data, default_flow_style=False))
+
+        reset_cache()
+        main()
+        # no change in zippedinv.yml
+        new_data = json.loads(yaml_load([os.path.dirname(fname)], os.path.basename(fname)))
+
+        reset_cache()
+        sys.argv = [
+            "kapitan",
+            "compile",
+            "--fetch",
+            "--output-path",
+            temp_output,
+            "--inventory-path",
+            temp_inv,
+            "--targets",
+            "remoteinv-example",
+            "--force",
+        ]
+        main()
+        # zippedinv.yml overwritten
+        force_fetched_data = json.loads(yaml_load([os.path.dirname(fname)], os.path.basename(fname)))
+        self.assertEqual(new_data["parameters"]["compression_type"], "test")
+        self.assertEqual(force_fetched_data["parameters"]["compression_type"], "gzip")
         rmtree(temp_inv)
         rmtree(temp_output)
 
