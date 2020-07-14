@@ -435,6 +435,7 @@ def valid_target_obj(target_obj):
                 "items": {
                     "type": "object",
                     "properties": {
+                        "name": {"type": "string"},
                         "input_paths": {"type": "array"},
                         "input_type": {"type": "string"},
                         "output_path": {"type": "string"},
