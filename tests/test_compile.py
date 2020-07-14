@@ -50,8 +50,8 @@ class CompileTestResourcesTestKadet(unittest.TestCase):
         sys.argv = ["kapitan", "compile", "-t", "kadet-test"]
         main()
 
-    def test_compile_with_kadet_params(self):
-        # kadet_params propagate through and written out to file
+    def test_compile_with_input_params(self):
+        # input_params propagate through and written out to file
         for g in glob.glob("compiled/kadet-test/test-1/*.yaml"):
             with open(g, "r") as fp:
                 manifest = yaml.safe_load(fp.read())
