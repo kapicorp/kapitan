@@ -27,29 +27,36 @@ def get_root_path(path, target_name):
         return get_root_path(drive, target_name)
 
 
-def main(kadet_params):
-    team_name = kadet_params.get("team_name", "no-owner")
-    if "namespace" in kadet_params:
-        namespace = kadet_params.get("namespace")
-    else:
-        raise ValueError("'namespace' key not found in 'kadet_params'")
+def get_post_process_input_output_path(post_process_input):
+    for i in inventory.parameters.kapitan.compile:
+        if i.name == post_process_input:
+            return i.output_path
+    raise ValueError("'post_process_input' {post_process_input} not found")
 
-    if "input_paths" in kadet_params:
-        input_paths = kadet_params.get("input_paths")
+
+def main(input_params):
+    team_name = input_params.get("team_name", "no-owner")
+    if "namespace" in input_params:
+        namespace = input_params.get("namespace")
     else:
-        raise ValueError("'input_paths' key not found in 'kadet_params'")
+        raise ValueError("'namespace' key not found in 'input_params'")
+
+    if "post_process_inputs" in input_params:
+        post_process_inputs = input_params.get("post_process_inputs")
+    else:
+        raise ValueError("'post_process_inputs' key not found in 'input_params'")
 
     # get path where files have been compiled on this run
     target_name = inventory.parameters.kapitan.vars.target
-    compile_path = kadet_params.get("compile_path")
+    compile_path = input_params.get("compile_path")
     root_path = get_root_path(compile_path, target_name)
 
     all_objects = {}
-    for ip in input_paths:
+    for post_process_input in post_process_inputs:
         output = kadet.BaseObj()
-
-        ip_file_path = os.path.join(root_path, target_name, ip)
-        for file in glob.glob(ip_file_path + "/*.yaml", recursive=True):
+        p = get_post_process_input_output_path(post_process_input)
+        dir_file_path = os.path.join(root_path, target_name, p)
+        for file in glob.glob(dir_file_path + "/*.yaml", recursive=True):
             # remove file extension
             file_name = os.path.basename(file).replace(".yaml", "")
             with open(file) as fp:

@@ -69,10 +69,10 @@ def load_from_search_paths(module_name):
 class Kadet(InputType):
     def __init__(self, compile_path, search_paths, ref_controller):
         super().__init__("kadet", compile_path, search_paths, ref_controller)
-        self.kadet_params = {}
+        self.input_params = {}
 
-    def set_kadet_params(self, kadet_params):
-        self.kadet_params = kadet_params
+    def set_input_params(self, input_params):
+        self.input_params = input_params
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """
@@ -91,12 +91,12 @@ class Kadet(InputType):
         target_name = kwargs.get("target_name", None)
         indent = kwargs.get("indent", 2)
 
-        kadet_params = self.kadet_params
+        input_params = self.input_params
         # set compile_path allowing kadet functions to have context on where files
         # are being compiled on the current kapitan run
-        kadet_params["compile_path"] = compile_path
+        input_params["compile_path"] = compile_path
         # reset between each compile if kadet component is used multiple times
-        self.kadet_params = {}
+        self.input_params = {}
 
         # These will be updated per target
         # XXX At the moment we have no other way of setting externals for modules...
@@ -116,7 +116,7 @@ class Kadet(InputType):
         logger.debug("Kadet main args: {}".format(kadet_arg_spec.args))
 
         if len(kadet_arg_spec.args) == 1:
-            output_obj = kadet_module.main(kadet_params).to_dict()
+            output_obj = kadet_module.main(input_params).to_dict()
         elif len(kadet_arg_spec.args) == 0:
             output_obj = kadet_module.main().to_dict()
         else:
