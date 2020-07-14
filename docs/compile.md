@@ -261,7 +261,7 @@ For a deeper understanding of this input type please review the proposal documen
 - yaml (default)
 - json
 
-#### using kadet for "post processing" or "overlaying" manifests
+#### using kadet for "post processing" or "overlaying" manifests (alpha/experimental)
 
 Sometimes you need to add a little something extra to manifests that you can't do within the original compile block.
 
@@ -277,7 +277,8 @@ parameters:
     output_path: test-1
   kapitan:
     compile:
-    - input_type: helm
+    - name: template-helm-chart
+      input_type: helm
       output_path: ${test_1:output_path}
       input_paths:
       	- <chart_path>
@@ -289,19 +290,20 @@ parameters:
       	namespace: <substitutes_.Release.Namespace>
       	name_template: <namespace_template>
       	release_name: <chart_release_name>
-    - input_type: kadet
+    - name: add-metadata-test-1
+      input_type: kadet
       output_path: ${test_1:output_path}
       input_paths:
         - <path_to_kadet_module>
-      kadet_params:
+      input_params:
         team_name: ops
-        input_paths: [${test_1:output_path}]
+        post_process_inputs: [template-helm-chart]
 ```
 Here you can clearly define the order in which your manifests are compiled and ensure that the helm
-chart is templated before your kadet module is run. The `kadet_params` injected are available in
-the main function as an object. `kadet_params` will always have the `compile_path` which is the absolute
+chart is templated before your kadet module is run. The `input_params` injected are available in
+the main function as an object. `input_params` will always have the `compile_path` which is the absolute
 path to the compile directory where manifests are compiled on the current run. Any additional keys 
-placed on the `kadet_params` in the compile block can be accessed in the kadet module for that specific
+placed on the `input_params` in the compile block can be accessed in the kadet module for that specific
 compile run.
 
 ```python
@@ -309,11 +311,11 @@ from kapitan.inputs import kadet
 
 inventory = kadet.inventory()
 
-def main(kadet_params):
-    team_name = kadet_params.get("team_name", "no-owner")
+def main(input_params):
+    team_name = input_params.get("team_name", "no-owner")
 ...
     target_name = inventory.parameters.kapitan.vars.target
-    compile_path = kadet_params.get("compile_path")
+    compile_path = input_params.get("compile_path")
 ...
 ```
 
