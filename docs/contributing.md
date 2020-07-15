@@ -43,9 +43,18 @@ that by running `bin/kapitan` from this repository or even setting an alias to i
 
 ## Code Style
 
-Run `make format_codestyle` before submitting to make sure you adhere to the
-[Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/). Python Black is used to
-apply the formatting so make sure you have it installed with `pip3 install black`.
+To make sure you adhere to the [Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/)
+Python Black is used to apply the formatting so make sure you have it installed with `pip3 install black`.
+
+#### Apply via Git hook
+
+- Run `pip3 install pre-commit` to install precommit framework.
+- In the Kapitan root directory, run `pre-commit install`
+- Git add/commit any changed files you want.
+
+#### Apply manually
+
+Run `make format_codestyle` before submitting.
 
 ## Releasing
 

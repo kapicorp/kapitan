@@ -1,0 +1,41 @@
+rbac:
+  create: false
+
+podSecurityPolicy:
+  enabled: false
+
+serviceAccounts:
+  alertmanager:
+    create: false
+  nodeExporter:
+    create: false
+  pushgateway:
+    create: false
+  server:
+    create: false
+
+alertmanager:
+  enabled: false
+
+configmapReload:
+  prometheus:
+    enabled: false
+  alertmanager:
+    enabled: false
+
+server:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: false
+
+nodeExporter:
+  enabled: false
+
+pushgateway:
+  enabled: false
+
+networkPolicy:
+  enabled: false
+
+forceNamespace: null

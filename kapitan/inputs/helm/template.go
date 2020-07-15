@@ -5,21 +5,23 @@ import "C"
 import (
 	"bytes"
 	"fmt"
-	"github.com/Masterminds/sprig"
-	"github.com/ghodss/yaml"
 	"io/ioutil"
-	"k8s.io/apimachinery/pkg/util/validation"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/manifest"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/renderutil"
-	"k8s.io/helm/pkg/strvals"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"text/template"
+	"unsafe"
+
+	"github.com/Masterminds/sprig"
+	"github.com/ghodss/yaml"
+	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/manifest"
+	"k8s.io/helm/pkg/proto/hapi/chart"
+	"k8s.io/helm/pkg/renderutil"
+	"k8s.io/helm/pkg/strvals"
 )
 
 const defaultDirectoryPermission_c = 0755
@@ -151,7 +153,7 @@ func generateName(nameTemplate string) (string, error) {
 }
 
 //export renderChart
-func renderChart(c_chartpath, c_outputDir, c_valueFile, c_namespace, c_releaseName, c_nameTemplate *C.char) *C.char {
+func renderChart(c_chartpath, c_outputDir, c_valueFile, c_namespace, c_releaseName, c_nameTemplate *C.char, c_valuesFiles **C.char, c_valuesFilesSize C.int) *C.char {
 	chartPath := C.GoString(c_chartpath)
 	outputDir := C.GoString(c_outputDir)
 	valueFile := C.GoString(c_valueFile)
@@ -160,6 +162,14 @@ func renderChart(c_chartpath, c_outputDir, c_valueFile, c_namespace, c_releaseNa
 	if valueFile != "" {
 		valueFiles = append(valueFiles, valueFile)
 	}
+
+	// https://stackoverflow.com/questions/47354663/access-c-array-of-type-const-char-from-go
+	size := int(c_valuesFilesSize)
+	cStrings := (*[1 << 30]*C.char)(unsafe.Pointer(c_valuesFiles))[:size:size]
+	for _, cString := range cStrings {
+		valueFiles = append(valueFiles, C.GoString(cString))
+	}
+
 	var values []string
 	// to force string values
 	var stringValues []string

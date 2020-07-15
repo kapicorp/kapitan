@@ -17,15 +17,9 @@ from contextlib import contextmanager
 from functools import lru_cache
 
 import yaml
-from kapitan.errors import (
-    RefBackendError,
-    RefError,
-    RefFromFuncError,
-    RefHashMismatchError,
-)
+from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashMismatchError
 from kapitan.refs.functions import eval_func
 from kapitan.utils import PrettyDumper, list_all_paths
-
 
 try:
     from yaml import CSafeLoader as YamlLoader
@@ -240,7 +234,7 @@ class Revealer(object):
         m = re.search(REF_TOKEN_SUBVAR_PATTERN, tag)
 
         if m is None:
-            # if this an embedded ref with subvar_path set
+            # if this is an embedded ref with subvar_path set
             # grab from controller
             ref = self.ref_controller[tag]
             if ref.embedded_subvar_path is not None:
@@ -324,6 +318,9 @@ class Revealer(object):
 
         return compile_replace_match
 
+    def reveal_raw_string(self, tag_string):
+        return self.regex.sub(self._reveal_replace_match, tag_string)
+
     def reveal_raw_file(self, filename):
         """
         read filename and reveal content (per line search and replace) with refs
@@ -333,12 +330,12 @@ class Revealer(object):
         out_raw = ""
         if filename is None:
             for line in sys.stdin:
-                revealed = self.regex.sub(self._reveal_replace_match, line)
+                revealed = self.reveal_raw_string(line)
                 out_raw += revealed
         else:
             with open(filename) as fp:
                 for line in fp:
-                    revealed = self.regex.sub(self._reveal_replace_match, line)
+                    revealed = self.reveal_raw_string(line)
                     out_raw += revealed
         return out_raw
 
@@ -504,6 +501,22 @@ class RefController(object):
         # from_base64 is True because data is always base64 encoded in embedded form
         ref = backend.ref_type(data, encrypt=False, from_base64=True, **json_data)
 
+        return ref
+
+    def ref_from_ref_file(self, ref_file_path):
+        "returns ref from a ref file_path"
+        with open(ref_file_path, "r") as ref_file:
+            ref_file_obj = yaml.safe_load(ref_file)
+
+            type_name = ref_file_obj.pop("type")
+            data = ref_file_obj.pop("data")
+
+            backend = self._get_backend(type_name)
+
+            # create new ref with deserialised data and remaining keys as kwargs
+            # note that encrypt=False is only for secret ref types, non secret refs (e.g. base64) will ignore
+            # from_base64 is True  because data is being loaded from a ref file where it is always base64
+            ref = backend.ref_type(data, encrypt=True, from_base64=True, **ref_file_obj)
         return ref
 
     def _get_from_token(self, token):

@@ -18,6 +18,7 @@ class Helm(InputType):
     def __init__(self, compile_path, search_paths, ref_controller):
         super().__init__("helm", compile_path, search_paths, ref_controller)
         self.helm_values_file = None
+        self.helm_values_files = []
         self.helm_params = {}
         self.lib = self.initialise_binding()
 
@@ -43,6 +44,9 @@ class Helm(InputType):
         _, self.helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
         with open(self.helm_values_file, "w") as fp:
             yaml.safe_dump(helm_values, fp)
+
+    def set_helm_values_files(self, helm_values_files):
+        self.helm_values_files = helm_values_files
 
     def set_helm_params(self, helm_params):
         self.helm_params = helm_params
@@ -71,6 +75,7 @@ class Helm(InputType):
             chart_dir=file_path,
             output_path=temp_dir,
             helm_values_file=self.helm_values_file,
+            helm_values_files=self.helm_values_files,
             **self.helm_params,
         )
         if error_message:
@@ -124,8 +129,23 @@ class Helm(InputType):
         char_dir_buf = ffi.new("char[]", chart_dir.encode("ascii"))
         output_path_buf = ffi.new("char[]", output_path.encode("ascii"))
 
+        helm_values_files = []
+        if kwargs.get("helm_values_files", []):
+            for file_name in kwargs["helm_values_files"]:
+                helm_values_files.append(ffi.new("char[]", file_name.encode("ascii")))
+
+        helm_values_files_len = ffi.cast("int", len(helm_values_files))
+        helm_values_files = ffi.new("char *[]", helm_values_files)
+
         c_error_message = self.lib.renderChart(
-            char_dir_buf, output_path_buf, helm_values_file, namespace, release_name, name_template
+            char_dir_buf,
+            output_path_buf,
+            helm_values_file,
+            namespace,
+            release_name,
+            name_template,
+            helm_values_files,
+            helm_values_files_len,
         )
         error_message = ffi.string(c_error_message)  # this creates a copy as bytes
         self.lib.free(c_error_message)  # free the char* returned by go

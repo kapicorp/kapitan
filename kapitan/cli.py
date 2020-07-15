@@ -16,7 +16,7 @@ import os
 import sys
 
 import yaml
-from kapitan import cached, defaults
+from kapitan import cached, defaults, setup_logging
 from kapitan.initialiser import initialise_skeleton
 from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
@@ -384,6 +384,12 @@ def main():
         default=from_dot_kapitan("refs", "reveal", False),
     )
     refs_parser.add_argument(
+        "--tag", help='specify ref tag to reveal, e.g. "?{gkms:my/ref:123456}" ', metavar="REFTAG"
+    )
+    refs_parser.add_argument(
+        "--ref-file", "-rf", help='read ref file, set "-" for stdin', metavar="REFFILENAME"
+    )
+    refs_parser.add_argument(
         "--file", "-f", help='read file or directory, set "-" for stdin', metavar="FILENAME"
     )
     refs_parser.add_argument("--target-name", "-t", help="grab recipients from target name")
@@ -531,11 +537,9 @@ def main():
     cached.args[sys.argv[1]] = args
 
     if hasattr(args, "verbose") and args.verbose:
-        logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s")
+        setup_logging(level=logging.DEBUG, force=True)
     elif hasattr(args, "quiet") and args.quiet:
-        logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
-    else:
-        logging.basicConfig(level=logging.INFO, format="%(message)s")
+        setup_logging(level=logging.CRITICAL, force=True)
 
     # call chosen command
     args.func(args)
