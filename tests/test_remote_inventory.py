@@ -30,9 +30,10 @@ class RemoteInventoryTest(unittest.TestCase):
         test fetching of git inventories
         """
         temp_dir = tempfile.mkdtemp()
+        repo_dir = os.path.join(temp_dir, "7a8f3940kapitan.git")
         git_source = "https://github.com/deepmind/kapitan.git"
-        fetch_git_source(git_source, temp_dir, item_type="inventory")
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "kapitan.git", "README.md")))
+        fetch_git_source(git_source, repo_dir, item_type="Inventory")
+        self.assertTrue(os.path.isfile(os.path.join(repo_dir, "README.md")))
         rmtree(temp_dir)
 
     def test_clone_inv_subdir(self):
@@ -55,12 +56,18 @@ class RemoteInventoryTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
 
         http_sources = [
-            "https://github.com/deepmind/kapitan/archive/master.zip",
-            "https://raw.githubusercontent.com/deepmind/kapitan/master/tests/test_resources/inventory/classes/common.yml",
-            "https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.zip",
+            ("https://github.com/deepmind/kapitan/archive/master.zip", "009a21cfmaster.zip"),
+            (
+                "https://raw.githubusercontent.com/deepmind/kapitan/master/tests/test_resources/inventory/classes/common.yml",
+                "eac6ceb7common.yml",
+            ),
+            (
+                "https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.zip",
+                "47c29a3binventory.zip",
+            ),
         ]
-        for source in http_sources:
-            fetch_http_source(source, temp_dir, item_type="inventory")
+        for source, path_hash in http_sources:
+            fetch_http_source(source, os.path.join(temp_dir, path_hash), item_type="Inventory")
 
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "009a21cfmaster.zip")))
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "eac6ceb7common.yml")))
