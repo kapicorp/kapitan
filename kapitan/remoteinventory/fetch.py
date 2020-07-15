@@ -11,21 +11,21 @@ from kapitan.utils import normalise_join_path
 logger = logging.getLogger(__name__)
 
 
-def fetch_inventories(inventory_path, target_objs, temp_dir, force, pool):
+def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
     """Parses through the 'inventory' parameter in target_objs to fetch the remote
-       inventories and stores it in a temporary directory before recursively
+       inventories and stores it in save dir/cache dir before recursively
        copying it to the output_path (relative to the inventory path)
+       Overwrites existing cached files and inventory items if force fetched
 
        :param inventory_path: default or user specified inventory path
+       :save_dir: directory to save the fetched items (cache directory)
        :param target_objs: target objects
+       :param force: bool value
        :param pool: pool object for multiprocessing
-
        :return: None
     """
-
     git_inventories = defaultdict(list)
     http_inventories = defaultdict(list)
-
     # To ensure no duplicate output path
     inv_output_path = defaultdict(set)
 
@@ -67,13 +67,13 @@ def fetch_inventories(inventory_path, target_objs, temp_dir, force, pool):
             logger.debug("Target object {} has no inventory key".format(target_obj["vars"]["target"]))
             continue
 
-    git_worker = partial(fetch_git_dependency, save_dir=temp_dir, force=force, item_type="inventory")
-    http_worker = partial(fetch_http_dependency, save_dir=temp_dir, force=force, item_type="inventory")
+    git_worker = partial(fetch_git_dependency, save_dir=save_dir, force=force, item_type="Inventory")
+    http_worker = partial(fetch_http_dependency, save_dir=save_dir, force=force, item_type="Inventory")
     [p.get() for p in pool.imap_unordered(git_worker, git_inventories.items()) if p]
     [p.get() for p in pool.imap_unordered(http_worker, http_inventories.items()) if p]
 
 
-def list_sources(target_objs):
+def list_sources(target_objs):  # TODO list_unique_sources?
     "returns list of all remote inventory sources"
     sources = []
     for target_obj in target_objs:

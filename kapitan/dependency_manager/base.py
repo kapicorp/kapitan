@@ -10,6 +10,7 @@ from distutils.dir_util import copy_tree
 from functools import partial
 from shutil import copyfile, rmtree
 import platform
+from mimetypes import MimeTypes
 from git import GitCommandError
 
 from kapitan.errors import GitSubdirNotFoundError, GitFetchingError, HelmBindingUnavailableError
@@ -32,10 +33,11 @@ except ImportError as ie:
     pass  # make this feature optional
 
 
-def fetch_dependencies(output_path, target_objs, temp_dir, force, pool):
+def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
     """
     parses through the dependencies parameters in target_objs and fetches them
-    all dependencies are first fetched into tmp dir, after which they are copied to their respective output_path.
+    all dependencies are first fetched into save dir (cache dir), after which they are copied to their respective output_path.
+    overwites older version of existing dependency cache if force fetced
     """
     # there could be multiple dependency items per source_uri due to reclass inheritance or
     # other user requirements. So create a mapping from source_uri to a set of dependencies with
@@ -82,28 +84,33 @@ def fetch_dependencies(output_path, target_objs, temp_dir, force, pool):
             )
             continue
 
-    git_worker = partial(fetch_git_dependency, save_dir=temp_dir, force=force)
-    http_worker = partial(fetch_http_dependency, save_dir=temp_dir, force=force)
-    helm_worker = partial(fetch_helm_chart, save_dir=temp_dir)
+    git_worker = partial(fetch_git_dependency, save_dir=save_dir, force=force)
+    http_worker = partial(fetch_http_dependency, save_dir=save_dir, force=force)
+    helm_worker = partial(fetch_helm_chart, save_dir=save_dir)  # TODO: helm cache
     [p.get() for p in pool.imap_unordered(http_worker, http_deps.items()) if p]
     [p.get() for p in pool.imap_unordered(git_worker, git_deps.items()) if p]
     [p.get() for p in pool.imap_unordered(helm_worker, helm_deps.items()) if p]
 
 
-def fetch_git_dependency(dep_mapping, save_dir, force, item_type="dependency"):
+def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
     """
-    fetches a git repository at source into save_dir, and copy the repository into output_path
-    ref is used to checkout if exists, fetches master branch by default
+    fetches a git repository at source into save_dir (cache dir), and copy the repository into
+    output_path stored in dep_mapping. ref is used to checkout if exists, fetches master branch by default.
     only subdir is copied into output_path if specified
 
     """
     source, deps = dep_mapping
-    fetch_git_source(source, save_dir, item_type)
+    # to avoid collisions between basename(source)
+    path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
+    cached_repo_path = os.path.join(save_dir, path_hash + os.path.basename(source))
+    if not exists_in_cache(cached_repo_path) or force:
+        fetch_git_source(source, cached_repo_path, item_type)
+    else:
+        logger.debug("Using cached {} {}".format(item_type, cached_repo_path))
     for dep in deps:
-        repo_path = os.path.join(save_dir, os.path.basename(source))
-        repo = Repo(repo_path)
+        repo = Repo(cached_repo_path)
         output_path = dep["output_path"]
-        copy_src_path = repo_path
+        copy_src_path = cached_repo_path
         if "ref" in dep:
             ref = dep["ref"]
             repo.git.checkout(ref)
@@ -112,7 +119,7 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="dependency"):
 
         if "subdir" in dep:
             sub_dir = dep["subdir"]
-            full_subdir = os.path.join(repo_path, sub_dir)
+            full_subdir = os.path.join(cached_repo_path, sub_dir)
             if os.path.isdir(full_subdir):
                 copy_src_path = full_subdir
             else:
@@ -125,45 +132,48 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="dependency"):
             safe_copy_tree(copy_src_path, output_path)
         logger.info("{} {} : saved to {}".format(item_type, source, output_path))
 
-    # So that a differnt target can fetch an item of the same name
-    rmtree(repo_path)
-    logger.debug("Repo path {} deleted".format(repo_path))
-
 
 def fetch_git_source(source, save_dir, item_type):
     """clones a git repository at source and saves into save_dir"""
+
+    if os.path.exists(save_dir):
+        rmtree(save_dir)
+        logger.debug("Removed {}".format(save_dir))
     logger.info("{} {} : fetching now".format(item_type, source))
     try:
-        Repo.clone_from(source, os.path.join(save_dir, os.path.basename(source)))
+        Repo.clone_from(source, save_dir)
         logger.info("{} {} : successfully fetched".format(item_type, source))
-        logger.debug(
-            "Git clone saved temporarily to {}".format(os.path.join(save_dir, os.path.basename(source)))
-        )
+        logger.debug("Git clone cached to {}".format(save_dir))
     except GitCommandError as e:
         logger.error(e)
         raise GitFetchingError("{} {} : fetching unsuccessful\n{}".format(item_type, source, e.stderr))
 
 
-def fetch_http_dependency(dep_mapping, save_dir, force, item_type="dependency"):
+def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
     """
     fetches a http[s] file at source and saves into save_dir, after which it is copied into
     the output_path stored in dep_mapping
     """
     source, deps = dep_mapping
-    content_type = fetch_http_source(source, save_dir, item_type)
+    # to avoid collisions between basename(source)
     path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
-    copy_src_path = os.path.join(save_dir, path_hash + os.path.basename(source))
+    cached_source_path = os.path.join(save_dir, path_hash + os.path.basename(source))
+    if not exists_in_cache(cached_source_path) or force:
+        content_type = fetch_http_source(source, cached_source_path, item_type)
+    else:
+        logger.debug("Using cached {} {}".format(item_type, cached_source_path))
+        content_type = MimeTypes().guess_type(cached_source_path)[0]
     for dep in deps:
         output_path = dep["output_path"]
         if dep.get("unpack", False):
             # ensure that the directory we are extracting to exists
             os.makedirs(output_path, exist_ok=True)
             if force:
-                is_unpacked = unpack_downloaded_file(copy_src_path, output_path, content_type)
+                is_unpacked = unpack_downloaded_file(cached_source_path, output_path, content_type)
             else:
                 unpack_output = os.path.join(save_dir, "extracted")
                 os.makedirs(unpack_output)
-                is_unpacked = unpack_downloaded_file(copy_src_path, unpack_output, content_type)
+                is_unpacked = unpack_downloaded_file(cached_source_path, unpack_output, content_type)
                 safe_copy_tree(unpack_output, output_path)
                 # delete unpack output
                 rmtree(unpack_output)
@@ -181,24 +191,25 @@ def fetch_http_dependency(dep_mapping, save_dir, force, item_type="dependency"):
             if parent_dir != "":
                 os.makedirs(parent_dir, exist_ok=True)
             if force:
-                copyfile(copy_src_path, output_path)
+                copyfile(cached_source_path, output_path)
             else:
-                safe_copy_file(copy_src_path, output_path)
+                safe_copy_file(cached_source_path, output_path)
             logger.info("{} {} : saved to {}".format(item_type, source, output_path))
 
 
-def fetch_http_source(source, save_dir, item_type):
-    """downloads a http[s] file from source and saves into save_dir"""
+def fetch_http_source(source, save_path, item_type):
+    """downloads a http[s] file from source and saves into save_path(which is a file)"""
+
+    if os.path.exists(save_path):
+        os.remove(save_path)
+        logger.debug("Removed {}".format(save_path))
     logger.info("{} {} : fetching now".format(item_type, source))
     content, content_type = make_request(source)
     logger.info("{} {} : successfully fetched".format(item_type, source))
     if content is not None:
-        basename = os.path.basename(source)
-        # to avoid collisions between basename(source)
-        path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
-        full_save_path = os.path.join(save_dir, path_hash + basename)
-        with open(full_save_path, "wb") as f:
+        with open(save_path, "wb") as f:
             f.write(content)
+        logger.debug("Cached to {}".format(save_path))
         return content_type
     logger.warning("{} {} : failed to fetch".format(item_type, source))
     return None
@@ -260,3 +271,11 @@ def initialise_helm_fetch_binding():
             "There was an error opening helm_fetch.so binding. " "Refer to the exception below:\n" + str(e)
         )
     return lib
+
+
+def exists_in_cache(item_path):
+    dep_cache_path = os.path.dirname(item_path)
+    if not os.path.exists(dep_cache_path):
+        os.makedirs(dep_cache_path)
+        return False
+    return os.path.basename(item_path) in os.listdir(dep_cache_path)

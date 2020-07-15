@@ -85,13 +85,14 @@ def compile_targets(
 
         if not target_objs:
             raise CompileError("Error: no targets found")
-
+        # to cache fetced inventory and dependency items
+        dep_cache_dir = os.path.join(output_path, ".dependency_cache")
         if kwargs.get("fetch_inventories", False):
             # new_source checks for new sources in fetched inventory items
             new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
             while new_sources:
                 fetch_inventories(
-                    inventory_path, target_objs, temp_path, kwargs.get("force_fetch", False), pool
+                    inventory_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
                 )
                 cached.reset_inv()
                 target_objs = load_target_inventory(inventory_path, updated_targets)
@@ -99,7 +100,9 @@ def compile_targets(
                 new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
 
         if kwargs.get("fetch_dependencies", False):
-            fetch_dependencies(output_path, target_objs, temp_path, kwargs.get("force_fetch", False), pool)
+            fetch_dependencies(
+                output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
+            )
 
         # compile_target() returns None on success
         # so p is only not None when raising an exception
