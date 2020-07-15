@@ -499,10 +499,10 @@ def unpack_downloaded_file(file_path, output_path, content_type):
             is_unpacked = True
         else:
             extension = re.findall(r"\..*$", file_path)[0]
-            logger.debug(f"file extension {extension} not suported")
+            logger.debug(f"File extension {extension} not suported")
             is_unpacked = False
     else:
-        logger.warning(f"content type {content_type} not suported")
+        logger.debug(f"Content type {content_type} not suported")
         is_unpacked = False
     return is_unpacked
 
@@ -519,7 +519,7 @@ def safe_copy_file(src, dst):
     """
 
     if not os.path.isfile(src):
-        raise DistutilsFileError("can't copy {}: doesn't exist or is not a regular file".format(src))
+        raise DistutilsFileError("Can't copy {}: doesn't exist or is not a regular file".format(src))
 
     if os.path.isdir(dst):
         dir = dst
@@ -528,9 +528,10 @@ def safe_copy_file(src, dst):
         dir = os.path.dirname(dst)
 
     if os.path.isfile(dst):
-        logger.warning("not updating {} (file already exists)".format(dst))
+        logger.warning("Not updating {} (file already exists)".format(dst))
         return (dst, 0)
     _copy_file_contents(src, dst)
+    logger.debug("Copied {} to {}".format(src, dir))
     return (dst, 1)
 
 
@@ -545,11 +546,11 @@ def safe_copy_tree(src, dst):
     Returns a list of copied file paths.
     """
     if not os.path.isdir(src):
-        raise DistutilsFileError("cannot copy tree {}: not a directory".format(src))
+        raise DistutilsFileError("Cannot copy tree {}: not a directory".format(src))
     try:
         names = os.listdir(src)
     except OSError as e:
-        raise DistutilsFileError("error listing files in {}: {}".format(src, e.strerror))
+        raise DistutilsFileError("Error listing files in {}: {}".format(src, e.strerror))
 
     mkpath(dst)
     outputs = []
@@ -559,7 +560,7 @@ def safe_copy_tree(src, dst):
         dst_name = os.path.join(dst, name)
 
         if name.startswith("."):
-            logger.debug("not copying {}".format(src_name))
+            logger.debug("Not copying {}".format(src_name))
             continue
         if os.path.isdir(src_name):
             outputs.extend(safe_copy_tree(src_name, dst_name))
