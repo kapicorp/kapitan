@@ -1,0 +1,107 @@
+apiVersion: v1
+data:
+  alerting_rules.yml: '{}
+
+    '
+  alerts: '{}
+
+    '
+  prometheus.yml: "global:\n  evaluation_interval: 1m\n  scrape_interval: 1m\n  scrape_timeout:\
+    \ 10s\nrule_files:\n- /etc/config/recording_rules.yml\n- /etc/config/alerting_rules.yml\n\
+    - /etc/config/rules\n- /etc/config/alerts\nscrape_configs:\n- job_name: prometheus\n\
+    \  static_configs:\n  - targets:\n    - localhost:9090\n- bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token\n\
+    \  job_name: kubernetes-apiservers\n  kubernetes_sd_configs:\n  - role: endpoints\n\
+    \  relabel_configs:\n  - action: keep\n    regex: default;kubernetes;https\n \
+    \   source_labels:\n    - __meta_kubernetes_namespace\n    - __meta_kubernetes_service_name\n\
+    \    - __meta_kubernetes_endpoint_port_name\n  scheme: https\n  tls_config:\n\
+    \    ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n    insecure_skip_verify:\
+    \ true\n- bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token\n\
+    \  job_name: kubernetes-nodes\n  kubernetes_sd_configs:\n  - role: node\n  relabel_configs:\n\
+    \  - action: labelmap\n    regex: __meta_kubernetes_node_label_(.+)\n  - replacement:\
+    \ kubernetes.default.svc:443\n    target_label: __address__\n  - regex: (.+)\n\
+    \    replacement: /api/v1/nodes/$1/proxy/metrics\n    source_labels:\n    - __meta_kubernetes_node_name\n\
+    \    target_label: __metrics_path__\n  scheme: https\n  tls_config:\n    ca_file:\
+    \ /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n    insecure_skip_verify:\
+    \ true\n- bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token\n\
+    \  job_name: kubernetes-nodes-cadvisor\n  kubernetes_sd_configs:\n  - role: node\n\
+    \  relabel_configs:\n  - action: labelmap\n    regex: __meta_kubernetes_node_label_(.+)\n\
+    \  - replacement: kubernetes.default.svc:443\n    target_label: __address__\n\
+    \  - regex: (.+)\n    replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor\n \
+    \   source_labels:\n    - __meta_kubernetes_node_name\n    target_label: __metrics_path__\n\
+    \  scheme: https\n  tls_config:\n    ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n\
+    \    insecure_skip_verify: true\n- job_name: kubernetes-service-endpoints\n  kubernetes_sd_configs:\n\
+    \  - role: endpoints\n  relabel_configs:\n  - action: keep\n    regex: true\n\
+    \    source_labels:\n    - __meta_kubernetes_service_annotation_prometheus_io_scrape\n\
+    \  - action: replace\n    regex: (https?)\n    source_labels:\n    - __meta_kubernetes_service_annotation_prometheus_io_scheme\n\
+    \    target_label: __scheme__\n  - action: replace\n    regex: (.+)\n    source_labels:\n\
+    \    - __meta_kubernetes_service_annotation_prometheus_io_path\n    target_label:\
+    \ __metrics_path__\n  - action: replace\n    regex: ([^:]+)(?::\\d+)?;(\\d+)\n\
+    \    replacement: $1:$2\n    source_labels:\n    - __address__\n    - __meta_kubernetes_service_annotation_prometheus_io_port\n\
+    \    target_label: __address__\n  - action: labelmap\n    regex: __meta_kubernetes_service_label_(.+)\n\
+    \  - action: replace\n    source_labels:\n    - __meta_kubernetes_namespace\n\
+    \    target_label: kubernetes_namespace\n  - action: replace\n    source_labels:\n\
+    \    - __meta_kubernetes_service_name\n    target_label: kubernetes_name\n  -\
+    \ action: replace\n    source_labels:\n    - __meta_kubernetes_pod_node_name\n\
+    \    target_label: kubernetes_node\n- job_name: kubernetes-service-endpoints-slow\n\
+    \  kubernetes_sd_configs:\n  - role: endpoints\n  relabel_configs:\n  - action:\
+    \ keep\n    regex: true\n    source_labels:\n    - __meta_kubernetes_service_annotation_prometheus_io_scrape_slow\n\
+    \  - action: replace\n    regex: (https?)\n    source_labels:\n    - __meta_kubernetes_service_annotation_prometheus_io_scheme\n\
+    \    target_label: __scheme__\n  - action: replace\n    regex: (.+)\n    source_labels:\n\
+    \    - __meta_kubernetes_service_annotation_prometheus_io_path\n    target_label:\
+    \ __metrics_path__\n  - action: replace\n    regex: ([^:]+)(?::\\d+)?;(\\d+)\n\
+    \    replacement: $1:$2\n    source_labels:\n    - __address__\n    - __meta_kubernetes_service_annotation_prometheus_io_port\n\
+    \    target_label: __address__\n  - action: labelmap\n    regex: __meta_kubernetes_service_label_(.+)\n\
+    \  - action: replace\n    source_labels:\n    - __meta_kubernetes_namespace\n\
+    \    target_label: kubernetes_namespace\n  - action: replace\n    source_labels:\n\
+    \    - __meta_kubernetes_service_name\n    target_label: kubernetes_name\n  -\
+    \ action: replace\n    source_labels:\n    - __meta_kubernetes_pod_node_name\n\
+    \    target_label: kubernetes_node\n  scrape_interval: 5m\n  scrape_timeout: 30s\n\
+    - honor_labels: true\n  job_name: prometheus-pushgateway\n  kubernetes_sd_configs:\n\
+    \  - role: service\n  relabel_configs:\n  - action: keep\n    regex: pushgateway\n\
+    \    source_labels:\n    - __meta_kubernetes_service_annotation_prometheus_io_probe\n\
+    - job_name: kubernetes-services\n  kubernetes_sd_configs:\n  - role: service\n\
+    \  metrics_path: /probe\n  params:\n    module:\n    - http_2xx\n  relabel_configs:\n\
+    \  - action: keep\n    regex: true\n    source_labels:\n    - __meta_kubernetes_service_annotation_prometheus_io_probe\n\
+    \  - source_labels:\n    - __address__\n    target_label: __param_target\n  -\
+    \ replacement: blackbox\n    target_label: __address__\n  - source_labels:\n \
+    \   - __param_target\n    target_label: instance\n  - action: labelmap\n    regex:\
+    \ __meta_kubernetes_service_label_(.+)\n  - source_labels:\n    - __meta_kubernetes_namespace\n\
+    \    target_label: kubernetes_namespace\n  - source_labels:\n    - __meta_kubernetes_service_name\n\
+    \    target_label: kubernetes_name\n- job_name: kubernetes-pods\n  kubernetes_sd_configs:\n\
+    \  - role: pod\n  relabel_configs:\n  - action: keep\n    regex: true\n    source_labels:\n\
+    \    - __meta_kubernetes_pod_annotation_prometheus_io_scrape\n  - action: replace\n\
+    \    regex: (.+)\n    source_labels:\n    - __meta_kubernetes_pod_annotation_prometheus_io_path\n\
+    \    target_label: __metrics_path__\n  - action: replace\n    regex: ([^:]+)(?::\\\
+    d+)?;(\\d+)\n    replacement: $1:$2\n    source_labels:\n    - __address__\n \
+    \   - __meta_kubernetes_pod_annotation_prometheus_io_port\n    target_label: __address__\n\
+    \  - action: labelmap\n    regex: __meta_kubernetes_pod_label_(.+)\n  - action:\
+    \ replace\n    source_labels:\n    - __meta_kubernetes_namespace\n    target_label:\
+    \ kubernetes_namespace\n  - action: replace\n    source_labels:\n    - __meta_kubernetes_pod_name\n\
+    \    target_label: kubernetes_pod_name\n- job_name: kubernetes-pods-slow\n  kubernetes_sd_configs:\n\
+    \  - role: pod\n  relabel_configs:\n  - action: keep\n    regex: true\n    source_labels:\n\
+    \    - __meta_kubernetes_pod_annotation_prometheus_io_scrape_slow\n  - action:\
+    \ replace\n    regex: (.+)\n    source_labels:\n    - __meta_kubernetes_pod_annotation_prometheus_io_path\n\
+    \    target_label: __metrics_path__\n  - action: replace\n    regex: ([^:]+)(?::\\\
+    d+)?;(\\d+)\n    replacement: $1:$2\n    source_labels:\n    - __address__\n \
+    \   - __meta_kubernetes_pod_annotation_prometheus_io_port\n    target_label: __address__\n\
+    \  - action: labelmap\n    regex: __meta_kubernetes_pod_label_(.+)\n  - action:\
+    \ replace\n    source_labels:\n    - __meta_kubernetes_namespace\n    target_label:\
+    \ kubernetes_namespace\n  - action: replace\n    source_labels:\n    - __meta_kubernetes_pod_name\n\
+    \    target_label: kubernetes_pod_name\n  scrape_interval: 5m\n  scrape_timeout:\
+    \ 30s\n"
+  recording_rules.yml: '{}
+
+    '
+  rules: '{}
+
+    '
+kind: ConfigMap
+metadata:
+  labels:
+    app: prometheus
+    chart: prometheus-11.3.0
+    component: prd-server
+    heritage: Tiller
+    release: prometheus
+  name: prometheus-prd-server
+  namespace: infra-prometheus

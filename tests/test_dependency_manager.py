@@ -117,7 +117,7 @@ class DependencyManagerTest(unittest.TestCase):
             "-t",
             "nginx",
             "nginx-dev",
-            "monitoring",
+            "monitoring-dev",
         ]
         main()
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))

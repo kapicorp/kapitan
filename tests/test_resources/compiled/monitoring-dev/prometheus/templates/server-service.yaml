@@ -4,10 +4,10 @@ metadata:
   labels:
     app: prometheus
     chart: prometheus-11.3.0
-    component: server
+    component: dev-server
     heritage: Tiller
     release: prometheus
-  name: prometheus-server
+  name: prometheus-dev-server
   namespace: infra-prometheus
 spec:
   ports:
@@ -17,7 +17,7 @@ spec:
       targetPort: 9090
   selector:
     app: prometheus
-    component: server
+    component: dev-server
     release: prometheus
   sessionAffinity: None
   type: ClusterIP

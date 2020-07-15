@@ -1,8 +1,5 @@
 parameters:
   kapitan:
-    vars:
-      target: monitoring
-
     dependencies:
       - type: helm
         output_path: charts/prometheus
@@ -17,7 +14,9 @@ parameters:
         helm_values:
           alertmanager:
             enabled: false
+        helm_values_files:
+          - helm_values_files/prometheus/common.yml
+          - helm_values_files/prometheus/${kapitan:vars:env}.yml
         helm_params:
           namespace: infra-prometheus
           name_template: prometheus
-

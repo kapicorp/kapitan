@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: prometheus
+    chart: prometheus-11.3.0
+    component: dev-server
+    heritage: Tiller
+    release: prometheus
+  name: prometheus-dev-server
+  namespace: infra-prometheus
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
