@@ -275,7 +275,5 @@ def initialise_helm_fetch_binding():
 
 def exists_in_cache(item_path):
     dep_cache_path = os.path.dirname(item_path)
-    if not os.path.exists(dep_cache_path):
-        os.makedirs(dep_cache_path)
-        return False
+    os.makedirs(dep_cache_path, exist_ok=True)
     return os.path.basename(item_path) in os.listdir(dep_cache_path)
