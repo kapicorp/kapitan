@@ -211,7 +211,7 @@ Method functions:
 
 A class can be a resource such as a kubernetes Deployment as shown here:
 
-```
+```python
 class Deployment(BaseObj):
     def new(self):
         self.need("name", "name string needed")
@@ -232,7 +232,7 @@ We have established that you may define a library which holds information on cla
 
 Here we import `kubelib` using `load_from_search_paths()`. We then use kubelib to access the defined object classes. In this instance the Deployment & Service resource class.
 
-```
+```python
 ...
 kubelib = kadet.load_from_search_paths("kubelib")
 ...
@@ -260,6 +260,67 @@ For a deeper understanding of this input type please review the proposal documen
 
 - yaml (default)
 - json
+
+#### using kadet for "post processing" or "overlaying" manifests (alpha/experimental)
+
+Sometimes you need to add a little something extra to manifests that you can't do within the original compile block.
+
+For instance, you might use an open source helm chart that doesn't have a specific parameter that is
+configurable. You could download the helm chart locally, amend the chart to take a new parameter, and
+check it into your repository. This could make it harder to upgrade chart versions in the future, and
+understand the motivation behind changes in the chart itself.
+
+Instead, you could create a kadet module that compiles after the helm input has compiled.
+```yaml
+parameters:
+  test_1:
+    output_path: test-1
+  kapitan:
+    compile:
+    - name: template-helm-chart
+      input_type: helm
+      output_path: ${test_1:output_path}
+      input_paths:
+      	- <chart_path>
+      helm_values:
+        <object_with_values_to_override>
+      helm_values_files:
+        - <values_file_path>
+      helm_params:
+      	namespace: <substitutes_.Release.Namespace>
+      	name_template: <namespace_template>
+      	release_name: <chart_release_name>
+    - name: add-metadata-test-1
+      input_type: kadet
+      output_path: ${test_1:output_path}
+      input_paths:
+        - <path_to_kadet_module>
+      input_params:
+        team_name: ops
+        post_process_inputs: [template-helm-chart]
+```
+Here you can clearly define the order in which your manifests are compiled and ensure that the helm
+chart is templated before your kadet module is run. The `input_params` injected are available in
+the main function as an object. `input_params` will always have the `compile_path` which is the absolute
+path to the compile directory where manifests are compiled on the current run. Any additional keys 
+placed on the `input_params` in the compile block can be accessed in the kadet module for that specific
+compile run.
+
+```python
+from kapitan.inputs import kadet
+
+inventory = kadet.inventory()
+
+def main(input_params):
+    team_name = input_params.get("team_name", "no-owner")
+...
+    target_name = inventory.parameters.kapitan.vars.target
+    compile_path = input_params.get("compile_path")
+...
+```
+
+For an in depth example, look at the `kadet-test` target under `tests/test_resources/inventory`. There is an
+example of adding labels to every kubernetes object a specific compiled folder.
 
 ### helm
 

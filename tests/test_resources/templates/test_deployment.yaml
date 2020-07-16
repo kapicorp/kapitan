@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-name
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: app-name
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: app-name
+    spec:
+      containers:
+      - name: hello
+        image: hello-word
+        imagePullPolicy: Always

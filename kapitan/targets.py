@@ -395,6 +395,8 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             input_compiler = jsonnet_compiler
         elif input_type == "kadet":
             input_compiler = kadet_compiler
+            if "input_params" in comp_obj:
+                kadet_compiler.set_input_params(comp_obj["input_params"])
         elif input_type == "helm":
             if "helm_values" in comp_obj:
                 helm_compiler.dump_helm_values(comp_obj["helm_values"])
@@ -433,6 +435,7 @@ def valid_target_obj(target_obj):
                 "items": {
                     "type": "object",
                     "properties": {
+                        "name": {"type": "string"},
                         "input_paths": {"type": "array"},
                         "input_type": {"type": "string"},
                         "output_path": {"type": "string"},
@@ -448,6 +451,7 @@ def valid_target_obj(target_obj):
                             },
                             "additionalProperties": False,
                         },
+                        "input_params": {"type": "object"},
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
