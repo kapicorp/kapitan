@@ -307,6 +307,7 @@ def inventory_reclass(inventory_path):
             "nodes_uri": os.path.join(inventory_path, "targets"),
             "classes_uri": os.path.join(inventory_path, "classes"),
             "compose_node_name": False,
+            "allow_none_override": True,
         }
 
         try:
