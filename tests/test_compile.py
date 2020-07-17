@@ -14,6 +14,7 @@ import io
 import contextlib
 import glob
 import shutil
+import yaml
 from kapitan.cli import main
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
@@ -35,6 +36,38 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
         for g in glob.glob("compiled/test-objects/*.json"):
             with open(g) as f:
                 self.assertTrue("?{plain:" not in f.read())
+
+    def tearDown(self):
+        os.chdir(os.getcwd() + "/../../")
+        reset_cache()
+
+
+class CompileTestResourcesTestKadet(unittest.TestCase):
+    def setUp(self):
+        os.chdir(os.getcwd() + "/tests/test_resources/")
+
+    def test_compile(self):
+        sys.argv = ["kapitan", "compile", "-t", "kadet-test"]
+        main()
+
+    def test_compile_with_input_params(self):
+        # input_params propagate through and written out to file
+        for g in glob.glob("compiled/kadet-test/test-1/*.yaml"):
+            with open(g, "r") as fp:
+                manifest = yaml.safe_load(fp.read())
+                namespace = manifest["metadata"]["namespace"]
+                team_name = manifest["metadata"]["labels"]["team_name"]
+                self.assertEqual(namespace, "ops")
+                self.assertEqual(team_name, "client-operations")
+        # same kadet function was called with new params should have
+        # different results
+        for g in glob.glob("compiled/kadet-test/test-2/*.yaml"):
+            with open(g, "r") as fp:
+                manifest = yaml.safe_load(fp.read())
+                namespace = manifest["metadata"]["namespace"]
+                team_name = manifest["metadata"]["labels"]["team_name"]
+                self.assertEqual(namespace, "team-2")
+                self.assertEqual(team_name, "SRE")
 
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")

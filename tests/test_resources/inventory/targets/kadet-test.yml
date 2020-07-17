@@ -1,0 +1,35 @@
+parameters:
+  kapitan:
+    vars:
+      target: kadet-test
+    compile:
+      - name: gen-test-1
+        input_type: copy # setup for remaining kadet compiles
+        output_path: test-1
+        input_paths:
+          - templates/test_deployment.yaml
+      - name: add-metadata-test-1
+        input_type: kadet
+        output_path: test-1
+        input_paths:
+          - kadet_functions/add_team_label
+        input_params:
+          team_name: 'client-operations'
+          namespace: 'ops'
+          post_process_inputs: [gen-test-1]
+      - name: gen-test-2
+        input_type: copy # setup for remaining kadet compiles
+        output_path: test-2
+        input_paths:
+          - templates/test_deployment.yaml
+      - name: add-metadata-test-2
+        input_type: kadet
+        output_path: test-2
+        input_paths:
+          - kadet_functions/add_team_label
+        input_params:
+          team_name: 'SRE'
+          namespace: 'team-2'
+          post_process_inputs: [gen-test-2]
+
+        

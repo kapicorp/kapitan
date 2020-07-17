@@ -1,3 +1,9 @@
+## 0.28.1-rc.4:
+- Adds input_params for compile time parameter injection into kadet modules (#560)
+- Add logging fix for python 3.8+ on macOS (#559)
+- Allow reclass override none feature (#562)
+- Update python dependencies (#555, #556, #557)
+
 ## 0.28.1-rc.3:
 - Enable helm values files to be injected for input type "helm" (#545)
 - Fix issue #500: Add --ref-file or --tag to refs --reveal option. (#548)
