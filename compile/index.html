@@ -11,7 +11,7 @@
       
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1, mkdocs-material-5.1.5">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.4.0">
     
     
       
@@ -19,7 +19,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.df84b5fe.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.fe0cca5b.min.css">
       
       
     
@@ -42,6 +42,7 @@
   
     <body dir="ltr">
   
+    
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
@@ -378,6 +379,19 @@
   <a href="#kadet" class="md-nav__link">
     kadet
   </a>
+  
+    <nav class="md-nav" aria-label="kadet">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-kadet-for-post-processing-or-overlaying-manifests-alphaexperimental" class="md-nav__link">
+    using kadet for "post processing" or "overlaying" manifests (alpha/experimental)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -756,6 +770,19 @@
     kadet
   </a>
   
+    <nav class="md-nav" aria-label="kadet">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#using-kadet-for-post-processing-or-overlaying-manifests-alphaexperimental" class="md-nav__link">
+    using kadet for "post processing" or "overlaying" manifests (alpha/experimental)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -876,7 +903,7 @@ regex_search - perform re.search and return the list of matches or a backref e.g
 regex_findall - perform re.findall and return the list of matches as array e.g. {{ hello world | regex_findall(&quot;world.*&quot;) }}
 ternary - value ? true_val : false_val e.g. {{ condition | ternary(&quot;yes&quot;, &quot;no&quot;) }}
 shuffle - randomly shuffle elements of a list {{ [1, 2, 3, 4, 5] | shuffle }}
-reveal_maybe - reveal ref/secret tag only if `compile --reveal` flag is set e.g. {{ &quot;?{ref:my_ref}&quot; | reveal_maybe }}
+reveal_maybe - reveal ref/secret tag only if `compile --reveal` flag is set e.g. {{ &quot;?{base64:my_ref}&quot; | reveal_maybe }}
 </code></pre></div>
 
 <p>You can also provide path to your custom filter modules in CLI. By default, you can put your filters in <code>lib/jinja2_filters.py</code> and they will automatically get loaded.</p>
@@ -988,39 +1015,39 @@ Compile error: failed to compile target: minikube-mysql
 <li><code>update_root()</code>: Updates the template file associated with the class</li>
 </ul>
 <p>A class can be a resource such as a kubernetes Deployment as shown here:</p>
-<div class="highlight"><pre><span></span><code>class Deployment(BaseObj):
-    def new(self):
-        self.need(&quot;name&quot;, &quot;name string needed&quot;)
-        self.need(&quot;labels&quot;, &quot;labels dict needed&quot;)
-        self.need(&quot;containers&quot;, &quot;containers dict needed&quot;)
-        self.update_root(&quot;lib/kubelib/deployment.yml&quot;)
+<div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Deployment</span><span class="p">(</span><span class="n">BaseObj</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">need</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;name string needed&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">need</span><span class="p">(</span><span class="s2">&quot;labels&quot;</span><span class="p">,</span> <span class="s2">&quot;labels dict needed&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">need</span><span class="p">(</span><span class="s2">&quot;containers&quot;</span><span class="p">,</span> <span class="s2">&quot;containers dict needed&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_root</span><span class="p">(</span><span class="s2">&quot;lib/kubelib/deployment.yml&quot;</span><span class="p">)</span>
 
-    def body(self):
-        self.root.metadata.name = self.kwargs.name
-        self.root.metadata.namespace = inv.parameters.target_name
-        self.root.spec.template.metadata.labels = self.kwargs.labels
-        self.root.spec.template.spec.containers = self.kwargs.containers
+    <span class="k">def</span> <span class="nf">body</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">namespace</span> <span class="o">=</span> <span class="n">inv</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">target_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">labels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">containers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">containers</span>
 </code></pre></div>
 
 <p>The deployment is an <code>BaseObj()</code> which has two main functions. New can be used to perform parameter validation &amp; template compilation. Body is utilized to set those parameters to be rendered. <code>self.root.metadata.name</code> is a direct reference to a key in the corresponding yaml.</p>
 <p>We have established that you may define a library which holds information on classes that represent resource objects. The library is then utilized by defined components to generate the required output.</p>
 <p>Here we import <code>kubelib</code> using <code>load_from_search_paths()</code>. We then use kubelib to access the defined object classes. In this instance the Deployment &amp; Service resource class.</p>
-<div class="highlight"><pre><span></span><code>...
-kubelib = kadet.load_from_search_paths(&quot;kubelib&quot;)
-...
-name = &quot;nginx&quot;
-labels = kadet.BaseObj.from_dict({&quot;app&quot;: name})
-nginx_container = kubelib.Container(
-    name=name, image=inv.parameters.nginx.image, ports=[{&quot;containerPort&quot;: 80}]
-)
-...
-def main():
-    output = kadet.BaseObj()
-    output.root.nginx_deployment = kubelib.Deployment(name=name, labels=labels, containers=[nginx_container])
-    output.root.nginx_service = kubelib.Service(
-        name=name, labels=labels, ports=[svc_port], selector=svc_selector
-    )
-    return output
+<div class="highlight"><pre><span></span><code><span class="o">...</span>
+<span class="n">kubelib</span> <span class="o">=</span> <span class="n">kadet</span><span class="o">.</span><span class="n">load_from_search_paths</span><span class="p">(</span><span class="s2">&quot;kubelib&quot;</span><span class="p">)</span>
+<span class="o">...</span>
+<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;nginx&quot;</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="n">kadet</span><span class="o">.</span><span class="n">BaseObj</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span><span class="s2">&quot;app&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span>
+<span class="n">nginx_container</span> <span class="o">=</span> <span class="n">kubelib</span><span class="o">.</span><span class="n">Container</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="n">inv</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">nginx</span><span class="o">.</span><span class="n">image</span><span class="p">,</span> <span class="n">ports</span><span class="o">=</span><span class="p">[{</span><span class="s2">&quot;containerPort&quot;</span><span class="p">:</span> <span class="mi">80</span><span class="p">}]</span>
+<span class="p">)</span>
+<span class="o">...</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">kadet</span><span class="o">.</span><span class="n">BaseObj</span><span class="p">()</span>
+    <span class="n">output</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">nginx_deployment</span> <span class="o">=</span> <span class="n">kubelib</span><span class="o">.</span><span class="n">Deployment</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">containers</span><span class="o">=</span><span class="p">[</span><span class="n">nginx_container</span><span class="p">])</span>
+    <span class="n">output</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">nginx_service</span> <span class="o">=</span> <span class="n">kubelib</span><span class="o">.</span><span class="n">Service</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">ports</span><span class="o">=</span><span class="p">[</span><span class="n">svc_port</span><span class="p">],</span> <span class="n">selector</span><span class="o">=</span><span class="n">svc_selector</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">output</span>
 </code></pre></div>
 
 <p>Kadet uses a library called <a href="https://github.com/mewwts/addict">addict</a> to organise the parameters inline with the yaml templates.
@@ -1031,6 +1058,60 @@ As shown above we create a <code>BaseObject()</code> named output. We update the
 <li>yaml (default)</li>
 <li>json</li>
 </ul>
+<h4 id="using-kadet-for-post-processing-or-overlaying-manifests-alphaexperimental">using kadet for "post processing" or "overlaying" manifests (alpha/experimental)</h4>
+<p>Sometimes you need to add a little something extra to manifests that you can't do within the original compile block.</p>
+<p>For instance, you might use an open source helm chart that doesn't have a specific parameter that is
+configurable. You could download the helm chart locally, amend the chart to take a new parameter, and
+check it into your repository. This could make it harder to upgrade chart versions in the future, and
+understand the motivation behind changes in the chart itself.</p>
+<p>Instead, you could create a kadet module that compiles after the helm input has compiled.
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+  <span class="nt">test_1</span><span class="p">:</span>
+    <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">test-1</span>
+  <span class="nt">kapitan</span><span class="p">:</span>
+    <span class="nt">compile</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">template-helm-chart</span>
+      <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">helm</span>
+      <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${test_1:output_path}</span>
+      <span class="nt">input_paths</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">&lt;chart_path&gt;</span>
+      <span class="nt">helm_values</span><span class="p">:</span>
+        <span class="l l-Scalar l-Scalar-Plain">&lt;object_with_values_to_override&gt;</span>
+      <span class="nt">helm_values_files</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">&lt;values_file_path&gt;</span>
+      <span class="nt">helm_params</span><span class="p">:</span>
+        <span class="nt">namespace</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;substitutes_.Release.Namespace&gt;</span>
+        <span class="nt">name_template</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;namespace_template&gt;</span>
+        <span class="nt">release_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;chart_release_name&gt;</span>
+    <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">add-metadata-test-1</span>
+      <span class="nt">input_type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">kadet</span>
+      <span class="nt">output_path</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">${test_1:output_path}</span>
+      <span class="nt">input_paths</span><span class="p">:</span>
+        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">&lt;path_to_kadet_module&gt;</span>
+      <span class="nt">input_params</span><span class="p">:</span>
+        <span class="nt">team_name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ops</span>
+        <span class="nt">post_process_inputs</span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">template-helm-chart</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+Here you can clearly define the order in which your manifests are compiled and ensure that the helm
+chart is templated before your kadet module is run. The <code>input_params</code> injected are available in
+the main function as an object. <code>input_params</code> will always have the <code>compile_path</code> which is the absolute
+path to the compile directory where manifests are compiled on the current run. Any additional keys 
+placed on the <code>input_params</code> in the compile block can be accessed in the kadet module for that specific
+compile run.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">kapitan.inputs</span> <span class="kn">import</span> <span class="n">kadet</span>
+
+<span class="n">inventory</span> <span class="o">=</span> <span class="n">kadet</span><span class="o">.</span><span class="n">inventory</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">input_params</span><span class="p">):</span>
+    <span class="n">team_name</span> <span class="o">=</span> <span class="n">input_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;team_name&quot;</span><span class="p">,</span> <span class="s2">&quot;no-owner&quot;</span><span class="p">)</span>
+<span class="o">...</span>
+    <span class="n">target_name</span> <span class="o">=</span> <span class="n">inventory</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">kapitan</span><span class="o">.</span><span class="n">vars</span><span class="o">.</span><span class="n">target</span>
+    <span class="n">compile_path</span> <span class="o">=</span> <span class="n">input_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;compile_path&quot;</span><span class="p">)</span>
+<span class="o">...</span>
+</code></pre></div>
+
+<p>For an in depth example, look at the <code>kadet-test</code> target under <code>tests/test_resources/inventory</code>. There is an
+example of adding labels to every kubernetes object a specific compiled folder.</p>
 <h3 id="helm">helm</h3>
 <p>This is a Python binding to <code>helm template</code> command for users with helm charts. This does not require the helm executable, and the templates are rendered without the Tiller server.</p>
 <p>Unlike other input types, Helm input types support the following additional parameters under <code>kapitan.compile</code>:</p>
@@ -1194,15 +1275,15 @@ For Copy, <code>input_paths</code> can be either a file or a directory: in case 
       
     </div>
     
-      <script src="../assets/javascripts/vendor.83fe6e3c.min.js"></script>
-      <script src="../assets/javascripts/bundle.7e1cb91c.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../assets/javascripts/vendor.d710d30a.min.js"></script>
+      <script src="../assets/javascripts/bundle.b39636ac.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
           base: "..",
           features: [],
           search: Object.assign({
-            worker: "../assets/javascripts/worker/search.37585f48.min.js"
+            worker: "../assets/javascripts/worker/search.a68abb33.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
