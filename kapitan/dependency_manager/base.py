@@ -77,6 +77,8 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
                     if version == "":
                         version = "latest"
                     helm_deps[item["chart_name"] + "-" + version].append(item)
+                else:
+                    logger.warning("{} is not a valid source type".format(dependency_type))
 
         except KeyError:
             logger.debug(

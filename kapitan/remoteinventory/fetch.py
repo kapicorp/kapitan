@@ -63,6 +63,8 @@ def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
                     git_inventories[source_uri].append(inv)
                 elif inv_type in ("http", "https"):
                     http_inventories[source_uri].append(inv)
+                else:
+                    logger.warning("{} is not a valid source type".format(inv_type))
         except KeyError:
             logger.debug("Target object {} has no inventory key".format(target_obj["vars"]["target"]))
             continue
