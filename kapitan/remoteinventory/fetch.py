@@ -13,13 +13,13 @@ logger = logging.getLogger(__name__)
 
 def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
     """Parses through the 'inventory' parameter in target_objs to fetch the remote
-       inventories and stores it in save dir/cache dir before recursively
+       inventories and stores it in save_dir before recursively
        copying it to the output_path (relative to the inventory path)
-       Overwrites existing cached files and inventory items if force fetched
+       Overwrites existing inventory items if force fetched
 
        :param inventory_path: default or user specified inventory path
-       :save_dir: directory to save the fetched items (cache directory)
        :param target_objs: target objects
+       :param save_dir: directory to save the fetched items
        :param force: bool value
        :param pool: pool object for multiprocessing
        :return: None
@@ -73,7 +73,7 @@ def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
     [p.get() for p in pool.imap_unordered(http_worker, http_inventories.items()) if p]
 
 
-def list_sources(target_objs):  # TODO list_unique_sources?
+def list_sources(target_objs):
     "returns list of all remote inventory sources"
     sources = []
     for target_obj in target_objs:

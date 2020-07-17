@@ -25,7 +25,8 @@ On executing the ``` $ kapitan compile --fetch``` command, first the remote inve
 ## Copying inventory files to the output location
 The output path is the path to save the inventory items into. The path is relative to the `inventory/` directory. For example, it could be `/classes/`. The contents of the fetched inventory will be recursively copied.
 
-The fetched inventory files will be cached in the `.dependency_cache` directory.
+The fetched inventory files will be cached in the `.dependency_cache` directory if `--cache` is set.
+eg. `$ kapitan compile --fetche --cache`
 
 ## Force fetching
 While fetching, the output path will be recursively checked to see if it contains any file with the same name. If so, kapitan will skip fetching it.

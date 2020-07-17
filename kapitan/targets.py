@@ -47,6 +47,7 @@ def compile_targets(
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix=".kapitan")
+    dep_cache_dir = temp_path
 
     updated_targets = targets
     try:
@@ -59,6 +60,9 @@ def compile_targets(
     if kwargs.get("cache"):
         additional_cache_paths = kwargs.get("cache_paths")
         generate_inv_cache_hashes(inventory_path, targets, additional_cache_paths)
+        # to cache fetched dependencies and inventories
+        dep_cache_dir = os.path.join(output_path, ".dependency_cache")
+        os.makedirs(dep_cache_dir, exist_ok=True)
 
         if not targets:
             updated_targets = changed_targets(inventory_path, output_path)
@@ -85,8 +89,6 @@ def compile_targets(
 
         if not target_objs:
             raise CompileError("Error: no targets found")
-        # to cache fetced inventory and dependency items
-        dep_cache_dir = os.path.join(output_path, ".dependency_cache")
         if kwargs.get("fetch_inventories", False):
             # new_source checks for new sources in fetched inventory items
             new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)

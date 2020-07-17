@@ -64,7 +64,6 @@ class DependencyManagerTest(unittest.TestCase):
         rmtree(output_dir)
 
     def test_fetch_helm_chart(self):
-        temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
@@ -78,15 +77,13 @@ class DependencyManagerTest(unittest.TestCase):
                 "source": "https://kubernetes-charts.storage.googleapis.com",
             }
         ]
-        fetch_helm_chart((unique_chart_name, dep), temp_dir)
+        fetch_helm_chart((unique_chart_name, dep))
         self.assertTrue(os.path.isdir(output_chart_dir))
         self.assertTrue(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
         self.assertTrue(os.path.isdir(os.path.join(output_chart_dir, "charts", "kube-state-metrics")))
-        rmtree(temp_dir)
         rmtree(output_dir)
 
     def test_fetch_helm_chart_version_that_does_not_exist(self):
-        temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
@@ -100,10 +97,9 @@ class DependencyManagerTest(unittest.TestCase):
                 "source": "https://kubernetes-charts.storage.googleapis.com",
             }
         ]
-        fetch_helm_chart((unique_chart_name, dep), temp_dir)
+        fetch_helm_chart((unique_chart_name, dep))
         self.assertFalse(os.path.isdir(output_chart_dir))
         self.assertFalse(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
-        rmtree(temp_dir)
         rmtree(output_dir)
 
     def test_compile_fetch(self):

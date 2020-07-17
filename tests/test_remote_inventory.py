@@ -166,6 +166,7 @@ class RemoteInventoryTest(unittest.TestCase):
             temp_inv,
             "--targets",
             "remoteinv-example",
+            "--cache"
         ]
         main()
 
