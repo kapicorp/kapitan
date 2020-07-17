@@ -43,7 +43,7 @@ def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
                     source_hash.update(subdir.encode())
                 if "ref" in inv:
                     ref = inv["ref"]
-                    source_hash = hashlib.sha256(ref.encode())
+                    source_hash.update(ref.encode())
                 if source_hash in cached.inv_sources:
                     continue
                 # output_path is relative to inventory_path
