@@ -20,6 +20,7 @@ from functools import partial
 import jsonschema
 import yaml
 from kapitan import cached, defaults
+from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
@@ -46,6 +47,7 @@ def compile_targets(
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix=".kapitan")
+    dep_cache_dir = temp_path
 
     updated_targets = targets
     try:
@@ -58,6 +60,9 @@ def compile_targets(
     if kwargs.get("cache"):
         additional_cache_paths = kwargs.get("cache_paths")
         generate_inv_cache_hashes(inventory_path, targets, additional_cache_paths)
+        # to cache fetched dependencies and inventories
+        dep_cache_dir = os.path.join(output_path, ".dependency_cache")
+        os.makedirs(dep_cache_dir, exist_ok=True)
 
         if not targets:
             updated_targets = changed_targets(inventory_path, output_path)
@@ -78,14 +83,28 @@ def compile_targets(
             search_paths=search_paths,
             compile_path=temp_path,
             ref_controller=ref_controller,
+            inventory_path=inventory_path,
             **kwargs,
         )
 
         if not target_objs:
             raise CompileError("Error: no targets found")
+        if kwargs.get("fetch_inventories", False):
+            # new_source checks for new sources in fetched inventory items
+            new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
+            while new_sources:
+                fetch_inventories(
+                    inventory_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
+                )
+                cached.reset_inv()
+                target_objs = load_target_inventory(inventory_path, updated_targets)
+                cached.inv_sources.update(new_sources)
+                new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
 
         if kwargs.get("fetch_dependencies", False):
-            fetch_dependencies(target_objs, pool)
+            fetch_dependencies(
+                output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
+            )
 
         # compile_target() returns None on success
         # so p is only not None when raising an exception
@@ -373,14 +392,14 @@ def search_targets(inventory_path, targets, labels):
     return targets_found
 
 
-def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
+def compile_target(target_obj, search_paths, compile_path, ref_controller, inventory_path, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
 
-    jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller)
+    jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller, inventory_path)
     jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
     kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
     helm_compiler = Helm(compile_path, search_paths, ref_controller)
@@ -531,6 +550,36 @@ def valid_target_obj(target_obj):
                                     "version": {"type": "string"},
                                 },
                                 "required": ["type", "output_path", "source", "chart_name"],
+                                "additionalProperties": False,
+                            },
+                        },
+                    ],
+                },
+            },
+            "inventories": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "enum": ["git", "http", "https"]},
+                        "output_path": {"type": "string"},
+                        "source": {"type": "string"},
+                        "subdir": {"type": "string"},
+                        "ref": {"type": "string"},
+                        "unpack": {"type": "boolean"},
+                    },
+                    "required": ["type", "output_path", "source"],
+                    "additionalProperties": False,
+                    "allOf": [
+                        {
+                            "if": {"properties": {"type": {"enum": ["http", "https"]}}},
+                            "then": {
+                                "properties": {
+                                    "type": {},
+                                    "source": {"format": "uri"},
+                                    "output_path": {},
+                                    "unpack": {},
+                                },
                                 "additionalProperties": False,
                             },
                         },

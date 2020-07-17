@@ -9,7 +9,7 @@ import os
 import sys
 import unittest
 import tempfile
-
+from shutil import rmtree
 from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.dependency_manager.base import (
@@ -17,7 +17,6 @@ from kapitan.dependency_manager.base import (
     fetch_http_source,
     fetch_git_dependency,
     fetch_helm_chart,
-    DEPENDENCY_OUTPUT_CONFIG,
 )
 
 
@@ -26,35 +25,53 @@ class DependencyManagerTest(unittest.TestCase):
         os.chdir(os.path.join(os.getcwd(), "tests", "test_resources"))
 
     def test_fetch_http_sources(self):
+        "Tests fetching http[s] sources"
         temp_dir = tempfile.mkdtemp()
         http_sources = [
-            "https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/components/jsonnet/jsonnet.jsonnet",
-            "https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/components/kadet/__init__.py",
+            (
+                "https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/components/jsonnet/jsonnet.jsonnet",
+                "1c3a08e6jsonnet.jsonnet",
+            ),
+            (
+                "https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/components/kadet/__init__.py",
+                "aff45ec8__init__.py",
+            ),
         ]
 
-        for source in http_sources:
-            fetch_http_source(source, temp_dir)
+        for source, path_hash in http_sources:
+            fetch_http_source(source, os.path.join(temp_dir, path_hash), item_type="Dependency")
 
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "1c3a08e6" + "jsonnet.jsonnet")))
         self.assertTrue(os.path.isfile(os.path.join(temp_dir, "aff45ec8" + "__init__.py")))
+        rmtree(temp_dir)
 
     def test_fetch_git_sources(self):
+        "Tests clonning git repo"
         temp_dir = tempfile.mkdtemp()
+        repo_dir = os.path.join(temp_dir, "7a8f3940kapitan.git")
         # TODO: also test git ssh urls
         git_source = "https://github.com/deepmind/kapitan.git"
-        fetch_git_source(git_source, temp_dir)
-        self.assertTrue(os.path.isdir(os.path.join(temp_dir, "kapitan.git", "kapitan")))
+        fetch_git_source(git_source, repo_dir, item_type="Dependency")
+        self.assertTrue(os.path.isfile(os.path.join(repo_dir, "README.md")))
+        rmtree(temp_dir)
 
     def test_clone_repo_subdir(self):
+        """
+        Tests clonning git repo and copy its' subdir
+        """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         source = "https://github.com/deepmind/kapitan.git"
         dep = [{"output_path": os.path.join(output_dir, "subdir"), "ref": "master", "subdir": "tests",}]
-        fetch_git_dependency((source, dep), temp_dir)
+        fetch_git_dependency((source, dep), temp_dir, force=False)
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
+        rmtree(temp_dir)
+        rmtree(output_dir)
 
     def test_fetch_helm_chart(self):
-        temp_dir = tempfile.mkdtemp()
+        """
+        Tests fetching helm chart
+        """
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
@@ -68,13 +85,17 @@ class DependencyManagerTest(unittest.TestCase):
                 "source": "https://kubernetes-charts.storage.googleapis.com",
             }
         ]
-        fetch_helm_chart((unique_chart_name, dep), temp_dir)
+        fetch_helm_chart((unique_chart_name, dep))
         self.assertTrue(os.path.isdir(output_chart_dir))
         self.assertTrue(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
         self.assertTrue(os.path.isdir(os.path.join(output_chart_dir, "charts", "kube-state-metrics")))
+        rmtree(output_dir)
 
     def test_fetch_helm_chart_version_that_does_not_exist(self):
-        temp_dir = tempfile.mkdtemp()
+        """
+        Test fetching helm chart version that does not exist
+        Runs $ kapitan compile --fetch --output-path temp -t nginx nginx-dev monitoring-dev
+        """
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
@@ -88,13 +109,13 @@ class DependencyManagerTest(unittest.TestCase):
                 "source": "https://kubernetes-charts.storage.googleapis.com",
             }
         ]
-        fetch_helm_chart((unique_chart_name, dep), temp_dir)
+        fetch_helm_chart((unique_chart_name, dep))
         self.assertFalse(os.path.isdir(output_chart_dir))
         self.assertFalse(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
+        rmtree(output_dir)
 
     def test_compile_fetch(self):
         temp = tempfile.mkdtemp()
-        DEPENDENCY_OUTPUT_CONFIG["root_dir"] = temp
         sys.argv = [
             "kapitan",
             "compile",
@@ -105,8 +126,6 @@ class DependencyManagerTest(unittest.TestCase):
             "nginx",
             "nginx-dev",
             "monitoring-dev",
-            "-p",
-            "4",
         ]
         main()
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))
@@ -114,6 +133,7 @@ class DependencyManagerTest(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "kapitan-repository")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "charts", "prometheus")))
+        rmtree(temp)
 
     def tearDown(self):
         os.chdir("../../")
