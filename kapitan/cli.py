@@ -176,7 +176,7 @@ def main():
     )
     compile_parser.add_argument(
         "--fetch",
-        help="fetches remote inventories and external dependencies",
+        help="fetch remote inventories and/or external dependencies",
         action="store_true",
         default=from_dot_kapitan("compile", "fetch", False),
     )
@@ -234,7 +234,8 @@ def main():
     compile_parser.add_argument(
         "--cache",
         "-c",
-        help="enable compilation caching to .kapitan_cache, default is False",
+        help="enable compilation caching to .kapitan_cache\
+        and dependency caching to .dependency_cache, default is False",
         action="store_true",
         default=from_dot_kapitan("compile", "cache", False),
     )

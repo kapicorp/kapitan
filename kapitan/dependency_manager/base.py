@@ -12,6 +12,7 @@ from shutil import copyfile, rmtree
 import platform
 from mimetypes import MimeTypes
 from git import GitCommandError
+from git import Repo
 
 from kapitan.errors import GitSubdirNotFoundError, GitFetchingError, HelmBindingUnavailableError
 from kapitan.utils import (
@@ -22,7 +23,6 @@ from kapitan.utils import (
     normalise_join_path,
 )
 
-from git import Repo
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
     """
     parses through the dependencies parameters in target_objs and fetches them
     all dependencies are first fetched into save_dir, after which they are copied to their respective output_path.
-    overwites older version of existing dependency if force fetced
+    overwites older version of existing dependencies if force fetced
     """
     # there could be multiple dependency items per source_uri due to reclass inheritance or
     # other user requirements. So create a mapping from source_uri to a set of dependencies with

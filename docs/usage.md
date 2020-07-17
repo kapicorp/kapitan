@@ -56,7 +56,8 @@ optional arguments:
   --prune               prune jsonnet output
   --quiet               set quiet mode, only critical output
   --output-path PATH    set output path, default is "."
-  --fetch               fetches external dependencies
+  --fetch               fetch remote inventories and/or external dependencies
+  --force               overwrite existing inventory and/or dependency item
   --validate            validate compile output against schemas as specified
                         in inventory
   --parallelism INT, -p INT
@@ -68,7 +69,8 @@ optional arguments:
                         sensitive data)
   --inventory-path INVENTORY_PATH
                         set inventory path, default is "./inventory"
-  --cache, -c           enable compilation caching to .kapitan_cache, default
+  --cache, -c           enable compilation caching to .kapitan_cache and
+                        dependency caching to .dependency_cache, default
                         is False
   --cache-paths PATH [PATH ...]
                         cache additional paths to .kapitan_cache, default is

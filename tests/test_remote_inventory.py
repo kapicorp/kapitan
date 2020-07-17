@@ -139,9 +139,9 @@ class RemoteInventoryTest(unittest.TestCase):
     def test_force_fetch(self):
         """Test overwriting inventory items while using the --force flag
 
-        runs $ kapitan compile --fetch --output-path=temp_output\
+        runs $ kapitan compile --fetch --cache --output-path=temp_output\
             --inventory-pat=temp_inv --targets remoteinv-example
-        runs $ kapitan compile --fetch --output-path=temp_output\
+        runs $ kapitan compile --fetch --cache --output-path=temp_output\
             --inventory-pat=temp_inv --targets remoteinv-example --force
         """
 
@@ -160,13 +160,13 @@ class RemoteInventoryTest(unittest.TestCase):
             "kapitan",
             "compile",
             "--fetch",
+            "--cache",
             "--output-path",
             temp_output,
             "--inventory-path",
             temp_inv,
             "--targets",
             "remoteinv-example",
-            "--cache",
         ]
         main()
 
@@ -186,6 +186,7 @@ class RemoteInventoryTest(unittest.TestCase):
             "kapitan",
             "compile",
             "--fetch",
+            "--cache",
             "--output-path",
             temp_output,
             "--inventory-path",
@@ -205,7 +206,3 @@ class RemoteInventoryTest(unittest.TestCase):
     def tearDown(self):
         os.chdir("../../../")
         reset_cache()
-
-
-if __name__ == "__main__":
-    unittest.main()

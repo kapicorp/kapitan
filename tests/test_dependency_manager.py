@@ -25,6 +25,7 @@ class DependencyManagerTest(unittest.TestCase):
         os.chdir(os.path.join(os.getcwd(), "tests", "test_resources"))
 
     def test_fetch_http_sources(self):
+        "Tests fetching http[s] sources"
         temp_dir = tempfile.mkdtemp()
         http_sources = [
             (
@@ -45,6 +46,7 @@ class DependencyManagerTest(unittest.TestCase):
         rmtree(temp_dir)
 
     def test_fetch_git_sources(self):
+        "Tests clonning git repo"
         temp_dir = tempfile.mkdtemp()
         repo_dir = os.path.join(temp_dir, "7a8f3940kapitan.git")
         # TODO: also test git ssh urls
@@ -54,6 +56,9 @@ class DependencyManagerTest(unittest.TestCase):
         rmtree(temp_dir)
 
     def test_clone_repo_subdir(self):
+        """
+        Tests clonning git repo and copy its' subdir
+        """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         source = "https://github.com/deepmind/kapitan.git"
@@ -64,6 +69,9 @@ class DependencyManagerTest(unittest.TestCase):
         rmtree(output_dir)
 
     def test_fetch_helm_chart(self):
+        """
+        Tests fetching helm chart
+        """
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
@@ -84,6 +92,10 @@ class DependencyManagerTest(unittest.TestCase):
         rmtree(output_dir)
 
     def test_fetch_helm_chart_version_that_does_not_exist(self):
+        """
+        Test fetching helm chart version that does not exist
+        Runs $ kapitan compile --fetch --output-path temp -t nginx nginx-dev monitoring-dev
+        """
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
