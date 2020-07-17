@@ -1,3 +1,6 @@
+## 0.28.1-rc.5:
+- Add support for remote inventory fetching (#521)
+
 ## 0.28.1-rc.4:
 - Adds input_params for compile time parameter injection into kadet modules (#560)
 - Add logging fix for python 3.8+ on macOS (#559)
