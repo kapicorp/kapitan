@@ -11,6 +11,7 @@ import os
 import sys
 from importlib.util import module_from_spec, spec_from_file_location
 
+import inspect
 import yaml
 from addict import Dict
 from kapitan.errors import CompileError
@@ -68,6 +69,10 @@ def load_from_search_paths(module_name):
 class Kadet(InputType):
     def __init__(self, compile_path, search_paths, ref_controller):
         super().__init__("kadet", compile_path, search_paths, ref_controller)
+        self.input_params = {}
+
+    def set_input_params(self, input_params):
+        self.input_params = input_params
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """
@@ -86,6 +91,13 @@ class Kadet(InputType):
         target_name = kwargs.get("target_name", None)
         indent = kwargs.get("indent", 2)
 
+        input_params = self.input_params
+        # set compile_path allowing kadet functions to have context on where files
+        # are being compiled on the current kapitan run
+        input_params["compile_path"] = compile_path
+        # reset between each compile if kadet component is used multiple times
+        self.input_params = {}
+
         # These will be updated per target
         # XXX At the moment we have no other way of setting externals for modules...
         global search_paths
@@ -100,7 +112,16 @@ class Kadet(InputType):
         spec.loader.exec_module(kadet_module)
         logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
 
-        output_obj = kadet_module.main().to_dict()
+        kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
+        logger.debug("Kadet main args: {}".format(kadet_arg_spec.args))
+
+        if len(kadet_arg_spec.args) == 1:
+            output_obj = kadet_module.main(input_params).to_dict()
+        elif len(kadet_arg_spec.args) == 0:
+            output_obj = kadet_module.main().to_dict()
+        else:
+            raise ValueError(f"Kadet {spec.name} main parameters not equal to 1 or 0")
+
         if prune:
             output_obj = prune_empty(output_obj)
 
