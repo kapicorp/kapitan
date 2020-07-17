@@ -8,7 +8,7 @@ Kapitan can manage references and secrets with the following key management serv
 - Environment
 - Vaultkv (read only support)
 
-If you want to get started with secrets but don't have a GPG or KMS setup, you can also use the secret `ref` type. Note that `ref` is not encrypted and is intended for development purposes only. *Do not use ref secrets if you're storing sensitive information!*
+If you want to get started with secrets but don't have a GPG or KMS setup, you can also use the `base64` reference type. Note that `base64` is not encrypted and is intended for development purposes only. *Do not use base64 if you're storing sensitive information!*
 
 ## Using Secrets
 
@@ -50,7 +50,7 @@ $ kapitan refs --write <secret_type>:path/to/secret/file -t <target_name> -f <se
 
 ​	where `<secret_type>` can be any of:
 
-- `ref`: ref type (not encrypted)
+- `base64`: base64 (not encrypted!)
 - `gpg`: GPG
 - `gkms`: Google Cloud KMS
 - `awskms`: AWS KMS
