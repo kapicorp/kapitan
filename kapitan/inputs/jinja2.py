@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 class Jinja2(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller):
-        super().__init__("jinja2", compile_path, search_paths, ref_controller)
+    def __init__(self, compile_path, search_paths, ref_controller, inventory_path):
+        super().__init__("jinja2", compile_path, search_paths, ref_controller, inventory_path)
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """
@@ -32,8 +32,8 @@ class Jinja2(InputType):
 
         # set ext_vars and inventory for jinja2 context
         context = ext_vars.copy()
-        context["inventory"] = inventory(self.search_paths, target_name)
-        context["inventory_global"] = inventory(self.search_paths, None)
+        context["inventory"] = inventory(self.search_paths, target_name, self.inventory_path)
+        context["inventory_global"] = inventory(self.search_paths, None, self.inventory_path)
         jinja2_filters = kwargs.get("jinja2_filters")
 
         for item_key, item_value in render_jinja2(

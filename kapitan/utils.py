@@ -14,6 +14,9 @@ import math
 import os
 import stat
 import sys
+import re
+import tarfile
+from zipfile import ZipFile
 from collections import Counter, defaultdict
 from functools import lru_cache, wraps
 from hashlib import sha256
@@ -26,6 +29,9 @@ from kapitan import cached, defaults
 from kapitan.errors import CompileError
 from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
 from kapitan.version import VERSION
+from distutils.errors import DistutilsFileError
+from distutils.file_util import _copy_file_contents
+from distutils.dir_util import mkpath
 
 "random utils"
 
@@ -471,3 +477,96 @@ def make_request(source):
     else:
         r.raise_for_status()
     return None, None
+
+
+def unpack_downloaded_file(file_path, output_path, content_type):
+    """unpacks files of various MIME type and stores it to the output_path"""
+    if content_type == "application/x-tar":
+        tar = tarfile.open(file_path)
+        tar.extractall(path=output_path)
+        tar.close()
+        is_unpacked = True
+    elif content_type == "application/zip":
+        zfile = ZipFile(file_path)
+        zfile.extractall(output_path)
+        zfile.close()
+        is_unpacked = True
+    elif content_type in ["application/octet-stream", "application/x-gzip"]:
+        if re.search(r"(\.tar\.gz|\.tgz)$", file_path):
+            tar = tarfile.open(file_path)
+            tar.extractall(path=output_path)
+            tar.close()
+            is_unpacked = True
+        else:
+            extension = re.findall(r"\..*$", file_path)[0]
+            logger.debug(f"File extension {extension} not suported")
+            is_unpacked = False
+    else:
+        logger.debug(f"Content type {content_type} not suported")
+        is_unpacked = False
+    return is_unpacked
+
+
+def safe_copy_file(src, dst):
+    """Copy a file from 'src' to 'dst'.
+
+    Similar to distutils.file_util.copy_file except
+    if the file exists in 'dst' it's not clobbered
+    or overwritten.
+
+    returns a tupple (src, val)
+    file not copied if val = 0 else 1
+    """
+
+    if not os.path.isfile(src):
+        raise DistutilsFileError("Can't copy {}: doesn't exist or is not a regular file".format(src))
+
+    if os.path.isdir(dst):
+        dir = dst
+        dst = os.path.join(dst, os.path.basename(src))
+    else:
+        dir = os.path.dirname(dst)
+
+    if os.path.isfile(dst):
+        logger.warning("Not updating {} (file already exists)".format(dst))
+        return (dst, 0)
+    _copy_file_contents(src, dst)
+    logger.debug("Copied {} to {}".format(src, dir))
+    return (dst, 1)
+
+
+def safe_copy_tree(src, dst):
+    """Recursively copies the 'src' directory tree to 'dst'
+
+    Both 'src' and 'dst' must be directories.
+    similar to distutil.dir_util.copy_tree except
+    it doesn't overwite an existing file and doesn't
+    copy any file starting with "."
+
+    Returns a list of copied file paths.
+    """
+    if not os.path.isdir(src):
+        raise DistutilsFileError("Cannot copy tree {}: not a directory".format(src))
+    try:
+        names = os.listdir(src)
+    except OSError as e:
+        raise DistutilsFileError("Error listing files in {}: {}".format(src, e.strerror))
+
+    mkpath(dst)
+    outputs = []
+
+    for name in names:
+        src_name = os.path.join(src, name)
+        dst_name = os.path.join(dst, name)
+
+        if name.startswith("."):
+            logger.debug("Not copying {}".format(src_name))
+            continue
+        if os.path.isdir(src_name):
+            outputs.extend(safe_copy_tree(src_name, dst_name))
+
+        else:
+            safe_copy_file(src_name, dst_name)
+            outputs.append(dst_name)
+
+    return outputs

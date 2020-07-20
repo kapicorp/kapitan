@@ -1,0 +1,13 @@
+[tool.black]
+line-length = 110
+target-version = ['py37']
+exclude = '''
+(
+  /(
+      .*reclass.*
+    | .*helm_binding.py
+    | .*helm_fetch_binding.py
+    | .*version.py
+  )
+)
+'''

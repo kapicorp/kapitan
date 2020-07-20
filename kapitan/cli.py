@@ -82,7 +82,9 @@ def trigger_compile(args):
         reveal=args.reveal,
         cache=args.cache,
         cache_paths=args.cache_paths,
+        fetch_inventories=args.fetch,
         fetch_dependencies=args.fetch,
+        force_fetch=args.force,
         validate=args.validate,
         schemas_path=args.schemas_path,
         jinja2_filters=args.jinja2_filters,
@@ -174,9 +176,15 @@ def main():
     )
     compile_parser.add_argument(
         "--fetch",
-        help="fetches external dependencies",
+        help="fetch remote inventories and/or external dependencies",
         action="store_true",
         default=from_dot_kapitan("compile", "fetch", False),
+    )
+    compile_parser.add_argument(
+        "--force",
+        help="overwrite existing inventory and/or dependency item",
+        action="store_true",
+        default=from_dot_kapitan("compile", "force", False),
     )
     compile_parser.add_argument(
         "--validate",
@@ -226,7 +234,8 @@ def main():
     compile_parser.add_argument(
         "--cache",
         "-c",
-        help="enable compilation caching to .kapitan_cache, default is False",
+        help="enable compilation caching to .kapitan_cache\
+        and dependency caching to .dependency_cache, default is False",
         action="store_true",
         default=from_dot_kapitan("compile", "cache", False),
     )
