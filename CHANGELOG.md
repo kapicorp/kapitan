@@ -1,3 +1,6 @@
+## 0.29.0-rc.1:
+- Rename remote inventory key to `inventory` instead of `inventories` (#570)
+
 ## 0.29.0-rc.0:
 - Add support for remote inventory fetching (#521)
 

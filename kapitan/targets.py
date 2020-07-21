@@ -20,7 +20,6 @@ from functools import partial
 import jsonschema
 import yaml
 from kapitan import cached, defaults
-from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
@@ -28,6 +27,7 @@ from kapitan.inputs.helm import Helm
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
+from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.resources import inventory_reclass
 from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
 from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
@@ -556,7 +556,7 @@ def valid_target_obj(target_obj):
                     ],
                 },
             },
-            "inventories": {
+            "inventory": {
                 "type": "array",
                 "items": {
                     "type": "object",
