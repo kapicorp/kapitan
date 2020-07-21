@@ -1,8 +1,8 @@
-import os
+import hashlib
 import logging
+import os
 from collections import defaultdict
 from functools import partial
-import hashlib
 
 from kapitan import cached
 from kapitan.dependency_manager.base import fetch_git_dependency, fetch_http_dependency
@@ -31,7 +31,7 @@ def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
 
     for target_obj in target_objs:
         try:
-            inventories = target_obj["inventories"]
+            inventories = target_obj["inventory"]
             for inv in inventories:
                 inv_type = inv["type"]
                 source_uri = inv["source"]
@@ -80,7 +80,7 @@ def list_sources(target_objs):
     sources = []
     for target_obj in target_objs:
         try:
-            invs = target_obj["inventories"]
+            invs = target_obj["inventory"]
             for inv in invs:
                 source_uri = inv["source"]
                 source_hash = hashlib.sha256(source_uri.encode())
@@ -95,7 +95,7 @@ def list_sources(target_objs):
                 sources.append(source_hash.hexdigest()[:8])
         except KeyError:
             logger.debug(
-                "Listing sources: target object {} has no 'inventories' key, continuing".format(
+                "Listing sources: target object {} has no 'inventory' key, continuing".format(
                     target_obj["vars"]["target"]
                 )
             )

@@ -4,7 +4,7 @@ parameters:
     target_name: remoteinv-example
     name_space: $(target_name)
     kapitan:
-        inventories:
+        inventory:
             - type: git
               output_path: targets/
               source: https://github.com/deepmind/kapitan.git
