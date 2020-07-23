@@ -90,9 +90,9 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(output_dir)
 
     def test_compile_fetch(self):
-        """ Run $ kapitan compile --fetch \
-            --output-path=some/dir/ \
-            --inventory-path=another/dir \
+        """ Run $ kapitan compile --fetch\
+            --output-path=some/dir/\
+            --inventory-path=another/dir\
             --targets remoteinv-example remoteinv-nginx zippedinv\
             --force
             were some/dir/ & another/dir/ are directories chosen by the user
@@ -132,6 +132,9 @@ class RemoteInventoryTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(temp_inv, "targets", "nginx-dev.yml")))
         self.assertTrue(os.path.isdir(os.path.join(temp_output, "compiled", "remoteinv-nginx")))
         self.assertTrue(os.path.isdir(os.path.join(temp_output, "compiled", "zippedinv")))
+        # declared `monitoring` class in the `remoteinv-example` but it does not exist in the `classes/` directory (yet)
+        # test successful fetching and compilation of `monitoring` class and its contents
+        self.assertTrue(os.path.isdir(os.path.join(temp_output, "charts", "prometheus")))
 
         rmtree(temp_inv)
         rmtree(temp_output)
