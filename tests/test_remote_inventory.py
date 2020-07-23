@@ -90,11 +90,7 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(output_dir)
 
     def test_compile_fetch(self):
-        """ Run $ kapitan compile --fetch\
-            --output-path=some/dir/\
-            --inventory-path=another/dir\
-            --targets remoteinv-example remoteinv-nginx zippedinv\
-            --force
+        """ Run $ kapitan compile --fetch --output-path=some/dir/ --inventory-path=another/dir --targets remoteinv-example remoteinv-nginx zippedinv --force
             were some/dir/ & another/dir/ are directories chosen by the user
 
             Recursively force fetch inventories and compile
@@ -132,20 +128,47 @@ class RemoteInventoryTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(temp_inv, "targets", "nginx-dev.yml")))
         self.assertTrue(os.path.isdir(os.path.join(temp_output, "compiled", "remoteinv-nginx")))
         self.assertTrue(os.path.isdir(os.path.join(temp_output, "compiled", "zippedinv")))
-        # declared `monitoring` class in the `remoteinv-example` but it does not exist in the `classes/` directory (yet)
-        # test successful fetching and compilation of `monitoring` class and its contents
-        self.assertTrue(os.path.isdir(os.path.join(temp_output, "charts", "prometheus")))
 
         rmtree(temp_inv)
         rmtree(temp_output)
 
+    def test_compile_fetch_classes_that_doesnot_exist_yet(self):
+        """
+        runs $ kapitan compile --fetch --search-path temp_dir --output-path temp_dir --inventory-path temp_dir/inventory -t monitoring-dev
+        The `monitor` class does not exist initially, it is fetched and then compiled
+        """
+        temp_dir = tempfile.mkdtemp()
+        copy_tree(
+            os.path.join(os.path.dirname(__file__), "test_remote_inventory", "environment_one"), temp_dir
+        )
+        os.makedirs(os.path.join(temp_dir, "helm_values_files"), exist_ok=True)
+        # copying helm_values_files to the search path
+        copy_tree(
+            os.path.join(os.path.abspath(os.path.dirname(__file__)), "test_resources", "helm_values_files"),
+            os.path.join(temp_dir, "helm_values_files"),
+        )
+        sys.argv = [
+            "kapitan",
+            "compile",
+            "--fetch",
+            "--search-path",
+            temp_dir,
+            "--output-path",
+            temp_dir,
+            "--inventory-path",
+            os.path.join(temp_dir, "inventory"),
+            "-t",
+            "monitoring-dev",
+        ]
+        main()
+        self.assertTrue(os.path.isdir(os.path.join(temp_dir, "charts", "prometheus")))
+        rmtree(temp_dir)
+
     def test_force_fetch(self):
         """Test overwriting inventory items while using the --force flag
 
-        runs $ kapitan compile --fetch --cache --output-path=temp_output\
-            --inventory-pat=temp_inv --targets remoteinv-example
-        runs $ kapitan compile --fetch --cache --output-path=temp_output\
-            --inventory-pat=temp_inv --targets remoteinv-example --force
+        runs $ kapitan compile --fetch --cache --output-path=temp_output --inventory-pat=temp_inv --targets remoteinv-example
+        runs $ kapitan compile --fetch --cache --output-path=temp_output --inventory-pat=temp_inv --targets remoteinv-example --force
         """
 
         temp_output = tempfile.mkdtemp()

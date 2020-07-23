@@ -108,9 +108,9 @@ def compile_targets(
                 )
                 cached.inv_sources.update(new_sources)
                 new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
-            # reset inventory cache and load target objs to check for missin classes
+            # reset inventory cache and load target objs to check for missing classes
             cached.reset_inv()
-            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=True)
+            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
         if kwargs.get("fetch_dependencies", False):
             fetch_dependencies(
                 output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool

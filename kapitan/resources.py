@@ -298,6 +298,8 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
     Will attempt to read reclass config from 'reclass-config.yml' otherwise
     it will failback to the default config.
     Returns a reclass style dictionary
+
+    Does not throw errors if a class is not found while --fetch flag is enabled
     """
 
     if not cached.inv:
