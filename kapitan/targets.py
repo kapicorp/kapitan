@@ -354,7 +354,8 @@ def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
             inv_target = inv["nodes"][target_name]
             target_obj = inv_target["parameters"]["kapitan"]
             target_obj["target_full_path"] = inv_target["__reclass__"]["node"].replace("./", "")
-            valid_target_obj(target_obj)
+            require_compile = not ignore_class_notfound
+            valid_target_obj(target_obj, require_compile)
             validate_matching_target_name(target_name, target_obj, inventory_path)
             logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
             target_objs.append(target_obj)
@@ -447,7 +448,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
 
 
 @hashable_lru_cache
-def valid_target_obj(target_obj):
+def valid_target_obj(target_obj, require_compile=True):
     """
     Validates a target_obj
     Returns a dict object if target is valid
@@ -597,8 +598,9 @@ def valid_target_obj(target_obj):
                 },
             },
         },
-        "required": ["compile"],
     }
+    if require_compile:
+        schema["required"] = ["compile"]
 
     try:
         jsonschema.validate(target_obj, schema, format_checker=jsonschema.FormatChecker())

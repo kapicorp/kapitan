@@ -134,7 +134,7 @@ class RemoteInventoryTest(unittest.TestCase):
 
     def test_compile_fetch_classes_that_doesnot_exist_yet(self):
         """
-        runs $ kapitan compile --fetch --search-path temp_dir --output-path temp_dir --inventory-path temp_dir/inventory -t monitoring-dev
+        runs $ kapitan compile --fetch --search-paths temp_dir --output-path temp_dir --inventory-path temp_dir/inventory -t monitoring-dev
         The `monitor` class does not exist initially, it is fetched and then compiled
         """
         temp_dir = tempfile.mkdtemp()
@@ -151,7 +151,7 @@ class RemoteInventoryTest(unittest.TestCase):
             "kapitan",
             "compile",
             "--fetch",
-            "--search-path",
+            "--search-paths",
             temp_dir,
             "--output-path",
             temp_dir,
