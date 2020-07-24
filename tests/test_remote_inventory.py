@@ -137,16 +137,13 @@ class RemoteInventoryTest(unittest.TestCase):
         runs $ kapitan compile --fetch --search-paths temp_dir --output-path temp_dir --inventory-path temp_dir/inventory -t monitoring-dev
         The `monitor` class does not exist initially, it is fetched and then compiled
         """
+        os.chdir(
+            os.path.join(
+                os.path.abspath(os.path.dirname(__file__)), "test_remote_inventory", "environment_three"
+            )
+        )
         temp_dir = tempfile.mkdtemp()
-        copy_tree(
-            os.path.join(os.path.dirname(__file__), "test_remote_inventory", "environment_one"), temp_dir
-        )
-        os.makedirs(os.path.join(temp_dir, "helm_values_files"), exist_ok=True)
         # copying helm_values_files to the search path
-        copy_tree(
-            os.path.join(os.path.abspath(os.path.dirname(__file__)), "test_resources", "helm_values_files"),
-            os.path.join(temp_dir, "helm_values_files"),
-        )
         sys.argv = [
             "kapitan",
             "compile",
@@ -155,8 +152,6 @@ class RemoteInventoryTest(unittest.TestCase):
             temp_dir,
             "--output-path",
             temp_dir,
-            "--inventory-path",
-            os.path.join(temp_dir, "inventory"),
             "-t",
             "monitoring-dev",
         ]

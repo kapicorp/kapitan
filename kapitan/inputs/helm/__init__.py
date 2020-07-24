@@ -2,7 +2,7 @@ import logging
 import os
 from kapitan.errors import HelmBindingUnavailableError, HelmTemplateError
 from kapitan.inputs.base import InputType, CompiledFile
-from kapitan.resources import file_exists
+
 import tempfile
 import platform
 import yaml
@@ -133,8 +133,7 @@ class Helm(InputType):
         helm_values_files = []
         if kwargs.get("helm_values_files", []):
             for file_name in kwargs["helm_values_files"]:
-                full_path = file_exists(self.search_paths, file_name)
-                helm_values_files.append(ffi.new("char[]", full_path["path"].encode("ascii")))
+                helm_values_files.append(ffi.new("char[]", file_name.encode("ascii")))
 
         helm_values_files_len = ffi.cast("int", len(helm_values_files))
         helm_values_files = ffi.new("char *[]", helm_values_files)
