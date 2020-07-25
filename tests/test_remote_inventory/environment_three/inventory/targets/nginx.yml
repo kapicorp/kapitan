@@ -1,0 +1,31 @@
+classes:
+  - common
+  - test-objects
+parameters:
+  my_plainref: ?{plain:my_plainref}
+  host_port: 8080
+  container_port: 80
+  server_name: localhost
+  website: $(pwd)/compiled/${kapitan:vars:target}/manifests/html
+  root: /usr/share/nginx/html
+  charset: koi8-r
+  target_name: nginx
+  kapitan:
+    compile:
+      - output_path: manifests
+        input_type: jinja2
+        input_paths:
+         - templates/nginx.conf
+    inventory:
+      - type: https
+        output_path: classes/test-objects.yml
+        source: https://raw.githubusercontent.com/AlphaRoy14/kapitan/master/tests/test_resources/inventory/classes/test-objects.yml
+    dependencies:
+      - type: git
+        output_path: templates/
+        ref: master
+        subdir: tests/test_resources/templates
+        source: https://github.com/deepmind/kapitan.git
+      - type: https
+        output_path: refs/my_plainref
+        source: https://raw.githubusercontent.com/AlphaRoy14/kapitan/master/tests/test_resources/refs/my_plainref

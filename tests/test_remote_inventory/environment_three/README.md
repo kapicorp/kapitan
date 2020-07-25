@@ -1,2 +1,2 @@
 # About.
-This directory is used to test compiling targets after fetching classes that does not exist initially
+This directory contains the test resources to test feching of classes that does not locally exist and compiling the target

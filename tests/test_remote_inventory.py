@@ -134,29 +134,28 @@ class RemoteInventoryTest(unittest.TestCase):
 
     def test_compile_fetch_classes_that_doesnot_exist_yet(self):
         """
-        runs $ kapitan compile --fetch --search-paths temp_dir --output-path temp_dir --inventory-path temp_dir/inventory -t monitoring-dev
-        The `monitor` class does not exist initially, it is fetched and then compiled
+        runs $ kapitan compile --fetch --search-paths temp_dir --output-path temp_dir --inventory-path temp_dir/inventory -t nginx
+        The `test-objects` class of target `nginx` does not exist initially, it is fetched and then compiled
         """
-        os.chdir(
-            os.path.join(
-                os.path.abspath(os.path.dirname(__file__)), "test_remote_inventory", "environment_three"
-            )
-        )
+        os.chdir(os.path.join(os.getcwd(), "..", "environment_three"))
         temp_dir = tempfile.mkdtemp()
-        # copying helm_values_files to the search path
+
+        copy_tree(".", temp_dir)  # copying the test environment to search path
         sys.argv = [
             "kapitan",
             "compile",
             "--fetch",
-            "--search-paths",
+            "--search-path",
             temp_dir,
             "--output-path",
             temp_dir,
+            "--inventory-path",
+            os.path.join(temp_dir, "inventory"),
             "-t",
-            "monitoring-dev",
+            "nginx",
         ]
         main()
-        self.assertTrue(os.path.isdir(os.path.join(temp_dir, "charts", "prometheus")))
+        self.assertTrue(os.path.exists(os.path.join(temp_dir, "compiled", "nginx")))
         rmtree(temp_dir)
 
     def test_force_fetch(self):
