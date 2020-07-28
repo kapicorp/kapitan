@@ -1,6 +1,6 @@
-# Support for Google Secret Management
+# Support for [Google Secret Manager](https://cloud.google.com/secret-manager/)
 
-This feature will enable users to retrieve secrets from Google Secret Management API using the `gsm` keyword.
+This feature will enable users to retrieve secrets from Google Secret Manager API using the `gsm` keyword.
 
 ## Specification
 
