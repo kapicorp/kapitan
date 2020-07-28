@@ -19,7 +19,7 @@ parameters:
     inventory:
       - type: https
         output_path: classes/test-objects.yml
-        source: https://github.com/deepmind/kapitan/blob/master/tests/test_resources/inventory/classes/test-objects.yml
+        source: https://raw.githubusercontent.com/deepmind/kapitan/master/tests/test_resources/inventory/classes/test-objects.yml
     dependencies:
       - type: git
         output_path: templates/
