@@ -2,6 +2,7 @@ import logging
 import os
 from kapitan.errors import HelmBindingUnavailableError, HelmTemplateError
 from kapitan.inputs.base import InputType, CompiledFile
+
 import tempfile
 import platform
 import yaml

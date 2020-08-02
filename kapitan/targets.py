@@ -74,7 +74,12 @@ def compile_targets(
     pool = multiprocessing.Pool(parallel)
 
     try:
-        target_objs = load_target_inventory(inventory_path, updated_targets)
+        if kwargs.get("fetch_inventories", False):
+            # skip classes that are not yet available
+            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=True)
+        else:
+            # ignore_class_notfound = False by default
+            target_objs = load_target_inventory(inventory_path, updated_targets)
 
         # append "compiled" to output_path so we can safely overwrite it
         compile_path = os.path.join(output_path, "compiled")
@@ -89,6 +94,7 @@ def compile_targets(
 
         if not target_objs:
             raise CompileError("Error: no targets found")
+
         if kwargs.get("fetch_inventories", False):
             # new_source checks for new sources in fetched inventory items
             new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
@@ -97,10 +103,14 @@ def compile_targets(
                     inventory_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
                 )
                 cached.reset_inv()
-                target_objs = load_target_inventory(inventory_path, updated_targets)
+                target_objs = load_target_inventory(
+                    inventory_path, updated_targets, ignore_class_notfound=True
+                )
                 cached.inv_sources.update(new_sources)
                 new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
-
+            # reset inventory cache and load target objs to check for missing classes
+            cached.reset_inv()
+            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
         if kwargs.get("fetch_dependencies", False):
             fetch_dependencies(
                 output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
@@ -328,10 +338,10 @@ def save_inv_cache(compile_path, targets):
                 yaml.dump(cached.inv_cache, stream=f, default_flow_style=False)
 
 
-def load_target_inventory(inventory_path, targets):
+def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
     """returns a list of target objects from the inventory"""
     target_objs = []
-    inv = inventory_reclass(inventory_path)
+    inv = inventory_reclass(inventory_path, ignore_class_notfound)
 
     # if '-t' is set on compile, only loop through selected targets
     if targets:
@@ -344,7 +354,8 @@ def load_target_inventory(inventory_path, targets):
             inv_target = inv["nodes"][target_name]
             target_obj = inv_target["parameters"]["kapitan"]
             target_obj["target_full_path"] = inv_target["__reclass__"]["node"].replace("./", "")
-            valid_target_obj(target_obj)
+            require_compile = not ignore_class_notfound
+            valid_target_obj(target_obj, require_compile)
             validate_matching_target_name(target_name, target_obj, inventory_path)
             logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
             target_objs.append(target_obj)
@@ -437,7 +448,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
 
 
 @hashable_lru_cache
-def valid_target_obj(target_obj):
+def valid_target_obj(target_obj, require_compile=True):
     """
     Validates a target_obj
     Returns a dict object if target is valid
@@ -587,8 +598,9 @@ def valid_target_obj(target_obj):
                 },
             },
         },
-        "required": ["compile"],
     }
+    if require_compile:
+        schema["required"] = ["compile"]
 
     try:
         jsonschema.validate(target_obj, schema, format_checker=jsonschema.FormatChecker())

@@ -2,8 +2,10 @@ classes:
   - mycommon
 parameters:
     target_name: remoteinv-example
-    name_space: $(target_name)
+    name_space: ${target_name}
     kapitan:
+        vars:
+          env: ${target_name}
         inventory:
             - type: git
               output_path: targets/
