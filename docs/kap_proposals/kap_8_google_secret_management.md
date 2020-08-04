@@ -60,7 +60,7 @@ Here, `version_id` will be an optional argument. By default it will point to `la
 
 ## Revealing a secret
 
-After compilation, the secret reference will be prefixed with 8 characters from the sha256 hash of the retrieved password
+After compilation, the secret reference will be postfixed with 8 characters from the sha256 hash of the retrieved password
 ```yaml
 apiVersion: v1
 data:
@@ -80,4 +80,4 @@ To reveal the secret, the following command will be used
 
 * [google-cloud-secret-manager](https://github.com/googleapis/python-secret-manager)
 
-*note* Kapitan will not be responsible for authentication or access management
+*note* Kapitan will not be responsible for authentication or access management to GCP
