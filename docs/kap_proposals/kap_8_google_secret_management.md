@@ -26,17 +26,18 @@ export PROJECT_ID=<Project_Id>
 ```
 
 ## Using a secret
+In GCP, a secret contains one or more secret versions, along with its metadata. The actual contents of a secret are stored in a secret version. Each secret is identified by a name. We call that variable `secret_id` e.g. _my\_treasured\_secret_.
+The URI of the secret becomes `projects/<Project_Id>/secrets/my_treasured_secret`
 
-`secret_id` is used to point to the secret data. The following command will be used to add a `secret_id` to kapitan.
-
+The following command will be used to add a `secret_id` to kapitan.
 ```shell
-$ echo "secret_id"  | kapitan refs --write gsm:path/to/secret_inside_kapitan -t <target_name> -f -
+$ echo "my_treasured_secret"  | kapitan refs --write gsm:path/to/secret_inside_kapitan -t <target_name> -f -
 ```
 The `-t <target_name>` is used to get the information about Project_ID.
 
-The _secret\_id_ is Base64 encoded and stored in `path/to/secret_inside_kapitan` as
+The `secret_id` is Base64 encoded and stored in `path/to/secret_inside_kapitan` as
 ```yaml
-data: aGVsbG8K
+data: bXlfdHJlYXN1cmVkX3NlY3JldAo=
 encoding: original
 type: gsm
 gsm_params:
