@@ -11,6 +11,7 @@ from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.env import EnvRef
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
+from kapitan.refs.secrets.gsm import GoogleSMSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.refs.secrets.vaultkv import VaultSecret
 from kapitan.resources import inventory_reclass
@@ -91,6 +92,29 @@ def ref_write(args, ref_controller):
             )
         secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
         tag = "?{{gkms:{}}}".format(token_path)
+        ref_controller[tag] = secret_obj
+
+    elif token_name.startswith("gsm:"):
+        type_name, token_path = token_name.split(":")
+        _data = data.encode()
+        # encoding is "original"
+        project_id = os.getenv("PROJECT_ID")
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            if "secrets" not in kap_inv_params:
+                raise KapitanError(
+                    "parameters.kapitan.secrets not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
+            project_id = kap_inv_params["secrets"]["gsm"]["project_id"]
+        if not project_id:
+            raise KapitanError(
+                "No Project ID specified. Set PROJECT_ID environment variable or specify it in parameters.kapitan.secrets.gsm.project_id and use --target-name"
+            )
+        secret_obj = GoogleSMSecret(_data, project_id)
+        tag = "?{{gsm:{}}}".format(token_path)
         ref_controller[tag] = secret_obj
 
     elif token_name.startswith("awskms:"):
@@ -311,6 +335,10 @@ def secret_update_validate(args, ref_controller):
             vaultkv = kap_inv_params["secrets"]["vaultkv"]["auth"]
         except KeyError:
             vaultkv = None
+        try:
+            gsm = kap_inv_params["secrets"]["gsm"]["project_id"]
+        except KeyError:
+            gsm = None
 
         for token_path in token_paths:
             if token_path.startswith("?{gpg:"):
@@ -372,6 +400,13 @@ def secret_update_validate(args, ref_controller):
                     else:
                         secret_obj.update_key(awskey)
                         ref_controller[token_path] = secret_obj
+            elif token_path.startswith("?{gsm:"):
+                if not gsm:
+                    logger.debug(
+                        "secret_update_validate: target: {} has no project_id, skipping {}".format(
+                            target_name, token_path
+                        )
+                    )
 
             else:
                 logger.info("Invalid secret %s, could not get type, skipping", token_path)

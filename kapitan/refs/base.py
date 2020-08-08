@@ -450,6 +450,10 @@ class RefController(object):
                 from kapitan.refs.secrets.vaultkv import VaultBackend
 
                 self.register_backend(VaultBackend(self.path, **ref_kwargs))
+            elif type_name == "gsm":
+                from kapitan.refs.secrets.gsm import GoogleSMBackend
+
+                self.register_backend(GoogleSMBackend(self.path, **ref_kwargs))
             else:
                 raise RefBackendError(f"no backend for ref type: {type_name}")
         return self.backends[type_name]
