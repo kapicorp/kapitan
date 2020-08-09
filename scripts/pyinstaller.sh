@@ -15,7 +15,8 @@ pyi-makespec kapitan/"$entry".py --onefile \
     --add-data kapitan/dependency_manager/helm/helm_fetch.so:kapitan/dependency_manager/helm \
     --hidden-import pyparsing --hidden-import jsonschema \
     --hidden-import 'pkg_resources.py2_warn' \
-    --exclude-module doctest --exclude-module pydoc
+    --exclude-module doctest --exclude-module pydoc \
+    --additional-hooks-dir .
 pyinstaller "$entry".spec --clean
 mv dist/$entry dist/$output_name
 # Open permissions so that when this binary
