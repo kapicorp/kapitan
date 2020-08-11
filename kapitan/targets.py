@@ -47,6 +47,7 @@ def compile_targets(
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix=".kapitan")
+    temp_compile_path = os.path.join(temp_path, "compiled")
     dep_cache_dir = temp_path
 
     updated_targets = targets
@@ -86,7 +87,7 @@ def compile_targets(
         worker = partial(
             compile_target,
             search_paths=search_paths,
-            compile_path=temp_path,
+            compile_path=temp_compile_path,
             ref_controller=ref_controller,
             inventory_path=inventory_path,
             **kwargs,
@@ -126,7 +127,7 @@ def compile_targets(
         if updated_targets:
             for target in updated_targets:
                 compile_path_target = os.path.join(compile_path, target)
-                temp_path_target = os.path.join(temp_path, target)
+                temp_path_target = os.path.join(temp_compile_path, target)
 
                 os.makedirs(compile_path_target, exist_ok=True)
 
@@ -136,8 +137,8 @@ def compile_targets(
         # otherwise override all targets
         else:
             shutil.rmtree(compile_path)
-            shutil.copytree(temp_path, compile_path)
-            logger.debug("Copied %s into %s", temp_path, compile_path)
+            shutil.copytree(temp_compile_path, compile_path)
+            logger.debug("Copied %s into %s", temp_compile_path, compile_path)
 
         # validate the compiled outputs
         if kwargs.get("validate", False):
