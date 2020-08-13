@@ -1,5 +1,4 @@
 "GCP secret manager secret retrieval module"
-import logging
 import os
 import base64
 import re
@@ -12,8 +11,6 @@ from kapitan import cached
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan.refs.base import REF_TOKEN_SUBVAR_PATTERN
-
-logger = logging.getLogger(__name__)
 
 
 class GoogleSMError(KapitanError):
@@ -46,7 +43,7 @@ class GoogleSMSecret(Base64Ref):
         """
         GSM Secret type is read only and cannot generate a secret
         """
-        raise RefError("GSM type does not support secondary functions")
+        raise GoogleSMError("GSM type does not support secondary functions")
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -85,6 +82,7 @@ class GoogleSMSecret(Base64Ref):
             "project_id": self.project_id,
             "type": self.type_name,
         }
+
     def compile(self):
         # XXX will only work if object read via backend
 

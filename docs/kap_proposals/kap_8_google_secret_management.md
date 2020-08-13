@@ -75,10 +75,12 @@ metadata:
 type: Opaque
 ```
 To reveal the secret, the following command will be used
-`$ kapitan ref --reveal -f compiled/file/containing/secret`
+`$ kapitan refs --reveal -f compiled/file/containing/secret`
+
+*note* `$ kapitan refs --reveal --ref-file ref/file/path` will reveal only the latest version of the secret. `$ kapitan refs --reveal -t ?{gsm:ref/file/path:version_id}` can be used to access custom secret sersions.
 
 ## Dependencies
 
 * [google-cloud-secret-manager](https://github.com/googleapis/python-secret-manager)
 
-*note* Kapitan will not be responsible for authentication or access management to GCP
+*note* Kapitan will not be responsible for authentication or access management to GCP.
