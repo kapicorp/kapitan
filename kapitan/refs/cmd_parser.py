@@ -205,7 +205,7 @@ def ref_write(args, ref_controller):
 
     else:
         fatal_error(
-            "Invalid token: {name}. Try using gpg/gkms/awskms/vaultkv/base64/plain/env:{name}".format(
+            "Invalid token: {name}. Try using gpg/gkms/awskms/vaultkv/gsm/base64/plain/env:{name}".format(
                 name=token_name
             )
         )

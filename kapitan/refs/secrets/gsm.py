@@ -2,12 +2,16 @@
 import logging
 import os
 import base64
+import re
+import json
+import hashlib
 from binascii import Error as b_error
 from google.cloud import secretmanager
 from kapitan.errors import KapitanError
 from kapitan import cached
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
+from kapitan.refs.base import REF_TOKEN_SUBVAR_PATTERN
 
 logger = logging.getLogger(__name__)
 
@@ -30,31 +34,19 @@ class GoogleSMSecret(Base64Ref):
     """
 
     def __init__(self, data, project_id, **kwargs):
-        # TODO add version from user input
+
         self.data = data
         self.project_id = project_id
-        self.version_id = "latest"
+        self.version_id = kwargs.get("version_id", "latest")
         super().__init__(self.data, **kwargs)
         self.type_name = "gsm"
 
     @classmethod
-    def from_param(cls, data, ref_params):
+    def from_params(cls, data, ref_params):
         """
-        Return new GoogleSMSecret from data and ref_params: target_name
-        project_id will be grabbed from the inventory via target_name
+        GSM Secret type is read only and cannot generate a secret
         """
-        try:
-            target_name = ref_params.kwargs["target_name"]
-            if target_name is None:
-                raise ValueError("target_name not set")
-            target_inv = cached.inv["nodes"].get(target_name, None)
-            if target_inv is None:
-                raise ValueError("target_inv not set")
-
-            project_id = target_inv["parameters"]["kapitan"]["secrets"]["gsm"]["project_id"]
-            return cls(data, project_id, **ref_params.kwargs)
-        except KeyError:
-            raise RefError("Could not decode GoogleSMSecret: target_name missing")
+        raise RefError("GSM type does not support secondary functions")
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -93,6 +85,25 @@ class GoogleSMSecret(Base64Ref):
             "project_id": self.project_id,
             "type": self.type_name,
         }
+    def compile(self):
+        # XXX will only work if object read via backend
+
+        if self.embed_refs:
+            return self.compile_embedded()
+
+        return f"?{{{self.type_name}:{self.path}:{self.version_id}:{self.hash[:8]}}}"
+
+    def compile_embedded(self):
+        dump = self.dump()
+        # add version_id for serialization
+        dump["version_id"] = self.version_id
+        # if subvar is set, save path in 'embedded_subvar_path' key
+        # TODO test subvar
+        subvar = self.path.split("@")
+        if len(subvar) > 1:
+            dump["embedded_subvar_path"] = subvar[1]
+        dump_data = base64.b64encode(json.dumps(dump).encode()).decode()
+        return f"?{{{self.type_name}:{dump_data}:{self.version_id}:embedded}}"
 
 
 class GoogleSMBackend(Base64RefBackend):
@@ -100,3 +111,18 @@ class GoogleSMBackend(Base64RefBackend):
         "init GoogleSMBackend ref backend type"
         super().__init__(path, ref_type, **ref_kwargs)
         self.type_name = "gsm"
+
+    def __getitem__(self, ref_path):
+        # remove the substring notation, if any
+        ref_file_path = re.sub(REF_TOKEN_SUBVAR_PATTERN, "", ref_path)
+        full_ref_path = os.path.join(self.path, ref_file_path)
+        ref = self.ref_type.from_path(full_ref_path, **self.ref_kwargs)
+
+        if ref is not None:
+            ref.path = ref_path
+            ref_path_data = "{}{}{}".format(ref_file_path, ref.data, ref.version_id)
+            ref.hash = hashlib.sha256(ref_path_data.encode()).hexdigest()
+            ref.token = "{}:{}:{}:{}".format(ref.type_name, ref.path, ref.version_id, ref.hash[:8])
+            return ref
+
+        raise KeyError(ref_path)

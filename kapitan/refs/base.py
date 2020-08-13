@@ -412,7 +412,7 @@ class RefController(object):
         assert isinstance(backend, PlainRefBackend)
         self.backends[backend.type_name] = backend
 
-    def _get_backend(self, type_name):
+    def _get_backend(self, type_name, **kwargs):
         "imports and registers backend according to type_name"
         try:
             return self.backends[type_name]
@@ -453,6 +453,7 @@ class RefController(object):
             elif type_name == "gsm":
                 from kapitan.refs.secrets.gsm import GoogleSMBackend
 
+                ref_kwargs["version_id"] = kwargs.get("version_id", "latest")
                 self.register_backend(GoogleSMBackend(self.path, **ref_kwargs))
             else:
                 raise RefBackendError(f"no backend for ref type: {type_name}")
@@ -534,9 +535,18 @@ class RefController(object):
             return backend[path]
 
         # "type_name:path/to/ref:n0c0ffee"
+        # "gsm:path/to/ref:secret_id"
         elif len(attrs) == 3:
             type_name = attrs[0]
             path = attrs[1]
+
+            # version_id is a numeric value (used only for gsm)
+            if attrs[2].isnumeric():
+                version_id = attrs[2]
+                backend = self._get_backend(type_name, version_id=version_id)
+                ref = backend[path]
+                return ref
+
             hash = attrs[2]
 
             if hash == "embedded":
@@ -552,6 +562,31 @@ class RefController(object):
                             token, ref.token
                         )
                     )
+
+        # "gsm:path/to/ref:version_id:n0c0ffee" (used only for gsm)
+        elif len(attrs) == 4:
+            type_name = attrs[0]
+            path = attrs[1]
+            version_id = attrs[2]
+            hash = attrs[3]
+
+            if hash == "embedded":
+                ref = self.ref_from_embedded(type_name, path)
+
+                return ref
+            else:
+                backend = self._get_backend(type_name, version_id=version_id)
+                ref = backend[path]
+
+                if ref.hash[:8] == hash:
+                    return ref
+                else:
+                    raise RefHashMismatchError(
+                        "{}: token hash does not match with stored reference hash: {}".format(
+                            token, ref.token
+                        )
+                    )
+
         else:
             return None
 
