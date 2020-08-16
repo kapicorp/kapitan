@@ -130,10 +130,18 @@ class Helm(InputType):
         char_dir_buf = ffi.new("char[]", chart_dir.encode("ascii"))
         output_path_buf = ffi.new("char[]", output_path.encode("ascii"))
 
+        # as noted in cffi documentation, once the reference to the pointer is out of scope, the data is freed.
+        # to prevent that from happening with these dynamic arrays, we create a 'keep_pointers_alive' dict
+        # https://cffi.readthedocs.io/en/latest/using.html#working-with-pointers-structures-and-arrays
         helm_values_files = []
+        keep_pointers_alive = dict()
         if kwargs.get("helm_values_files", []):
-            for file_name in kwargs["helm_values_files"]:
-                helm_values_files.append(ffi.new("char[]", file_name.encode("ascii")))
+            for i in range(len(kwargs["helm_values_files"])):
+                file_name = kwargs["helm_values_files"][i]
+
+                ptr_to_encoded_file_name = ffi.new("char[]", file_name.encode("ascii"))
+                keep_pointers_alive[file_name + str(i)] = ptr_to_encoded_file_name
+                helm_values_files.append(ptr_to_encoded_file_name)
 
         helm_values_files_len = ffi.cast("int", len(helm_values_files))
         helm_values_files = ffi.new("char *[]", helm_values_files)
