@@ -23,6 +23,7 @@ from kapitan import cached, defaults
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
+from kapitan.inputs.remove import Remove
 from kapitan.inputs.helm import Helm
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
@@ -47,6 +48,8 @@ def compile_targets(
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix=".kapitan")
+    # enable previously compiled items to be reference in other compile inputs
+    search_paths.append(temp_path)
     temp_compile_path = os.path.join(temp_path, "compiled")
     dep_cache_dir = temp_path
 
@@ -416,6 +419,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
     kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
     helm_compiler = Helm(compile_path, search_paths, ref_controller)
     copy_compiler = Copy(compile_path, search_paths, ref_controller)
+    remove_compiler = Remove(compile_path, search_paths, ref_controller)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
@@ -438,8 +442,10 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
             input_compiler = helm_compiler
         elif input_type == "copy":
             input_compiler = copy_compiler
+        elif input_type == "remove":
+            input_compiler = remove_compiler
         else:
-            err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy'
+            err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove'
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)
@@ -489,7 +495,7 @@ def valid_target_obj(target_obj, require_compile=True):
                     "oneOf": [
                         {
                             "properties": {
-                                "input_type": {"enum": ["jsonnet", "kadet", "copy"]},
+                                "input_type": {"enum": ["jsonnet", "kadet", "copy", "remove"]},
                                 "output_type": {"enum": ["yml", "yaml", "json", "plain"]},
                             },
                         },
