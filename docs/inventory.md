@@ -133,6 +133,7 @@ parameters:
 
 Values under `parameters.kapitan`, such as `parameters.kapitan.vars` as mentioned above, are special values that kapitan parses and processes. These include:
 
+- `kapitan.dependencies` items to fetch components stored in remote locations
 - `kapitan.compile` items which indicate which files to compile
 - `kapitan.secrets` which contains secret encryption/decryption information
 - `kapitan.validate` items which indicate which compiled output to validate
