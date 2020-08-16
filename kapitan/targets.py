@@ -445,7 +445,9 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
         elif input_type == "remove":
             input_compiler = remove_compiler
         else:
-            err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove'
+            err_msg = (
+                'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove'
+            )
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)

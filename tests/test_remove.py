@@ -64,7 +64,7 @@ class RemoveTest(unittest.TestCase):
     def test_remove_file_folder(self):
         test_dirs_bootstrap_helper()
         self.copy_compiler.compile_file(test_file_path, compile_path, None)
-        
+
         self.assertTrue(os.path.exists(test_file_compiled_path))
         self.remove_compiler.compile_file(test_file_compiled_path, compile_path, None)
         self.assertFalse(os.path.exists(test_file_compiled_path))
@@ -72,7 +72,7 @@ class RemoveTest(unittest.TestCase):
     def test_remove_folder_folder(self):
         test_dirs_bootstrap_helper()
         self.copy_compiler.compile_file(file_path, compile_path, None)
-        
+
         self.assertTrue(os.path.exists(compile_path))
         self.remove_compiler.compile_file(compile_path, compile_path, None)
         self.assertFalse(os.path.exists(compile_path))
