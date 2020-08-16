@@ -441,3 +441,30 @@ This input type simply copies the input templates to the output directory withou
 For Copy, `input_paths` can be either a file or a directory: in case of a directory, all the templates in the directory will be copied and outputted to `output_path`.
 
 *Supported output types*: N/A (no need to specify `output_type`)
+
+### Remove
+
+This input type simply removes files or directories. This can be helpful if you can't control particular files
+generated during other compile inputs.
+
+For example, to remove a file named `copy_target`, specify an entry to `input_paths`, `compiled/${kapitan:vars:target}/copy_target`.
+
+```yaml
+parameters:
+  target_name: removal
+  kapitan:
+    vars:
+      target: ${target_name}
+    compile:
+      - input_type: copy
+        input_paths:
+          - copy_target
+        output_path: .
+      # test removal of a file
+      - input_type: remove
+        input_paths:
+          - compiled/${kapitan:vars:target}/copy_target
+        output_path: .
+```
+
+*Supported output types*: N/A (no need to specify `output_type`)
