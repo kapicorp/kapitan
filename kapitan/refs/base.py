@@ -453,7 +453,6 @@ class RefController(object):
             elif type_name == "gsm":
                 from kapitan.refs.secrets.gsm import GoogleSMBackend
 
-                ref_kwargs["version_id"] = kwargs.get("version_id", "latest")
                 self.register_backend(GoogleSMBackend(self.path, **ref_kwargs))
             else:
                 raise RefBackendError(f"no backend for ref type: {type_name}")
@@ -543,8 +542,8 @@ class RefController(object):
             # version_id is a numeric value (used only for gsm)
             if attrs[2].isnumeric():
                 version_id = attrs[2]
-                backend = self._get_backend(type_name, version_id=version_id)
-                ref = backend[path]
+                backend = self._get_backend(type_name)
+                ref = backend[path + ":" + version_id]
                 return ref
 
             hash = attrs[2]
@@ -576,7 +575,7 @@ class RefController(object):
                 return ref
             else:
                 backend = self._get_backend(type_name, version_id=version_id)
-                ref = backend[path]
+                ref = backend[path + ":" + version_id]
 
                 if ref.hash[:8] == hash:
                     return ref

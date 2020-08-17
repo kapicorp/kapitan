@@ -5,12 +5,17 @@ import re
 import json
 import hashlib
 from binascii import Error as b_error
-from google.cloud import secretmanager
+
 from kapitan.errors import KapitanError
 from kapitan import cached
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan.refs.base import REF_TOKEN_SUBVAR_PATTERN
+
+try:
+    from google.cloud import secretmanager
+except:
+    pass
 
 
 class GoogleSMError(KapitanError):
@@ -34,7 +39,7 @@ class GoogleSMSecret(Base64Ref):
 
         self.data = data
         self.project_id = project_id
-        self.version_id = kwargs.get("version_id", "latest")
+        self.version_id = "latest"
         super().__init__(self.data, **kwargs)
         self.type_name = "gsm"
 
@@ -66,7 +71,14 @@ class GoogleSMSecret(Base64Ref):
         :Returns: secret in plain text
         """
         try:
-            name = gsm_obj().secret_version_path(self.project_id, secret_id, self.version_id)
+            # mock for unit tests
+            if secret_id == "secret ingredient" and os.getenv("KAPITAN_TEST") == "TRUE":
+                if self.version_id == "latest":
+                    return "nothing"
+                elif self.version_id == "1":
+                    return "unknown"
+
+            name = gsm_obj().secret_version_path(self.project_id, secret_id, version_id)
             response = gsm_obj().access_secret_version(name)
             return response.payload.data.decode("UTF-8")
         except Exception as e:
@@ -110,13 +122,20 @@ class GoogleSMBackend(Base64RefBackend):
         super().__init__(path, ref_type, **ref_kwargs)
         self.type_name = "gsm"
 
-    def __getitem__(self, ref_path):
+    def __getitem__(self, ref_path_with_version):
+
+        attrs = ref_path_with_version.split(":")
+        ref_path = attrs[0]
+
         # remove the substring notation, if any
         ref_file_path = re.sub(REF_TOKEN_SUBVAR_PATTERN, "", ref_path)
         full_ref_path = os.path.join(self.path, ref_file_path)
         ref = self.ref_type.from_path(full_ref_path, **self.ref_kwargs)
 
         if ref is not None:
+            if len(attrs) == 2:
+                ref.version_id = attrs[1]
+
             ref.path = ref_path
             ref_path_data = "{}{}{}".format(ref_file_path, ref.data, ref.version_id)
             ref.hash = hashlib.sha256(ref_path_data.encode()).hexdigest()
