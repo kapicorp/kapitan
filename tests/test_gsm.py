@@ -42,7 +42,7 @@ class GoogleSecretManagerTest(unittest.TestCase):
 
     def test_gsm_write_embedded_reveal(self):
         """
-        test embedded secret, conform it exists, reveal embedded secret and compare the contents
+        write secret, conform it exists, reveal embedded secret and compare the contents
         """
 
         tag = "?{gsm:secret/recipe}"
@@ -76,7 +76,7 @@ class GoogleSecretManagerTest(unittest.TestCase):
 
     def test_gsm_reveal_from_ref_tag(self):
         """
-        write secret, verify it, reveal secret of different version and compare
+        write secret, confirm it exists, reveal secret of different versions and compare
         """
         tag = "?{gsm:secret/recipe}"
         PROJECT_ID = "test"
@@ -100,7 +100,7 @@ class GoogleSecretManagerTest(unittest.TestCase):
 
     def test_gsm_reveal_from_token_with_hash(self):
         """
-        write secret, confirm it exists, make tag with with postfixed hash
+        write secret, confirm it exists, make tag with postfixed hash
         reveal tag with correct hash and incorrect hash and compare
         """
         tag = "?{gsm:secret/recipe}"

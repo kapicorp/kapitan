@@ -336,9 +336,9 @@ def secret_update_validate(args, ref_controller):
         except KeyError:
             vaultkv = None
         try:
-            gsm = kap_inv_params["secrets"]["gsm"]["project_id"]
+            gsm_id = kap_inv_params["secrets"]["gsm"]["project_id"]
         except KeyError:
-            gsm = None
+            gsm_id = None
 
         for token_path in token_paths:
             if token_path.startswith("?{gpg:"):
@@ -401,7 +401,7 @@ def secret_update_validate(args, ref_controller):
                         secret_obj.update_key(awskey)
                         ref_controller[token_path] = secret_obj
             elif token_path.startswith("?{gsm:"):
-                if not gsm:
+                if not gsm_id:
                     logger.debug(
                         "secret_update_validate: target: {} has no project_id, skipping {}".format(
                             target_name, token_path

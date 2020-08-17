@@ -412,7 +412,7 @@ class RefController(object):
         assert isinstance(backend, PlainRefBackend)
         self.backends[backend.type_name] = backend
 
-    def _get_backend(self, type_name, **kwargs):
+    def _get_backend(self, type_name):
         "imports and registers backend according to type_name"
         try:
             return self.backends[type_name]
@@ -574,7 +574,7 @@ class RefController(object):
 
                 return ref
             else:
-                backend = self._get_backend(type_name, version_id=version_id)
+                backend = self._get_backend(type_name)
                 ref = backend[path + ":" + version_id]
 
                 if ref.hash[:8] == hash:
