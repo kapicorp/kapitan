@@ -11,6 +11,7 @@ from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.env import EnvRef
 from kapitan.refs.secrets.awskms import AWSKMSSecret
 from kapitan.refs.secrets.gkms import GoogleKMSSecret
+from kapitan.refs.secrets.azkms import AzureKMSSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.refs.secrets.vaultkv import VaultSecret
 from kapitan.resources import inventory_reclass
@@ -115,6 +116,28 @@ def ref_write(args, ref_controller):
         tag = "?{{awskms:{}}}".format(token_path)
         ref_controller[tag] = secret_obj
 
+    elif token_name.startswith("azkms:"):
+        type_name, token_path = token_name.split(":")
+        key = args.key
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            if "secrets" not in kap_inv_params:
+                raise KapitanError(
+                    "parameters.kapitan.secrets not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
+
+            key = kap_inv_params["secrets"]["azkms"]["key"]
+        if not key:
+            raise KapitanError(
+                "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target-name"
+            )
+        secret_obj = AzureKMSSecret(data, key, encode_base64=args.base64)
+        tag = "?{{azkms:{}}}".format(token_path)
+        ref_controller[tag] = secret_obj
+
     elif token_name.startswith("base64:"):
         type_name, token_path = token_name.split(":")
         _data = data.encode()
@@ -181,7 +204,7 @@ def ref_write(args, ref_controller):
 
     else:
         fatal_error(
-            "Invalid token: {name}. Try using gpg/gkms/awskms/vaultkv/base64/plain/env:{name}".format(
+            "Invalid token: {name}. Try using gpg/gkms/awskms/azkms/vaultkv/base64/plain/env:{name}".format(
                 name=token_name
             )
         )
@@ -228,6 +251,25 @@ def secret_update(args, ref_controller):
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
             key = kap_inv_params["secrets"]["gkms"]["key"]
+        if not key:
+            raise KapitanError(
+                "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target"
+            )
+        type_name, token_path = token_name.split(":")
+        tag = "?{{gkms:{}}}".format(token_path)
+        secret_obj = ref_controller[tag]
+        secret_obj.update_key(key)
+        ref_controller[tag] = secret_obj
+
+    elif token_name.startswith("azkms:"):
+        key = args.key
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            if "secrets" not in kap_inv_params:
+                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+
+            key = kap_inv_params["secrets"]["azkms"]["key"]
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target"
@@ -318,6 +360,10 @@ def secret_update_validate(args, ref_controller):
             vaultkv = kap_inv_params["secrets"]["vaultkv"]["auth"]
         except KeyError:
             vaultkv = None
+        try:
+            azkey = kap_inv_params["secrets"]["azkms"]["key"]
+        except KeyError:
+            azkey = None
 
         for token_path in token_paths:
             if token_path.startswith("?{gpg:"):
@@ -385,6 +431,23 @@ def secret_update_validate(args, ref_controller):
                         ret_code = 1
                     else:
                         secret_obj.update_key(awskey)
+                        ref_controller[token_path] = secret_obj
+
+            elif token_path.startswith("?{azkms:"):
+                if not azkey:
+                    logger.debug(
+                        "secret_update_validate: target: %s has no inventory azkms key, skipping %s",
+                        target_name,
+                        token_path,
+                    )
+                    continue
+                secret_obj = ref_controller[token_path]
+                if azkey != secret_obj.key:
+                    if args.validate_targets:
+                        logger.info("%s key mismatch", token_path)
+                        ret_code = 1
+                    else:
+                        secret_obj.update_key(azkey)
                         ref_controller[token_path] = secret_obj
 
             else:
