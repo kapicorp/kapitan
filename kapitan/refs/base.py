@@ -443,13 +443,17 @@ class RefController(object):
 
                 self.register_backend(GoogleKMSBackend(self.path, **ref_kwargs))
             elif type_name == "awskms":
-                from kapitan.refs.secrets.awskms import AWSKMSBackend
+                from kapitan.refs.secrets.azkms import AWSKMSBackend
 
                 self.register_backend(AWSKMSBackend(self.path, **ref_kwargs))
             elif type_name == "vaultkv":
                 from kapitan.refs.secrets.vaultkv import VaultBackend
 
                 self.register_backend(VaultBackend(self.path, **ref_kwargs))
+            elif type_name == "azkms":
+                from kapitan.refs.secrets.azkms import AzureKMSBackend
+
+                self.register_backend(AzureKMSBackend(self.path, **ref_kwargs))
             else:
                 raise RefBackendError(f"no backend for ref type: {type_name}")
         return self.backends[type_name]
