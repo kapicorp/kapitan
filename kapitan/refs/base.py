@@ -446,7 +446,7 @@ class RefController(object):
 
                 self.register_backend(GoogleKMSBackend(self.path, **ref_kwargs))
             elif type_name == "awskms":
-                from kapitan.refs.secrets.azkms import AWSKMSBackend
+                from kapitan.refs.secrets.awskms import AWSKMSBackend
 
                 self.register_backend(AWSKMSBackend(self.path, **ref_kwargs))
             elif type_name == "vaultkv":
