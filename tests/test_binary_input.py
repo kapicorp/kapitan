@@ -16,7 +16,10 @@ from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.inputs.binary import Binary
 
+YTT_BINARY_PATH = "/usr/local/bin/ytt"
 
+
+@unittest.skipIf(not os.path.exists(YTT_BINARY_PATH), "ytt binary not found")
 class BinaryInputTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.path.join("tests", "test_resources"))
