@@ -2,6 +2,18 @@
 
 **Note:** make sure to read up on [inventory](inventory.md) before moving on.
 
+
+### Phases of the compile command
+
+Now that we have a basic understanding of Kapitan `inventory`, we can talk about the `kapitan compile` command. 
+
+The command has five distinct `phases`:
+- Reclass: this takes all the target and class definitions and runs reclass to determine what kapitan needs to do during the compile command.
+- Fetch: this is an optional phase that happens before the compilation actions, if there are dependencies defined in any classes under `parameters.kapitan.dependencies`. This is triggered through the `--fetch` option on the `kapitan compile` command.
+- Compilation: the Reclass phase has determined a sequential list of actions to run specified in the `parameters.kapitan.compile` for each target.  The actions can be defined using jinja2, jsonnet, kadet, helm, and copy. These actions define any transpilation steps you want to take to get a desired manifest output, or simply put, your inputs and outputs.
+- Copying: the Compilation phase runs all of its actions in a tmp folder and when finished, all outputted files for each target are copied to their respective `compiled` directories.
+- Validate: this is an optional phase that validates the schema of compiled output. Validate options are specified in the inventory under `parameters.kapitan.validate`
+
 ## Specifying inputs and outputs
 
 Input types can be specified in the inventory under `kapitan.compile` in the following format:
@@ -439,5 +451,52 @@ charts to download, including subcharts.
 
 This input type simply copies the input templates to the output directory without any rendering/processing.
 For Copy, `input_paths` can be either a file or a directory: in case of a directory, all the templates in the directory will be copied and outputted to `output_path`.
+
+*Supported output types*: N/A (no need to specify `output_type`)
+
+### Remove
+
+This input type simply removes files or directories. This can be helpful if you can't control particular files
+generated during other compile inputs.
+
+For example, to remove a file named `copy_target`, specify an entry to `input_paths`, `compiled/${kapitan:vars:target}/copy_target`.
+
+```yaml
+parameters:
+  target_name: removal
+  kapitan:
+    vars:
+      target: ${target_name}
+    compile:
+      - input_type: copy
+        input_paths:
+          - copy_target
+        output_path: .
+      # test removal of a file
+      - input_type: remove
+        input_paths:
+          - compiled/${kapitan:vars:target}/copy_target
+        output_path: .
+```
+
+As a reminder, each input block within the compile array is run sequentially for a target in Kapitan. If we reversed the order of the inputs above like so:
+```yaml
+parameters:
+  target_name: removal
+  kapitan:
+    vars:
+      target: ${target_name}
+    compile:
+      - input_type: remove
+        input_paths:
+          - compiled/${kapitan:vars:target}/copy_target
+        output_path: .
+      - input_type: copy
+        input_paths:
+          - copy_target
+        output_path: .
+```
+
+The first input block would throw an error because the copy input command hasn't run yet to produce the file being removed by the remove input block.
 
 *Supported output types*: N/A (no need to specify `output_type`)

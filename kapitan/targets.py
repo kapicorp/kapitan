@@ -23,6 +23,7 @@ from kapitan import cached, defaults
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
+from kapitan.inputs.remove import Remove
 from kapitan.inputs.helm import Helm
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
@@ -48,6 +49,8 @@ def compile_targets(
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix=".kapitan")
+    # enable previously compiled items to be reference in other compile inputs
+    search_paths.append(temp_path)
     temp_compile_path = os.path.join(temp_path, "compiled")
     dep_cache_dir = temp_path
 
@@ -503,7 +506,7 @@ def valid_target_obj(target_obj, require_compile=True):
                     "oneOf": [
                         {
                             "properties": {
-                                "input_type": {"enum": ["jsonnet", "kadet", "copy"]},
+                                "input_type": {"enum": ["jsonnet", "kadet", "copy", "remove"]},
                                 "output_type": {"enum": ["yml", "yaml", "json", "plain"]},
                             },
                         },
