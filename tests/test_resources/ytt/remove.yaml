@@ -1,0 +1,8 @@
+#@ load("@ytt:overlay", "overlay")
+
+#@overlay/match by=overlay.subset({"metadata":{"name":"example-ingress1"}})
+---
+metadata:
+  annotations:
+    #@overlay/remove
+    ingress.kubernetes.io/rewrite-target:

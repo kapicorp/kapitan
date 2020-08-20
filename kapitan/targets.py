@@ -27,6 +27,7 @@ from kapitan.inputs.helm import Helm
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
+from kapitan.inputs.binary import Binary
 from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.resources import inventory_reclass
 from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
@@ -411,13 +412,16 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
 
-    jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller, inventory_path)
-    jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
-    kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
-    helm_compiler = Helm(compile_path, search_paths, ref_controller)
-    copy_compiler = Copy(compile_path, search_paths, ref_controller)
-
     for comp_obj in compile_objs:
+        # these need to be inside this for loop so default values are reinitialized for each compile object
+        jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller, inventory_path)
+        jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
+        kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
+        helm_compiler = Helm(compile_path, search_paths, ref_controller)
+        copy_compiler = Copy(compile_path, search_paths, ref_controller)
+        remove_compiler = Remove(compile_path, search_paths, ref_controller)
+        binary_compiler = Binary(compile_path, search_paths, ref_controller)
+
         input_type = comp_obj["input_type"]
         output_path = comp_obj["output_path"]
         if input_type == "jinja2":
@@ -438,8 +442,16 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
             input_compiler = helm_compiler
         elif input_type == "copy":
             input_compiler = copy_compiler
+        elif input_type == "remove":
+            input_compiler = remove_compiler
+        elif input_type == "binary":
+            input_compiler = binary_compiler
+            if "binary_args" in comp_obj:
+                binary_compiler.set_binary_args(comp_obj["binary_args"])
+            if "binary_env_vars" in comp_obj:
+                binary_compiler.set_binary_env_vars(comp_obj["binary_env_vars"])
         else:
-            err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy'
+            err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, binary'
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)
@@ -483,6 +495,8 @@ def valid_target_obj(target_obj, require_compile=True):
                             "additionalProperties": False,
                         },
                         "input_params": {"type": "object"},
+                        "binary_env_vars": {"type": "object"},
+                        "binary_args": {"type": "array"},
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
@@ -493,7 +507,7 @@ def valid_target_obj(target_obj, require_compile=True):
                                 "output_type": {"enum": ["yml", "yaml", "json", "plain"]},
                             },
                         },
-                        {"properties": {"input_type": {"enum": ["jinja2", "helm"]}}},
+                        {"properties": {"input_type": {"enum": ["jinja2", "helm", "binary"]}}},
                     ],
                 },
             },

@@ -17,6 +17,12 @@ COPY ./MANIFEST.in ./MANIFEST.in
 COPY ./requirements.txt ./requirements.txt
 COPY ./setup.py ./setup.py
 
+ARG YTT_VERSION="0.30.0"
+ARG YTT_URL="https://github.com/k14s/ytt/releases/download/v${YTT_VERSION}/ytt-linux-amd64"
+
+RUN curl -sL "${YTT_URL}" -o /usr/local/bin/ytt \
+    && chmod +x /usr/local/bin/ytt
+
 # Build the virtualenv for Kapitan
 FROM python:3.7-slim-stretch AS python-builder
 
@@ -39,6 +45,7 @@ RUN apt-get update \
 FROM python:3.7-slim-stretch
 
 COPY --from=python-builder /opt/venv /opt/venv
+COPY --from=helm-builder /usr/local/bin/ytt /usr/local/bin/ytt
 
 ENV PATH="/opt/venv/bin:${PATH}"
 ENV SEARCHPATH="/src"

@@ -1,0 +1,26 @@
+parameters:
+  kapitan:
+    vars:
+      target: binary-test
+    compile:
+      - input_type: binary
+        output_path: .
+        input_paths:
+          - script.sh
+        binary_args:
+          - arg1
+          - \${compiled_target_dir} # this will not be interpolated by reclass but by the Binary input
+        binary_env_vars:
+          EXAMPLE: "ENV_VAR"
+
+      - input_type: binary
+        output_path: .
+        input_paths:
+          - /usr/local/bin/ytt
+        binary_args:
+          - -f
+          - ytt/extensions.v1beta1.Ingress.default.example-ingress1.yaml
+          - -f
+          - ytt/remove.yaml
+          - ">"
+          - \${compiled_target_dir}/extensions.v1beta1.Ingress.default.example-ingress1.yaml
