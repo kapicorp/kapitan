@@ -83,6 +83,42 @@ class BinaryTest(unittest.TestCase):
 
         os.remove(test_tag_file)
 
+    def test_cli_secret_write_reveal_azkms(self):
+        """
+        run $ kapitan refs --write amkms:test_secret
+        and $ kapitan refs --reveal
+        using mock key
+        """
+        test_secret_content = "mock"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        argv = [
+            BINARY_PATH,
+            "refs",
+            "--write",
+            "azkms:test_secret",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+            "--key",
+            "mock",
+        ]
+        subprocess.run(argv)
+
+        test_tag_content = "revealing: ?{azkms:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        argv = [BINARY_PATH, "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
+
+        result = subprocess.run(argv, stdout=subprocess.PIPE)
+        self.assertEqual("revealing: {}".format(test_secret_content), result.stdout.decode("utf-8"))
+
+        os.remove(test_tag_file)
+
     def test_cli_secret_write_reveal_awskms(self):
         """
         run $ kapitan refs --write awskms:test_secret

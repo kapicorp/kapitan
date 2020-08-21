@@ -137,7 +137,7 @@ class AzureKMSSecret(Base64Ref):
             ciphertext = ""
             # Mocking encrypted response for tests
             if key == "mock":
-                ciphertext = base64.b64encode("mock".encode())
+                ciphertext = base64.b64encode(_data)
             else:
 
                 request = azkms_obj(key).encrypt(EncryptionAlgorithm.rsa_oaep, _data)
