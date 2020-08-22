@@ -37,7 +37,7 @@ key: https://kapitanbackend.vault.azure.net/keys/myKey/deadbeef
 type: azkms
 ```
 
-*note* Cryptographic algorithm used for encryption would be _rsa-oaep_. Optimal Asymmetric Encryption Padding (OAEP) is a padding scheme often used together with RSA encryption.
+*note* Cryptographic algorithm used for encryption would be _rsa-oaep-256_. Optimal Asymmetric Encryption Padding (OAEP) is a padding scheme often used together with RSA encryption.
 
 ## referencing a secret
 Secrets can be refered using `?{azkms:path/to/secret_id}`
