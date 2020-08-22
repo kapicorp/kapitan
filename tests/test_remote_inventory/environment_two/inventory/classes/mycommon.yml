@@ -2,4 +2,4 @@ parameters:
     kapitan:
       vars:
         target: ${target_name}
-        namespace: $(target_name)
+        namespace: ${target_name}
