@@ -157,7 +157,7 @@ class AzureKMSSecret(Base64Ref):
             if self.key == "mock":
                 plaintext = "mock".encode()
             else:
-                request = azkms_obj(key).decrypt(EncryptionAlgorithm.rsa_oaep, data)
+                request = azkms_obj(key).decrypt(EncryptionAlgorithm.rsa_oaep_256, data)
                 plaintext = request.plaintext
 
             return plaintext.decode()

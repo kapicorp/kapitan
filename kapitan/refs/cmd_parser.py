@@ -132,7 +132,7 @@ def ref_write(args, ref_controller):
             key = kap_inv_params["secrets"]["azkms"]["key"]
         if not key:
             raise KapitanError(
-                "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target-name"
+                "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.azkms.key and use --target-name"
             )
         secret_obj = AzureKMSSecret(data, key, encode_base64=args.base64)
         tag = "?{{azkms:{}}}".format(token_path)
@@ -272,10 +272,10 @@ def secret_update(args, ref_controller):
             key = kap_inv_params["secrets"]["azkms"]["key"]
         if not key:
             raise KapitanError(
-                "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target"
+                "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.azkms.key and use --target"
             )
         type_name, token_path = token_name.split(":")
-        tag = "?{{gkms:{}}}".format(token_path)
+        tag = "?{{azkms:{}}}".format(token_path)
         secret_obj = ref_controller[tag]
         secret_obj.update_key(key)
         ref_controller[tag] = secret_obj
