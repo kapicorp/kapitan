@@ -100,6 +100,7 @@ class Helm(InputType):
 
         self.helm_values_file = None  # reset this
         self.helm_params = {}
+        self.helm_values_files = []
 
     def default_output_type(self):
         return None
