@@ -23,6 +23,7 @@ from kapitan import cached, defaults
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
+from kapitan.inputs.remove import Remove
 from kapitan.inputs.helm import Helm
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
@@ -47,6 +48,9 @@ def compile_targets(
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix=".kapitan")
+    # enable previously compiled items to be reference in other compile inputs
+    search_paths.append(temp_path)
+    temp_compile_path = os.path.join(temp_path, "compiled")
     dep_cache_dir = temp_path
 
     updated_targets = targets
@@ -74,14 +78,19 @@ def compile_targets(
     pool = multiprocessing.Pool(parallel)
 
     try:
-        target_objs = load_target_inventory(inventory_path, updated_targets)
+        if kwargs.get("fetch_inventories", False):
+            # skip classes that are not yet available
+            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=True)
+        else:
+            # ignore_class_notfound = False by default
+            target_objs = load_target_inventory(inventory_path, updated_targets)
 
         # append "compiled" to output_path so we can safely overwrite it
         compile_path = os.path.join(output_path, "compiled")
         worker = partial(
             compile_target,
             search_paths=search_paths,
-            compile_path=temp_path,
+            compile_path=temp_compile_path,
             ref_controller=ref_controller,
             inventory_path=inventory_path,
             **kwargs,
@@ -89,6 +98,7 @@ def compile_targets(
 
         if not target_objs:
             raise CompileError("Error: no targets found")
+
         if kwargs.get("fetch_inventories", False):
             # new_source checks for new sources in fetched inventory items
             new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
@@ -97,10 +107,14 @@ def compile_targets(
                     inventory_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
                 )
                 cached.reset_inv()
-                target_objs = load_target_inventory(inventory_path, updated_targets)
+                target_objs = load_target_inventory(
+                    inventory_path, updated_targets, ignore_class_notfound=True
+                )
                 cached.inv_sources.update(new_sources)
                 new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
-
+            # reset inventory cache and load target objs to check for missing classes
+            cached.reset_inv()
+            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
         if kwargs.get("fetch_dependencies", False):
             fetch_dependencies(
                 output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
@@ -116,7 +130,7 @@ def compile_targets(
         if updated_targets:
             for target in updated_targets:
                 compile_path_target = os.path.join(compile_path, target)
-                temp_path_target = os.path.join(temp_path, target)
+                temp_path_target = os.path.join(temp_compile_path, target)
 
                 os.makedirs(compile_path_target, exist_ok=True)
 
@@ -126,8 +140,8 @@ def compile_targets(
         # otherwise override all targets
         else:
             shutil.rmtree(compile_path)
-            shutil.copytree(temp_path, compile_path)
-            logger.debug("Copied %s into %s", temp_path, compile_path)
+            shutil.copytree(temp_compile_path, compile_path)
+            logger.debug("Copied %s into %s", temp_compile_path, compile_path)
 
         # validate the compiled outputs
         if kwargs.get("validate", False):
@@ -328,10 +342,10 @@ def save_inv_cache(compile_path, targets):
                 yaml.dump(cached.inv_cache, stream=f, default_flow_style=False)
 
 
-def load_target_inventory(inventory_path, targets):
+def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
     """returns a list of target objects from the inventory"""
     target_objs = []
-    inv = inventory_reclass(inventory_path)
+    inv = inventory_reclass(inventory_path, ignore_class_notfound)
 
     # if '-t' is set on compile, only loop through selected targets
     if targets:
@@ -344,7 +358,8 @@ def load_target_inventory(inventory_path, targets):
             inv_target = inv["nodes"][target_name]
             target_obj = inv_target["parameters"]["kapitan"]
             target_obj["target_full_path"] = inv_target["__reclass__"]["node"].replace("./", "")
-            valid_target_obj(target_obj)
+            require_compile = not ignore_class_notfound
+            valid_target_obj(target_obj, require_compile)
             validate_matching_target_name(target_name, target_obj, inventory_path)
             logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
             target_objs.append(target_obj)
@@ -404,6 +419,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
     kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
     helm_compiler = Helm(compile_path, search_paths, ref_controller)
     copy_compiler = Copy(compile_path, search_paths, ref_controller)
+    remove_compiler = Remove(compile_path, search_paths, ref_controller)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
@@ -426,8 +442,12 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
             input_compiler = helm_compiler
         elif input_type == "copy":
             input_compiler = copy_compiler
+        elif input_type == "remove":
+            input_compiler = remove_compiler
         else:
-            err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy'
+            err_msg = (
+                'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove'
+            )
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)
@@ -437,7 +457,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
 
 
 @hashable_lru_cache
-def valid_target_obj(target_obj):
+def valid_target_obj(target_obj, require_compile=True):
     """
     Validates a target_obj
     Returns a dict object if target is valid
@@ -477,7 +497,7 @@ def valid_target_obj(target_obj):
                     "oneOf": [
                         {
                             "properties": {
-                                "input_type": {"enum": ["jsonnet", "kadet", "copy"]},
+                                "input_type": {"enum": ["jsonnet", "kadet", "copy", "remove"]},
                                 "output_type": {"enum": ["yml", "yaml", "json", "plain"]},
                             },
                         },
@@ -587,8 +607,9 @@ def valid_target_obj(target_obj):
                 },
             },
         },
-        "required": ["compile"],
     }
+    if require_compile:
+        schema["required"] = ["compile"]
 
     try:
         jsonschema.validate(target_obj, schema, format_checker=jsonschema.FormatChecker())

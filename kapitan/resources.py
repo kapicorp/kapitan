@@ -291,13 +291,15 @@ def generate_inventory(args):
         sys.exit(1)
 
 
-def inventory_reclass(inventory_path):
+def inventory_reclass(inventory_path, ignore_class_notfound=False):
     """
     Runs a reclass inventory in inventory_path
     (same output as running ./reclass.py -b inv_base_uri/ --inventory)
     Will attempt to read reclass config from 'reclass-config.yml' otherwise
     it will failback to the default config.
     Returns a reclass style dictionary
+
+    Does not throw errors if a class is not found while --fetch flag is enabled
     """
 
     if not cached.inv:
@@ -308,6 +310,7 @@ def inventory_reclass(inventory_path):
             "classes_uri": os.path.join(inventory_path, "classes"),
             "compose_node_name": False,
             "allow_none_override": True,
+            "ignore_class_notfound": ignore_class_notfound,
         }
 
         try:

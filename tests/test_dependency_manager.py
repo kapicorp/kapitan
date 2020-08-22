@@ -94,7 +94,6 @@ class DependencyManagerTest(unittest.TestCase):
     def test_fetch_helm_chart_version_that_does_not_exist(self):
         """
         Test fetching helm chart version that does not exist
-        Runs $ kapitan compile --fetch --output-path temp -t nginx nginx-dev monitoring-dev
         """
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
@@ -115,6 +114,7 @@ class DependencyManagerTest(unittest.TestCase):
         rmtree(output_dir)
 
     def test_compile_fetch(self):
+        "Runs $ kapitan compile --fetch --output-path temp -t nginx nginx-dev monitoring-dev"
         temp = tempfile.mkdtemp()
         sys.argv = [
             "kapitan",
