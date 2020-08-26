@@ -13,7 +13,7 @@ import secrets  # python secrets module
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
-from kapitan.errors import RefError
+from kapitan.errors import RefError, KapitanError
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,7 @@ def eval_func(func_name, ctx, *func_params):
         "rsapublic": rsa_public_key,
         "publickey": public_key,
         "reveal": reveal,
+        "inputstr": inputstr,
     }
 
     return func_lookup[func_name](ctx, *func_params)
@@ -46,6 +47,16 @@ def randomstr(ctx, nbytes=""):
 
     else:
         ctx.data = secrets.token_urlsafe()
+
+
+def inputstr(ctx, text=""):
+    """
+    sets text data specified to ctx.data
+    """
+    if text:
+        ctx.data = text.encode()
+    else:
+        raise RefError("Ref error: eval_func: no text provided; try " "something like '|inputstr:text_input'")
 
 
 def sha256(ctx, salt=""):

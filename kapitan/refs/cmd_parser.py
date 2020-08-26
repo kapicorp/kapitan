@@ -98,7 +98,9 @@ def ref_write(args, ref_controller):
         type_name, token_path = token_name.split(":")
         _data = data.encode()
         # encoding is "original"
-        project_id = os.getenv("PROJECT_ID")
+        project_id = os.getenv("GCP_PROJECT_ID")
+        if args.gcp_project_id:
+            project_id = args.gcp_project_id
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]

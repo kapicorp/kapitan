@@ -39,6 +39,8 @@ RUN apt-get update \
     && pip install --upgrade pip wheel \
     && pip install pyinstaller==$PYINSTALLER_VERSION \
     && pip install -r requirements.txt \
+# PyInstaller requires the presence of google-cloud-core package for using google.cloud.* to import modules
+# Since the google-cloud-core package is not a dependency of google-cloud-secret-manager, it needs to be installed manually
     && pip install --upgrade google-cloud-core \
     && ./kapitan/inputs/helm/build.sh \
     && ./kapitan/dependency_manager/helm/build.sh \

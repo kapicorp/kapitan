@@ -412,6 +412,12 @@ def main():
         "--key", "-K", help="set KMS key", default=from_dot_kapitan("refs", "key", ""), metavar="KEY"
     )
     refs_parser.add_argument(
+        "--gcp-project-id",
+        help="set project id for GCP",
+        default=from_dot_kapitan("refs", "gcp-project-id", ""),
+        metavar="PROJECT ID",
+    )
+    refs_parser.add_argument(
         "--vault-auth",
         help="set authentication type for vaultkv secrets",
         default=from_dot_kapitan("refs", "vault-auth", ""),

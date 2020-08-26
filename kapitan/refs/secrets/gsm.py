@@ -46,9 +46,21 @@ class GoogleSMSecret(Base64Ref):
     @classmethod
     def from_params(cls, data, ref_params):
         """
-        GSM Secret type is read only and cannot generate a secret
+        Return new GoogleSMSecret from data and ref_params: target_name
+        project_id will be grabbed from the inventory via target_name
         """
-        raise GoogleSMError("GSM type does not support secondary functions")
+        try:
+            target_name = ref_params.kwargs["target_name"]
+            if target_name is None:
+                raise ValueError("target_name not set")
+            target_inv = cached.inv["nodes"].get(target_name, None)
+            if target_inv is None:
+                raise ValueError("target_inv not set")
+
+            project_id = target_inv["parameters"]["kapitan"]["secrets"]["gsm"]["project_id"]
+            return cls(data, project_id, **ref_params.kwargs)
+        except KeyError:
+            raise RefError("Could not decode GoogleSMSecret: target_name missing")
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -72,13 +84,13 @@ class GoogleSMSecret(Base64Ref):
         """
         try:
             # mock for unit tests
-            if secret_id == "secret ingredient" and os.getenv("KAPITAN_TEST") == "TRUE":
+            if secret_id == "secret ingredient" and self.project_id == "test":
                 if self.version_id == "latest":
                     return "nothing"
                 elif self.version_id == "1":
                     return "unknown"
 
-            name = gsm_obj().secret_version_path(self.project_id, secret_id, version_id)
+            name = gsm_obj().secret_version_path(self.project_id, secret_id, self.version_id)
             response = gsm_obj().access_secret_version(name)
             return response.payload.data.decode("UTF-8")
         except Exception as e:

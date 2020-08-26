@@ -539,18 +539,11 @@ class RefController(object):
             type_name = attrs[0]
             path = attrs[1]
 
-            # version_id is a numeric value (used only for gsm)
-            if attrs[2].isnumeric():
-                version_id = attrs[2]
-                backend = self._get_backend(type_name)
-                ref = backend[path + ":" + version_id]
-                return ref
-
-            hash = attrs[2]
-
-            if hash == "embedded":
+            if attrs[2] == "embedded":
                 return self.ref_from_embedded(type_name, path)
-            else:
+
+            if len(attrs[2]) == 8:
+                hash = attrs[2]
                 backend = self._get_backend(type_name)
                 ref = backend[path]
                 if ref.hash[:8] == hash:
@@ -561,8 +554,14 @@ class RefController(object):
                             token, ref.token
                         )
                     )
+            # when version_id is specified (used for secret managers)
+            else:
+                version_id = attrs[2]
+                backend = self._get_backend(type_name)
+                ref = backend[path + ":" + version_id]
+                return ref
 
-        # "gsm:path/to/ref:version_id:n0c0ffee" (used only for gsm)
+        # "gsm:path/to/ref:version_id:n0c0ffee" (used for secret managers)
         elif len(attrs) == 4:
             type_name = attrs[0]
             path = attrs[1]
@@ -571,8 +570,8 @@ class RefController(object):
 
             if hash == "embedded":
                 ref = self.ref_from_embedded(type_name, path)
-
                 return ref
+
             else:
                 backend = self._get_backend(type_name)
                 ref = backend[path + ":" + version_id]
@@ -592,7 +591,8 @@ class RefController(object):
     def _set_to_token(self, token, ref_obj):
         attrs = token.split(":")
 
-        if len(attrs) == 2:
+        # len(attrs) will be 3 in case a version_id is specified for a secret manager
+        if len(attrs) == 2 or 3:
             type_name = attrs[0]
             path = attrs[1]
             backend = self._get_backend(type_name)

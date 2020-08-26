@@ -17,12 +17,12 @@ parameters:
 
 - As a flag
 ```shell
-$ kapitan refs --google-project-id=<Project_Id> --write gsm:/path/to/secret_id -f secret_id_file.txt
+$ kapitan refs --gcp-project-id=<Project_Id> --write gsm:/path/to/secret_id -f secret_id_file.txt
 ```
 
 - As an environment variable
 ```shell
-export PROJECT_ID=<Project_Id>
+export GCP_PROJECT_ID=<Project_Id>
 ```
 
 ## Using a secret
@@ -77,7 +77,7 @@ type: Opaque
 To reveal the secret, the following command will be used
 `$ kapitan refs --reveal -f compiled/file/containing/secret`
 
-*note* `$ kapitan refs --reveal --ref-file ref/file/path` will reveal only the latest version of the secret. `$ kapitan refs --reveal -t ?{gsm:ref/file/path:version_id}` can be used to access custom secret sersions.
+*note* `$ kapitan refs --reveal --ref-file ref/file/path` will reveal only the latest version of the secret. `$ kapitan refs --reveal -t ?{gsm:ref/file/path:version_id}` can be used to access custom secret versions.
 
 ## Dependencies
 
