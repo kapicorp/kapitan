@@ -7,6 +7,7 @@ Kapitan can manage references and secrets with the following key management serv
 - AWS KMS (beta)
 - Environment
 - Vaultkv (read only support)
+- Google Secret Manager (read only support)
 
 If you want to get started with secrets but don't have a GPG or KMS setup, you can also use the `base64` reference type. Note that `base64` is not encrypted and is intended for development purposes only. *Do not use base64 if you're storing sensitive information!*
 
@@ -38,6 +39,8 @@ parameters:
       vaultkv:
         VAULT_ADDR: http://127.0.0.1:8200
         auth: token
+      gsm:
+        project_id: 'GCP Project ID'
 ```
 
 #### 2. Create Your Secret
@@ -55,6 +58,7 @@ $ kapitan refs --write <secret_type>:path/to/secret/file -t <target_name> -f <se
 - `gkms`: Google Cloud KMS
 - `awskms`: AWS KMS
 - `vaultkv`: Hashicorp Vault with kv/kv-v2 secret engine
+- `gsm`: Google Secret Manager
 
 Kapitan will inherit the secrets configuration for the specified target, and encrypt and save your secret into `<path/to/secret/file>`.
 
@@ -71,6 +75,7 @@ rsa - Generates an RSA 4096 private key (PKCS#8). You can optionally pass the ke
 ed25519 - Generates a ed25519 private key (PKCS#8).
 publickey - Derives the public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|publickey`
 rsapublic - Derives an RSA public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|rsapublic` (deprecated, use `publickey` instead)
+inputstr - Uses the string specified by you to write the secret; insert your secret after a colon i.e `||inputstr:your_text`
 
 ```
 
@@ -242,3 +247,42 @@ parameters:
         VAULT_CLIENT_KEY: /path/to/key
         VAULT_CLIENT_CERT: /path/to/cert
 ```
+### Google Secret Manager Backend (Read-only)
+
+In order to retrieve a secret from Google Secret Manager, kapitan needs the following:
+- `project_id` : The id which uniquely identifies a GCP project
+- `secret_id` : The GCP secret name
+- `version_id` : The version of the secret (optional)
+
+The `project_id` can be set in the following ways:
+
+- As a part of target files
+```yaml
+parameters:
+  kapitan:
+    secrets:
+      gsm:
+        project_id: 'GCP Project ID'
+```
+
+- With the `--gcp-project-id` flag
+```sh
+$ kapitan refs --gcp-project-id=<Project_Id> --write gsm:/path/to/secret_id -f secret_id_file.txt
+```
+
+- With the `GCP_PROJECT_ID` environment variable
+```sh
+$ export GCP_PROJECT_ID=<Project_Id>
+```
+
+To use a `secret_id`, it has to be stored in the refs path. E.g if a `secret_id` is "secret-number", it has to be used in the following way:
+```sh
+$ echo "secret-number"  | kapitan refs --write gsm:path/to/secret_inside_kapitan -t <target_name> -f -
+```
+New `secret_id` can be saved from ref tags by using the `inputstr` function for more convenience.
+E.g `?{gsm:path/to/secret_inside_kapitan:version_id||inputstr:secret-number}`
+
+The `version_id` is set to "latest" by default and can be specified in the refs tag.
+E.g `?{gsm:path/to/secret_inside_kapitan:version_id}`
+
+*note* Kapitan is not responsible for authentication or access management to GCP.
