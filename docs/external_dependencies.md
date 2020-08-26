@@ -30,7 +30,7 @@ $ kapitan compile --fetch
 ```
 
 This will download the dependencies and store them at their respective `output_path`.
-By default, kapitan does not overwrite an existing item with the same name as that of the fetched dependencies.
+By default, kapitan does not overwrite existing items with the same name as that of the fetched dependencies.
 
 Use the `--force` flag to force fetch (update cache with freshly fetched dependencies) and overwrite any existing item sharing the same name in the `output_path`.
 

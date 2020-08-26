@@ -384,7 +384,7 @@ parameters:
       image: amazoncorretto:8
 ```
 
-The run:
+Then run:
 ```shell
 $ kapitan compile --fetch
 [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
@@ -427,7 +427,7 @@ parameters:
       image: amazoncorretto:8
 ```
 
-The run:
+Then run:
 ```shell
 $ kapitan compile --fetch
 [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
