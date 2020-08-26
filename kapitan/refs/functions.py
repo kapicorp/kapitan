@@ -56,7 +56,7 @@ def inputstr(ctx, text=""):
     if text:
         ctx.data = text.encode()
     else:
-        raise RefError("Ref error: eval_func: no text provided; try " "something like '|inputstr:text_input'")
+        raise RefError("Ref error: eval_func: no text provided; try something like '|inputstr:text_input'")
 
 
 def sha256(ctx, salt=""):

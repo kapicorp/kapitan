@@ -50,6 +50,10 @@ class GoogleSMSecret(Base64Ref):
         project_id will be grabbed from the inventory via target_name
         """
         try:
+            # mock for unit tests
+            if os.getenv("GCP_PROJECT_ID") == "test":
+                return cls(data, "test", **ref_params.kwargs)
+
             target_name = ref_params.kwargs["target_name"]
             if target_name is None:
                 raise ValueError("target_name not set")
@@ -84,7 +88,7 @@ class GoogleSMSecret(Base64Ref):
         """
         try:
             # mock for unit tests
-            if secret_id == "secret ingredient" and self.project_id == "test":
+            if self.project_id == "test":
                 if self.version_id == "latest":
                     return "nothing"
                 elif self.version_id == "1":

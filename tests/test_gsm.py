@@ -5,11 +5,12 @@ import os
 import shutil
 import tempfile
 import hashlib
+from shutil import rmtree
 
 from kapitan.refs.base import RefController, RefParams, Revealer
 from kapitan.refs.secrets.gsm import GoogleSMSecret, GoogleSMError
 from kapitan import cached
-from kapitan.errors import RefHashMismatchError
+from kapitan.errors import RefHashMismatchError, RefError
 
 
 REFS_HOME = tempfile.mkdtemp()
@@ -22,7 +23,7 @@ REVEALER_EMBEDDED = Revealer(REF_CONTROLLER_EMBEDDED)
 class GoogleSecretManagerTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        os.environ["KAPITAN_TEST"] = "TRUE"
+        os.environ["GCP_PROJECT_ID"] = "test"
 
     def test_gsm_write_reveal(self):
         """
@@ -83,20 +84,43 @@ class GoogleSecretManagerTest(unittest.TestCase):
         REF_CONTROLLER[tag] = GoogleSMSecret(b"secret ingredient", PROJECT_ID)
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "secret/recipe")))
 
-        tag_with_version = "?{gsm:secret/recipe:1}"
         revealed = REVEALER.reveal_raw_string(tag)
         self.assertEqual("nothing", revealed)
 
+        tag_with_version = "?{gsm:secret/recipe:1}"
         revealed = REVEALER.reveal_raw_string(tag_with_version)
         self.assertEqual("unknown", revealed)
 
-    def test_gsm_with_function(self):
-        " test non existing secret path with secondary function "
-        tag = "?{gsm:secret/foo||randomstr|base64}"
-        with self.assertRaises(GoogleSMError) as error:
-            REF_CONTROLLER[tag] = RefParams()
+    def test_gsm_with_inputstr(self):
+        """
+        write secret from inputstr, confirm secret exists, reveal and check
+        """
 
-        self.assertEqual(str(error.exception), "GSM type does not support secondary functions")
+        tag = "?{gsm:secret/recipe||inputstr:secret ingredient}"
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "secret/recipe")))
+
+        # write secret from tag where secret version is specified
+        tag_with_version = "?{gsm:another/secret/recipe:2||inputstr:secret ingredient}"
+        REF_CONTROLLER[tag_with_version] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "another/secret/recipe")))
+
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, "w") as fp:
+            fp.write("The secret ingredient is ?{gsm:secret/recipe}")
+
+        revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
+        self.assertEqual("The secret ingredient is nothing", revealed)
+
+        rmtree(os.path.join(REFS_HOME, "another"))
+
+    def test_gsm_with_empty_inputstr(self):
+        """
+        test writing secret from blank inputstring
+        """
+        tag = "?{gsm:secret/recipe||inputstr}"
+        with self.assertRaises(RefError) as error:
+            REF_CONTROLLER[tag] = RefParams()
 
     def test_gsm_reveal_from_token_with_hash(self):
         """
@@ -120,7 +144,9 @@ class GoogleSecretManagerTest(unittest.TestCase):
 
     def testDown(self):
         cached.reset_cache()
+        if os.path.exists(os.path.join(REFS_HOME, "secret")):
+            rmtree(os.path.join(REFS_HOME, "secret"))
 
     @classmethod
     def tearDownClass(cls):
-        os.environ["KAPITAN_TEST"] = ""
+        os.environ["GCP_PROJECT_ID"] = ""

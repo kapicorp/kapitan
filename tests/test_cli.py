@@ -654,12 +654,10 @@ class CliFuncsTest(unittest.TestCase):
 
     def test_cli_secret_write_reveal_gsm(self):
         """
-        run $ kapitan refs --write gsm:test_secret
-        and $ kapitan refs --reveal
+        run $ kapitan refs --write gsm:test_secret -f test_secret_file --refs-path REFS_PATH --gcp-project-id test
+        and $ kapitan refs --reveal -f test_tag_file --refs-path REFS_PATH
         using "secret ingredient" gsm secret id
         """
-        os.environ["KAPITAN_TEST"] = "TRUE"
-        os.environ["PROJECT_ID"] = "test"
         test_secret_content = "secret ingredient"
         test_secret_file = tempfile.mktemp()
         with open(test_secret_file, "w") as fp:
@@ -674,6 +672,8 @@ class CliFuncsTest(unittest.TestCase):
             test_secret_file,
             "--refs-path",
             REFS_PATH,
+            "--gcp-project-id",
+            "test",
         ]
         main()
 
