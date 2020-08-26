@@ -5,6 +5,7 @@ Kapitan can manage references and secrets with the following key management serv
 - GPG
 - Google Cloud KMS (beta)
 - AWS KMS (beta)
+- Azure KMS (beta)
 - Environment
 - Vaultkv (read only support)
 
@@ -35,6 +36,8 @@ parameters:
         key: 'projects/<project>/locations/<location>/keyRings/<keyRing>/cryptoKeys/<key>'
       awskms:
         key: 'alias/nameOfKey'
+      az:
+        key: '<keyvault-name>.vault.azure.net/keys/<object-name>/<object-version>'
       vaultkv:
         VAULT_ADDR: http://127.0.0.1:8200
         auth: token
@@ -54,6 +57,7 @@ $ kapitan refs --write <secret_type>:path/to/secret/file -t <target_name> -f <se
 - `gpg`: GPG
 - `gkms`: Google Cloud KMS
 - `awskms`: AWS KMS
+- `azkms`: Azure KMS
 - `vaultkv`: Hashicorp Vault with kv/kv-v2 secret engine
 
 Kapitan will inherit the secrets configuration for the specified target, and encrypt and save your secret into `<path/to/secret/file>`.
