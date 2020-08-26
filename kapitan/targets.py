@@ -23,6 +23,7 @@ from kapitan import cached, defaults
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
+from kapitan.inputs.remove import Remove
 from kapitan.inputs.helm import Helm
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
@@ -47,6 +48,9 @@ def compile_targets(
     """
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix=".kapitan")
+    # enable previously compiled items to be reference in other compile inputs
+    search_paths.append(temp_path)
+    temp_compile_path = os.path.join(temp_path, "compiled")
     dep_cache_dir = temp_path
 
     updated_targets = targets
@@ -86,7 +90,7 @@ def compile_targets(
         worker = partial(
             compile_target,
             search_paths=search_paths,
-            compile_path=temp_path,
+            compile_path=temp_compile_path,
             ref_controller=ref_controller,
             inventory_path=inventory_path,
             **kwargs,
@@ -126,7 +130,7 @@ def compile_targets(
         if updated_targets:
             for target in updated_targets:
                 compile_path_target = os.path.join(compile_path, target)
-                temp_path_target = os.path.join(temp_path, target)
+                temp_path_target = os.path.join(temp_compile_path, target)
 
                 os.makedirs(compile_path_target, exist_ok=True)
 
@@ -136,8 +140,8 @@ def compile_targets(
         # otherwise override all targets
         else:
             shutil.rmtree(compile_path)
-            shutil.copytree(temp_path, compile_path)
-            logger.debug("Copied %s into %s", temp_path, compile_path)
+            shutil.copytree(temp_compile_path, compile_path)
+            logger.debug("Copied %s into %s", temp_compile_path, compile_path)
 
         # validate the compiled outputs
         if kwargs.get("validate", False):
@@ -415,6 +419,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
     kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
     helm_compiler = Helm(compile_path, search_paths, ref_controller)
     copy_compiler = Copy(compile_path, search_paths, ref_controller)
+    remove_compiler = Remove(compile_path, search_paths, ref_controller)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
@@ -437,8 +442,12 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
             input_compiler = helm_compiler
         elif input_type == "copy":
             input_compiler = copy_compiler
+        elif input_type == "remove":
+            input_compiler = remove_compiler
         else:
-            err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy'
+            err_msg = (
+                'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove'
+            )
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)
@@ -488,7 +497,7 @@ def valid_target_obj(target_obj, require_compile=True):
                     "oneOf": [
                         {
                             "properties": {
-                                "input_type": {"enum": ["jsonnet", "kadet", "copy"]},
+                                "input_type": {"enum": ["jsonnet", "kadet", "copy", "remove"]},
                                 "output_type": {"enum": ["yml", "yaml", "json", "plain"]},
                             },
                         },

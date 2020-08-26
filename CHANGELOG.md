@@ -1,3 +1,10 @@
+## 0.29.0-rc.2:
+- Fix issue #572 Enable adding reclass classes from remote inventories before they are available (#574)
+- Add a dedicated directory in the temp path (#584)
+- Fix issue with dynamically created array of pointers with cffi (#586)
+- New remove input type (#589)
+- Update pip dependencies (#578, #580, #581, #577, #576, #582)
+
 ## 0.29.0-rc.1:
 - Rename remote inventory key to `inventory` instead of `inventories` (#570)
 

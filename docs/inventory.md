@@ -133,6 +133,7 @@ parameters:
 
 Values under `parameters.kapitan`, such as `parameters.kapitan.vars` as mentioned above, are special values that kapitan parses and processes. These include:
 
+- `kapitan.dependencies` items to fetch components stored in remote locations
 - `kapitan.compile` items which indicate which files to compile
 - `kapitan.secrets` which contains secret encryption/decryption information
 - `kapitan.validate` items which indicate which compiled output to validate
@@ -246,5 +247,226 @@ Shows all inventory files where a variable is declared:
 $ kapitan searchvar parameters.elasticsearch.replicas
 ./inventory/targets/minikube-es.yml               2
 ./inventory/classes/component/elasticsearch.yml   1
+```
+
+# Remote Inventory
+
+Kapitan is capable of recursively fetching inventory items stored in remote locations and copy it to the specified output path. This feature can be used by specifying those inventory items in classes or targets under `parameters.kapitan.inventory`. Supported types are:
+
+- [git type](#git-type)
+- [http type](#http-type)
+
+## Usage
+
+```yaml
+parameters:
+  kapitan:
+    inventory:
+    - type: <inventory_type>
+      output_path: path/to/file/or/dir # releative to inventory
+      source: <source_of_inventory>
+      # other type-specific parameters, if any
+```
+
+Use the `--fetch` flag to fetch the remote inventories and the external dependencies.
+
+```
+$ kapitan compile --fetch
+```
+
+This will download the dependencies and store them at their respective `output_path`.
+By default, kapitan does not overwrite an existing item with the same name as that of the fetched inventory items.
+
+Use the `--force` flag to force fetch (update cache with freshly fetched items) and overwrite inventory items of the same name in the `output_path`.
+
+```
+$ kapitan compile --fetch --force
+```
+
+Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
+
+```
+$ kapitan compile --cache --fetch
+```
+
+
+Class items can be specified before they are locally available as long as they are fetched in the same run. [Example](#Example) of this is given below.
+
+
+## Git type
+
+Git types can fetch external inventories available via HTTP/HTTPS or SSH URLs. This is useful for fetching repositories or their sub-directories, as well as accessing them in specific commits and branches (refs).
+
+**Note**: git types require git binary on your system.
+
+### Usage
+
+```yaml
+parameters:
+  kapitan:
+    inventory:
+    - type: git
+      output_path: path/to/dir
+      source: git_url
+      subdir: relative/path/from/repo/root (optional)
+      ref: tag, commit, branch etc. (optional)
+```
+
+## http type
+http[s] types can fetch external inventories available at `http://` or `https://` URL.
+
+### Usage
+
+```yaml
+parameters:
+  kapitan:
+    inventory:
+    - type: http | https
+      output_path: path/to/file
+      source: http[s]://<url>
+      unpack: True | False # False by default
+```
+
+`output_path` must fully specify the file name. For example:
+
+```yaml
+parameters:
+  kapitan:
+    inventory:
+    - type: https
+      output_path: foo.txt
+      source: https://example.com/foo.txt
+```
+
+## Example
+
+Lets say we want to fetch a class from our kapitan repository, specifically
+`deepmind/kapitan/tree/master/examples/docker/inventory/classes/dockerfiles.yml`. Lets create a simple target file `docker.yml`
+
+**note**: [external dependencies](external_dependencies.md) are used to fetch dependency items in this example.
+
+Root project directory before compilation:
+
+```shell
+.
+└── inventory
+    ├── classes
+    └── targets
+        └── docker.yml
+```
+#### Using git type to fetch the inventory item
+
+```yaml
+classes:
+  - dockerfiles
+parameters:
+  kapitan:
+    vars:
+      target: docker
+    inventory:
+      - type: git
+        source: https://github.com/deepmind/kapitan
+        subdir: examples/docker/inventory/classes/
+        output_path: classes/
+    dependencies:
+      - type: git
+        source: https://github.com/deepmind/kapitan
+        subdir: examples/docker/components
+        output_path: components/
+      - type: git
+        source: https://github.com/deepmind/kapitan
+        subdir: examples/docker/templates
+        output_path: templates/
+  dockerfiles:
+    - name: web
+      image: amazoncorretto:11
+    - name: worker
+      image: amazoncorretto:8
+```
+
+Then run:
+```shell
+$ kapitan compile --fetch
+[WARNING] Reclass class not found: 'dockerfiles'. Skipped!
+[WARNING] Reclass class not found: 'dockerfiles'. Skipped!
+Inventory https://github.com/deepmind/kapitan: fetching now
+Inventory https://github.com/deepmind/kapitan: successfully fetched
+Inventory https://github.com/deepmind/kapitan: saved to inventory/classes
+Dependency https://github.com/deepmind/kapitan: saved to components
+Dependency https://github.com/deepmind/kapitan: saved to templates
+Compiled docker (0.11s)
+```
+
+#### Using http type to fetch the inventory item
+
+```yaml
+classes:
+  - dockerfiles
+parameters:
+  kapitan:
+    vars:
+      target: docker
+    inventory:
+      - type: https
+        source: https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/inventory/classes/dockerfiles.yml
+        output_path: classes/dockerfiles.yml
+
+    dependencies:
+      - type: git
+        source: https://github.com/deepmind/kapitan
+        subdir: examples/docker/components
+        output_path: components/
+      - type: git
+        source: https://github.com/deepmind/kapitan
+        subdir: examples/docker/templates
+        output_path: templates/
+  dockerfiles:
+    - name: web
+      image: amazoncorretto:11
+    - name: worker
+      image: amazoncorretto:8
+```
+
+Then run:
+```shell
+$ kapitan compile --fetch
+[WARNING] Reclass class not found: 'dockerfiles'. Skipped!
+[WARNING] Reclass class not found: 'dockerfiles'. Skipped!
+Inventory https://raw.githubusercontent.com/deepmind/.../classes/dockerfiles.yml: fetching now
+Inventory https://raw.githubusercontent.com/deepmind/.../classes/dockerfiles.yml: successfully fetched
+Inventory https://raw.githubusercontent.com/deepmind/.../classes/dockerfiles.yml: saved to inventory/classes/dockerfiles.yml
+Dependency https://github.com/deepmind/kapitan: fetching now
+Dependency https://github.com/deepmind/kapitan: successfully fetched
+Dependency https://github.com/deepmind/kapitan: saved to components
+Dependency https://github.com/deepmind/kapitan: saved to templates
+Compiled docker (0.14s)
+```
+
+Root project directory after compilation:
+
+```shell
+.
+├── compiled
+│   └── docker
+│       ├── jsonnet
+│       │   ├── Dockerfile.web
+│       │   └── Dockerfile.worker
+│       └── kadet
+│           ├── Dockerfile.web
+│           └── Dockerfile.worker
+├── components
+│   ├── jsonnet
+│   │   └── jsonnet.jsonnet
+│   └── kadet
+│       ├── __init__.py
+│       └── __pycache__
+│           └── __init__.cpython-37.pyc
+├── inventory
+│   ├── classes
+│   │   └── dockerfiles.yml
+│   └── targets
+│       └── docker.yml
+└── templates
+    └── Dockerfile
 ```
 
