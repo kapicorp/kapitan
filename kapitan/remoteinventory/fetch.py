@@ -13,16 +13,16 @@ logger = logging.getLogger(__name__)
 
 def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
     """Parses through the 'inventory' parameter in target_objs to fetch the remote
-       inventories and stores it in save_dir before recursively
-       copying it to the output_path (relative to the inventory path)
-       Overwrites existing inventory items if force fetched
+    inventories and stores it in save_dir before recursively
+    copying it to the output_path (relative to the inventory path)
+    Overwrites existing inventory items if force fetched
 
-       :param inventory_path: default or user specified inventory path
-       :param target_objs: target objects
-       :param save_dir: directory to save the fetched items
-       :param force: bool value
-       :param pool: pool object for multiprocessing
-       :return: None
+    :param inventory_path: default or user specified inventory path
+    :param target_objs: target objects
+    :param save_dir: directory to save the fetched items
+    :param force: bool value
+    :param pool: pool object for multiprocessing
+    :return: None
     """
     git_inventories = defaultdict(list)
     http_inventories = defaultdict(list)

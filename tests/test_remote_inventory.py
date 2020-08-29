@@ -90,10 +90,10 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(output_dir)
 
     def test_compile_fetch(self):
-        """ Run $ kapitan compile --fetch --output-path=some/dir/ --inventory-path=another/dir --targets remoteinv-example remoteinv-nginx zippedinv --force
-            were some/dir/ & another/dir/ are directories chosen by the user
+        """Run $ kapitan compile --fetch --output-path=some/dir/ --inventory-path=another/dir --targets remoteinv-example remoteinv-nginx zippedinv --force
+        were some/dir/ & another/dir/ are directories chosen by the user
 
-            Recursively force fetch inventories and compile
+        Recursively force fetch inventories and compile
         """
         temp_output = tempfile.mkdtemp()
         temp_inv = tempfile.mkdtemp()
