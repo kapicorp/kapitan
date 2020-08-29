@@ -140,7 +140,7 @@ class AzureKMSSecret(Base64Ref):
                 ciphertext = base64.b64encode(_data)
             else:
 
-                request = azkms_obj(key).encrypt(EncryptionAlgorithm.rsa_oaep, _data)
+                request = azkms_obj(key).encrypt(EncryptionAlgorithm.rsa_oaep_256, _data)
                 ciphertext = request.ciphertext
 
             self.data = ciphertext
