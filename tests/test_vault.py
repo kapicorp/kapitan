@@ -121,7 +121,8 @@ class VaultSecretTest(unittest.TestCase):
         tag = "?{vaultkv:secret/batman}"
         secret = {"some_random_value": "something_secret"}
         self.client.secrets.kv.v2.create_or_update_secret(
-            path="foo", secret=secret,
+            path="foo",
+            secret=secret,
         )
         env = {"auth": "token"}
         file_data = "foo:some_random_value".encode()
