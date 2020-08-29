@@ -15,7 +15,7 @@
     
     
       
-        <title>Ref Types Redesign - Kapitan documentation</title>
+        <title>Modularize Kapitan - Kapitan documentation</title>
       
     
     
@@ -49,7 +49,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#ref-types-redesign" class="md-skip">
+        <a href="#modularize-kapitan" class="md-skip">
           Skip to content
         </a>
       
@@ -77,7 +77,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              Ref Types Redesign
+              Modularize Kapitan
             
           </span>
         </div>
@@ -467,70 +467,16 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#proposal" class="md-nav__link">
-    Proposal
+  <a href="#usage" class="md-nav__link">
+    Usage
   </a>
-  
-    <nav class="md-nav" aria-label="Proposal">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#plain-backend" class="md-nav__link">
-    plain backend
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#base64-backend" class="md-nav__link">
-    base64 backend
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#refs-path" class="md-nav__link">
-    Refs path
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#background" class="md-nav__link">
-    Background
+  <a href="#implementation" class="md-nav__link">
+    Implementation
   </a>
-  
-    <nav class="md-nav" aria-label="Background">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#kapitan-secrets" class="md-nav__link">
-    Kapitan Secrets
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kapitan-secrets-example" class="md-nav__link">
-    Kapitan Secrets example
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#secret-backend-comparison" class="md-nav__link">
-    Secret Backend Comparison
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -546,7 +492,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/deepmind/kapitan/edit/master/docs/kap_proposals/kap_5_ref_types_redesign.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/deepmind/kapitan/edit/master/docs/kap_proposals/kap_8_modularize_kapitan.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
@@ -554,162 +500,19 @@
                   
                 
                 
-                <h1 id="ref-types-redesign">Ref Types Redesign</h1>
-<p>Redesign Kapitan Secrets and rename them as <code>References</code> or <code>Ref</code>.</p>
-<p>Breaking changes:</p>
+                <h1 id="modularize-kapitan">Modularize Kapitan</h1>
+<p>Kapitan is packaged in PYPI and as a binary along with all its dependencies. Adding an extra key/security backend means that we need to ship another dependency with that PYPI package, making deploying changes more complicated. This project would modularize kapitan into core dependencies and extra modules.</p>
+<h2 id="usage">Usage</h2>
+<div class="highlight"><pre><span></span><code>$ pip3 install --user kapitan <span class="c1"># to install only core dependencies</span>
+$ Pip3 install --user kapitan<span class="o">[</span>gkms<span class="o">]</span> ​# gkms is the module
+</code></pre></div>
+
+<h2 id="implementation">Implementation</h2>
 <ul>
-<li><code>$ kapitan secrets</code> is replaced with <code>$ kapitan refs</code></li>
-<li>the default secrets directory <code>./secrets/</code> changes to <code>./refs/</code></li>
-<li>the <code>--secrets-path</code> flag changes to <code>--refs-path</code></li>
-<li><em>ref</em> ref type is renamed to <em>base64</em> e.g.<code>?{ref:some/ref}</code> into <code>?{base64:some/ref}</code></li>
+<li>The main module includes the essential kapitan dependencies and reclass dependencies, which will be included in the ​requirement.txt​ file.</li>
+<li>The extra module <a href="https://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies">pypi extras</a> will be defined in the <code>s​etup.py</code>​ file.</li>
+<li>The extra dependencies are of secret backends like (AWS Key backend, Google KMS Key backend, Vault Key backend etc.) and Helm support.</li>
 </ul>
-<p>Status: In progress</p>
-<p>Author: @ramaro</p>
-<h2 id="proposal">Proposal</h2>
-<p>Rename <code>Secrets</code> into <code>Ref</code> (or <code>References</code>) to improve consistency and meaning of the backend types
-by removing the <code>ref</code> backend and introducting new backends:</p>
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Description</th>
-<th>Encrypted?</th>
-<th>Compiles To</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>gpg</td>
-<td>GnuPG</td>
-<td>Yes</td>
-<td>hashed tag</td>
-</tr>
-<tr>
-<td>gkms</td>
-<td>Google KMS</td>
-<td>Yes</td>
-<td>hashed tag</td>
-</tr>
-<tr>
-<td>awskms</td>
-<td>Amazon KMS</td>
-<td>Yes</td>
-<td>hashed tag</td>
-</tr>
-<tr>
-<td>base64</td>
-<td>base64</td>
-<td>No</td>
-<td>hashed tag</td>
-</tr>
-<tr>
-<td>plain</td>
-<td>plain text</td>
-<td>No</td>
-<td>plain text</td>
-</tr>
-</tbody>
-</table>
-<p>The type value will now need to be representative of the way a reference is stored via its backend.</p>
-<p>A new <code>plain</code> backend type is introduced and will compile into revealed state instead of a hashed tag.</p>
-<p>A new <code>base64</code> backend type will store a base64 encoded value as the backend suggests (replacing the old badly named <code>ref</code> backend).</p>
-<p>The command line for secrets will be instead:</p>
-<div class="highlight"><pre><span></span><code>$ kapitan refs --write gpg:my/secret1 ...
-$ kapitan refs --write base64:my/file ...
-$ kapitan refs --write plain:my/info ...
-</code></pre></div>
-
-<h3 id="plain-backend">plain backend</h3>
-<p>The <code>plain</code> backend type will allow referring to external state by updating refs programmatically (e.g. in your pipeline)</p>
-<p>For example, one can update the value of an environment variable and use <code>?{plain:my/user}</code> as a reference in a template:</p>
-<div class="highlight"><pre><span></span><code>$ <span class="nb">echo</span> <span class="nv">$USER</span> <span class="p">|</span> kapitan refs --write plain:my/user -f -
-</code></pre></div>
-
-<p>Or update a docker image value as ref <code>?{plain:images/dev/envoy}</code>:</p>
-<div class="highlight"><pre><span></span><code>$ <span class="nb">echo</span> <span class="s1">&#39;envoyproxy/envoy:v1.10.0&#39;</span> <span class="p">|</span> kapitan refs --write plain:images/dev/envoy -f -
-</code></pre></div>
-
-<p>These references will be compiled into their values instead of hashed tags.</p>
-<h3 id="base64-backend">base64 backend</h3>
-<p>The <code>base64</code> backend type will function as the original <code>ref</code> type.
-Except that this time, the name is representative of what is actually happening :)</p>
-<h3 id="refs-path">Refs path</h3>
-<p>Refs will be stored by default in the <code>./refs</code> path set by <code>--refs-path</code> replacing the <code>--secrets-path</code> flag.</p>
-<h2 id="background">Background</h2>
-<h3 id="kapitan-secrets">Kapitan Secrets</h3>
-<p>Kapitan Secrets allow referring to restricted information (passwords, private keys, etc...) in templates while also securely storing them.</p>
-<p>On compile, secret tags are updated into hashed tags which validate and instruct <code>Kapitan</code> how to reveal tags into decrypted or encoded information.</p>
-<h3 id="kapitan-secrets-example">Kapitan Secrets example</h3>
-<p>The following command creates a GPG encrypted secret with the contents of <em>file.txt</em> for recipient <code>ramaro@google.com</code> to read:</p>
-<div class="highlight"><pre><span></span><code>$ kapitan secrets --write gpg:my/secret1 -f file.txt --recipients ramaro@google.com
-</code></pre></div>
-
-<p>This secret can be referred to in a jsonnet compoment:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;app&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;test_app&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;username&quot;</span><span class="p">:</span> <span class="s2">&quot;user_one&quot;</span><span class="p">,</span>
-    <span class="nt">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;?{gpg:my/secret1}&quot;</span>
-<span class="p">}</span>
-</code></pre></div>
-
-<p>When this compoment is compiled, it looks like (note the hashed tag):</p>
-<div class="highlight"><pre><span></span><code><span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">app</span>
-<span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">test_app</span>
-<span class="nt">username</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">user_one</span>
-<span class="nt">password</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">?{gpg:my/secret1:deadbeef}</span>
-</code></pre></div>
-
-<p>A user with the required permissions can reveal the compiled component:</p>
-<div class="highlight"><pre><span></span><code>$ kapitan secrets --reveal -f compiled/mytarget/manifests/component.yml
-
-type: app
-name: test_app
-username: user_one
-password: secret_content_of_file.txt
-</code></pre></div>
-
-<h3 id="secret-backend-comparison">Secret Backend Comparison</h3>
-<p>Kapitan today offers multiple secret backends:</p>
-<table>
-<thead>
-<tr>
-<th>Type</th>
-<th>Description</th>
-<th>Encrypted?</th>
-<th>Compiles To</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>gpg</td>
-<td>GnuPG</td>
-<td>Yes</td>
-<td>hashed tag</td>
-</tr>
-<tr>
-<td>gkms</td>
-<td>Google KMS</td>
-<td>Yes</td>
-<td>hashed tag</td>
-</tr>
-<tr>
-<td>awskms</td>
-<td>Amazon KMS</td>
-<td>Yes</td>
-<td>hashed tag</td>
-</tr>
-<tr>
-<td>ref</td>
-<td>base64</td>
-<td>No</td>
-<td>hashed tag</td>
-</tr>
-</tbody>
-</table>
-<p>However, not all backends are encrypted - this is not consistent!</p>
-<p>The <code>ref</code> type is not encrypted as its purpose is to allow getting started with the Kapitan Secrets workflow without
-the need of setting up the encryption backends tooling (gpg, gcloud, boto, etc...)</p>
                 
               
               
