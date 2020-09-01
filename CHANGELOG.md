@@ -1,3 +1,7 @@
+## 0.29.1:
+- Fix reveal from ref file bug (#605)
+- Update dependencies (#600, #601, #602, #603)
+
 ## 0.29.0:
 - Fix issue #572 Enable adding reclass classes from remote inventories before they are available (#574)
 - Add a dedicated directory in the temp path (#584)
