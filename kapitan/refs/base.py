@@ -523,7 +523,7 @@ class RefController(object):
             # create new ref with deserialised data and remaining keys as kwargs
             # note that encrypt=False is only for secret ref types, non secret refs (e.g. base64) will ignore
             # from_base64 is True  because data is being loaded from a ref file where it is always base64
-            ref = backend.ref_type(data, encrypt=True, from_base64=True, **ref_file_obj)
+            ref = backend.ref_type(data, encrypt=False, from_base64=True, **ref_file_obj)
         return ref
 
     def _get_from_token(self, token):
