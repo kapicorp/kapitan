@@ -3,7 +3,7 @@
 import os
 import logging
 import base64
-
+from urllib.parse import urlparse
 from azure.keyvault.keys.crypto import CryptographyClient, EncryptionAlgorithm
 from azure.keyvault.keys import KeyClient
 from azure.identity import DefaultAzureCredential
@@ -31,15 +31,14 @@ def azkms_obj(key_id):
     # e.g of key_id https://kapitanbackend.vault.azure.net/keys/myKey/deadbeef
     if not cached.azkms_obj:
 
-        attrs = key_id.split("/")
-        if key_id.startswith("http"):
-            key_vault_uri = attrs[2]
-            key_name = attrs[4]
-            key_version = attrs[5]
-        else:
-            key_vault_uri = attrs[0]
-            key_name = attrs[2]
-            key_version = attrs[3]
+        url = urlparse(key_id)
+        # ['', 'keys', 'myKey', 'deadbeef'] or ['kapitanbackend.vault.azure.net', 'keys', 'myKey', 'deadbeef']
+        # depending on if key_id is prefixed with https://
+        attrs = url.path.split("/")
+        key_vault_uri = url.hostname or attrs[0]
+        key_name = attrs[-2]
+        key_version = attrs[-1]
+
         # If --verbose is set, show requests from azure
         if logger.getEffectiveLevel() > logging.DEBUG:
             logging.getLogger("azure").setLevel(logging.ERROR)
