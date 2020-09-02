@@ -36,8 +36,8 @@ parameters:
         key: 'projects/<project>/locations/<location>/keyRings/<keyRing>/cryptoKeys/<key>'
       awskms:
         key: 'alias/nameOfKey'
-      az:
-        key: '<keyvault-name>.vault.azure.net/keys/<object-name>/<object-version>'
+      azkms:
+        key: 'https://<keyvault-name>.vault.azure.net/keys/<object-name>/<object-version>'
       vaultkv:
         VAULT_ADDR: http://127.0.0.1:8200
         auth: token
