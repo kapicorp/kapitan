@@ -66,17 +66,14 @@ Kapitan will inherit the secrets configuration for the specified target, and enc
 
 When referencing your secret in the inventory during compile, you can use the following functions to automatically generate, encrypt and save your secret:
 
-```
-randomstr - Generates a random string. You can optionally pass the length you want i.e. `||randomstr:32`
-base64 - base64 encodes your secret; to be used as a secondary function i.e. `||randomstr|base64`
-sha256 - sha256 hashes your secret; to be used as a secondary function i.e. `||randomstr|sha256`. You can optionally pass a salt i.e `||randomstr|sha256:salt` -> becomes `sha256("salt:<generated random string>")`
-reveal - Decrypts a secret; to be used as a secondary function, useful for reuse of a secret like for different encodings i.e `||reveal:path/to/secret|base64`
-rsa - Generates an RSA 4096 private key (PKCS#8). You can optionally pass the key size i.e. `||rsa:2048`
-ed25519 - Generates a ed25519 private key (PKCS#8).
-publickey - Derives the public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|publickey`
-rsapublic - Derives an RSA public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|rsapublic` (deprecated, use `publickey` instead)
-
-```
+- `randomstr` - Generates a random string. You can optionally pass the length you want i.e. `||randomstr:32`
+- `base64` - base64 encodes your secret; to be used as a secondary function i.e. `||randomstr|base64`
+- `sha256` - sha256 hashes your secret; to be used as a secondary function i.e. `||randomstr|sha256`. You can optionally pass a salt i.e `||randomstr|sha256:salt` -> becomes `sha256("salt:<generated random string>")`
+- `reveal` - Decrypts a secret; to be used as a secondary function, useful for reuse of a secret like for different encodings i.e `||reveal:path/to/secret|base64`
+- `rsa` - Generates an RSA 4096 private key (PKCS#8). You can optionally pass the key size i.e. `||rsa:2048`
+- `ed25519` - Generates a ed25519 private key (PKCS#8).
+- `publickey` - Derives the public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|publickey`
+- `rsapublic` - Derives an RSA public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|rsapublic` (deprecated, use `publickey` instead)
 
 *Note*: The first operator here `||` is more similar to a logical OR. If the secret file doesn't exist, kapitan will generate it and apply the functions after the `||`. If the secret file already exists, no functions will run.
 
