@@ -27,7 +27,6 @@ SHELL ["/bin/bash", "-i", "-c"]
 ARG PYINSTALLER_VERSION=3.5
 
 COPY --from=helm-builder /kapitan /kapitan
-
 WORKDIR /kapitan
 
 ENV PATH="/opt/venv/bin:${PATH}"
