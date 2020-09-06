@@ -43,7 +43,7 @@ class InputType(object):
             globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
             inputs = list(itertools.chain.from_iterable(globbed_paths))
             # remove duplicate inputs
-            inputs = list(dict.fromkeys(inputs))
+            inputs = set(inputs)
             if len(inputs) == 0:
                 raise CompileError(
                     "Compile error: {} for target: {} not found in "

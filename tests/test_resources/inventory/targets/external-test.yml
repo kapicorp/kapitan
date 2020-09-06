@@ -1,23 +1,23 @@
 parameters:
   kapitan:
     vars:
-      target: binary-test
+      target: external-test
     compile:
-      - input_type: binary
+      - input_type: external
         output_path: .
         input_paths:
           - script.sh
-        binary_args:
+        args:
           - arg1
           - \${compiled_target_dir} # this will not be interpolated by reclass but by the Binary input
-        binary_env_vars:
+        env_vars:
           EXAMPLE: "ENV_VAR"
 
-      - input_type: binary
+      - input_type: external
         output_path: .
         input_paths:
           - /usr/local/bin/ytt
-        binary_args:
+        args:
           - -f
           - ytt/extensions.v1beta1.Ingress.default.example-ingress1.yaml
           - -f

@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"binary input tests"
+"external input tests"
 import os
 import sys
 import tempfile
@@ -14,26 +14,26 @@ import unittest
 import yaml
 from kapitan.cached import reset_cache
 from kapitan.cli import main
-from kapitan.inputs.binary import Binary
+from kapitan.inputs.external import External
 
 YTT_BINARY_PATH = "/usr/local/bin/ytt"
 
 
-@unittest.skipIf(not os.path.exists(YTT_BINARY_PATH), "ytt binary not found")
-class BinaryInputTest(unittest.TestCase):
+@unittest.skipIf(not os.path.exists(YTT_BINARY_PATH), "ytt external not found")
+class ExternalInputTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.path.join("tests", "test_resources"))
 
     def test_compile(self):
         temp = tempfile.mkdtemp()
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "binary-test"]
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "external-test"]
         main()
         self.assertTrue(
             os.path.isfile(
                 os.path.join(
                     temp,
                     "compiled",
-                    "binary-test",
+                    "external-test",
                     "extensions.v1beta1.Ingress.default.example-ingress1.yaml",
                 )
             )
