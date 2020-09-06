@@ -5,12 +5,6 @@ FROM golang:1.14.4-stretch AS helm-builder
 RUN mkdir /kapitan
 WORKDIR /kapitan
 
-ARG YTT_VERSION="0.30.0"
-ARG YTT_URL="https://github.com/k14s/ytt/releases/download/v${YTT_VERSION}/ytt-linux-amd64"
-
-RUN curl -sL "${YTT_URL}" -o /usr/local/bin/ytt \
-    && chmod +x /usr/local/bin/ytt
-
 COPY ./kapitan/inputs/helm ./kapitan/inputs/helm
 RUN chmod +x ./kapitan/inputs/helm/build.sh \
     && ./kapitan/inputs/helm/build.sh
@@ -33,7 +27,7 @@ SHELL ["/bin/bash", "-i", "-c"]
 ARG PYINSTALLER_VERSION=3.5
 
 COPY --from=helm-builder /kapitan /kapitan
-COPY --from=helm-builder /usr/local/bin/ytt /usr/local/bin/ytt
+
 WORKDIR /kapitan
 
 ENV PATH="/opt/venv/bin:${PATH}"
