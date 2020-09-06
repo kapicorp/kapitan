@@ -46,9 +46,7 @@ class External(InputType):
             args = re.sub(r"(\${compiled_target_dir})", compile_path, args)
 
             logger.debug(
-                "Executing external input with command '{}' and env vars '{}'.".format(
-                    args, self.env_vars
-                )
+                "Executing external input with command '{}' and env vars '{}'.".format(args, self.env_vars)
             )
 
             external_result = subprocess.run(
