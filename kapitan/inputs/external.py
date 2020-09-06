@@ -37,12 +37,14 @@ class External(InputType):
         """
 
         try:
+            # file_path (str): Path to executable script or binary
             external_path = file_path
 
             args = [external_path]
             args.extend(self.args)
             args = " ".join(args)
 
+            # compile_path (str): Path to current target compiled directory
             args = re.sub(r"(\${compiled_target_dir})", compile_path, args)
 
             logger.debug(

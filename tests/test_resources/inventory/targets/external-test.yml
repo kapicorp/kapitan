@@ -8,19 +8,6 @@ parameters:
         input_paths:
           - script.sh
         args:
-          - arg1
-          - \${compiled_target_dir} # this will not be interpolated by reclass but by the Binary input
+          - \${compiled_target_dir} # this will not be interpolated by reclass but by the External input
         env_vars:
-          EXAMPLE: "ENV_VAR"
-
-      - input_type: external
-        output_path: .
-        input_paths:
-          - /usr/local/bin/ytt
-        args:
-          - -f
-          - ytt/extensions.v1beta1.Ingress.default.example-ingress1.yaml
-          - -f
-          - ytt/remove.yaml
-          - ">"
-          - \${compiled_target_dir}/extensions.v1beta1.Ingress.default.example-ingress1.yaml
+          FILE_NAME: "test.md"
