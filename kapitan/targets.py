@@ -416,43 +416,35 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
     target_name = ext_vars["target"]
 
     for comp_obj in compile_objs:
-        # these need to be inside this for loop so default values are reinitialized for each compile object
-        jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller, inventory_path)
-        jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
-        kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
-        helm_compiler = Helm(compile_path, search_paths, ref_controller)
-        copy_compiler = Copy(compile_path, search_paths, ref_controller)
-        remove_compiler = Remove(compile_path, search_paths, ref_controller)
-        external_compiler = External(compile_path, search_paths, ref_controller)
-
         input_type = comp_obj["input_type"]
         output_path = comp_obj["output_path"]
+
         if input_type == "jinja2":
-            input_compiler = jinja2_compiler
+            input_compiler = Jinja2(compile_path, search_paths, ref_controller, inventory_path)
         elif input_type == "jsonnet":
-            input_compiler = jsonnet_compiler
+            input_compiler = Jsonnet(compile_path, search_paths, ref_controller)
         elif input_type == "kadet":
-            input_compiler = kadet_compiler
+            input_compiler = Kadet(compile_path, search_paths, ref_controller)
             if "input_params" in comp_obj:
-                kadet_compiler.set_input_params(comp_obj["input_params"])
+                input_compiler.set_input_params(comp_obj["input_params"])
         elif input_type == "helm":
+            input_compiler = Helm(compile_path, search_paths, ref_controller)
             if "helm_values" in comp_obj:
-                helm_compiler.dump_helm_values(comp_obj["helm_values"])
+                input_compiler.dump_helm_values(comp_obj["helm_values"])
             if "helm_params" in comp_obj:
-                helm_compiler.set_helm_params(comp_obj["helm_params"])
+                input_compiler.set_helm_params(comp_obj["helm_params"])
             if "helm_values_files" in comp_obj:
-                helm_compiler.set_helm_values_files(comp_obj["helm_values_files"])
-            input_compiler = helm_compiler
+                input_compiler.set_helm_values_files(comp_obj["helm_values_files"])
         elif input_type == "copy":
-            input_compiler = copy_compiler
+            input_compiler = Copy(compile_path, search_paths, ref_controller)
         elif input_type == "remove":
-            input_compiler = remove_compiler
+            input_compiler = Remove(compile_path, search_paths, ref_controller)
         elif input_type == "external":
-            input_compiler = external_compiler
+            input_compiler = External(compile_path, search_paths, ref_controller)
             if "args" in comp_obj:
-                external_compiler.set_args(comp_obj["args"])
+                input_compiler.set_args(comp_obj["args"])
             if "env_vars" in comp_obj:
-                external_compiler.set_env_vars(comp_obj["env_vars"])
+                input_compiler.set_env_vars(comp_obj["env_vars"])
         else:
             err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
             raise CompileError(err_msg.format(input_type))
