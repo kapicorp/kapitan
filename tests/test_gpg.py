@@ -205,3 +205,33 @@ class GPGSecretsTest(unittest.TestCase):
         self.assertTrue(len(ref.recipients), 2)
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
         self.assertEqual("I am a file with a c3VwZXIgc2VjcmV0IHZhbHVl", revealed)
+
+    def test_gpg_write_ref_path_reveal(self):
+        """
+        write secret content, confirm secret file exists,
+        reveal from ref file path and compare content
+        """
+        tag = "?{gpg:secret/sauce3}"
+        REF_CONTROLLER_EMBEDDED[tag] = GPGSecret("super secret value", [{"fingerprint": KEY.fingerprint}])
+        reffile_name = os.path.join(REFS_HOME, "secret/sauce3")
+        self.assertTrue(os.path.isfile(reffile_name))
+
+        ref = REF_CONTROLLER.ref_from_ref_file(reffile_name)
+        revealed = ref.reveal()
+        self.assertEqual("super secret value", revealed)
+
+    def test_gpg_write_base64_ref_path_reveal(self):
+        """
+        write secret for base64 encoded content, confirm secret file exists,
+        reveal from ref file path and compare content
+        """
+        tag = "?{gpg:secret/sauce3}"
+        REF_CONTROLLER_EMBEDDED[tag] = GPGSecret(
+            "super secret value", [{"fingerprint": KEY.fingerprint}], encode_base64=True
+        )
+        reffile_name = os.path.join(REFS_HOME, "secret/sauce3")
+        self.assertTrue(os.path.isfile(reffile_name))
+
+        ref = REF_CONTROLLER.ref_from_ref_file(reffile_name)
+        revealed = ref.reveal()
+        self.assertEqual("c3VwZXIgc2VjcmV0IHZhbHVl", revealed)

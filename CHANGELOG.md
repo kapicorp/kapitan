@@ -1,3 +1,24 @@
+## 0.29.1:
+- Fix reveal from ref file bug (#605)
+- Update dependencies (#600, #601, #602, #603)
+
+## 0.29.0:
+- Fix issue #572 Enable adding reclass classes from remote inventories before they are available (#574)
+- Add a dedicated directory in the temp path (#584)
+- Fix issue with dynamically created array of pointers with cffi (#586)
+- New remove input type (#589)
+- Update pip dependencies (#578, #580, #581, #577, #576, #582)
+- Rename remote inventory key to `inventory` instead of `inventories` (#570)
+- Add support for remote inventory fetching (#521)
+- Adds input_params for compile time parameter injection into kadet modules (#560)
+- Add logging fix for python 3.8+ on macOS (#559)
+- Allow reclass override none feature (#562)
+- Update python dependencies (#555, #556, #557)
+- Enable helm values files to be injected for input type "helm" (#545)
+- Fix issue #500: Add --ref-file or --tag to refs --reveal option. (#548)
+- Add TOML Jinja2 Filters (#534)
+- Fix issues #535 and #536 by resolving relative paths in the copy input type and not clobbering the output dir (#539)
+
 ## 0.29.0-rc.2:
 - Fix issue #572 Enable adding reclass classes from remote inventories before they are available (#574)
 - Add a dedicated directory in the temp path (#584)

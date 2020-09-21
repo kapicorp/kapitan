@@ -62,7 +62,13 @@ class DependencyManagerTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         source = "https://github.com/deepmind/kapitan.git"
-        dep = [{"output_path": os.path.join(output_dir, "subdir"), "ref": "master", "subdir": "tests",}]
+        dep = [
+            {
+                "output_path": os.path.join(output_dir, "subdir"),
+                "ref": "master",
+                "subdir": "tests",
+            }
+        ]
         fetch_git_dependency((source, dep), temp_dir, force=False)
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
         rmtree(temp_dir)
