@@ -4,6 +4,7 @@
 
 import hashlib
 import logging
+import multiprocessing
 import os
 from collections import defaultdict
 from distutils.dir_util import copy_tree
@@ -172,7 +173,9 @@ def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
             if force:
                 is_unpacked = unpack_downloaded_file(cached_source_path, output_path, content_type)
             else:
-                unpack_output = os.path.join(save_dir, "extracted")
+                unpack_output = os.path.join(
+                    save_dir, "extracted-" + str(multiprocessing.current_process().name)
+                )
                 os.makedirs(unpack_output)
                 is_unpacked = unpack_downloaded_file(cached_source_path, unpack_output, content_type)
                 safe_copy_tree(unpack_output, output_path)
