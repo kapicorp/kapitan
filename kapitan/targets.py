@@ -28,6 +28,7 @@ from kapitan.inputs.helm import Helm
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
+from kapitan.inputs.external import External
 from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.resources import inventory_reclass
 from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
@@ -414,40 +415,38 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
 
-    jinja2_compiler = Jinja2(compile_path, search_paths, ref_controller, inventory_path)
-    jsonnet_compiler = Jsonnet(compile_path, search_paths, ref_controller)
-    kadet_compiler = Kadet(compile_path, search_paths, ref_controller)
-    helm_compiler = Helm(compile_path, search_paths, ref_controller)
-    copy_compiler = Copy(compile_path, search_paths, ref_controller)
-    remove_compiler = Remove(compile_path, search_paths, ref_controller)
-
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
         output_path = comp_obj["output_path"]
+
         if input_type == "jinja2":
-            input_compiler = jinja2_compiler
+            input_compiler = Jinja2(compile_path, search_paths, ref_controller, inventory_path)
         elif input_type == "jsonnet":
-            input_compiler = jsonnet_compiler
+            input_compiler = Jsonnet(compile_path, search_paths, ref_controller)
         elif input_type == "kadet":
-            input_compiler = kadet_compiler
+            input_compiler = Kadet(compile_path, search_paths, ref_controller)
             if "input_params" in comp_obj:
-                kadet_compiler.set_input_params(comp_obj["input_params"])
+                input_compiler.set_input_params(comp_obj["input_params"])
         elif input_type == "helm":
+            input_compiler = Helm(compile_path, search_paths, ref_controller)
             if "helm_values" in comp_obj:
-                helm_compiler.dump_helm_values(comp_obj["helm_values"])
+                input_compiler.dump_helm_values(comp_obj["helm_values"])
             if "helm_params" in comp_obj:
-                helm_compiler.set_helm_params(comp_obj["helm_params"])
+                input_compiler.set_helm_params(comp_obj["helm_params"])
             if "helm_values_files" in comp_obj:
-                helm_compiler.set_helm_values_files(comp_obj["helm_values_files"])
-            input_compiler = helm_compiler
+                input_compiler.set_helm_values_files(comp_obj["helm_values_files"])
         elif input_type == "copy":
-            input_compiler = copy_compiler
+            input_compiler = Copy(compile_path, search_paths, ref_controller)
         elif input_type == "remove":
-            input_compiler = remove_compiler
+            input_compiler = Remove(compile_path, search_paths, ref_controller)
+        elif input_type == "external":
+            input_compiler = External(compile_path, search_paths, ref_controller)
+            if "args" in comp_obj:
+                input_compiler.set_args(comp_obj["args"])
+            if "env_vars" in comp_obj:
+                input_compiler.set_env_vars(comp_obj["env_vars"])
         else:
-            err_msg = (
-                'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove'
-            )
+            err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path)
@@ -491,6 +490,8 @@ def valid_target_obj(target_obj, require_compile=True):
                             "additionalProperties": False,
                         },
                         "input_params": {"type": "object"},
+                        "env_vars": {"type": "object"},
+                        "args": {"type": "array"},
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
@@ -501,7 +502,7 @@ def valid_target_obj(target_obj, require_compile=True):
                                 "output_type": {"enum": ["yml", "yaml", "json", "plain"]},
                             },
                         },
-                        {"properties": {"input_type": {"enum": ["jinja2", "helm"]}}},
+                        {"properties": {"input_type": {"enum": ["jinja2", "helm", "external"]}}},
                     ],
                 },
             },
