@@ -189,10 +189,7 @@ class Revealer(object):
                 rev_obj = self.reveal_obj(obj)
                 return (
                     yaml.dump_all(
-                        rev_obj,
-                        Dumper=PrettyDumper,
-                        default_flow_style=False,
-                        explicit_start=True,
+                        rev_obj, Dumper=PrettyDumper, default_flow_style=False, explicit_start=True,
                     ),
                     "yaml",
                 )

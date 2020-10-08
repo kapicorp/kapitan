@@ -420,7 +420,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, inven
         output_path = comp_obj["output_path"]
 
         if input_type == "jinja2":
-            input_compiler = Jinja2(compile_path, search_paths, ref_controller, inventory_path)
+            input_compiler = Jinja2(compile_path, search_paths, ref_controller)
         elif input_type == "jsonnet":
             input_compiler = Jsonnet(compile_path, search_paths, ref_controller)
         elif input_type == "kadet":
