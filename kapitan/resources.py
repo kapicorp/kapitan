@@ -245,14 +245,19 @@ def search_imports(cwd, import_str, search_paths):
     return normalised_path, normalised_path_content
 
 
-def inventory(search_paths, target, inventory_path="inventory/"):
+def inventory(search_paths, target, inventory_path=None):
     """
     Reads inventory (set by inventory_path) in search_paths.
     set nodes_uri to change reclass nodes_uri the default value
     set target to None to return all target in the inventory
+    set inventory_path to read custom path. None defaults to value set via cli
     Returns a dictionary with the inventory for target
     """
 
+    if inventory_path is None:
+        # grab inventory_path value from cli subcommand
+        inventory_path_arg = cached.args.get("compile") or cached.args.get("inventory")
+        inventory_path = inventory_path_arg.inventory_path
     full_inv_path = ""
     inv_path_exists = False
     for path in search_paths:

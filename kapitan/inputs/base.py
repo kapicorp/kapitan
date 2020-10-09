@@ -21,12 +21,11 @@ logger = logging.getLogger(__name__)
 
 
 class InputType(object):
-    def __init__(self, type_name, compile_path, search_paths, ref_controller, inventory_path="inventory/"):
+    def __init__(self, type_name, compile_path, search_paths, ref_controller):
         self.type_name = type_name
         self.compile_path = compile_path
         self.search_paths = search_paths
         self.ref_controller = ref_controller
-        self.inventory_path = inventory_path
 
     def compile_obj(self, comp_obj, ext_vars, **kwargs):
         """
