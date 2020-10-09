@@ -33,10 +33,11 @@ ENV PATH="/opt/venv/bin:${PATH}"
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
-        build-essential \
+        build-essential patchelf \
     && python -m venv /opt/venv \
     && pip install --upgrade pip wheel \
     && pip install pyinstaller==$PYINSTALLER_VERSION \
+    && pip install staticx \
     && pip install -r requirements.txt \
     && ./kapitan/inputs/helm/build.sh \
     && ./kapitan/dependency_manager/helm/build.sh \
