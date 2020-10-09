@@ -20,7 +20,9 @@ pyi-makespec kapitan/"$entry".py --onefile \
     --hidden-import 'pkg_resources.py2_warn' \
     --exclude-module doctest --exclude-module pydoc
 pyinstaller "$entry".spec --clean
-staticx --strip dist/$entry dist/$output_name
+staticx -l \
+    /usr/lib/x86_64-linux-gnu/libssl.so \
+    --strip dist/$entry dist/$output_name
 # Open permissions so that when this binary
 # is used outside of docker (on the volume mount) it
 # also can be deleted by Travis CI
