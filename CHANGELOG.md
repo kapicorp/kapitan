@@ -5,7 +5,7 @@
 - remove inventory_path parameter in InputType classes (#625)
 
 ## 0.29.2:
-- fix for reveal of secret for dir with json (#607)
+- Fix for reveal of secret for dir with json (#607)
 - Fix FileExistsError when fetching multiple dependencies with unpack=True (#608)
 - Create External Input (#587)
 - Update reclass dependency (#610)
