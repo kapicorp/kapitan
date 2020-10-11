@@ -692,6 +692,45 @@ class CliFuncsTest(unittest.TestCase):
 
         os.remove(test_tag_file)
 
+    def test_cli_secret_write_reveal_gsm(self):
+        """
+        run $ kapitan refs --write gsm:test_secret -f test_secret_file --refs-path REFS_PATH --gcp-project-id test
+        and $ kapitan refs --reveal -f test_tag_file --refs-path REFS_PATH
+        using "secret ingredient" gsm secret id
+        """
+        test_secret_content = "secret ingredient"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "gsm:test_secret",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+            "--gcp-project-id",
+            "test",
+        ]
+        main()
+
+        test_tag_content = "revealing: ?{gsm:test_secret}"
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(test_tag_content)
+        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual("revealing: nothing", stdout.getvalue())
+
+        os.remove(test_tag_file)
+
     def test_cli_searchvar(self):
         """
         run $ kapitan searchvar mysql.replicas

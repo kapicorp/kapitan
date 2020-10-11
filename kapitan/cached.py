@@ -11,6 +11,7 @@ inv = {}
 inv_cache = {}
 gpg_obj = None
 gkms_obj = None
+gsm_obj = None
 awskms_obj = None
 dot_kapitan = {}
 ref_controller_obj = None
@@ -27,6 +28,7 @@ def reset_cache():
     inv_sources = set()
     gpg_obj = None
     gkms_obj = None
+    gsm_obj = None
     awskms_obj = None
     dot_kapitan = {}
     ref_controller_obj = None

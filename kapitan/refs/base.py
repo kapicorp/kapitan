@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token||func:param1:param2}
 # e.g  ?{ref:basepayloadhere==:embedded} (for embedded refs)
-REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@=]+)([\|\|\w\:\.\-\/]+)?=*})"
+REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@=]+)([\|\|\w\:\.\-\/ ]+)?=*})"
 REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
 
@@ -453,6 +453,10 @@ class RefController(object):
                 from kapitan.refs.secrets.vaultkv import VaultBackend
 
                 self.register_backend(VaultBackend(self.path, **ref_kwargs))
+            elif type_name == "gsm":
+                from kapitan.refs.secrets.gsm import GoogleSMBackend
+
+                self.register_backend(GoogleSMBackend(self.path, **ref_kwargs))
             else:
                 raise RefBackendError(f"no backend for ref type: {type_name}")
         return self.backends[type_name]
@@ -533,14 +537,16 @@ class RefController(object):
             return backend[path]
 
         # "type_name:path/to/ref:n0c0ffee"
+        # "gsm:path/to/ref:secret_id"
         elif len(attrs) == 3:
             type_name = attrs[0]
             path = attrs[1]
-            hash = attrs[2]
 
-            if hash == "embedded":
+            if attrs[2] == "embedded":
                 return self.ref_from_embedded(type_name, path)
-            else:
+
+            if len(attrs[2]) == 8:
+                hash = attrs[2]
                 backend = self._get_backend(type_name)
                 ref = backend[path]
                 if ref.hash[:8] == hash:
@@ -551,13 +557,45 @@ class RefController(object):
                             token, ref.token
                         )
                     )
+            # when version_id is specified (used for secret managers)
+            else:
+                version_id = attrs[2]
+                backend = self._get_backend(type_name)
+                ref = backend[path + ":" + version_id]
+                return ref
+
+        # "gsm:path/to/ref:version_id:n0c0ffee" (used for secret managers)
+        elif len(attrs) == 4:
+            type_name = attrs[0]
+            path = attrs[1]
+            version_id = attrs[2]
+            hash = attrs[3]
+
+            if hash == "embedded":
+                ref = self.ref_from_embedded(type_name, path)
+                return ref
+
+            else:
+                backend = self._get_backend(type_name)
+                ref = backend[path + ":" + version_id]
+
+                if ref.hash[:8] == hash:
+                    return ref
+                else:
+                    raise RefHashMismatchError(
+                        "{}: token hash does not match with stored reference hash: {}".format(
+                            token, ref.token
+                        )
+                    )
+
         else:
             return None
 
     def _set_to_token(self, token, ref_obj):
         attrs = token.split(":")
 
-        if len(attrs) == 2:
+        # len(attrs) will be 3 in case a version_id is specified for a secret manager
+        if len(attrs) == 2 or 3:
             type_name = attrs[0]
             path = attrs[1]
             backend = self._get_backend(type_name)

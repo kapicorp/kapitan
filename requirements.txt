@@ -8,6 +8,7 @@ python-gnupg==0.4.6
 six>=1.15.0
 cryptography>=2.9.2
 google-api-python-client==1.7.11
+google-cloud-secret-manager==1.0.0
 boto3>=1.14.3
 requests==2.23.0
 addict==2.2.1
