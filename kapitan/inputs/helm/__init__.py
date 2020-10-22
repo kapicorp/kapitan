@@ -8,7 +8,8 @@ import platform
 import yaml
 
 try:
-    from kapitan.inputs.helm.helm_binding import ffi
+    from kapitan_helm.helm_binding import ffi
+    from kapitan_helm.util import get_dl_path
 except ImportError:
     pass  # make this feature optional
 
@@ -27,8 +28,9 @@ class Helm(InputType):
         """returns the dl_opened library (.so file) if exists, otherwise None"""
         if platform.system() not in ("Linux", "Darwin"):  # TODO: later add binding for Mac
             return None
-        # binding_path is kapitan/inputs/helm/libtemplate.so
-        binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "libtemplate.so")
+        # Binding path is the path to the build template.<sysconfig extension>.so file
+        # It is shipped by the kapitan_helm python package.
+        binding_path = get_dl_path()
         if not os.path.exists(binding_path):
             logger.debug("The helm binding does not exist at {}".format(binding_path))
             return None
