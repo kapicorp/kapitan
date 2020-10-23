@@ -19,3 +19,6 @@ hvac==0.10.4
 docker==4.2.1
 # Reclass dependencies
 pyparsing
+# TODO: This is obviously temporary
+--extra-index-url=https://test.pypi.org/simple/
+kapitan_helm
