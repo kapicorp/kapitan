@@ -58,7 +58,7 @@ def get_env(parameter):
         "VAULT_NAMESPACE", os.getenv("VAULT_NAMESPACE", default="")
     )
     # VERIFY VAULT SERVER TLS CERTIFICATE
-    skip_verify = parameter.get("VAULT_SKIP_VERIFY", os.getenv("VAULT_SKIP_VERIFY", default=""))
+    skip_verify = str(parameter.get("VAULT_SKIP_VERIFY", os.getenv("VAULT_SKIP_VERIFY", default="")))
 
     if skip_verify.lower() == "false":
         cert = parameter.get("VAULT_CACERT", os.getenv("VAULT_CACERT", default=""))

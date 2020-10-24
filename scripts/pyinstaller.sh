@@ -5,6 +5,9 @@
 
 set -e
 
+#CC='gcc -pthread -static'
+#CONFIG_ARGS='--disable-shared'
+
 entry='__main__'
 output_name='kapitan-linux-amd64'
 pyi-makespec kapitan/"$entry".py --onefile \
@@ -17,7 +20,7 @@ pyi-makespec kapitan/"$entry".py --onefile \
     --hidden-import 'pkg_resources.py2_warn' \
     --exclude-module doctest --exclude-module pydoc
 pyinstaller "$entry".spec --clean
-mv dist/$entry dist/$output_name
+staticx --strip dist/$entry dist/$output_name
 # Open permissions so that when this binary
 # is used outside of docker (on the volume mount) it
 # also can be deleted by Travis CI

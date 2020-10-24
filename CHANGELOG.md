@@ -1,3 +1,16 @@
+## 0.29.3:
+- Bump boto3 from 1.14.52 to 1.15.10 (#619)
+- VAULT_SKIP_VERIFY supports with yaml boolean defined in parameters (#623)
+- Add staticx and patchelf to pyinstaller.sh to build a Linux static binary (#624)
+- remove inventory_path parameter in InputType classes (#625)
+
+## 0.29.2:
+- Fix for reveal of secret for dir with json (#607)
+- Fix FileExistsError when fetching multiple dependencies with unpack=True (#608)
+- Create External Input (#587)
+- Update reclass dependency (#610)
+- Bump yamllint from 1.24.2 to 1.25.0 (#616)
+
 ## 0.29.1:
 - Fix reveal from ref file bug (#605)
 - Update dependencies (#600, #601, #602, #603)

@@ -224,7 +224,7 @@ class Revealer(object):
                 out_yaml += out
             elif fpath.endswith(".json"):
                 out, _ = self._reveal_file(fpath)
-                out_json += self._reveal_file(fpath)
+                out_json += out
             else:
                 out, _ = self._reveal_file(fpath)
                 out_raw += out
