@@ -6,7 +6,7 @@ Jinja2>=2.11.2
 jsonschema==3.2.0
 python-gnupg==0.4.6
 six>=1.15.0
-cryptography>=2.9.2
+cryptography>=3.2
 google-api-python-client==1.7.11
 boto3>=1.14.3
 # Can be removed once https://github.com/boto/botocore/issues/2187 is resolved
