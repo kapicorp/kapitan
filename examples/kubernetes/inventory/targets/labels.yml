@@ -4,3 +4,12 @@ classes:
 
 parameters:
   target_name: labels
+  kapitan:
+    vars:
+      a: b                # works fine
+
+      map:                # this map definition leads to error
+        foo: bar          # $ kapitan compile -t lables
+                          # jsonnet error: failed to compile kubernetes/components/namespace/main.jsonnet:
+                          # bad argument type for built-in operation
+                          # Compile error: failed to compile target: labels
