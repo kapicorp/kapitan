@@ -1,3 +1,7 @@
+## 0.29.4:
+- Pin urllib3 to fix kapitan crash on newest boto (#635)
+- Bump cryptography to fix CVE-2020-25659 (#636)
+
 ## 0.29.3:
 - Bump boto3 from 1.14.52 to 1.15.10 (#619)
 - VAULT_SKIP_VERIFY supports with yaml boolean defined in parameters (#623)
