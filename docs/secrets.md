@@ -5,6 +5,7 @@ Kapitan can manage references and secrets with the following key management serv
 - GPG
 - Google Cloud KMS (beta)
 - AWS KMS (beta)
+- Azure KMS (beta)
 - Environment
 - Vaultkv (read only support)
 
@@ -35,6 +36,8 @@ parameters:
         key: 'projects/<project>/locations/<location>/keyRings/<keyRing>/cryptoKeys/<key>'
       awskms:
         key: 'alias/nameOfKey'
+      azkms:
+        key: 'https://<keyvault-name>.vault.azure.net/keys/<object-name>/<object-version>'
       vaultkv:
         VAULT_ADDR: http://127.0.0.1:8200
         auth: token
@@ -54,6 +57,7 @@ $ kapitan refs --write <secret_type>:path/to/secret/file -t <target_name> -f <se
 - `gpg`: GPG
 - `gkms`: Google Cloud KMS
 - `awskms`: AWS KMS
+- `azkms`: Azure KMS
 - `vaultkv`: Hashicorp Vault with kv/kv-v2 secret engine
 
 Kapitan will inherit the secrets configuration for the specified target, and encrypt and save your secret into `<path/to/secret/file>`.
@@ -239,3 +243,46 @@ parameters:
         VAULT_CLIENT_KEY: /path/to/key
         VAULT_CLIENT_CERT: /path/to/cert
 ```
+### Azure KMS Secret Backend
+
+To encrypt secrets using keys stored in Azure's Key Vault, a `key_id` is required to identify an Azure key object uniquely.
+It should be of the form `https://{keyvault-name}.vault.azure.net/{object-type}/{object-name}/{object-version}`.
+
+#### Defining the KMS key
+
+This is done in the inventory under `parameters.kapitan.secrets`.
+```yaml
+parameters:
+  kapitan:
+    vars:
+      target: ${target_name}
+      namespace: ${target_name}
+    secrets:
+      azkms:
+        key: 'https://<keyvault-name>.vault.azure.net/keys/<object-name>/<object-version>'
+```
+The key can also be specified using the `--key` flag
+
+#### Creating a secret
+
+Secrets can be created using any of the methods described in the ["creating your secret"](##2.-Create-Your-Secret) section.
+
+For example, if the key is defined in the `prod` target file
+```shell
+$ echo "my_encrypted_secret" | kapitan refs --write azkms:path/to/secret_inside_kapitan -t prod -f -
+```
+Using the `--key` flag and a `key_id`
+```shell
+$ echo "my_encrypted_secret" | kapitan refs --write azkms:path/to/secret_inside_kapitan --key=<key_id> -f -
+```
+#### Referencing and revealing a secret
+Secrets can be [referenced](####3.-Reference-your-secrets-in-your-classes/targets-and-run-`kapitan-compile`) and [revealed](####4.-Reveal-and-use-the-secrets) in any of the ways described above.
+
+For example, to reveal the secret stored at `path/to/secret_inside_kapitan`
+```shell
+$ kapitan refs --reveal --tag "?{azkms:path/to/secret_inside_kapitan}"
+```
+
+
+*Note:* Cryptographic algorithm used for encryption is _rsa-oaep-256_.
+
