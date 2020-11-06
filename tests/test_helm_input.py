@@ -128,7 +128,7 @@ class HelmInputTest(unittest.TestCase):
         with open(controller_deployment_file, "r") as fp:
             manifest = yaml.safe_load(fp.read())
             name = manifest["metadata"]["name"]
-            self.assertEqual(name, "-nginx-ingress-my-controller")
+            self.assertEqual(name, "nginx-ingress-my-controller")
 
     def test_compile_with_helm_values_files(self):
         temp = tempfile.mkdtemp()
@@ -199,6 +199,25 @@ class HelmInputTest(unittest.TestCase):
                 )
             )
             self.assertIn("--election-id=super_secret_ID", args)
+
+    def test_compile_with_crds(self):
+        temp = tempfile.mkdtemp()
+        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "acs-engine-autoscaler", "--reveal"]
+        main()
+        crd_file = os.path.join(
+            temp,
+            "compiled",
+            "acs-engine-autoscaler",
+            "acs-engine-autoscaler",
+            "crds",
+            "apiextensions.crossplane.io_compositeresourcedefinitions.yaml",
+        )
+        self.assertTrue(os.path.isfile(crd_file))
+        with open(crd_file, "r") as fp:
+            manifest = yaml.safe_load(fp.read())
+            self.assertEqual(
+                "compositeresourcedefinitions.apiextensions.crossplane.io", manifest["metadata"]["name"]
+            )
 
     def tearDown(self):
         os.chdir("../../")
