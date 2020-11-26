@@ -10,11 +10,13 @@ jobs:
           submodules: 'recursive'
       - name: Strip git ref prefix from tag version and store in TAG_VERSION
         run: |
-          echo ::set-env name=TAG_VERSION::${GITHUB_REF#refs/*/v}
-          echo ::set-env name=REF_NAME::${GITHUB_REF##*/}
+          echo "TAG_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+          echo "REF_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
+          
       - name: Strip full version and just keep major part in MAJOR_VERSION VAR
         run: |
-          echo ::set-env name=MAJOR_VERSION::${TAG_VERSION:0:4}
+          echo "MAJOR_VERSION=${TAG_VERSION:0:4}" >> $GITHUB_ENV
+          
       # Printing versions needs to be a separate step,
       # as they aren't set during the previous two steps
       - name: Print Versions
