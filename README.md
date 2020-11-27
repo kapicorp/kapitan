@@ -8,7 +8,7 @@
 [![Releases](https://img.shields.io/github/release/deepmind/kapitan.svg)](https://github.com/deepmind/kapitan/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/deepmind/kapitan/latest.svg)](https://hub.docker.com/r/deepmind/kapitan)
 
-Kapitan is the tool to help you manage the complexity of your configuration using an inventory and a choice of templates like [generators](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7), jsonnet, [kadet](https://github.com/deepmind/kapitan/pull/190), jinja2 and helm.
+Kapitan is the tool to help you manage the complexity of your configuration using an inventory and a choice of templates like [generators](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7), jsonnet, [kadet](https://kapitan.dev/compile/#kadet), jinja2 and helm.
 
 Use Kapitan to build an inventory which you can then use to drive templates for your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
 
@@ -47,10 +47,10 @@ files (for instance, Kubernetes manifests) without using any templating at all.
 
 > Read our blog post [**Keep your ship together with Kapitan**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7) 
 
-### [Jsonnet](https://jsonnet.org/) or [Kadet](https://github.com/deepmind/kapitan/pull/190) templates backends
+### [Jsonnet](https://jsonnet.org/) or [Kadet](https://kapitan.dev/compile/#kadet) templates backends
 For more complex scenarios, you have a choice of directly using our 2 main templating engines.
 
-You can use either [Jsonnet](https://jsonnet.org/) (tapping into an ever growing number of libraries and examples) or our Python based [Kadet](https://github.com/deepmind/kapitan/pull/190) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
+You can use either [Jsonnet](https://jsonnet.org/) (tapping into an ever growing number of libraries and examples) or our Python based [Kadet](https://kapitan.dev/compile/#kadet) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
 
 ### [Jinja2](http://jinja.pocoo.org/)
 Good old Jinja to create text based templates for scripts and documentation; Don't underestimate the power of this very simple approach to create templated scripts and documentation!
