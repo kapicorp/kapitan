@@ -220,7 +220,7 @@ class Jinja2ContextVars(unittest.TestCase):
             f.write("{{ inventory.parameters.cluster.name }}".encode("UTF-8"))
             cluster_name = "minikube"
             target_name = "minikube-es"
-            inv = inventory(["examples/kubernetes"], target_name)
+            inv = inventory(["examples/kubernetes"], target_name, inventory_path="inventory/")
             context = {"inventory": inv}
             f.seek(0)
             self.assertEqual(render_jinja2_file(f.name, context), cluster_name)
@@ -233,7 +233,7 @@ class Jinja2ContextVars(unittest.TestCase):
                 % target_name.encode("UTF-8")
             )
             cluster_name = "minikube"
-            inv_global = inventory(["examples/kubernetes"], None)
+            inv_global = inventory(["examples/kubernetes"], None, inventory_path="inventory/")
             context = {"inventory_global": inv_global}
             f.seek(0)
             self.assertEqual(render_jinja2_file(f.name, context), cluster_name)
@@ -245,7 +245,7 @@ class Jinja2ExternalFilterTest(unittest.TestCase):
             f.write("{{ inventory.parameters.cluster.name | custom_jinja2_filter }}".encode("UTF-8"))
             cluster_name = "minikube"
             target_name = "minikube-es"
-            inv = inventory(["examples/kubernetes"], target_name)
+            inv = inventory(["examples/kubernetes"], target_name, inventory_path="inventory/")
             context = {"inventory": inv}
             f.seek(0)
             actual_output = render_jinja2_file(
