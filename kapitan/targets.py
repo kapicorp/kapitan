@@ -39,6 +39,15 @@ from reclass.errors import NotFoundError, ReclassException
 logger = logging.getLogger(__name__)
 
 
+def check_jsonnet_import():
+    try:
+        import _jsonnet
+    except ImportError:
+        logger.info(
+            "Note: jsonnet is not yet supported on ARM/M1. You can still use kadet and jinja2 for templating"
+        )
+
+
 def compile_targets(
     inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs
 ):
@@ -47,6 +56,7 @@ def compile_targets(
     multiprocessing pool with parallel number of processes.
     kwargs are passed to compile_target()
     """
+    check_jsonnet_import()
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix=".kapitan")
     # enable previously compiled items to be reference in other compile inputs
