@@ -408,7 +408,7 @@ def search_targets(inventory_path, targets, labels):
     return targets_found
 
 
-def compile_target(target_obj, search_paths, compile_path, ref_controller, inventory_path, **kwargs):
+def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
     compile_objs = target_obj["compile"]
