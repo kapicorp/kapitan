@@ -257,7 +257,10 @@ def inventory(search_paths, target, inventory_path=None):
     if inventory_path is None:
         # grab inventory_path value from cli subcommand
         inventory_path_arg = cached.args.get("compile") or cached.args.get("inventory")
-        inventory_path = inventory_path_arg.inventory_path
+        if inventory_path_arg:
+            inventory_path = inventory_path_arg.inventory_path
+        else:
+            inventory_path = "./inventory"
 
     inv_path_exists = False
 
