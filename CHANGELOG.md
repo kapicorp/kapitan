@@ -1,3 +1,14 @@
+## 0.29.4:
+- Fix inventory_path not found error (#661)
+- Bump requests from 2.24.0 to 2.25.0 (#657)
+- Bump boto3 from 1.15.10 to 1.16.26 (#654)
+- Bump cffi from 1.14.2 to 1.14.4 (#650)
+- Bump azure-identity from 1.4.0 to 1.4.1 (#645)
+- Bump boto3 from 1.15.10 to 1.16.9 (#642)
+- Bump gitpython from 3.1.7 to 3.1.11 (#640)
+- Bump cryptography to fix CVE-2020-25659 (#636)
+- Add libssl for static(x) binary (#628)
+
 ## 0.29.3:
 - Bump boto3 from 1.14.52 to 1.15.10 (#619)
 - VAULT_SKIP_VERIFY supports with yaml boolean defined in parameters (#623)

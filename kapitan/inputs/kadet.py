@@ -89,6 +89,7 @@ class Kadet(InputType):
         prune = kwargs.get("prune", False)
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
+        inventory_path = kwargs.get("inventory_path", None)
         indent = kwargs.get("indent", 2)
 
         input_params = self.input_params
@@ -103,9 +104,9 @@ class Kadet(InputType):
         global search_paths
         search_paths = self.search_paths
         global inventory
-        inventory = lambda: Dict(inventory_func(self.search_paths, target_name))  # noqa E731
+        inventory = lambda: Dict(inventory_func(self.search_paths, target_name, inventory_path))  # noqa E731
         global inventory_global
-        inventory_global = lambda: Dict(inventory_func(self.search_paths, None))  # noqa E731
+        inventory_global = lambda: Dict(inventory_func(self.search_paths, None, inventory_path))  # noqa E731
 
         kadet_module, spec = module_from_path(file_path)
         sys.modules[spec.name] = kadet_module

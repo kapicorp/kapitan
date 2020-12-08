@@ -258,13 +258,20 @@ def inventory(search_paths, target, inventory_path=None):
         # grab inventory_path value from cli subcommand
         inventory_path_arg = cached.args.get("compile") or cached.args.get("inventory")
         inventory_path = inventory_path_arg.inventory_path
-    full_inv_path = ""
+
     inv_path_exists = False
-    for path in search_paths:
-        full_inv_path = os.path.join(path, inventory_path)
-        if os.path.exists(full_inv_path):
-            inv_path_exists = True
-            break
+
+    # check if the absolute inventory_path exists
+    full_inv_path = os.path.abspath(inventory_path)
+    if os.path.exists(full_inv_path):
+        inv_path_exists = True
+    # if not, check for inventory_path in search_paths
+    else:
+        for path in search_paths:
+            full_inv_path = os.path.join(path, inventory_path)
+            if os.path.exists(full_inv_path):
+                inv_path_exists = True
+                break
 
     if not inv_path_exists:
         raise InventoryError(f"Inventory not found in search paths: {search_paths}")
