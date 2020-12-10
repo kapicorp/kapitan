@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-jsonnet = "==0.16.0"
+jsonnet = "==0.17.0"
 jsonschema = "==3.2.0"
 python-gnupg = "==0.4.6"
 six = ">=1.15.0"
