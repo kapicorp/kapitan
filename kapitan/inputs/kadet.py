@@ -126,6 +126,10 @@ class Kadet(InputType):
         if prune:
             output_obj = prune_empty(output_obj)
 
+        # Return None if output_obj has no output
+        if output_obj is None:
+            return None
+
         for item_key, item_value in output_obj.items():
             # write each item to disk
             if output == "json":
