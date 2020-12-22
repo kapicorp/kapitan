@@ -14,19 +14,21 @@ from setuptools import find_packages, setup
 from kapitan.version import AUTHOR, AUTHOR_EMAIL, DESCRIPTION, LICENCE, PROJECT_NAME, URL, VERSION
 
 
-EXTRAS ={
-    "awskms" : ["boto3>=1.14.3"],
-    "gkms" : ["google-api-python-client==1.7.11"],
-    "gpg" : ["python-gnupg==0.4.6"],
-    "vaultkv" : ["hvac==0.10.4"],
-    "helm" : ["cffi"],
-    "test" : ["docker==4.2.1", "hvac==0.10.4"],
+EXTRAS = {
+    "awskms": ["boto3>=1.14.3"],
+    "gkms": ["google-api-python-client==1.7.11"],
+    "gpg": ["python-gnupg==0.4.6"],
+    "az": ["azure-keyvault-keys==4.2.0", "azure-identity==1.5.0"],
+    "vaultkv": ["hvac==0.10.4"],
+    "helm": ["cffi"],
+    "test": ["docker==4.2.1", "hvac==0.10.4"],
 }
-EXTRAS["all"] = [ item for items in EXTRAS.values() for item in items]
+EXTRAS["all"] = [item for items in EXTRAS.values() for item in items]
 
 # From https://github.com/pypa/pip/issues/3610#issuecomment-356687173
 def install_deps(EXTRAS):
-    """Reads requirements.txt and preprocess it
+    """
+    Reads requirements.txt and preprocess it
     to be feed into setuptools.
 
     This is the only possible way (we found)
@@ -82,7 +84,7 @@ setup(
     py_modules=["kapitan"],
     python_requires=">=3.6",
     packages=find_packages(),
-    package_data={"kapitan" : ["*.so"]},
+    package_data={"kapitan": ["*.so"]},
     include_package_data=True,
     dependency_links=new_links,
     extras_require=EXTRAS,
