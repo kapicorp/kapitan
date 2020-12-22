@@ -5,6 +5,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import multiprocessing
 import os
 import sys
 import unittest
@@ -17,6 +18,7 @@ from kapitan.dependency_manager.base import (
     fetch_http_source,
     fetch_git_dependency,
     fetch_helm_chart,
+    fetch_dependencies,
 )
 
 
@@ -62,7 +64,13 @@ class DependencyManagerTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         source = "https://github.com/deepmind/kapitan.git"
-        dep = [{"output_path": os.path.join(output_dir, "subdir"), "ref": "master", "subdir": "tests",}]
+        dep = [
+            {
+                "output_path": os.path.join(output_dir, "subdir"),
+                "ref": "master",
+                "subdir": "tests",
+            }
+        ]
         fetch_git_dependency((source, dep), temp_dir, force=False)
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
         rmtree(temp_dir)
@@ -94,7 +102,6 @@ class DependencyManagerTest(unittest.TestCase):
     def test_fetch_helm_chart_version_that_does_not_exist(self):
         """
         Test fetching helm chart version that does not exist
-        Runs $ kapitan compile --fetch --output-path temp -t nginx nginx-dev monitoring-dev
         """
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
@@ -114,7 +121,46 @@ class DependencyManagerTest(unittest.TestCase):
         self.assertFalse(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
         rmtree(output_dir)
 
+    def test_fetch_dependencies_unpack_parallel(self):
+        output_path = tempfile.mkdtemp()
+        save_dir = tempfile.mkdtemp()
+        # use default parallelism of 4 for test
+        pool = multiprocessing.Pool(4)
+        target_objs = [
+            {
+                "dependencies": [
+                    {
+                        "type": "https",
+                        "source": "https://kubernetes-charts.storage.googleapis.com/nfs-client-provisioner-1.2.8.tgz",
+                        "output_path": "nfs-client-provisioner",
+                        "unpack": True,
+                    },
+                    {
+                        "type": "https",
+                        "source": "https://kubernetes-charts.storage.googleapis.com/prometheus-pushgateway-1.2.13.tgz",
+                        "output_path": "prometheus-pushgateway",
+                        "unpack": True,
+                    },
+                ]
+            }
+        ]
+        try:
+            fetch_dependencies(output_path, target_objs, save_dir, False, pool)
+            pool.close()
+        except Exception as e:
+            pool.terminate()
+            raise e
+        finally:
+            pool.join()
+
+        for obj in target_objs[0]["dependencies"]:
+            self.assertTrue(os.path.isdir(os.path.join(output_path, obj["output_path"])))
+            self.assertTrue(os.path.isdir(os.path.join(save_dir, obj["output_path"])))
+        rmtree(output_path)
+        rmtree(save_dir)
+
     def test_compile_fetch(self):
+        "Runs $ kapitan compile --fetch --output-path temp -t nginx nginx-dev monitoring-dev"
         temp = tempfile.mkdtemp()
         sys.argv = [
             "kapitan",

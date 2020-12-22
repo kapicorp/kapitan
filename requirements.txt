@@ -6,9 +6,11 @@ Jinja2>=2.11.2
 jsonschema==3.2.0
 python-gnupg==0.4.6
 six>=1.15.0
-cryptography>=2.9.2
+cryptography>=3.2
 google-api-python-client==1.7.11
 boto3>=1.14.3
+# Can be removed once https://github.com/boto/botocore/issues/2187 is resolved
+urllib3==1.25.10
 requests==2.23.0
 addict==2.2.1
 yamllint>=1.23.0
@@ -17,5 +19,7 @@ rfc3987==1.3.8
 GitPython==3.1.3
 hvac==0.10.4
 docker==4.2.1
+azure-keyvault-keys==4.2.0
+azure-identity==1.5.0
 # Reclass dependencies
 pyparsing

@@ -189,7 +189,10 @@ class Revealer(object):
                 rev_obj = self.reveal_obj(obj)
                 return (
                     yaml.dump_all(
-                        rev_obj, Dumper=PrettyDumper, default_flow_style=False, explicit_start=True,
+                        rev_obj,
+                        Dumper=PrettyDumper,
+                        default_flow_style=False,
+                        explicit_start=True,
                     ),
                     "yaml",
                 )
@@ -221,7 +224,7 @@ class Revealer(object):
                 out_yaml += out
             elif fpath.endswith(".json"):
                 out, _ = self._reveal_file(fpath)
-                out_json += self._reveal_file(fpath)
+                out_json += out
             else:
                 out, _ = self._reveal_file(fpath)
                 out_raw += out
@@ -450,6 +453,10 @@ class RefController(object):
                 from kapitan.refs.secrets.vaultkv import VaultBackend
 
                 self.register_backend(VaultBackend(self.path, **ref_kwargs))
+            elif type_name == "azkms":
+                from kapitan.refs.secrets.azkms import AzureKMSBackend
+
+                self.register_backend(AzureKMSBackend(self.path, **ref_kwargs))
             else:
                 raise RefBackendError(f"no backend for ref type: {type_name}")
         return self.backends[type_name]
@@ -516,7 +523,7 @@ class RefController(object):
             # create new ref with deserialised data and remaining keys as kwargs
             # note that encrypt=False is only for secret ref types, non secret refs (e.g. base64) will ignore
             # from_base64 is True  because data is being loaded from a ref file where it is always base64
-            ref = backend.ref_type(data, encrypt=True, from_base64=True, **ref_file_obj)
+            ref = backend.ref_type(data, encrypt=False, from_base64=True, **ref_file_obj)
         return ref
 
     def _get_from_token(self, token):

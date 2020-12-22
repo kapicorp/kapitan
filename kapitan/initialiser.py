@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def initialise_skeleton(args):
-    """ Initialises a directory with a recommended skeleton structure
+    """Initialises a directory with a recommended skeleton structure
     Args:
         args.directory (string): path which to initialise, directory is assumed to exist
     """

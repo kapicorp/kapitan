@@ -2,9 +2,9 @@ classes:
   - mycommon
 parameters:
     target_name: remoteinv-nginx
-    namespace: $(target_name)
+    namespace: ${target_name}
     kapitan:
-        inventories:
+        inventory:
             - type: git
               output_path: .
               source: https://github.com/deepmind/kapitan.git

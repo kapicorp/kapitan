@@ -90,14 +90,10 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(output_dir)
 
     def test_compile_fetch(self):
-        """ Run $ kapitan compile --fetch \
-            --output-path=some/dir/ \
-            --inventory-path=another/dir \
-            --targets remoteinv-example remoteinv-nginx zippedinv\
-            --force
-            were some/dir/ & another/dir/ are directories chosen by the user
+        """Run $ kapitan compile --fetch --output-path=some/dir/ --inventory-path=another/dir --targets remoteinv-example remoteinv-nginx zippedinv --force
+        were some/dir/ & another/dir/ are directories chosen by the user
 
-            Recursively force fetch inventories and compile
+        Recursively force fetch inventories and compile
         """
         temp_output = tempfile.mkdtemp()
         temp_inv = tempfile.mkdtemp()
@@ -136,13 +132,37 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(temp_inv)
         rmtree(temp_output)
 
+    def test_compile_fetch_classes_that_doesnot_exist_yet(self):
+        """
+        runs $ kapitan compile --fetch --search-paths temp_dir --output-path temp_dir --inventory-path temp_dir/inventory -t nginx
+        The `test-objects` class of target `nginx` does not exist initially, it is fetched and then compiled
+        """
+        os.chdir(os.path.join(os.getcwd(), "..", "environment_three"))
+        temp_dir = tempfile.mkdtemp()
+
+        copy_tree(".", temp_dir)  # copying the test environment to search path
+        sys.argv = [
+            "kapitan",
+            "compile",
+            "--fetch",
+            "--search-path",
+            temp_dir,
+            "--output-path",
+            temp_dir,
+            "--inventory-path",
+            os.path.join(temp_dir, "inventory"),
+            "-t",
+            "nginx",
+        ]
+        main()
+        self.assertTrue(os.path.exists(os.path.join(temp_dir, "compiled", "nginx")))
+        rmtree(temp_dir)
+
     def test_force_fetch(self):
         """Test overwriting inventory items while using the --force flag
 
-        runs $ kapitan compile --fetch --cache --output-path=temp_output\
-            --inventory-pat=temp_inv --targets remoteinv-example
-        runs $ kapitan compile --fetch --cache --output-path=temp_output\
-            --inventory-pat=temp_inv --targets remoteinv-example --force
+        runs $ kapitan compile --fetch --cache --output-path=temp_output --inventory-pat=temp_inv --targets remoteinv-example
+        runs $ kapitan compile --fetch --cache --output-path=temp_output --inventory-pat=temp_inv --targets remoteinv-example --force
         """
 
         temp_output = tempfile.mkdtemp()

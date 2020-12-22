@@ -21,7 +21,6 @@ from collections import Counter, defaultdict
 from functools import lru_cache, wraps
 from hashlib import sha256
 
-import _jsonnet as jsonnet
 import jinja2
 import requests
 import yaml
@@ -37,6 +36,12 @@ from distutils.dir_util import mkpath
 
 
 logger = logging.getLogger(__name__)
+
+try:
+    import _jsonnet as jsonnet
+except ImportError as e:
+    logger.debug(f"Could not import jsonnet: {e}")
+
 
 try:
     from yaml import CSafeLoader as YamlLoader
@@ -342,7 +347,7 @@ def get_entropy(s):
 
 def list_all_paths(folder):
     """Given a folder (string), returns a list with the full paths
-       of every sub-folder/file.
+    of every sub-folder/file.
     """
     for root, folders, files in os.walk(folder):
         for filename in folders + files:

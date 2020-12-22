@@ -1,3 +1,58 @@
+## 0.29.4:
+- Fix inventory_path not found error (#661)
+- Bump requests from 2.24.0 to 2.25.0 (#657)
+- Bump boto3 from 1.15.10 to 1.16.26 (#654)
+- Bump cffi from 1.14.2 to 1.14.4 (#650)
+- Bump azure-identity from 1.4.0 to 1.4.1 (#645)
+- Bump boto3 from 1.15.10 to 1.16.9 (#642)
+- Bump gitpython from 3.1.7 to 3.1.11 (#640)
+- Bump cryptography to fix CVE-2020-25659 (#636)
+- Add libssl for static(x) binary (#628)
+
+## 0.29.3:
+- Bump boto3 from 1.14.52 to 1.15.10 (#619)
+- VAULT_SKIP_VERIFY supports with yaml boolean defined in parameters (#623)
+- Add staticx and patchelf to pyinstaller.sh to build a Linux static binary (#624)
+- remove inventory_path parameter in InputType classes (#625)
+
+## 0.29.2:
+- Fix for reveal of secret for dir with json (#607)
+- Fix FileExistsError when fetching multiple dependencies with unpack=True (#608)
+- Create External Input (#587)
+- Update reclass dependency (#610)
+- Bump yamllint from 1.24.2 to 1.25.0 (#616)
+
+## 0.29.1:
+- Fix reveal from ref file bug (#605)
+- Update dependencies (#600, #601, #602, #603)
+
+## 0.29.0:
+- Fix issue #572 Enable adding reclass classes from remote inventories before they are available (#574)
+- Add a dedicated directory in the temp path (#584)
+- Fix issue with dynamically created array of pointers with cffi (#586)
+- New remove input type (#589)
+- Update pip dependencies (#578, #580, #581, #577, #576, #582)
+- Rename remote inventory key to `inventory` instead of `inventories` (#570)
+- Add support for remote inventory fetching (#521)
+- Adds input_params for compile time parameter injection into kadet modules (#560)
+- Add logging fix for python 3.8+ on macOS (#559)
+- Allow reclass override none feature (#562)
+- Update python dependencies (#555, #556, #557)
+- Enable helm values files to be injected for input type "helm" (#545)
+- Fix issue #500: Add --ref-file or --tag to refs --reveal option. (#548)
+- Add TOML Jinja2 Filters (#534)
+- Fix issues #535 and #536 by resolving relative paths in the copy input type and not clobbering the output dir (#539)
+
+## 0.29.0-rc.2:
+- Fix issue #572 Enable adding reclass classes from remote inventories before they are available (#574)
+- Add a dedicated directory in the temp path (#584)
+- Fix issue with dynamically created array of pointers with cffi (#586)
+- New remove input type (#589)
+- Update pip dependencies (#578, #580, #581, #577, #576, #582)
+
+## 0.29.0-rc.1:
+- Rename remote inventory key to `inventory` instead of `inventories` (#570)
+
 ## 0.29.0-rc.0:
 - Add support for remote inventory fetching (#521)
 

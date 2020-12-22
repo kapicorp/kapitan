@@ -1,8 +1,8 @@
-import os
+import hashlib
 import logging
+import os
 from collections import defaultdict
 from functools import partial
-import hashlib
 
 from kapitan import cached
 from kapitan.dependency_manager.base import fetch_git_dependency, fetch_http_dependency
@@ -13,16 +13,16 @@ logger = logging.getLogger(__name__)
 
 def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
     """Parses through the 'inventory' parameter in target_objs to fetch the remote
-       inventories and stores it in save_dir before recursively
-       copying it to the output_path (relative to the inventory path)
-       Overwrites existing inventory items if force fetched
+    inventories and stores it in save_dir before recursively
+    copying it to the output_path (relative to the inventory path)
+    Overwrites existing inventory items if force fetched
 
-       :param inventory_path: default or user specified inventory path
-       :param target_objs: target objects
-       :param save_dir: directory to save the fetched items
-       :param force: bool value
-       :param pool: pool object for multiprocessing
-       :return: None
+    :param inventory_path: default or user specified inventory path
+    :param target_objs: target objects
+    :param save_dir: directory to save the fetched items
+    :param force: bool value
+    :param pool: pool object for multiprocessing
+    :return: None
     """
     git_inventories = defaultdict(list)
     http_inventories = defaultdict(list)
@@ -31,7 +31,7 @@ def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
 
     for target_obj in target_objs:
         try:
-            inventories = target_obj["inventories"]
+            inventories = target_obj["inventory"]
             for inv in inventories:
                 inv_type = inv["type"]
                 source_uri = inv["source"]
@@ -80,7 +80,7 @@ def list_sources(target_objs):
     sources = []
     for target_obj in target_objs:
         try:
-            invs = target_obj["inventories"]
+            invs = target_obj["inventory"]
             for inv in invs:
                 source_uri = inv["source"]
                 source_hash = hashlib.sha256(source_uri.encode())
@@ -95,7 +95,7 @@ def list_sources(target_objs):
                 sources.append(source_hash.hexdigest()[:8])
         except KeyError:
             logger.debug(
-                "Listing sources: target object {} has no 'inventories' key, continuing".format(
+                "Listing sources: target object {} has no 'inventory' key, continuing".format(
                     target_obj["vars"]["target"]
                 )
             )

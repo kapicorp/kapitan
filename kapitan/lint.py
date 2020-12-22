@@ -47,7 +47,7 @@ rules:
 
 
 def start_lint(args):
-    """ Runs all lint operations available
+    """Runs all lint operations available
     Args:
         fail_on_warning (bool): if set to True, function will exit if any warning is found
         skip_class_checks (bool): whether to skip checking for class related warnings or not
@@ -92,7 +92,7 @@ def start_lint(args):
 
 
 def lint_orphan_secrets(compiled_path, secrets_path):
-    """ Checks your refs/ folder for unused secrets files by:
+    """Checks your refs/ folder for unused secrets files by:
         - iterating the secrets_path/ dir and extracting all secrets names from the file paths
         - does a text search over the entire compiled_path/ to find usages of those secrets
     Args:
@@ -131,7 +131,7 @@ def lint_orphan_secrets(compiled_path, secrets_path):
 
 
 def lint_unused_classes(inventory_path):
-    """ Checks your inventory for unused classes by:
+    """Checks your inventory for unused classes by:
         - iterating the inventory_path/classes/ dir and extracting all class names from the file paths
         - converting those file paths to class references (e.g. component/mysql -> component.mysql)
         - does a text search over the entire inventory_path/ to find usages of those classes
@@ -187,7 +187,7 @@ def lint_unused_classes(inventory_path):
 
 
 def lint_yamllint(inventory_path):
-    """ Run yamllint on all yaml files in inventory
+    """Run yamllint on all yaml files in inventory
     Args:
         inventory_path (string): path to your inventory/ folder
     Yields:

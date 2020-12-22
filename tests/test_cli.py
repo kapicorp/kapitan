@@ -610,6 +610,46 @@ class CliFuncsTest(unittest.TestCase):
         self.assertEqual(expected.format("hello", "world"), stdout.getvalue())
         os.remove(test_tag_file)
 
+    def test_cli_secret_ref_reveal_gpg_ref(self):
+        """
+        run $ kapitan refs --write gpg:test_secret
+        and $ kapitan refs --reveal --ref-file REFS_PATH/test_secret
+        """
+        test_secret_content = "secret_value!"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--write",
+            "gpg:test_secret",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+            "--recipients",
+            "example@kapitan.dev",
+        ]
+        main()
+
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--reveal",
+            "--ref-file",
+            REFS_PATH + "/test_secret",
+            "--refs-path",
+            REFS_PATH,
+        ]
+
+        # set stdout as string
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            main()
+        self.assertEqual(test_secret_content, stdout.getvalue())
+
     @patch.object(vaultkv.VaultSecret, "_decrypt")
     def test_cli_secret_write_vault(self, mock_reveal):
         """

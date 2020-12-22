@@ -353,10 +353,15 @@ def main():
     refs_parser.set_defaults(func=handle_refs_command)
 
     refs_parser.add_argument(
-        "--write", "-w", help="write ref token", metavar="TOKENNAME",
+        "--write",
+        "-w",
+        help="write ref token",
+        metavar="TOKENNAME",
     )
     refs_parser.add_argument(
-        "--update", help="update GPG recipients for ref token", metavar="TOKENNAME",
+        "--update",
+        help="update GPG recipients for ref token",
+        metavar="TOKENNAME",
     )
     refs_parser.add_argument(
         "--update-targets",

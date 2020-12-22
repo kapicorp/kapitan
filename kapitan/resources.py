@@ -245,21 +245,33 @@ def search_imports(cwd, import_str, search_paths):
     return normalised_path, normalised_path_content
 
 
-def inventory(search_paths, target, inventory_path="inventory/"):
+def inventory(search_paths, target, inventory_path=None):
     """
     Reads inventory (set by inventory_path) in search_paths.
     set nodes_uri to change reclass nodes_uri the default value
     set target to None to return all target in the inventory
+    set inventory_path to read custom path. None defaults to value set via cli
     Returns a dictionary with the inventory for target
     """
 
-    full_inv_path = ""
+    if inventory_path is None:
+        # grab inventory_path value from cli subcommand
+        inventory_path_arg = cached.args.get("compile") or cached.args.get("inventory")
+        inventory_path = inventory_path_arg.inventory_path
+
     inv_path_exists = False
-    for path in search_paths:
-        full_inv_path = os.path.join(path, inventory_path)
-        if os.path.exists(full_inv_path):
-            inv_path_exists = True
-            break
+
+    # check if the absolute inventory_path exists
+    full_inv_path = os.path.abspath(inventory_path)
+    if os.path.exists(full_inv_path):
+        inv_path_exists = True
+    # if not, check for inventory_path in search_paths
+    else:
+        for path in search_paths:
+            full_inv_path = os.path.join(path, inventory_path)
+            if os.path.exists(full_inv_path):
+                inv_path_exists = True
+                break
 
     if not inv_path_exists:
         raise InventoryError(f"Inventory not found in search paths: {search_paths}")
@@ -291,13 +303,15 @@ def generate_inventory(args):
         sys.exit(1)
 
 
-def inventory_reclass(inventory_path):
+def inventory_reclass(inventory_path, ignore_class_notfound=False):
     """
     Runs a reclass inventory in inventory_path
     (same output as running ./reclass.py -b inv_base_uri/ --inventory)
     Will attempt to read reclass config from 'reclass-config.yml' otherwise
     it will failback to the default config.
     Returns a reclass style dictionary
+
+    Does not throw errors if a class is not found while --fetch flag is enabled
     """
 
     if not cached.inv:
@@ -308,6 +322,7 @@ def inventory_reclass(inventory_path):
             "classes_uri": os.path.join(inventory_path, "classes"),
             "compose_node_name": False,
             "allow_none_override": True,
+            "ignore_class_notfound": ignore_class_notfound,
         }
 
         try:
