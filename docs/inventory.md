@@ -263,7 +263,7 @@ parameters:
   kapitan:
     inventory:
     - type: <inventory_type>
-      output_path: path/to/file/or/dir # releative to inventory
+      output_path: path/to/file/or/dir # relative to inventory
       source: <source_of_inventory>
       # other type-specific parameters, if any
 ```
