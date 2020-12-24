@@ -445,6 +445,8 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
                 input_compiler.set_helm_params(comp_obj["helm_params"])
             if "helm_values_files" in comp_obj:
                 input_compiler.set_helm_values_files(comp_obj["helm_values_files"])
+            if "kube_version" in comp_obj:
+                input_compiler.set_kube_version(comp_obj["kube_version"])
         elif input_type == "copy":
             input_compiler = Copy(compile_path, search_paths, ref_controller)
         elif input_type == "remove":
