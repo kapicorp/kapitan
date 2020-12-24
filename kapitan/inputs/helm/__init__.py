@@ -21,6 +21,7 @@ class Helm(InputType):
         self.helm_values_file = None
         self.helm_values_files = []
         self.helm_params = {}
+        self.kube_version = ""
         self.lib = self.initialise_binding()
 
     def initialise_binding(self):
@@ -51,6 +52,9 @@ class Helm(InputType):
 
     def set_helm_params(self, helm_params):
         self.helm_params = helm_params
+
+    def set_kube_version(self, kube_version):
+        self.kube_version = kube_version
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """
@@ -130,6 +134,7 @@ class Helm(InputType):
 
         char_dir_buf = ffi.new("char[]", chart_dir.encode("ascii"))
         output_path_buf = ffi.new("char[]", output_path.encode("ascii"))
+        kube_version = ffi.new("char[]", self.kube_version.encode("ascii"))
 
         # as noted in cffi documentation, once the reference to the pointer is out of scope, the data is freed.
         # to prevent that from happening with these dynamic arrays, we create a 'keep_pointers_alive' dict
@@ -156,6 +161,7 @@ class Helm(InputType):
             name_template,
             helm_values_files,
             helm_values_files_len,
+            kube_version,
         )
         error_message = ffi.string(c_error_message)  # this creates a copy as bytes
         self.lib.free(c_error_message)  # free the char* returned by go

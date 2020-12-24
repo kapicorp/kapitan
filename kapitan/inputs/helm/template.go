@@ -153,7 +153,7 @@ func generateName(nameTemplate string) (string, error) {
 }
 
 //export renderChart
-func renderChart(c_chartpath, c_outputDir, c_valueFile, c_namespace, c_releaseName, c_nameTemplate *C.char, c_valuesFiles **C.char, c_valuesFilesSize C.int) *C.char {
+func renderChart(c_chartpath, c_outputDir, c_valueFile, c_namespace, c_releaseName, c_nameTemplate *C.char, c_valuesFiles **C.char, c_valuesFilesSize C.int, c_kubeVersion *C.char) *C.char {
 	chartPath := C.GoString(c_chartpath)
 	outputDir := C.GoString(c_outputDir)
 	valueFile := C.GoString(c_valueFile)
@@ -177,7 +177,11 @@ func renderChart(c_chartpath, c_outputDir, c_valueFile, c_namespace, c_releaseNa
 	nameTemplate := C.GoString(c_nameTemplate)
 	releaseName := C.GoString(c_releaseName) // will be overwritten by nameTemplate if set
 	namespace := C.GoString(c_namespace)
-	kubeVersion := defaultKubeVersion_c
+	kubeVersion := C.GoString(c_kubeVersion)
+	if kubeVersion == "" {
+		kubeVersion = defaultKubeVersion_c
+	}
+
 	// particular template files to render
 	var renderFiles []string
 	showNotes := false

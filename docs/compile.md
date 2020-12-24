@@ -346,15 +346,16 @@ parameters:
     - output_path: <output_path>
       input_type: helm
       input_paths:
-      	- <chart_path>
+        - <chart_path>
       helm_values:
         <object_with_values_to_override>
       helm_values_files:
         - <values_file_path>
       helm_params:
-      	namespace: <substitutes_.Release.Namespace>
-      	name_template: <namespace_template>
-      	release_name: <chart_release_name>
+        namespace: <substitutes_.Release.Namespace>
+        name_template: <namespace_template>
+        release_name: <chart_release_name>
+      kube_version: <target_kubernetes_version_string>
 ```
 
 `helm_values` is an object containing values specified that will override the default values in the input chart. This has exactly the same effect as specifying `--values custom_values.yml` for `helm template` command where `custom_values.yml` structure mirrors that of `helm_values`.
@@ -377,6 +378,8 @@ This component has helm chart input and takes a `common.yml` helm_values file wh
 - release_name: equivalent of `--name` option
 
 See the [helm doc](https://helm.sh/docs/helm/#helm-template) for further detail.
+
+`kube_version` optionally specifies the Kubernetes version to target when rendering the manifests from the chart, for example "1.16". As some charts generate manifests slightly differently depending on the target Kubernetes version (e.g. targeting different APIs), it may be useful to target a specific version. When not specified, the default version used is "1.12".
 
 #### Example
 
