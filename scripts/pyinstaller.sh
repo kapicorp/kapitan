@@ -16,6 +16,7 @@ pyi-makespec kapitan/"$entry".py --onefile \
     --add-data kapitan/inputs/templates:kapitan/inputs/templates \
     --hidden-import pyparsing --hidden-import jsonschema \
     --hidden-import 'pkg_resources.py2_warn' \
+    --hidden-import kapitan_helm \
     --exclude-module doctest --exclude-module pydoc
 pyinstaller "$entry".spec --clean
 staticx --strip dist/$entry dist/$output_name
