@@ -23,3 +23,6 @@ azure-keyvault-keys==4.2.0
 azure-identity==1.5.0
 # Reclass dependencies
 pyparsing
+# TODO: This is obviously temporary
+--extra-index-url=https://test.pypi.org/simple/
+kapitan_helm

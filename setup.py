@@ -39,6 +39,11 @@ def install_deps():
                 pkg = resource.split("#")[-1]
                 links.append(resource.strip() + "-9876543210")
                 new_pkgs.append(pkg.replace("egg=", "").rstrip())
+            elif "--extra-index-url" in resource:
+                # TODO: Once kapitan_helm is published to the real pypi, the
+                # requirement to have an extra index url goes away, and so should
+                # this case.
+                pass
             else:
                 new_pkgs.append(resource.strip())
         return new_pkgs, links

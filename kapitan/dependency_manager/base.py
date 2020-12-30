@@ -28,7 +28,8 @@ from kapitan.utils import (
 logger = logging.getLogger(__name__)
 
 try:
-    from kapitan.dependency_manager.helm.helm_fetch_binding import ffi
+    from kapitan_helm.helm_binding import ffi
+    from kapitan_helm.util import get_dl_path
 except ImportError as ie:
     logger.debug("Error importing ffi from kapitan.dependency_manager.helm.helm_fetch_binding: {}".format(ie))
     pass  # make this feature optional
@@ -263,8 +264,7 @@ def initialise_helm_fetch_binding():
     """returns the dl_opened library (.so file) if exists, otherwise None"""
     if platform.system() not in ("Linux", "Darwin"):  # TODO: later add binding for Mac
         return None
-    # binding_path is kapitan/dependency_manager/helm/helm_fetch.so
-    binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "helm/helm_fetch.so")
+    binding_path = get_dl_path()
     if not os.path.exists(binding_path):
         logger.debug("The helm_fetch binding does not exist at {}".format(binding_path))
         return None
