@@ -90,7 +90,7 @@ class DependencyManagerTest(unittest.TestCase):
                 "output_path": output_chart_dir,
                 "version": version,
                 "chart_name": chart_name,
-                "source": "https://kubernetes-charts.storage.googleapis.com",
+                "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/",
             }
         ]
         fetch_helm_chart((unique_chart_name, dep))
@@ -113,7 +113,7 @@ class DependencyManagerTest(unittest.TestCase):
                 "output_path": output_chart_dir,
                 "version": version,
                 "chart_name": chart_name,
-                "source": "https://kubernetes-charts.storage.googleapis.com",
+                "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/",
             }
         ]
         fetch_helm_chart((unique_chart_name, dep))
@@ -131,13 +131,13 @@ class DependencyManagerTest(unittest.TestCase):
                 "dependencies": [
                     {
                         "type": "https",
-                        "source": "https://kubernetes-charts.storage.googleapis.com/nfs-client-provisioner-1.2.8.tgz",
+                        "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/nfs-client-provisioner-1.2.8.tgz",
                         "output_path": "nfs-client-provisioner",
                         "unpack": True,
                     },
                     {
                         "type": "https",
-                        "source": "https://kubernetes-charts.storage.googleapis.com/prometheus-pushgateway-1.2.13.tgz",
+                        "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/prometheus-pushgateway-1.2.13.tgz",
                         "output_path": "prometheus-pushgateway",
                         "unpack": True,
                     },
