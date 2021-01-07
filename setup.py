@@ -70,9 +70,5 @@ setup(
     include_package_data=True,
     dependency_links=new_links,
     install_requires=pkgs,
-    entry_points={
-        "console_scripts": [
-            "kapitan=kapitan.cli:main",
-        ],
-    },
+    entry_points={"console_scripts": ["kapitan=kapitan.cli:main",],},
 )

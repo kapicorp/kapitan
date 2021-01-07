@@ -99,7 +99,7 @@ def main():
         # set 'fork' method as a more deterministic/conservative
         # and compatible multiprocessing method for Linux and MacOS
         # see https://github.com/deepmind/kapitan/issues/641
-        multiprocessing.set_start_method('fork')
+        multiprocessing.set_start_method("fork")
     # main() is explicitly multiple times in tests
     # and will raise RuntimeError
     except RuntimeError:
@@ -364,15 +364,10 @@ def main():
     refs_parser.set_defaults(func=handle_refs_command)
 
     refs_parser.add_argument(
-        "--write",
-        "-w",
-        help="write ref token",
-        metavar="TOKENNAME",
+        "--write", "-w", help="write ref token", metavar="TOKENNAME",
     )
     refs_parser.add_argument(
-        "--update",
-        help="update GPG recipients for ref token",
-        metavar="TOKENNAME",
+        "--update", help="update GPG recipients for ref token", metavar="TOKENNAME",
     )
     refs_parser.add_argument(
         "--update-targets",
