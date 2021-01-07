@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    team_name: client-operations
+  name: app-name
+  namespace: ops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-name
+  template:
+    metadata:
+      labels:
+        app: app-name
+    spec:
+      containers:
+        - image: hello-word
+          imagePullPolicy: Always
+          name: hello

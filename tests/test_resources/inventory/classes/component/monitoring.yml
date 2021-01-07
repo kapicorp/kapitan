@@ -3,7 +3,7 @@ parameters:
     dependencies:
       - type: helm
         output_path: charts/prometheus
-        source: https://kubernetes-charts.storage.googleapis.com
+        source: https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/
         version: 11.3.0
         chart_name: prometheus
     compile:
