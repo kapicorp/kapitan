@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 
 def check_jsonnet_import():
     try:
-        import _jsonnet
+        import _gojsonnet
     except ImportError:
         logger.info(
             "Note: jsonnet is not yet supported on ARM/M1. You can still use kadet and jinja2 for templating"
@@ -132,8 +132,8 @@ def compile_targets(
             )
 
         # compile_target() returns None on success
-        # so p is only not None when raising an exception
-        [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+        for target_obj in target_objs:
+            worker(target_obj)
 
         os.makedirs(compile_path, exist_ok=True)
 
