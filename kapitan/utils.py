@@ -22,10 +22,10 @@ from functools import lru_cache, wraps
 from hashlib import sha256
 
 import _gojsonnet as jsonnet
-# import _jsonnet as jsonnet
 import jinja2
 import requests
 import yaml
+
 from kapitan import cached, defaults
 from kapitan.errors import CompileError
 from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
