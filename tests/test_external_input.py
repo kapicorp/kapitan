@@ -29,7 +29,16 @@ class ExternalInputTest(unittest.TestCase):
         temp = tempfile.mkdtemp()
         sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "external-test"]
         main()
-        self.assertTrue(os.path.isfile(os.path.join(temp, "compiled", "external-test", "test.md",)))
+        self.assertTrue(
+            os.path.isfile(
+                os.path.join(
+                    temp,
+                    "compiled",
+                    "external-test",
+                    "test.md",
+                )
+            )
+        )
 
     def test_compile_file(self):
         # tests setting of args, env_vars and "\${compiled_target_dir}" being properly substituted

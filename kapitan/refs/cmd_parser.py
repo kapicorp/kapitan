@@ -216,7 +216,14 @@ def secret_update(args, ref_controller):
     token_name = args.update
     if token_name.startswith("gpg:"):
         # args.recipients is a list, convert to recipients dict
-        recipients = [dict([("name", name),]) for name in args.recipients]
+        recipients = [
+            dict(
+                [
+                    ("name", name),
+                ]
+            )
+            for name in args.recipients
+        ]
         if args.target_name:
             inv = inventory_reclass(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
@@ -381,7 +388,14 @@ def secret_update_validate(args, ref_controller):
                             logger.info("%s needs addition", to_add)
                         ret_code = 1
                     else:
-                        new_recipients = [dict([("fingerprint", f),]) for f in target_fingerprints]
+                        new_recipients = [
+                            dict(
+                                [
+                                    ("fingerprint", f),
+                                ]
+                            )
+                            for f in target_fingerprints
+                        ]
                         secret_obj.update_recipients(new_recipients)
                         ref_controller[token_path] = secret_obj
 
