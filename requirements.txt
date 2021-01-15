@@ -7,11 +7,16 @@
 addict==2.4.0
     # via -r requirements.txt
 attrs==21.2.0
-    # via jsonschema
+    # via
+    #   -r requirements.txt
+    #   jsonschema
 azure-common==1.1.27
-    # via azure-keyvault-keys
+    # via
+    #   -r requirements.txt
+    #   azure-keyvault-keys
 azure-core==1.17.0
     # via
+    #   -r requirements.txt
     #   azure-identity
     #   azure-keyvault-keys
 azure-identity==1.6.0
@@ -22,18 +27,26 @@ boto3==1.18.17
     # via -r requirements.txt
 botocore==1.21.17
     # via
+    #   -r requirements.txt
     #   boto3
     #   s3transfer
 cachetools==4.2.2
-    # via google-auth
+    # via
+    #   -r requirements.txt
+    #   google-auth
 certifi==2021.5.30
     # via
+    #   -r requirements.txt
     #   msrest
     #   requests
 cffi==1.14.6
-    # via cryptography
+    # via
+    #   -r requirements.txt
+    #   cryptography
 charset-normalizer==2.0.4
-    # via requests
+    # via
+    #   -r requirements.txt
+    #   requests
 cryptography==3.4.7
     # via
     #   -r requirements.txt
@@ -44,36 +57,51 @@ cryptography==3.4.7
 docker==5.0.0
     # via -r requirements.txt
 gitdb==4.0.7
-    # via gitpython
+    # via
+    #   -r requirements.txt
+    #   gitpython
 gitpython==3.1.20
     # via -r requirements.txt
 google-api-core==1.31.1
-    # via google-api-python-client
+    # via
+    #   -r requirements.txt
+    #   google-api-python-client
 google-api-python-client==2.15.0
     # via -r requirements.txt
 google-auth==1.34.0
     # via
+    #   -r requirements.txt
     #   google-api-core
     #   google-api-python-client
     #   google-auth-httplib2
 google-auth-httplib2==0.1.0
-    # via google-api-python-client
+    # via
+    #   -r requirements.txt
+    #   google-api-python-client
 googleapis-common-protos==1.53.0
-    # via google-api-core
+    # via
+    #   -r requirements.txt
+    #   google-api-core
 httplib2==0.19.1
     # via
+    #   -r requirements.txt
     #   google-api-python-client
     #   google-auth-httplib2
 hvac==0.11.0
     # via -r requirements.txt
 idna==3.2
-    # via requests
+    # via
+    #   -r requirements.txt
+    #   requests
 isodate==0.6.0
-    # via msrest
+    # via
+    #   -r requirements.txt
+    #   msrest
 jinja2==3.0.1
     # via -r requirements.txt
 jmespath==0.10.0
     # via
+    #   -r requirements.txt
     #   boto3
     #   botocore
 jsonnet==0.17.0
@@ -81,50 +109,81 @@ jsonnet==0.17.0
 jsonschema==3.2.0
     # via -r requirements.txt
 markupsafe==2.0.1
-    # via jinja2
+    # via
+    #   -r requirements.txt
+    #   jinja2
 msal==1.13.0
     # via
+    #   -r requirements.txt
     #   azure-identity
     #   msal-extensions
 msal-extensions==0.3.0
-    # via azure-identity
+    # via
+    #   -r requirements.txt
+    #   azure-identity
 msrest==0.6.21
-    # via azure-keyvault-keys
+    # via
+    #   -r requirements.txt
+    #   azure-keyvault-keys
 oauthlib==3.1.1
-    # via requests-oauthlib
+    # via
+    #   -r requirements.txt
+    #   requests-oauthlib
 packaging==21.0
-    # via google-api-core
+    # via
+    #   -r requirements.txt
+    #   google-api-core
 pathspec==0.9.0
-    # via yamllint
+    # via
+    #   -r requirements.txt
+    #   yamllint
 portalocker==1.7.1
-    # via msal-extensions
+    # via
+    #   -r requirements.txt
+    #   msal-extensions
 protobuf==3.17.3
     # via
+    #   -r requirements.txt
     #   google-api-core
     #   googleapis-common-protos
 pyasn1==0.4.8
     # via
+    #   -r requirements.txt
     #   pyasn1-modules
     #   rsa
 pyasn1-modules==0.2.8
-    # via google-auth
+    # via
+    #   -r requirements.txt
+    #   google-auth
 pycparser==2.20
-    # via cffi
+    # via
+    #   -r requirements.txt
+    #   cffi
+pyfakefs==4.5.1
+    # via -r requirements.txt
 pyjwt[crypto]==2.1.0
-    # via msal
+    # via
+    #   -r requirements.txt
+    #   msal
 pyparsing==2.4.7
     # via
     #   -r requirements.txt
     #   httplib2
     #   packaging
 pyrsistent==0.18.0
-    # via jsonschema
+    # via
+    #   -r requirements.txt
+    #   jsonschema
 python-dateutil==2.8.2
-    # via botocore
+    # via
+    #   -r requirements.txt
+    #   botocore
 python-gnupg==0.4.7
     # via -r requirements.txt
 pytz==2021.1
-    # via google-api-core
+    # via
+    #   -r requirements.txt
+    #   google-api-core
 pyyaml==5.4.1
     # via
     #   -r requirements.txt
@@ -140,13 +199,19 @@ requests==2.26.0
     #   msrest
     #   requests-oauthlib
 requests-oauthlib==1.3.0
-    # via msrest
+    # via
+    #   -r requirements.txt
+    #   msrest
 rfc3987==1.3.8
     # via -r requirements.txt
 rsa==4.7.2
-    # via google-auth
+    # via
+    #   -r requirements.txt
+    #   google-auth
 s3transfer==0.5.0
-    # via boto3
+    # via
+    #   -r requirements.txt
+    #   boto3
 six==1.16.0
     # via
     #   -r requirements.txt
@@ -162,19 +227,28 @@ six==1.16.0
     #   protobuf
     #   python-dateutil
 smmap==4.0.0
-    # via gitdb
+    # via
+    #   -r requirements.txt
+    #   gitdb
 toml==0.10.2
     # via -r requirements.txt
 typing-extensions==3.10.0.0
-    # via gitpython
+    # via
+    #   -r requirements.txt
+    #   gitpython
 uritemplate==3.0.1
-    # via google-api-python-client
+    # via
+    #   -r requirements.txt
+    #   google-api-python-client
 urllib3==1.26.6
     # via
+    #   -r requirements.txt
     #   botocore
     #   requests
 websocket-client==1.1.1
-    # via docker
+    # via
+    #   -r requirements.txt
+    #   docker
 yamllint==1.26.2
     # via -r requirements.txt
 

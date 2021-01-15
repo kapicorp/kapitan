@@ -62,7 +62,6 @@ def compile_targets(
     temp_compile_path = os.path.join(temp_path, "compiled")
     dep_cache_dir = temp_path
 
-    updated_targets = targets
     try:
         updated_targets = search_targets(inventory_path, targets, labels)
     except CompileError as e:
@@ -136,23 +135,13 @@ def compile_targets(
         [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
         os.makedirs(compile_path, exist_ok=True)
-
-        # if '-t' is set on compile or only a few changed, only override selected targets
-        if updated_targets:
-            for target in updated_targets:
-                compile_path_target = os.path.join(compile_path, target)
-                temp_path_target = os.path.join(temp_compile_path, target)
-
-                os.makedirs(compile_path_target, exist_ok=True)
-
-                shutil.rmtree(compile_path_target)
-                shutil.copytree(temp_path_target, compile_path_target)
-                logger.debug("Copied %s into %s", temp_path_target, compile_path_target)
-        # otherwise override all targets
-        else:
-            shutil.rmtree(compile_path)
-            shutil.copytree(temp_compile_path, compile_path)
-            logger.debug("Copied %s into %s", temp_compile_path, compile_path)
+        tree_style_output = kwargs.get("tree_style_output")
+        merge_targets(
+            temp_compile_path=temp_compile_path,
+            compile_path=compile_path,
+            updated_targets=targets,
+            tree_style_output=tree_style_output,
+        )
 
         # validate the compiled outputs
         if kwargs.get("validate", False):
@@ -191,6 +180,53 @@ def compile_targets(
         pool.join()
         shutil.rmtree(temp_path)
         logger.debug("Removed %s", temp_path)
+
+
+def merge_targets(temp_compile_path, compile_path, updated_targets, tree_style_output):
+    if tree_style_output:
+        if not updated_targets:
+            updated_targets = os.listdir(temp_compile_path)
+        for target in updated_targets:
+            merge_tree_style_output(os.path.join(temp_compile_path, target), compile_path)
+    else:
+        merge_directory_per_target(updated_targets, compile_path, temp_compile_path)
+
+
+def merge_tree_style_output(src, dst):
+    """Recursively copy a directory tree.
+
+    Similar to shutil.copytree, but does not overwrite files.
+    """
+    with os.scandir(src) as entries:
+        os.makedirs(dst, exist_ok=True)
+        for entry in entries:
+            dst_name = os.path.join(dst, entry.name)
+            if entry.is_dir():
+                merge_tree_style_output(entry, dst_name)
+            else:
+                dst_file = os.path.join(dst, dst_name)
+                if os.path.isfile(dst_name):
+                    raise CompileError("File %s compiled by more than one target", dst_file)
+                shutil.copy(entry, dst_file)
+
+
+def merge_directory_per_target(updated_targets, compile_path, temp_compile_path):
+    # if '-t' is set on compile or only a few changed, only override selected targets
+    if updated_targets:
+        for target in updated_targets:
+            compile_path_target = os.path.join(compile_path, target)
+            temp_path_target = os.path.join(temp_compile_path, target)
+
+            os.makedirs(compile_path_target, exist_ok=True)
+
+            shutil.rmtree(compile_path_target)
+            shutil.copytree(temp_path_target, compile_path_target)
+            logger.debug("Copied %s into %s", temp_path_target, compile_path_target)
+    # otherwise override all targets
+    else:
+        shutil.rmtree(compile_path)
+        shutil.copytree(temp_compile_path, compile_path)
+        logger.debug("Copied %s into %s", temp_compile_path, compile_path)
 
 
 def generate_inv_cache_hashes(inventory_path, targets, cache_paths):

@@ -14,3 +14,4 @@ tags
 *.so
 *.h
 .vscode/
+.idea

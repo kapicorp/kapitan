@@ -89,6 +89,7 @@ def trigger_compile(args):
         validate=args.validate,
         schemas_path=args.schemas_path,
         jinja2_filters=args.jinja2_filters,
+        tree_style_output=args.tree_style_output,
         verbose=hasattr(args, "verbose") and args.verbose,
     )
 
@@ -268,6 +269,12 @@ def main():
         "--schemas-path",
         default=from_dot_kapitan("validate", "schemas-path", "./schemas"),
         help='set schema cache path, default is "./schemas"',
+    )
+    compile_parser.add_argument(
+        "--tree-style-output",
+        help="Do not create directory per target, all output paths are merged in the same tree",
+        action="store_true",
+        default=from_dot_kapitan("compile", "tree-style-output", False),
     )
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
