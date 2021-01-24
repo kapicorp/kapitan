@@ -61,8 +61,15 @@ def ref_write(args, ref_controller):
                         args.target_name
                     )
                 )
+            try:
+                recipients = kap_inv_params["secrets"]["gpg"]["recipients"]
 
-            recipients = kap_inv_params["secrets"]["gpg"]["recipients"]
+            except KeyError:
+                raise KapitanError(
+                    "parameters.kapitan.secrets.gpg.recipients not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
         if not recipients:
             raise KapitanError(
                 "No GPG recipients specified. Use --recipients or specify them in "
@@ -84,8 +91,14 @@ def ref_write(args, ref_controller):
                         args.target_name
                     )
                 )
-
-            key = kap_inv_params["secrets"]["gkms"]["key"]
+            try:
+                key = kap_inv_params["secrets"]["gkms"]["key"]
+            except KeyError:
+                raise KapitanError(
+                    "parameters.kapitan.secrets.gkms.key not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target-name"
@@ -107,7 +120,14 @@ def ref_write(args, ref_controller):
                     )
                 )
 
-            key = kap_inv_params["secrets"]["awskms"]["key"]
+            try:
+                key = kap_inv_params["secrets"]["awskms"]["key"]
+            except KeyError:
+                raise KapitanError(
+                    "parameters.kapitan.secrets.awskms.key not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.awskms.key and use --target-name"
@@ -129,7 +149,14 @@ def ref_write(args, ref_controller):
                     )
                 )
 
-            key = kap_inv_params["secrets"]["azkms"]["key"]
+            try:
+                key = kap_inv_params["secrets"]["azkms"]["key"]
+            except KeyError:
+                raise KapitanError(
+                    "parameters.kapitan.secrets.azkms.key not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.azkms.key and use --target-name"
@@ -164,8 +191,14 @@ def ref_write(args, ref_controller):
                         args.target_name
                     )
                 )
-
-            vault_params = kap_inv_params["secrets"]["vaultkv"]
+            try:
+                vault_params = kap_inv_params["secrets"]["vaultkv"]
+            except KeyError:
+                raise KapitanError(
+                    "parameters.kapitan.secrets.vaultkv not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
         if args.vault_auth:
             vault_params["auth"] = args.vault_auth
         if vault_params.get("auth") is None:
@@ -230,7 +263,15 @@ def secret_update(args, ref_controller):
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            recipients = kap_inv_params["secrets"]["gpg"]["recipients"]
+            try:
+                recipients = kap_inv_params["secrets"]["gpg"]["recipients"]
+
+            except KeyError:
+                raise KapitanError(
+                    "parameters.kapitan.secrets.gpg.recipients not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
         if not recipients:
             raise KapitanError(
                 "No GPG recipients specified. Use --recipients or specify them in "
@@ -250,7 +291,14 @@ def secret_update(args, ref_controller):
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            key = kap_inv_params["secrets"]["gkms"]["key"]
+            try:
+                key = kap_inv_params["secrets"]["gkms"]["key"]
+            except KeyError:
+                raise KapitanError(
+                    "parameters.kapitan.secrets.gkms.key not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target"
@@ -269,7 +317,14 @@ def secret_update(args, ref_controller):
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            key = kap_inv_params["secrets"]["azkms"]["key"]
+            try:
+                key = kap_inv_params["secrets"]["azkms"]["key"]
+            except KeyError:
+                raise KapitanError(
+                    "parameters.kapitan.secrets.azkms.key not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.azkms.key and use --target"
@@ -288,7 +343,14 @@ def secret_update(args, ref_controller):
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
-            key = kap_inv_params["secrets"]["awskms"]["key"]
+            try:
+                key = kap_inv_params["secrets"]["awskms"]["key"]
+            except KeyError:
+                raise KapitanError(
+                    "parameters.kapitan.secrets.awskms.key not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.awskms.key and use --target"
