@@ -494,22 +494,22 @@ def valid_target_obj(target_obj, require_compile=True):
                                 },
                             },
                         },
-                        "required": "recipients",
+                        "required": ["recipients"],
                     },
                     "gkms": {
                         "type": "object",
                         "properties": {"key": {"type": "string"}},
-                        "required": "key",
+                        "required": ["key"],
                     },
                     "awskms": {
                         "type": "object",
                         "properties": {"key": {"type": "string"}},
-                        "required": "key",
+                        "required": ["key"],
                     },
                     "azkms": {
                         "type": "object",
                         "properties": {"key": {"type": "string"}},
-                        "required": "key",
+                        "required": ["key"],
                     },
                     "vaultkv": {
                         "type": "object",
