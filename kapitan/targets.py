@@ -477,7 +477,56 @@ def valid_target_obj(target_obj, require_compile=True):
         "type": "object",
         "properties": {
             "vars": {"type": "object"},
-            "secrets": {"type": "object"},
+            "secrets": {
+                "type": "object",
+                "properties": {
+                    "gpg": {
+                        "type": "object",
+                        "properties": {
+                            "recipients": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "fingerprint": {"type": "string"},
+                                    },
+                                },
+                            },
+                        },
+                        "required": "recipients",
+                    },
+                    "gkms": {
+                        "type": "object",
+                        "properties": {"key": {"type": "string"}},
+                        "required": "key",
+                    },
+                    "awskms": {
+                        "type": "object",
+                        "properties": {"key": {"type": "string"}},
+                        "required": "key",
+                    },
+                    "azkms": {
+                        "type": "object",
+                        "properties": {"key": {"type": "string"}},
+                        "required": "key",
+                    },
+                    "vaultkv": {
+                        "type": "object",
+                        "properties": {
+                            "VAULT_ADDR": {"type": "string"},
+                            "VAULT_NAMESPACE": {"type": "string"},
+                            "VAULT_SKIP_VERIFY": {"type": "string"},
+                            "VAULT_CLIENT_KEY": {"type": "string"},
+                            "VAULT_CLIENT_CERT": {"type": "string"},
+                            "auth": {"enum": ["token", "userpass", "ldap", "github", "approle"]},
+                            "engine": {"type": "string"},
+                            "mount": {"type": "string"},
+                        },
+                    },
+                },
+                "additionalProperties": False,
+            },
             "compile": {
                 "type": "array",
                 "items": {
