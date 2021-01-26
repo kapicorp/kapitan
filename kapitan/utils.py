@@ -442,7 +442,7 @@ def check_version():
 
             print(f"Docker: docker pull deepmind/kapitan:{dot_kapitan_version}")
             print(f"Pip (user): pip3 install --user --upgrade kapitan=={dot_kapitan_version}\n")
-            print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
+            print("Check https://github.com/kapicorp/kapitan#quickstart for more info.\n")
             print(
                 "If you know what you're doing, you can skip this check by adding '--ignore-version-check'."
             )

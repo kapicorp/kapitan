@@ -13,4 +13,4 @@ DESCRIPTION = "Generic templated configuration management for Kubernetes, " "Ter
 AUTHOR = "Ricardo Amaro"
 AUTHOR_EMAIL = "ramaro@google.com"
 LICENCE = "Apache License 2.0"
-URL = "https://github.com/deepmind/kapitan"
+URL = "https://github.com/kapicorp/kapitan"
