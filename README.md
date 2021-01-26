@@ -1,11 +1,11 @@
 # Kapitan: Generic templated configuration management for Kubernetes, Terraform and other things
 
 [![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
-![](https://img.shields.io/github/pipenv/locked/python-version/deepmind/kapitan.svg)
+![](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)
 ![](https://img.shields.io/pypi/dm/kapitan)
 ![](https://img.shields.io/docker/pulls/deepmind/kapitan)
-[![Docker](https://github.com/deepmind/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/deepmind/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
-[![Releases](https://img.shields.io/github/release/deepmind/kapitan.svg)](https://github.com/deepmind/kapitan/releases)
+[![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
+[![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/deepmind/kapitan/latest.svg)](https://hub.docker.com/r/deepmind/kapitan)
 
 Kapitan is the tool to help you manage the complexity of your configuration using an inventory and a choice of templates like [generators](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7), jsonnet, [kadet](https://kapitan.dev/compile/#kadet), jinja2 and helm.
@@ -28,7 +28,7 @@ How is it different from [`helm`](https://github.com/kubernetes/helm) and [`kust
 ## Key Concepts
 
 ### Inventory
-The inventory is the heart of Kapitan. 
+The inventory is the heart of Kapitan.
 Using simple reusable `yaml` files (classes), you can represent as a ***single source of truth*** 
 everything that matters in your setup, for instance:
  * kubernetes `components` definitions
@@ -38,14 +38,14 @@ everything that matters in your setup, for instance:
  * ...anything else you want!
   
  Once you have it defined, you can reuse this data to feed into any of the many templating backends available to Kapitan.
- 
+
 ### [**Generators**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7)
-The simplest way to get started with Kapitan. 
+The simplest way to get started with Kapitan.
 Generators are ***universal templates*** that are a simplified way to generate configuration 
 files (for instance, Kubernetes manifests) without using any templating at all. 
 > Check out our reference repository to get started:  [Kapitan Reference](https://github.com/kapicorp/kapitan-reference)
 
-> Read our blog post [**Keep your ship together with Kapitan**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7) 
+> Read our blog post [**Keep your ship together with Kapitan**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7)
 
 ### [Jsonnet](https://jsonnet.org/) or [Kadet](https://kapitan.dev/compile/#kadet) templates backends
 For more complex scenarios, you have a choice of directly using our 2 main templating engines.
@@ -97,7 +97,7 @@ sudo pip3 install --upgrade kapitan
 
 #### Standalone binary
 
-From v0.24.0, kapitan is also available as a standalone binary which you can download from the [releases page](https://github.com/deepmind/kapitan/releases). The platform currently supported is Linux amd64.
+From v0.24.0, kapitan is also available as a standalone binary which you can download from the [releases page](https://github.com/kapicorp/kapitan/releases). The platform currently supported is Linux amd64.
 
 ## Example
 
