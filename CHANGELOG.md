@@ -1,3 +1,13 @@
+## 0.29.5:
+- Note for jsonnet on arm. Skip import if not used (#663)
+- Fix error for null inventory path in kadet (#664)
+- Bump jsonnet from 0.16.0 to 0.17.0 (#665)
+- Fix empty kadet output_obj crash (#667)
+- Set default multiprocessing to fork & update helm version (#641)
+- Add parameter to set kube version for Helm charts rendering (#671)
+- Handle KeyError in kapitan secrets/refs (#681)
+
+
 ## 0.29.4:
 - Fix inventory_path not found error (#661)
 - Bump requests from 2.24.0 to 2.25.0 (#657)
