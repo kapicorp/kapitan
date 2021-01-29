@@ -43,7 +43,8 @@ class InputType(object):
             inputs = list(itertools.chain.from_iterable(globbed_paths))
             # remove duplicate inputs
             inputs = set(inputs)
-            if len(inputs) == 0:
+            ignore_missing = comp_obj.get("ignore_missing", False)
+            if len(inputs) == 0 and ignore_missing == False:
                 raise CompileError(
                     "Compile error: {} for target: {} not found in "
                     "search_paths: {}".format(input_path, ext_vars["target"], self.search_paths)
