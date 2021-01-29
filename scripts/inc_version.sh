@@ -8,15 +8,15 @@ echomsg() {
 
 export LAST_COMMIT_MSG="$(git log -1 --oneline)"
 
-if ! $(echo "$LAST_COMMIT_MSG" | grep -qE "deepmind/release-v([0-9]+.[0-9]{2}.[0-9]+)+" ); then
+if ! $(echo "$LAST_COMMIT_MSG" | grep -qE "kapicorp/release-v([0-9]+.[0-9]{2}.[0-9]+)+" ); then
   echomsg "Not a release, skipping version incrementing"
   exit 0;
 fi
 
 echomsg "Incrementing Version"
 
-# Get everything after deepmind/release-v
-export VERSION="${LAST_COMMIT_MSG##*deepmind/release-v}"
+# Get everything after kapicorp/release-v
+export VERSION="${LAST_COMMIT_MSG##*kapicorp/release-v}"
 # Get everything before space character
 export VERSION="${VERSION%% *}"
 export TRAVIS_TAG="v$VERSION"
@@ -37,7 +37,7 @@ git commit -m "Version increment $VERSION"
 git tag -a "v$VERSION" -m "Version increment $VERSION"
 
 git remote remove origin
-git remote add origin https://${GH_TOKEN}@github.com/deepmind/kapitan.git
+git remote add origin https://${GH_TOKEN}@github.com/kapicorp/kapitan.git
 
 echomsg "Push new commit and tag v$VERSION"
 git push origin --tags HEAD:master
