@@ -456,6 +456,18 @@ For Copy, `input_paths` can be either a file or a directory: in case of a direct
 
 *Supported output types*: N/A (no need to specify `output_type`)
 
+Example
+
+```yaml
+ kapitan:
+    compile:
+      - input_type: copy
+        ignore_missing: true  # Do not error if path is missing. Defaults to False
+        input_paths:
+          - resources/state/${target_name}/.terraform.lock.hcl
+        output_path: terraform/
+```
+
 ### Remove
 
 This input type simply removes files or directories. This can be helpful if you can't control particular files
