@@ -81,6 +81,7 @@ class CopyTest(unittest.TestCase):
         except FileNotFoundError:
             pass
 
+
 class CopyMissingFileTest(unittest.TestCase):
     def setUp(self):
         try:
@@ -99,6 +100,7 @@ class CopyMissingFileTest(unittest.TestCase):
             shutil.rmtree(test_path)
         except FileNotFoundError:
             pass
+
 
 class CompileCopyTest(unittest.TestCase):
     def setUp(self):

@@ -36,15 +36,12 @@ class Copy(InputType):
                         shutil.copy2(file_path, compile_path)
                     else:
                         os.makedirs(compile_path, exist_ok=True)
-                        shutil.copy2(file_path, os.path.join(
-                            compile_path, os.path.basename(file_path)))
+                        shutil.copy2(file_path, os.path.join(compile_path, os.path.basename(file_path)))
                 else:
-                    compile_path = os.path.abspath(
-                        compile_path)  # Resolve relative paths
+                    compile_path = os.path.abspath(compile_path)  # Resolve relative paths
                     copy_tree(file_path, compile_path)
             elif ignore_missing == False:
-                raise OSError(
-                    f"Path {file_path} does not exist and `ignore_missing` is {ignore_missing}")
+                raise OSError(f"Path {file_path} does not exist and `ignore_missing` is {ignore_missing}")
         except OSError as e:
             logger.exception(f"Input dir not copied. Error: {e}")
 
