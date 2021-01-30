@@ -44,7 +44,7 @@ class InputType(object):
             # remove duplicate inputs
             inputs = set(inputs)
             ignore_missing = comp_obj.get("ignore_missing", False)
-            if len(inputs) == 0 and ignore_missing == False:
+            if len(inputs) == 0 and not ignore_missing:
                 raise CompileError(
                     "Compile error: {} for target: {} not found in "
                     "search_paths: {}".format(input_path, ext_vars["target"], self.search_paths)
