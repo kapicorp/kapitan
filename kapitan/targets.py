@@ -448,7 +448,8 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             if "kube_version" in comp_obj:
                 input_compiler.set_kube_version(comp_obj["kube_version"])
         elif input_type == "copy":
-            input_compiler = Copy(compile_path, search_paths, ref_controller)
+            ignore_missing = comp_obj.get("ignore_missing", False)
+            input_compiler = Copy(compile_path, search_paths, ref_controller, ignore_missing)
         elif input_type == "remove":
             input_compiler = Remove(compile_path, search_paths, ref_controller)
         elif input_type == "external":
