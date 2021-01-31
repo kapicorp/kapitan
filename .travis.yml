@@ -57,7 +57,7 @@ deploy:
     prerelease: $PRERELEASE
     on:
       tags: true
-      repo: deepmind/kapitan
+      repo: kapicorp/kapitan
   - provider: pypi
     distributions: sdist bdist_wheel
     skip_existing: true

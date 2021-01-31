@@ -16,7 +16,7 @@ Difficulty: Medium
 
 ## 2. Follow up on helm OSX Bindings
 
-Description: This would be a followup project from last years GSoC to complete the helm bindings pipelines so they also build bindings for OSX. https://github.com/deepmind/kapitan/pull/359 Along with the bindings, it should be possible/fairly easy to also compile the binary of Kapitan for OSX with the bindings prebaked in it.
+Description: This would be a followup project from last years GSoC to complete the helm bindings pipelines so they also build bindings for OSX. https://github.com/kapicorp/kapitan/pull/359 Along with the bindings, it should be possible/fairly easy to also compile the binary of Kapitan for OSX with the bindings prebaked in it.
 
 Expected Outcome: The pip python package for Kapitan ships with pre-included OSX helm bindings. Documentation is updated and the build is implemented in a way that runs automatically and doesn't require a lot of human time. Along with this, the student would also ship the OSX binary of Kapitan in the github releases page.
 As a bonus, this work could also add a brew manifest for OSX so that users there can install Kapitan in a simpler way.
@@ -38,7 +38,7 @@ Difficulty: Medium
 
 ## 4. Implement Azure KMS and Vault KMS backends
 
-Description: Currently there is a PR to add Azure KMS support to Kapitan https://github.com/deepmind/kapitan/pull/410 but it needs some adjustments, as well as a methodology to mock the KMS APIs during tests in python. There is also some work done on adding Hashicorp's Vault as a secrets backend https://github.com/deepmind/kapitan/blob/master/docs/kap_proposals/kap_6_hashicorp_vault.md but that is only implemented for reading values from vaultkv.
+Description: Currently there is a PR to add Azure KMS support to Kapitan https://github.com/kapicorp/kapitan/pull/410 but it needs some adjustments, as well as a methodology to mock the KMS APIs during tests in python. There is also some work done on adding Hashicorp's Vault as a secrets backend https://github.com/kapicorp/kapitan/blob/master/docs/kap_proposals/kap_6_hashicorp_vault.md but that is only implemented for reading values from vaultkv.
 
 This project would be about finalizing all work related to the Azure KMS backend, adding tests + mocks for the Azure/Google/AWS secret backends and finally adding read/write support for the Vault secrets backend.
 

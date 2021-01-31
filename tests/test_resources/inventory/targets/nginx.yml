@@ -20,8 +20,8 @@ parameters:
         output_path: components/tests
         ref: master
         subdir: tests
-        source: https://github.com/deepmind/kapitan.git
+        source: https://github.com/kapicorp/kapitan.git
       - type: http
         output_path: components/kapitan-repository
-        source: https://github.com/deepmind/kapitan/archive/master.zip
+        source: https://github.com/kapicorp/kapitan/archive/master.zip
         unpack: true

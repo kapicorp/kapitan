@@ -1,10 +1,10 @@
 # Kapitan: CI/CD usage
 
-The [Docker image](https://hub.docker.com/r/deepmind/kapitan/tags/) (`deepmind/kapitan:ci`) ([Dockerfile](https://github.com/kapicorp/kapitan/blob/master/Dockerfile.ci)) comes pre-packaged with `gcloud`, `gsutil`, `bq`, `kubectl`, `terraform`, `promtool` and `kapitan`.
+The [Docker image](https://hub.docker.com/r/kapicorp/kapitan/tags/) (`kapicorp/kapitan:ci`) ([Dockerfile](https://github.com/kapicorp/kapitan/blob/master/Dockerfile.ci)) comes pre-packaged with `gcloud`, `gsutil`, `bq`, `kubectl`, `terraform`, `promtool` and `kapitan`.
 
 ## Example workflow - Deploy to GKE
 
-The following commands are run using the `deepmind/kapitan:ci` Docker image.
+The following commands are run using the `kapicorp/kapitan:ci` Docker image.
 
 1. Compile:
 

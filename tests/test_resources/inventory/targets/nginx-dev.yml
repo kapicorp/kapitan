@@ -20,7 +20,7 @@ parameters:
         output_path: components/source
         ref: master
         subdir: kapitan
-        source: https://github.com/deepmind/kapitan.git
+        source: https://github.com/kapicorp/kapitan.git
       - type: http
         output_path: components
         source: https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/acs-engine-autoscaler-0.1.0.tgz

@@ -440,7 +440,7 @@ def check_version():
                     f"Option 2: Downgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n"
                 )
 
-            print(f"Docker: docker pull deepmind/kapitan:{dot_kapitan_version}")
+            print(f"Docker: docker pull kapicorp/kapitan:{dot_kapitan_version}")
             print(f"Pip (user): pip3 install --user --upgrade kapitan=={dot_kapitan_version}\n")
             print("Check https://github.com/kapicorp/kapitan#quickstart for more info.\n")
             print(
