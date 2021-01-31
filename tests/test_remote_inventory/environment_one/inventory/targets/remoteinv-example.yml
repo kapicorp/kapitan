@@ -9,12 +9,12 @@ parameters:
         inventory:
             - type: git
               output_path: targets/
-              source: https://github.com/deepmind/kapitan.git
+              source: https://github.com/kapicorp/kapitan.git
               ref: master
               subdir: tests/test_remote_inventory/environment_two/inventory/targets/
             - type: https
               output_path: .
-              source: https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.tar.gz
+              source: https://github.com/kapicorp/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.tar.gz
               unpack: True
         compile:
             - output_path: .

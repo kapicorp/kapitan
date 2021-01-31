@@ -31,11 +31,11 @@ class DependencyManagerTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         http_sources = [
             (
-                "https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/components/jsonnet/jsonnet.jsonnet",
+                "https://raw.githubusercontent.com/kapicorp/kapitan/master/examples/docker/components/jsonnet/jsonnet.jsonnet",
                 "1c3a08e6jsonnet.jsonnet",
             ),
             (
-                "https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/components/kadet/__init__.py",
+                "https://raw.githubusercontent.com/kapicorp/kapitan/master/examples/docker/components/kadet/__init__.py",
                 "aff45ec8__init__.py",
             ),
         ]
@@ -52,7 +52,7 @@ class DependencyManagerTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         repo_dir = os.path.join(temp_dir, "7a8f3940kapitan.git")
         # TODO: also test git ssh urls
-        git_source = "https://github.com/deepmind/kapitan.git"
+        git_source = "https://github.com/kapicorp/kapitan.git"
         fetch_git_source(git_source, repo_dir, item_type="Dependency")
         self.assertTrue(os.path.isfile(os.path.join(repo_dir, "README.md")))
         rmtree(temp_dir)
@@ -63,7 +63,7 @@ class DependencyManagerTest(unittest.TestCase):
         """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
-        source = "https://github.com/deepmind/kapitan.git"
+        source = "https://github.com/kapicorp/kapitan.git"
         dep = [
             {
                 "output_path": os.path.join(output_dir, "subdir"),
