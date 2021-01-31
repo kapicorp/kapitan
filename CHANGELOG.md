@@ -6,6 +6,7 @@
 - Set default multiprocessing to fork & update helm version (#641)
 - Add parameter to set kube version for Helm charts rendering (#671)
 - Handle KeyError in kapitan secrets/refs (#681)
+- Find release version script
 
 
 ## 0.29.4:
