@@ -171,7 +171,7 @@ Setting `unpack: True` will unpack zip or tar files onto the `output_path`. In s
 ## Helm type
 
 Fetches helm charts and any specific subcharts in the `requirements.yaml` file.
-Currently only works on linux with the `helm_fetch_binding`.
+Requires that `helm` be present in the PATH.
 
 ### Usage
 

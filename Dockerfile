@@ -8,10 +8,6 @@ COPY ./kapitan/inputs/helm ./kapitan/inputs/helm
 RUN chmod +x ./kapitan/inputs/helm/build.sh \
     && ./kapitan/inputs/helm/build.sh
 
-COPY ./kapitan/dependency_manager/helm ./kapitan/dependency_manager/helm
-RUN chmod +x ./kapitan/dependency_manager/helm/build.sh \
-    && ./kapitan/dependency_manager/helm/build.sh
-
 COPY ./kapitan ./kapitan
 COPY ./MANIFEST.in ./MANIFEST.in
 COPY ./requirements.txt ./requirements.txt
@@ -32,8 +28,14 @@ RUN apt-get update \
     && pip install --upgrade pip yq wheel \
     && pip install -r requirements.txt \
     && ./kapitan/inputs/helm/build.sh \
-    && ./kapitan/dependency_manager/helm/build.sh \
     && pip install .
+
+# Install Helm
+RUN apt-get install --no-install-recommends -y curl \
+    && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
+    && chmod 700 get_helm.sh \
+    && HELM_INSTALL_DIR=/opt/venv/bin ./get_helm.sh --no-sudo \
+    && rm get_helm.sh
 
 # Final image with virtualenv built in previous step
 FROM python:3.7-slim-stretch

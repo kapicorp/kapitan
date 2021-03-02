@@ -53,7 +53,3 @@ format_codestyle:
 	# ignores line length and reclass
 	black .
 	@echo
-
-.PHONY: build_helm_fetch_binding
-build_helm_fetch_binding:
-	bash kapitan/dependency_manager/helm/build.sh

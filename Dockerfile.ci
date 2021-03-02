@@ -17,10 +17,6 @@ COPY ./kapitan/inputs/helm ./kapitan/inputs/helm
 RUN chmod +x ./kapitan/inputs/helm/build.sh \
     && ./kapitan/inputs/helm/build.sh
 
-COPY ./kapitan/dependency_manager/helm ./kapitan/dependency_manager/helm
-RUN chmod +x ./kapitan/dependency_manager/helm/build.sh \
-    && ./kapitan/dependency_manager/helm/build.sh
-
 COPY ./kapitan ./kapitan
 COPY ./MANIFEST.in ./MANIFEST.in
 COPY ./requirements.txt ./requirements.txt
@@ -73,9 +69,12 @@ RUN apt-get update \
     && pip install --upgrade pip yq wheel \
     && pip install -r ./kapitan/requirements.txt \
     && ./kapitan/kapitan/inputs/helm/build.sh \
-    && ./kapitan/kapitan/dependency_manager/helm/build.sh \
     && pip install ./kapitan \
     && rm -rf ./kapitan \
+    && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
+    && chmod 700 get_helm.sh \
+    && HELM_INSTALL_DIR=/opt/venv/bin ./get_helm.sh --no-sudo \
+    && rm get_helm.sh \
     && curl -L -o /usr/local/bin/kapp ${KAPP_URL} \
     && chmod +x /usr/local/bin/kapp \
     && curl -L -o /usr/local/bin/kbld ${KBLD_URL} \

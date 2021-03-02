@@ -6,7 +6,6 @@ exclude = '''
   /(
       .*reclass.*
     | .*helm_binding.py
-    | .*helm_fetch_binding.py
     | .*version.py
   )
 )

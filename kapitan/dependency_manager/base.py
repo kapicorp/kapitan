@@ -6,16 +6,16 @@ import hashlib
 import logging
 import multiprocessing
 import os
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from distutils.dir_util import copy_tree
 from functools import partial
-from shutil import copyfile, rmtree
-import platform
 from mimetypes import MimeTypes
+from shutil import copyfile, rmtree
+
 from git import GitCommandError
 from git import Repo
-
-from kapitan.errors import GitSubdirNotFoundError, GitFetchingError, HelmBindingUnavailableError
+from kapitan.errors import GitSubdirNotFoundError, GitFetchingError, HelmFetchingError
+from kapitan.helm_cli import helm_cli
 from kapitan.utils import (
     make_request,
     unpack_downloaded_file,
@@ -24,14 +24,9 @@ from kapitan.utils import (
     normalise_join_path,
 )
 
-
 logger = logging.getLogger(__name__)
 
-try:
-    from kapitan.dependency_manager.helm.helm_fetch_binding import ffi
-except ImportError as ie:
-    logger.debug("Error importing ffi from kapitan.dependency_manager.helm.helm_fetch_binding: %s", ie)
-    pass  # make this feature optional
+HelmSource = namedtuple("HelmSource", ["repo", "chart_name", "version"])
 
 
 def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
@@ -75,9 +70,7 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
                     http_deps[source_uri].append(item)
                 elif dependency_type == "helm":
                     version = item.get("version", "")
-                    if version == "":
-                        version = "latest"
-                    helm_deps[item["chart_name"] + "-" + version].append(item)
+                    helm_deps[HelmSource(source_uri, item["chart_name"], version)].append(item)
                 else:
                     logger.warning("%s is not a valid source type", dependency_type)
 
@@ -89,7 +82,7 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
 
     git_worker = partial(fetch_git_dependency, save_dir=save_dir, force=force)
     http_worker = partial(fetch_http_dependency, save_dir=save_dir, force=force)
-    helm_worker = partial(fetch_helm_chart)
+    helm_worker = partial(fetch_helm_chart, save_dir=save_dir, force=force)
     [p.get() for p in pool.imap_unordered(http_worker, http_deps.items()) if p]
     [p.get() for p in pool.imap_unordered(git_worker, git_deps.items()) if p]
     [p.get() for p in pool.imap_unordered(helm_worker, helm_deps.items()) if p]
@@ -220,56 +213,56 @@ def fetch_http_source(source, save_path, item_type):
     return None
 
 
-def fetch_helm_chart(dep_mapping):
+def fetch_helm_chart(dep_mapping, save_dir, force):
     """
     downloads a helm chart and its subcharts from source then untars and moves it to save_dir
     """
-    lib = initialise_helm_fetch_binding()
-    unique_chart, deps = dep_mapping
+    source, deps = dep_mapping
+
+    # to avoid collisions between source.chart_name/source.version
+    path_hash = hashlib.sha256(source.repo.encode()).hexdigest()[:8]
+    cached_repo_path = os.path.join(
+        save_dir, path_hash, source.chart_name + "-" + (source.version or "latest")
+    )
+    if force or not exists_in_cache(cached_repo_path):
+        fetch_helm_archive(source.repo, source.chart_name, source.version, cached_repo_path)
+    else:
+        logger.debug("Using cached {} {}".format(item_type, cached_repo_path))
+
     for dep in deps:
-        chart_name = dep["chart_name"]
-        version = dep.get("version", "")
-        repo_url = dep["source"]
-        destination_dir = dep["output_path"]
+        output_path = dep["output_path"]
 
-        if version == "":
-            logger.info(
-                "Dependency helm chart %s being fetch with using latest version available", chart_name
-            )
-
-        logger.info("Dependency helm chart %s and version %s: fetching now", chart_name, version)
-        c_chart_name = ffi.new("char[]", chart_name.encode("ascii"))
-        c_version = ffi.new("char[]", version.encode("ascii"))
-        c_repo_url = ffi.new("char[]", repo_url.encode("ascii"))
-        c_destination_dir = ffi.new("char[]", destination_dir.encode("ascii"))
-
-        res = lib.fetchHelmChart(c_repo_url, c_chart_name, c_version, c_destination_dir)
-        response = ffi.string(res).decode("utf-8")
-        if response != "":
-            logger.warning("Dependency helm chart %s and version %s: %s", chart_name, version, response)
+        parent_dir = os.path.dirname(output_path)
+        if parent_dir != "":
+            os.makedirs(parent_dir, exist_ok=True)
+        if force:
+            copy_tree(cached_repo_path, output_path)
         else:
-            logger.info("Dependency helm chart %s and version %s: successfully fetched", chart_name, version)
-            logger.info(
-                "Dependency helm chart %s and version %s: saved to %s", chart_name, version, destination_dir
-            )
+            safe_copy_tree(cached_repo_path, output_path)
+        logger.info("Dependency %s: saved to %s", source.chart_name, output_path)
 
 
-def initialise_helm_fetch_binding():
-    """returns the dl_opened library (.so file) if exists, otherwise None"""
-    if platform.system() not in ("Linux", "Darwin"):  # TODO: later add binding for Mac
-        return None
-    # binding_path is kapitan/dependency_manager/helm/helm_fetch.so
-    binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "helm/helm_fetch.so")
-    if not os.path.exists(binding_path):
-        logger.debug("The helm_fetch binding does not exist at %s", binding_path)
-        return None
-    try:
-        lib = ffi.dlopen(binding_path)
-    except (NameError, OSError) as e:
-        raise HelmBindingUnavailableError(
-            "There was an error opening helm_fetch.so binding. " "Refer to the exception below:\n" + str(e)
-        )
-    return lib
+def fetch_helm_archive(repo, chart_name, version, save_path):
+    logger.info("Dependency helm chart %s and version %s: fetching now", chart_name, version or "latest")
+    # Fetch archive and untar it into parent dir
+    save_dir = os.path.dirname(save_path)
+    args = ["pull", "--destination", save_dir, "--untar", "--repo", repo]
+
+    if version:
+        args.append("--version")
+        args.append(version)
+
+    args.append(chart_name)
+
+    response = helm_cli(args)
+    if response != "":
+        logger.warning("Dependency helm chart %s and version %s: %s", chart_name, version, response)
+        raise HelmFetchingError(response)
+    else:
+        # rename chart to requested name
+        os.rename(os.path.join(save_dir, chart_name), save_path)
+        logger.info("Dependency helm chart %s and version %s: successfully fetched", chart_name, version)
+        logger.info("Dependency helm chart %s and version %s: saved to %s", chart_name, version, save_path)
 
 
 def exists_in_cache(item_path):
