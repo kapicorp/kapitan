@@ -16,16 +16,7 @@ from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.inputs.helm import Helm
 
-helm_binding_exists = True
-try:
-    from kapitan.inputs.helm.helm_binding import (
-        ffi,
-    )  # this statement will raise ImportError if binding not available
-except ImportError:
-    helm_binding_exists = False
 
-
-@unittest.skipUnless(helm_binding_exists, "helm binding is not available")
 class HelmInputTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.path.join("tests", "test_resources"))
@@ -48,7 +39,7 @@ class HelmInputTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         helm = Helm(None, None, None)
         error_message = helm.render_chart(chart_path, temp_dir)
-        self.assertTrue("no such file or directory" in error_message)
+        self.assertTrue("path" in error_message and "not found" in error_message)
 
     def test_compile_chart(self):
         temp = tempfile.mkdtemp()
@@ -128,7 +119,7 @@ class HelmInputTest(unittest.TestCase):
         with open(controller_deployment_file, "r") as fp:
             manifest = yaml.safe_load(fp.read())
             name = manifest["metadata"]["name"]
-            self.assertEqual(name, "-nginx-ingress-my-controller")
+            self.assertEqual("RELEASE-NAME-nginx-ingress-my-controller", name)
 
     def test_compile_with_helm_values_files(self):
         temp = tempfile.mkdtemp()

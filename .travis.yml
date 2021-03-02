@@ -25,10 +25,6 @@ before_install:
   - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
   # Loop until update succeeds (timeouts can occur)
   - travis_retry $(! sudo apt-get -qq update 2>&1 | grep Failed)
-  - sudo apt-get install -y golang-1.14
-  - export PATH="/usr/lib/go-1.14/bin:$PATH"
-  - export GOROOT=/usr/lib/go-1.14
-  - go version
   - sudo apt-get install -y gnupg2 git curl
   # Install Helm Binary
   - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
@@ -40,7 +36,6 @@ install:
   - pip3 install coverage black
 
 script:
-  - make build_helm_binding
   - make test && make test_coverage
 
 after_success:

@@ -548,6 +548,7 @@ def valid_target_obj(target_obj, require_compile=True):
                                 "namespace": {"type": "string"},
                                 "name_template": {"type": "string"},
                                 "release_name": {"type": "string"},
+                                "validate": {"type": "boolean"},
                             },
                             "additionalProperties": False,
                         },

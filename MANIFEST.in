@@ -2,4 +2,3 @@ recursive-include kapitan/reclass/reclass/ *.py
 include kapitan/lib/*.libjsonnet
 include requirements.txt
 recursive-include kapitan/inputs/templates *
-recursive-include kapitan/inputs/helm *
