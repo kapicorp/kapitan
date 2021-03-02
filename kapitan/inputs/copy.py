@@ -29,7 +29,7 @@ class Copy(InputType):
         # Whether to fail silently if the path does not exists.
         ignore_missing = self.ignore_missing
         try:
-            logger.debug("Copying {} to {}.".format(file_path, compile_path))
+            logger.debug("Copying %s to %s.", file_path, compile_path)
             if os.path.exists(file_path):
                 if os.path.isfile(file_path):
                     if os.path.isfile(compile_path):
@@ -43,7 +43,7 @@ class Copy(InputType):
             elif ignore_missing == False:
                 raise OSError(f"Path {file_path} does not exist and `ignore_missing` is {ignore_missing}")
         except OSError as e:
-            logger.exception(f"Input dir not copied. Error: {e}")
+            logger.exception("Input dir not copied. Error: %s", e)
 
     def default_output_type(self):
         # no output_type options for copy

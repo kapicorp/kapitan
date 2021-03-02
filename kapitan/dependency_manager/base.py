@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 try:
     from kapitan.dependency_manager.helm.helm_fetch_binding import ffi
 except ImportError as ie:
-    logger.debug("Error importing ffi from kapitan.dependency_manager.helm.helm_fetch_binding: {}".format(ie))
+    logger.debug("Error importing ffi from kapitan.dependency_manager.helm.helm_fetch_binding: %s", ie)
     pass  # make this feature optional
 
 
@@ -59,12 +59,12 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
                 # The target key "output_path" is relative to the compile output path set by the user
                 # point to the full output path
                 full_output_path = normalise_join_path(output_path, item["output_path"])
-                logger.debug("Updated output_path from {} to {}".format(item["output_path"], output_path))
+                logger.debug("Updated output_path from %s to %s", item["output_path"], output_path)
                 item["output_path"] = full_output_path
 
                 if full_output_path in deps_output_paths[source_uri]:
                     # if the output_path is duplicated for the same source_uri
-                    logger.warning("Skipping duplicate output path for uri {}".format(source_uri))
+                    logger.warning("Skipping duplicate output path for uri %s", source_uri)
                     continue
                 else:
                     deps_output_paths[source_uri].add(full_output_path)
@@ -79,11 +79,11 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
                         version = "latest"
                     helm_deps[item["chart_name"] + "-" + version].append(item)
                 else:
-                    logger.warning("{} is not a valid source type".format(dependency_type))
+                    logger.warning("%s is not a valid source type", dependency_type)
 
         except KeyError:
             logger.debug(
-                "Target object {} has no 'dependencies' key, continuing".format(target_obj["vars"]["target"])
+                "Target object %s has no 'dependencies' key, continuing", target_obj["vars"]["target"]
             )
             continue
 
@@ -108,7 +108,7 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
     if not exists_in_cache(cached_repo_path) or force:
         fetch_git_source(source, cached_repo_path, item_type)
     else:
-        logger.debug("Using cached {} {}".format(item_type, cached_repo_path))
+        logger.debug("Using cached %s %s", item_type, cached_repo_path)
     for dep in deps:
         repo = Repo(cached_repo_path)
         output_path = dep["output_path"]
@@ -132,7 +132,7 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
             copy_tree(copy_src_path, output_path)
         else:
             safe_copy_tree(copy_src_path, output_path)
-        logger.info("{} {}: saved to {}".format(item_type, source, output_path))
+        logger.info("%s %s: saved to %s", item_type, source, output_path)
 
 
 def fetch_git_source(source, save_dir, item_type):
@@ -140,12 +140,12 @@ def fetch_git_source(source, save_dir, item_type):
 
     if os.path.exists(save_dir):
         rmtree(save_dir)
-        logger.debug("Removed {}".format(save_dir))
-    logger.info("{} {}: fetching now".format(item_type, source))
+        logger.debug("Removed %s", save_dir)
+    logger.info("%s %s: fetching now", item_type, source)
     try:
         Repo.clone_from(source, save_dir)
-        logger.info("{} {}: successfully fetched".format(item_type, source))
-        logger.debug("Git clone cached to {}".format(save_dir))
+        logger.info("%s %s: successfully fetched", item_type, source)
+        logger.debug("Git clone cached to %s", save_dir)
     except GitCommandError as e:
         logger.error(e)
         raise GitFetchingError("{} {}: fetching unsuccessful\n{}".format(item_type, source, e.stderr))
@@ -163,7 +163,7 @@ def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
     if not exists_in_cache(cached_source_path) or force:
         content_type = fetch_http_source(source, cached_source_path, item_type)
     else:
-        logger.debug("Using cached {} {}".format(item_type, cached_source_path))
+        logger.debug("Using cached %s %s", item_type, cached_source_path)
         content_type = MimeTypes().guess_type(cached_source_path)[0]
     for dep in deps:
         output_path = dep["output_path"]
@@ -182,12 +182,13 @@ def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
                 # delete unpack output
                 rmtree(unpack_output)
             if is_unpacked:
-                logger.info("{} {}: extracted to {}".format(item_type, source, output_path))
+                logger.info("%s %s: extracted to %s", item_type, source, output_path)
             else:
                 logger.info(
-                    "{} {}: Content-Type {} is not supported for unpack. Ignoring save".format(
-                        item_type, source, content_type
-                    )
+                    "%s %s: Content-Type %s is not supported for unpack. Ignoring save",
+                    item_type,
+                    source,
+                    content_type,
                 )
         else:
             # we are downloading a single file
@@ -198,7 +199,7 @@ def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
                 copyfile(cached_source_path, output_path)
             else:
                 safe_copy_file(cached_source_path, output_path)
-            logger.info("{} {}: saved to {}".format(item_type, source, output_path))
+            logger.info("%s %s: saved to %s", item_type, source, output_path)
 
 
 def fetch_http_source(source, save_path, item_type):
@@ -206,16 +207,16 @@ def fetch_http_source(source, save_path, item_type):
 
     if os.path.exists(save_path):
         os.remove(save_path)
-        logger.debug("Removed {}".format(save_path))
-    logger.info("{} {}: fetching now".format(item_type, source))
+        logger.debug("Removed %s", save_path)
+    logger.info("%s %s: fetching now", item_type, source)
     content, content_type = make_request(source)
-    logger.info("{} {}: successfully fetched".format(item_type, source))
+    logger.info("%s %s: successfully fetched", item_type, source)
     if content is not None:
         with open(save_path, "wb") as f:
             f.write(content)
-        logger.debug("Cached to {}".format(save_path))
+        logger.debug("Cached to %s", save_path)
         return content_type
-    logger.warning("{} {}: failed to fetch".format(item_type, source))
+    logger.warning("%s %s: failed to fetch", item_type, source)
     return None
 
 
@@ -233,10 +234,10 @@ def fetch_helm_chart(dep_mapping):
 
         if version == "":
             logger.info(
-                "Dependency helm chart {} being fetch with using latest version available".format(chart_name)
+                "Dependency helm chart %s being fetch with using latest version available", chart_name
             )
 
-        logger.info("Dependency helm chart {} and version {}: fetching now".format(chart_name, version))
+        logger.info("Dependency helm chart %s and version %s: fetching now", chart_name, version)
         c_chart_name = ffi.new("char[]", chart_name.encode("ascii"))
         c_version = ffi.new("char[]", version.encode("ascii"))
         c_repo_url = ffi.new("char[]", repo_url.encode("ascii"))
@@ -245,17 +246,11 @@ def fetch_helm_chart(dep_mapping):
         res = lib.fetchHelmChart(c_repo_url, c_chart_name, c_version, c_destination_dir)
         response = ffi.string(res).decode("utf-8")
         if response != "":
-            logger.warning(
-                "Dependency helm chart {} and version {}: {}".format(chart_name, version, response)
-            )
+            logger.warning("Dependency helm chart %s and version %s: %s", chart_name, version, response)
         else:
+            logger.info("Dependency helm chart %s and version %s: successfully fetched", chart_name, version)
             logger.info(
-                "Dependency helm chart {} and version {}: successfully fetched".format(chart_name, version)
-            )
-            logger.info(
-                "Dependency helm chart {} and version {}: saved to {}".format(
-                    chart_name, version, destination_dir
-                )
+                "Dependency helm chart %s and version %s: saved to %s", chart_name, version, destination_dir
             )
 
 
@@ -266,7 +261,7 @@ def initialise_helm_fetch_binding():
     # binding_path is kapitan/dependency_manager/helm/helm_fetch.so
     binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "helm/helm_fetch.so")
     if not os.path.exists(binding_path):
-        logger.debug("The helm_fetch binding does not exist at {}".format(binding_path))
+        logger.debug("The helm_fetch binding does not exist at %s", binding_path)
         return None
     try:
         lib = ffi.dlopen(binding_path)
