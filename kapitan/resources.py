@@ -229,7 +229,7 @@ def search_imports(cwd, import_str, search_paths):
                 # if found, set as full_import_path
                 if os.path.exists(_full_import_path):
                     full_import_path = _full_import_path
-                    logger.debug(f"import_str: %s found in search_path: %s", import_str, path)
+                    logger.debug("import_str: %s found in search_path: %s", import_str, path)
                     break
 
     # if the above search did not find anything, let jsonnet error
