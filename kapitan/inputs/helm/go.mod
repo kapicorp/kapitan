@@ -1,4 +1,4 @@
-module .
+module inhelm
 
 go 1.14
 
