@@ -1,4 +1,4 @@
-module .
+module dmhelm
 
 go 1.14
 
