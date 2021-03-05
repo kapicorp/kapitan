@@ -114,7 +114,7 @@ class Kadet(InputType):
         logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
 
         kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
-        logger.debug("Kadet main args: {}".format(kadet_arg_spec.args))
+        logger.debug("Kadet main args: %s", kadet_arg_spec.args)
 
         if len(kadet_arg_spec.args) == 1:
             output_obj = kadet_module.main(input_params).to_dict()

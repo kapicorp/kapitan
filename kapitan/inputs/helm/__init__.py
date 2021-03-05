@@ -31,7 +31,7 @@ class Helm(InputType):
         # binding_path is kapitan/inputs/helm/libtemplate.so
         binding_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "libtemplate.so")
         if not os.path.exists(binding_path):
-            logger.debug("The helm binding does not exist at {}".format(binding_path))
+            logger.debug("The helm binding does not exist at %s", binding_path)
             return None
         try:
             lib = ffi.dlopen(binding_path)

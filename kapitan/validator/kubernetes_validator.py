@@ -33,7 +33,7 @@ class KubernetesManifestValidator(Validator):
         validator = jsonschema.Draft4Validator(schema)
         for validate_path in validate_paths:
             if not os.path.isfile(validate_path):
-                logger.warning("{} does not exist. skipping".format(validate_path))
+                logger.warning("%s does not exist. skipping", validate_path)
                 continue
             with open(validate_path, "r") as fp:
                 validate_instance = yaml.safe_load(fp.read())
@@ -45,7 +45,7 @@ class KubernetesManifestValidator(Validator):
                     )
                     raise KubernetesManifestValidationError(error_message)
                 else:
-                    logger.info("Validation: manifest validation successful for {}".format(validate_path))
+                    logger.info("Validation: manifest validation successful for %s", validate_path)
 
     @lru_cache(maxsize=256)
     def _get_schema(self, kind, version):
@@ -72,7 +72,7 @@ class KubernetesManifestValidator(Validator):
 
     def _get_schema_from_web(self, kind, version):
         url = self._get_request_url(kind, version)
-        logger.debug("Validation: fetching schema from {}".format(url))
+        logger.debug("Validation: fetching schema from %s", url)
         try:
             content, _ = make_request(url)
         except requests.exceptions.HTTPError:
@@ -80,7 +80,7 @@ class KubernetesManifestValidator(Validator):
                 "Validation: schema failed to fetch from {}"
                 "\nThe specified version '{}' or kind '{}' may not be supported".format(url, version, kind)
             )
-        logger.debug("Validation: schema fetched  from {}".format(url))
+        logger.debug("Validation: schema fetched  from %s", url)
         return yaml.safe_load(content)
 
     def _get_request_url(self, kind, version):

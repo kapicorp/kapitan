@@ -688,7 +688,7 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
     """Throws *InventoryError* if parameters.kapitan.vars.target is not set,
     or target does not have a corresponding yaml file in *inventory_path*
     """
-    logger.debug(f"validating target name matches the name of yml file {target_filename}")
+    logger.debug("validating target name matches the name of yml file %s", target_filename)
     try:
         target_name = target_obj["vars"]["target"]
     except KeyError:
@@ -713,12 +713,12 @@ def schema_validate_compiled(args):
     validates compiled output according to schemas specified in the inventory
     """
     if not os.path.isdir(args.compiled_path):
-        logger.error(f"compiled-path {args.compiled_path} not found")
+        logger.error("compiled-path %s not found", args.compiled_path)
         sys.exit(1)
 
     if not os.path.isdir(args.schemas_path):
         os.makedirs(args.schemas_path)
-        logger.info(f"created schema-cache-path at {args.schemas_path}")
+        logger.info("created schema-cache-path at %s", args.schemas_path)
 
     worker = partial(schema_validate_kubernetes_output, cache_dir=args.schemas_path)
     pool = multiprocessing.Pool(args.parallelism)
@@ -760,9 +760,7 @@ def create_validate_mapping(target_objs, compiled_path):
     for target_obj in target_objs:
         target_name = target_obj["vars"]["target"]
         if "validate" not in target_obj:
-            logger.debug(
-                "target '{}' does not have 'validate' parameter in inventory. skipping".format(target_name)
-            )
+            logger.debug("target '%s' does not have 'validate' parameter in inventory. skipping", target_name)
             continue
 
         for validate_item in target_obj["validate"]:
@@ -775,11 +773,13 @@ def create_validate_mapping(target_objs, compiled_path):
                 for output_path in validate_item["output_paths"]:
                     full_output_path = os.path.join(compiled_path, target_name, output_path)
                     if not os.path.isfile(full_output_path):
-                        logger.warning(f"{output_path} does not exist for target '{target_name}'. skipping")
+                        logger.warning(
+                            "%s does not exist for target '%s'. skipping", output_path, target_name
+                        )
                         continue
                     validate_files_map[kind_version_pair].append(full_output_path)
             else:
-                logger.warning(f"type {validate_type} is not supported for validation. skipping")
+                logger.warning("type %s is not supported for validation. skipping", validate_type)
 
     return validate_files_map
 

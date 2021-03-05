@@ -25,11 +25,11 @@ def initialise_skeleton(args):
 
     copy_tree(templates_directory, args.directory)
 
-    logger.info("Populated {} with:".format(args.directory))
+    logger.info("Populated %s with:", args.directory)
     for dirName, subdirList, fileList in os.walk(args.directory):
-        logger.info("{}".format(dirName))
+        logger.info("%s", dirName)
         for fname in fileList:
-            logger.info("\t {}".format(fname))
+            logger.info("\t %s", fname)
         # Remove the first entry in the list of sub-directories
         # if there are any sub-directories present
         if len(subdirList) > 0:

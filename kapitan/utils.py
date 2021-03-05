@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 try:
     import _jsonnet as jsonnet
 except ImportError as e:
-    logger.debug(f"Could not import jsonnet: {e}")
+    logger.debug("Could not import jsonnet: %s", e)
 
 
 try:
@@ -64,7 +64,7 @@ def hashable_lru_cache(func):
         try:
             return json.loads(value)
         except Exception:
-            logger.debug(f"hashable_lru_cache: {value} not serialiseable, using generic lru_cache instead")
+            logger.debug("hashable_lru_cache: %s not serialiseable, using generic lru_cache instead", value)
             return value
 
     def func_with_serialized_params(*args, **kwargs):
@@ -504,10 +504,10 @@ def unpack_downloaded_file(file_path, output_path, content_type):
             is_unpacked = True
         else:
             extension = re.findall(r"\..*$", file_path)[0]
-            logger.debug(f"File extension {extension} not suported")
+            logger.debug("File extension %s not suported", extension)
             is_unpacked = False
     else:
-        logger.debug(f"Content type {content_type} not suported")
+        logger.debug("Content type %s not suported", content_type)
         is_unpacked = False
     return is_unpacked
 
@@ -533,10 +533,10 @@ def safe_copy_file(src, dst):
         dir = os.path.dirname(dst)
 
     if os.path.isfile(dst):
-        logger.warning("Not updating {} (file already exists)".format(dst))
+        logger.warning("Not updating %s (file already exists)", dst)
         return (dst, 0)
     _copy_file_contents(src, dst)
-    logger.debug("Copied {} to {}".format(src, dir))
+    logger.debug("Copied %s to %s", src, dir)
     return (dst, 1)
 
 
@@ -565,7 +565,7 @@ def safe_copy_tree(src, dst):
         dst_name = os.path.join(dst, name)
 
         if name.startswith("."):
-            logger.debug("Not copying {}".format(src_name))
+            logger.debug("Not copying %s", src_name)
             continue
         if os.path.isdir(src_name):
             outputs.extend(safe_copy_tree(src_name, dst_name))

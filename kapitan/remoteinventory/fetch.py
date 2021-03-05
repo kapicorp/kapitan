@@ -49,12 +49,12 @@ def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
                 # output_path is relative to inventory_path
                 # ./inventory by default
                 output_path = normalise_join_path(inventory_path, inv["output_path"])
-                logger.debug("Updated output_path from {} to {}".format(inv["output_path"], output_path))
+                logger.debug("Updated output_path from %s to %s", inv["output_path"], output_path)
                 inv["output_path"] = output_path
 
                 if output_path in inv_output_path[source_uri]:
                     # if the output_path is duplicated for the same source_uri
-                    logger.warning("Skipping duplicate output path for uri {}".format(source_uri))
+                    logger.warning("Skipping duplicate output path for uri %s", source_uri)
                     continue
                 else:
                     inv_output_path[source_uri].add(output_path)
@@ -64,9 +64,9 @@ def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
                 elif inv_type in ("http", "https"):
                     http_inventories[source_uri].append(inv)
                 else:
-                    logger.warning("{} is not a valid source type".format(inv_type))
+                    logger.warning("%s is not a valid source type", inv_type)
         except KeyError:
-            logger.debug("Target object {} has no inventory key".format(target_obj["vars"]["target"]))
+            logger.debug("Target object %s has no inventory key", target_obj["vars"]["target"])
             continue
 
     git_worker = partial(fetch_git_dependency, save_dir=save_dir, force=force, item_type="Inventory")
@@ -95,9 +95,8 @@ def list_sources(target_objs):
                 sources.append(source_hash.hexdigest()[:8])
         except KeyError:
             logger.debug(
-                "Listing sources: target object {} has no 'inventory' key, continuing".format(
-                    target_obj["vars"]["target"]
-                )
+                "Listing sources: target object %s has no 'inventory' key, continuing",
+                target_obj["vars"]["target"],
             )
             continue
     return sources

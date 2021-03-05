@@ -47,9 +47,7 @@ class External(InputType):
             # compile_path (str): Path to current target compiled directory
             args = re.sub(r"(\${compiled_target_dir})", compile_path, args)
 
-            logger.debug(
-                "Executing external input with command '{}' and env vars '{}'.".format(args, self.env_vars)
-            )
+            logger.debug("Executing external input with command '%s' and env vars '%s'.", args, self.env_vars)
 
             external_result = subprocess.run(
                 args,
@@ -60,7 +58,7 @@ class External(InputType):
                 encoding="utf8",
             )
 
-            logger.debug("External stdout: {}.".format(external_result.stdout))
+            logger.debug("External stdout: %s.", external_result.stdout)
             if external_result.returncode != 0:
                 raise ValueError(
                     "Executing external input with command '{}' and env vars '{}' failed: {}".format(
@@ -69,7 +67,7 @@ class External(InputType):
                 )
 
         except OSError as e:
-            logger.exception(f"External failed to run. Error: {e}")
+            logger.exception("External failed to run. Error: %s", e)
 
     def default_output_type(self):
         # no output_type options for external
