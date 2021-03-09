@@ -227,7 +227,7 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
     if force or not exists_in_cache(cached_repo_path):
         fetch_helm_archive(source.repo, source.chart_name, source.version, cached_repo_path)
     else:
-        logger.debug("Using cached {} {}".format(item_type, cached_repo_path))
+        logger.debug("Using cached helm chart at %s", cached_repo_path)
 
     for dep in deps:
         output_path = dep["output_path"]
