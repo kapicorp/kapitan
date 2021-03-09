@@ -549,6 +549,8 @@ def valid_target_obj(target_obj, require_compile=True):
                                 "name_template": {"type": "string"},
                                 "release_name": {"type": "string"},
                                 "validate": {"type": "boolean"},
+                                "include_crds": {"type": "boolean"},
+                                "skip_tests": {"type": "boolean"},
                             },
                             "additionalProperties": False,
                         },

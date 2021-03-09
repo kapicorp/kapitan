@@ -365,21 +365,24 @@ If the same keys exist in `helm_values` and in multiple specified `helm_values_f
 There is an example in the tests. The `monitoring-dev`(kapitan/tests/test_resources/inventory/targets/monitoring-dev.yml) and `monitoring-prd`(kapitan/tests/test_resources/inventory/targets/monitoring-prd.yml) targets  both use the `monitoring`(tests/test_resources/inventory/classes/component/monitoring.yml) component.
 This component has helm chart input and takes a `common.yml` helm_values file which is "shared" by any target that uses the component and it also takes a dynamically defined file based on a kapitan variable defined in the target.
 
-`helm_params` correspond to the options for `helm template` as follows:
+`helm_params` correspond to the flags for `helm template` as follows:
 
-- namespace: equivalent of `--namespace` option: note that due to the restriction on `helm template` command, specifying the namespace does not automatically add `metadata.namespace` property to the resources. Therefore, users are encourage to explicitly specify in all resources:
+- `namespace`: equivalent of `--namespace` flag: note that due to the restriction on `helm template` command, specifying the namespace does not automatically add `metadata.namespace` property to the resources. Therefore, users are encourage to explicitly specify in all resources:
 
     ```yaml
     metadata:
       namespace: {{ .Release.Namespace }} # or any other custom values
     ```
 
-- name_template: equivalent of `--name-template` option
-- release_name: equivalent of `--name` option
+- `name_template`: equivalent of `--name-template` flag.
+- `release_name`: equivalent of `name` parameter. Ignored if `name_template` is also specified. If neither `name_template` nor `release_name` are specified, the `--generate-name` flag is used to generate a name.
+- `validate`: equivalent of `--validate` flag.
+- `include_crds`: equivalent of `--include-crds` flag. Defaults to `true`.
+- `skip_tests`: equivalent of `--skip-tests` flag. Defaults to `true`.
 
 See the [helm doc](https://helm.sh/docs/helm/#helm-template) for further detail.
 
-`kube_version` optionally specifies the Kubernetes version to target when rendering the manifests from the chart, for example "1.16". As some charts generate manifests slightly differently depending on the target Kubernetes version (e.g. targeting different APIs), it may be useful to target a specific version. When not specified, the default version used is "1.12".
+`kube_version` optionally specifies the Kubernetes version to target when rendering the manifests from the chart, for example "1.16". As some charts generate manifests slightly differently depending on the target Kubernetes version (e.g. targeting different APIs), it may be useful to target a specific version.
 
 #### Example
 

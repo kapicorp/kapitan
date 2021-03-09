@@ -110,6 +110,12 @@ class Helm(InputType):
         if kwargs.get("validate", False):
             args.append("--validate")
 
+        if kwargs.get("include_crds", True):
+            args.append("--include-crds")
+
+        if kwargs.get("skip_tests", True):
+            args.append("--skip-tests")
+
         if kwargs.get("name_template", None):
             args.append("--name-template")
             args.append(kwargs["name_template"])
