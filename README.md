@@ -12,7 +12,7 @@ Kapitan is the tool to help you manage the complexity of your configuration usin
 
 Use Kapitan to build an inventory which you can then use to drive templates for your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
 
-## Community
+## COMMUNITY
 * **Main Blog, articles and tutorials**: [Kapitan Blog](https://medium.com/kapitan-blog)
 * [**Generators**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7) and reference kapitan repository: [Kapitan Reference](https://github.com/kapicorp/kapitan-reference)
 * [Kapitan Reference](https://github.com/kapicorp/kapitan-reference): our reference repository to get started with Kapitan.
