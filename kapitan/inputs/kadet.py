@@ -117,17 +117,18 @@ class Kadet(InputType):
         logger.debug("Kadet main args: %s", kadet_arg_spec.args)
 
         if len(kadet_arg_spec.args) == 1:
-            output_obj = kadet_module.main(input_params).to_dict()
+            output_obj = kadet_module.main(input_params)
         elif len(kadet_arg_spec.args) == 0:
-            output_obj = kadet_module.main().to_dict()
+            output_obj = kadet_module.main()
         else:
             raise ValueError(f"Kadet {spec.name} main parameters not equal to 1 or 0")
 
+        output_obj = _to_dict(output_obj)
         if prune:
             output_obj = prune_empty(output_obj)
 
         # Return None if output_obj has no output
-        if output_obj is None:
+        if not output_obj:
             return None
 
         for item_key, item_value in output_obj.items():
@@ -173,6 +174,30 @@ class Kadet(InputType):
 
     def default_output_type(self):
         return "yaml"
+
+
+def _to_dict(obj):
+    """
+    recursively update obj should it contain other
+    BaseObj values
+    """
+    if isinstance(obj, BaseObj):
+        for k, v in obj.root.items():
+            obj.root[k] = _to_dict(v)
+        # BaseObj needs to return to_dict()
+        return obj.root.to_dict()
+    elif isinstance(obj, list):
+        obj = [_to_dict(item) for item in obj]
+        # list has no .to_dict, return itself
+        return obj
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            obj[k] = _to_dict(v)
+        # dict has no .to_dict, return itself
+        return obj
+
+    # anything else, return itself
+    return obj
 
 
 class BaseObj(object):
@@ -258,31 +283,8 @@ class BaseObj(object):
         """
         pass
 
-    def _to_dict(self, obj):
-        """
-        recursively update obj should it contain other
-        BaseObj values
-        """
-        if isinstance(obj, BaseObj):
-            for k, v in obj.root.items():
-                obj.root[k] = self._to_dict(v)
-            # BaseObj needs to return to_dict()
-            return obj.root.to_dict()
-        elif isinstance(obj, list):
-            obj = [self._to_dict(item) for item in obj]
-            # list has no .to_dict, return itself
-            return obj
-        elif isinstance(obj, dict):
-            for k, v in obj.items():
-                obj[k] = self._to_dict(v)
-            # dict has no .to_dict, return itself
-            return obj
-
-        # anything else, return itself
-        return obj
-
     def to_dict(self):
         """
         returns object dict
         """
-        return self._to_dict(self)
+        return _to_dict(self)
