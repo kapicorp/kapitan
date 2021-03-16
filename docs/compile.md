@@ -298,9 +298,8 @@ parameters:
       helm_values_files:
         - <values_file_path>
       helm_params:
+	name: <chart_release_name>
       	namespace: <substitutes_.Release.Namespace>
-      	name_template: <namespace_template>
-      	release_name: <chart_release_name>
     - name: add-metadata-test-1
       input_type: kadet
       output_path: ${test_1:output_path}
@@ -352,10 +351,10 @@ parameters:
       helm_values_files:
         - <values_file_path>
       helm_params:
+        name: <chart_release_name>
         namespace: <substitutes_.Release.Namespace>
-        name_template: <namespace_template>
-        release_name: <chart_release_name>
-      kube_version: <target_kubernetes_version_string>
+        validate: true
+        …
 ```
 
 `helm_values` is an object containing values specified that will override the default values in the input chart. This has exactly the same effect as specifying `--values custom_values.yml` for `helm template` command where `custom_values.yml` structure mirrors that of `helm_values`.
@@ -365,24 +364,27 @@ If the same keys exist in `helm_values` and in multiple specified `helm_values_f
 There is an example in the tests. The `monitoring-dev`(kapitan/tests/test_resources/inventory/targets/monitoring-dev.yml) and `monitoring-prd`(kapitan/tests/test_resources/inventory/targets/monitoring-prd.yml) targets  both use the `monitoring`(tests/test_resources/inventory/classes/component/monitoring.yml) component.
 This component has helm chart input and takes a `common.yml` helm_values file which is "shared" by any target that uses the component and it also takes a dynamically defined file based on a kapitan variable defined in the target.
 
-`helm_params` correspond to the flags for `helm template` as follows:
+`helm_params` correspond to the flags for `helm template`. Most flags that helm supports can be used here by replacing '-' by '_' in the flag name.
 
-- `namespace`: equivalent of `--namespace` flag: note that due to the restriction on `helm template` command, specifying the namespace does not automatically add `metadata.namespace` property to the resources. Therefore, users are encourage to explicitly specify in all resources:
+Flags without argument must have a boolean value, all other flags require a string value.
+
+Special flags:
+
+- `name`: equivalent of helm template `[NAME]` parameter. Ignored if `name_template` is also specified. If neither `name_template` nor `name` are specified, the `--generate-name` flag is used to generate a name.
+
+- `include_crds` and `skip_tests`: These flags are enabled by default and should be set to `false` to be removed.
+- `debug`: prints the helm debug output in kapitan debug log.
+- `namespace`: note that due to the restriction on `helm template` command, specifying the namespace does not automatically add `metadata.namespace` property to the resources. Therefore, users are encourage to explicitly specify in all resources:
 
     ```yaml
     metadata:
       namespace: {{ .Release.Namespace }} # or any other custom values
     ```
 
-- `name_template`: equivalent of `--name-template` flag.
-- `release_name`: equivalent of `name` parameter. Ignored if `name_template` is also specified. If neither `name_template` nor `release_name` are specified, the `--generate-name` flag is used to generate a name.
-- `validate`: equivalent of `--validate` flag.
-- `include_crds`: equivalent of `--include-crds` flag. Defaults to `true`.
-- `skip_tests`: equivalent of `--skip-tests` flag. Defaults to `true`.
 
-See the [helm doc](https://helm.sh/docs/helm/#helm-template) for further detail.
 
-`kube_version` optionally specifies the Kubernetes version to target when rendering the manifests from the chart, for example "1.16". As some charts generate manifests slightly differently depending on the target Kubernetes version (e.g. targeting different APIs), it may be useful to target a specific version.
+See the [helm doc](https://helm.sh/docs/helm/helm_template/) for further detail.
+
 
 #### Example
 

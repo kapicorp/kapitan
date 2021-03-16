@@ -213,8 +213,7 @@ parameters:
             enabled: false
         helm_params:
           namespace: monitoring
-          name_template: prometheus
-          release_name: prometheus
+          name: prometheus
 ```
 
 Then run:
@@ -266,8 +265,7 @@ parameters:
             enabled: false
         helm_params:
           namespace: monitoring
-          name_template: prometheus
-          release_name: prometheus
+          name: prometheus
 ```
 
 Then run:

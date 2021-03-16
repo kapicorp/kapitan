@@ -3,11 +3,24 @@ import os
 import tempfile
 
 import yaml
+
 from kapitan.errors import HelmTemplateError
 from kapitan.helm_cli import helm_cli
 from kapitan.inputs.base import InputType, CompiledFile
 
 logger = logging.getLogger(__name__)
+
+HELM_DENIED_FLAGS = {
+    "atomic",
+    "dry-run",
+    "generate-name",
+    "help",
+    "output-dir",
+    "repo",
+    "show-only",
+    "wait",
+    "wait-for-jobs",
+}
 
 
 class Helm(InputType):
@@ -31,6 +44,8 @@ class Helm(InputType):
         self.helm_params = helm_params
 
     def set_kube_version(self, kube_version):
+        if kube_version:
+            logger.warning("passing kube_version is deprecated. Use api_versions helm flag instead.")
         self.kube_version = kube_version
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
@@ -50,9 +65,9 @@ class Helm(InputType):
         error_message = self.render_chart(
             chart_dir=file_path,
             output_path=temp_dir,
+            helm_params=self.helm_params,
             helm_values_file=self.helm_values_file,
             helm_values_files=self.helm_values_files,
-            **self.helm_params,
         )
         if error_message:
             raise HelmTemplateError(error_message)
@@ -84,46 +99,80 @@ class Helm(InputType):
     def default_output_type(self):
         return None
 
-    def render_chart(self, chart_dir, output_path, **kwargs):
+    def render_chart(self, chart_dir, output_path, helm_params, helm_values_file, helm_values_files):
         args = ["template"]
+
+        name = helm_params.pop("name", None)
+
+        flags = {"--include-crds": True, "--skip-tests": True}
+
+        if self.kube_version:
+            flags["--api-versions"] = self.kube_version
+
+        for param, value in helm_params.items():
+            if len(param) == 1:
+                logger.warning("invalid helm flag: '%s'. helm_params supports only long flag names", param)
+                continue
+
+            param = param.replace("_", "-")
+
+            if param in ("set", "set-file", "set-string"):
+                logger.warning(
+                    "helm '%s' flag is not supported. Use 'helm_values' to specify template values", param
+                )
+                continue
+
+            if param == "values":
+                logger.warning(
+                    "helm '%s' flag is not supported. Use 'helm_values_files' to specify template values files",
+                    param,
+                )
+                continue
+
+            if param in HELM_DENIED_FLAGS:
+                logger.warning("helm flag '%s' is not supported and will be ignored.", param)
+                continue
+
+            flags[f"--{param}"] = value
+
+        # 'release_name' used to be the "helm template" [NAME] parameter.
+        # For backward compatibility, assume it is the '--release-name' flag only if its value is a bool.
+        release_name = flags.get("--release-name")
+        if release_name is not None and not isinstance(release_name, bool):
+            logger.warning(
+                "using 'release_name' to specify the output name is deprecated. Use 'name' parameter instead"
+            )
+            del flags["--release-name"]
+            # name is used in place of release_name if both are specified
+            name = name or release_name
+
+        for flag, value in flags.items():
+            # boolean flag should be passed when present, and omitted when not specified
+            if isinstance(value, bool):
+                if value:
+                    args.append(flag)
+            else:
+                args.append(flag)
+                args.append(str(value))
+
         """renders helm chart located at chart_dir, and stores the output to output_path"""
-        if kwargs.get("helm_values_files", []):
-            for file_name in kwargs["helm_values_files"]:
-                args.append("-f")
+        if helm_values_file:
+            args.append("--values")
+            args.append(helm_values_file)
+
+        if helm_values_files:
+            for file_name in helm_values_files:
+                args.append("--values")
                 args.append(file_name)
-
-        if kwargs.get("helm_values_file", None):
-            args.append("-f")
-            args.append(kwargs["helm_values_file"])
-
-        if kwargs.get("namespace", None):
-            args.append("-n")
-            args.append(kwargs["namespace"])
 
         args.append("--output-dir")
         args.append(output_path)
 
-        if self.kube_version:
-            args.append("--api-versions")
-            args.append(self.kube_version)
+        if "name_template" not in flags:
+            args.append(name or "--generate-name")
 
-        if kwargs.get("validate", False):
-            args.append("--validate")
-
-        if kwargs.get("include_crds", True):
-            args.append("--include-crds")
-
-        if kwargs.get("skip_tests", True):
-            args.append("--skip-tests")
-
-        if kwargs.get("name_template", None):
-            args.append("--name-template")
-            args.append(kwargs["name_template"])
-        else:
-            args.append(kwargs.get("release_name", "--generate-name"))
-
-        # uses absolute path to make sure helm interpret it as a
+        # uses absolute path to make sure helm interprets it as a
         # local dir and not a chart_name that it should download.
-        args.append(os.path.abspath(chart_dir))
+        args.append(chart_dir)
 
-        return helm_cli(args)
+        return helm_cli(args, verbose="--debug" in flags)

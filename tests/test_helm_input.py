@@ -12,6 +12,7 @@ import tempfile
 import unittest
 
 import yaml
+
 from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.inputs.helm import Helm
@@ -25,7 +26,7 @@ class HelmInputTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         chart_path = "charts/acs-engine-autoscaler"
         helm = Helm(None, None, None)
-        error_message = helm.render_chart(chart_path, temp_dir)
+        error_message = helm.render_chart(chart_path, temp_dir, {"name": "acs-engine-autoscaler"}, None, None)
         self.assertFalse(error_message)
         self.assertTrue(
             os.path.isfile(os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "secrets.yaml"))
@@ -35,10 +36,10 @@ class HelmInputTest(unittest.TestCase):
         )
 
     def test_error_invalid_char_dir(self):
-        chart_path = "non-existent"
+        chart_path = "./non-existent"
         temp_dir = tempfile.mkdtemp()
         helm = Helm(None, None, None)
-        error_message = helm.render_chart(chart_path, temp_dir)
+        error_message = helm.render_chart(chart_path, temp_dir, {"name": "mychart"}, None, None)
         self.assertTrue("path" in error_message and "not found" in error_message)
 
     def test_compile_chart(self):
@@ -150,7 +151,7 @@ class HelmInputTest(unittest.TestCase):
         with open("inventory/targets/nginx-ingress-helm-params.yml", "r") as fp:
             manifest = yaml.safe_load(fp.read())
             helm_params = manifest["parameters"]["kapitan"]["compile"][0]["helm_params"]
-            release_name = helm_params["release_name"]
+            release_name = helm_params["name"]
             namespace = helm_params["namespace"]
 
         main()
