@@ -11,15 +11,11 @@ from kapitan.inputs.base import InputType, CompiledFile
 logger = logging.getLogger(__name__)
 
 HELM_DENIED_FLAGS = {
-    "atomic",
     "dry-run",
     "generate-name",
     "help",
     "output-dir",
-    "repo",
     "show-only",
-    "wait",
-    "wait-for-jobs",
 }
 
 
@@ -111,27 +107,25 @@ class Helm(InputType):
 
         for param, value in helm_params.items():
             if len(param) == 1:
-                logger.warning("invalid helm flag: '%s'. helm_params supports only long flag names", param)
-                continue
+                raise ValueError(f"invalid helm flag: '{param}'. helm_params supports only long flag names")
+
+            if "-" in param:
+                raise ValueError(f"helm flag names must use '_' and not '-': {param}")
 
             param = param.replace("_", "-")
 
             if param in ("set", "set-file", "set-string"):
-                logger.warning(
-                    "helm '%s' flag is not supported. Use 'helm_values' to specify template values", param
+                raise ValueError(
+                    f"helm '{param}' flag is not supported. Use 'helm_values' to specify template values"
                 )
-                continue
 
             if param == "values":
-                logger.warning(
-                    "helm '%s' flag is not supported. Use 'helm_values_files' to specify template values files",
-                    param,
+                raise ValueError(
+                    f"helm '{param}' flag is not supported. Use 'helm_values_files' to specify template values files"
                 )
-                continue
 
             if param in HELM_DENIED_FLAGS:
-                logger.warning("helm flag '%s' is not supported and will be ignored.", param)
-                continue
+                raise ValueError(f"helm flag '{param}' is not supported.")
 
             flags[f"--{param}"] = value
 
@@ -140,7 +134,7 @@ class Helm(InputType):
         release_name = flags.get("--release-name")
         if release_name is not None and not isinstance(release_name, bool):
             logger.warning(
-                "using 'release_name' to specify the output name is deprecated. Use 'name' parameter instead"
+                "using 'release_name' to specify the output name is deprecated. Use 'name' instead"
             )
             del flags["--release-name"]
             # name is used in place of release_name if both are specified
