@@ -374,7 +374,7 @@ Special flags:
 
 - `include_crds` and `skip_tests`: These flags are enabled by default and should be set to `false` to be removed.
 - `debug`: prints the helm debug output in kapitan debug log.
-- `namespace`: note that due to the restriction on `helm template` command, specifying the namespace does not automatically add `metadata.namespace` property to the resources. Therefore, users are encourage to explicitly specify in all resources:
+- `namespace`: note that due to the restriction on `helm template` command, specifying the namespace does not automatically add `metadata.namespace` property to the resources. Therefore, users are encouraged to explicitly specify it in all resources:
 
     ```yaml
     metadata:
