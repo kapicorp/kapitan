@@ -15,6 +15,7 @@ import logging
 import multiprocessing
 import os
 import sys
+from functools import partial
 
 import yaml
 from kapitan import cached, defaults, setup_logging
@@ -291,7 +292,7 @@ def main():
     )
 
     inventory_parser = subparser.add_parser("inventory", aliases=["i"], help="show inventory")
-    inventory_parser.set_defaults(func=generate_inventory)
+    inventory_parser.set_defaults(func=partial(generate_inventory, inventory_parser))
 
     inventory_parser.add_argument(
         "--target-name",
