@@ -84,7 +84,7 @@ def compile_targets(
                 logger.info("No changes since last compilation.")
                 return
 
-    pool = multiprocessing.Pool(parallel)
+    pool = multiprocessing.get_context("spawn").Pool(parallel)
 
     try:
         if kwargs.get("fetch_inventories", False):
@@ -96,14 +96,6 @@ def compile_targets(
 
         # append "compiled" to output_path so we can safely overwrite it
         compile_path = os.path.join(output_path, "compiled")
-        worker = partial(
-            compile_target,
-            search_paths=search_paths,
-            compile_path=temp_compile_path,
-            ref_controller=ref_controller,
-            inventory_path=inventory_path,
-            **kwargs,
-        )
 
         if not target_objs:
             raise CompileError("Error: no targets found")
@@ -129,9 +121,19 @@ def compile_targets(
                 output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
             )
 
+        worker = partial(
+            compile_target,
+            search_paths=search_paths,
+            compile_path=temp_compile_path,
+            ref_controller=ref_controller,
+            inventory_path=inventory_path,
+            globals_cached=cached.as_dict(),
+            **kwargs,
+        )
+
         # compile_target() returns None on success
-        for target_obj in target_objs:
-            worker(target_obj)
+        # so p is only not None when raising an exception
+        [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
         os.makedirs(compile_path, exist_ok=True)
 
@@ -416,12 +418,15 @@ def search_targets(inventory_path, targets, labels):
     return targets_found
 
 
-def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
+def compile_target(target_obj, search_paths, compile_path, ref_controller, globals_cached=None, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
+
+    if globals_cached:
+        cached.from_dict(globals_cached)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
