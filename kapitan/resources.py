@@ -21,7 +21,6 @@ import jsonschema
 import kapitan.cached as cached
 import yaml
 from kapitan import __file__ as kapitan_install_path
-from kapitan import cached as cached
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
 
@@ -37,6 +36,7 @@ except ImportError:
     from yaml import SafeLoader as YamlLoader
 
 JSONNET_CACHE = {}
+
 
 def resource_callbacks(search_paths):
     """
@@ -258,7 +258,6 @@ def inventory(search_paths, target, inventory_path=None):
     set inventory_path to read custom path. None defaults to value set via cli
     Returns a dictionary with the inventory for target
     """
-
     if inventory_path is None:
         # grab inventory_path value from cli subcommand
         inventory_path_arg = cached.args.get("compile") or cached.args.get("inventory")

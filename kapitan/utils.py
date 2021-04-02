@@ -24,7 +24,8 @@ from hashlib import sha256
 JSONNET_AVAILABLE = True
 try:
     import _gojsonnet as jsonnet
-    logging.debug('Using GO jsonnet over C jsonnet')
+
+    logging.debug("Using GO jsonnet over C jsonnet")
 except ImportError:
     try:
         import _jsonnet as jsonnet
