@@ -1,5 +1,5 @@
 # kapitan dependencies
-gojsonnet==0.17.0
+jsonnet==0.16.0
 pyyaml>=5.4
 toml==0.10.1
 Jinja2>=2.11.3
