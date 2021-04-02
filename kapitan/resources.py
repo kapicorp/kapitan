@@ -286,9 +286,7 @@ def inventory(search_paths, target, inventory_path=None):
     return inventory_reclass(full_inv_path)["nodes"][target]
 
 
-def generate_inventory(parser, args):
-    if args.pattern and args.target_name == "":
-        parser.error("--pattern requires --target_name")
+def generate_inventory(args):
     try:
         inv = inventory_reclass(args.inventory_path)
         if args.target_name != "":
