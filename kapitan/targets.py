@@ -31,7 +31,7 @@ from kapitan.inputs.kadet import Kadet
 from kapitan.inputs.external import External
 from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.resources import inventory_reclass
-from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
+from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache, JSONNET_AVAILABLE
 from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
 from reclass.errors import NotFoundError, ReclassException
@@ -40,9 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 def check_jsonnet_import():
-    try:
-        import _gojsonnet
-    except ImportError:
+    if not JSONNET_AVAILABLE:
         logger.info(
             "Note: jsonnet is not yet supported on ARM/M1. You can still use kadet and jinja2 for templating"
         )

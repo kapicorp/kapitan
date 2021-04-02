@@ -75,4 +75,7 @@ setup(
             "kapitan=kapitan.cli:main",
         ],
     },
+    extras_require={
+        "gojsonnet": ["gojsonnet==0.17.0"]
+    }
 )
