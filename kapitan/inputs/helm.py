@@ -99,6 +99,7 @@ class Helm(InputType):
         args = ["template"]
 
         name = helm_params.pop("name", None)
+        output_file = helm_params.pop("output_file", None)
 
         flags = {"--include-crds": True, "--skip-tests": True}
 
@@ -159,8 +160,9 @@ class Helm(InputType):
                 args.append("--values")
                 args.append(file_name)
 
-        args.append("--output-dir")
-        args.append(output_path)
+        if not output_file:
+            args.append("--output-dir")
+            args.append(output_path)
 
         if "name_template" not in flags:
             args.append(name or "--generate-name")
@@ -169,4 +171,9 @@ class Helm(InputType):
         # local dir and not a chart_name that it should download.
         args.append(chart_dir)
 
-        return helm_cli(args, verbose="--debug" in flags)
+        if output_file:
+            with open(os.path.join(output_path, output_file), "wb") as f:
+                # can't be verbose when capturing stdout
+                return helm_cli(args, stdout=f)
+        else:
+            return helm_cli(args, verbose="--debug" in flags)

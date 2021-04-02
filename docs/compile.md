@@ -353,6 +353,7 @@ parameters:
       helm_params:
         name: <chart_release_name>
         namespace: <substitutes_.Release.Namespace>
+        output_file: <string>
         validate: true
         …
 ```
@@ -371,6 +372,7 @@ Flags without argument must have a boolean value, all other flags require a stri
 Special flags:
 
 - `name`: equivalent of helm template `[NAME]` parameter. Ignored if `name_template` is also specified. If neither `name_template` nor `name` are specified, the `--generate-name` flag is used to generate a name.
+- `output_file`: name of the single file used to output all the generated resources. This is equivalent to call `helm template` without specifing output dir. If not specified, each resource is generated into a distinct file.
 
 - `include_crds` and `skip_tests`: These flags are enabled by default and should be set to `false` to be removed.
 - `debug`: prints the helm debug output in kapitan debug log.
@@ -415,7 +417,7 @@ parameters:
             image:
               repository: custom_repo
         helm_params:
-          release_name: my-first-release-name
+          name: my-first-release-name
           namespace: my-first-namespace
 ```
 

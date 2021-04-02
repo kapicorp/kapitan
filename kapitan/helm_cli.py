@@ -5,11 +5,13 @@ from subprocess import PIPE, DEVNULL
 logger = logging.getLogger(__name__)
 
 
-def helm_cli(args, verbose=False):
+def helm_cli(args, stdout=None, verbose=False):
     try:
         logger.debug("launching helm with arguments: %s", args)
-        res = subprocess.run(args=["helm"] + args, stderr=PIPE, stdout=PIPE if verbose else DEVNULL)
-        if verbose:
+        res = subprocess.run(
+            args=["helm"] + args, stderr=PIPE, stdout=stdout or (PIPE if verbose else DEVNULL)
+        )
+        if verbose and not stdout:
             for line in res.stdout.splitlines():
                 if line:
                     logger.debug("[helm] %s", line.decode())
