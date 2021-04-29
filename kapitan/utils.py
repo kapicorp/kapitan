@@ -496,7 +496,12 @@ def unpack_downloaded_file(file_path, output_path, content_type):
         zfile.extractall(output_path)
         zfile.close()
         is_unpacked = True
-    elif content_type in ["application/octet-stream", "application/x-gzip"]:
+    elif content_type in [
+        "application/octet-stream",
+        "application/x-gzip",
+        "application/x-compressed",
+        "application/x-compressed-tar",
+    ]:
         if re.search(r"(\.tar\.gz|\.tgz)$", file_path):
             tar = tarfile.open(file_path)
             tar.extractall(path=output_path)
