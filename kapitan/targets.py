@@ -544,12 +544,8 @@ def valid_target_obj(target_obj, require_compile=True):
                         "helm_values_files": {"type": "array"},
                         "helm_params": {
                             "type": "object",
-                            "properties": {
-                                "namespace": {"type": "string"},
-                                "name_template": {"type": "string"},
-                                "release_name": {"type": "string"},
-                            },
-                            "additionalProperties": False,
+                            "properties": {"name": {"type": "string"}},
+                            "additionalProperties": True,
                         },
                         "input_params": {"type": "object"},
                         "env_vars": {"type": "object"},
