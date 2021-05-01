@@ -24,7 +24,7 @@ FROM python:3.7-slim-stretch
 
 SHELL ["/bin/bash", "-i", "-c"]
 
-ARG PYINSTALLER_VERSION=3.5
+ARG PYINSTALLER_VERSION=4.2
 
 COPY --from=helm-builder /kapitan /kapitan
 WORKDIR /kapitan
