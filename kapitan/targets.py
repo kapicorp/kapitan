@@ -462,7 +462,10 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
             raise CompileError(err_msg.format(input_type))
 
-        input_compiler.make_compile_dirs(target_name, output_path)
+        if kwargs["tree_style_output"]:
+            input_compiler.make_compile_dirs("", output_path)
+        else:
+            input_compiler.make_compile_dirs(target_name, output_path)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 
     logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)

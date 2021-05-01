@@ -66,7 +66,10 @@ class InputType(object):
 
         logger.debug("Compiling %s", input_path)
         try:
-            _compile_path = os.path.join(self.compile_path, target_name, output_path)
+            if kwargs["tree_style_output"]:
+                _compile_path = os.path.join(self.compile_path, output_path)
+            else:
+                _compile_path = os.path.join(self.compile_path, target_name, output_path)
             self.compile_file(
                 input_path,
                 _compile_path,
