@@ -3,10 +3,10 @@
 [![Build Status](https://travis-ci.org/kapicorp/kapitan.svg?branch=master)](https://travis-ci.org/kapicorp/kapitan)
 ![](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)
 ![](https://img.shields.io/pypi/dm/kapitan)
-![](https://img.shields.io/docker/pulls/kapicorp/kapitan)
+![](https://img.shields.io/docker/pulls/deepmind/kapitan)
 [![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
-[![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
+[![Docker Image Size](https://img.shields.io/docker/image-size/deepmind/kapitan/latest.svg)](https://hub.docker.com/r/deepmind/kapitan)
 
 Kapitan is the tool to help you manage the complexity of your configuration using an inventory and a choice of templates like [generators](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7), jsonnet, [kadet](https://kapitan.dev/compile/#kadet), jinja2 and helm.
 
@@ -65,7 +65,7 @@ Use [Tesoro](https://github.com/kapicorp/tesoro), our Kubernetes Admission Contr
 #### Docker (recommended)
 
 ```
-docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan -h
+docker run -t --rm -v $(pwd):/src:delegated deepmind/kapitan -h
 ```
 
 On Linux you can add `-u $(id -u)` to `docker run` to preserve file permissions.
