@@ -20,29 +20,24 @@ HELM_DENIED_FLAGS = {
 
 
 class Helm(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller):
+    def __init__(self, compile_path, search_paths, ref_controller, args):
         super().__init__("helm", compile_path, search_paths, ref_controller)
+
+        self.helm_values_files = args.get("helm_values_files")
+        self.helm_params = args.get("helm_params") or {}
+        self.helm_path = args.get("helm_path")
+
         self.helm_values_file = None
-        self.helm_values_files = []
-        self.helm_params = {}
-        self.kube_version = ""
+        if "helm_values" in args:
+            """dump helm values into a yaml file whose path will be passed over to Go helm code"""
+            _, self.helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
+            with open(self.helm_values_file, "w") as fp:
+                yaml.safe_dump(args["helm_values"], fp)
 
-    def dump_helm_values(self, helm_values):
-        """dump helm values into a yaml file whose path will be passed over to Go helm code"""
-        _, self.helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
-        with open(self.helm_values_file, "w") as fp:
-            yaml.safe_dump(helm_values, fp)
-
-    def set_helm_values_files(self, helm_values_files):
-        self.helm_values_files = helm_values_files
-
-    def set_helm_params(self, helm_params):
-        self.helm_params = helm_params
-
-    def set_kube_version(self, kube_version):
-        if kube_version:
+        self.kube_version = None
+        if "kube_version" in args:
             logger.warning("passing kube_version is deprecated. Use api_versions helm flag instead.")
-        self.kube_version = kube_version
+            self.kube_version = args["kube_version"]
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """
@@ -61,6 +56,7 @@ class Helm(InputType):
         error_message = self.render_chart(
             chart_dir=file_path,
             output_path=temp_dir,
+            helm_path=self.helm_path,
             helm_params=self.helm_params,
             helm_values_file=self.helm_values_file,
             helm_values_files=self.helm_values_files,
@@ -95,7 +91,9 @@ class Helm(InputType):
     def default_output_type(self):
         return None
 
-    def render_chart(self, chart_dir, output_path, helm_params, helm_values_file, helm_values_files):
+    def render_chart(
+        self, chart_dir, output_path, helm_path, helm_params, helm_values_file, helm_values_files
+    ):
         args = ["template"]
 
         name = helm_params.pop("name", None)
@@ -174,6 +172,6 @@ class Helm(InputType):
         if output_file:
             with open(os.path.join(output_path, output_file), "wb") as f:
                 # can't be verbose when capturing stdout
-                return helm_cli(args, stdout=f)
+                return helm_cli(helm_path, args, stdout=f)
         else:
-            return helm_cli(args, verbose="--debug" in flags)
+            return helm_cli(helm_path, args, verbose="--debug" in flags)

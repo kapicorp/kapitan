@@ -438,15 +438,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             if "input_params" in comp_obj:
                 input_compiler.set_input_params(comp_obj["input_params"])
         elif input_type == "helm":
-            input_compiler = Helm(compile_path, search_paths, ref_controller)
-            if "helm_values" in comp_obj:
-                input_compiler.dump_helm_values(comp_obj["helm_values"])
-            if "helm_params" in comp_obj:
-                input_compiler.set_helm_params(comp_obj["helm_params"])
-            if "helm_values_files" in comp_obj:
-                input_compiler.set_helm_values_files(comp_obj["helm_values_files"])
-            if "kube_version" in comp_obj:
-                input_compiler.set_kube_version(comp_obj["kube_version"])
+            input_compiler = Helm(compile_path, search_paths, ref_controller, comp_obj)
         elif input_type == "copy":
             ignore_missing = comp_obj.get("ignore_missing", False)
             input_compiler = Copy(compile_path, search_paths, ref_controller, ignore_missing)

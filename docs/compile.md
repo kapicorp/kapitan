@@ -350,6 +350,7 @@ parameters:
         <object_with_values_to_override>
       helm_values_files:
         - <values_file_path>
+      helm_path: <helm binary>
       helm_params:
         name: <chart_release_name>
         namespace: <substitutes_.Release.Namespace>
@@ -364,6 +365,9 @@ parameters:
 If the same keys exist in `helm_values` and in multiple specified `helm_values_files`, the last indexed file in the `helm_values_files` will take precedence followed by the preceding `helm_values_files` and at the bottom the `helm_values` defined in teh compile block.
 There is an example in the tests. The `monitoring-dev`(kapitan/tests/test_resources/inventory/targets/monitoring-dev.yml) and `monitoring-prd`(kapitan/tests/test_resources/inventory/targets/monitoring-prd.yml) targets  both use the `monitoring`(tests/test_resources/inventory/classes/component/monitoring.yml) component.
 This component has helm chart input and takes a `common.yml` helm_values file which is "shared" by any target that uses the component and it also takes a dynamically defined file based on a kapitan variable defined in the target.
+
+`helm_path` can be use to provide the helm binary name or path.
+`helm_path` defaults to the value of `KAPITAN_HELM_PATH` env var if it is set, else it defaults to `helm`
 
 `helm_params` correspond to the flags for `helm template`. Most flags that helm supports can be used here by replacing '-' by '_' in the flag name.
 
@@ -382,7 +386,6 @@ Special flags:
     metadata:
       namespace: {{ .Release.Namespace }} # or any other custom values
     ```
-
 
 
 See the [helm doc](https://helm.sh/docs/helm/helm_template/) for further detail.

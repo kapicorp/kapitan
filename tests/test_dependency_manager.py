@@ -97,7 +97,7 @@ class DependencyManagerTest(unittest.TestCase):
                 "source": repo,
             }
         ]
-        fetch_helm_chart((HelmSource(repo, chart_name, version), dep), temp_dir, force=False)
+        fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
         self.assertTrue(os.path.isdir(output_chart_dir))
         self.assertTrue(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
         self.assertTrue(os.path.isdir(os.path.join(output_chart_dir, "charts", "kube-state-metrics")))
@@ -123,7 +123,7 @@ class DependencyManagerTest(unittest.TestCase):
             }
         ]
         with self.assertRaises(HelmFetchingError):
-            fetch_helm_chart((HelmSource(repo, chart_name, version), dep), temp_dir, force=False)
+            fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
         self.assertFalse(os.path.isdir(output_chart_dir))
         self.assertFalse(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
         rmtree(temp_dir)

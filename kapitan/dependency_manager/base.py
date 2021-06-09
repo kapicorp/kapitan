@@ -26,7 +26,7 @@ from kapitan.utils import (
 
 logger = logging.getLogger(__name__)
 
-HelmSource = namedtuple("HelmSource", ["repo", "chart_name", "version"])
+HelmSource = namedtuple("HelmSource", ["repo", "chart_name", "version", "helm_path"])
 
 
 def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
@@ -70,7 +70,9 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
                     http_deps[source_uri].append(item)
                 elif dependency_type == "helm":
                     version = item.get("version", "")
-                    helm_deps[HelmSource(source_uri, item["chart_name"], version)].append(item)
+                    helm_deps[
+                        HelmSource(source_uri, item["chart_name"], version, item.get("helm_path"))
+                    ].append(item)
                 else:
                     logger.warning("%s is not a valid source type", dependency_type)
 
@@ -225,7 +227,7 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
         save_dir, path_hash, source.chart_name + "-" + (source.version or "latest")
     )
     if force or not exists_in_cache(cached_repo_path):
-        fetch_helm_archive(source.repo, source.chart_name, source.version, cached_repo_path)
+        fetch_helm_archive(source.helm_path, source.repo, source.chart_name, source.version, cached_repo_path)
     else:
         logger.debug("Using cached helm chart at %s", cached_repo_path)
 
@@ -242,7 +244,7 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
         logger.info("Dependency %s: saved to %s", source.chart_name, output_path)
 
 
-def fetch_helm_archive(repo, chart_name, version, save_path):
+def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
     logger.info("Dependency helm chart %s and version %s: fetching now", chart_name, version or "latest")
     # Fetch archive and untar it into parent dir
     save_dir = os.path.dirname(save_path)
@@ -254,7 +256,7 @@ def fetch_helm_archive(repo, chart_name, version, save_path):
 
     args.append(chart_name)
 
-    response = helm_cli(args)
+    response = helm_cli(helm_path, args)
     if response != "":
         logger.warning("Dependency helm chart %s and version %s: %s", chart_name, version, response)
         raise HelmFetchingError(response)

@@ -171,7 +171,10 @@ Setting `unpack: True` will unpack zip or tar files onto the `output_path`. In s
 ## Helm type
 
 Fetches helm charts and any specific subcharts in the `requirements.yaml` file.
-Requires that `helm` be present in the PATH.
+
+`helm_path` can be used to specify where the `helm` binary name or path.
+It defaults to the value of the `KAPITAN_HELM_PATH` environment var or simply to `helm` if neither is set.
+You should specify only if you don't want the default behavior.
 
 ### Usage
 
@@ -184,6 +187,7 @@ parameters:
       source: http[s]://<helm_chart_repository_url>
       version: <specific chart version>
       chart_name: <name of chart>
+      helm_path: <helm binary>
 ```
 
 
