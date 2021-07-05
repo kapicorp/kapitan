@@ -57,3 +57,14 @@ format_codestyle:
 .PHONY: build_helm_fetch_binding
 build_helm_fetch_binding:
 	bash kapitan/dependency_manager/helm/build.sh
+
+.PHONY: local_serve_documentation
+local_serve_documentation:
+	docker build -f Dockerfile.docs --no-cache -t kapitan-docs .
+	docker run --rm -v $(PWD):/docs -p 8000:8000 kapitan-docs
+
+.PHONY: mkdocs_gh_deploy
+mkdocs_gh_deploy:
+	@[ "${COMMIT_MSG}" ] || ( echo ">> COMMIT_MSG is not set"; exit 1 )
+	docker build -f Dockerfile.docs --no-cache -t kapitan-docs .
+	docker run --rm -v $(PWD):/docs -e COMMIT_MSG=$(COMMIT_MSG) kapitan-docs gh-deploy -m "${COMMIT_MSG}" -f ./mkdocs.yml -b gh-pages
