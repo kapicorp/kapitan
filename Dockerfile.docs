@@ -1,4 +1,4 @@
-FROM squidfunk/mkdocs-material:7.1.9
+FROM squidfunk/mkdocs-material:7.1.2
 
 RUN apk update && \
     pip install pymdown-extensions==8.2 \
