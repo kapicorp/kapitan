@@ -9,11 +9,15 @@ Now that we have a basic understanding of Kapitan `inventory`, we can talk about
 
 The command has five distinct `phases`:
 
-- Reclass: this takes all the target and class definitions and runs reclass to determine what kapitan needs to do during the compile command.
-- Fetch: this is an optional phase that happens before the compilation actions, if there are dependencies defined in any classes under `parameters.kapitan.dependencies`. This is triggered through the `--fetch` option on the `kapitan compile` command.
-- Compilation: the Reclass phase has determined a sequential list of actions to run specified in the `parameters.kapitan.compile` for each target.  The actions can be defined using jinja2, jsonnet, kadet, helm, and copy. These actions define any transpilation steps you want to take to get a desired manifest output, or simply put, your inputs and outputs.
-- Copying: the Compilation phase runs all of its actions in a tmp folder and when finished, all outputted files for each target are copied to their respective `compiled` directories.
-- Validate: this is an optional phase that validates the schema of compiled output. Validate options are specified in the inventory under `parameters.kapitan.validate`
+- **Reclass**: this takes all the target and class definitions and runs reclass to determine what kapitan needs to do during the compile command.
+
+- **Fetch**: this is an optional phase that happens before the compilation actions, if there are dependencies defined in any classes under `parameters.kapitan.dependencies`. This is triggered through the `--fetch` option on the `kapitan compile` command.
+
+- **Compilation**: the Reclass phase has determined a sequential list of actions to run specified in the `parameters.kapitan.compile` for each target.  The actions can be defined using jinja2, jsonnet, kadet, helm, and copy. These actions define any transpilation steps you want to take to get a desired manifest output, or simply put, your inputs and outputs.
+
+- **Copying**: the Compilation phase runs all of its actions in a tmp folder and when finished, all outputted files for each target are copied to their respective `compiled` directories.
+
+- **Validate**: this is an optional phase that validates the schema of compiled output. Validate options are specified in the inventory under `parameters.kapitan.validate`
 
 ## Specifying inputs and outputs
 
