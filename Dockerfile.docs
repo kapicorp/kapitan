@@ -1,4 +1,4 @@
-FROM squidfunk/mkdocs-material:7.1.9
+FROM squidfunk/mkdocs-material:7.1.2
 
 COPY requirements.docs.txt /tmp/requirements.docs.txt
 

@@ -45,7 +45,8 @@ Kapitan supports the following input template types:
 - [kadet](#kadet) (alpha)
 - [helm](#helm) (alpha)
 - [copy](#copy)
-
+- [remove](#remove)
+- [external](#external-alphaexperimental)
 
 ### jinja2
 
