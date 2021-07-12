@@ -1,6 +1,7 @@
 # dependencies:
 # pip install mkdocs mkdocs-material pymdown-extensions
 site_name: Kapitan documentation
+site_url: 'https://kapitan.dev'
 theme: material
 use_directory_urls: true
 nav:
