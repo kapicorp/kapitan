@@ -52,7 +52,9 @@ Kapitan supports the following input template types:
 
 This renders jinja2 templates, typically stored in `templates/` directory, such as README, scripts and config files. Refer to [jinja2 docs](http://jinja.palletsprojects.com/en/2.10.x/templates/) to understand how the template engine works.
 
-For Jinja2, `input_paths` can be either a file or a directory: in case of a directory, all the templates in the directory will be rendered and outputted to `output_path`.
+For Jinja2, `input_paths` can either be a file, or a directory: in case of a directory, all the templates in the directory will be rendered and outputted to `output_path`.
+
+There is the optional `input_params` field which you can think of as localized function parameters. This is different from `inventory` and `inventory_global` parameters, since those are set outside the jinja2 compile block. `input_params` are useful when needing to use a similar template for multiple components in the same target.
 
 *Supported output types*: N/A (no need to specify `output_type`)
 
