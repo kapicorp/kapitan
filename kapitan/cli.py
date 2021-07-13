@@ -99,7 +99,7 @@ def main():
         # set 'fork' method as a more deterministic/conservative
         # and compatible multiprocessing method for Linux and MacOS
         # see https://github.com/kapicorp/kapitan/issues/641
-        multiprocessing.set_start_method("fork")
+        multiprocessing.set_start_method("spawn")
     # main() is explicitly multiple times in tests
     # and will raise RuntimeError
     except RuntimeError:

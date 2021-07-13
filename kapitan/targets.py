@@ -84,7 +84,7 @@ def compile_targets(
                 logger.info("No changes since last compilation.")
                 return
 
-    pool = multiprocessing.get_context("spawn").Pool(parallel)
+    pool = multiprocessing.Pool(parallel)
 
     try:
         if kwargs.get("fetch_inventories", False):
