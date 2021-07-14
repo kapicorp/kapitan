@@ -1,3 +1,15 @@
+## 0.30.0-rc.0:
+- Adds input_params to jinja2 input type (#752) 
+- Update boto3 and remove urllib3 (#744)
+- Update Pipfile.lock (#733)
+- Add support for application/x-compressed and application/x-compressed-tar dependencies (#731)
+- Relax kadet output type requirement. (#710)
+- Fix usage of undefined variable. (#707)
+- Bump reclass submodule to latest commit on develop branch (#703)
+- Let the logger format the message lazily. (#700)
+- Bump httplib2 from 0.18.1 to 0.19.0 (#692)
+- Ignore copy file on missing source (#687)
+
 ## 0.29.5:
 - Note for jsonnet on arm. Skip import if not used (#663)
 - Fix error for null inventory path in kadet (#664)
