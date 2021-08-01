@@ -31,7 +31,7 @@ from kapitan.inputs.kadet import Kadet
 from kapitan.inputs.external import External
 from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.resources import inventory_reclass
-from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
+from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache, JSONNET_AVAILABLE
 from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
 from reclass.errors import NotFoundError, ReclassException
@@ -40,9 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 def check_jsonnet_import():
-    try:
-        import _jsonnet
-    except ImportError:
+    if not JSONNET_AVAILABLE:
         logger.info(
             "Note: jsonnet is not yet supported on ARM/M1. You can still use kadet and jinja2 for templating"
         )
@@ -98,14 +96,6 @@ def compile_targets(
 
         # append "compiled" to output_path so we can safely overwrite it
         compile_path = os.path.join(output_path, "compiled")
-        worker = partial(
-            compile_target,
-            search_paths=search_paths,
-            compile_path=temp_compile_path,
-            ref_controller=ref_controller,
-            inventory_path=inventory_path,
-            **kwargs,
-        )
 
         if not target_objs:
             raise CompileError("Error: no targets found")
@@ -130,6 +120,16 @@ def compile_targets(
             fetch_dependencies(
                 output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
             )
+
+        worker = partial(
+            compile_target,
+            search_paths=search_paths,
+            compile_path=temp_compile_path,
+            ref_controller=ref_controller,
+            inventory_path=inventory_path,
+            globals_cached=cached.as_dict(),
+            **kwargs,
+        )
 
         # compile_target() returns None on success
         # so p is only not None when raising an exception
@@ -418,12 +418,15 @@ def search_targets(inventory_path, targets, labels):
     return targets_found
 
 
-def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
+def compile_target(target_obj, search_paths, compile_path, ref_controller, globals_cached=None, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
+
+    if globals_cached:
+        cached.from_dict(globals_cached)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
@@ -456,6 +459,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
             raise CompileError(err_msg.format(input_type))
 
+        # logger.info("about to compile %s ", target_obj["target_full_path"])
         input_compiler.make_compile_dirs(target_name, output_path)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 

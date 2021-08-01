@@ -21,9 +21,21 @@ from collections import Counter, defaultdict
 from functools import lru_cache, wraps
 from hashlib import sha256
 
+JSONNET_AVAILABLE = True
+try:
+    import _gojsonnet as jsonnet
+
+    logging.debug("Using GO jsonnet over C jsonnet")
+except ImportError:
+    try:
+        import _jsonnet as jsonnet
+    except ImportError:
+        JSONNET_AVAILABLE = False
+
 import jinja2
 import requests
 import yaml
+
 from kapitan import cached, defaults
 from kapitan.errors import CompileError
 from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
@@ -36,11 +48,6 @@ from distutils.dir_util import mkpath
 
 
 logger = logging.getLogger(__name__)
-
-try:
-    import _jsonnet as jsonnet
-except ImportError as e:
-    logger.debug("Could not import jsonnet: %s", e)
 
 
 try:

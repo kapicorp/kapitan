@@ -15,7 +15,6 @@ import logging
 import multiprocessing
 import os
 import sys
-from functools import partial
 
 import yaml
 from kapitan import cached, defaults, setup_logging
@@ -100,7 +99,7 @@ def main():
         # set 'fork' method as a more deterministic/conservative
         # and compatible multiprocessing method for Linux and MacOS
         # see https://github.com/kapicorp/kapitan/issues/641
-        multiprocessing.set_start_method("fork")
+        multiprocessing.set_start_method("spawn")
     # main() is explicitly multiple times in tests
     # and will raise RuntimeError
     except RuntimeError:
@@ -292,7 +291,7 @@ def main():
     )
 
     inventory_parser = subparser.add_parser("inventory", aliases=["i"], help="show inventory")
-    inventory_parser.set_defaults(func=partial(generate_inventory, inventory_parser))
+    inventory_parser.set_defaults(func=generate_inventory)
 
     inventory_parser.add_argument(
         "--target-name",
@@ -542,6 +541,9 @@ def main():
         help="Number of concurrent validate processes, default is 4",
     )
     args = parser.parse_args()
+
+    if getattr(args, 'func', None) == generate_inventory and args.pattern and args.target_name == "":
+        parser.error("--pattern requires --target_name")
 
     logger.debug("Running with args: %s", args)
 
