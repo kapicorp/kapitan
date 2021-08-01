@@ -278,7 +278,7 @@ def deep_get(dictionary, keys, previousKey=None):
                             else:
                                 item = deep_get(v, keys)
 
-                            if item:
+                            if item is not None:
                                 return item
 
     return value
