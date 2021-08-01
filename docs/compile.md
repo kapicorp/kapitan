@@ -45,13 +45,16 @@ Kapitan supports the following input template types:
 - [kadet](#kadet) (alpha)
 - [helm](#helm) (alpha)
 - [copy](#copy)
-
+- [remove](#remove)
+- [external](#external-alphaexperimental)
 
 ### jinja2
 
 This renders jinja2 templates, typically stored in `templates/` directory, such as README, scripts and config files. Refer to [jinja2 docs](http://jinja.palletsprojects.com/en/2.10.x/templates/) to understand how the template engine works.
 
-For Jinja2, `input_paths` can be either a file or a directory: in case of a directory, all the templates in the directory will be rendered and outputted to `output_path`.
+For Jinja2, `input_paths` can either be a file, or a directory: in case of a directory, all the templates in the directory will be rendered and outputted to `output_path`.
+
+There is the optional `input_params` field which you can think of as localized function parameters. This is different from `inventory` and `inventory_global` parameters, since those are set outside the jinja2 compile block. `input_params` are useful when needing to use a similar template for multiple components in the same target.
 
 *Supported output types*: N/A (no need to specify `output_type`)
 
@@ -302,9 +305,8 @@ parameters:
       helm_values_files:
         - <values_file_path>
       helm_params:
+	name: <chart_release_name>
       	namespace: <substitutes_.Release.Namespace>
-      	name_template: <namespace_template>
-      	release_name: <chart_release_name>
     - name: add-metadata-test-1
       input_type: kadet
       output_path: ${test_1:output_path}
@@ -355,11 +357,13 @@ parameters:
         <object_with_values_to_override>
       helm_values_files:
         - <values_file_path>
+      helm_path: <helm binary>
       helm_params:
+        name: <chart_release_name>
         namespace: <substitutes_.Release.Namespace>
-        name_template: <namespace_template>
-        release_name: <chart_release_name>
-      kube_version: <target_kubernetes_version_string>
+        output_file: <string>
+        validate: true
+        …
 ```
 
 `helm_values` is an object containing values specified that will override the default values in the input chart. This has exactly the same effect as specifying `--values custom_values.yml` for `helm template` command where `custom_values.yml` structure mirrors that of `helm_values`.
@@ -369,21 +373,30 @@ If the same keys exist in `helm_values` and in multiple specified `helm_values_f
 There is an example in the tests. The `monitoring-dev`(kapitan/tests/test_resources/inventory/targets/monitoring-dev.yml) and `monitoring-prd`(kapitan/tests/test_resources/inventory/targets/monitoring-prd.yml) targets  both use the `monitoring`(tests/test_resources/inventory/classes/component/monitoring.yml) component.
 This component has helm chart input and takes a `common.yml` helm_values file which is "shared" by any target that uses the component and it also takes a dynamically defined file based on a kapitan variable defined in the target.
 
-`helm_params` correspond to the options for `helm template` as follows:
+`helm_path` can be use to provide the helm binary name or path.
+`helm_path` defaults to the value of `KAPITAN_HELM_PATH` env var if it is set, else it defaults to `helm`
 
-- namespace: equivalent of `--namespace` option: note that due to the restriction on `helm template` command, specifying the namespace does not automatically add `metadata.namespace` property to the resources. Therefore, users are encourage to explicitly specify in all resources:
+`helm_params` correspond to the flags for `helm template`. Most flags that helm supports can be used here by replacing '-' by '_' in the flag name.
+
+Flags without argument must have a boolean value, all other flags require a string value.
+
+Special flags:
+
+- `name`: equivalent of helm template `[NAME]` parameter. Ignored if `name_template` is also specified. If neither `name_template` nor `name` are specified, the `--generate-name` flag is used to generate a name.
+- `output_file`: name of the single file used to output all the generated resources. This is equivalent to call `helm template` without specifing output dir. If not specified, each resource is generated into a distinct file.
+
+- `include_crds` and `skip_tests`: These flags are enabled by default and should be set to `false` to be removed.
+- `debug`: prints the helm debug output in kapitan debug log.
+- `namespace`: note that due to the restriction on `helm template` command, specifying the namespace does not automatically add `metadata.namespace` property to the resources. Therefore, users are encouraged to explicitly specify it in all resources:
 
     ```yaml
     metadata:
       namespace: {{ .Release.Namespace }} # or any other custom values
     ```
 
-- name_template: equivalent of `--name-template` option
-- release_name: equivalent of `--name` option
 
-See the [helm doc](https://helm.sh/docs/helm/#helm-template) for further detail.
+See the [helm doc](https://helm.sh/docs/helm/helm_template/) for further detail.
 
-`kube_version` optionally specifies the Kubernetes version to target when rendering the manifests from the chart, for example "1.16". As some charts generate manifests slightly differently depending on the target Kubernetes version (e.g. targeting different APIs), it may be useful to target a specific version. When not specified, the default version used is "1.12".
 
 #### Example
 
@@ -414,7 +427,7 @@ parameters:
             image:
               repository: custom_repo
         helm_params:
-          release_name: my-first-release-name
+          name: my-first-release-name
           namespace: my-first-namespace
 ```
 

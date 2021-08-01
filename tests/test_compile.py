@@ -74,6 +74,38 @@ class CompileTestResourcesTestKadet(unittest.TestCase):
         reset_cache()
 
 
+class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
+    def setUp(self):
+        os.chdir(os.getcwd() + "/tests/test_resources/")
+
+    def test_compile(self):
+        sys.argv = ["kapitan", "compile", "-t", "jinja2-input-params"]
+        main()
+
+    def test_compile_with_input_params(self):
+        # input_params propagate through and written out to file
+        for g in glob.glob("compiled/jinja2-input-params/test-1/*.yml"):
+            with open(g, "r") as fp:
+                manifest = yaml.safe_load(fp.read())
+                namespace = manifest["metadata"]["namespace"]
+                name = manifest["metadata"]["name"]
+                self.assertEqual(namespace, "ns1")
+                self.assertEqual(name, "test1")
+        # same jinja2 function was called with new params should have
+        # different results
+        for g in glob.glob("compiled/jinja2-input-params/test-2/*.yaml"):
+            with open(g, "r") as fp:
+                manifest = yaml.safe_load(fp.read())
+                namespace = manifest["metadata"]["namespace"]
+                name = manifest["metadata"]["name"]
+                self.assertEqual(namespace, "ns2")
+                self.assertEqual(name, "test2")
+
+    def tearDown(self):
+        os.chdir(os.getcwd() + "/../../")
+        reset_cache()
+
+
 class CompileKubernetesTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/examples/kubernetes/")

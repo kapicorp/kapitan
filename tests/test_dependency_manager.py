@@ -8,9 +8,11 @@
 import multiprocessing
 import os
 import sys
-import unittest
 import tempfile
+import unittest
 from shutil import rmtree
+
+from kapitan.errors import HelmFetchingError
 from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.dependency_manager.base import (
@@ -19,6 +21,7 @@ from kapitan.dependency_manager.base import (
     fetch_git_dependency,
     fetch_helm_chart,
     fetch_dependencies,
+    HelmSource,
 )
 
 
@@ -80,45 +83,50 @@ class DependencyManagerTest(unittest.TestCase):
         """
         Tests fetching helm chart
         """
+        temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
         version = "11.3.0"
-        unique_chart_name = chart_name + "-" + version
+        repo = "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/"
         dep = [
             {
                 "output_path": output_chart_dir,
                 "version": version,
                 "chart_name": chart_name,
-                "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/",
+                "source": repo,
             }
         ]
-        fetch_helm_chart((unique_chart_name, dep))
+        fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
         self.assertTrue(os.path.isdir(output_chart_dir))
         self.assertTrue(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
         self.assertTrue(os.path.isdir(os.path.join(output_chart_dir, "charts", "kube-state-metrics")))
+        rmtree(temp_dir)
         rmtree(output_dir)
 
     def test_fetch_helm_chart_version_that_does_not_exist(self):
         """
         Test fetching helm chart version that does not exist
         """
+        temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
         version = "10.7.0"
-        unique_chart_name = chart_name + "-" + version
+        repo = "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/"
         dep = [
             {
                 "output_path": output_chart_dir,
                 "version": version,
                 "chart_name": chart_name,
-                "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/",
+                "source": repo,
             }
         ]
-        fetch_helm_chart((unique_chart_name, dep))
+        with self.assertRaises(HelmFetchingError):
+            fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
         self.assertFalse(os.path.isdir(output_chart_dir))
         self.assertFalse(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
+        rmtree(temp_dir)
         rmtree(output_dir)
 
     def test_fetch_dependencies_unpack_parallel(self):

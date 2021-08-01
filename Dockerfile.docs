@@ -1,5 +1,6 @@
-FROM squidfunk/mkdocs-material:7.1.9
+FROM squidfunk/mkdocs-material:7.1.2
+
+COPY requirements.docs.txt /tmp/requirements.docs.txt
 
 RUN apk update && \
-    pip install pymdown-extensions==8.2 \
-    markdown-include==0.6.0
+    pip install -r /tmp/requirements.docs.txt
