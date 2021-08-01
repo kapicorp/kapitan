@@ -9,11 +9,15 @@ Now that we have a basic understanding of Kapitan `inventory`, we can talk about
 
 The command has five distinct `phases`:
 
-- Reclass: this takes all the target and class definitions and runs reclass to determine what kapitan needs to do during the compile command.
-- Fetch: this is an optional phase that happens before the compilation actions, if there are dependencies defined in any classes under `parameters.kapitan.dependencies`. This is triggered through the `--fetch` option on the `kapitan compile` command.
-- Compilation: the Reclass phase has determined a sequential list of actions to run specified in the `parameters.kapitan.compile` for each target.  The actions can be defined using jinja2, jsonnet, kadet, helm, and copy. These actions define any transpilation steps you want to take to get a desired manifest output, or simply put, your inputs and outputs.
-- Copying: the Compilation phase runs all of its actions in a tmp folder and when finished, all outputted files for each target are copied to their respective `compiled` directories.
-- Validate: this is an optional phase that validates the schema of compiled output. Validate options are specified in the inventory under `parameters.kapitan.validate`
+- **Reclass**: this takes all the target and class definitions and runs reclass to determine what kapitan needs to do during the compile command.
+
+- **Fetch**: this is an optional phase that happens before the compilation actions, if there are dependencies defined in any classes under `parameters.kapitan.dependencies`. This is triggered through the `--fetch` option on the `kapitan compile` command.
+
+- **Compilation**: the Reclass phase has determined a sequential list of actions to run specified in the `parameters.kapitan.compile` for each target.  The actions can be defined using jinja2, jsonnet, kadet, helm, and copy. These actions define any transpilation steps you want to take to get a desired manifest output, or simply put, your inputs and outputs.
+
+- **Copying**: the Compilation phase runs all of its actions in a tmp folder and when finished, all outputted files for each target are copied to their respective `compiled` directories.
+
+- **Validate**: this is an optional phase that validates the schema of compiled output. Validate options are specified in the inventory under `parameters.kapitan.validate`
 
 ## Specifying inputs and outputs
 
@@ -41,13 +45,16 @@ Kapitan supports the following input template types:
 - [kadet](#kadet) (alpha)
 - [helm](#helm) (alpha)
 - [copy](#copy)
-
+- [remove](#remove)
+- [external](#external-alphaexperimental)
 
 ### jinja2
 
 This renders jinja2 templates, typically stored in `templates/` directory, such as README, scripts and config files. Refer to [jinja2 docs](http://jinja.palletsprojects.com/en/2.10.x/templates/) to understand how the template engine works.
 
-For Jinja2, `input_paths` can be either a file or a directory: in case of a directory, all the templates in the directory will be rendered and outputted to `output_path`.
+For Jinja2, `input_paths` can either be a file, or a directory: in case of a directory, all the templates in the directory will be rendered and outputted to `output_path`.
+
+There is the optional `input_params` field which you can think of as localized function parameters. This is different from `inventory` and `inventory_global` parameters, since those are set outside the jinja2 compile block. `input_params` are useful when needing to use a similar template for multiple components in the same target.
 
 *Supported output types*: N/A (no need to specify `output_type`)
 
