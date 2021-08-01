@@ -54,10 +54,6 @@ format_codestyle:
 	black .
 	@echo
 
-.PHONY: build_helm_fetch_binding
-build_helm_fetch_binding:
-	bash kapitan/dependency_manager/helm/build.sh
-
 .PHONY: local_serve_documentation
 local_serve_documentation:
 	docker build -f Dockerfile.docs --no-cache -t kapitan-docs .

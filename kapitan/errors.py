@@ -60,6 +60,10 @@ class HelmBindingUnavailableError(KapitanError):
     pass
 
 
+class HelmFetchingError(KapitanError):
+    pass
+
+
 class HelmTemplateError(KapitanError):
     pass
 
