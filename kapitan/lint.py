@@ -101,15 +101,15 @@ def lint_orphan_secrets(compiled_path, secrets_path):
     Yields:
         checks_sum (int): the number of orphan secrets found
     """
-    logger.debug("Find secret paths for " + secrets_path)
+    logger.debug("Find secret paths for %s", secrets_path)
     secrets_paths = set()
     for path in list_all_paths(secrets_path):
         if os.path.isfile(path):
             path = path[len(secrets_path) + 1 :]
             secrets_paths.add(path)
 
-    logger.debug("Collected # of paths: {}".format(len(secrets_paths)))
-    logger.debug("Checking if all secrets are declared in " + compiled_path)
+    logger.debug("Collected # of paths: %s", len(secrets_paths))
+    logger.debug("Checking if all secrets are declared in %s", compiled_path)
 
     for path in list_all_paths(compiled_path):
         if os.path.isfile(path):
@@ -122,9 +122,9 @@ def lint_orphan_secrets(compiled_path, secrets_path):
     checks_sum = len(secrets_paths)
     if checks_sum > 0:
         logger.info(
-            "No usage found for the following {} secrets files:\n{}\n".format(
-                len(secrets_paths), pformat(secrets_paths)
-            )
+            "No usage found for the following %s secrets files:\n%s\n",
+            len(secrets_paths),
+            pformat(secrets_paths),
         )
 
     return checks_sum
@@ -144,7 +144,7 @@ def lint_unused_classes(inventory_path):
     if not os.path.isdir(classes_dir):
         raise KapitanError("{} is not a valid directory or does not exist".format(classes_dir))
 
-    logger.debug("Find unused classes from {}".format(classes_dir))
+    logger.debug("Find unused classes from %s", classes_dir)
     class_paths = set()
     for path in list_all_paths(classes_dir):
         if os.path.isfile(path) and (path.endswith(".yml") or path.endswith(".yaml")):
@@ -152,8 +152,8 @@ def lint_unused_classes(inventory_path):
             path = path.replace(".yml", "").replace(".yaml", "").replace("/", ".")
             class_paths.add(path)
 
-    logger.debug("Collected # of paths: {}".format(len(class_paths)))
-    logger.debug("Checking if all classes are declared in " + classes_dir)
+    logger.debug("Collected # of paths: %s", len(class_paths))
+    logger.debug("Checking if all classes are declared in %s", classes_dir)
 
     for path in list_all_paths(inventory_path):
         if os.path.isfile(path):
@@ -178,9 +178,7 @@ def lint_unused_classes(inventory_path):
     checks_sum = len(class_paths)
     if checks_sum > 0:
         logger.info(
-            "No usage found for the following {} classes:\n{}\n".format(
-                len(class_paths), pformat(class_paths)
-            )
+            "No usage found for the following %s classes:\n%s\n", len(class_paths), pformat(class_paths)
         )
 
     return checks_sum
@@ -193,7 +191,7 @@ def lint_yamllint(inventory_path):
     Yields:
         checks_sum (int): the number of yaml lint issues found
     """
-    logger.debug("Running yamllint for " + inventory_path)
+    logger.debug("Running yamllint for %s", inventory_path)
 
     if os.path.isfile(".yamllint"):
         logger.info("Loading values from .yamllint found.")
@@ -216,11 +214,11 @@ def lint_yamllint(inventory_path):
 
                 if len(problems) > 0:
                     checks_sum += len(problems)
-                    logger.info("File {} has the following issues:".format(path))
+                    logger.info("File %s has the following issues:", path)
                     for problem in problems:
-                        logger.info("\t{}".format(problem))
+                        logger.info("\t%s", problem)
 
     if checks_sum > 0:
-        logger.info("\nTotal yamllint issues found: {}".format(checks_sum))
+        logger.info("\nTotal yamllint issues found: %s", checks_sum)
 
     return checks_sum

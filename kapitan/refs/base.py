@@ -251,8 +251,9 @@ class Revealer(object):
                     )
                 try:
                     logger.debug(
-                        'Revealer: embedded sub-variable path "{}"'
-                        "matched in tag {}".format(ref.embedded_subvar_path, tag)
+                        'Revealer: embedded sub-variable path "%s"' "matched in tag %s",
+                        ref.embedded_subvar_path,
+                        tag,
                     )
                     return self._get_value_in_yaml_path(revealed_yaml, ref.embedded_subvar_path)
                 except KeyError:
@@ -262,7 +263,7 @@ class Revealer(object):
 
             # else this is just a ref
             else:
-                logger.debug('Revealer: no sub-variable path was matched in "{}"'.format(tag))
+                logger.debug('Revealer: no sub-variable path was matched in "%s"', tag)
                 return self._reveal_tag_without_subvar(tag)
 
         # this is a ref with subvar
@@ -270,7 +271,7 @@ class Revealer(object):
             subvar_path = m.groups()
             # strip away the @
             subvar_path = subvar_path[0][1:]
-            logger.debug('Revealer: sub-variable path "{}" matched in tag {}'.format(subvar_path, tag))
+            logger.debug('Revealer: sub-variable path "%s" matched in tag %s', subvar_path, tag)
             tag_without_yaml_path = re.sub(REF_TOKEN_SUBVAR_PATTERN, "", tag)
 
             plaintext = self._reveal_tag_without_subvar(tag_without_yaml_path)
@@ -288,7 +289,7 @@ class Revealer(object):
     @lru_cache(maxsize=256)
     def _reveal_tag_without_subvar(self, tag_without_subvar):
         ref = self.ref_controller[tag_without_subvar]
-        logger.debug("Revealer: revealing tag {} for the first time".format(tag_without_subvar))
+        logger.debug("Revealer: revealing tag %s for the first time", tag_without_subvar)
         return ref.reveal()
 
     def _get_value_in_yaml_path(self, d, yaml_path):

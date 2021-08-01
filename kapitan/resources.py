@@ -21,7 +21,6 @@ import jsonschema
 import kapitan.cached as cached
 import yaml
 from kapitan import __file__ as kapitan_install_path
-from kapitan import cached as cached
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
 
@@ -35,6 +34,8 @@ try:
     from yaml import CSafeLoader as YamlLoader
 except ImportError:
     from yaml import SafeLoader as YamlLoader
+
+JSONNET_CACHE = {}
 
 
 def resource_callbacks(search_paths):
@@ -212,7 +213,10 @@ def search_imports(cwd, import_str, search_paths):
     needs to be closured.
     """
     basename = os.path.basename(import_str)
-    full_import_path = os.path.join(cwd, import_str)
+    full_import_path = os.path.normpath(os.path.join(cwd, import_str))
+
+    if full_import_path in JSONNET_CACHE:
+        return full_import_path, JSONNET_CACHE[full_import_path]
 
     if not os.path.exists(full_import_path):
         # if import_str not found, search in install_path
@@ -221,7 +225,7 @@ def search_imports(cwd, import_str, search_paths):
         # if found, set as full_import_path
         if os.path.exists(_full_import_path):
             full_import_path = _full_import_path
-            logger.debug(f"import_str: {import_str} found in search_path: {install_path}")
+            logger.debug("import_str: %s found in search_path: %s", import_str, install_path)
         else:
             # if import_str not found, search in search_paths
             for path in search_paths:
@@ -229,7 +233,7 @@ def search_imports(cwd, import_str, search_paths):
                 # if found, set as full_import_path
                 if os.path.exists(_full_import_path):
                     full_import_path = _full_import_path
-                    logger.debug(f"import_str: {import_str} found in search_path: {path}")
+                    logger.debug("import_str: %s found in search_path: %s", import_str, path)
                     break
 
     # if the above search did not find anything, let jsonnet error
@@ -241,6 +245,7 @@ def search_imports(cwd, import_str, search_paths):
     normalised_path_content = ""
     with open(normalised_path) as f:
         normalised_path_content = f.read()
+        JSONNET_CACHE[normalised_path] = normalised_path_content
 
     return normalised_path, normalised_path_content
 
@@ -253,7 +258,6 @@ def inventory(search_paths, target, inventory_path=None):
     set inventory_path to read custom path. None defaults to value set via cli
     Returns a dictionary with the inventory for target
     """
-
     if inventory_path is None:
         # grab inventory_path value from cli subcommand
         inventory_path_arg = cached.args.get("compile") or cached.args.get("inventory")
@@ -283,8 +287,6 @@ def inventory(search_paths, target, inventory_path=None):
 
 
 def generate_inventory(args):
-    if args.pattern and args.target_name == "":
-        parser.error("--pattern requires --target_name")
     try:
         inv = inventory_reclass(args.inventory_path)
         if args.target_name != "":
@@ -335,7 +337,7 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
                     uri_path = os.path.join(inventory_path, uri_val)
                     normalised_path = os.path.normpath(uri_path)
                     reclass_config.update({uri: normalised_path})
-                logger.debug(f"Using reclass inventory config at: {cfg_file}")
+                logger.debug("Using reclass inventory config at: %s", cfg_file)
         except IOError as ex:
             # If file does not exist, ignore
             if ex.errno == errno.ENOENT:

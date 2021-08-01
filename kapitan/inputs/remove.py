@@ -26,13 +26,13 @@ class Remove(InputType):
         """
 
         try:
-            logger.debug("Removing {}".format(file_path))
+            logger.debug("Removing %s", file_path)
             if os.path.isfile(file_path):
                 os.remove(file_path)
             else:
                 shutil.rmtree(file_path)
         except OSError as e:
-            logger.exception(f"Input dir not removed. Error: {e}")
+            logger.exception("Input dir not removed. Error: %s", e)
 
     def default_output_type(self):
         # no output_type options for remove

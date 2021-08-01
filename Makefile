@@ -54,18 +54,12 @@ format_codestyle:
 	black .
 	@echo
 
-.PHONY: build_binary
-build_binary:
-	scripts/build-binary.sh
+.PHONY: local_serve_documentation
+local_serve_documentation:
+	docker build -f Dockerfile.docs --no-cache -t kapitan-docs .
+	docker run --rm -v $(PWD):/docs -p 8000:8000 kapitan-docs
 
-.PHONY: test_binary
-test_binary:
-	python3 -m unittest tests.test_binary
-
-.PHONY: build_helm_binding
-build_helm_binding:
-	bash kapitan/inputs/helm/build.sh
-
-.PHONY: build_helm_fetch_binding
-build_helm_fetch_binding:
-	bash kapitan/dependency_manager/helm/build.sh
+.PHONY: mkdocs_gh_deploy
+mkdocs_gh_deploy: # to run locally assuming git ssh access
+	docker build -f Dockerfile.docs --no-cache -t kapitan-docs .
+	docker run --rm -it -v $(PWD):/src -v ~/.ssh:/root/.ssh -w /src kapitan-docs gh-deploy -f ./mkdocs.yml

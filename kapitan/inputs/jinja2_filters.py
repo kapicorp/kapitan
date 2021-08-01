@@ -57,11 +57,11 @@ def load_module_from_path(env, path):
         custom_filter_spec.loader.exec_module(custom_filter_module)
         for function in dir(custom_filter_module):
             if isinstance(getattr(custom_filter_module, function), types.FunctionType):
-                logger.debug("custom filter loaded from {}".format(path))
+                logger.debug("custom filter loaded from %s", path)
                 env.filters[function] = getattr(custom_filter_module, function)
     except Exception as e:
-        logger.debug("failed to find custom filter from path {}".format(path))
         raise IOError("jinja2 failed to render, could not load filter at {}: {}".format(path, e))
+        logger.debug("failed to find custom filter from path %s", path)
 
 
 def load_jinja2_filters_from_file(env, jinja2_filters):

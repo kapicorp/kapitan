@@ -31,7 +31,7 @@ class RemoteInventoryTest(unittest.TestCase):
         """
         temp_dir = tempfile.mkdtemp()
         repo_dir = os.path.join(temp_dir, "7a8f3940kapitan.git")
-        git_source = "https://github.com/deepmind/kapitan.git"
+        git_source = "https://github.com/kapicorp/kapitan.git"
         fetch_git_source(git_source, repo_dir, item_type="Inventory")
         self.assertTrue(os.path.isfile(os.path.join(repo_dir, "README.md")))
         rmtree(temp_dir)
@@ -42,7 +42,7 @@ class RemoteInventoryTest(unittest.TestCase):
         """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
-        git_source = "https://github.com/deepmind/kapitan.git"
+        git_source = "https://github.com/kapicorp/kapitan.git"
         inv = [{"output_path": os.path.join(output_dir, "subdir"), "ref": "master", "subdir": "tests"}]
         fetch_git_dependency((git_source, inv), temp_dir, force=False, item_type="inventory")
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
@@ -56,13 +56,13 @@ class RemoteInventoryTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
 
         http_sources = [
-            ("https://github.com/deepmind/kapitan/archive/master.zip", "009a21cfmaster.zip"),
+            ("https://github.com/kapicorp/kapitan/archive/master.zip", "009a21cfmaster.zip"),
             (
-                "https://raw.githubusercontent.com/deepmind/kapitan/master/tests/test_resources/inventory/classes/common.yml",
+                "https://raw.githubusercontent.com/kapicorp/kapitan/master/tests/test_resources/inventory/classes/common.yml",
                 "eac6ceb7common.yml",
             ),
             (
-                "https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.zip",
+                "https://github.com/kapicorp/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.zip",
                 "47c29a3binventory.zip",
             ),
         ]
@@ -81,7 +81,7 @@ class RemoteInventoryTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         # tar.gz file
-        http_source = "https://github.com/deepmind/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.tar.gz"
+        http_source = "https://github.com/kapicorp/kapitan/raw/master/tests/test_remote_inventory/zipped_inventories/inventory.tar.gz"
         inv = [{"output_path": os.path.join(output_dir, "subdir"), "unpack": "True"}]
         fetch_http_dependency((http_source, inv), temp_dir, force=False, item_type="inventory")
 

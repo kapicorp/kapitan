@@ -12,6 +12,7 @@ from __future__ import print_function
 import argparse
 import json
 import logging
+import multiprocessing
 import os
 import sys
 
@@ -94,6 +95,16 @@ def trigger_compile(args):
 
 def main():
     """main function for command line usage"""
+    try:
+        # set 'fork' method as a more deterministic/conservative
+        # and compatible multiprocessing method for Linux and MacOS
+        # see https://github.com/kapicorp/kapitan/issues/641
+        multiprocessing.set_start_method("spawn")
+    # main() is explicitly multiple times in tests
+    # and will raise RuntimeError
+    except RuntimeError:
+        pass
+
     parser = argparse.ArgumentParser(prog=PROJECT_NAME, description=DESCRIPTION)
     parser.add_argument("--version", action="version", version=VERSION)
     subparser = parser.add_subparsers(help="commands", dest="subparser_name")
@@ -530,6 +541,9 @@ def main():
         help="Number of concurrent validate processes, default is 4",
     )
     args = parser.parse_args()
+
+    if getattr(args, 'func', None) == generate_inventory and args.pattern and args.target_name == "":
+        parser.error("--pattern requires --target_name")
 
     logger.debug("Running with args: %s", args)
 

@@ -1,14 +1,15 @@
+---
 language: python
 cache: pip
 matrix:
   include:
-  - python: 3.7
-    dist: bionic
-    sudo: true
+    - python: 3.7
+      dist: bionic
+      sudo: true
 branches:
   only:
     - master
-    - /v(\d+\.){2}\d+(-rc\.\d+)?/ # regex for tag branches e.g. v0.22.0-rc.1, v0.22.0 etc
+    - /v(\d+\.){2}\d+(-rc\.\d+)?/  # regex for tag branches e.g. v0.22.0-rc.1, v0.22.0 etc
 notifications:
   recipients:
     - kapitan-admins@googlegroups.com
@@ -24,28 +25,27 @@ before_install:
   - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
   # Loop until update succeeds (timeouts can occur)
   - travis_retry $(! sudo apt-get -qq update 2>&1 | grep Failed)
-  - sudo apt-get install -y gnupg2 git
-  - sudo apt-get install -y golang-1.14
-  - export PATH="/usr/lib/go-1.14/bin:$PATH"
-  - export GOROOT=/usr/lib/go-1.14
-  - go version
+  - sudo apt-get install -y gnupg2 git curl
+  # Install Helm Binary
+  - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+  - chmod 700 get_helm.sh
+  - sudo ./get_helm.sh
 
 install:
   - pip3 install -r requirements.txt
   - pip3 install coverage black
 
 script:
-  - make build_helm_binding && make build_helm_fetch_binding
   - make test && make test_coverage
-  - make build_binary
-  - make test_binary
 
 after_success:
-  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ]; then bash ./scripts/inc_version.sh; fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" = "master" ]; then
+    bash ./scripts/inc_version.sh; fi
 
 before_deploy:
   - export PRERELEASE=false
-  - if $(echo $TRAVIS_BRANCH | grep -Eq "v([0-9]+.[0-9]{2}.[0-9]+)-rc.[0-9]+"); then export PRERELEASE=true; fi
+  - if $(echo $TRAVIS_BRANCH | grep -Eq "v([0-9]+.[0-9]{2}.[0-9]+)-rc.[0-9]+"); then
+    export PRERELEASE=true; fi
   - echo "Deploying $TRAVIS_BRANCH, prerelease $PRERELEASE"
 deploy:
   - provider: releases
@@ -57,7 +57,7 @@ deploy:
     prerelease: $PRERELEASE
     on:
       tags: true
-      repo: deepmind/kapitan
+      repo: kapicorp/kapitan
   - provider: pypi
     distributions: sdist bdist_wheel
     skip_existing: true

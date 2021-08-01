@@ -23,6 +23,7 @@ test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_copy"
 compile_path = os.path.join(test_path, "output")
 file_path = os.path.join(test_path, "input")
 test_file_path = os.path.join(file_path, "test_copy_input")
+test_file_missing_path = os.path.join(file_path, "test_copy_input_missing")
 test_file_compiled_path = os.path.join(compile_path, "test_copy_input")
 test_file_content = """
 apiVersion: v1
@@ -73,6 +74,26 @@ class CopyTest(unittest.TestCase):
         file_path_hash = directory_hash(file_path)
         compile_path_hash = directory_hash(compile_path)
         self.assertEqual(file_path_hash, compile_path_hash)
+
+    def tearDown(self):
+        try:
+            shutil.rmtree(test_path)
+        except FileNotFoundError:
+            pass
+
+
+class CopyMissingFileTest(unittest.TestCase):
+    def setUp(self):
+        try:
+            shutil.rmtree(test_path)
+        except FileNotFoundError:
+            pass
+
+        self.copy_compiler = Copy(compile_path, search_path, ref_controller, ignore_missing=True)
+
+    def test_copy_missing_path_folder(self):
+        test_dirs_bootstrap_helper()
+        self.copy_compiler.compile_file(test_file_missing_path, compile_path, None)
 
     def tearDown(self):
         try:

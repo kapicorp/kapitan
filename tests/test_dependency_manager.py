@@ -8,9 +8,11 @@
 import multiprocessing
 import os
 import sys
-import unittest
 import tempfile
+import unittest
 from shutil import rmtree
+
+from kapitan.errors import HelmFetchingError
 from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.dependency_manager.base import (
@@ -19,6 +21,7 @@ from kapitan.dependency_manager.base import (
     fetch_git_dependency,
     fetch_helm_chart,
     fetch_dependencies,
+    HelmSource,
 )
 
 
@@ -31,11 +34,11 @@ class DependencyManagerTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         http_sources = [
             (
-                "https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/components/jsonnet/jsonnet.jsonnet",
+                "https://raw.githubusercontent.com/kapicorp/kapitan/master/examples/docker/components/jsonnet/jsonnet.jsonnet",
                 "1c3a08e6jsonnet.jsonnet",
             ),
             (
-                "https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/components/kadet/__init__.py",
+                "https://raw.githubusercontent.com/kapicorp/kapitan/master/examples/docker/components/kadet/__init__.py",
                 "aff45ec8__init__.py",
             ),
         ]
@@ -52,7 +55,7 @@ class DependencyManagerTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         repo_dir = os.path.join(temp_dir, "7a8f3940kapitan.git")
         # TODO: also test git ssh urls
-        git_source = "https://github.com/deepmind/kapitan.git"
+        git_source = "https://github.com/kapicorp/kapitan.git"
         fetch_git_source(git_source, repo_dir, item_type="Dependency")
         self.assertTrue(os.path.isfile(os.path.join(repo_dir, "README.md")))
         rmtree(temp_dir)
@@ -63,7 +66,7 @@ class DependencyManagerTest(unittest.TestCase):
         """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
-        source = "https://github.com/deepmind/kapitan.git"
+        source = "https://github.com/kapicorp/kapitan.git"
         dep = [
             {
                 "output_path": os.path.join(output_dir, "subdir"),
@@ -80,45 +83,50 @@ class DependencyManagerTest(unittest.TestCase):
         """
         Tests fetching helm chart
         """
+        temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
         version = "11.3.0"
-        unique_chart_name = chart_name + "-" + version
+        repo = "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/"
         dep = [
             {
                 "output_path": output_chart_dir,
                 "version": version,
                 "chart_name": chart_name,
-                "source": "https://kubernetes-charts.storage.googleapis.com",
+                "source": repo,
             }
         ]
-        fetch_helm_chart((unique_chart_name, dep))
+        fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
         self.assertTrue(os.path.isdir(output_chart_dir))
         self.assertTrue(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
         self.assertTrue(os.path.isdir(os.path.join(output_chart_dir, "charts", "kube-state-metrics")))
+        rmtree(temp_dir)
         rmtree(output_dir)
 
     def test_fetch_helm_chart_version_that_does_not_exist(self):
         """
         Test fetching helm chart version that does not exist
         """
+        temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
         version = "10.7.0"
-        unique_chart_name = chart_name + "-" + version
+        repo = "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/"
         dep = [
             {
                 "output_path": output_chart_dir,
                 "version": version,
                 "chart_name": chart_name,
-                "source": "https://kubernetes-charts.storage.googleapis.com",
+                "source": repo,
             }
         ]
-        fetch_helm_chart((unique_chart_name, dep))
+        with self.assertRaises(HelmFetchingError):
+            fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
         self.assertFalse(os.path.isdir(output_chart_dir))
         self.assertFalse(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
+        rmtree(temp_dir)
         rmtree(output_dir)
 
     def test_fetch_dependencies_unpack_parallel(self):
@@ -131,13 +139,13 @@ class DependencyManagerTest(unittest.TestCase):
                 "dependencies": [
                     {
                         "type": "https",
-                        "source": "https://kubernetes-charts.storage.googleapis.com/nfs-client-provisioner-1.2.8.tgz",
+                        "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/nfs-client-provisioner-1.2.8.tgz",
                         "output_path": "nfs-client-provisioner",
                         "unpack": True,
                     },
                     {
                         "type": "https",
-                        "source": "https://kubernetes-charts.storage.googleapis.com/prometheus-pushgateway-1.2.13.tgz",
+                        "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/prometheus-pushgateway-1.2.13.tgz",
                         "output_path": "prometheus-pushgateway",
                         "unpack": True,
                     },

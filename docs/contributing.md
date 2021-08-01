@@ -61,7 +61,7 @@ Run `make format_codestyle` before submitting.
 - Create a branch named `release-v<NUMBER>`. Use `v0.*.*-rc.*` if you want pre-release versions to be uploaded.
 - Update CHANGELOG.md with the release changes.
 - Once reviewed and merged, Travis will auto-release.
-- The merge has to happen with a merge commit not with squash/rebase so that the commit message still mentions `deepmind/release-v*` inside.
+- The merge has to happen with a merge commit not with squash/rebase so that the commit message still mentions `kapicorp/release-v*` inside.
 
 ## Updating gh-pages docs
 
@@ -73,13 +73,7 @@ Updating our gh-pages is therefore a two-step process.
 
 Submit a PR for our master branch that updates the `.md` file(s). Test how the changes would look like when deployed to gh-pages by serving it on localhost:
 
-```
-# from project root
-pip install mkdocs mkdocs-material pymdown-extensions markdown-include
-mkdocs build
-mkdocs serve
-# open http://127.0.0.1:8000
-```
+`make local_serve_documentation`
 
 ### 2. Submit a PR for gh-pages branch to deploy the update
 
@@ -87,14 +81,14 @@ Once the above PR has been merged, use `mkdocs gh-deploy` command to push the co
 
 ```
 # locally, on master branch (which has your updated docs)
-mkdocs gh-deploy -m "Commit message" -f ./mkdocs.yml -b gh-pages
+COMMIT_MSG="your commit message to replace" make mkdocs_gh_deploy
 ```
 
 After it's pushed, create a PR that targets our gh-pages branch from your gh-pages branch.
 
-## Packaging extra resources in python package or binary
+## Packaging extra resources in python package
 
-To package any extra resources/files in the pip package or the kapitan binary, make sure you modify both `MANIFEST.in` and `scripts/pyinstaller.sh`.
+To package any extra resources/files in the pip package, make sure you modify both `MANIFEST.in`.
 
 ## Contributor License Agreement
 

@@ -1,14 +1,14 @@
 # Kapitan: Generic templated configuration management for Kubernetes, Terraform and other things
 
-[![Build Status](https://travis-ci.org/deepmind/kapitan.svg?branch=master)](https://travis-ci.org/deepmind/kapitan)
-![](https://img.shields.io/github/pipenv/locked/python-version/deepmind/kapitan.svg)
+[![Build Status](https://travis-ci.org/kapicorp/kapitan.svg?branch=master)](https://travis-ci.org/kapicorp/kapitan)
+![](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)
 ![](https://img.shields.io/pypi/dm/kapitan)
-![](https://img.shields.io/docker/pulls/deepmind/kapitan)
-[![Docker](https://github.com/deepmind/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/deepmind/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
-[![Releases](https://img.shields.io/github/release/deepmind/kapitan.svg)](https://github.com/deepmind/kapitan/releases)
-[![Docker Image Size](https://img.shields.io/docker/image-size/deepmind/kapitan/latest.svg)](https://hub.docker.com/r/deepmind/kapitan)
+![](https://img.shields.io/docker/pulls/kapicorp/kapitan)
+[![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
+[![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
+[![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
 
-Kapitan is the tool to help you manage the complexity of your configuration using an inventory and a choice of templates like [generators](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7), jsonnet, [kadet](https://github.com/deepmind/kapitan/pull/190), jinja2 and helm.
+Kapitan is the tool to help you manage the complexity of your configuration using an inventory and a choice of templates like [generators](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7), jsonnet, [kadet](https://github.com/kapicorp/kapitan/pull/190), jinja2 and helm.
 
 Use Kapitan to build an inventory which you can then use to drive templates for your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
 
@@ -47,10 +47,10 @@ files (for instance, Kubernetes manifests) without using any templating at all.
 
 > Read our blog post [**Keep your ship together with Kapitan**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7) 
 
-### [Jsonnet](https://jsonnet.org/) or [Kadet](https://github.com/deepmind/kapitan/pull/190) templates backends
+### [Jsonnet](https://jsonnet.org/) or [Kadet](https://github.com/kapicorp/kapitan/pull/190) templates backends
 For more complex scenarios, you have a choice of directly using our 2 main templating engines.
 
-You can use either [Jsonnet](https://jsonnet.org/) (tapping into an ever growing number of libraries and examples) or our Python based [Kadet](https://github.com/deepmind/kapitan/pull/190) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
+You can use either [Jsonnet](https://jsonnet.org/) (tapping into an ever growing number of libraries and examples) or our Python based [Kadet](https://github.com/kapicorp/kapitan/pull/190) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
 
 ### [Jinja2](http://jinja.pocoo.org/)
 Good old Jinja to create text based templates for scripts and documentation; Don't underestimate the power of this very simple approach to create templated scripts and documentation!
@@ -65,7 +65,7 @@ Use [Tesoro](https://github.com/kapicorp/tesoro), our Kubernetes Admission Contr
 #### Docker (recommended)
 
 ```
-docker run -t --rm -v $(pwd):/src:delegated deepmind/kapitan -h
+docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan -h
 ```
 
 On Linux you can add `-u $(id -u)` to `docker run` to preserve file permissions.
@@ -94,10 +94,6 @@ System-wide (not recommended):
 ```shell
 sudo pip3 install --upgrade kapitan
 ```
-
-#### Standalone binary
-
-From v0.24.0, kapitan is also available as a standalone binary which you can download from the [releases page](https://github.com/deepmind/kapitan/releases). The platform currently supported is Linux amd64.
 
 ## Example
 

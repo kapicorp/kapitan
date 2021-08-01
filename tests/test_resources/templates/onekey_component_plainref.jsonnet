@@ -1,4 +1,4 @@
-// cover https://github.com/deepmind/kapitan/issues/434
+// cover https://github.com/kapicorp/kapitan/issues/434
 local kap = import "lib/kapitan.libjsonnet";
 local inventory = kap.inventory();
 local p = inventory.parameters;

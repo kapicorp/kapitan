@@ -1,20 +1,17 @@
 # kapitan dependencies
 jsonnet==0.16.0
-pyyaml>=5.3.1
+pyyaml>=5.4
 toml==0.10.1
-Jinja2>=2.11.2
+Jinja2>=2.11.3
 jsonschema==3.2.0
 python-gnupg==0.4.6
 six>=1.15.0
-cryptography>=3.2
+cryptography>=3.3.2
 google-api-python-client==1.7.11
-boto3>=1.14.3
-# Can be removed once https://github.com/boto/botocore/issues/2187 is resolved
-urllib3==1.25.10
+boto3>=1.17.101
 requests==2.23.0
 addict==2.2.1
 yamllint>=1.23.0
-cffi
 rfc3987==1.3.8
 GitPython==3.1.3
 hvac==0.10.4

@@ -65,7 +65,7 @@ parameters:
 
 ### Example
 
-Say we want to fetch the source code from our kapitan repository, specifically, `deepmind/kapitan/kapitan/version.py`. Let's create a very simple target file `inventory/targets/kapitan-example.yml`.
+Say we want to fetch the source code from our kapitan repository, specifically, `kapicorp/kapitan/kapitan/version.py`. Let's create a very simple target file `inventory/targets/kapitan-example.yml`.
 
 ```yaml
 parameters:
@@ -75,7 +75,7 @@ parameters:
     dependencies:
     - type: git
       output_path: source/kapitan
-      source: git@github.com:deepmind/kapitan.git
+      source: git@github.com:kapicorp/kapitan.git
       subdir: kapitan
       ref: master
     compile:
@@ -89,16 +89,16 @@ Then run:
 
 ```shell
 $ kapitan compile --fetch -t kapitan-example
-Dependency git@github.com:deepmind/kapitan.git : fetching now
-Dependency git@github.com:deepmind/kapitan.git : successfully fetched
-Dependency git@github.com:deepmind/kapitan.git : saved to source/kapitan
+Dependency git@github.com:kapicorp/kapitan.git : fetching now
+Dependency git@github.com:kapicorp/kapitan.git : successfully fetched
+Dependency git@github.com:kapicorp/kapitan.git : saved to source/kapitan
 Compiled kapitan-example (0.02s)
 
 $ ls source
 kapitan
 ```
 
-This will download the kapitan repository (deepmind/kapitan), copy the sub-directory `kapitan` and save it to `source/kapitan`. Therefore, `deepmind/kapitan/kapitan` corresponds to `source/kapitan` locally.
+This will download the kapitan repository (kapicorp/kapitan), copy the sub-directory `kapitan` and save it to `source/kapitan`. Therefore, `kapicorp/kapitan/kapitan` corresponds to `source/kapitan` locally.
 
 Note that even if you are not using `subdir` parameter, you can and should specify the repository name in the `output_path` parameter. If you only specify `source` as the `output_path`, then all the kapitan files will be under `source` and not `source/kapitan`.
 
@@ -131,7 +131,7 @@ parameters:
 
 ### Example
 
-Say we want to download kapitan README.md file. Since it's on Github, we can access it as https://raw.githubusercontent.com/deepmind/kapitan/master/README.md. Using the following inventory, we can copy this to our target folder:
+Say we want to download kapitan README.md file. Since it's on Github, we can access it as https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md. Using the following inventory, we can copy this to our target folder:
 
 ```yaml
 parameters:
@@ -141,7 +141,7 @@ parameters:
     dependencies:
     - type: https
       output_path: README.md
-      source: https://raw.githubusercontent.com/deepmind/kapitan/master/README.md
+      source: https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md
     compile:
     - input_paths:
       - README.md
@@ -153,9 +153,9 @@ Then run:
 
 ```shell
 $ kapitan compile --fetch -t kapitan-example
-Dependency https://raw.githubusercontent.com/deepmind/kapitan/master/README.md : fetching now
-Dependency https://raw.githubusercontent.com/deepmind/kapitan/master/README.md : successfully fetched
-Dependency https://raw.githubusercontent.com/deepmind/kapitan/master/README.md : saved to README.md
+Dependency https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md : fetching now
+Dependency https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md : successfully fetched
+Dependency https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md : saved to README.md
 Compiled kapitan-example (0.02s)
 
 $ ls
@@ -171,7 +171,10 @@ Setting `unpack: True` will unpack zip or tar files onto the `output_path`. In s
 ## Helm type
 
 Fetches helm charts and any specific subcharts in the `requirements.yaml` file.
-Currently only works on linux with the `helm_fetch_binding`.
+
+`helm_path` can be used to specify where the `helm` binary name or path.
+It defaults to the value of the `KAPITAN_HELM_PATH` environment var or simply to `helm` if neither is set.
+You should specify only if you don't want the default behavior.
 
 ### Usage
 
@@ -184,6 +187,7 @@ parameters:
       source: http[s]://<helm_chart_repository_url>
       version: <specific chart version>
       chart_name: <name of chart>
+      helm_path: <helm binary>
 ```
 
 
@@ -213,8 +217,7 @@ parameters:
             enabled: false
         helm_params:
           namespace: monitoring
-          name_template: prometheus
-          release_name: prometheus
+          name: prometheus
 ```
 
 Then run:
@@ -266,8 +269,7 @@ parameters:
             enabled: false
         helm_params:
           namespace: monitoring
-          name_template: prometheus
-          release_name: prometheus
+          name: prometheus
 ```
 
 Then run:

@@ -1,0 +1,21 @@
+parameters:
+  kapitan:
+    vars:
+      target: jinja2-input-params
+    compile:
+      - output_path: test-1/
+        input_type: jinja2
+        input_paths:
+          - templates/pod.yml
+        input_params:
+          name: test1
+          namespace: ns1
+      - output_path: test-2/
+        input_type: jinja2
+        input_paths:
+          - templates/pod.yml
+        input_params:
+          name: test2
+          namespace: ns2
+
+

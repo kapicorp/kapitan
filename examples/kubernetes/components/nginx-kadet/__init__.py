@@ -17,9 +17,7 @@ svc_port.root.targetPort = 80
 
 
 def main():
-    output = kadet.BaseObj()
-    output.root.nginx_deployment = kubelib.Deployment(name=name, labels=labels, containers=[nginx_container])
-    output.root.nginx_service = kubelib.Service(
-        name=name, labels=labels, ports=[svc_port], selector=svc_selector
-    )
-    return output
+    return {
+        "nginx_deployment": kubelib.Deployment(name=name, labels=labels, containers=[nginx_container]),
+        "nginx_service": kubelib.Service(name=name, labels=labels, ports=[svc_port], selector=svc_selector),
+    }

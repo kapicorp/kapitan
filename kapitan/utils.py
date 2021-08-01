@@ -21,9 +21,21 @@ from collections import Counter, defaultdict
 from functools import lru_cache, wraps
 from hashlib import sha256
 
+JSONNET_AVAILABLE = True
+try:
+    import _gojsonnet as jsonnet
+
+    logging.debug("Using GO jsonnet over C jsonnet")
+except ImportError:
+    try:
+        import _jsonnet as jsonnet
+    except ImportError:
+        JSONNET_AVAILABLE = False
+
 import jinja2
 import requests
 import yaml
+
 from kapitan import cached, defaults
 from kapitan.errors import CompileError
 from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
@@ -36,11 +48,6 @@ from distutils.dir_util import mkpath
 
 
 logger = logging.getLogger(__name__)
-
-try:
-    import _jsonnet as jsonnet
-except ImportError as e:
-    logger.debug(f"Could not import jsonnet: {e}")
 
 
 try:
@@ -64,7 +71,7 @@ def hashable_lru_cache(func):
         try:
             return json.loads(value)
         except Exception:
-            logger.debug(f"hashable_lru_cache: {value} not serialiseable, using generic lru_cache instead")
+            logger.debug("hashable_lru_cache: %s not serialiseable, using generic lru_cache instead", value)
             return value
 
     def func_with_serialized_params(*args, **kwargs):
@@ -440,9 +447,9 @@ def check_version():
                     f"Option 2: Downgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n"
                 )
 
-            print(f"Docker: docker pull deepmind/kapitan:{dot_kapitan_version}")
+            print(f"Docker: docker pull kapicorp/kapitan:{dot_kapitan_version}")
             print(f"Pip (user): pip3 install --user --upgrade kapitan=={dot_kapitan_version}\n")
-            print("Check https://github.com/deepmind/kapitan#quickstart for more info.\n")
+            print("Check https://github.com/kapicorp/kapitan#quickstart for more info.\n")
             print(
                 "If you know what you're doing, you can skip this check by adding '--ignore-version-check'."
             )
@@ -496,7 +503,12 @@ def unpack_downloaded_file(file_path, output_path, content_type):
         zfile.extractall(output_path)
         zfile.close()
         is_unpacked = True
-    elif content_type in ["application/octet-stream", "application/x-gzip"]:
+    elif content_type in [
+        "application/octet-stream",
+        "application/x-gzip",
+        "application/x-compressed",
+        "application/x-compressed-tar",
+    ]:
         if re.search(r"(\.tar\.gz|\.tgz)$", file_path):
             tar = tarfile.open(file_path)
             tar.extractall(path=output_path)
@@ -504,10 +516,10 @@ def unpack_downloaded_file(file_path, output_path, content_type):
             is_unpacked = True
         else:
             extension = re.findall(r"\..*$", file_path)[0]
-            logger.debug(f"File extension {extension} not suported")
+            logger.debug("File extension %s not suported", extension)
             is_unpacked = False
     else:
-        logger.debug(f"Content type {content_type} not suported")
+        logger.debug("Content type %s not suported", content_type)
         is_unpacked = False
     return is_unpacked
 
@@ -533,10 +545,10 @@ def safe_copy_file(src, dst):
         dir = os.path.dirname(dst)
 
     if os.path.isfile(dst):
-        logger.warning("Not updating {} (file already exists)".format(dst))
+        logger.warning("Not updating %s (file already exists)", dst)
         return (dst, 0)
     _copy_file_contents(src, dst)
-    logger.debug("Copied {} to {}".format(src, dir))
+    logger.debug("Copied %s to %s", src, dir)
     return (dst, 1)
 
 
@@ -565,7 +577,7 @@ def safe_copy_tree(src, dst):
         dst_name = os.path.join(dst, name)
 
         if name.startswith("."):
-            logger.debug("Not copying {}".format(src_name))
+            logger.debug("Not copying %s", src_name)
             continue
         if os.path.isdir(src_name):
             outputs.extend(safe_copy_tree(src_name, dst_name))

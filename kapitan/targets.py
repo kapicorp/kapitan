@@ -31,7 +31,7 @@ from kapitan.inputs.kadet import Kadet
 from kapitan.inputs.external import External
 from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.resources import inventory_reclass
-from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
+from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache, JSONNET_AVAILABLE
 from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
 from reclass.errors import NotFoundError, ReclassException
@@ -40,9 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 def check_jsonnet_import():
-    try:
-        import _jsonnet
-    except ImportError:
+    if not JSONNET_AVAILABLE:
         logger.info(
             "Note: jsonnet is not yet supported on ARM/M1. You can still use kadet and jinja2 for templating"
         )
@@ -98,14 +96,6 @@ def compile_targets(
 
         # append "compiled" to output_path so we can safely overwrite it
         compile_path = os.path.join(output_path, "compiled")
-        worker = partial(
-            compile_target,
-            search_paths=search_paths,
-            compile_path=temp_compile_path,
-            ref_controller=ref_controller,
-            inventory_path=inventory_path,
-            **kwargs,
-        )
 
         if not target_objs:
             raise CompileError("Error: no targets found")
@@ -130,6 +120,16 @@ def compile_targets(
             fetch_dependencies(
                 output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
             )
+
+        worker = partial(
+            compile_target,
+            search_paths=search_paths,
+            compile_path=temp_compile_path,
+            ref_controller=ref_controller,
+            inventory_path=inventory_path,
+            globals_cached=cached.as_dict(),
+            **kwargs,
+        )
 
         # compile_target() returns None on success
         # so p is only not None when raising an exception
@@ -418,12 +418,15 @@ def search_targets(inventory_path, targets, labels):
     return targets_found
 
 
-def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
+def compile_target(target_obj, search_paths, compile_path, ref_controller, globals_cached=None, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
+
+    if globals_cached:
+        cached.from_dict(globals_cached)
 
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
@@ -431,6 +434,8 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
 
         if input_type == "jinja2":
             input_compiler = Jinja2(compile_path, search_paths, ref_controller)
+            if "input_params" in comp_obj:
+                input_compiler.set_input_params(comp_obj["input_params"])
         elif input_type == "jsonnet":
             input_compiler = Jsonnet(compile_path, search_paths, ref_controller)
         elif input_type == "kadet":
@@ -438,15 +443,10 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             if "input_params" in comp_obj:
                 input_compiler.set_input_params(comp_obj["input_params"])
         elif input_type == "helm":
-            input_compiler = Helm(compile_path, search_paths, ref_controller)
-            if "helm_values" in comp_obj:
-                input_compiler.dump_helm_values(comp_obj["helm_values"])
-            if "helm_params" in comp_obj:
-                input_compiler.set_helm_params(comp_obj["helm_params"])
-            if "helm_values_files" in comp_obj:
-                input_compiler.set_helm_values_files(comp_obj["helm_values_files"])
+            input_compiler = Helm(compile_path, search_paths, ref_controller, comp_obj)
         elif input_type == "copy":
-            input_compiler = Copy(compile_path, search_paths, ref_controller)
+            ignore_missing = comp_obj.get("ignore_missing", False)
+            input_compiler = Copy(compile_path, search_paths, ref_controller, ignore_missing)
         elif input_type == "remove":
             input_compiler = Remove(compile_path, search_paths, ref_controller)
         elif input_type == "external":
@@ -459,6 +459,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwa
             err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
             raise CompileError(err_msg.format(input_type))
 
+        # logger.info("about to compile %s ", target_obj["target_full_path"])
         input_compiler.make_compile_dirs(target_name, output_path)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 
@@ -477,7 +478,56 @@ def valid_target_obj(target_obj, require_compile=True):
         "type": "object",
         "properties": {
             "vars": {"type": "object"},
-            "secrets": {"type": "object"},
+            "secrets": {
+                "type": "object",
+                "properties": {
+                    "gpg": {
+                        "type": "object",
+                        "properties": {
+                            "recipients": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {"type": "string"},
+                                        "fingerprint": {"type": "string"},
+                                    },
+                                },
+                            },
+                        },
+                        "required": ["recipients"],
+                    },
+                    "gkms": {
+                        "type": "object",
+                        "properties": {"key": {"type": "string"}},
+                        "required": ["key"],
+                    },
+                    "awskms": {
+                        "type": "object",
+                        "properties": {"key": {"type": "string"}},
+                        "required": ["key"],
+                    },
+                    "azkms": {
+                        "type": "object",
+                        "properties": {"key": {"type": "string"}},
+                        "required": ["key"],
+                    },
+                    "vaultkv": {
+                        "type": "object",
+                        "properties": {
+                            "VAULT_ADDR": {"type": "string"},
+                            "VAULT_NAMESPACE": {"type": "string"},
+                            "VAULT_SKIP_VERIFY": {"type": "string"},
+                            "VAULT_CLIENT_KEY": {"type": "string"},
+                            "VAULT_CLIENT_CERT": {"type": "string"},
+                            "auth": {"enum": ["token", "userpass", "ldap", "github", "approle"]},
+                            "engine": {"type": "string"},
+                            "mount": {"type": "string"},
+                        },
+                    },
+                },
+                "additionalProperties": False,
+            },
             "compile": {
                 "type": "array",
                 "items": {
@@ -492,12 +542,8 @@ def valid_target_obj(target_obj, require_compile=True):
                         "helm_values_files": {"type": "array"},
                         "helm_params": {
                             "type": "object",
-                            "properties": {
-                                "namespace": {"type": "string"},
-                                "name_template": {"type": "string"},
-                                "release_name": {"type": "string"},
-                            },
-                            "additionalProperties": False,
+                            "properties": {"name": {"type": "string"}},
+                            "additionalProperties": True,
                         },
                         "input_params": {"type": "object"},
                         "env_vars": {"type": "object"},
@@ -636,7 +682,7 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
     """Throws *InventoryError* if parameters.kapitan.vars.target is not set,
     or target does not have a corresponding yaml file in *inventory_path*
     """
-    logger.debug(f"validating target name matches the name of yml file {target_filename}")
+    logger.debug("validating target name matches the name of yml file %s", target_filename)
     try:
         target_name = target_obj["vars"]["target"]
     except KeyError:
@@ -661,12 +707,12 @@ def schema_validate_compiled(args):
     validates compiled output according to schemas specified in the inventory
     """
     if not os.path.isdir(args.compiled_path):
-        logger.error(f"compiled-path {args.compiled_path} not found")
+        logger.error("compiled-path %s not found", args.compiled_path)
         sys.exit(1)
 
     if not os.path.isdir(args.schemas_path):
         os.makedirs(args.schemas_path)
-        logger.info(f"created schema-cache-path at {args.schemas_path}")
+        logger.info("created schema-cache-path at %s", args.schemas_path)
 
     worker = partial(schema_validate_kubernetes_output, cache_dir=args.schemas_path)
     pool = multiprocessing.Pool(args.parallelism)
@@ -708,9 +754,7 @@ def create_validate_mapping(target_objs, compiled_path):
     for target_obj in target_objs:
         target_name = target_obj["vars"]["target"]
         if "validate" not in target_obj:
-            logger.debug(
-                "target '{}' does not have 'validate' parameter in inventory. skipping".format(target_name)
-            )
+            logger.debug("target '%s' does not have 'validate' parameter in inventory. skipping", target_name)
             continue
 
         for validate_item in target_obj["validate"]:
@@ -723,11 +767,13 @@ def create_validate_mapping(target_objs, compiled_path):
                 for output_path in validate_item["output_paths"]:
                     full_output_path = os.path.join(compiled_path, target_name, output_path)
                     if not os.path.isfile(full_output_path):
-                        logger.warning(f"{output_path} does not exist for target '{target_name}'. skipping")
+                        logger.warning(
+                            "%s does not exist for target '%s'. skipping", output_path, target_name
+                        )
                         continue
                     validate_files_map[kind_version_pair].append(full_output_path)
             else:
-                logger.warning(f"type {validate_type} is not supported for validation. skipping")
+                logger.warning("type %s is not supported for validation. skipping", validate_type)
 
     return validate_files_map
 

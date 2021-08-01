@@ -201,7 +201,9 @@ def fingerprint_non_expired(recipient_name):
                 return key["fingerprint"]
             else:
                 logger.debug(
-                    f"Key for recipient: {recipient_name} with fingerprint: {key['fingerprint']} has expired, skipping"
+                    "Key for recipient: %s with fingerprint: %s has expired, skipping",
+                    recipient_name,
+                    key["fingerprint"],
                 )
         raise GPGError(f"Could not find valid key for recipient: {recipient_name}")
     except IndexError as iexp:

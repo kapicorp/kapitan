@@ -1,6 +1,7 @@
 # dependencies:
 # pip install mkdocs mkdocs-material pymdown-extensions
 site_name: Kapitan documentation
+site_url: 'https://kapitan.dev'
 theme: material
 use_directory_urls: true
 nav:
@@ -44,5 +45,5 @@ markdown_extensions:
   - markdown_include.include:
       base_path: docs
 
-repo_name: 'deepmind/kapitan'
-repo_url: 'https://github.com/deepmind/kapitan'
+repo_name: 'kapicorp/kapitan'
+repo_url: 'https://github.com/kapicorp/kapitan'

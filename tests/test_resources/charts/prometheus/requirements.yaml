@@ -2,6 +2,6 @@ dependencies:
 
   - name: kube-state-metrics
     version: "2.7.*"
-    repository: https://kubernetes-charts.storage.googleapis.com/
+    repository: https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/
     condition: kubeStateMetrics.enabled
 

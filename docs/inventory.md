@@ -341,7 +341,7 @@ parameters:
 ## Example
 
 Lets say we want to fetch a class from our kapitan repository, specifically
-`deepmind/kapitan/tree/master/examples/docker/inventory/classes/dockerfiles.yml`. Lets create a simple target file `docker.yml`
+`kapicorp/kapitan/tree/master/examples/docker/inventory/classes/dockerfiles.yml`. Lets create a simple target file `docker.yml`
 
 **note**: [external dependencies](external_dependencies.md) are used to fetch dependency items in this example.
 
@@ -365,16 +365,16 @@ parameters:
       target: docker
     inventory:
       - type: git
-        source: https://github.com/deepmind/kapitan
+        source: https://github.com/kapicorp/kapitan
         subdir: examples/docker/inventory/classes/
         output_path: classes/
     dependencies:
       - type: git
-        source: https://github.com/deepmind/kapitan
+        source: https://github.com/kapicorp/kapitan
         subdir: examples/docker/components
         output_path: components/
       - type: git
-        source: https://github.com/deepmind/kapitan
+        source: https://github.com/kapicorp/kapitan
         subdir: examples/docker/templates
         output_path: templates/
   dockerfiles:
@@ -389,11 +389,11 @@ Then run:
 $ kapitan compile --fetch
 [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
 [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
-Inventory https://github.com/deepmind/kapitan: fetching now
-Inventory https://github.com/deepmind/kapitan: successfully fetched
-Inventory https://github.com/deepmind/kapitan: saved to inventory/classes
-Dependency https://github.com/deepmind/kapitan: saved to components
-Dependency https://github.com/deepmind/kapitan: saved to templates
+Inventory https://github.com/kapicorp/kapitan: fetching now
+Inventory https://github.com/kapicorp/kapitan: successfully fetched
+Inventory https://github.com/kapicorp/kapitan: saved to inventory/classes
+Dependency https://github.com/kapicorp/kapitan: saved to components
+Dependency https://github.com/kapicorp/kapitan: saved to templates
 Compiled docker (0.11s)
 ```
 
@@ -408,16 +408,16 @@ parameters:
       target: docker
     inventory:
       - type: https
-        source: https://raw.githubusercontent.com/deepmind/kapitan/master/examples/docker/inventory/classes/dockerfiles.yml
+        source: https://raw.githubusercontent.com/kapicorp/kapitan/master/examples/docker/inventory/classes/dockerfiles.yml
         output_path: classes/dockerfiles.yml
 
     dependencies:
       - type: git
-        source: https://github.com/deepmind/kapitan
+        source: https://github.com/kapicorp/kapitan
         subdir: examples/docker/components
         output_path: components/
       - type: git
-        source: https://github.com/deepmind/kapitan
+        source: https://github.com/kapicorp/kapitan
         subdir: examples/docker/templates
         output_path: templates/
   dockerfiles:
@@ -432,13 +432,13 @@ Then run:
 $ kapitan compile --fetch
 [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
 [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
-Inventory https://raw.githubusercontent.com/deepmind/.../classes/dockerfiles.yml: fetching now
-Inventory https://raw.githubusercontent.com/deepmind/.../classes/dockerfiles.yml: successfully fetched
-Inventory https://raw.githubusercontent.com/deepmind/.../classes/dockerfiles.yml: saved to inventory/classes/dockerfiles.yml
-Dependency https://github.com/deepmind/kapitan: fetching now
-Dependency https://github.com/deepmind/kapitan: successfully fetched
-Dependency https://github.com/deepmind/kapitan: saved to components
-Dependency https://github.com/deepmind/kapitan: saved to templates
+Inventory https://raw.githubusercontent.com/kapicorp/.../classes/dockerfiles.yml: fetching now
+Inventory https://raw.githubusercontent.com/kapicorp/.../classes/dockerfiles.yml: successfully fetched
+Inventory https://raw.githubusercontent.com/kapicorp/.../classes/dockerfiles.yml: saved to inventory/classes/dockerfiles.yml
+Dependency https://github.com/kapicorp/kapitan: fetching now
+Dependency https://github.com/kapicorp/kapitan: successfully fetched
+Dependency https://github.com/kapicorp/kapitan: saved to components
+Dependency https://github.com/kapicorp/kapitan: saved to templates
 Compiled docker (0.14s)
 ```
 
