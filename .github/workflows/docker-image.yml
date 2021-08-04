@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@master
