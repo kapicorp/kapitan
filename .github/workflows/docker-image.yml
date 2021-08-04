@@ -1,11 +1,17 @@
 ---
 name: Docker Build and Push
-on: [push, pull_request]
+on:
+  push: {}
+  pull_request: {}
+  workflow_run:
+    workflows:
+      - Python Tests
+    types:
+      - completed
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    needs: test
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@master

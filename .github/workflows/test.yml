@@ -1,11 +1,17 @@
 ---
 name: Python Tests
-on: [push, pull_request]
+on:
+  push: {}
+  pull_request: {}
+  workflow_run:
+    workflows:
+      - Python Lint
+    types:
+      - completed
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    needs: lint
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9]
