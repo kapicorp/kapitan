@@ -542,7 +542,7 @@ def main():
     )
     args = parser.parse_args()
 
-    if getattr(args, 'func', None) == generate_inventory and args.pattern and args.target_name == "":
+    if getattr(args, "func", None) == generate_inventory and args.pattern and args.target_name == "":
         parser.error("--pattern requires --target_name")
 
     logger.debug("Running with args: %s", args)
