@@ -8,9 +8,6 @@
 import subprocess
 import re
 import logging
-import os
-import shutil
-from distutils.dir_util import copy_tree
 
 from kapitan.inputs.base import InputType
 
@@ -42,19 +39,15 @@ class External(InputType):
 
             args = [external_path]
             args.extend(self.args)
-            args = " ".join(args)
 
             # compile_path (str): Path to current target compiled directory
-            args = re.sub(r"(\${compiled_target_dir})", compile_path, args)
+            args = [re.sub(r"(\${compiled_target_dir})", compile_path, arg) for arg in args]
 
             logger.debug("Executing external input with command '%s' and env vars '%s'.", args, self.env_vars)
-
             external_result = subprocess.run(
                 args,
-                env=self.env_vars,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                shell=True,
                 encoding="utf8",
             )
 
