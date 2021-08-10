@@ -38,18 +38,23 @@ class InputType(object):
 
         # expand any globbed paths, taking into account provided search paths
         input_paths = []
-        for input_path in comp_obj["input_paths"]:
-            globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
-            inputs = list(itertools.chain.from_iterable(globbed_paths))
-            # remove duplicate inputs
-            inputs = set(inputs)
-            ignore_missing = comp_obj.get("ignore_missing", False)
-            if len(inputs) == 0 and not ignore_missing:
-                raise CompileError(
-                    "Compile error: {} for target: {} not found in "
-                    "search_paths: {}".format(input_path, ext_vars["target"], self.search_paths)
-                )
-            input_paths.extend(inputs)
+
+        if input_type == "external":
+            input_paths = comp_obj["input_paths"]
+
+        else:
+            for input_path in comp_obj["input_paths"]:
+                globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
+                inputs = list(itertools.chain.from_iterable(globbed_paths))
+                # remove duplicate inputs
+                inputs = set(inputs)
+                ignore_missing = comp_obj.get("ignore_missing", False)
+                if len(inputs) == 0 and not ignore_missing:
+                    raise CompileError(
+                        "Compile error: {} for target: {} not found in "
+                        "search_paths: {}".format(input_path, ext_vars["target"], self.search_paths)
+                    )
+                input_paths.extend(inputs)
 
         for input_path in input_paths:
             self.compile_input_path(input_path, comp_obj, ext_vars, **kwargs)
