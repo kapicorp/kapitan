@@ -552,15 +552,15 @@ parameters:
     compile:
       - input_type: external
         input_paths:
-          - /usr/local/bin/ytt # path to ytt on system
-        output_path: .
+          - ytt # path to ytt on system
+        output_path: ingresses/ingresses.yaml
         args:
           - -f
           - ingresses/ # directory with ingresses
           - -f
           - ytt/remove.yaml # custom ytt script
           - ">"
-          - \${compiled_target_dir}/ingresses/ingresses.yaml # final merged result
+          - \${compiled_target_dir} # will be replace to /tmp/tmp<random>.kapitan/compiled/<target>/ingresses/ingresses.yaml
 ```
 
 *Supported output types*: N/A (no need to specify `output_type`)
