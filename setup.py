@@ -9,8 +9,7 @@
 
 from setuptools import find_packages, setup
 
-from kapitan.version import (AUTHOR, AUTHOR_EMAIL, DESCRIPTION, LICENCE,
-                             PROJECT_NAME, URL, VERSION)
+from kapitan.version import AUTHOR, AUTHOR_EMAIL, DESCRIPTION, LICENCE, PROJECT_NAME, URL, VERSION
 
 
 # From https://github.com/pypa/pip/issues/3610#issuecomment-356687173
