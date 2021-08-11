@@ -5,12 +5,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"Project description variables"
+"""Project description variables."""
 
 PROJECT_NAME = "kapitan"
-VERSION = '0.29.5'
+VERSION = "0.30.0-rc.0a"
 DESCRIPTION = "Generic templated configuration management for Kubernetes, " "Terraform and other things"
 AUTHOR = "Ricardo Amaro"
-AUTHOR_EMAIL = "ramaro@google.com"
+AUTHOR_EMAIL = "ramaro@kapicorp.com"
 LICENCE = "Apache License 2.0"
 URL = "https://github.com/kapicorp/kapitan"
