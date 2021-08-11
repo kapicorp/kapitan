@@ -1,6 +1,6 @@
 # Kapitan: Generic templated configuration management for Kubernetes, Terraform and other things
 
-[![Build Status](https://travis-ci.org/kapicorp/kapitan.svg?branch=master)](https://travis-ci.org/kapicorp/kapitan)
+![Python Tests](https://github.com/kapicorp/kapitan/actions/workflows/test.yml/badge.svg)
 ![](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)
 ![](https://img.shields.io/pypi/dm/kapitan)
 ![](https://img.shields.io/docker/pulls/deepmind/kapitan)
