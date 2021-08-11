@@ -9,7 +9,7 @@
 
 PROJECT_NAME = "kapitan"
 VERSION = "0.30.0rc0a"
-DESCRIPTION = "Generic templated configuration management for Kubernetes, " "Terraform and other things"
+DESCRIPTION = "Generic templated configuration management for Kubernetes, Terraform and other things"
 AUTHOR = "Ricardo Amaro"
 AUTHOR_EMAIL = "ramaro@kapicorp.com"
 LICENCE = "Apache License 2.0"
