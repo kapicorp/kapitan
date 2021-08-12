@@ -1,3 +1,17 @@
+## 0.30.0-rc.0:
+- Helm binary support (KAP 09) (#701) special thanks @Jean-Daniel @sebradloff @srueg
+- Gojsonnet support (#753) special thanks @pvanderlinden @janeklb
+- Fix searchvar not finding vars with false values (#670) thanks @roman8422
+- Adds input params to jinja2 input type (#752) thanks @sebradloff
+- Update boto3 and remove urllib3 (#744)
+- Add support for application/x-compressed and application/x-compressed-tar dependencies (#731) thanks @jperville
+- Relax kadet output type requirement. (#710) thanks @Jean-Daniel
+- Fix usage of undefined variable. (#707) thanks @Jean-Daniel
+- Bump reclass submodule to latest commit on develop branch (#703) thanks @simu
+- Let the logger format the message lazily. (#700) thanks @Jean-Daniel
+- Bump httplib2 from 0.18.1 to 0.19.0 (#692)
+- Ignore copy file on missing source (#687) thanks @ademariag
+
 ## 0.29.5:
 - Note for jsonnet on arm. Skip import if not used (#663)
 - Fix error for null inventory path in kadet (#664)
