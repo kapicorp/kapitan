@@ -19,6 +19,17 @@ RUN apt-get update \
     && pip install -r requirements.txt \
     && pip install .
 
+# Install gojsonnet (and golang) if INCLUDE_GOJSONNET build arg is set
+ARG INCLUDE_GOJSONNET
+ARG GOLANG_VERSION=1.16.7
+RUN \
+if [ ! -z "$INCLUDE_GOJSONNET" ]; then \
+    apt-get install --no-install-recommends -y wget; \
+    wget https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz; \
+    tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-amd64.tar.gz; \
+    PATH=$PATH:/usr/local/go/bin pip install ".[gojsonnet]"; \
+fi
+
 # Install Helm
 RUN apt-get install --no-install-recommends -y curl \
     && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
