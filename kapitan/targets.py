@@ -183,6 +183,7 @@ def compile_targets(
 
 
 def merge_targets(temp_compile_path, compile_path, updated_targets, tree_style_output):
+    """Calls appropriate merge function based on tree_style_output option."""
     if tree_style_output:
         if not updated_targets:
             updated_targets = os.listdir(temp_compile_path)
