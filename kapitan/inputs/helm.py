@@ -26,6 +26,7 @@ class Helm(InputType):
         self.helm_values_files = args.get("helm_values_files")
         self.helm_params = args.get("helm_params") or {}
         self.helm_path = args.get("helm_path")
+        self.file_path = None
 
         self.helm_values_file = None
         if "helm_values" in args:
@@ -49,6 +50,14 @@ class Helm(InputType):
         """
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
+
+        if self.file_path is not None:
+            raise CompileError(
+                "The same helm input was compiled with different input paths, which will give a wrong result."
+                + f" The input paths found are: {self.file_path} and {file_path}."
+                + f" The search paths were: {self.search_paths}."
+            )
+        self.file_path = file_path
 
         temp_dir = tempfile.mkdtemp()
         os.makedirs(os.path.dirname(compile_path), exist_ok=True)
