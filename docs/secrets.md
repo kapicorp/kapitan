@@ -67,6 +67,7 @@ Kapitan will inherit the secrets configuration for the specified target, and enc
 When referencing your secret in the inventory during compile, you can use the following functions to automatically generate, encrypt and save your secret:
 
 - `randomstr` - Generates a random string. You can optionally pass the length you want i.e. `||randomstr:32`
+- `randomint` - Generates a random string. You can optionally pass the length you want i.e. `||randomint:32`
 - `base64` - base64 encodes your secret; to be used as a secondary function i.e. `||randomstr|base64`
 - `sha256` - sha256 hashes your secret; to be used as a secondary function i.e. `||randomstr|sha256`. You can optionally pass a salt i.e `||randomstr|sha256:salt` -> becomes `sha256("salt:<generated random string>")`
 - `reveal` - Decrypts a secret; to be used as a secondary function, useful for reuse of a secret like for different encodings i.e `||reveal:path/to/secret|base64`
