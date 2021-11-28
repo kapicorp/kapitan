@@ -86,6 +86,7 @@ def compile_targets(
     pool = multiprocessing.Pool(parallel)
 
     try:
+        rendering_start = time.time()
         if kwargs.get("fetch_inventories", False):
             # skip classes that are not yet available
             target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=True)
@@ -119,6 +120,7 @@ def compile_targets(
             fetch_dependencies(
                 output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
             )
+        logger.info("Rendered inventory (%.2fs)", time.time() - rendering_start)
 
         worker = partial(
             compile_target,
