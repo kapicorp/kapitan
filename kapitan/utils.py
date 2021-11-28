@@ -16,6 +16,7 @@ import stat
 import sys
 import re
 import tarfile
+import traceback
 from zipfile import ZipFile
 from collections import Counter, defaultdict
 from functools import lru_cache, wraps
@@ -123,6 +124,14 @@ def sha256_string(string):
     return sha256(string.encode("UTF-8")).hexdigest()
 
 
+def _jinja_error_info(trace_data):
+    """Extract jinja2 templating related frames from traceback data"""
+    try:
+        return [x for x in trace_data if x[2] in ("top-level template code", "template", "<module>")][-1]
+    except IndexError:
+        pass
+
+
 def render_jinja2_file(name, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH, search_paths=None):
     """Render jinja2 file name with context"""
     path, filename = os.path.split(name)
@@ -136,7 +145,12 @@ def render_jinja2_file(name, context, jinja2_filters=defaults.DEFAULT_JINJA2_FIL
     )
     load_jinja2_filters(env)
     load_jinja2_filters_from_file(env, jinja2_filters)
-    return env.get_template(filename).render(context)
+    try:
+        return env.get_template(filename).render(context)
+    except jinja2.TemplateError as e:
+        # Exception misses the line number info. Retreive it from traceback
+        err_info = _jinja_error_info(traceback.extract_tb(sys.exc_info()[2]))
+        raise CompileError(f"Jinja2 TemplateError: {e}, at {err_info[0]}:{err_info[1]}")
 
 
 def render_jinja2(path, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH, search_paths=None):

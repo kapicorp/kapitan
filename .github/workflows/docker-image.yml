@@ -2,7 +2,6 @@
 name: Docker Build and Push
 on:
   push: {}
-  pull_request: {}
   workflow_run:
     workflows:
       - Python Tests
@@ -46,6 +45,7 @@ jobs:
           tags: kapicorp/kapitan:${{ format('{0}', env.REF_NAME ) }}
           push: ${{ github.event_name != 'pull_request' }}  # push image only on non-pull_requests
           file: Dockerfile
+      # TODO push and tag as latest if release (and not RC)
       - name: Build latest tag
         uses: docker/build-push-action@v2
         if: github.ref == 'refs/heads/master'
@@ -70,6 +70,7 @@ jobs:
           tags: kapicorp/kapitan:${{ format('{0}', env.MAJOR_VERSION ) }}
           file: Dockerfile
 
+      # TODO push and tag as latest if release (and not RC)
       - name: Build latest ci tag
         uses: docker/build-push-action@v2
         if: github.ref == 'refs/heads/master'

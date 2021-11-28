@@ -5,9 +5,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""
-Kapitan setup.py for PIP install
-"""
+"""Kapitan setup.py for PIP install."""
 
 from setuptools import find_packages, setup
 
@@ -16,8 +14,7 @@ from kapitan.version import AUTHOR, AUTHOR_EMAIL, DESCRIPTION, LICENCE, PROJECT_
 
 # From https://github.com/pypa/pip/issues/3610#issuecomment-356687173
 def install_deps():
-    """Reads requirements.txt and preprocess it
-    to be feed into setuptools.
+    """Reads requirements.txt and preprocess it to be feed into setuptools.
 
     This is the only possible way (we found)
     how requirements.txt can be reused in setup.py
@@ -60,12 +57,13 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Build Tools",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     keywords="jsonnet kubernetes reclass jinja",
     py_modules=["kapitan"],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     packages=find_packages(),
     include_package_data=True,
     dependency_links=new_links,
