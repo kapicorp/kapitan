@@ -2,7 +2,6 @@
 name: Docker Build and Push
 on:
   push: {}
-  pull_request: {}
   workflow_run:
     workflows:
       - Python Tests
