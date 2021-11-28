@@ -60,7 +60,7 @@ Run `make format_codestyle` before submitting.
 
 - Create a branch named `release-v<NUMBER>`. Use `v0.*.*-rc.*` if you want pre-release versions to be uploaded.
 - Update CHANGELOG.md with the release changes.
-- Once reviewed and merged, Travis will auto-release.
+- Once reviewed and merged, Github Actions will auto-release.
 - The merge has to happen with a merge commit not with squash/rebase so that the commit message still mentions `kapicorp/release-v*` inside.
 
 ## Updating gh-pages docs
