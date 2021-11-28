@@ -1,5 +1,5 @@
 # Build the virtualenv for Kapitan
-FROM python:3.7-slim-stretch AS python-builder
+FROM python:3.8-slim-stretch AS python-builder
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
@@ -27,7 +27,7 @@ RUN apt-get install --no-install-recommends -y curl \
     && rm get_helm.sh
 
 # Final image with virtualenv built in previous step
-FROM python:3.7-slim-stretch
+FROM python:3.8-slim-stretch
 
 COPY --from=python-builder /opt/venv /opt/venv
 
