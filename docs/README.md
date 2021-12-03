@@ -70,8 +70,6 @@ docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan -h
 
 On Linux you can add `-u $(id -u)` to `docker run` to preserve file permissions.
 
-For CI/CD usage, check out [CI.md](CI.md)
-
 #### Pip
 
 Kapitan needs Python 3.6.
@@ -141,8 +139,6 @@ Compiled minikube-es
 ### Miscellaneous
 
 - [Usage](usage.md)
-- [Continuous Integration](CI.md)
-- [Set up kapitan on older Python systems](pyenv-scl.md)
 
 ### Examples
 
