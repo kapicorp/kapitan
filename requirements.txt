@@ -47,6 +47,7 @@ gitdb==4.0.7
     # via gitpython
 gitpython==3.1.20
     # via -r requirements.txt
+gojsonnet==0.17.0
 google-api-core==1.31.1
     # via google-api-python-client
 google-api-python-client==2.15.0
