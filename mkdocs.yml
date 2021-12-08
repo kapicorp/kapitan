@@ -16,8 +16,6 @@ nav:
   - Manifest validation: validate.md
   - External dependency management: external_dependencies.md
 - Miscellaneous:
-  - Continuous Integration: CI.md
-  - Set up kapitan on older Python systems: pyenv-scl.md
   - Usage: usage.md
   - Proposals: proposals.md
 - Examples:
