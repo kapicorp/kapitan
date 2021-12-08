@@ -25,7 +25,7 @@ RUN python -m venv /opt/venv \
     && pip install --upgrade pip yq wheel \
     && export PATH=$PATH:/usr/local/go/bin \
     && pip install -r requirements.txt \
-    && pip install .
+    && pip install .[gojsonnet]
 
 # Install Helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
