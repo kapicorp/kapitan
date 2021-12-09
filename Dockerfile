@@ -13,15 +13,22 @@ ENV PATH="/opt/venv/bin:${PATH}"
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
-        build-essential \
-    && python -m venv /opt/venv \
+        curl \
+        build-essential
+
+# Install Go (for go-jsonnet)
+RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.17.3.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go.tar.gz \
+    && rm go.tar.gz
+
+RUN python -m venv /opt/venv \
     && pip install --upgrade pip yq wheel \
+    && export PATH=$PATH:/usr/local/go/bin \
     && pip install -r requirements.txt \
-    && pip install .
+    && pip install .[gojsonnet]
 
 # Install Helm
-RUN apt-get install --no-install-recommends -y curl \
-    && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
+RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
     && chmod 700 get_helm.sh \
     && HELM_INSTALL_DIR=/opt/venv/bin ./get_helm.sh --no-sudo \
     && rm get_helm.sh
