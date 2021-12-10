@@ -30,7 +30,7 @@ def jsonnet_file(file_path, **kwargs):
     except ImportError:
         logger.info(
             "Note: Jsonnet is not installed or running on an unsupported architecture."
-            " You can still use other input types."
+            " See https://kapitan.dev/compile/#jsonnet"
         )
     except Exception as e:
         raise CompileError(f"Jsonnet error: failed to compile {file_path}:\n {e}")
@@ -48,7 +48,7 @@ def go_jsonnet_file(file_path, **kwargs):
     except ImportError:
         logger.info(
             "Note: Go-jsonnet is not installed or running on an unsupported architecture."
-            " You can still use other input types."
+            " See https://kapitan.dev/compile/#jsonnet"
         )
     except Exception as e:
         raise CompileError(f"Jsonnet error: failed to compile {file_path}:\n {e}")
