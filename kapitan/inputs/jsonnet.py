@@ -47,7 +47,7 @@ def go_jsonnet_file(file_path, **kwargs):
         return sys.modules["_gojsonnet"].evaluate_file(file_path, **kwargs)
     except ImportError:
         logger.info(
-            "Note: Jsonnet is not installed or running on an unsupported architecture."
+            "Note: Go-jsonnet is not installed or running on an unsupported architecture."
             " You can still use other input types."
         )
     except Exception as e:
