@@ -20,14 +20,14 @@ import yaml
 
 from kapitan import cached, defaults, setup_logging
 from kapitan.initialiser import initialise_skeleton
+from kapitan.inputs.jsonnet import jsonnet_file
 from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
 from kapitan.resources import (generate_inventory, resource_callbacks,
                                search_imports)
 from kapitan.targets import compile_targets, schema_validate_compiled
-from kapitan.utils import (check_version, from_dot_kapitan, jsonnet_file,
-                           searchvar)
+from kapitan.utils import check_version, from_dot_kapitan, searchvar
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
 logger = logging.getLogger(__name__)
@@ -100,9 +100,6 @@ def trigger_compile(args):
 def main():
     """main function for command line usage"""
     try:
-        # set 'fork' method as a more deterministic/conservative
-        # and compatible multiprocessing method for Linux and MacOS
-        # see https://github.com/kapicorp/kapitan/issues/641
         multiprocessing.set_start_method("spawn")
     # main() is explicitly multiple times in tests
     # and will raise RuntimeError
