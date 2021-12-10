@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-
+"random utils"
 # Copyright 2019 The Kapitan Authors
 # SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
 #
@@ -12,26 +11,18 @@ import json
 import logging
 import math
 import os
+import re
 import stat
 import sys
-import re
 import tarfile
 import traceback
-from zipfile import ZipFile
 from collections import Counter, defaultdict
+from distutils.dir_util import mkpath
+from distutils.errors import DistutilsFileError
+from distutils.file_util import _copy_file_contents
 from functools import lru_cache, wraps
 from hashlib import sha256
-
-JSONNET_AVAILABLE = True
-try:
-    import _gojsonnet as jsonnet
-
-    logging.debug("Using GO jsonnet over C jsonnet")
-except ImportError:
-    try:
-        import _jsonnet as jsonnet
-    except ImportError:
-        JSONNET_AVAILABLE = False
+from zipfile import ZipFile
 
 import jinja2
 import requests
@@ -41,12 +32,6 @@ from kapitan import cached, defaults
 from kapitan.errors import CompileError
 from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
 from kapitan.version import VERSION
-from distutils.errors import DistutilsFileError
-from distutils.file_util import _copy_file_contents
-from distutils.dir_util import mkpath
-
-"random utils"
-
 
 logger = logging.getLogger(__name__)
 
@@ -197,17 +182,6 @@ def file_mode(name):
     """Returns mode for file name"""
     st = os.stat(name)
     return stat.S_IMODE(st.st_mode)
-
-
-def jsonnet_file(file_path, **kwargs):
-    """
-    Evaluate file_path jsonnet file.
-    kwargs are documented in http://jsonnet.org/implementation/bindings.html
-    """
-    try:
-        return jsonnet.evaluate_file(file_path, **kwargs)
-    except Exception as e:
-        raise CompileError(f"Jsonnet error: failed to compile {file_path}:\n {e}")
 
 
 def prune_empty(d):
