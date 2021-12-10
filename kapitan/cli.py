@@ -24,8 +24,7 @@ from kapitan.inputs.jsonnet import jsonnet_file
 from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
-from kapitan.resources import (generate_inventory, resource_callbacks,
-                               search_imports)
+from kapitan.resources import generate_inventory, resource_callbacks, search_imports
 from kapitan.targets import compile_targets, schema_validate_compiled
 from kapitan.utils import check_version, from_dot_kapitan, searchvar
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
