@@ -422,6 +422,10 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
     if globals_cached:
         cached.from_dict(globals_cached)
 
+    use_go_jsonnet = kwargs.get("use_go_jsonnet", False)
+    if use_go_jsonnet:
+        logger.debug("Using go-jsonnet over jsonnet")
+
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
         output_path = comp_obj["output_path"]
@@ -431,7 +435,6 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
             if "input_params" in comp_obj:
                 input_compiler.set_input_params(comp_obj["input_params"])
         elif input_type == "jsonnet":
-            use_go_jsonnet = kwargs.get("use_go_jsonnet", False)
             input_compiler = Jsonnet(compile_path, search_paths, ref_controller, use_go=use_go_jsonnet)
         elif input_type == "kadet":
             input_compiler = Kadet(compile_path, search_paths, ref_controller)
@@ -454,7 +457,6 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
             err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
             raise CompileError(err_msg.format(input_type))
 
-        # logger.info("about to compile %s ", target_obj["target_full_path"])
         input_compiler.make_compile_dirs(target_name, output_path)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 
