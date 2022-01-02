@@ -22,7 +22,7 @@ docker = "==4.3.1"
 pyparsing = "*"
 PyYAML = ">=5.4"
 Jinja2 = ">=2.11.3"
-GitPython = "==3.1.11"
+GitPython = "==3.1.24"
 toml = ">=0.10.1"
 
 [requires]
