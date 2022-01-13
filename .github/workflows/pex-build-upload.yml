@@ -30,7 +30,7 @@ jobs:
       - name: Build Pex
         run: |-
           mkdir -p dist
-          PATH=$PATH:/tmp/go/bin pex .[gojsonnet] --python-shebang='#!/usr/bin/env python3' -m kapitan -o dist/kapitan.linux-x86_64.pex
+          PATH=$PATH:/tmp/go/bin pex .[gojsonnet] -r requirements.txt --python-shebang='#!/usr/bin/env python3' -m kapitan -o dist/kapitan.linux-x86_64.pex
       - name: Add linux-x86_64 pex to assets
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
