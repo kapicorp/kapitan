@@ -26,11 +26,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pex
           curl -fsSL -o go.tar.gz https://go.dev/dl/go1.17.3.linux-amd64.tar.gz
-          tar -C /usr/local -xzf go.tar.gz && rm go.tar.gz
+          tar -C /tmp -xzf go.tar.gz && rm go.tar.gz
       - name: Build Pex
         run: |-
           mkdir -p dist
-          PATH=$PATH:/usr/local/go/bin pex .[gojsonnet] --python-shebang='#!/usr/bin/env python3' -m kapitan -o dist/kapitan.linux-x86_64.pex
+          PATH=$PATH:/tmp/go/bin pex .[gojsonnet] --python-shebang='#!/usr/bin/env python3' -m kapitan -o dist/kapitan.linux-x86_64.pex
       - name: Add linux-x86_64 pex to artifacts
         uses: actions/upload-artifact@v2
         with:
