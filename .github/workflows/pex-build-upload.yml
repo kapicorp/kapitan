@@ -20,17 +20,19 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.x
-      - name: Install dependencies
+          python-version: '3.7 - 3.9'
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pex
-          curl -fsSL -o go.tar.gz https://go.dev/dl/go1.17.3.linux-amd64.tar.gz
-          tar -C /tmp -xzf go.tar.gz && rm go.tar.gz
       - name: Build Pex
         run: |-
           mkdir -p dist
-          PATH=$PATH:/tmp/go/bin pex .[gojsonnet] -r requirements.txt --python-shebang='#!/usr/bin/env python3' -m kapitan -o dist/kapitan.linux-x86_64.pex
+          pex .[gojsonnet] -r requirements.txt --python-shebang='#!/usr/bin/env python3' --python=python3.7 --python=python3.8 --python=python3.9 -m kapitan -o dist/kapitan.linux-x86_64.pex
       - name: Add linux-x86_64 pex to assets
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
