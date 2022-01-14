@@ -12,7 +12,7 @@ on:
 
 jobs:
   pex_build_publish:
-    # if: false  # disable
+    if: false  # disable as this is not working with multiple python versions
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: ['3.7', '3.8',  '3.9']
+          python-version: 3.x
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
