@@ -104,7 +104,7 @@ jmespath==0.10.0
     #   -r requirements.txt
     #   boto3
     #   botocore
-jsonnet==0.17.0
+jsonnet==0.18.0
     # via -r requirements.txt
 jsonschema==3.2.0
     # via -r requirements.txt
