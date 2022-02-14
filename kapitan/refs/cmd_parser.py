@@ -225,10 +225,10 @@ def ref_write(args, ref_controller):
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
             try:
-                vault_params = kap_inv_params["secrets"]["vault"]
+                vault_params = kap_inv_params["secrets"]["vaulttransit"]
             except KeyError:
                 raise KapitanError(
-                    "parameters.kapitan.secrets.vault.transit.key not defined in inventory of target {}".format(
+                    "parameters.kapitan.secrets.vaulttransit not defined in inventory of target {}".format(
                         args.target_name
                     )
                 )
