@@ -53,7 +53,8 @@ $ kapitan refs --write <secret_type>:path/to/secret/file -t <target_name> -f <se
 
 ​	where `<secret_type>` can be any of:
 
-- `base64`: base64 (not encrypted!)
+- `plain`: plain - directly written on the disk in plain text (good for random string generation on kapitan level). Not suitable for secrets.
+- `base64`: base64 (not encrypted!). Not suitable for secrets.
 - `gpg`: GPG
 - `gkms`: Google Cloud KMS
 - `awskms`: AWS KMS
