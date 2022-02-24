@@ -14,7 +14,7 @@ from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.azkms import AzureKMSSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.refs.secrets.vaultkv import VaultSecret
-from kapitan.refs.secrets.vaulttransit import VaultSecret
+from kapitan.refs.secrets.vaulttransit import VaultTransit
 from kapitan.resources import inventory_reclass
 from kapitan.utils import fatal_error, search_target_token_paths
 
@@ -240,7 +240,7 @@ def ref_write(args, ref_controller):
                 " in parameters.kapitan.secrets.vaulttransit.auth and use --target-name or use --vault-auth"
             )
 
-        secret_obj = VaultSecret(_data, vault_params)
+        secret_obj = VaultTransit(_data, vault_params)
         tag = "?{{vaulttransit:{}}}".format(token_path)
         ref_controller[tag] = secret_obj
 
@@ -457,7 +457,7 @@ def secret_update_validate(args, ref_controller):
             vaultkv = None
         try:
             # Referenced Auth
-            vkey = kap_inv_params["secrets"]["vaulttransit"]["auth"]
+            vkey = kap_inv_params["secrets"]["vaulttransit"]["key"]
         except KeyError:
             vkey = None
         try:
@@ -525,7 +525,7 @@ def secret_update_validate(args, ref_controller):
                     )
                     continue
                 secret_obj = ref_controller[token_path]
-                if vkey != secret_obj.key:
+                if vkey != secret_obj.vault_params["key"]:
                     if args.validate_targets:
                         logger.info("%s key mismatch", token_path)
                         ret_code = 1
