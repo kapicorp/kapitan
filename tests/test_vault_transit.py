@@ -58,7 +58,7 @@ class VaultTransitTest(unittest.TestCase):
             vault_container.reload()
 
         # Initialize vault, unseal, mount secret engine & add auth
-        os.environ["VAULT_ADDR"] =  f"http://127.0.0.1:{DOCKER_PORT}"
+        os.environ["VAULT_ADDR"] = f"http://127.0.0.1:{DOCKER_PORT}"
         cls.client = hvac.Client()
         init = cls.client.sys.initialize()
         cls.client.sys.submit_unseal_keys(init["keys"])
