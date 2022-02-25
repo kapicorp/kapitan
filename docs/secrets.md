@@ -8,6 +8,7 @@ Kapitan can manage references and secrets with the following key management serv
 - Azure KMS (beta)
 - Environment
 - Vaultkv (read only support)
+- Vaulttransit (encrypt, decrypt, update_key, rotate_key)
 
 If you want to get started with secrets but don't have a GPG or KMS setup, you can also use the `base64` reference type. Note that `base64` is not encrypted and is intended for development purposes only. *Do not use base64 if you're storing sensitive information!*
 
@@ -41,6 +42,13 @@ parameters:
       vaultkv:
         VAULT_ADDR: http://127.0.0.1:8200
         auth: token
+      vaulttransit:
+        VAULT_ADDR: https://vault.example.com
+        VAULT_TOKEN: s.mqWkI0uB6So0aHH0v0jyDs97
+        VAULT_SKIP_VERIFY: "True"
+        auth: token
+        mount: mytransit
+        key: 2022-02-13-test
 ```
 
 #### 2. Create Your Secret
@@ -59,6 +67,7 @@ $ kapitan refs --write <secret_type>:path/to/secret/file -t <target_name> -f <se
 - `awskms`: AWS KMS
 - `azkms`: Azure KMS
 - `vaultkv`: Hashicorp Vault with kv/kv-v2 secret engine
+- `vaulttransit`: Hashicorp Vault with transit secret engine
 
 Kapitan will inherit the secrets configuration for the specified target, and encrypt and save your secret into `<path/to/secret/file>`.
 
@@ -243,6 +252,40 @@ parameters:
         VAULT_CLIENT_KEY: /path/to/key
         VAULT_CLIENT_CERT: /path/to/cert
 ```
+
+### Vaulttransit Secret Backend - Addons
+
+Considering a key-value pair like `my_key`:`my_secret` in the path `secret/foo/bar` in a transit secret engine on the vault server, to use this as a secret use:
+
+```shell
+$ echo "any.value:whatever-you_may*like"  | kapitan refs --write vaulttransit:my_target/to/secret_inside_kapitan -t <target_name> -f -
+```
+
+Parameters in the secret file are collected from the inventory of the target we gave from CLI `-t <target_name>`. If target isn't provided then kapitan will identify the variables from the environment when revealing secret.
+
+Environment variables that can be defined in kapitan inventory are `VAULT_ADDR`, `VAULT_NAMESPACE`, `VAULT_SKIP_VERIFY`, `VAULT_CLIENT_CERT`, `VAULT_CLIENT_KEY`, `VAULT_CAPATH` & `VAULT_CACERT`.
+Extra parameters that can be defined in inventory are:
+* `auth`: specify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`
+* `mount`: specify the mount point of key's path. e.g if path=`my_mount` (default `transit`)
+* `key`: specifies the key which is used to encrypt/decrypt
+Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID`.
+
+```yaml
+parameters:
+  kapitan:
+    vars:
+      target: my_target
+      namespace: my_namespace
+    secrets:
+      vaulttransit:
+        VAULT_ADDR: https://vault.example.com
+        VAULT_TOKEN: s.mqWkI0uB6So0aHH0v0jyDs97
+        VAULT_SKIP_VERIFY: "True"
+        auth: token
+        mount: mytransit
+        key: 2022-02-13-test
+```
+
 ### Azure KMS Secret Backend
 
 To encrypt secrets using keys stored in Azure's Key Vault, a `key_id` is required to identify an Azure key object uniquely.
