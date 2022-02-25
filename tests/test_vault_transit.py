@@ -1,5 +1,7 @@
 "vault transit tests"
 
+import socket
+from contextlib import closing
 import os
 import shutil
 import tempfile
@@ -14,6 +16,15 @@ from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.vaulttransit import VaultError, VaultTransit, vault_obj
 
 
+def find_free_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(("", 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
+
+
+DOCKER_PORT = find_free_port()
+
 # Create temporary folder
 REFS_HOME = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_HOME)
@@ -22,13 +33,14 @@ REVEALER = Revealer(REF_CONTROLLER)
 # Create Vault docker container
 client = docker.from_env()
 env = {
-    "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'
+    "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:%s","tls_disable":"true"}}}'
+    % DOCKER_PORT
 }
 
 vault_container = client.containers.run(
     image="vault",
     cap_add=["IPC_LOCK"],
-    ports={"8200": "8200"},
+    ports={DOCKER_PORT: "8200"},
     environment=env,
     detach=True,
     remove=True,
