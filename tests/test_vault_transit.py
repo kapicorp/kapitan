@@ -4,7 +4,7 @@ import os
 import shutil
 import tempfile
 import unittest
-import base64 
+import base64
 from time import sleep
 
 import docker
@@ -12,7 +12,7 @@ import hvac
 from kapitan.refs import secrets
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.vaulttransit import VaultError, VaultTransit, vault_obj
-                          
+
 
 # Create temporary folder
 REFS_HOME = tempfile.mkdtemp()
@@ -53,8 +53,7 @@ class VaultTransitTest(unittest.TestCase):
         os.environ["VAULT_ROOT_TOKEN"] = init["root_token"]
         cls.client.adapter.close()
         cls.client = hvac.Client(token=init["root_token"])
-        cls.client.sys.enable_secrets_engine(
-            backend_type="transit", path="transit")
+        cls.client.sys.enable_secrets_engine(backend_type="transit", path="transit")
         test_policy = """
         path "transit/encrypt/hvac_key" {
             capabilities = [ "create", "update" ]
@@ -69,15 +68,14 @@ class VaultTransitTest(unittest.TestCase):
         os.environ["VAULT_USERNAME"] = "test_user"
         os.environ["VAULT_PASSWORD"] = "test_password"
         cls.client.sys.enable_auth_method("userpass")
-        cls.client.create_userpass(
-            username="test_user", password="test_password", policies=[policy])
+        cls.client.create_userpass(username="test_user", password="test_password", policies=[policy])
         cls.client.sys.enable_auth_method("approle")
         cls.client.create_role("test_role")
         os.environ["VAULT_ROLE_ID"] = cls.client.get_role_id("test_role")
-        os.environ["VAULT_SECRET_ID"] = cls.client.create_role_secret_id("test_role")[
-            "data"]["secret_id"]
+        os.environ["VAULT_SECRET_ID"] = cls.client.create_role_secret_id("test_role")["data"]["secret_id"]
         os.environ["VAULT_TOKEN"] = cls.client.create_token(policies=[policy], lease="1h")["auth"][
-            "client_token"]
+            "client_token"
+        ]
 
         cls.client.secrets.transit.create_key(name="hvac_key")
 
@@ -103,9 +101,7 @@ class VaultTransitTest(unittest.TestCase):
         data = base64.b64decode(vault_transit_obj.data.encode())
 
         response = self.client.secrets.transit.decrypt_data(
-            name="hvac_key",
-            mount_point="transit",
-            ciphertext=data.decode()
+            name="hvac_key", mount_point="transit", ciphertext=data.decode()
         )
 
         plaintext = base64.b64decode(response["data"]["plaintext"])
@@ -117,15 +113,13 @@ class VaultTransitTest(unittest.TestCase):
         Access non existing secret, expect error
         """
         tag = "?{vaulttransit:secret/spiderman}"
-        env = {"auth": "token", "crypto_key": "hvac_key", "always_latest":False}
+        env = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
         file_data = "foo:some_random_value"
         vault_transit_obj = VaultTransit(file_data, env)
 
         b64_file_data = base64.b64encode(file_data.encode())
         response = self.client.secrets.transit.encrypt_data(
-            name="hvac_key",
-            mount_point="transit",
-            plaintext=b64_file_data.decode()
+            name="hvac_key", mount_point="transit", plaintext=b64_file_data.decode()
         )
 
         data = response["data"]["ciphertext"].encode()
