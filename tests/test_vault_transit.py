@@ -33,14 +33,13 @@ REVEALER = Revealer(REF_CONTROLLER)
 # Create Vault docker container
 client = docker.from_env()
 env = {
-    "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:%s","tls_disable":"true"}}}'
-    % DOCKER_PORT
+    "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'
 }
 
 vault_container = client.containers.run(
     image="vault",
     cap_add=["IPC_LOCK"],
-    ports={DOCKER_PORT: "8200"},
+    ports={8200: DOCKER_PORT},
     environment=env,
     detach=True,
     remove=True,
@@ -59,6 +58,7 @@ class VaultTransitTest(unittest.TestCase):
             vault_container.reload()
 
         # Initialize vault, unseal, mount secret engine & add auth
+        os.environ["VAULT_ADDR"] =  f"http://127.0.0.1:{DOCKER_PORT}"
         cls.client = hvac.Client()
         init = cls.client.sys.initialize()
         cls.client.sys.submit_unseal_keys(init["keys"])
