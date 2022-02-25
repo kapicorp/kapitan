@@ -437,7 +437,7 @@ def main():
     )
     refs_parser.add_argument(
         "--vault-auth",
-        help="set authentication type for vaultkv secrets",
+        help="set authentication type for vault secrets",
         default=from_dot_kapitan("refs", "vault-auth", ""),
         metavar="AUTH",
     )

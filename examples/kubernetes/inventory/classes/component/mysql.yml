@@ -32,6 +32,9 @@ parameters:
     secrets:
       vaultkv:
         auth: token
+      vaulttransit:
+        auth: token
+        key: my-vault-key
   mysql:
     storage: 10G
     storage_class: standard
@@ -52,3 +55,6 @@ parameters:
 
         # This secret requires a running vault instance & vaultkv parameters either in inventory or environment
         # password_vaultkv: ?{vaultkv:targets/${target_name}/mysql/vault_secret}
+
+        # This secret requires a running vault instance & vaulttransit parameters either in inventory or environment
+        # password_transit: ?{transit:${target_name}/mysql/vault_secret}
