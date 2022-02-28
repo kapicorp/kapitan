@@ -36,10 +36,13 @@ data: dmF1bHQ6djI6SmhuM1V6dGhLY0oycytzRWlPNjBFVWlEbXV6cVVDNG1NQldwMlZqZy9ER2wrR0
 encoding: original
 type: vaulttransit
 vault_params:
+  VAULT_ADDR: http://127.0.0.1:8200
+  VAULT_SKIP_VERIFY: 'True'
+  VAULT_TOKEN: s.i53a1DL83REM61UxlJKLdQDY
   auth: token
-  mount: mytransit
-  key: 2022-02-13-test
-  version: 1
+  crypto_key: key
+  mount: transit
+  always_latest: false
 ```
 
 Encoding tells the type of data given to kapitan, if it is `original` then after decoding base64 we'll get the original secret and if it is `base64` then after decoding once we still have a base64 encoded secret and have to decode again.
@@ -52,18 +55,20 @@ parameters:
       namespace: my_namespace
     secrets:
       vaulttransit:
-        VAULT_ADDR: https://vault.example.com
-        VAULT_TOKEN: s.mqWkI0uB6So0aHH0v0jyDs97
+        VAULT_ADDR: http://vault.example.com:8200
+        VAULT_TOKEN: s.i53a1DL83REM61UxlJKLdQDY
         VAULT_SKIP_VERIFY: "True"
         auth: token
-        mount: mytransit
-        key: 2022-02-13-test
+        mount: transit
+        crypto_key: new_key   
+        always_latest: False
 ```
 Environment variables that can be defined in kapitan inventory are `VAULT_ADDR`, `VAULT_NAMESPACE`, `VAULT_SKIP_VERIFY`, `VAULT_CLIENT_CERT`, `VAULT_CLIENT_KEY`, `VAULT_CAPATH` & `VAULT_CACERT`.
 Extra parameters that can be defined in inventory are:
 * `auth`: specify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`
 * `mount`: specify the mount point of key's path. e.g if path=`alpha-secret/foo/bar` then `mount: alpha-secret` (default `secret`)
-* `key`: secret engine used, is `transit`
+* `crypto_key`: Name of the `encryption key` defined in vault
+* `always_latest`: Always rewrap ciphertext to latest rotated `crypto_key` version  
 Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID`.
 This makes the secret_inside_kapitan file accessible throughout the inventory, where we can use the secret whenever necessary like `?{vaulttransit:${target_name}/secret_inside_kapitan}`
 
