@@ -137,7 +137,6 @@ class VaultTransitTest(unittest.TestCase):
         dec_data = vault_transit_obj._decrypt(data)
         self.assertTrue(dec_data == file_data, "message")
 
-
     def test_vault_transit_update_key(self):
         """
         Checks the key udate works
