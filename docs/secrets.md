@@ -267,7 +267,8 @@ Environment variables that can be defined in kapitan inventory are `VAULT_ADDR`,
 Extra parameters that can be defined in inventory are:
 * `auth`: specify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`
 * `mount`: specify the mount point of key's path. e.g if path=`my_mount` (default `transit`)
-* `key`: specifies the key which is used to encrypt/decrypt
+* `crypto_key`: Name of the `encryption key` defined in vault
+* `always_latest`: Always rewrap ciphertext to latest rotated crypto_key version
 Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID`.
 
 ```yaml
@@ -278,12 +279,25 @@ parameters:
       namespace: my_namespace
     secrets:
       vaulttransit:
-        VAULT_ADDR: https://vault.example.com
-        VAULT_TOKEN: s.mqWkI0uB6So0aHH0v0jyDs97
+        VAULT_ADDR: http://vault.example.com:8200
+        VAULT_TOKEN: s.i53a1DL83REM61UxlJKLdQDY
         VAULT_SKIP_VERIFY: "True"
         auth: token
-        mount: mytransit
-        key: 2022-02-13-test
+        mount: transit
+        crypto_key: new_key
+        always_latest: False
+parameters:
+  target_name: secrets
+  kapitan:
+    secrets:
+      vaulttransit:
+        VAULT_ADDR: http://127.0.0.1:8200
+        VAULT_TOKEN: s.i53a1DL83REM61UxlJKLdQDY
+        VAULT_SKIP_VERIFY: "True"
+        auth: token
+        mount: transit
+        crypto_key: key
+        always_latest: False
 ```
 
 ### Azure KMS Secret Backend
