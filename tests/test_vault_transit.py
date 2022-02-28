@@ -67,11 +67,11 @@ class VaultTransitTest(unittest.TestCase):
         cls.client = hvac.Client(token=init["root_token"])
         cls.client.sys.enable_secrets_engine(backend_type="transit", path="transit")
         test_policy = """
-        path "transit/encrypt/hvac_key" {
+        path "transit/encrypt/*" {
             capabilities = [ "create", "update" ]
         }
 
-        path "transit/decrypt/hvac_key" {
+        path "transit/decrypt/*" {
             capabilities = [ "create", "update" ]
         }
         """
@@ -90,6 +90,7 @@ class VaultTransitTest(unittest.TestCase):
         ]
 
         cls.client.secrets.transit.create_key(name="hvac_key")
+        cls.client.secrets.transit.create_key(name="hvac_updated_key")
 
     @classmethod
     def tearDownClass(cls):
@@ -103,9 +104,8 @@ class VaultTransitTest(unittest.TestCase):
 
     def test_vault_transit_enc_data(self):
         """
-        Access non existing secret, expect error
+        Check the encryption works
         """
-        tag = "?{vaulttransit:secret/spiderman}"
         env = {"auth": "token", "crypto_key": "hvac_key"}
         file_data = "foo:some_random_value"
         vault_transit_obj = VaultTransit(file_data, env)
@@ -122,9 +122,8 @@ class VaultTransitTest(unittest.TestCase):
 
     def test_vault_transit_dec_data(self):
         """
-        Access non existing secret, expect error
+        Check the decryption works
         """
-        tag = "?{vaulttransit:secret/spiderman}"
         env = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
         file_data = "foo:some_random_value"
         vault_transit_obj = VaultTransit(file_data, env)
@@ -137,3 +136,26 @@ class VaultTransitTest(unittest.TestCase):
         data = response["data"]["ciphertext"].encode()
         dec_data = vault_transit_obj._decrypt(data)
         self.assertTrue(dec_data == file_data, "message")
+
+
+    def test_vault_transit_update_key(self):
+        """
+        Checks the key udate works
+        """
+        env = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
+        file_data = "foo:some_random_value"
+        vault_transit_obj = VaultTransit(file_data, env)
+
+        data = base64.b64decode(vault_transit_obj.data.encode())
+
+        self.assertTrue(vault_transit_obj.update_key("hvac_updated_key"), "message")
+        updated_ciphertext = base64.b64decode(vault_transit_obj.data)
+        self.assertNotEqual(data, updated_ciphertext, "message")
+
+        response = self.client.secrets.transit.decrypt_data(
+            name="hvac_key", mount_point="transit", ciphertext=data.decode()
+        )
+
+        plaintext = base64.b64decode(response["data"]["plaintext"])
+        file_data_b64 = base64.b64encode(file_data.encode())
+        self.assertTrue(plaintext == file_data_b64, "message")
