@@ -54,24 +54,19 @@ def get_env(parameter):
         :type namespace: str
     """
     client_parameters = {}
-    client_parameters["url"] = parameter.get(
-        "VAULT_ADDR", os.getenv("VAULT_ADDR", default=""))
+    client_parameters["url"] = parameter.get("VAULT_ADDR", os.getenv("VAULT_ADDR", default=""))
     client_parameters["namespace"] = parameter.get(
         "VAULT_NAMESPACE", os.getenv("VAULT_NAMESPACE", default="")
     )
     # VERIFY VAULT SERVER TLS CERTIFICATE
-    skip_verify = str(parameter.get("VAULT_SKIP_VERIFY",
-                      os.getenv("VAULT_SKIP_VERIFY", default="")))
+    skip_verify = str(parameter.get("VAULT_SKIP_VERIFY", os.getenv("VAULT_SKIP_VERIFY", default="")))
 
     if skip_verify.lower() == "false":
-        cert = parameter.get("VAULT_CACERT", os.getenv(
-            "VAULT_CACERT", default=""))
+        cert = parameter.get("VAULT_CACERT", os.getenv("VAULT_CACERT", default=""))
         if not cert:
-            cert_path = parameter.get(
-                "VAULT_CAPATH", os.getenv("VAULT_CAPATH", default=""))
+            cert_path = parameter.get("VAULT_CAPATH", os.getenv("VAULT_CAPATH", default=""))
             if not cert_path:
-                raise Exception(
-                    "Neither VAULT_CACERT nor VAULT_CAPATH specified")
+                raise Exception("Neither VAULT_CACERT nor VAULT_CAPATH specified")
             client_parameters["verify"] = cert_path
         else:
             client_parameters["verify"] = cert
@@ -79,10 +74,8 @@ def get_env(parameter):
         client_parameters["verify"] = False
 
     # CLIENT CERTIFICATE FOR TLS AUTHENTICATION
-    client_key = parameter.get(
-        "VAULT_CLIENT_KEY", os.getenv("VAULT_CLIENT_KEY", default=""))
-    client_cert = parameter.get(
-        "VAULT_CLIENT_CERT", os.getenv("VAULT_CLIENT_CERT", default=""))
+    client_key = parameter.get("VAULT_CLIENT_KEY", os.getenv("VAULT_CLIENT_KEY", default=""))
+    client_cert = parameter.get("VAULT_CLIENT_CERT", os.getenv("VAULT_CLIENT_CERT", default=""))
     if client_key != "" and client_cert != "":
         client_parameters["cert"] = (client_cert, client_key)
     return client_parameters
@@ -107,38 +100,32 @@ def vault_obj(vault_parameters):
         env["token"] = os.getenv("VAULT_TOKEN")
         if not env["token"]:
             try:
-                token_file = os.path.join(
-                    os.path.expanduser("~"), ".vault-token")
+                token_file = os.path.join(os.path.expanduser("~"), ".vault-token")
                 with open(token_file, "r") as f:
                     env["token"] = f.read()
                 if env["token"] == "":
                     raise VaultError("{file} is empty".format(file=token_file))
             except IOError:
-                raise VaultError(
-                    "Cannot read file {file}".format(file=token_file))
+                raise VaultError("Cannot read file {file}".format(file=token_file))
     # DIFFERENT LOGIN METHOD BASED ON AUTHENTICATION TYPE
     if auth_type == "token":
         client.token = env["token"]
     elif auth_type == "ldap":
-        client.auth.ldap.login(username=os.getenv(
-            "VAULT_USERNAME"), password=os.getenv("VAULT_PASSWORD"))
+        client.auth.ldap.login(username=os.getenv("VAULT_USERNAME"), password=os.getenv("VAULT_PASSWORD"))
     elif auth_type == "userpass":
-        client.auth_userpass(username=os.getenv(
-            "VAULT_USERNAME"), password=os.getenv("VAULT_PASSWORD"))
+        client.auth_userpass(username=os.getenv("VAULT_USERNAME"), password=os.getenv("VAULT_PASSWORD"))
     elif auth_type == "approle":
-        client.auth_approle(os.getenv("VAULT_ROLE_ID"),
-                            secret_id=os.getenv("VAULT_SECRET_ID"))
+        client.auth_approle(os.getenv("VAULT_ROLE_ID"), secret_id=os.getenv("VAULT_SECRET_ID"))
     elif auth_type == "github":
         client.auth.github.login(token=env["token"])
     else:
-        raise "Authentication type '{auth}' not supported".format(
-            auth=auth_type)
+        raise "Authentication type '{auth}' not supported".format(auth=auth_type)
 
     if client.is_authenticated():
         return client
     else:
-        raise VaultError(
-            "Vault Authentication Error, Environment Variables defined?")
+        raise VaultError("Vault Authentication Error, Environment Variables defined?")
+
 
 class VaultTransit(Base64Ref):
     """
@@ -152,7 +139,7 @@ class VaultTransit(Base64Ref):
         self.vault_params = vault_params
 
         if encrypt:
-            self._encrypt(data, self.vault_params.get('crypto_key'), True)
+            self._encrypt(data, self.vault_params.get("crypto_key"), True)
         else:
             self.data = data
             self.type_name = "vaulttransit"
@@ -178,8 +165,7 @@ class VaultTransit(Base64Ref):
 
             return cls(data, **ref_params.kwargs)
         except KeyError:
-            raise RefError(
-                "Could not create VaultSecret: vaulttransit parameters missing")
+            raise RefError("Could not create VaultSecret: vaulttransit parameters missing")
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -202,7 +188,7 @@ class VaultTransit(Base64Ref):
         re-encrypts data with new key, respects original encoding
         returns True if key is different and secret is updated, False otherwise
         """
-        if key == self.vault_params.get('crypto_key'):
+        if key == self.vault_params.get("crypto_key"):
             return False
 
         data_dec = self.reveal()
@@ -239,23 +225,21 @@ class VaultTransit(Base64Ref):
             response = client.secrets.transit.encrypt_data(
                 name=key,
                 mount_point=self.vault_params.get("mount", "transit"),
-                plaintext=base64.b64encode(
-                    _data).decode("ascii"),
+                plaintext=base64.b64encode(_data).decode("ascii"),
             )
             ciphertext = response["data"]["ciphertext"]
 
             client.adapter.close()
 
             self.data = ciphertext.encode()
-            self.vault_params['crypto_key'] = key
+            self.vault_params["crypto_key"] = key
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
                 + "make sure the token is authorised to access {path} on Vault".format(path=data[0])
             )
         except InvalidPath:
-            raise VaultError(
-                "{path} does not exist on Vault secret".format(path=data[0]))
+            raise VaultError("{path} does not exist on Vault secret".format(path=data[0]))
 
     def _decrypt(self, data):
         """
@@ -265,7 +249,7 @@ class VaultTransit(Base64Ref):
         """
         client = vault_obj(self.vault_params)
         try:
-            always_latest = self.vault_params['always_latest']
+            always_latest = self.vault_params["always_latest"]
             key = self.vault_params.get("crypto_key")
 
             if always_latest:
@@ -273,12 +257,12 @@ class VaultTransit(Base64Ref):
                     name=key,
                     ciphertext=data.decode(),
                 )
-                data = encrypt_data_response['data']['ciphertext'].encode()
+                data = encrypt_data_response["data"]["ciphertext"].encode()
 
             response = client.secrets.transit.decrypt_data(
                 name=key,
                 mount_point=self.vault_params.get("mount_point", "transit"),
-                ciphertext=data.decode()
+                ciphertext=data.decode(),
             )
             plaintext = base64.b64decode(response["data"]["plaintext"])
 
@@ -289,8 +273,7 @@ class VaultTransit(Base64Ref):
                 + "make sure the token is authorised to access {path} on Vault".format(path=data[0])
             )
         except InvalidPath:
-            raise VaultError(
-                "{path} does not exist on Vault secret".format(path=data[0]))
+            raise VaultError("{path} does not exist on Vault secret".format(path=data[0]))
 
     def dump(self):
         """
