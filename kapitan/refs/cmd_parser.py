@@ -4,6 +4,7 @@ import base64
 import logging
 import os
 import sys
+import mimetypes
 
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.refs.base import PlainRef, RefController, Revealer
@@ -38,6 +39,7 @@ def ref_write(args, ref_controller):
     token_name = args.write
     file_name = args.file
     data = None
+    is_binary = False
 
     if file_name is None:
         fatal_error("--file is required with --write")
@@ -46,8 +48,12 @@ def ref_write(args, ref_controller):
         for line in sys.stdin:
             data += line
     else:
-        with open(file_name) as fp:
+        mime_type = mimetypes.guess_type(file_name)
+        modifier = "r" if "text" in mime_type else "rb"
+        with open(file_name, modifier) as fp:
             data = fp.read()
+            if 'b' in fp.mode:
+                is_binary = True
 
     if token_name.startswith("gpg:"):
         type_name, token_path = token_name.split(":")
@@ -167,7 +173,7 @@ def ref_write(args, ref_controller):
 
     elif token_name.startswith("base64:"):
         type_name, token_path = token_name.split(":")
-        _data = data.encode()
+        _data = data if is_binary else data.encode()
         encoding = "original"
         if args.base64:
             _data = base64.b64encode(_data).decode()
