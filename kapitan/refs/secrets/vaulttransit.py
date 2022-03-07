@@ -195,6 +195,9 @@ class VaultTransit(Base64Ref):
 
         encode_base64 = self.encoding == "base64"
         if encode_base64:
+            logger.info(
+                'Content is already base64 encoded "?(vaulttransit:...|base64)" has no effect.'
+            )
             data_dec = base64.b64decode(data_dec).decode()
         self._encrypt(data_dec, key, encode_base64)
         self.data = base64.b64encode(self.data).decode()
