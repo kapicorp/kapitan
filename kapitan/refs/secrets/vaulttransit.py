@@ -209,7 +209,7 @@ class VaultTransit(Base64Ref):
         """
         _data = data
         self.encoding = "original"
-        if encode_base64:
+        if not encode_base64:
             _data = base64.b64encode(data.encode())
             self.encoding = "base64"
         else:
