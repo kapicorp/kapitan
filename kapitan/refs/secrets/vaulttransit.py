@@ -261,7 +261,7 @@ class VaultTransit(Base64Ref):
 
             response = client.secrets.transit.decrypt_data(
                 name=key,
-                mount_point=self.vault_params.get("mount_point", "transit"),
+                mount_point=self.vault_params.get("mount", "transit"),
                 ciphertext=data.decode(),
             )
             plaintext = base64.b64decode(response["data"]["plaintext"])
