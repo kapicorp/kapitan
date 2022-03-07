@@ -142,9 +142,10 @@ class VaultTransit(Base64Ref):
             self._encrypt(data, self.vault_params.get("crypto_key"), True)
         else:
             self.data = data
-            self.type_name = "vaulttransit"
+
 
         super().__init__(self.data, **kwargs)
+        self.type_name = "vaulttransit"
 
     @classmethod
     def from_params(cls, data, ref_params):
