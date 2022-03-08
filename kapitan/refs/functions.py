@@ -9,6 +9,7 @@ import base64
 import hashlib
 import logging
 import secrets  # python secrets module
+import string
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -28,6 +29,7 @@ def eval_func(func_name, ctx, *func_params):
         "rsapublic": rsa_public_key,
         "publickey": public_key,
         "reveal": reveal,
+        "lower_alpha_num": lower_alpha_num,
     }
 
     return func_lookup[func_name](ctx, *func_params)
@@ -140,3 +142,16 @@ def reveal(ctx, secret_path):
         raise RefError(
             f"|reveal function error: {secret_path} file in {ctx.token}|reveal:{secret_path} does not exist"
         )
+
+
+def lower_alpha_num(ctx, chars="8"):
+    """
+    generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars
+    sets it to ctx.data
+    """
+    pool = string.ascii_lowercase + string.digits
+    try:
+        chars = int(chars)
+    except ValueError:
+        raise RefError(f"Ref error: eval_func: {chars} cannot be converted into integer.")
+    ctx.data = "".join(secrets.choice(pool) for i in range(chars))
