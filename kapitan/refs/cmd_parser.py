@@ -52,7 +52,7 @@ def ref_write(args, ref_controller):
         modifier = "r" if "text" in mime_type else "rb"
         with open(file_name, modifier) as fp:
             data = fp.read()
-            if 'b' in fp.mode:
+            if "b" in fp.mode:
                 is_binary = True
 
     if token_name.startswith("gpg:"):
@@ -185,7 +185,7 @@ def ref_write(args, ref_controller):
 
     elif token_name.startswith("vaultkv:"):
         type_name, token_path = token_name.split(":")
-        _data = data.encode()
+        _data = data if is_binary else data.encode()
         vault_params = {}
         encoding = "original"
         if args.target_name:
@@ -219,7 +219,7 @@ def ref_write(args, ref_controller):
 
     elif token_name.startswith("plain:"):
         type_name, token_path = token_name.split(":")
-        _data = data.encode()
+        _data = data if is_binary else data.encode()
         encoding = "original"
         if args.base64:
             _data = base64.b64encode(_data).decode()
@@ -231,7 +231,7 @@ def ref_write(args, ref_controller):
 
     elif token_name.startswith("env:"):
         type_name, token_path = token_name.split(":")
-        _data = data.encode()
+        _data = data if is_binary else data.encode()
         encoding = "original"
         if args.base64:
             _data = base64.b64encode(_data).decode()
