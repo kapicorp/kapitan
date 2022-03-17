@@ -122,7 +122,7 @@ class HelmInputTest(unittest.TestCase):
         with open(controller_deployment_file, "r") as fp:
             manifest = yaml.safe_load(fp.read())
             name = manifest["metadata"]["name"]
-            self.assertEqual("RELEASE-NAME-nginx-ingress-my-controller", name)
+            self.assertEqual("release-name-nginx-ingress-my-controller", name)
 
     def test_compile_with_helm_values_files(self):
         temp = tempfile.mkdtemp()
