@@ -493,6 +493,7 @@ def unpack_downloaded_file(file_path, output_path, content_type):
         zfile.close()
         is_unpacked = True
     elif content_type in [
+        "application/gzip",
         "application/octet-stream",
         "application/x-gzip",
         "application/x-compressed",
