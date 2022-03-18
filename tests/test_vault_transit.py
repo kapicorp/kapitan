@@ -139,7 +139,7 @@ class VaultTransitTest(unittest.TestCase):
 
     def test_vault_transit_update_key(self):
         """
-        Checks the key udate works
+        Checks the key update works
         """
         env = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
         file_data = "foo:some_random_value"

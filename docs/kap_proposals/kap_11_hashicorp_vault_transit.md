@@ -69,7 +69,7 @@ Extra parameters that can be defined in inventory are:
 * `mount`: specify the mount point of key's path. e.g if path=`alpha-secret/foo/bar` then `mount: alpha-secret` (default `secret`)
 * `crypto_key`: Name of the `encryption key` defined in vault
 * `always_latest`: Always rewrap ciphertext to latest rotated `crypto_key` version  
-Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID`.
+Environment variables **should NOT** be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID`.
 This makes the secret_inside_kapitan file accessible throughout the inventory, where we can use the secret whenever necessary like `?{vaulttransit:${target_name}/secret_inside_kapitan}`
 
 Following is the example file having a secret and pointing to the vault `?{vaulttransit:${target_name}/secret_inside_kapitan}`
@@ -84,7 +84,7 @@ parameters:
     replicas: ${replicas}
     args:
       - --verbose=${verbose}
-      - --password=?{vaulttransit:${target_name}/secret_inside_kapitan|randomstr}
+      - --password=?{vaulttransit:${target_name}/secret_inside_kapitan||randomstr}
 ```
 when `?{vaulttransit:${target_name}/secret_inside_kapitan}` is compiled, it will look same with an 8 character prefix of sha256 hash added at the end like:
 ```yaml
@@ -102,7 +102,7 @@ spec:
       containers:
         - args:
             - --verbose=True
-            - --password=?{vaulttransit:${target_name}/secret_inside_kapitan|randomstr}
+            - --password=?{vaulttransit:${target_name}/secret_inside_kapitan||randomstr}
           image: app:app-tag
           name: app
 ```
