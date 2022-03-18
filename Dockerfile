@@ -49,6 +49,7 @@ RUN apt-get update \
         git \
         ssh-client \
         gnupg \
+        ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --no-log-init --user-group kapitan
