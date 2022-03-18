@@ -117,7 +117,7 @@ class VaultTransitTest(unittest.TestCase):
         )
 
         plaintext = base64.b64decode(response["data"]["plaintext"])
-        file_data_b64 = base64.b64encode(file_data.encode())
+        file_data_b64 = file_data.encode()
         self.assertTrue(plaintext == file_data_b64, "message")
 
     def test_vault_transit_dec_data(self):
@@ -156,5 +156,5 @@ class VaultTransitTest(unittest.TestCase):
         )
 
         plaintext = base64.b64decode(response["data"]["plaintext"])
-        file_data_b64 = base64.b64encode(file_data.encode())
+        file_data_b64 = file_data.encode()
         self.assertTrue(plaintext == file_data_b64, "message")
