@@ -29,7 +29,7 @@ def eval_func(func_name, ctx, *func_params):
         "rsapublic": rsa_public_key,
         "publickey": public_key,
         "reveal": reveal,
-        "lower_alpha_num": lower_alpha_num,
+        "loweralphanum": loweralphanum,
     }
 
     return func_lookup[func_name](ctx, *func_params)
@@ -144,10 +144,9 @@ def reveal(ctx, secret_path):
         )
 
 
-def lower_alpha_num(ctx, chars="8"):
+def loweralphanum(ctx, chars="8"):
     """
     generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars
-    sets it to ctx.data
     """
     pool = string.ascii_lowercase + string.digits
     try:

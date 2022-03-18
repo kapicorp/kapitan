@@ -421,21 +421,21 @@ class Base64RefsTest(unittest.TestCase):
 
     # TODO write tests for RefController errors (lookups, etc..)
 
-    def test_ref_function_lower_alpha_num(self):
-        "write lower_alpha_num to secret, confirm ref file exists, reveal and check"
+    def test_ref_function_loweralphanum(self):
+        "write loweralphanum to secret, confirm ref file exists, reveal and check"
 
-        tag = "?{plain:ref/lower_alpha_num||lower_alpha_num}"
+        tag = "?{plain:ref/loweralphanum||loweralphanum}"
         REF_CONTROLLER[tag] = RefParams()
-        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/lower_alpha_num")))
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/loweralphanum")))
 
         file_with_tags = tempfile.mktemp()
         with open(file_with_tags, "w") as fp:
-            fp.write("?{plain:ref/lower_alpha_num}")
+            fp.write("?{plain:ref/loweralphanum}")
         revealed = REVEALER.reveal_raw_file(file_with_tags)
-        self.assertEqual(len(revealed), 8)  # default length of lower_alpha_num string is 8
+        self.assertEqual(len(revealed), 8)  # default length of loweralphanum string is 8
 
         # Test with parameter chars=16, correlating with string length 16
-        tag = "?{plain:ref/lower_alpha_num||lower_alpha_num:16}"
+        tag = "?{plain:ref/loweralphanum||loweralphanum:16}"
         REF_CONTROLLER[tag] = RefParams()
         REVEALER._reveal_tag_without_subvar.cache_clear()
         revealed = REVEALER.reveal_raw_file(file_with_tags)
