@@ -143,14 +143,13 @@ class VaultTransit(Base64Ref):
         else:
             self.data = data
 
-
         super().__init__(self.data, **kwargs)
         self.type_name = "vaulttransit"
 
     @classmethod
     def from_params(cls, data, ref_params):
         """
-        Return new VaultSecret from data and ref_params: tar1get_name
+        Return new VaultSecret from data and ref_params: target_name
         parameters will be grabbed from the inventory via target_name
         """
         try:
@@ -196,9 +195,7 @@ class VaultTransit(Base64Ref):
 
         encode_base64 = self.encoding == "base64"
         if encode_base64:
-            logger.info(
-                'Content is already base64 encoded "?(vaulttransit:...|base64)" has no effect.'
-            )
+            logger.info('Content is already base64 encoded "?(vaulttransit:...|base64)" has no effect.')
             data_dec = base64.b64decode(data_dec).decode()
         self._encrypt(data_dec, key, encode_base64)
         self.data = base64.b64encode(self.data).decode()
