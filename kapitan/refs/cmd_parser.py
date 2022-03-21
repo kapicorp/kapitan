@@ -49,7 +49,7 @@ def ref_write(args, ref_controller):
             data += line
     else:
         mime_type = mimetypes.guess_type(file_name)
-        modifier = "r" if "text" in mime_type else "rb"
+        modifier = "r" if "text" in mime_type or  mime_type[0] is None else "rb"
         with open(file_name, modifier) as fp:
             data = fp.read()
             if "b" in fp.mode:
