@@ -176,6 +176,8 @@ Fetches helm charts and any specific subcharts in the `requirements.yaml` file.
 It defaults to the value of the `KAPITAN_HELM_PATH` environment var or simply to `helm` if neither is set.
 You should specify only if you don't want the default behavior.
 
+`source` can be either the URL to a chart repository, or the URL to a chart on an OCI registry (supported since Helm 3.8.0).
+
 ### Usage
 
 ```yaml
@@ -184,7 +186,7 @@ parameters:
     dependencies:
     - type: helm
       output_path: path/to/chart
-      source: http[s]://<helm_chart_repository_url>
+      source: http[s]|oci://<helm_chart_repository_url>
       version: <specific chart version>
       chart_name: <name of chart>
       helm_path: <helm binary>
