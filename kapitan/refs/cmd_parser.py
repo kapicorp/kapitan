@@ -38,8 +38,8 @@ def ref_write(args, ref_controller):
     "Write ref to ref_controller based on cli args"
     token_name = args.write
     file_name = args.file
+    is_binary = args.binary
     data = None
-    is_binary = False
 
     if file_name is None:
         fatal_error("--file is required with --write")
@@ -49,11 +49,12 @@ def ref_write(args, ref_controller):
             data += line
     else:
         mime_type = mimetypes.guess_type(file_name)
-        modifier = "r" if "text" in mime_type or  mime_type[0] is None else "rb"
+        modifier = "rb" if is_binary else "r"
         with open(file_name, modifier) as fp:
-            data = fp.read()
-            if "b" in fp.mode:
-                is_binary = True
+            try:
+                data = fp.read()
+            except UnicodeDecodeError as e:
+                raise KapitanError("Could not read file. Please add '--binary' if the file contains binary data. ({})".format(e))
 
     if token_name.startswith("gpg:"):
         type_name, token_path = token_name.split(":")
