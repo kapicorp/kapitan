@@ -27,7 +27,7 @@ class TestMergeTreeStyleOutput(fakefs.TestCase):
         with self.assertRaises(kapitan.errors.CompileError):
             kapitan.targets.merge_tree_style_output("/src2", "/dst")
 
-    def testa_merge_targets(self):
+    def test_merge_targets(self):
         m_listdir = mock.patch("os.listdir").start()
         m_listdir.return_value = ["target1", "target2"]
         m_merge_tree = mock.patch("kapitan.targets.merge_tree_style_output").start()
@@ -39,7 +39,7 @@ class TestMergeTreeStyleOutput(fakefs.TestCase):
         )
         m_merge_tree.assert_has_calls([mock.call("/src/target1", "/dst"), mock.call("/src/target2", "/dst")])
 
-    def testa_merge_targets_no_targets(self):
+    def test_merge_targets_no_targets(self):
         m_listdir = mock.patch("os.listdir").start()
         m_listdir.return_value = []
         m_merge_tree = mock.patch("kapitan.targets.merge_tree_style_output").start()
@@ -51,7 +51,7 @@ class TestMergeTreeStyleOutput(fakefs.TestCase):
         )
         m_merge_tree.assert_not_called()
 
-    def testa_merge_targets_target_specified(self):
+    def test_merge_targets_target_specified(self):
         m_merge_tree = mock.patch("kapitan.targets.merge_tree_style_output").start()
         kapitan.targets.merge_targets(
             tree_style_output=True,
