@@ -55,7 +55,11 @@ def ref_write(args, ref_controller):
             try:
                 data = fp.read()
             except UnicodeDecodeError as e:
-                raise KapitanError("Could not read file. Please add '--binary' if the file contains binary data. ({})".format(e))
+                raise KapitanError(
+                    "Could not read file. Please add '--binary' if the file contains binary data. ({})".format(
+                        e
+                    )
+                )
 
     if token_name.startswith("gpg:"):
         type_name, token_path = token_name.split(":")
