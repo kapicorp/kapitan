@@ -402,6 +402,12 @@ def main():
         default=from_dot_kapitan("refs", "base64", False),
     )
     refs_parser.add_argument(
+        "--binary",
+        help="file content should be handled as binary data",
+        action="store_true",
+        default=from_dot_kapitan("refs", "binary", False),
+    )
+    refs_parser.add_argument(
         "--reveal",
         "-r",
         help="reveal refs",

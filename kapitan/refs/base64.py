@@ -40,7 +40,11 @@ class Base64Ref(PlainRef):
 
     def reveal(self):
         # TODO data should be bytes only
-        return base64.b64decode(self.data).decode()
+        decoded = base64.b64decode(self.data)
+        try:
+            return decoded.decode()
+        except:
+            return self.data
 
     def compile_embedded(self):
         dump = self.dump()
