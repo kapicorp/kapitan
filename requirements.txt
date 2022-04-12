@@ -60,7 +60,7 @@ gitdb==4.0.7
     # via
     #   -r requirements.txt
     #   gitpython
-gitpython==3.1.20
+gitpython==3.1.24
     # via -r requirements.txt
 google-api-core==1.31.1
     # via
@@ -104,7 +104,7 @@ jmespath==0.10.0
     #   -r requirements.txt
     #   boto3
     #   botocore
-jsonnet==0.17.0
+jsonnet==0.18.0
     # via -r requirements.txt
 jsonschema==3.2.0
     # via -r requirements.txt

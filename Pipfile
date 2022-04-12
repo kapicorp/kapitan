@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-jsonnet = "==0.17.0"
+jsonnet = "==0.18.0"
 jsonschema = "==3.2.0"
 python-gnupg = "==0.4.6"
 six = ">=1.15.0"
@@ -22,7 +22,7 @@ docker = "==4.3.1"
 pyparsing = "*"
 PyYAML = ">=5.4"
 Jinja2 = ">=2.11.3"
-GitPython = "==3.1.11"
+GitPython = "==3.1.24"
 toml = ">=0.10.1"
 
 [requires]

@@ -454,6 +454,10 @@ class RefController(object):
                 from kapitan.refs.secrets.vaultkv import VaultBackend
 
                 self.register_backend(VaultBackend(self.path, **ref_kwargs))
+            elif type_name == "vaulttransit":
+                from kapitan.refs.secrets.vaulttransit import VaultBackend
+
+                self.register_backend(VaultBackend(self.path, **ref_kwargs))
             elif type_name == "azkms":
                 from kapitan.refs.secrets.azkms import AzureKMSBackend
 

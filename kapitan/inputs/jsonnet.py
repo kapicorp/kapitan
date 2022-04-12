@@ -8,17 +8,61 @@
 import json
 import logging
 import os
+import sys
 
+from kapitan.errors import CompileError
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.resources import resource_callbacks, search_imports
-from kapitan.utils import jsonnet_file, prune_empty
+from kapitan.utils import prune_empty
 
 logger = logging.getLogger(__name__)
 
 
+def jsonnet_file(file_path, **kwargs):
+    """
+    Evaluate file_path jsonnet file.
+    kwargs are documented in http://jsonnet.org/implementation/bindings.html
+    """
+    try:
+        if "_jsonnet" not in sys.modules:
+            import _jsonnet
+        return sys.modules["_jsonnet"].evaluate_file(file_path, **kwargs)
+    except ImportError:
+        logger.info(
+            "Note: Jsonnet is not installed or running on an unsupported architecture."
+            " See https://kapitan.dev/compile/#jsonnet"
+        )
+    except Exception as e:
+        raise CompileError(f"Jsonnet error: failed to compile {file_path}:\n {e}")
+
+
+def go_jsonnet_file(file_path, **kwargs):
+    """
+    Evaluate file_path jsonnet file using gojsonnet.
+    kwargs are documented in http://jsonnet.org/implementation/bindings.html
+    """
+    try:
+        if "_gojsonnet" not in sys.modules:
+            import _gojsonnet
+        return sys.modules["_gojsonnet"].evaluate_file(file_path, **kwargs)
+    except ImportError:
+        logger.info(
+            "Note: Go-jsonnet is not installed or running on an unsupported architecture."
+            " See https://kapitan.dev/compile/#jsonnet"
+        )
+    except Exception as e:
+        raise CompileError(f"Jsonnet error: failed to compile {file_path}:\n {e}")
+
+
 class Jsonnet(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller):
-        super().__init__("jsonnet", compile_path, search_paths, ref_controller)
+    def __init__(self, compile_path, search_paths, ref_controller, use_go=False):
+        super().__init__(
+            "jsonnet",
+            compile_path,
+            search_paths,
+            ref_controller,
+        )
+        self.use_go = use_go
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """
@@ -35,12 +79,21 @@ class Jsonnet(InputType):
         def _search_imports(cwd, imp):
             return search_imports(cwd, imp, self.search_paths)
 
-        json_output = jsonnet_file(
-            file_path,
-            import_callback=_search_imports,
-            native_callbacks=resource_callbacks(self.search_paths),
-            ext_vars=ext_vars,
-        )
+        json_output = None
+        if self.use_go:
+            json_output = go_jsonnet_file(
+                file_path,
+                import_callback=_search_imports,
+                native_callbacks=resource_callbacks(self.search_paths),
+                ext_vars=ext_vars,
+            )
+        else:
+            json_output = jsonnet_file(
+                file_path,
+                import_callback=_search_imports,
+                native_callbacks=resource_callbacks(self.search_paths),
+                ext_vars=ext_vars,
+            )
         output_obj = json.loads(json_output)
 
         output = kwargs.get("output", "yaml")

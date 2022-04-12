@@ -248,13 +248,18 @@ def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
     logger.info("Dependency helm chart %s and version %s: fetching now", chart_name, version or "latest")
     # Fetch archive and untar it into parent dir
     save_dir = os.path.dirname(save_path)
-    args = ["pull", "--destination", save_dir, "--untar", "--repo", repo]
+    args = ["pull", "--destination", save_dir, "--untar"]
 
     if version:
         args.append("--version")
         args.append(version)
 
-    args.append(chart_name)
+    if repo.startswith("oci://"):
+        args.append(repo)
+    else:
+        args.append("--repo")
+        args.append(repo)
+        args.append(chart_name)
 
     response = helm_cli(helm_path, args)
     if response != "":

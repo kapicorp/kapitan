@@ -19,31 +19,24 @@ from functools import partial
 
 import jsonschema
 import yaml
+from reclass.errors import NotFoundError, ReclassException
+
 from kapitan import cached, defaults
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
-from kapitan.inputs.remove import Remove
+from kapitan.inputs.external import External
 from kapitan.inputs.helm import Helm
 from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
-from kapitan.inputs.external import External
+from kapitan.inputs.remove import Remove
 from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.resources import inventory_reclass
-from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache, JSONNET_AVAILABLE
+from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
 from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
-from reclass.errors import NotFoundError, ReclassException
-
 logger = logging.getLogger(__name__)
-
-
-def check_jsonnet_import():
-    if not JSONNET_AVAILABLE:
-        logger.info(
-            "Note: jsonnet is not yet supported on ARM/M1. You can still use kadet and jinja2 for templating"
-        )
 
 
 def compile_targets(
@@ -54,7 +47,6 @@ def compile_targets(
     multiprocessing pool with parallel number of processes.
     kwargs are passed to compile_target()
     """
-    check_jsonnet_import()
     # temp_path will hold compiled items
     temp_path = tempfile.mkdtemp(suffix=".kapitan")
     # enable previously compiled items to be reference in other compile inputs
@@ -467,6 +459,10 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
     if globals_cached:
         cached.from_dict(globals_cached)
 
+    use_go_jsonnet = kwargs.get("use_go_jsonnet", False)
+    if use_go_jsonnet:
+        logger.debug("Using go-jsonnet over jsonnet")
+
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
         output_path = comp_obj["output_path"]
@@ -476,7 +472,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
             if "input_params" in comp_obj:
                 input_compiler.set_input_params(comp_obj["input_params"])
         elif input_type == "jsonnet":
-            input_compiler = Jsonnet(compile_path, search_paths, ref_controller)
+            input_compiler = Jsonnet(compile_path, search_paths, ref_controller, use_go=use_go_jsonnet)
         elif input_type == "kadet":
             input_compiler = Kadet(compile_path, search_paths, ref_controller)
             if "input_params" in comp_obj:
@@ -498,7 +494,6 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
             err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
             raise CompileError(err_msg.format(input_type))
 
-        # logger.info("about to compile %s ", target_obj["target_full_path"])
         input_compiler.make_compile_dirs(target_name, output_path)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 
@@ -562,6 +557,20 @@ def valid_target_obj(target_obj, require_compile=True):
                             "auth": {"enum": ["token", "userpass", "ldap", "github", "approle"]},
                             "engine": {"type": "string"},
                             "mount": {"type": "string"},
+                        },
+                    },
+                    "vaulttransit": {
+                        "type": "object",
+                        "properties": {
+                            "VAULT_ADDR": {"type": "string"},
+                            "VAULT_NAMESPACE": {"type": "string"},
+                            "VAULT_SKIP_VERIFY": {"type": "string"},
+                            "VAULT_CLIENT_KEY": {"type": "string"},
+                            "VAULT_CLIENT_CERT": {"type": "string"},
+                            "auth": {"enum": ["token", "userpass", "ldap", "github", "approle"]},
+                            "engine": {"type": "string"},
+                            "mount": {"type": "string"},
+                            "key": {"type": "string"},
                         },
                     },
                 },
