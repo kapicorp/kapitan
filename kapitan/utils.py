@@ -450,6 +450,7 @@ def search_target_token_paths(target_secrets_path, targets):
     """
     returns dict of target and their secret token paths (e.g ?{[gpg/gkms/awskms]:path/to/secret}) in target_secrets_path
     targets is a set of target names used to lookup targets in target_secrets_path
+    directory should be structured as follow ./refs/${target_name}/file
     """
     target_files = defaultdict(list)
     for full_path in list_all_paths(target_secrets_path):

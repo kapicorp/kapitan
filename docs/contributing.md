@@ -21,6 +21,9 @@ There are multiple solutions:
 Once you've done it, please install all Kapitan's dependencies:
 
 ```shell
+python3 -m venv env
+source env/bin/activate
+pip3 install black # required for `make test_formatting`
 pip3 install -r requirements.txt
 ```
 
@@ -29,6 +32,14 @@ repository, you need to pull it separately by executing the command below:
 
 ```shell
 git submodule update --init
+```
+
+#### Troubleshoot pip install errors
+
+Check if gcc is installed:
+
+```shell
+brew install gcc@5
 ```
 
 ## Testing
@@ -40,6 +51,10 @@ test coverage remains at current or better levels and that code formatting is ap
 
 If you would like to evaluate your changes by running your version of Kapitan, you can do
 that by running `bin/kapitan` from this repository or even setting an alias to it.
+
+```shell
+python3 -m unittest tests/test_vault_transit.py
+```
 
 ## Code Style
 

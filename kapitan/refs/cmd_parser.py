@@ -15,6 +15,7 @@ from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.azkms import AzureKMSSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.refs.secrets.vaultkv import VaultSecret
+from kapitan.refs.secrets.vaulttransit import VaultTransit
 from kapitan.resources import inventory_reclass
 from kapitan.utils import fatal_error, search_target_token_paths
 
@@ -184,6 +185,7 @@ def ref_write(args, ref_controller):
         tag = "?{{base64:{}}}".format(token_path)
         ref_controller[tag] = ref_obj
 
+    # VAULT Key-Value Engine
     elif token_name.startswith("vaultkv:"):
         type_name, token_path = token_name.split(":")
         _data = data if is_binary else data.encode()
@@ -218,6 +220,37 @@ def ref_write(args, ref_controller):
         tag = "?{{vaultkv:{}}}".format(token_path)
         ref_controller[tag] = secret_obj
 
+    # VAULT Transit engine
+    elif token_name.startswith("vaulttransit:"):
+        type_name, token_path = token_name.split(":")
+        _data = data.encode()
+        vault_params = {}
+        if args.target_name:
+            inv = inventory_reclass(args.inventory_path)
+            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            if "secrets" not in kap_inv_params:
+                raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+
+            try:
+                vault_params = kap_inv_params["secrets"]["vaulttransit"]
+            except KeyError:
+                raise KapitanError(
+                    "parameters.kapitan.secrets.vaulttransit not defined in inventory of target {}".format(
+                        args.target_name
+                    )
+                )
+        if args.vault_auth:
+            vault_params["auth"] = args.vault_auth
+        if vault_params.get("auth") is None:
+            raise KapitanError(
+                "No Authentication type parameter specified. Specify it"
+                " in parameters.kapitan.secrets.vaulttransit.auth and use --target-name or use --vault-auth"
+            )
+
+        secret_obj = VaultTransit(_data, vault_params)
+        tag = "?{{vaulttransit:{}}}".format(token_path)
+        ref_controller[tag] = secret_obj
+
     elif token_name.startswith("plain:"):
         type_name, token_path = token_name.split(":")
         _data = data if is_binary else data.encode()
@@ -244,7 +277,7 @@ def ref_write(args, ref_controller):
 
     else:
         fatal_error(
-            "Invalid token: {name}. Try using gpg/gkms/awskms/azkms/vaultkv/base64/plain/env:{name}".format(
+            "Invalid token: {name}. Try using gpg/gkms/awskms/azkms/vaultkv/vaulttransit/base64/plain/env:{name}".format(
                 name=token_name
             )
         )
@@ -430,6 +463,11 @@ def secret_update_validate(args, ref_controller):
         except KeyError:
             vaultkv = None
         try:
+            # Referenced Auth
+            vkey = kap_inv_params["secrets"]["vaulttransit"]["key"]
+        except KeyError:
+            vkey = None
+        try:
             azkey = kap_inv_params["secrets"]["azkms"]["key"]
         except KeyError:
             azkey = None
@@ -483,6 +521,23 @@ def secret_update_validate(args, ref_controller):
                         ret_code = 1
                     else:
                         secret_obj.update_key(gkey)
+                        ref_controller[token_path] = secret_obj
+
+            elif token_path.startswith("?{vaulttransit:"):
+                if not vkey:
+                    logger.debug(
+                        "secret_update_validate: target: %s has no inventory vaulttransit key, skipping %s",
+                        target_name,
+                        token_path,
+                    )
+                    continue
+                secret_obj = ref_controller[token_path]
+                if vkey != secret_obj.vault_params["key"]:
+                    if args.validate_targets:
+                        logger.info("%s key mismatch", token_path)
+                        ret_code = 1
+                    else:
+                        secret_obj.update_key(vkey)
                         ref_controller[token_path] = secret_obj
 
             elif token_path.startswith("?{awskms:"):
