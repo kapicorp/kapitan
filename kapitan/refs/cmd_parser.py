@@ -4,6 +4,7 @@ import base64
 import logging
 import os
 import sys
+import mimetypes
 
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.refs.base import PlainRef, RefController, Revealer
@@ -37,6 +38,7 @@ def ref_write(args, ref_controller):
     "Write ref to ref_controller based on cli args"
     token_name = args.write
     file_name = args.file
+    is_binary = args.binary
     data = None
 
     if file_name is None:
@@ -46,8 +48,13 @@ def ref_write(args, ref_controller):
         for line in sys.stdin:
             data += line
     else:
-        with open(file_name) as fp:
-            data = fp.read()
+        mime_type = mimetypes.guess_type(file_name)
+        modifier = "rb" if is_binary else "r"
+        with open(file_name, modifier) as fp:
+            try:
+                data = fp.read()
+            except UnicodeDecodeError as e:
+                raise KapitanError("Could not read file. Please add '--binary' if the file contains binary data. ({})".format(e))
 
     if token_name.startswith("gpg:"):
         type_name, token_path = token_name.split(":")
@@ -167,7 +174,7 @@ def ref_write(args, ref_controller):
 
     elif token_name.startswith("base64:"):
         type_name, token_path = token_name.split(":")
-        _data = data.encode()
+        _data = data if is_binary else data.encode()
         encoding = "original"
         if args.base64:
             _data = base64.b64encode(_data).decode()
@@ -179,7 +186,7 @@ def ref_write(args, ref_controller):
 
     elif token_name.startswith("vaultkv:"):
         type_name, token_path = token_name.split(":")
-        _data = data.encode()
+        _data = data if is_binary else data.encode()
         vault_params = {}
         encoding = "original"
         if args.target_name:
@@ -213,7 +220,7 @@ def ref_write(args, ref_controller):
 
     elif token_name.startswith("plain:"):
         type_name, token_path = token_name.split(":")
-        _data = data.encode()
+        _data = data if is_binary else data.encode()
         encoding = "original"
         if args.base64:
             _data = base64.b64encode(_data).decode()
@@ -225,7 +232,7 @@ def ref_write(args, ref_controller):
 
     elif token_name.startswith("env:"):
         type_name, token_path = token_name.split(":")
-        _data = data.encode()
+        _data = data if is_binary else data.encode()
         encoding = "original"
         if args.base64:
             _data = base64.b64encode(_data).decode()
