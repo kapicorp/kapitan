@@ -16,7 +16,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from kapitan.cli import main
+from kapitan.cli import main, build_parser
 from kapitan.refs.secrets import vaultkv
 
 REFS_PATH = tempfile.mkdtemp()
@@ -731,6 +731,18 @@ class CliFuncsTest(unittest.TestCase):
         with contextlib.redirect_stdout(stdout):
             main()
         self.assertEqual("id: minikube\nname: minikube\ntype: minikube\nuser: minikube\n", stdout.getvalue())
+
+    def test_parser_aliases(self):
+        """
+        run $ kapitan c
+        or run $ kapitan i
+        """
+        parser = build_parser()
+        aliases = {"c": "compile", "i": "inventory"}
+
+        for alias, command in aliases.items():
+            result = parser.parse_args([alias])
+            self.assertEqual(command, result.name)
 
     def tearDown(self):
         shutil.rmtree(REFS_PATH, ignore_errors=True)
