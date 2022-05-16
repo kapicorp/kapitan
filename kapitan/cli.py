@@ -96,22 +96,14 @@ def trigger_compile(args):
     )
 
 
-def main():
-    """main function for command line usage"""
-    try:
-        multiprocessing.set_start_method("spawn")
-    # main() is explicitly multiple times in tests
-    # and will raise RuntimeError
-    except RuntimeError:
-        pass
-
+def build_parser():
     parser = argparse.ArgumentParser(prog=PROJECT_NAME, description=DESCRIPTION)
     parser.add_argument("--version", action="version", version=VERSION)
     subparser = parser.add_subparsers(help="commands", dest="subparser_name")
 
     eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
     eval_parser.add_argument("jsonnet_file", type=str)
-    eval_parser.set_defaults(func=trigger_eval)
+    eval_parser.set_defaults(func=trigger_eval, name="eval")
 
     eval_parser.add_argument(
         "--output",
@@ -139,7 +131,7 @@ def main():
     )
 
     compile_parser = subparser.add_parser("compile", aliases=["c"], help="compile targets")
-    compile_parser.set_defaults(func=trigger_compile)
+    compile_parser.set_defaults(func=trigger_compile, name="compile")
 
     compile_parser.add_argument(
         "--search-paths",
@@ -299,7 +291,7 @@ def main():
     )
 
     inventory_parser = subparser.add_parser("inventory", aliases=["i"], help="show inventory")
-    inventory_parser.set_defaults(func=generate_inventory)
+    inventory_parser.set_defaults(func=generate_inventory, name="inventory")
 
     inventory_parser.add_argument(
         "--target-name",
@@ -337,7 +329,7 @@ def main():
     searchvar_parser = subparser.add_parser(
         "searchvar", aliases=["sv"], help="show all inventory files where var is declared"
     )
-    searchvar_parser.set_defaults(func=searchvar)
+    searchvar_parser.set_defaults(func=searchvar, name="searchvar")
 
     searchvar_parser.add_argument(
         "searchvar",
@@ -366,10 +358,10 @@ def main():
     )
 
     secrets_parser = subparser.add_parser("secrets", aliases=["s"], help="(DEPRECATED) please use refs")
-    secrets_parser.set_defaults(func=print_deprecated_secrets_msg)
+    secrets_parser.set_defaults(func=print_deprecated_secrets_msg, name="secrets")
 
     refs_parser = subparser.add_parser("refs", aliases=["r"], help="manage refs")
-    refs_parser.set_defaults(func=handle_refs_command)
+    refs_parser.set_defaults(func=handle_refs_command, name="refs")
 
     refs_parser.add_argument(
         "--write",
@@ -461,7 +453,7 @@ def main():
     )
 
     lint_parser = subparser.add_parser("lint", aliases=["l"], help="linter for inventory and refs")
-    lint_parser.set_defaults(func=start_lint)
+    lint_parser.set_defaults(func=start_lint, name="lint")
 
     lint_parser.add_argument(
         "--fail-on-warning",
@@ -504,9 +496,9 @@ def main():
     )
 
     init_parser = subparser.add_parser(
-        "init", aliases=["i"], help="initialize a directory with the recommended kapitan project skeleton."
+        "init", help="initialize a directory with the recommended kapitan project skeleton."
     )
-    init_parser.set_defaults(func=initialise_skeleton)
+    init_parser.set_defaults(func=initialise_skeleton, name="init")
 
     init_parser.add_argument(
         "--directory",
@@ -520,7 +512,7 @@ def main():
         aliases=["v"],
         help="validates the compile output against schemas as specified in inventory",
     )
-    validate_parser.set_defaults(func=schema_validate_compiled)
+    validate_parser.set_defaults(func=schema_validate_compiled, name="validate")
 
     validate_parser.add_argument(
         "--compiled-path",
@@ -554,6 +546,20 @@ def main():
         metavar="INT",
         help="Number of concurrent validate processes, default is 4",
     )
+
+    return parser
+
+
+def main():
+    """main function for command line usage"""
+    try:
+        multiprocessing.set_start_method("spawn")
+    # main() is explicitly multiple times in tests
+    # and will raise RuntimeError
+    except RuntimeError:
+        pass
+
+    parser = build_parser()
     args = parser.parse_args()
 
     if getattr(args, "func", None) == generate_inventory and args.pattern and args.target_name == "":
@@ -568,7 +574,8 @@ def main():
         sys.exit(1)
 
     # cache args where key is subcommand
-    cached.args[sys.argv[1]] = args
+    assert "name" in args, "All cli commands must have provided default name"
+    cached.args[args.name] = args
 
     if hasattr(args, "verbose") and args.verbose:
         setup_logging(level=logging.DEBUG, force=True)
