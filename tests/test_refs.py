@@ -388,6 +388,28 @@ class Base64RefsTest(unittest.TestCase):
         revealed = REVEALER.reveal_raw_file(file_with_tags)
         self.assertEqual(len(revealed), 16)
 
+    def test_ref_function_randomint(self):
+        "write randomint to secret, confirm ref file exists, reveal and check"
+
+        tag = "?{base64:ref/randomint||randomint}"
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/base64")))
+
+        file_with_tags = tempfile.mktemp()
+        with open(file_with_tags, "w") as fp:
+            fp.write("?{base64:ref/randomint}")
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        # default length of token_urlsafe() string is 43
+        self.assertEqual(len(revealed), 43)
+        self.assertTrue(get_entropy(revealed) > 4)
+
+        # Test with parameter nbytes=16, correlating with string length 16
+        tag = "?{base64:ref/randomint||randomint:16}"
+        REF_CONTROLLER[tag] = RefParams()
+        REVEALER._reveal_tag_without_subvar.cache_clear()
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 16)
+
     def test_ref_function_base64(self):
         "write randomstr to ref and base64, confirm ref file exists, reveal and check"
 

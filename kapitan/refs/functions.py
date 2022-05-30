@@ -23,6 +23,7 @@ def eval_func(func_name, ctx, *func_params):
 
     func_lookup = {
         "randomstr": randomstr,
+        "randomint": randomint,
         "sha256": sha256,
         "ed25519": ed25519_private_key,
         "rsa": rsa_private_key,
@@ -48,6 +49,20 @@ def randomstr(ctx, nbytes=""):
 
     else:
         ctx.data = secrets.token_urlsafe()
+
+
+def randomint(ctx, nbytes=""):
+    """
+    generates a URL-safe text string, containing nbytes random bits
+    sets it to ctx.data
+    """
+    if nbytes:
+        nbytes = int(nbytes)
+        # Generate twice the amount of integer asked for
+        # and then trim them to nbytes length if it's longer
+        ctx.data = secrets.randbits(2 * nbytes)[:nbytes]
+    else:
+        ctx.data = secrets.randbits()
 
 
 def sha256(ctx, salt=""):
