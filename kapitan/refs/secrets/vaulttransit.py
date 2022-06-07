@@ -256,6 +256,7 @@ class VaultTransit(Base64Ref):
             if always_latest:
                 encrypt_data_response = client.secrets.transit.rewrap_data(
                     name=key,
+                    mount_point=self.vault_params.get("mount", "transit"),
                     ciphertext=data.decode(),
                 )
                 data = encrypt_data_response["data"]["ciphertext"].encode()
