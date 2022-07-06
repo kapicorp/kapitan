@@ -35,8 +35,7 @@ class Helm(InputType):
             _, self.helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
             with open(self.helm_values_file, "w") as fp:
                 SafeDumper.add_representer(
-                    type(None),
-                    lambda dumper, value: dumper.represent_scalar(u'tag:yaml.org,2002:null', '')
+                    type(None), lambda dumper, value: dumper.represent_scalar("tag:yaml.org,2002:null", "")
                 )
                 yaml.safe_dump(args["helm_values"], fp, default_flow_style=False)
 
