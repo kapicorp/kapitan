@@ -212,6 +212,16 @@ class PrettyDumper(yaml.SafeDumper):
         return super(PrettyDumper, self).increase_indent(flow, False)
 
 
+"""
+Changes the bahavior of the yaml dump.
+By default, YAML will handle None-types as blank values.
+More info on https://stackoverflow.com/questions/30134110/how-can-i-output-blank-value-in-python-yaml-file
+"""
+PrettyDumper.add_representer(
+    type(None), lambda dumper, value: dumper.represent_scalar("tag:yaml.org,2002:null", "")
+)
+
+
 def flatten_dict(d, parent_key="", sep="."):
     """Flatten nested elements in a dictionary"""
     items = []
