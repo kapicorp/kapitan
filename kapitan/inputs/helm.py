@@ -2,7 +2,6 @@ import logging
 import os
 import tempfile
 
-from yaml import SafeDumper
 import yaml
 
 from kapitan.errors import HelmTemplateError
