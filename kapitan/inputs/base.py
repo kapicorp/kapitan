@@ -123,10 +123,22 @@ class CompilingFile(object):
 
         if obj:
             if isinstance(obj, Mapping):
-                yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+                yaml.dump(
+                    obj,
+                    stream=self.fp,
+                    indent=indent,
+                    Dumper=PrettyDumper,
+                    default_flow_style=False,
+                    sort_keys=False,
+                )
             else:
                 yaml.dump_all(
-                    obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False
+                    obj,
+                    stream=self.fp,
+                    indent=indent,
+                    Dumper=PrettyDumper,
+                    default_flow_style=False,
+                    sort_keys=False,
                 )
 
             logger.debug("Wrote %s", self.fp.name)

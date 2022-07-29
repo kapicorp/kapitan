@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    app: nginx
   name: nginx
   namespace: minikube-nginx-kadet
+  labels:
+    app: nginx
 spec:
   ports:
     - name: http
