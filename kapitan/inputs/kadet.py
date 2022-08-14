@@ -5,24 +5,38 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import json
+import contextvars
+import inspect
 import logging
 import os
 import sys
 from importlib.util import module_from_spec, spec_from_file_location
 
-import inspect
-import yaml
-from addict import Dict
+import kadet
+from kadet import BaseModel, BaseObj, Dict
+
+from kapitan import cached
 from kapitan.errors import CompileError
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.resources import inventory as inventory_func
 from kapitan.utils import prune_empty
 
+# Set external kadet exception to kapitan.error.CompileError
+kadet.ABORT_EXCEPTION_TYPE = CompileError
+
 logger = logging.getLogger(__name__)
-inventory = None
-inventory_global = None
-search_paths = None
+inventory_path = cached.args.get(
+    "inventory_path"
+)  # XXX think about this as it probably breaks usage as library
+search_paths = contextvars.ContextVar("current search_paths in thread")
+current_target = contextvars.ContextVar("current target in thread")
+
+inventory = lambda: Dict(
+    inventory_func(search_paths.get(), current_target.get(), inventory_path), frozen_box=True
+)  # noqa E731
+inventory_global = lambda: Dict(
+    inventory_func(search_paths.get(), None, inventory_path), frozen_box=True
+)  # noqa E731
 
 
 def module_from_path(path, check_name=None):
@@ -55,7 +69,7 @@ def load_from_search_paths(module_name):
     loads and executes python module with module_name from search paths
     returns module
     """
-    for path in search_paths:
+    for path in search_paths.get():
         try:
             _path = os.path.join(path, module_name)
             mod, spec = module_from_path(_path, check_name=module_name)
@@ -89,8 +103,11 @@ class Kadet(InputType):
         prune = kwargs.get("prune", False)
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
-        inventory_path = kwargs.get("inventory_path", None)
+        # inventory_path = kwargs.get("inventory_path", None)
         indent = kwargs.get("indent", 2)
+
+        current_target.set(target_name)
+        search_paths.set(self.search_paths)
 
         input_params = self.input_params
         # set compile_path allowing kadet functions to have context on where files
@@ -101,12 +118,16 @@ class Kadet(InputType):
 
         # These will be updated per target
         # XXX At the moment we have no other way of setting externals for modules...
-        global search_paths
-        search_paths = self.search_paths
-        global inventory
-        inventory = lambda: Dict(inventory_func(self.search_paths, target_name, inventory_path))  # noqa E731
-        global inventory_global
-        inventory_global = lambda: Dict(inventory_func(self.search_paths, None, inventory_path))  # noqa E731
+        # global search_paths
+        # search_paths = self.search_paths
+        # global inventory
+        # inventory = lambda: Dict(
+        #     inventory_func(self.search_paths, current_target.get(), inventory_path)
+        # )  # noqa E731
+        # global inventory_global
+        # inventory_global = lambda: Dict(
+        #     inventory_func(self.search_paths, None, inventory_path)
+        # )  # noqa E731
 
         kadet_module, spec = module_from_path(file_path)
         sys.modules[spec.name] = kadet_module
@@ -181,7 +202,7 @@ def _to_dict(obj):
     recursively update obj should it contain other
     BaseObj values
     """
-    if isinstance(obj, BaseObj):
+    if isinstance(obj, (BaseObj, BaseModel)):
         for k, v in obj.root.items():
             obj.root[k] = _to_dict(v)
         # BaseObj needs to return to_dict()
@@ -198,93 +219,3 @@ def _to_dict(obj):
 
     # anything else, return itself
     return obj
-
-
-class BaseObj(object):
-    def __init__(self, **kwargs):
-        """
-        returns a BaseObj
-        kwargs will be save into self.kwargs
-        values in self.root are returned as dict via self.to_dict()
-        """
-        self.root = Dict()
-        self.kwargs = Dict(kwargs)
-        self.new()
-        self.body()
-
-    @classmethod
-    def from_json(cls, file_path):
-        """
-        returns a BaseObj initialised with json content
-        from file_path
-        """
-        with open(file_path) as fp:
-            json_obj = json.load(fp)
-            return cls.from_dict(json_obj)
-
-    @classmethod
-    def from_yaml(cls, file_path):
-        """
-        returns a BaseObj initialised with yaml content
-        from file_path
-        """
-        with open(file_path) as fp:
-            yaml_obj = yaml.safe_load(fp)
-            return cls.from_dict(yaml_obj)
-
-    @classmethod
-    def from_dict(cls, dict_value):
-        """
-        returns a BaseObj initialise with dict_value
-        """
-        bobj = cls()
-        bobj.root = Dict(dict_value)
-        return bobj
-
-    def update_root(self, file_path):
-        """
-        update self.root with YAML/JSON content in file_path
-        raises CompileError if file_path does not end with .yaml, .yml or .json
-        """
-        with open(file_path) as fp:
-            if file_path.endswith(".yaml") or file_path.endswith(".yml"):
-                yaml_obj = yaml.safe_load(fp)
-                _copy = dict(self.root)
-                _copy.update(yaml_obj)
-                self.root = Dict(_copy)
-
-            elif file_path.endswith(".json"):
-                json_obj = json.load(fp)
-                _copy = dict(self.root)
-                _copy.update(json_obj)
-                self.root = Dict(_copy)
-            else:
-                raise CompileError("file_path is neither JSON or YAML: {}".format(file_path))
-
-    def need(self, key, msg="key and value needed"):
-        """
-        requires that key is set in self.kwargs
-        errors with msg if key not set
-        """
-        err_msg = '{}: "{}": {}'.format(self.__class__.__name__, key, msg)
-        if key not in self.kwargs:
-            raise CompileError(err_msg)
-
-    def new(self):
-        """
-        initialise need()ed keys for
-        a new BaseObj
-        """
-        pass
-
-    def body(self):
-        """
-        set values/logic for self.root
-        """
-        pass
-
-    def to_dict(self):
-        """
-        returns object dict
-        """
-        return _to_dict(self)
