@@ -98,7 +98,11 @@ def compile_targets(
             new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
             while new_sources:
                 fetch_inventories(
-                    inventory_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
+                    inventory_path,
+                    target_objs,
+                    dep_cache_dir,
+                    kwargs.get("force_fetch", False),
+                    pool,
                 )
                 cached.reset_inv()
                 target_objs = load_target_inventory(
@@ -152,7 +156,8 @@ def compile_targets(
         if kwargs.get("validate", False):
             validate_map = create_validate_mapping(target_objs, compile_path)
             worker = partial(
-                schema_validate_kubernetes_output, cache_dir=kwargs.get("schemas_path", "./schemas")
+                schema_validate_kubernetes_output,
+                cache_dir=kwargs.get("schemas_path", "./schemas"),
             )
             [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
 
@@ -589,7 +594,12 @@ def valid_target_obj(target_obj, require_compile=True):
                         {
                             "if": {"properties": {"type": {"const": "kubernetes"}}},
                             "then": {
-                                "properties": {"type": {}, "kind": {}, "output_paths": {}, "version": {}},
+                                "properties": {
+                                    "type": {},
+                                    "kind": {},
+                                    "output_paths": {},
+                                    "version": {},
+                                },
                                 "additionalProperties": False,
                                 "required": ["kind"],
                             },
@@ -765,7 +775,10 @@ def create_validate_mapping(target_objs, compiled_path):
     for target_obj in target_objs:
         target_name = target_obj["vars"]["target"]
         if "validate" not in target_obj:
-            logger.debug("target '%s' does not have 'validate' parameter in inventory. skipping", target_name)
+            logger.debug(
+                "target '%s' does not have 'validate' parameter in inventory. skipping",
+                target_name,
+            )
             continue
 
         for validate_item in target_obj["validate"]:

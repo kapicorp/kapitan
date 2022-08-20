@@ -9,8 +9,8 @@
 
 import tempfile
 import unittest
-from kapitan.errors import CompileError
-from kapitan.inputs.kadet import BaseObj, Dict
+
+from kadet import ABORT_EXCEPTION_TYPE, BaseObj, Dict
 
 
 class KadetTestObj(BaseObj):
@@ -46,13 +46,13 @@ class KadetTestObjWithInner(KadetTestObj):
 class KadetTest(unittest.TestCase):
     def test_parse_kwargs(self):
         kobj = BaseObj.from_dict({"this": "that", "not_hidden": True})
-        output = kobj.to_dict()
+        output = kobj.dump()
         desired_output = {"this": "that", "not_hidden": True}
         self.assertEqual(output, desired_output)
 
-    def test_to_dict(self):
+    def test_dump(self):
         kobj = KadetTestObj(name="testObj", size=5)
-        output = kobj.to_dict()
+        output = kobj.dump()
         desired_output = {
             "name": "testObj",
             "size": 5,
@@ -68,7 +68,7 @@ class KadetTest(unittest.TestCase):
 
     def test_inner(self):
         kobj = KadetTestObjWithInner(name="testWithInnerObj", size=6)
-        output = kobj.to_dict()
+        output = kobj.dump()
         desired_output = {
             "name": "testWithInnerObj",
             "size": 6,
@@ -90,7 +90,7 @@ class KadetTest(unittest.TestCase):
             BaseObj.from_dict({"me": "too"}),
             BaseObj.from_dict({"list_of_objs": [BaseObj.from_dict(dict(a=1, b=2)), Dict(dict(c=3, d=4))]}),
         ]
-        output = kobj.to_dict()
+        output = kobj.dump()
         desired_output = {
             "name": "testObj",
             "size": 5,
@@ -110,7 +110,7 @@ class KadetTest(unittest.TestCase):
         self.assertEqual(output, desired_output)
 
     def test_need(self):
-        with self.assertRaises(CompileError):
+        with self.assertRaises(ABORT_EXCEPTION_TYPE):
             KadetTestObj(this_should_error=True)
 
     def test_update_root_yaml(self):
@@ -120,9 +120,9 @@ class KadetTest(unittest.TestCase):
 
         class KadetObjFromYaml(BaseObj):
             def new(self):
-                self.update_root(yaml_file)
+                self.root_file(yaml_file)
 
-        output = KadetObjFromYaml().to_dict()
+        output = KadetObjFromYaml().dump()
         desired_output = {"this": "that", "list": [1, 2, 3]}
         self.assertEqual(output, desired_output)
 
@@ -133,9 +133,9 @@ class KadetTest(unittest.TestCase):
 
         class KadetObjFromYaml(BaseObj):
             def new(self):
-                self.update_root(json_file)
+                self.root_file(json_file)
 
-        output = KadetObjFromYaml().to_dict()
+        output = KadetObjFromYaml().dump()
         desired_output = {"this": "that", "list": [1, 2, 3]}
         self.assertEqual(output, desired_output)
 
@@ -145,7 +145,7 @@ class KadetTest(unittest.TestCase):
             fp.write('{"this": "that", "list": [1,2,3]}')
 
         kobj = BaseObj.from_json(json_file)
-        output = kobj.to_dict()
+        output = kobj.dump()
         desired_output = {"this": "that", "list": [1, 2, 3]}
         self.assertEqual(output, desired_output)
 
@@ -155,6 +155,6 @@ class KadetTest(unittest.TestCase):
             fp.write("this: that\nlist: [1,2,3]\n")
 
         kobj = BaseObj.from_yaml(yaml_file)
-        output = kobj.to_dict()
+        output = kobj.dump()
         desired_output = {"this": "that", "list": [1, 2, 3]}
         self.assertEqual(output, desired_output)
