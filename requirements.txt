@@ -108,7 +108,7 @@ jsonnet==0.18.0
     # via -r requirements.txt
 jsonschema==3.2.0
     # via -r requirements.txt
-kadet==0.2.0
+kadet==0.2.1
     # via -r requirements.txt
 markupsafe==2.0.1
     # via
@@ -162,7 +162,9 @@ pycparser==2.20
     #   -r requirements.txt
     #   cffi
 pydantic==1.9.2
-    # via kadet
+    # via
+    #   -r requirements.txt
+    #   kadet
 pyjwt[crypto]==2.1.0
     # via
     #   -r requirements.txt
@@ -177,7 +179,9 @@ pyrsistent==0.18.0
     #   -r requirements.txt
     #   jsonschema
 python-box==6.0.2
-    # via kadet
+    # via
+    #   -r requirements.txt
+    #   kadet
 python-dateutil==2.8.2
     # via
     #   -r requirements.txt
@@ -238,7 +242,9 @@ smmap==4.0.0
 toml==0.10.2
     # via -r requirements.txt
 typeguard==2.13.3
-    # via kadet
+    # via
+    #   -r requirements.txt
+    #   kadet
 typing-extensions==3.10.0.0
     # via
     #   -r requirements.txt

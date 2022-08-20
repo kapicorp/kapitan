@@ -31,12 +31,13 @@ inventory_path = cached.args.get(
 search_paths = contextvars.ContextVar("current search_paths in thread")
 current_target = contextvars.ContextVar("current target in thread")
 
-inventory = lambda: Dict(
-    inventory_func(search_paths.get(), current_target.get(), inventory_path), frozen_box=True
-)  # noqa E731
-inventory_global = lambda: Dict(
-    inventory_func(search_paths.get(), None, inventory_path), frozen_box=True
-)  # noqa E731
+
+def inventory():
+    return Dict(inventory_func(search_paths.get(), current_target.get(), inventory_path), default_box=False)
+
+
+def inventory_global():
+    return Dict(inventory_func(search_paths.get(), None, inventory_path), default_box=False)
 
 
 def module_from_path(path, check_name=None):
@@ -116,19 +117,6 @@ class Kadet(InputType):
         # reset between each compile if kadet component is used multiple times
         self.input_params = {}
 
-        # These will be updated per target
-        # XXX At the moment we have no other way of setting externals for modules...
-        # global search_paths
-        # search_paths = self.search_paths
-        # global inventory
-        # inventory = lambda: Dict(
-        #     inventory_func(self.search_paths, current_target.get(), inventory_path)
-        # )  # noqa E731
-        # global inventory_global
-        # inventory_global = lambda: Dict(
-        #     inventory_func(self.search_paths, None, inventory_path)
-        # )  # noqa E731
-
         kadet_module, spec = module_from_path(file_path)
         sys.modules[spec.name] = kadet_module
         spec.loader.exec_module(kadet_module)
@@ -191,7 +179,6 @@ class Kadet(InputType):
                 raise ValueError(
                     f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'"
                 )
-            logger.debug("Pruned output for: %s", file_path)
 
     def default_output_type(self):
         return "yaml"
