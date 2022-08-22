@@ -8,7 +8,7 @@ class Deployment(BaseObj):
         self.need("name", "name string needed")
         self.need("labels", "labels dict needed")
         self.need("containers", "containers dict needed")
-        self.update_root("lib/kubelib/deployment.yml")
+        self.root_file("lib/kubelib/deployment.yml")
 
     def body(self):
         self.root.metadata.name = self.kwargs.name
@@ -23,7 +23,7 @@ class Service(BaseObj):
         self.need("labels", "labels dict needed")
         self.need("ports", "ports dict needed")
         self.need("selector", "selector dict needed")
-        self.update_root("lib/kubelib/service.yml")
+        self.root_file("lib/kubelib/service.yml")
 
     def body(self):
         self.root.metadata.name = self.kwargs.name

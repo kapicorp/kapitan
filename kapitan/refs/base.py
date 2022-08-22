@@ -17,6 +17,7 @@ from contextlib import contextmanager
 from functools import lru_cache
 
 import yaml
+
 from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashMismatchError
 from kapitan.refs.functions import eval_func
 from kapitan.utils import PrettyDumper, list_all_paths

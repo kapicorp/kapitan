@@ -13,6 +13,7 @@ import os
 from collections.abc import Mapping
 
 import yaml
+
 from kapitan.errors import CompileError, KapitanError
 from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper
@@ -123,10 +124,20 @@ class CompilingFile(object):
 
         if obj:
             if isinstance(obj, Mapping):
-                yaml.dump(obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False)
+                yaml.dump(
+                    obj,
+                    stream=self.fp,
+                    indent=indent,
+                    Dumper=PrettyDumper,
+                    default_flow_style=False,
+                )
             else:
                 yaml.dump_all(
-                    obj, stream=self.fp, indent=indent, Dumper=PrettyDumper, default_flow_style=False
+                    obj,
+                    stream=self.fp,
+                    indent=indent,
+                    Dumper=PrettyDumper,
+                    default_flow_style=False,
                 )
 
             logger.debug("Wrote %s", self.fp.name)
