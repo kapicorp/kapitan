@@ -32,12 +32,12 @@ search_paths = contextvars.ContextVar("current search_paths in thread")
 current_target = contextvars.ContextVar("current target in thread")
 
 
-def inventory():
-    return Dict(inventory_func(search_paths.get(), current_target.get(), inventory_path), default_box=False)
+def inventory(lazy=False):
+    return Dict(inventory_func(search_paths.get(), current_target.get(), inventory_path), default_box=lazy)
 
 
-def inventory_global():
-    return Dict(inventory_func(search_paths.get(), None, inventory_path), default_box=False)
+def inventory_global(lazy=False):
+    return Dict(inventory_func(search_paths.get(), None, inventory_path), default_box=lazy)
 
 
 def module_from_path(path, check_name=None):
