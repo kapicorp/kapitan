@@ -224,6 +224,7 @@ def multiline_str_presenter(dumper, data):
             return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
     return dumper.represent_scalar('tag:yaml.org,2002:str', data)
 
+
 PrettyDumper.add_representer(str, multiline_str_presenter)
 
 def null_presenter(dumper, data):
@@ -233,7 +234,8 @@ def null_presenter(dumper, data):
         return dumper.represent_scalar('tag:yaml.org,2002:null', '')
     else:
         return dumper.represent_scalar('tag:yaml.org,2002:null', 'null')
-        
+
+
 PrettyDumper.add_representer(type(None), null_presenter)
 
 def flatten_dict(d, parent_key="", sep="."):
