@@ -212,6 +212,21 @@ class PrettyDumper(yaml.SafeDumper):
         return super(PrettyDumper, self).increase_indent(flow, False)
 
 
+def multiline_str_presenter(dumper, data):
+    """
+    Configures yaml for dumping multiline strings with style='|'.
+    By default, strings are getting dumped with style='"'.
+    Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
+    """
+    flag = True
+    if flag:
+        if data.count('\n') > 0:  # check for multiline string
+            return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
+    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+    
+PrettyDumper.add_representer(str, multiline_str_presenter)
+
+
 def flatten_dict(d, parent_key="", sep="."):
     """Flatten nested elements in a dictionary"""
     items = []
