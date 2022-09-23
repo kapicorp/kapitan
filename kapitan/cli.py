@@ -271,19 +271,20 @@ def build_parser():
     )
 
     compile_parser.add_argument(
-        "--multiline-string-rep",
+        "--multiline-string-style",
         type=str,
-        choices=('|', '>', '"'),
-        metavar="ARG",
-        default=from_dot_kapitan("compile", "multiline-string-rep", '"'),
-        help="set multiline string style to '|'",
+        choices=["literal", "folded", "double-quotes"],
+        metavar="STYLE",
+        action="store",
+        default=from_dot_kapitan("compile", "multiline-string-style", False),
+        help="set multiline string style to STYLE, default is 'double-quotes'",
     )
     
     compile_parser.add_argument(
-        "--dump-null",
-        default=from_dot_kapitan("compile", "dump-null", False),
+        "--dump-null-as-empty",
+        default=from_dot_kapitan("compile", "dump-null-as-empty", False),
         action="store_true",
-        help="dumps all none-type entries"
+        help="dumps all none-type entries as empty"
     )
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()

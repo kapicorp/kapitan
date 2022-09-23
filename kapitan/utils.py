@@ -214,12 +214,24 @@ class PrettyDumper(yaml.SafeDumper):
 
 def multiline_str_presenter(dumper, data):
     """
-    Configures yaml for dumping multiline strings with style='|'.
+    Configures yaml for dumping multiline strings with given style.
     By default, strings are getting dumped with style='"'.
     Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
     """
-    args = vars(cached.as_dict()["args"]["compile"]) # get parsed args from cached.py
-    style = args["multiline_string_rep"]
+    # get parsed args from cached.py
+    cached_dict = cached.as_dict()
+    args = vars(cached_dict["args"]["compile"])
+    
+    flag = args["multiline_string_style"]
+    if flag:
+        style = flag
+    
+    if style == "literal": 
+        style = '|'
+    elif style == "folded":
+        style = '>'
+    else:
+        style = '"'
     if data.count('\n') > 0:  # check for multiline string
         return dumper.represent_scalar('tag:yaml.org,2002:str', data, style=style)
     return dumper.represent_scalar('tag:yaml.org,2002:str', data)
@@ -229,9 +241,13 @@ PrettyDumper.add_representer(str, multiline_str_presenter)
 
 def null_presenter(dumper, data):
     """Configures yaml for omitting value from null-datatype"""
-    args = vars(cached.as_dict()["args"]["compile"]) # get parsed args from cached.py
-    flag = args["dump_null"]
-    if flag:
+    # get parsed args from cached.py
+    cached_dict = cached.as_dict()
+    args = vars(cached_dict["args"]["compile"])
+    print(args)
+    
+    flag_value = args["dump_null_as_empty"]
+    if flag_value:
         return dumper.represent_scalar('tag:yaml.org,2002:null', '')
     else:
         return dumper.represent_scalar('tag:yaml.org,2002:null', 'null')
