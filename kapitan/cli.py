@@ -276,7 +276,7 @@ def build_parser():
         choices=["literal", "folded", "double-quotes"],
         metavar="STYLE",
         action="store",
-        default=from_dot_kapitan("compile", "multiline-string-style", False),
+        default=from_dot_kapitan("compile", "multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
     

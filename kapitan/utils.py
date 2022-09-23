@@ -222,10 +222,8 @@ def multiline_str_presenter(dumper, data):
     cached_dict = cached.as_dict()
     args = vars(cached_dict["args"]["compile"])
     
-    flag = args["multiline_string_style"]
-    if flag:
-        style = flag
-    
+    style = args["multiline_string_style"]
+
     if style == "literal": 
         style = '|'
     elif style == "folded":
@@ -244,7 +242,6 @@ def null_presenter(dumper, data):
     # get parsed args from cached.py
     cached_dict = cached.as_dict()
     args = vars(cached_dict["args"]["compile"])
-    print(args)
     
     flag_value = args["dump_null_as_empty"]
     if flag_value:
