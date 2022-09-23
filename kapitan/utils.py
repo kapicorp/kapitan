@@ -218,10 +218,10 @@ def multiline_str_presenter(dumper, data):
     By default, strings are getting dumped with style='"'.
     Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
     """
-    flag = True
-    if flag:
-        if data.count('\n') > 0:  # check for multiline string
-            return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
+    args = vars(cached.as_dict()["args"]["compile"]) # get parsed args from cached.py
+    style = args["multiline_string_rep"]
+    if data.count('\n') > 0:  # check for multiline string
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data, style=style)
     return dumper.represent_scalar('tag:yaml.org,2002:str', data)
 
 
@@ -229,7 +229,8 @@ PrettyDumper.add_representer(str, multiline_str_presenter)
 
 def null_presenter(dumper, data):
     """Configures yaml for omitting value from null-datatype"""
-    flag = True
+    args = vars(cached.as_dict()["args"]["compile"]) # get parsed args from cached.py
+    flag = args["dump_null"]
     if flag:
         return dumper.represent_scalar('tag:yaml.org,2002:null', '')
     else:

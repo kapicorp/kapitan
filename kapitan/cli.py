@@ -270,6 +270,22 @@ def build_parser():
         help='set schema cache path, default is "./schemas"',
     )
 
+    compile_parser.add_argument(
+        "--multiline-string-rep",
+        type=str,
+        choices=('|', '>', '"'),
+        metavar="ARG",
+        default=from_dot_kapitan("compile", "multiline-string-rep", '"'),
+        help="set multiline string style to '|'",
+    )
+    
+    compile_parser.add_argument(
+        "--dump-null",
+        default=from_dot_kapitan("compile", "dump-null", False),
+        action="store_true",
+        help="dumps all none-type entries"
+    )
+
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
     compile_selector_parser.add_argument(
         "--targets",
