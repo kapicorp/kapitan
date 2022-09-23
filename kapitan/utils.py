@@ -223,9 +223,18 @@ def multiline_str_presenter(dumper, data):
         if data.count('\n') > 0:  # check for multiline string
             return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
     return dumper.represent_scalar('tag:yaml.org,2002:str', data)
-    
+
 PrettyDumper.add_representer(str, multiline_str_presenter)
 
+def null_presenter(dumper, data):
+    """Configures yaml for omitting value from null-datatype"""
+    flag = True
+    if flag:
+        return dumper.represent_scalar('tag:yaml.org,2002:null', '')
+    else:
+        return dumper.represent_scalar('tag:yaml.org,2002:null', 'null')
+        
+PrettyDumper.add_representer(type(None), null_presenter)
 
 def flatten_dict(d, parent_key="", sep="."):
     """Flatten nested elements in a dictionary"""
