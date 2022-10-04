@@ -117,6 +117,26 @@ def compile_targets(
             fetch_dependencies(
                 output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
             )
+        # if --force is set, ignore dependencies property
+        elif not kwargs.get("force_fetch", False):
+            fetch_objs = []
+            # iterate through targets
+            for target in target_objs:
+                try:
+                    # get value of "fetch_always" property
+                    dependencies = target["dependencies"]
+                    # dependencies is still a list
+                    for entry in dependencies:
+                        fetch_always = entry["fetch_always"]
+                        if fetch_always:
+                            fetch_objs.append(target)
+                except KeyError:
+                    # targets may have no "dependencies" or "fetch_always" key
+                    continue
+            # fetch dependencies from targets with fetch_always set to true
+            if fetch_objs:
+                fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
+
         logger.info("Rendered inventory (%.2fs)", time.time() - rendering_start)
 
         worker = partial(
@@ -620,6 +640,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         "ref": {"type": "string"},
                         "unpack": {"type": "boolean"},
                         "version": {"type": "string"},
+                        "fetch_always": {"type": "boolean"},
                     },
                     "required": ["type", "output_path", "source"],
                     "additionalProperties": False,
@@ -632,6 +653,7 @@ def valid_target_obj(target_obj, require_compile=True):
                                     "source": {"format": "uri"},
                                     "output_path": {},
                                     "unpack": {},
+                                    "fetch_always": {},
                                 },
                                 "additionalProperties": False,
                             },
@@ -646,6 +668,7 @@ def valid_target_obj(target_obj, require_compile=True):
                                     "unpack": {},
                                     "chart_name": {"type": "string"},
                                     "version": {"type": "string"},
+                                    "fetch_always": {},
                                 },
                                 "required": ["type", "output_path", "source", "chart_name"],
                                 "additionalProperties": False,
