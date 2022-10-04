@@ -279,12 +279,12 @@ def build_parser():
         default=from_dot_kapitan("compile", "multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
-    
+
     compile_parser.add_argument(
         "--dump-null-as-empty",
         default=from_dot_kapitan("compile", "dump-null-as-empty", False),
         action="store_true",
-        help="dumps all none-type entries as empty"
+        help="dumps all none-type entries as empty",
     )
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
