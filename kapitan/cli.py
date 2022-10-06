@@ -271,20 +271,20 @@ def build_parser():
     )
 
     compile_parser.add_argument(
-        "--multiline-string-style",
+        "--yaml-multiline-string-style",
         type=str,
         choices=["literal", "folded", "double-quotes"],
         metavar="STYLE",
         action="store",
-        default=from_dot_kapitan("compile", "multiline-string-style", "double-quotes"),
+        default=from_dot_kapitan("compile", "yaml-multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
 
     compile_parser.add_argument(
-        "--dump-null-as-empty",
-        default=from_dot_kapitan("compile", "dump-null-as-empty", False),
+        "--yaml-dump-null-as-empty",
+        default=from_dot_kapitan("compile", "yaml-dump-null-as-empty", False),
         action="store_true",
-        help="dumps all none-type entries as empty",
+        help="dumps all none-type entries as empty, default is dumping as 'null'",
     )
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
