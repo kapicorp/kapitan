@@ -79,6 +79,10 @@ optional arguments:
                         ignore the version from .kapitan
   --schemas-path SCHEMAS_PATH
                         set schema cache path, default is "./schemas"
+  --yaml-multiline-string-style STYLE
+                        set multiline string style to STYLE, default is 'double-quotes'
+  --yaml-dump-null-as-empty
+                        dumps all none-type entries as empty, default is dumping as 'null'
   --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
                         targets to compile, default is all
   --labels [key=value [key=value ...]], -l [key=value [key=value ...]]
