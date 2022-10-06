@@ -220,10 +220,7 @@ def multiline_str_presenter(dumper, data):
     """
     # get parsed args from cached.py
     try:
-        cached_dict = cached.as_dict()
-        args = vars(cached_dict["args"]["compile"])
-
-        style = args["multiline_string_style"]
+        style = cached.args["compile"].yaml_multiline_string_style
     except KeyError:
         style = None
 
@@ -245,9 +242,7 @@ def null_presenter(dumper, data):
     """Configures yaml for omitting value from null-datatype"""
     # get parsed args from cached.py
     try:
-        cached_dict = cached.as_dict()
-        args = vars(cached_dict["args"]["compile"])
-        flag_value = args["dump_null_as_empty"]
+        flag_value = cached.args["compile"].yaml_dump_null_as_empty
     except KeyError:
         flag_value = None
 
