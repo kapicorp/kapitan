@@ -219,10 +219,10 @@ def multiline_str_presenter(dumper, data):
     Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
     """
     # get parsed args from cached.py
-    try:
-        style = cached.args["compile"].yaml_multiline_string_style
-    except KeyError:
-        style = None
+    compile_args = cached.args.get("compile", None)
+    style = None
+    if compile_args:
+        style = compile_args.yaml_multiline_string_style
 
     if style == "literal":
         style = "|"
@@ -241,10 +241,10 @@ PrettyDumper.add_representer(str, multiline_str_presenter)
 def null_presenter(dumper, data):
     """Configures yaml for omitting value from null-datatype"""
     # get parsed args from cached.py
-    try:
-        flag_value = cached.args["compile"].yaml_dump_null_as_empty
-    except KeyError:
-        flag_value = None
+    compile_args = cached.args.get("compile", None)
+    flag_value = None
+    if compile_args:
+        flag_value = compile_args.yaml_dump_null_as_empty
 
     if flag_value:
         return dumper.represent_scalar("tag:yaml.org,2002:null", "")
