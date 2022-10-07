@@ -212,6 +212,49 @@ class PrettyDumper(yaml.SafeDumper):
         return super(PrettyDumper, self).increase_indent(flow, False)
 
 
+def multiline_str_presenter(dumper, data):
+    """
+    Configures yaml for dumping multiline strings with given style.
+    By default, strings are getting dumped with style='"'.
+    Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
+    """
+    # get parsed args from cached.py
+    compile_args = cached.args.get("compile", None)
+    style = None
+    if compile_args:
+        style = compile_args.yaml_multiline_string_style
+
+    if style == "literal":
+        style = "|"
+    elif style == "folded":
+        style = ">"
+    else:
+        style = '"'
+    if data.count("\n") > 0:  # check for multiline string
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+PrettyDumper.add_representer(str, multiline_str_presenter)
+
+
+def null_presenter(dumper, data):
+    """Configures yaml for omitting value from null-datatype"""
+    # get parsed args from cached.py
+    compile_args = cached.args.get("compile", None)
+    flag_value = None
+    if compile_args:
+        flag_value = compile_args.yaml_dump_null_as_empty
+
+    if flag_value:
+        return dumper.represent_scalar("tag:yaml.org,2002:null", "")
+    else:
+        return dumper.represent_scalar("tag:yaml.org,2002:null", "null")
+
+
+PrettyDumper.add_representer(type(None), null_presenter)
+
+
 def flatten_dict(d, parent_key="", sep="."):
     """Flatten nested elements in a dictionary"""
     items = []
