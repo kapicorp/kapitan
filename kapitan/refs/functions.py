@@ -195,7 +195,6 @@ def alphanumspec(ctx, nchars="8", special_chars=string.punctuation):
     # make sure that each character is include only once or not at all
     special_chars = "".join(set(special_chars).intersection(string.punctuation))
     pool = string.ascii_letters + special_chars
-    print(pool)
     generic_alphanum(ctx, nchars, pool)
 
 
