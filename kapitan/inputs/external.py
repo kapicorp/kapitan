@@ -45,13 +45,16 @@ class External(InputType):
             args = " ".join(args)
 
             # compile_path (str): Path to current target compiled directory
-            args = re.sub(r"(\${compiled_target_dir})", compile_path, args)
+            compiled_target_pattern = re.compile(r"(\${compiled_target_dir})")
+            args = compiled_target_pattern.sub(compile_path, args)
+            # substitute `${compiled_target_dir}` in provided environment variables
+            env_vars = {k: compiled_target_pattern.sub(compile_path, v) for (k, v) in self.env_vars.items()}
 
-            logger.debug("Executing external input with command '%s' and env vars '%s'.", args, self.env_vars)
+            logger.debug("Executing external input with command '%s' and env vars '%s'.", args, env_vars)
 
             external_result = subprocess.run(
                 args,
-                env=self.env_vars,
+                env=env_vars,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 shell=True,
@@ -62,7 +65,7 @@ class External(InputType):
             if external_result.returncode != 0:
                 raise ValueError(
                     "Executing external input with command '{}' and env vars '{}' failed: {}".format(
-                        args, self.env_vars, external_result.stderr
+                        args, env_vars, external_result.stderr
                     )
                 )
 
