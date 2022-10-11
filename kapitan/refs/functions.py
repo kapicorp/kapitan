@@ -10,6 +10,7 @@ import hashlib
 import logging
 import secrets  # python secrets module
 import string
+import re
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -29,7 +30,12 @@ def eval_func(func_name, ctx, *func_params):
         "rsapublic": rsa_public_key,
         "publickey": public_key,
         "reveal": reveal,
-        "loweralphanum": loweralphanum,
+        "randomint": random_int,
+        "loweralpha": lower_alpha,
+        "loweralphanum": lower_alpha_num,
+        "upperalpha": upper_alpha,
+        "upperalphanum": upper_alpha_num,
+        "customregex": custom_regex
     }
 
     return func_lookup[func_name](ctx, *func_params)
@@ -144,13 +150,63 @@ def reveal(ctx, secret_path):
         )
 
 
-def loweralphanum(ctx, chars="8"):
-    """
-    generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars
-    """
+def random_int(ctx, ndigits="16"):
+    """generates a number, containing ndigits random digits"""
+    pool = string.digits
+    generic_alphanum(ctx, ndigits, pool)
+
+
+def lower_alpha(ctx, nchars="8"):
+    """generator function for lowercase letters (a-z)"""
+    pool = string.ascii_lowercase
+    generic_alphanum(ctx, nchars, pool)
+
+
+def lower_alpha_num(ctx, nchars="8"):
+    """generator function for lowercase letters and numbers (a-z and 0-9)"""
     pool = string.ascii_lowercase + string.digits
-    try:
-        chars = int(chars)
+    generic_alphanum(ctx, nchars, pool)
+
+
+def upper_alpha(ctx, nchars="8"):
+    """generator function for uppercase letters (A-Z)"""
+    pool = string.ascii_uppercase
+    generic_alphanum(ctx, nchars, pool)
+
+
+def upper_alpha_num(ctx, nchars="8"):
+    """generator function for uppercase letters and numbers (A-Z and 0-9)"""
+    pool = string.ascii_uppercase + string.digits
+    generic_alphanum(ctx, nchars, pool)
+
+
+def generic_alphanum(ctx, nchars, pool):
+    """
+    generates a DNS-compliant text string, containing nchars from pool
+    default for nchars is 8 chars
+    sets it to ctx.data
+    """
+    # check input
+    try: 
+        nchars = int (nchars)
     except ValueError:
-        raise RefError(f"Ref error: eval_func: {chars} cannot be converted into integer.")
-    ctx.data = "".join(secrets.choice(pool) for i in range(chars))
+        raise RefError(f"Ref error: eval_func: {nchars} cannot be converted into integer.")
+    
+    # generate string based on given pool
+    generated_str = "".join(secrets.choice(pool) for i in range(nchars))
+
+    # set ctx.data to generated string 
+    ctx.data = generated_str
+
+
+def custom_regex(ctx, regex = "***"):
+    """
+    (TBD)
+    generates a text string matching the given regex 
+    example: ...||customregex:("^[a-zA-Z0-9 ,:/\\-]{8}$") could generate "Uk0,rB\w" as secret
+    sets it to ctx.data
+    """
+    # validate regex
+    # generate string
+    # set string to ctx.data
+    raise NotImplementedError
