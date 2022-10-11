@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 def eval_func(func_name, ctx, *func_params):
     """calls specific function which generates the secret"""
     func_lookup = get_func_lookup()
-    
+
     return func_lookup[func_name](ctx, *func_params)
 
 
@@ -42,7 +42,7 @@ def get_func_lookup():
         "loweralphanum": lower_alpha_num,
         "upperalpha": upper_alpha,
         "upperalphanum": upper_alpha_num,
-        "customregex": custom_regex
+        "alphanumspec": alphanumspec,
     }
 
 
@@ -185,6 +185,20 @@ def upper_alpha_num(ctx, nchars="8"):
     generic_alphanum(ctx, nchars, pool)
 
 
+def alphanumspec(ctx, nchars="8", special_chars=string.punctuation):
+    """
+    generator function for alphanumeric characters and given special characters
+    usage: ?{base64:path/to/secret||alphanumspec:32:#./&}
+    default is !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+    NOTE: '|' and ':' are used for arg parsing and aren't allowed manually, in default they work
+    """
+    # make sure that each character is include only once or not at all
+    special_chars = "".join(set(special_chars).intersection(string.punctuation))
+    pool = string.ascii_letters + special_chars
+    print(pool)
+    generic_alphanum(ctx, nchars, pool)
+
+
 def generic_alphanum(ctx, nchars, pool):
     """
     generates a DNS-compliant text string, containing nchars from pool
@@ -192,26 +206,13 @@ def generic_alphanum(ctx, nchars, pool):
     sets it to ctx.data
     """
     # check input
-    try: 
-        nchars = int (nchars)
+    try:
+        nchars = int(nchars)
     except ValueError:
         raise RefError(f"Ref error: eval_func: {nchars} cannot be converted into integer.")
-    
+
     # generate string based on given pool
     generated_str = "".join(secrets.choice(pool) for i in range(nchars))
 
-    # set ctx.data to generated string 
+    # set ctx.data to generated string
     ctx.data = generated_str
-
-
-def custom_regex(ctx, regex = "***"):
-    """
-    (TBD)
-    generates a text string matching the given regex 
-    example: ...||customregex:("^[a-zA-Z0-9 ,:/\\-]{8}$") could generate "Uk0,rB\w" as secret
-    sets it to ctx.data
-    """
-    # validate regex
-    # generate string
-    # set string to ctx.data
-    raise NotImplementedError
