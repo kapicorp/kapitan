@@ -25,6 +25,13 @@ class External(InputType):
         self.target_name = None
 
     def set_env_vars(self, env_vars):
+        # Propagate HOME and PATH environment variables to external tool
+        # This is necessary, because calling `subprocess.run()` with `env` set doesn't propagate
+        # any environment variables from the current process.
+        if "PATH" not in env_vars:
+            env_vars["PATH"] = os.environ.get("PATH")
+        if "HOME" not in env_vars:
+            env_vars["HOME"] = os.environ.get("HOME")
         self.env_vars = env_vars
 
     def set_args(self, args):
