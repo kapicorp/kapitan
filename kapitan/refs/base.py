@@ -19,7 +19,7 @@ from functools import lru_cache
 import yaml
 
 from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashMismatchError
-from kapitan.refs.functions import eval_func
+from kapitan.refs.functions import eval_func, get_func_lookup
 from kapitan.utils import PrettyDumper, list_all_paths
 
 try:
@@ -592,7 +592,11 @@ class RefController(object):
                 try:
                     eval_func(func_name, ctx, *func_params)
                 except KeyError:
-                    raise RefError(f"{func_name}: unknown ref function used.")
+                    raise RefError(
+                        "{}: unknown ref function used. Choose one of: {}".format(
+                            func_name, [key for key in get_func_lookup()]
+                        )
+                    )
 
         return ctx
 

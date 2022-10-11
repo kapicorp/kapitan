@@ -21,8 +21,15 @@ logger = logging.getLogger(__name__)
 
 
 def eval_func(func_name, ctx, *func_params):
+    """calls specific function which generates the secret"""
+    func_lookup = get_func_lookup()
+    
+    return func_lookup[func_name](ctx, *func_params)
 
-    func_lookup = {
+
+def get_func_lookup():
+    """returns the lookup-table for the generator functions"""
+    return {
         "randomstr": randomstr,
         "sha256": sha256,
         "ed25519": ed25519_private_key,
@@ -37,8 +44,6 @@ def eval_func(func_name, ctx, *func_params):
         "upperalphanum": upper_alpha_num,
         "customregex": custom_regex
     }
-
-    return func_lookup[func_name](ctx, *func_params)
 
 
 def randomstr(ctx, nbytes=""):
