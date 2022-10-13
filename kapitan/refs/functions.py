@@ -10,7 +10,6 @@ import hashlib
 import logging
 import secrets  # python secrets module
 import string
-import re
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -192,15 +191,15 @@ def alphanumspec(ctx, nchars="8", special_chars=string.punctuation):
     default is !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
     NOTE: '|' and ':' are used for arg parsing and aren't allowed manually, in default they work
     """
-    # make sure that each character is include only once or not at all
+    # make sure that each allowed character is include only once or not at all
     special_chars = "".join(set(special_chars).intersection(string.punctuation))
-    pool = string.ascii_letters + special_chars
+    pool = string.ascii_letters + string.digits + special_chars
     generic_alphanum(ctx, nchars, pool)
 
 
 def generic_alphanum(ctx, nchars, pool):
     """
-    generates a DNS-compliant text string, containing nchars from pool
+    generates a text string, containing nchars from pool
     default for nchars is 8 chars
     sets it to ctx.data
     """
@@ -209,6 +208,10 @@ def generic_alphanum(ctx, nchars, pool):
         nchars = int(nchars)
     except ValueError:
         raise RefError(f"Ref error: eval_func: {nchars} cannot be converted into integer.")
+
+    allowed_pool = string.ascii_letters + string.digits + string.punctuation
+    if not set(pool).issubset(allowed_pool):
+        raise RefError("{}: invalid elements in pool".format(set(pool).difference(set(allowed_pool))))
 
     # generate string based on given pool
     generated_str = "".join(secrets.choice(pool) for i in range(nchars))
