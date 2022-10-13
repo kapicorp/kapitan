@@ -9,6 +9,7 @@
 
 import base64
 import os
+import string
 import tempfile
 import unittest
 
@@ -440,3 +441,113 @@ class Base64RefsTest(unittest.TestCase):
         REVEALER._reveal_tag_without_subvar.cache_clear()
         revealed = REVEALER.reveal_raw_file(file_with_tags)
         self.assertEqual(len(revealed), 16)
+
+    def test_ref_function_upperalphanum(self):
+        "write upperalphanum to secret, confirm ref file exists, reveal and check"
+
+        tag = "?{plain:ref/upperalphanum||upperalphanum}"
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/upperalphanum")))
+
+        file_with_tags = tempfile.mktemp()
+        with open(file_with_tags, "w") as fp:
+            fp.write("?{plain:ref/upperalphanum}")
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 8)  # default length of upperalphanum string is 8
+
+        # Test with parameter nchars=16, correlating with string length 16
+        tag = "?{plain:ref/upperalphanum||upperalphanum:16}"
+        REF_CONTROLLER[tag] = RefParams()
+        REVEALER._reveal_tag_without_subvar.cache_clear()
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 16)
+
+    def test_ref_function_loweralpha(self):
+        "write loweralpha to secret, confirm ref file exists, reveal and check"
+
+        tag = "?{plain:ref/loweralpha||loweralpha}"
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/loweralpha")))
+
+        file_with_tags = tempfile.mktemp()
+        with open(file_with_tags, "w") as fp:
+            fp.write("?{plain:ref/loweralpha}")
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 8)  # default length of loweralpha string is 8
+
+        # Test with parameter nchars=16, correlating with string length 16
+        tag = "?{plain:ref/loweralpha||loweralpha:16}"
+        REF_CONTROLLER[tag] = RefParams()
+        REVEALER._reveal_tag_without_subvar.cache_clear()
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 16)
+
+    def test_ref_function_upperalpha(self):
+        "write upperalpha to secret, confirm ref file exists, reveal and check"
+
+        tag = "?{plain:ref/upperalpha||upperalpha}"
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/upperalpha")))
+
+        file_with_tags = tempfile.mktemp()
+        with open(file_with_tags, "w") as fp:
+            fp.write("?{plain:ref/upperalpha}")
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 8)  # default length of upperalpha string is 8
+
+        # Test with parameter nchars=16, correlating with string length 16
+        tag = "?{plain:ref/upperalpha||upperalpha:16}"
+        REF_CONTROLLER[tag] = RefParams()
+        REVEALER._reveal_tag_without_subvar.cache_clear()
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 16)
+
+    def test_ref_function_randomint(self):
+        "write randomint to secret, confirm ref file exists, reveal and check"
+
+        tag = "?{plain:ref/randomint||randomint}"
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/randomint")))
+
+        file_with_tags = tempfile.mktemp()
+        with open(file_with_tags, "w") as fp:
+            fp.write("?{plain:ref/randomint}")
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 16)  # default length of randomint string is 16
+
+        # Test with parameter nchars=32, correlating with string length 32
+        tag = "?{plain:ref/randomint||randomint:32}"
+        REF_CONTROLLER[tag] = RefParams()
+        REVEALER._reveal_tag_without_subvar.cache_clear()
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 32)
+
+    def test_ref_function_alphanumspec(self):
+        "write alphanumspec to secret, confirm ref file exists, reveal and check"
+        tag = "?{plain:ref/alphanumspec||alphanumspec}"
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/alphanumspec")))
+
+        file_with_tags = tempfile.mktemp()
+        with open(file_with_tags, "w") as fp:
+            fp.write("?{plain:ref/alphanumspec}")
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 8)  # default length of alphanumspec string is 8
+
+        # Test with parameter nchars=16, correlating with string length 16
+        tag = "?{plain:ref/alphanumspec||alphanumspec:16}"
+        REF_CONTROLLER[tag] = RefParams()
+        REVEALER._reveal_tag_without_subvar.cache_clear()
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 16)
+
+        # Test with every allowed special char, nchars=32
+        allowed_special_chars = set(string.punctuation).difference(":|")
+        for special_char in allowed_special_chars:
+            tag = "?{plain:ref/alphanumspec||alphanumspec:32:" + special_char + "}"
+            REF_CONTROLLER[tag] = RefParams()
+            REVEALER._reveal_tag_without_subvar.cache_clear()
+            revealed = REVEALER.reveal_raw_file(file_with_tags)
+            self.assertEqual(len(revealed), 32)
+            intersection = set(string.punctuation).intersection(revealed)
+            self.assertTrue(intersection.issubset(set(special_char)))
