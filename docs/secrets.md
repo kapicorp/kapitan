@@ -83,7 +83,12 @@ When referencing your secret in the inventory during compile, you can use the fo
 - `ed25519` - Generates a ed25519 private key (PKCS#8).
 - `publickey` - Derives the public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|publickey`
 - `rsapublic` - Derives an RSA public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|rsapublic` (deprecated, use `publickey` instead)
-- `loweralphanum` - Generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars `||`
+- `randomint` - Generates a random number. You can optionally pass the length you want i.e `||randomint:64`
+- `loweralphanum` - Generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars i.e. `||loweralphanum:32`
+- `upperalphanum` - Generates a text string (A-Z and 0-9) containing uppercase letters and numbers i.e. `||upperalphanum:32`
+- `loweralpha` - Generates a text string (a-z) containing lowercase letters i.e. `||loweralpha:32`
+- `upperalpha` - Generates a text string (A-Z) containing uppercase letters i.e. `||upperalpha:32`
+- `alphanumspec` - Generates a text string containing alphanumeric and given special characters i.e. `||alphanumspec:32:!$%&/(){}[]`. default is `string.punctuation`. Note: you can't pass `|` or `:` manually
 
 *Note*: The first operator here `||` is more similar to a logical OR. If the secret file doesn't exist, kapitan will generate it and apply the functions after the `||`. If the secret file already exists, no functions will run.
 
