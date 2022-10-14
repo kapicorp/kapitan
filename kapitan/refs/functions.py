@@ -30,18 +30,14 @@ def get_func_lookup():
     """returns the lookup-table for the generator functions"""
     return {
         "randomstr": randomstr,
+        "random": random,
         "sha256": sha256,
         "ed25519": ed25519_private_key,
         "rsa": rsa_private_key,
         "rsapublic": rsa_public_key,
         "publickey": public_key,
         "reveal": reveal,
-        "randomint": random_int,
-        "loweralpha": lower_alpha,
-        "loweralphanum": lower_alpha_num,
-        "upperalpha": upper_alpha,
-        "upperalphanum": upper_alpha_num,
-        "alphanumspec": alphanumspec,
+        "loweralphanum": loweralphanum,
     }
 
 
@@ -50,14 +46,9 @@ def randomstr(ctx, nbytes=""):
     generates a URL-safe text string, containing nbytes random bytes
     sets it to ctx.data
     """
-    if nbytes:
-        nbytes = int(nbytes)
-        # Generate twice the amount of bytes asked for
-        # and then trim the string to nbytes length if it's longer
-        ctx.data = secrets.token_urlsafe(2 * nbytes)[:nbytes]
-
-    else:
-        ctx.data = secrets.token_urlsafe()
+    # deprecated function
+    logger.info("")
+    random(ctx, "str", nbytes)
 
 
 def sha256(ctx, salt=""):
@@ -154,64 +145,53 @@ def reveal(ctx, secret_path):
         )
 
 
-def random_int(ctx, ndigits="16"):
-    """generates a number, containing ndigits random digits"""
-    pool = string.digits
-    generic_alphanum(ctx, ndigits, pool)
+def loweralphanum(ctx, nchars="8"):
+    """generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars"""
+    # deprecated function
+    logger.info("")
+    random(ctx, "loweralphanum", nchars)
 
 
-def lower_alpha(ctx, nchars="8"):
-    """generator function for lowercase letters (a-z)"""
-    pool = string.ascii_lowercase
-    generic_alphanum(ctx, nchars, pool)
-
-
-def lower_alpha_num(ctx, nchars="8"):
-    """generator function for lowercase letters and numbers (a-z and 0-9)"""
-    pool = string.ascii_lowercase + string.digits
-    generic_alphanum(ctx, nchars, pool)
-
-
-def upper_alpha(ctx, nchars="8"):
-    """generator function for uppercase letters (A-Z)"""
-    pool = string.ascii_uppercase
-    generic_alphanum(ctx, nchars, pool)
-
-
-def upper_alpha_num(ctx, nchars="8"):
-    """generator function for uppercase letters and numbers (A-Z and 0-9)"""
-    pool = string.ascii_uppercase + string.digits
-    generic_alphanum(ctx, nchars, pool)
-
-
-def alphanumspec(ctx, nchars="8", special_chars=string.punctuation):
+def random(ctx, type="str", nchars="", special_chars=string.punctuation):
     """
-    generator function for alphanumeric characters and given special characters
-    usage: ?{base64:path/to/secret||alphanumspec:32:#./&}
-    default is !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
-    NOTE: '|' and ':' are used for arg parsing and aren't allowed manually, in default they work
-    """
-    # make sure that each allowed character is include only once or not at all
-    special_chars = "".join(set(special_chars).intersection(string.punctuation))
-    pool = string.ascii_letters + string.digits + special_chars
-    generic_alphanum(ctx, nchars, pool)
+    generates a text string, containing nchars of given type
 
-
-def generic_alphanum(ctx, nchars, pool):
     """
-    generates a text string, containing nchars from pool
-    default for nchars is 8 chars
-    sets it to ctx.data
-    """
-    # check input
-    try:
-        nchars = int(nchars)
-    except ValueError:
-        raise RefError(f"Ref error: eval_func: {nchars} cannot be converted into integer.")
+    pool_lookup = {
+        "str": string.ascii_letters + string.digits + "-_",
+        "int": string.digits,
+        "loweralpha": string.ascii_lowercase,
+        "upperalpha": string.ascii_uppercase,
+        "loweralphanum": string.ascii_lowercase + string.digits,
+        "upperalphanum": string.ascii_uppercase + string.digits,
+        "special": string.ascii_letters + string.digits + special_chars,
+    }
 
+    default_nchars_lookup = {
+        "str": 43,
+        "int": 16,
+    }
+
+    # get pool of given type
+    pool = pool_lookup.get(type, None)
+    if not pool:
+        raise RefError(
+            "{}: unknown random type used. Choose one of {}".format(type, [key for key in pool_lookup])
+        )
+
+    # get default value for nchars if nchars is not specified
+    if not nchars:
+        nchars = default_nchars_lookup.get(type, 8)
+    else:
+        # check input for nchars
+        try:
+            nchars = int(nchars)
+        except ValueError:
+            raise RefError(f"Ref error: eval_func: {nchars} cannot be converted into integer.")
+
+    # check if pool is valid, eliminates duplicates
     allowed_pool = string.ascii_letters + string.digits + string.punctuation
-    if not set(pool).issubset(allowed_pool):
-        raise RefError("{}: invalid elements in pool".format(set(pool).difference(set(allowed_pool))))
+    pool = "".join(set(pool).intersection(allowed_pool))
 
     # generate string based on given pool
     generated_str = "".join(secrets.choice(pool) for i in range(nchars))
