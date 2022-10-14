@@ -80,7 +80,19 @@ def compile_targets(
 
     try:
         rendering_start = time.time()
-        if kwargs.get("fetch_inventories", False):
+
+        # check if --fetch or --force-fetch is enabled
+        force_fetch = kwargs.get("force_fetch", False)
+        fetch = kwargs.get("fetch", False) or force_fetch
+
+        # deprecated --force flag
+        if kwargs.get("force", False):
+            logger.info(
+                "DeprecationWarning: --force is deprecated. Use --force-fetch instead of --force --fetch"
+            )
+            force_fetch = True
+
+        if fetch:
             # skip classes that are not yet available
             target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=True)
         else:
@@ -93,7 +105,8 @@ def compile_targets(
         if not target_objs:
             raise CompileError("Error: no targets found")
 
-        if kwargs.get("fetch_inventories", False):
+        # fetch inventory
+        if fetch:
             # new_source checks for new sources in fetched inventory items
             new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
             while new_sources:
@@ -101,7 +114,7 @@ def compile_targets(
                     inventory_path,
                     target_objs,
                     dep_cache_dir,
-                    kwargs.get("force_fetch", False),
+                    force_fetch,
                     pool,
                 )
                 cached.reset_inv()
@@ -113,11 +126,10 @@ def compile_targets(
             # reset inventory cache and load target objs to check for missing classes
             cached.reset_inv()
             target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
-        if kwargs.get("fetch_dependencies", False):
-            fetch_dependencies(
-                output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
-            )
-        # if --force is set, ignore dependencies property
+        # fetch dependencies
+        if fetch:
+            fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
+        # fetch targets which have fetch_always: true
         elif not kwargs.get("force_fetch", False):
             fetch_objs = []
             # iterate through targets
