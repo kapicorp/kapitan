@@ -47,7 +47,7 @@ def randomstr(ctx, nbytes=""):
     sets it to ctx.data
     """
     # deprecated function
-    logger.info("")
+    logger.info("DeprecationWarning: randomstr is deprecated. Use random:str instead")
     random(ctx, "str", nbytes)
 
 
@@ -148,7 +148,7 @@ def reveal(ctx, secret_path):
 def loweralphanum(ctx, nchars="8"):
     """generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars"""
     # deprecated function
-    logger.info("")
+    logger.info("DeprecationWarning: loweralphanum is deprecated. Use random:loweralphanum instead")
     random(ctx, "loweralphanum", nchars)
 
 
