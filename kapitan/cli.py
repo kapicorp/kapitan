@@ -87,7 +87,7 @@ def trigger_compile(args):
         cache_paths=args.cache_paths,
         fetch=args.fetch,
         force_fetch=args.force_fetch,
-        force=args.force, # deprecated
+        force=args.force,  # deprecated
         validate=args.validate,
         schemas_path=args.schemas_path,
         jinja2_filters=args.jinja2_filters,
