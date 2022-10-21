@@ -58,7 +58,7 @@ def sha256(ctx, salt=""):
         ctx.data = hashlib.sha256(salted_input_value.encode()).hexdigest()
     else:
         raise RefError(
-            "Ref error: eval_func: nothing to sha256 hash; try " "something like '|randomstr|sha256'"
+            "Ref error: eval_func: nothing to sha256 hash; try " "something like '|random:str|sha256'"
         )
 
 

@@ -70,9 +70,9 @@ parameters:
     users:
       root:
         # If 'refs/targets/${target_name}/mysql/password' doesn't exist, it will gen a random b64-encoded password
-        password: ?{gpg:targets/${target_name}/mysql/password||randomstr|base64}
-        # password: ?{gkms:targets/${target_name}/mysql/password||randomstr|base64}
-        # password: ?{awskms:targets/${target_name}/mysql/password||randomstr|base64}
+        password: ?{gpg:targets/${target_name}/mysql/password||random:str|base64}
+        # password: ?{gkms:targets/${target_name}/mysql/password||random:str|base64}
+        # password: ?{awskms:targets/${target_name}/mysql/password||random:str|base64}
 
         # Generates the sha256 checksum of the previously declared B64'ed password
         # It's base64'ed again so that it can be used in kubernetes secrets

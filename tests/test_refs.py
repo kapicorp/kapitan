@@ -163,11 +163,11 @@ class Base64RefsTest(unittest.TestCase):
 
     def test_base64_ref_tag_func_name(self):
         "check ref tag func name is correct"
-        tag = "?{base64:my/ref5||randomstr}"
+        tag = "?{base64:my/ref5||random:str}"
         tag, token, func_str = REF_CONTROLLER.tag_params(tag)
-        self.assertEqual(tag, "?{base64:my/ref5||randomstr}")
+        self.assertEqual(tag, "?{base64:my/ref5||random:str}")
         self.assertEqual(token, "base64:my/ref5")
-        self.assertEqual(func_str, "||randomstr")
+        self.assertEqual(func_str, "||random:str")
 
     def test_base64_ref_embedded_attr(self):
         "check embedded ref has embed_refs set to True"
@@ -199,7 +199,7 @@ class Base64RefsTest(unittest.TestCase):
         check new ref tag with function raises RefFromFuncError
         and then creates it using RefParams()
         """
-        tag = "?{base64:my/ref7||randomstr}"
+        tag = "?{base64:my/ref7||random:str}"
         with self.assertRaises(RefFromFuncError):
             REF_CONTROLLER[tag]
         try:
@@ -392,7 +392,7 @@ class Base64RefsTest(unittest.TestCase):
     def test_ref_function_base64(self):
         "write randomstr to ref and base64, confirm ref file exists, reveal and check"
 
-        tag = "?{base64:ref/base64||randomstr|base64}"
+        tag = "?{base64:ref/base64||random:str|base64}"
         REF_CONTROLLER[tag] = RefParams()
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/base64")))
 
@@ -406,7 +406,7 @@ class Base64RefsTest(unittest.TestCase):
     def test_ref_function_sha256(self):
         "write randomstr to ref and sha256, confirm ref file exists, reveal and check"
 
-        tag = "?{base64:ref/sha256||randomstr|sha256}"
+        tag = "?{base64:ref/sha256||random:str|sha256}"
         REF_CONTROLLER[tag] = RefParams()
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/sha256")))
 
