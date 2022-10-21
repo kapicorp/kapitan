@@ -189,6 +189,14 @@ def random(ctx, type="str", nchars="", special_chars=string.punctuation):
         except ValueError:
             raise RefError(f"Ref error: eval_func: {nchars} cannot be converted into integer.")
 
+    # check if any special characters are specified without using type special
+    if type != "special" and special_chars != string.punctuation:
+        raise RefError(
+            "Ref error: eval_func: {} has no option to use special characters. Use type special instead, i.e. ||random:special:{}".format(
+                type, special_chars
+            )
+        )
+
     # check if pool is valid, eliminates duplicates
     allowed_pool = string.ascii_letters + string.digits + string.punctuation
     pool = "".join(set(pool).intersection(allowed_pool))
