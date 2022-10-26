@@ -133,14 +133,10 @@ class Kadet(InputType):
                 output_obj = kadet_module.main(input_params)
             elif len(kadet_arg_spec.args) == 0:
                 output_obj = kadet_module.main()
-        except Exception as e:
-            # Re raise kadet module CompileError
-            if type(e) is CompileError:
-                raise
-            # Print traceback on any other errors
-            else:
-                logger.exception("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                raise CompileError(f"Could not load Kadet module: {spec.name[16:]}")
+        except Exception:
+            # Log traceback and exception as is
+            logger.exception("")
+            raise CompileError(f"Could not load Kadet module: {spec.name[16:]}")
 
         output_obj = _to_dict(output_obj)
         if prune:
