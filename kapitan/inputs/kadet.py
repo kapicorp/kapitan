@@ -125,12 +125,18 @@ class Kadet(InputType):
         kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
         logger.debug("Kadet main args: %s", kadet_arg_spec.args)
 
-        if len(kadet_arg_spec.args) == 1:
-            output_obj = kadet_module.main(input_params)
-        elif len(kadet_arg_spec.args) == 0:
-            output_obj = kadet_module.main()
-        else:
+        if len(kadet_arg_spec.args) > 1:
             raise ValueError(f"Kadet {spec.name} main parameters not equal to 1 or 0")
+
+        try:
+            if len(kadet_arg_spec.args) == 1:
+                output_obj = kadet_module.main(input_params)
+            elif len(kadet_arg_spec.args) == 0:
+                output_obj = kadet_module.main()
+        except Exception:
+            # Log traceback and exception as is
+            logger.exception("")
+            raise CompileError(f"Could not load Kadet module: {spec.name[16:]}")
 
         output_obj = _to_dict(output_obj)
         if prune:

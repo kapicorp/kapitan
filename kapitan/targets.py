@@ -177,7 +177,7 @@ def compile_targets(
         logger.debug("Compile pool terminated")
         # only print traceback for errors we don't know about
         if not isinstance(e, KapitanError):
-            logger.exception("Unknown (Non-Kapitan) Error occurred")
+            logger.exception("\nUnknown (Non-Kapitan) error occurred:\n")
 
         logger.error("\n")
         if kwargs.get("verbose"):
