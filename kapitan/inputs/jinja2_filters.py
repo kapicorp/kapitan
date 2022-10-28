@@ -17,13 +17,19 @@ from importlib import util
 from random import Random, shuffle
 
 import toml
-import yaml
+import ruamel.yaml
+from io import StringIO
 from kapitan import cached, defaults, utils
 from kapitan.errors import CompileError
 from six import string_types
 
 logger = logging.getLogger(__name__)
 
+yaml = ruamel.yaml.YAML()
+yaml.indent(sequence=2, offset=0)
+yaml.allow_duplicate_keys = True
+yaml.explicit_start = False
+yaml.preserve_quotes = True
 
 def load_jinja2_filters(env):
     """Load Jinja2 custom filters into env"""
@@ -94,7 +100,11 @@ def base64_decode(string):
 
 
 def to_yaml(obj):
-    return yaml.safe_dump(obj, default_flow_style=False)
+    string_stream = StringIO()
+    yaml.dump(obj, string_stream)
+    output_str = string_stream.getvalue()
+    string_stream.close()
+    return output_str
 
 
 def to_toml(obj):
