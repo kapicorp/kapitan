@@ -129,23 +129,23 @@ def compile_targets(
         # fetch dependencies
         if fetch:
             fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
-        # fetch targets which have fetch_always: true
+        # fetch targets which have force_fetch: true
         elif not kwargs.get("force_fetch", False):
             fetch_objs = []
             # iterate through targets
             for target in target_objs:
                 try:
-                    # get value of "fetch_always" property
+                    # get value of "force_fetch" property
                     dependencies = target["dependencies"]
                     # dependencies is still a list
                     for entry in dependencies:
-                        fetch_always = entry["fetch_always"]
-                        if fetch_always:
+                        force_fetch = entry["force_fetch"]
+                        if force_fetch:
                             fetch_objs.append(target)
                 except KeyError:
-                    # targets may have no "dependencies" or "fetch_always" key
+                    # targets may have no "dependencies" or "force_fetch" key
                     continue
-            # fetch dependencies from targets with fetch_always set to true
+            # fetch dependencies from targets with force_fetch set to true
             if fetch_objs:
                 fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
 
@@ -652,7 +652,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         "ref": {"type": "string"},
                         "unpack": {"type": "boolean"},
                         "version": {"type": "string"},
-                        "fetch_always": {"type": "boolean"},
+                        "force_fetch": {"type": "boolean"},
                     },
                     "required": ["type", "output_path", "source"],
                     "additionalProperties": False,
@@ -665,7 +665,7 @@ def valid_target_obj(target_obj, require_compile=True):
                                     "source": {"format": "uri"},
                                     "output_path": {},
                                     "unpack": {},
-                                    "fetch_always": {},
+                                    "force_fetch": {},
                                 },
                                 "additionalProperties": False,
                             },
@@ -680,7 +680,7 @@ def valid_target_obj(target_obj, require_compile=True):
                                     "unpack": {},
                                     "chart_name": {"type": "string"},
                                     "version": {"type": "string"},
-                                    "fetch_always": {},
+                                    "force_fetch": {},
                                 },
                                 "required": ["type", "output_path", "source", "chart_name"],
                                 "additionalProperties": False,
