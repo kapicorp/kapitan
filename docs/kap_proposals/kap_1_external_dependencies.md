@@ -36,7 +36,7 @@ If the file already exists at `output_path`, the fetch will be skipped. For fres
 $ kapitan compile --fetch
 ```
 
-Users can also add the `fetch_always: true` option to the `kapitan.dependencies` in the inventory in order to force fetch of the dependencies of the target every time.
+Users can also add the `force_fetch: true` option to the `kapitan.dependencies` in the inventory in order to force fetch of the dependencies of the target every time.
 
 ## Implementation details
 
