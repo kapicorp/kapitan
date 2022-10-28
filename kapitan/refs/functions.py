@@ -30,6 +30,7 @@ def eval_func(func_name, ctx, *func_params):
         "publickey": public_key,
         "reveal": reveal,
         "loweralphanum": loweralphanum,
+        "basicauth": basicauth,
     }
 
     return func_lookup[func_name](ctx, *func_params)
@@ -154,3 +155,23 @@ def loweralphanum(ctx, chars="8"):
     except ValueError:
         raise RefError(f"Ref error: eval_func: {chars} cannot be converted into integer.")
     ctx.data = "".join(secrets.choice(pool) for i in range(chars))
+
+
+def basicauth(ctx, username="", password=""):
+    # check if parameters are specified
+    if not username:
+        # use random pet name as username
+        username = "".join(secrets.choice(string.ascii_lowercase) for i in range(8))
+
+    if not password:
+        # generate random password
+        pool = string.ascii_letters + string.digits
+        password = "".join(secrets.choice(pool) for i in range(8))
+    # generate basic-auth token (base64-encoded)
+    token = username + ":" + password
+    token_bytes = token.encode()
+    token_bytes_b64 = base64.b64encode(token_bytes)
+    token_b64 = token_bytes_b64.decode()
+
+    # set generated token to ctx.data
+    ctx.data = token_b64
