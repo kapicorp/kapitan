@@ -25,8 +25,8 @@ parameters:
 
 Use `--fetch` option to fetch the dependencies:
 
-```
-$ kapitan compile --fetch
+```shell
+kapitan compile --fetch
 ```
 
 This will download the dependencies and store them at their respective `output_path`.
@@ -34,14 +34,14 @@ By default, kapitan does not overwrite existing items with the same name as that
 
 Use the `--force` flag to force fetch (update cache with freshly fetched dependencies) and overwrite any existing item sharing the same name in the `output_path`.
 
-```
-$ kapitan compile --fetch --force
+```shell
+kapitan compile --fetch --force
 ```
 
 Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
 
-```
-$ kapitan compile --cache --fetch
+```shell
+kapitan compile --cache --fetch
 ```
 
 ## Git type
@@ -131,7 +131,7 @@ parameters:
 
 ### Example
 
-Say we want to download kapitan README.md file. Since it's on Github, we can access it as https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md. Using the following inventory, we can copy this to our target folder:
+Say we want to download kapitan README.md file. Since it's on Github, we can access it as <https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md>. Using the following inventory, we can copy this to our target folder:
 
 ```yaml
 parameters:
@@ -167,7 +167,6 @@ This fetches the README.md file from the URL and save it locally.
 Another use case for http types is when we want to download an archive file, such as helm packages, and extract its content.
 Setting `unpack: True` will unpack zip or tar files onto the `output_path`. In such cases, set `output_path` to a folder where you extract the content, and not the file name. You can refer to [here](compile.md#example) for the example.
 
-
 ## Helm type
 
 Fetches helm charts and any specific subcharts in the `requirements.yaml` file.
@@ -192,7 +191,6 @@ parameters:
       helm_path: <helm binary>
 ```
 
-
 ### Example
 
 If we want to download the prometheus helm chart we simply add the dependency to the monitoring target.
@@ -215,7 +213,7 @@ parameters:
         input_paths:
           - charts/prometheus
         helm_values:
-      	  alertmanager:
+         alertmanager:
             enabled: false
         helm_params:
           namespace: monitoring
@@ -250,6 +248,7 @@ $ tree -L 3
 ```
 
 If you simply want the latest chart available, either don't include the `version` key or specify an empty string.
+
 ```yaml
 parameters:
   kapitan:
@@ -267,7 +266,7 @@ parameters:
         input_paths:
           - charts/prometheus
         helm_values:
-      	  alertmanager:
+         alertmanager:
             enabled: false
         helm_params:
           namespace: monitoring

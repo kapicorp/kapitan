@@ -3,11 +3,12 @@
 ## The Problem
 
 Currently the helm binding can't be run on Mac OSX. Attempts to fix this have been made on several occasions:
-- https://github.com/kapicorp/kapitan/pull/414
-- https://github.com/kapicorp/kapitan/pull/547
-- https://github.com/kapicorp/kapitan/pull/568
 
-There are some issues with the current bindings besides the lack of Mac OSX support. The golang runtime (1.14) selected will effect older versions helm templates: https://github.com/helm/helm/issues/7711. Users can't select the version of helm they'd like to use for templating.
+- <https://github.com/kapicorp/kapitan/pull/414>
+- <https://github.com/kapicorp/kapitan/pull/547>
+- <https://github.com/kapicorp/kapitan/pull/568>
+
+There are some issues with the current bindings besides the lack of Mac OSX support. The golang runtime (1.14) selected will effect older versions helm templates: <https://github.com/helm/helm/issues/7711>. Users can't select the version of helm they'd like to use for templating.
 
 ## Solution
 

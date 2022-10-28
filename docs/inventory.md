@@ -21,8 +21,11 @@ Classifying almost anything will help you avoid repetition (DRY) and will force 
 For example, the snippet below, taken from the example `elasticsearch` class, declares
 what parameters are needed for the elasticsearch component:
 
+```shell
+cat inventory/classes/component/elasticsearch.yml
 ```
-$ cat inventory/classes/component/elasticsearch.yml
+
+```yaml
 parameters:
   elasticsearch:
     image: "quay.io/pires/docker-elasticsearch-kubernetes:5.5.0"
@@ -60,8 +63,11 @@ Or in the `mysql` class example, we declare the generic variables that will be s
 
 We include a secret that is referencing a GPG encrypted value in `secrets/targets/minikube-mysql/mysql/password`, or if the file doesn't exist, it will dynamically generate a random b64-encoded password, encrypt it and save it into the file.
 
+```shell
+cat inventory/classes/component/mysql.yml
 ```
-$ cat inventory/classes/component/mysql.yml
+
+```yaml
 parameters:
   mysql:
     storage: 10G
@@ -104,8 +110,11 @@ When you run `kapitan compile`, kapitan will generate `compiled` directory whose
 Inside the inventory target files you can include classes and define new values or override any values inherited from the included classes.
 For example:
 
+```shell
+cat inventory/targets/minikube-es.yml
 ```
-$ cat inventory/targets/minikube-es.yml
+
+```yaml
 classes:
   - common
   - cluster.minikube
@@ -148,7 +157,10 @@ Renders the resulting inventory values for a specific target.
 For example, rendering the inventory for the `minikube-es` target:
 
 ```shell
-$ kapitan inventory -t minikube-es
+kapitan inventory -t minikube-es
+```
+
+```yaml
 ...
 classes:
   - component.namespace
@@ -243,20 +255,20 @@ Use `kapitan lint` to checkup on your inventory or refs.
 
 Shows all inventory files where a variable is declared:
 
-```
+```shell
 $ kapitan searchvar parameters.elasticsearch.replicas
 ./inventory/targets/minikube-es.yml               2
 ./inventory/classes/component/elasticsearch.yml   1
 ```
 
-# Remote Inventory
+## Remote Inventory
 
 Kapitan is capable of recursively fetching inventory items stored in remote locations and copy it to the specified output path. This feature can be used by specifying those inventory items in classes or targets under `parameters.kapitan.inventory`. Supported types are:
 
 - [git type](#git-type)
 - [http type](#http-type)
 
-## Usage
+### Usage
 
 ```yaml
 parameters:
@@ -270,8 +282,8 @@ parameters:
 
 Use the `--fetch` flag to fetch the remote inventories and the external dependencies.
 
-```
-$ kapitan compile --fetch
+```shell
+kapitan compile --fetch
 ```
 
 This will download the dependencies and store them at their respective `output_path`.
@@ -279,19 +291,17 @@ By default, kapitan does not overwrite an existing item with the same name as th
 
 Use the `--force` flag to force fetch (update cache with freshly fetched items) and overwrite inventory items of the same name in the `output_path`.
 
-```
-$ kapitan compile --fetch --force
+```shell
+kapitan compile --fetch --force
 ```
 
 Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
 
+```shell
+kapitan compile --cache --fetch
 ```
-$ kapitan compile --cache --fetch
-```
 
-
-Class items can be specified before they are locally available as long as they are fetched in the same run. [Example](#Example) of this is given below.
-
+Class items can be specified before they are locally available as long as they are fetched in the same run. [Example](#example) of this is given below.
 
 ## Git type
 
@@ -313,6 +323,7 @@ parameters:
 ```
 
 ## http type
+
 http[s] types can fetch external inventories available at `http://` or `https://` URL.
 
 ### Usage
@@ -354,7 +365,8 @@ Root project directory before compilation:
     └── targets
         └── docker.yml
 ```
-#### Using git type to fetch the inventory item
+
+### Using git type to fetch the inventory item
 
 ```yaml
 classes:
@@ -385,6 +397,7 @@ parameters:
 ```
 
 Then run:
+
 ```shell
 $ kapitan compile --fetch
 [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
@@ -397,7 +410,7 @@ Dependency https://github.com/kapicorp/kapitan: saved to templates
 Compiled docker (0.11s)
 ```
 
-#### Using http type to fetch the inventory item
+### Using http type to fetch the inventory item
 
 ```yaml
 classes:
@@ -428,6 +441,7 @@ parameters:
 ```
 
 Then run:
+
 ```shell
 $ kapitan compile --fetch
 [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
@@ -444,7 +458,7 @@ Compiled docker (0.14s)
 
 Root project directory after compilation:
 
-```shell
+```text
 .
 ├── compiled
 │   └── docker
@@ -469,4 +483,3 @@ Root project directory after compilation:
 └── templates
     └── Dockerfile
 ```
-

@@ -8,11 +8,11 @@ for new features.
 
 ## Existing proposals
 
-[Kadet input type](kap_proposals/kap_0_kadet.md) 
+[Kadet input type](kap_proposals/kap_0_kadet.md)
 
 [External dependency management](kap_proposals/kap_1_external_dependencies.md)
 
-[Helm charts input type](kap_proposals/kap_2_helm_charts_input_type.md) 
+[Helm charts input type](kap_proposals/kap_2_helm_charts_input_type.md)
 
 [Kubernetes scheme validation](kap_proposals/kap_3_schema_validation.md)
 

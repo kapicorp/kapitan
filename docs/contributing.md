@@ -34,7 +34,7 @@ repository, you need to pull it separately by executing the command below:
 git submodule update --init
 ```
 
-#### Troubleshoot pip install errors
+### Troubleshoot pip install errors
 
 Check if gcc is installed:
 
@@ -61,13 +61,13 @@ python3 -m unittest tests/test_vault_transit.py
 To make sure you adhere to the [Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/)
 Python Black is used to apply the formatting so make sure you have it installed with `pip3 install black`.
 
-#### Apply via Git hook
+### Apply via Git hook
 
 - Run `pip3 install pre-commit` to install precommit framework.
 - In the Kapitan root directory, run `pre-commit install`
 - Git add/commit any changed files you want.
 
-#### Apply manually
+### Apply manually
 
 Run `make format_codestyle` before submitting.
 
@@ -94,7 +94,7 @@ Submit a PR for our master branch that updates the `.md` file(s). Test how the c
 
 Once the above PR has been merged, use `mkdocs gh-deploy` command to push the commit that updates the site content to your own gh-pages branch. Make sure that you already have this gh-pages branch in your fork that is up-to-date with our gh-pages branch such that the two branches share the commit history (otherwise Github would not allow PRs to be created).
 
-```
+```text
 # locally, on master branch (which has your updated docs)
 COMMIT_MSG="your commit message to replace" make mkdocs_gh_deploy
 ```

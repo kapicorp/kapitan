@@ -1,9 +1,9 @@
 # Kapitan: Generic templated configuration management for Kubernetes, Terraform and other things
 
 ![Unit Tests](https://github.com/kapicorp/kapitan/actions/workflows/test.yml/badge.svg)
-![](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)
-![](https://img.shields.io/pypi/dm/kapitan)
-![](https://img.shields.io/docker/pulls/kapicorp/kapitan)
+![Python Version](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)
+![Downloads](https://img.shields.io/pypi/dm/kapitan)
+![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)
 [![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
@@ -13,6 +13,7 @@ Kapitan is the tool to help you manage the complexity of your configuration usin
 Use Kapitan to build an inventory which you can then use to drive templates for your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
 
 ## Community
+
 * **Main Blog, articles and tutorials**: [Kapitan Blog](https://medium.com/kapitan-blog)
 * [**Generators**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7) and reference kapitan repository: [Kapitan Reference](https://github.com/kapicorp/kapitan-reference)
 * [Kapitan Reference](https://github.com/kapicorp/kapitan-reference): our reference repository to get started with Kapitan.
@@ -28,56 +29,62 @@ How is it different from [`helm`](https://github.com/kubernetes/helm) and [`kust
 ## Key Concepts
 
 ### Inventory
+
 The inventory is the heart of Kapitan.
-Using simple reusable `yaml` files (classes), you can represent as a ***single source of truth*** 
+Using simple reusable `yaml` files (classes), you can represent as a ***single source of truth***
 everything that matters in your setup, for instance:
- * kubernetes `components` definitions
- * terraform resources
- * business concepts
- * documentation and tooling
- * ...anything else you want!
+
+* kubernetes `components` definitions
+* terraform resources
+* business concepts
+* documentation and tooling
+* ...anything else you want!
   
  Once you have it defined, you can reuse this data to feed into any of the many templating backends available to Kapitan.
 
 ### [**Generators**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7)
+
 The simplest way to get started with Kapitan.
-Generators are ***universal templates*** that are a simplified way to generate configuration 
-files (for instance, Kubernetes manifests) without using any templating at all. 
+Generators are ***universal templates*** that are a simplified way to generate configuration
+files (for instance, Kubernetes manifests) without using any templating at all.
 > Check out our reference repository to get started:  [Kapitan Reference](https://github.com/kapicorp/kapitan-reference)
 
 > Read our blog post [**Keep your ship together with Kapitan**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7)
 
 ### [Jsonnet](https://jsonnet.org/) or [Kadet](https://kapitan.dev/compile/#kadet) templates backends
+
 For more complex scenarios, you have a choice of directly using our 2 main templating engines.
 
 You can use either [Jsonnet](https://jsonnet.org/) (tapping into an ever growing number of libraries and examples) or our Python based [Kadet](https://kapitan.dev/compile/#kadet) to create json/yaml based configurations (e.g. Kubernetes, Terraform);
 
 ### [Jinja2](http://jinja.pocoo.org/)
+
 Good old Jinja to create text based templates for scripts and documentation; Don't underestimate the power of this very simple approach to create templated scripts and documentation!
 
 ### [Kapitan Declarative Secrets](https://medium.com/kapitan-blog/declarative-secret-management-for-gitops-with-kapitan-b3c596eab088)
+
 Use Kapitan to securely generate and manage secrets with GPG, AWS KMS, gCloud KMS and Vault.
 
 Use [Tesoro](https://github.com/kapicorp/tesoro), our Kubernetes Admission Controller, to complete your integration with Kubernetes for secure secret decryption on-the-fly.
 
 ## Quickstart
 
-#### Docker (recommended)
+### Docker (recommended)
 
-```
+```shell
 docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan -h
 ```
 
 On Linux you can add `-u $(id -u)` to `docker run` to preserve file permissions.
 
-#### Pip
+### Pip
 
 Kapitan needs Python 3.7.
 
 **Install Python 3.7:**
 
- * Linux: `sudo apt-get update && sudo apt-get install -y python3.7-dev python3-pip python3-yaml`
- * Mac: `brew install python3 libyaml`
+* Linux: `sudo apt-get update && sudo apt-get install -y python3.7-dev python3-pip python3-yaml`
+* Mac: `brew install python3 libyaml`
 
 **Install Kapitan:**
 
@@ -95,7 +102,7 @@ sudo pip3 install --upgrade kapitan
 
 ## Example
 
-The example below _compiles_ 2 targets inside the `examples/kubernetes` folder.
+The example below *compiles* 2 targets inside the `examples/kubernetes` folder.
 Each target represents a different namespace in a minikube cluster.
 
 These targets generate the following resources:
@@ -126,23 +133,23 @@ Compiled minikube-es
 
 ### Getting Started
 
-- [Kapitan Overview](docs/kapitan_overview.md)
-- [Understanding inventory](docs/inventory.md)
-- [Compile operation](docs/compile.md)
+* [Kapitan Overview](docs/kapitan_overview.md)
+* [Understanding inventory](docs/inventory.md)
+* [Compile operation](docs/compile.md)
 
 ### Kapitan features
 
-- [References (formerly secrets)](docs/secrets.md)
-- [Manifest validation](docs/validate.md)
-- [External dependencies management](docs/external_dependencies.md)
+* [References (formerly secrets)](docs/secrets.md)
+* [Manifest validation](docs/validate.md)
+* [External dependencies management](docs/external_dependencies.md)
 
 ### Miscellaneous
 
-- [Usage](docs/usage.md)
+* [Usage](docs/usage.md)
 
 ### Examples
 
-- [Kubernetes](docs/example-kubernetes.md)
+* [Kubernetes](docs/example-kubernetes.md)
 
 ## Credits
 
@@ -166,6 +173,7 @@ We quickly discovered that `Helm` did not fit well with our workflow, for the fo
 In short, we feel `Helm` is trying to be `apt-get` for Kubernetes charts, while we are trying to take you further than that.
 
 ### Why do I need Kapitan?
+
 With Kapitan, we worked to de-compose several problems that most of the other solutions are treating as one.
 
 1) ***Kubernetes manifests***: We like the jsonnet approach of using json as the working language. Jsonnet allows us to use inheritance and composition, and hide complexity at higher levels.
@@ -182,7 +190,6 @@ With Kapitan, we worked to de-compose several problems that most of the other so
 We feel most other solutions are pushing the limits of their capacity in order to provide for the above problems.
 Helm treats everything as a text template, while jsonnet tries to do everything as json.
 We believe that these approaches can be blended in a powerful new way, glued together by the inventory.
-
 
 ## Related projects
 

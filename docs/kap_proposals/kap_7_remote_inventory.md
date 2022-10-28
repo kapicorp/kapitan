@@ -19,16 +19,17 @@ parameters:
      output_path: <relative_output_path>
 ```
 
-On executing the ``` $ kapitan compile --fetch``` command, first the remote inventories will be fetched followed by fetching of external dependencies and finally merge the inventory to compile.
-
+On executing the ```$ kapitan compile --fetch``` command, first the remote inventories will be fetched followed by fetching of external dependencies and finally merge the inventory to compile.
 
 ## Copying inventory files to the output location
+
 The output path is the path to save the inventory items into. The path is relative to the `inventory/` directory. For example, it could be `/classes/`. The contents of the fetched inventory will be recursively copied.
 
 The fetched inventory files will be cached in the `.dependency_cache` directory if `--cache` is set.
 eg. `$ kapitan compile --fetch --cache`
 
 ## Force fetching
+
 While fetching, the output path will be recursively checked to see if it contains any file with the same name. If so, kapitan will skip fetching it.
 
 To overwrite the files with the newly downloaded inventory items, we can add the `--force` flag to the compile command, as shown below.
@@ -36,6 +37,7 @@ To overwrite the files with the newly downloaded inventory items, we can add the
 `$ kapitan compile --fetch --force`
 
 ## URL type
+
 The URL type can be either git or http(s). Depending on the URL type, the configuration file may have additional arguments.
 
 E.g Git type may also include aditional `ref` parameter as illustrated below:
@@ -49,6 +51,7 @@ inventory:
 ```
 
 ## Implementation details
+
 TODO
 
 ### Dependencies
