@@ -255,6 +255,7 @@ class HelmChart(BaseModel):
 
     def body(self):
         # TODO kadet.BaseModel.__init__ must initialise self.root = Dict()
+        # TODO as new BseModel instances will append params globally
         # TODO Doing here until a fix is in kadet module
         self.root = Dict()
         for obj in self.load_chart():
