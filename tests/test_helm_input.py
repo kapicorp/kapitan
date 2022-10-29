@@ -26,7 +26,7 @@ class HelmInputTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         chart_path = "charts/acs-engine-autoscaler"
         helm = Helm(None, None, None, {})
-        error_message = helm.render_chart(
+        _, error_message = helm.render_chart(
             chart_path, temp_dir, None, {"name": "acs-engine-autoscaler"}, None, None
         )
         self.assertFalse(error_message)
@@ -41,7 +41,7 @@ class HelmInputTest(unittest.TestCase):
         chart_path = "./non-existent"
         temp_dir = tempfile.mkdtemp()
         helm = Helm(None, None, None, {})
-        error_message = helm.render_chart(chart_path, temp_dir, None, {"name": "mychart"}, None, None)
+        _, error_message = helm.render_chart(chart_path, temp_dir, None, {"name": "mychart"}, None, None)
         self.assertTrue("path" in error_message and "not found" in error_message)
 
     def test_compile_chart(self):
