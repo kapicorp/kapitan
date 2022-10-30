@@ -27,7 +27,7 @@ Git type may also include `ref` and `subdir` parameters as illustrated below:
   source: <git_url>
   subdir: relative/path/in/repository
   ref: <commit_hash/branch/tag>
-  fetch_always: <bool>
+  force_fetch: <bool>
 ```
 
 If the file already exists at `output_path`, the fetch will be skipped. For fresh fetch of the dependencies, users may add `--fetch` option as follows:
