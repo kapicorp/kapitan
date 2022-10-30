@@ -277,10 +277,10 @@ $ kapitan compile --fetch
 This will download the dependencies and store them at their respective `output_path`.
 By default, kapitan does not overwrite an existing item with the same name as that of the fetched inventory items.
 
-Use the `--force` flag to force fetch (update cache with freshly fetched items) and overwrite inventory items of the same name in the `output_path`.
+Use the `--force-fetch` flag to force fetch (update cache with freshly fetched items) and overwrite inventory items of the same name in the `output_path`.
 
 ```
-$ kapitan compile --fetch --force
+$ kapitan compile --fetch --force-fetch
 ```
 
 Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
