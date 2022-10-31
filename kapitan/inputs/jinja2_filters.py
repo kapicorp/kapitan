@@ -31,6 +31,7 @@ yaml.allow_duplicate_keys = True
 yaml.explicit_start = False
 yaml.preserve_quotes = True
 
+
 def load_jinja2_filters(env):
     """Load Jinja2 custom filters into env"""
     env.filters["sha256"] = utils.sha256_string
