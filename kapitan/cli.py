@@ -348,6 +348,23 @@ def build_parser():
         action="store_true",
         default=from_dot_kapitan("inventory", "verbose", False),
     )
+    inventory_parser.add_argument(
+        "--indent",
+        "-i",
+        type=int,
+        default=from_dot_kapitan("inventory", "indent", 2),
+        metavar="INT",
+        help="Indentation spaces for inventory output, default is 2",
+    )
+    inventory_parser.add_argument(
+        "--multiline-string-style",
+        type=str,
+        choices=["literal", "folded", "double-quotes"],
+        metavar="STYLE",
+        action="store",
+        default=from_dot_kapitan("inventory", "multiline-string-style", "double-quotes"),
+        help="set multiline string style to STYLE, default is 'double-quotes'",
+    )
 
     searchvar_parser = subparser.add_parser(
         "searchvar", aliases=["sv"], help="show all inventory files where var is declared"
