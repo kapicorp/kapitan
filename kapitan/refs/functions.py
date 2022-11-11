@@ -156,15 +156,7 @@ def loweralphanum(ctx, nchars="8"):
 def random(ctx, type="str", nchars="", special_chars=string.punctuation):
     """
     generates a text string, containing nchars of given type
-
     """
-
-    pool = string.ascii_lowercase + string.digits
-    try:
-        chars = int(chars)
-    except ValueError:
-        raise RefError(f"Ref error: eval_func: {chars} cannot be converted into integer.")
-    ctx.data = "".join(secrets.choice(pool) for i in range(chars))
 
     pool_lookup = {
         "str": string.ascii_letters + string.digits + "-_",
@@ -215,7 +207,7 @@ def random(ctx, type="str", nchars="", special_chars=string.punctuation):
 
     # set ctx.data to generated string
     ctx.data = generated_str
-    
+
 
 def basicauth(ctx, username="", password=""):
     # check if parameters are specified
@@ -235,4 +227,3 @@ def basicauth(ctx, username="", password=""):
 
     # set generated token to ctx.data
     ctx.data = token_b64
-
