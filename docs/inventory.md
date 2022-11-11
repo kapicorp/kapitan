@@ -70,9 +70,9 @@ parameters:
     users:
       root:
         # If 'refs/targets/${target_name}/mysql/password' doesn't exist, it will gen a random b64-encoded password
-        password: ?{gpg:targets/${target_name}/mysql/password||randomstr|base64}
-        # password: ?{gkms:targets/${target_name}/mysql/password||randomstr|base64}
-        # password: ?{awskms:targets/${target_name}/mysql/password||randomstr|base64}
+        password: ?{gpg:targets/${target_name}/mysql/password||random:str|base64}
+        # password: ?{gkms:targets/${target_name}/mysql/password||random:str|base64}
+        # password: ?{awskms:targets/${target_name}/mysql/password||random:str|base64}
 
         # Generates the sha256 checksum of the previously declared B64'ed password
         # It's base64'ed again so that it can be used in kubernetes secrets
@@ -277,10 +277,10 @@ $ kapitan compile --fetch
 This will download the dependencies and store them at their respective `output_path`.
 By default, kapitan does not overwrite an existing item with the same name as that of the fetched inventory items.
 
-Use the `--force` flag to force fetch (update cache with freshly fetched items) and overwrite inventory items of the same name in the `output_path`.
+Use the `--force-fetch` flag to force fetch (update cache with freshly fetched items) and overwrite inventory items of the same name in the `output_path`.
 
 ```
-$ kapitan compile --fetch --force
+$ kapitan compile --fetch --force-fetch
 ```
 
 Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.

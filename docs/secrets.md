@@ -75,15 +75,23 @@ Kapitan will inherit the secrets configuration for the specified target, and enc
 
 When referencing your secret in the inventory during compile, you can use the following functions to automatically generate, encrypt and save your secret:
 
-- `randomstr` - Generates a random string. You can optionally pass the length you want i.e. `||randomstr:32`
-- `base64` - base64 encodes your secret; to be used as a secondary function i.e. `||randomstr|base64`
-- `sha256` - sha256 hashes your secret; to be used as a secondary function i.e. `||randomstr|sha256`. You can optionally pass a salt i.e `||randomstr|sha256:salt` -> becomes `sha256("salt:<generated random string>")`
+- `random` - Generates a random textstring with characters of given pool. Use one of:
+  - `str` : generator function for alphanumeric characters, will be url-token-safe
+  - `int` : generator function for digits (0-9)
+  - `loweralpha` : generator function for lowercase letters (a-z)
+  - `upperalpha` : generator function for uppercase letters (A-Z)
+  - `loweralphanum` : generator function for lowercase letters and numbers (a-z and 0-9)
+  - `upperalphanum` : generator function for uppercase letters and numbers (A-Z and 0-9)
+  - `special` : generator function for alphanumeric characters and given special characters(third parameter)
+
+  You can optionally pass the length you want i.e. `||random:str:32`
+- `base64` - base64 encodes your secret; to be used as a secondary function i.e. `||random:str|base64`
+- `sha256` - sha256 hashes your secret; to be used as a secondary function i.e. `||random:str|sha256`. You can optionally pass a salt i.e `||random:str|sha256:salt` -> becomes `sha256("salt:<generated random string>")`
 - `reveal` - Decrypts a secret; to be used as a secondary function, useful for reuse of a secret like for different encodings i.e `||reveal:path/to/secret|base64`
 - `rsa` - Generates an RSA 4096 private key (PKCS#8). You can optionally pass the key size i.e. `||rsa:2048`
 - `ed25519` - Generates a ed25519 private key (PKCS#8).
 - `publickey` - Derives the public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|publickey`
 - `rsapublic` - Derives an RSA public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|rsapublic` (deprecated, use `publickey` instead)
-- `loweralphanum` - Generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars `||`
 - `basicauth` - Generates a base64 encoded pair of `username:password`, i.e. `||basicauth:username:password`
 
 *Note*: The first operator here `||` is more similar to a logical OR. If the secret file doesn't exist, kapitan will generate it and apply the functions after the `||`. If the secret file already exists, no functions will run.
@@ -102,7 +110,7 @@ For example, assume for now that your GPG-encrypted secret is already stored in 
 users:
   root:
     # If 'secrets/targets/${target_name}/mysql/password' doesn't exist, we can automatically generate a random b64-encoded password as follows
-    password: ?{gpg:targets/${target_name}/mysql/password|randomstr|base64}
+    password: ?{gpg:targets/${target_name}/mysql/password||random:str|base64}
 ```
 
 During compile, kapitan will search for the path `targets/${target_name}/mysql/password`. Should it not exist, then it will automatically generate a random base64 password and save it to that path.

@@ -20,9 +20,17 @@ logger = logging.getLogger(__name__)
 
 
 def eval_func(func_name, ctx, *func_params):
+    """calls specific function which generates the secret"""
+    func_lookup = get_func_lookup()
 
-    func_lookup = {
+    return func_lookup[func_name](ctx, *func_params)
+
+
+def get_func_lookup():
+    """returns the lookup-table for the generator functions"""
+    return {
         "randomstr": randomstr,
+        "random": random,
         "sha256": sha256,
         "ed25519": ed25519_private_key,
         "rsa": rsa_private_key,
@@ -33,22 +41,15 @@ def eval_func(func_name, ctx, *func_params):
         "basicauth": basicauth,
     }
 
-    return func_lookup[func_name](ctx, *func_params)
-
 
 def randomstr(ctx, nbytes=""):
     """
     generates a URL-safe text string, containing nbytes random bytes
     sets it to ctx.data
     """
-    if nbytes:
-        nbytes = int(nbytes)
-        # Generate twice the amount of bytes asked for
-        # and then trim the string to nbytes length if it's longer
-        ctx.data = secrets.token_urlsafe(2 * nbytes)[:nbytes]
-
-    else:
-        ctx.data = secrets.token_urlsafe()
+    # deprecated function
+    logger.info("DeprecationWarning: randomstr is deprecated. Use random:str instead")
+    random(ctx, "str", nbytes)
 
 
 def sha256(ctx, salt=""):
@@ -58,7 +59,7 @@ def sha256(ctx, salt=""):
         ctx.data = hashlib.sha256(salted_input_value.encode()).hexdigest()
     else:
         raise RefError(
-            "Ref error: eval_func: nothing to sha256 hash; try " "something like '|randomstr|sha256'"
+            "Ref error: eval_func: nothing to sha256 hash; try " "something like '|random:str|sha256'"
         )
 
 
@@ -145,10 +146,19 @@ def reveal(ctx, secret_path):
         )
 
 
-def loweralphanum(ctx, chars="8"):
+def loweralphanum(ctx, nchars="8"):
+    """generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars"""
+    # deprecated function
+    logger.info("DeprecationWarning: loweralphanum is deprecated. Use random:loweralphanum instead")
+    random(ctx, "loweralphanum", nchars)
+
+
+def random(ctx, type="str", nchars="", special_chars=string.punctuation):
     """
-    generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars
+    generates a text string, containing nchars of given type
+
     """
+
     pool = string.ascii_lowercase + string.digits
     try:
         chars = int(chars)
@@ -156,6 +166,56 @@ def loweralphanum(ctx, chars="8"):
         raise RefError(f"Ref error: eval_func: {chars} cannot be converted into integer.")
     ctx.data = "".join(secrets.choice(pool) for i in range(chars))
 
+    pool_lookup = {
+        "str": string.ascii_letters + string.digits + "-_",
+        "int": string.digits,
+        "loweralpha": string.ascii_lowercase,
+        "upperalpha": string.ascii_uppercase,
+        "loweralphanum": string.ascii_lowercase + string.digits,
+        "upperalphanum": string.ascii_uppercase + string.digits,
+        "special": string.ascii_letters + string.digits + special_chars,
+    }
+
+    default_nchars_lookup = {
+        "str": 43,
+        "int": 16,
+    }
+
+    # get pool of given type
+    pool = pool_lookup.get(type, None)
+    if not pool:
+        raise RefError(
+            "{}: unknown random type used. Choose one of {}".format(type, [key for key in pool_lookup])
+        )
+
+    # get default value for nchars if nchars is not specified
+    if not nchars:
+        nchars = default_nchars_lookup.get(type, 8)
+    else:
+        # check input for nchars
+        try:
+            nchars = int(nchars)
+        except ValueError:
+            raise RefError(f"Ref error: eval_func: {nchars} cannot be converted into integer.")
+
+    # check if any special characters are specified without using type special
+    if type != "special" and special_chars != string.punctuation:
+        raise RefError(
+            "Ref error: eval_func: {} has no option to use special characters. Use type special instead, i.e. ||random:special:{}".format(
+                type, special_chars
+            )
+        )
+
+    # check if pool is valid, eliminates duplicates
+    allowed_pool = string.ascii_letters + string.digits + string.punctuation
+    pool = "".join(set(pool).intersection(allowed_pool))
+
+    # generate string based on given pool
+    generated_str = "".join(secrets.choice(pool) for i in range(nchars))
+
+    # set ctx.data to generated string
+    ctx.data = generated_str
+    
 
 def basicauth(ctx, username="", password=""):
     # check if parameters are specified
@@ -175,3 +235,4 @@ def basicauth(ctx, username="", password=""):
 
     # set generated token to ctx.data
     ctx.data = token_b64
+
