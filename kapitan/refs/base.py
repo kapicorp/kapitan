@@ -19,7 +19,7 @@ from functools import lru_cache
 import yaml
 
 from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashMismatchError
-from kapitan.refs.functions import eval_func
+from kapitan.refs.functions import eval_func, get_func_lookup
 from kapitan.utils import PrettyDumper, list_all_paths
 
 try:
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 # e.g. ?{ref:my/secret/token} or ?{ref:my/secret/token||func:param1:param2}
 # e.g  ?{ref:basepayloadhere==:embedded} (for embedded refs)
-REF_TOKEN_TAG_PATTERN = r"(\?{([\w\:\.\-\/@=]+)([\|\|\w\:\.\-\/]+)?=*})"
+REF_TOKEN_TAG_PATTERN = r"(\?{(\w+:[\w\-\.\@\=\/\:]+)(\|(?:(?:\|\w+)(?::\S*)*)+)?\=*})"
 REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
 
@@ -480,7 +480,10 @@ class RefController(object):
             tag, token, func_str = match.groups()
             return tag, token, func_str
         else:
-            raise RefError("{}: is not a valid tag".format(tag))
+            raise RefError(
+                "{}: is not a valid tag".format(tag),
+                "\ntry something like: ?{ref:path/to/secret||function:param1:param2}",
+            )
 
     def token_type(self, token):
         "returns ref type for token"
@@ -581,18 +584,27 @@ class RefController(object):
         evals and updates context ctx for func_str
         returns evaluated ctx
         """
+        # parse functions
         assert func_str.startswith("||")
         funcs = func_str[2:].split("|")
 
         for func in funcs:
+            # parse parameters for function
             func_name, *func_params = func.strip().split(":")
             if func_name == "base64":  # not a real function
                 ctx.encode_base64 = True
             else:
                 try:
+                    # call function with parameters and set generated secret to ctx.data
                     eval_func(func_name, ctx, *func_params)
                 except KeyError:
-                    raise RefError(f"{func_name}: unknown ref function used.")
+                    raise RefError(
+                        "{}: unknown ref function used. Choose one of: {}".format(
+                            func_name, [key for key in get_func_lookup()]
+                        )
+                    )
+                except TypeError:
+                    raise RefError("{}: too many arguments for function {}".format(func_params, func_name))
 
         return ctx
 

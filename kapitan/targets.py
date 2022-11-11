@@ -80,7 +80,19 @@ def compile_targets(
 
     try:
         rendering_start = time.time()
-        if kwargs.get("fetch_inventories", False):
+
+        # check if --fetch or --force-fetch is enabled
+        force_fetch = kwargs.get("force_fetch", False)
+        fetch = kwargs.get("fetch", False) or force_fetch
+
+        # deprecated --force flag
+        if kwargs.get("force", False):
+            logger.info(
+                "DeprecationWarning: --force is deprecated. Use --force-fetch instead of --force --fetch"
+            )
+            force_fetch = True
+
+        if fetch:
             # skip classes that are not yet available
             target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=True)
         else:
@@ -93,7 +105,8 @@ def compile_targets(
         if not target_objs:
             raise CompileError("Error: no targets found")
 
-        if kwargs.get("fetch_inventories", False):
+        # fetch inventory
+        if fetch:
             # new_source checks for new sources in fetched inventory items
             new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
             while new_sources:
@@ -101,7 +114,7 @@ def compile_targets(
                     inventory_path,
                     target_objs,
                     dep_cache_dir,
-                    kwargs.get("force_fetch", False),
+                    force_fetch,
                     pool,
                 )
                 cached.reset_inv()
@@ -113,10 +126,29 @@ def compile_targets(
             # reset inventory cache and load target objs to check for missing classes
             cached.reset_inv()
             target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
-        if kwargs.get("fetch_dependencies", False):
-            fetch_dependencies(
-                output_path, target_objs, dep_cache_dir, kwargs.get("force_fetch", False), pool
-            )
+        # fetch dependencies
+        if fetch:
+            fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
+        # fetch targets which have force_fetch: true
+        elif not kwargs.get("force_fetch", False):
+            fetch_objs = []
+            # iterate through targets
+            for target in target_objs:
+                try:
+                    # get value of "force_fetch" property
+                    dependencies = target["dependencies"]
+                    # dependencies is still a list
+                    for entry in dependencies:
+                        force_fetch = entry["force_fetch"]
+                        if force_fetch:
+                            fetch_objs.append(target)
+                except KeyError:
+                    # targets may have no "dependencies" or "force_fetch" key
+                    continue
+            # fetch dependencies from targets with force_fetch set to true
+            if fetch_objs:
+                fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
+
         logger.info("Rendered inventory (%.2fs)", time.time() - rendering_start)
 
         worker = partial(
@@ -620,6 +652,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         "ref": {"type": "string"},
                         "unpack": {"type": "boolean"},
                         "version": {"type": "string"},
+                        "force_fetch": {"type": "boolean"},
                     },
                     "required": ["type", "output_path", "source"],
                     "additionalProperties": False,
@@ -632,6 +665,7 @@ def valid_target_obj(target_obj, require_compile=True):
                                     "source": {"format": "uri"},
                                     "output_path": {},
                                     "unpack": {},
+                                    "force_fetch": {},
                                 },
                                 "additionalProperties": False,
                             },
@@ -646,6 +680,7 @@ def valid_target_obj(target_obj, require_compile=True):
                                     "unpack": {},
                                     "chart_name": {"type": "string"},
                                     "version": {"type": "string"},
+                                    "force_fetch": {},
                                 },
                                 "required": ["type", "output_path", "source", "chart_name"],
                                 "additionalProperties": False,

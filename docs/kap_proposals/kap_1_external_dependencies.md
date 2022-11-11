@@ -27,6 +27,7 @@ Git type may also include `ref` and `subdir` parameters as illustrated below:
   source: <git_url>
   subdir: relative/path/in/repository
   ref: <commit_hash/branch/tag>
+  force_fetch: <bool>
 ```
 
 If the file already exists at `output_path`, the fetch will be skipped. For fresh fetch of the dependencies, users may add `--fetch` option as follows:
@@ -35,7 +36,7 @@ If the file already exists at `output_path`, the fetch will be skipped. For fres
 kapitan compile --fetch
 ```
 
-Users can also add the `fetch_always: true` option to the `kapitan.compile` in the inventory in order to force fresh fetch of the dependencies every time.
+Users can also add the `force_fetch: true` option to the `kapitan.dependencies` in the inventory in order to force fetch of the dependencies of the target every time.
 
 ## Implementation details
 

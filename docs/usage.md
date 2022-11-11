@@ -57,7 +57,7 @@ optional arguments:
   --quiet               set quiet mode, only critical output
   --output-path PATH    set output path, default is "."
   --fetch               fetch remote inventories and/or external dependencies
-  --force               overwrite existing inventory and/or dependency item
+  --force-fetch         overwrite existing inventory and/or dependency item
   --validate            validate compile output against schemas as specified
                         in inventory
   --parallelism INT, -p INT

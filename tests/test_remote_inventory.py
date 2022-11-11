@@ -90,7 +90,7 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(output_dir)
 
     def test_compile_fetch(self):
-        """Run $ kapitan compile --fetch --output-path=some/dir/ --inventory-path=another/dir --targets remoteinv-example remoteinv-nginx zippedinv --force
+        """Run $ kapitan compile --force-fetch --output-path=some/dir/ --inventory-path=another/dir --targets remoteinv-example remoteinv-nginx zippedinv
         were some/dir/ & another/dir/ are directories chosen by the user
 
         Recursively force fetch inventories and compile
@@ -110,7 +110,7 @@ class RemoteInventoryTest(unittest.TestCase):
         sys.argv = [
             "kapitan",
             "compile",
-            "--fetch",
+            "--force-fetch",
             "--output-path",
             temp_output,
             "--inventory-path",
@@ -119,7 +119,6 @@ class RemoteInventoryTest(unittest.TestCase):
             "remoteinv-example",
             "remoteinv-nginx",
             "zippedinv",
-            "--force",
         ]
         main()
 
@@ -159,10 +158,10 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(temp_dir)
 
     def test_force_fetch(self):
-        """Test overwriting inventory items while using the --force flag
+        """Test overwriting inventory items while using the --force-fetch flag
 
         runs $ kapitan compile --fetch --cache --output-path=temp_output --inventory-pat=temp_inv --targets remoteinv-example
-        runs $ kapitan compile --fetch --cache --output-path=temp_output --inventory-pat=temp_inv --targets remoteinv-example --force
+        runs $ kapitan compile --force-fetch --cache --output-path=temp_output --inventory-pat=temp_inv --targets remoteinv-example
         """
 
         temp_output = tempfile.mkdtemp()
@@ -205,7 +204,7 @@ class RemoteInventoryTest(unittest.TestCase):
         sys.argv = [
             "kapitan",
             "compile",
-            "--fetch",
+            "--force-fetch",
             "--cache",
             "--output-path",
             temp_output,
@@ -213,7 +212,6 @@ class RemoteInventoryTest(unittest.TestCase):
             temp_inv,
             "--targets",
             "remoteinv-example",
-            "--force",
         ]
         main()
         # zippedinv.yml overwritten
