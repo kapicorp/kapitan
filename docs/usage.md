@@ -2,7 +2,7 @@
 
 To see all the available commands, run:
 
-```
+```shell
 $ kapitan -h
 usage: kapitan [-h] [--version]
                {eval,compile,inventory,searchvar,secrets,lint} ...
@@ -32,7 +32,7 @@ optional arguments:
 
 Additional parameters are available for each positional argument. For example:
 
-```
+```shell
 $ kapitan compile -h
 usage: kapitan compile [-h] [--search-paths JPATH [JPATH ...]]
                        [--jinja2-filters FPATH] [--verbose] [--prune]
@@ -93,17 +93,17 @@ optional arguments:
 
 If you only want to compile a subset or specific targets, you can use the two kapitan compile flags `--targets, -t` or `--labels, -l`.
 
-#### Specific target(s)
+### Specific target(s)
 
-```
+```shell
 $ cd examples/kubernetes
 $ kapitan compile -t minikube-mysql
 Compiled minikube-mysql (0.43s)
 ```
 
-#### Using labels
+### Using labels
 
-```
+```shell
 $ cd examples/kubernetes
 
 $ cat inventory/classes/component/nginx-kadet.yml  # Inherited by minikube-nginx-kadet target
@@ -122,24 +122,23 @@ Compiled minikube-nginx-kadet (0.14s)
 
 These parameters can also be defined in a local `.kapitan` file per project directory, for example:
 
-
 To enforce the kapitan version used for compilation (for consistency and safety), you can add `version` to `.kapitan`:
 
-```
+```shell
 $ cat .kapitan
 version: 0.21.0
 ```
 
 Or to skip all minor version checks:
 
-```
+```shell
 $ cat .kapitan
 version: 0.21
 ```
 
 You can also permanently define all command line flags in the `.kapitan` config file. For example:
 
-```
+```shell
 $ cat .kapitan
 version: 0.21
 
@@ -150,13 +149,13 @@ compile:
 
 would be equivalent to running:
 
-```
+```shell
 kapitan compile --indent 4 --parallelism 8
 ```
 
 or
 
-```
+```shell
 $ cat .kapitan
 version: 0.21
 
@@ -166,6 +165,6 @@ inventory:
 
 which would be equivalent to always running:
 
-```
+```shell
 kapitan inventory --inventory-path=./some_path
 ```

@@ -1,6 +1,6 @@
 # Terraform example
 
-We will be looking at how to use Kapitan to compile terraform files with Jsonnet as the input type. It's possible to use other input types, however, Jsonnet is recommended. 
+We will be looking at how to use Kapitan to compile terraform files with Jsonnet as the input type. It's possible to use other input types, however, Jsonnet is recommended.
 For example, we could use the Kadet input to generate terraform files but this would require templates to be written in YAML then rendered into JSON.
 It is possible to allow Kadet to consume JSON as an input. This enables you to integrate your organizations pre-existing terraform JSON file's as templates.
 Jsonnet is the most straightforward input type as you will see due to its functional nature. The only appropriate output type is JSON since this is the format that Terraform consumes.
@@ -8,19 +8,20 @@ Jsonnet is the most straightforward input type as you will see due to its functi
 ## Directory structure
 
 There are several examples available in `examples/terraform`. This will be our working directory for this documentation. The directory structure is as follows:
-```
+
+```text
 ├── inventory
 └── templates
 ```
 
-It is possible to further extend this locally to include a `lib` directory where a `terraform.libjsonnet` file can be stored for use. This is generally dependent on the project scope and organizational patterns. 
+It is possible to further extend this locally to include a `lib` directory where a `terraform.libjsonnet` file can be stored for use. This is generally dependent on the project scope and organizational patterns.
 We will describe in more detail the role of each of these folders in the following sections.
 
 ### inventory
 
 This folder contains the inventory files used to render the templates for each target. The structure of this folder is as follows:
 
-```
+```text
 .
 ├── classes
 │   ├── env
@@ -45,7 +46,7 @@ The `targets` directory enables us to define various projects. We can specify ea
 
 The following is an example targets file. `type.terraform` is what defines the entry point into the main Jsonnet template file. The parameters in the file `inventory/targets/develop/project1.yml` will then be utilized to set the environmental specific provider/resource configuration.
 We define the default region and zone for terraform's provider configuration. The default DNS TTL for the DNS resource is also configured for the development environment.
- 
+
 ```yaml
 classes:
   - type.terraform
@@ -73,7 +74,7 @@ class_mappings:
   - prod/*                             env.prod
   - sandbox/*                          env.sandbox
 ```
- 
+
 The following class `provider.gcp` will be found in all files in this path since it is a common configuration for the cloud authentication module.
 
 ```yaml
@@ -81,7 +82,7 @@ classes:
   - provider.gcp
 ```
 
-Further classes that group parameters together can be included. To assist in further refining the configuration. 
+Further classes that group parameters together can be included. To assist in further refining the configuration.
 
 ### components
 
@@ -90,7 +91,7 @@ You can have these in any path just ensure you define that path in `inventory/cl
 
 The templates folder is where the Jsonnet is located in this instance as shown below:
 
-```
+```text
 .
 ├── cloudbuild.jsonnet
 ├── dns.jsonnet
@@ -125,7 +126,7 @@ The main thing to understand about terraform components is that they are strictl
 }
 ```
 
-Each Jsonnet file defines a resource and then it is imported. Jsonnet then filters through all the inventory parameters to find specific keys that have been defined. Let's take for example the cloud build resource: 
+Each Jsonnet file defines a resource and then it is imported. Jsonnet then filters through all the inventory parameters to find specific keys that have been defined. Let's take for example the cloud build resource:
 
 ```json5
 local cloudbuild = import "cloudbuild.jsonnet";
@@ -138,9 +139,9 @@ local cloudbuild = import "cloudbuild.jsonnet";
 }
 ```  
 
-Assuming that one of the configuration files for a specific environment has the parameter key `cloudbuild` set. 
-These parameters will then be interpreted by the `cloudbuild.jsonnet` template. 
-A file named `cloudbuild.tf.json` will then be compiled using the parameters associated with the `cloudbuild` parameter key. 
+Assuming that one of the configuration files for a specific environment has the parameter key `cloudbuild` set.
+These parameters will then be interpreted by the `cloudbuild.jsonnet` template.
+A file named `cloudbuild.tf.json` will then be compiled using the parameters associated with the `cloudbuild` parameter key.
 
 It is important to understand that once you have a deeper understanding of Kapitan's capabilities, you can organize these files to a style and logic suitable for your organization.
 
@@ -170,7 +171,7 @@ The following is what generates the documentation:
 
 The function `kap.jinja2_template()` (imported from `kapitan.libjsonnet`) is used to convert and interpreter the `README.md.j2` file into a raw string using the inventory for evaluation logic.
 
-Based on the various parameters jinja2 decides which sections of the readme should be included. 
+Based on the various parameters jinja2 decides which sections of the readme should be included.
 When terraform runs it will use the output module to generate your desired `README.md` using information from terraform's state.
 
 Scripts are located in the `scripts` directory. They are compiled using jinja2 as the templating language. An example is as follows:
@@ -181,7 +182,7 @@ export OUTPUT_DIR=$(realpath -m ${DIR}/../../../output/{{inventory.parameters.na
 ```
 
 It is good practice to utilize this method to improve integration with various CLI based tools. Scripts help to ensure terraform and
-kapitan can function with your CI/CD systems. It generally depends on your organizational workflows. 
+kapitan can function with your CI/CD systems. It generally depends on your organizational workflows.
 
 ### secrets
 
@@ -190,7 +191,7 @@ Although there are no particular secrets in this instance. It is possible to uti
 ### Collaboration
 
 In some situations you may find teams that are used to writing terraform in HCL. In such situations it may be difficult to adopt Kapitan into the companies workflows.
-We can however use terraform modules to simplify the integration process. This means teams which are used to writing in HCL will not need to completely adopt Jsonnet. 
+We can however use terraform modules to simplify the integration process. This means teams which are used to writing in HCL will not need to completely adopt Jsonnet.
 
 Modules can be imported into projects by defining them under the `modules` parameter key as shown in `inventory/targets/sandbox`. This means teams will only have to worry about coordinating parameter inputs for different projects.
 Jsonnet provides the ability to specify conventions and validation of input parameters. This provides peace of mind to infrastructure administrators around the tools usage.

@@ -9,6 +9,7 @@ Author: @ramaro
 ## Overview
 
 ### BaseObj
+
 BaseObj implements the basic object implementation that compiles into JSON or YAML.
 Setting keys in `self.root` means they will be in the compiled output. Keys can be set as an hierarchy of attributes (courtesy of [addict](https://github.com/mewwts/addict))
 The `self.body()` method is reserved for setting self.root on instantiation:
@@ -56,10 +57,12 @@ obj = MyApp(name="myapp", foo="bar")
 ```
 
 ### Setting a skeleton
+
 Defining a large body with Python can be quite hard and repetitive to read and write.
 The `self.update_root()` method allows importing a YAML/JSON file to set the skeleton of self.root.
 
 MyApp's skeleton can be set instead like this:
+
 ```yaml
 #skel.yml
 ---
@@ -98,6 +101,7 @@ def set_replicas(self):
 ```
 
 #### Inheritance
+
 Python inheritance will work as expected:
 
 ```python
@@ -114,6 +118,7 @@ def body(self):
 
 obj = MyOtherApp(name="otherapp1", foo="bar2", size=3)
 ```
+
 compiles to:
 
 ```yaml
@@ -127,7 +132,7 @@ size: 3
 
 ## Components
 
-A component in Kadet is a python module that must implement a `main()` function returning an instance of` BaseObj`. The inventory is also available via the `inventory()` function.
+A component in Kadet is a python module that must implement a `main()` function returning an instance of`BaseObj`. The inventory is also available via the `inventory()` function.
 
 For example, a `tinyapp` component:
 
@@ -165,6 +170,7 @@ parameters:
 ```
 
 ### Common components
+
 A library in `--search-paths` (which now defaults to `.` and `lib/`) can also be a module that kadet components import. It is loaded using the `load_from_search_paths()`:
 
 ```python
@@ -175,4 +181,3 @@ def main():
   obj.root.example_app_deployment = kubelib.Deployment(name="example-app")
   return obj
 ```
-
