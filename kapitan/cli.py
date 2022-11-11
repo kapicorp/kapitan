@@ -358,6 +358,7 @@ def build_parser():
     )
     inventory_parser.add_argument(
         "--multiline-string-style",
+        "-L",
         type=str,
         choices=["literal", "folded", "double-quotes"],
         metavar="STYLE",
