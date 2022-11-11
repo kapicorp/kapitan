@@ -16,7 +16,7 @@ If you want to get started with secrets but don't have a GPG or KMS setup, you c
 
 The usual flow of creating and using an encrypted secret with kapitan is:
 
-#### 1. Define your GPG recipients, Vault client parameters or KMS key
+### 1. Define your GPG recipients, Vault client parameters or KMS key
 
 This is done in the inventory under `parameters.kapitan.secrets`.
 
@@ -51,15 +51,15 @@ parameters:
         key: 2022-02-13-test
 ```
 
-#### 2. Create Your Secret
+### 2. Create Your Secret
 
-##### Manually via command line:
+#### Manually via command line
 
 ```shell
-$ kapitan refs --write <secret_type>:path/to/secret/file -t <target_name> -f <secret_file>
+kapitan refs --write <secret_type>:path/to/secret/file -t <target_name> -f <secret_file>
 ```
 
-​	where `<secret_type>` can be any of:
+​ where `<secret_type>` can be any of:
 
 - `base64`: base64 (not encrypted!)
 - `gpg`: GPG
@@ -71,7 +71,7 @@ $ kapitan refs --write <secret_type>:path/to/secret/file -t <target_name> -f <se
 
 Kapitan will inherit the secrets configuration for the specified target, and encrypt and save your secret into `<path/to/secret/file>`.
 
-##### Automatically
+#### Automatically
 
 When referencing your secret in the inventory during compile, you can use the following functions to automatically generate, encrypt and save your secret:
 
@@ -99,7 +99,7 @@ When referencing your secret in the inventory during compile, you can use the fo
 
 *Note*: `vaultkv` can't be used to generate secrets automatically for now, manually create the secret using the command line.
 
-#### 3. Reference your secrets in your classes/targets and run `kapitan compile`
+### 3. Reference your secrets in your classes/targets and run `kapitan compile`
 
 Secrets can be referenced in the format `?{<secret_type>:path/to/secret/file}`.
 
@@ -114,12 +114,12 @@ users:
 
 During compile, kapitan will search for the path `targets/${target_name}/mysql/password`. Should it not exist, then it will automatically generate a random base64 password and save it to that path.
 
-#### 4. Reveal and use the secrets
+### 4. Reveal and use the secrets
 
 You can reveal the secrets referenced in the outputs of `kapitan compile` via:
 
-```
-$ kapitan refs --reveal -f path/to/rendered/template
+```shell
+kapitan refs --reveal -f path/to/rendered/template
 ```
 
 For example, `compiled/minikube-mysql/manifests/mysql_secret.yml` with the following content:
@@ -141,39 +141,39 @@ type: Opaque
 
 can be revealed as follows:
 
-```
-$ kapitan refs --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
+```shell
+kapitan refs --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
 ```
 
 This will substitute the referenced secrets with the actual decrypted secrets stored at the referenced paths and display the file content.
 
 You can also use:
 
-```
-$ kapitan refs --reveal --ref-file refs/targets/all-glob/mysql/password
+```shell
+kapitan refs --reveal --ref-file refs/targets/all-glob/mysql/password
 ```
 
 or
 
-```
-$ kapitan refs --reveal --tag "?{base64:targets/all-glob/mysql/password}"
-$ # or
-$ kapitan refs --reveal --tag "?{base64:targets/all-glob/mysql/password:3192c15c}"
+```shell
+kapitan refs --reveal --tag "?{base64:targets/all-glob/mysql/password}"
+# or
+kapitan refs --reveal --tag "?{base64:targets/all-glob/mysql/password:3192c15c}"
 ```
 
 for more convenience.
 
-#### 5. Compile refs in embedded format
+### 5. Compile refs in embedded format
 
 This allows revealing compiled files without needing access to ref files by using:
 
-```
-$ kapitan compile --embed-refs
+```shell
+kapitan compile --embed-refs
 ```
 
 Compiled files containing refs will now have the references embedded in the compiled file under the following format (gkms backend used as an example):
 
-```
+```yaml
 ?{gkms:ReallyLongBase64HereZ2FyZ2FiZQo=:embedded}
 ```
 
@@ -193,8 +193,8 @@ mysql_passwords:
 
 This can be manually encrypted by:
 
-```
-$ kapitan refs --write gpg:components/secrets/mysql_secrets -t prod -f secrets/mysql_secrets
+```shell
+kapitan refs --write gpg:components/secrets/mysql_secrets -t prod -f secrets/mysql_secrets
 ```
 
 To reference `secret_foo`inside this file, you can specify it in the inventory as follows:
@@ -209,7 +209,7 @@ to locate a value for a reference from the environment using a prefixed variable
 and use this value with the refs command.
 
 ```shell
-$ echo "my_default_value" | kapitan refs --write env:path/to/secret_inside_kapitan -t <target_name> -f -
+echo "my_default_value" | kapitan refs --write env:path/to/secret_inside_kapitan -t <target_name> -f -
 ```
 
 When this reference is created and then referred to in the parameters, it will use the last path component, from a
@@ -226,26 +226,26 @@ parameters:
 When using the above parameters reference, values would be consulted in the environment from the following
 variables:
 
-* `$KAPITAN_VAR_mysql_secret_foo`
-* `$KAPITAN_VAR_mysql_secret_bar`
-
+- `$KAPITAN_VAR_mysql_secret_foo`
+- `$KAPITAN_VAR_mysql_secret_bar`
 
 ### Vaultkv Secret Backend (Read Only) - Addons
 
 Considering a key-value pair like `my_key`:`my_secret` in the path `secret/foo/bar` in a kv-v2(KV version 2) secret engine on the vault server, to use this as a secret use:
 
 ```shell
-$ echo "foo/bar:my_key"  | kapitan refs --write vaultkv:path/to/secret_inside_kapitan -t <target_name> -f -
+echo "foo/bar:my_key"  | kapitan refs --write vaultkv:path/to/secret_inside_kapitan -t <target_name> -f -
 ```
 
 Parameters in the secret file are collected from the inventory of the target we gave from CLI `-t <target_name>`. If target isn't provided then kapitan will identify the variables from the environment when revealing secret.
 
 Environment variables that can be defined in kapitan inventory are `VAULT_ADDR`, `VAULT_NAMESPACE`, `VAULT_SKIP_VERIFY`, `VAULT_CLIENT_CERT`, `VAULT_CLIENT_KEY`, `VAULT_CAPATH` & `VAULT_CACERT`.
 Extra parameters that can be defined in inventory are:
-* `auth`: specify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`
-* `mount`: specify the mount point of key's path. e.g if path=`alpha-secret/foo/bar` then `mount: alpha-secret` (default `secret`)
-* `engine`: secret engine used, either `kv-v2` or `kv` (default `kv-v2`)
-Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID`.
+
+- `auth`: specify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`
+- `mount`: specify the mount point of key's path. e.g if path=`alpha-secret/foo/bar` then `mount: alpha-secret` (default `secret`)
+- `engine`: secret engine used, either `kv-v2` or `kv` (default `kv-v2`)
+Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,`VAULT_SECRET_ID`.
 
 ```yaml
 parameters:
@@ -267,18 +267,19 @@ parameters:
 Considering a key-value pair like `my_key`:`my_secret` in the path `secret/foo/bar` in a transit secret engine on the vault server, to use this as a secret use:
 
 ```shell
-$ echo "any.value:whatever-you_may*like"  | kapitan refs --write vaulttransit:my_target/to/secret_inside_kapitan -t <target_name> -f -
+echo "any.value:whatever-you_may*like"  | kapitan refs --write vaulttransit:my_target/to/secret_inside_kapitan -t <target_name> -f -
 ```
 
 Parameters in the secret file are collected from the inventory of the target we gave from CLI `-t <target_name>`. If target isn't provided then kapitan will identify the variables from the environment when revealing secret.
 
 Environment variables that can be defined in kapitan inventory are `VAULT_ADDR`, `VAULT_NAMESPACE`, `VAULT_SKIP_VERIFY`, `VAULT_CLIENT_CERT`, `VAULT_CLIENT_KEY`, `VAULT_CAPATH` & `VAULT_CACERT`.
 Extra parameters that can be defined in inventory are:
-* `auth`: specify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`
-* `mount`: specify the mount point of key's path. e.g if path=`my_mount` (default `transit`)
-* `crypto_key`: Name of the `encryption key` defined in vault
-* `always_latest`: Always rewrap ciphertext to latest rotated crypto_key version
-Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,` VAULT_SECRET_ID`.
+
+- `auth`: specify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`
+- `mount`: specify the mount point of key's path. e.g if path=`my_mount` (default `transit`)
+- `crypto_key`: Name of the `encryption key` defined in vault
+- `always_latest`: Always rewrap ciphertext to latest rotated crypto_key version
+Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,`VAULT_SECRET_ID`.
 
 ```yaml
 parameters:
@@ -317,6 +318,7 @@ It should be of the form `https://{keyvault-name}.vault.azure.net/{object-type}/
 #### Defining the KMS key
 
 This is done in the inventory under `parameters.kapitan.secrets`.
+
 ```yaml
 parameters:
   kapitan:
@@ -327,28 +329,33 @@ parameters:
       azkms:
         key: 'https://<keyvault-name>.vault.azure.net/keys/<object-name>/<object-version>'
 ```
+
 The key can also be specified using the `--key` flag
 
 #### Creating a secret
 
-Secrets can be created using any of the methods described in the ["creating your secret"](##2.-Create-Your-Secret) section.
+Secrets can be created using any of the methods described in the ["creating your secret"](#2-create-your-secret) section.
 
 For example, if the key is defined in the `prod` target file
+
 ```shell
-$ echo "my_encrypted_secret" | kapitan refs --write azkms:path/to/secret_inside_kapitan -t prod -f -
+echo "my_encrypted_secret" | kapitan refs --write azkms:path/to/secret_inside_kapitan -t prod -f -
 ```
+
 Using the `--key` flag and a `key_id`
+
 ```shell
-$ echo "my_encrypted_secret" | kapitan refs --write azkms:path/to/secret_inside_kapitan --key=<key_id> -f -
+echo "my_encrypted_secret" | kapitan refs --write azkms:path/to/secret_inside_kapitan --key=<key_id> -f -
 ```
+
 #### Referencing and revealing a secret
-Secrets can be [referenced](####3.-Reference-your-secrets-in-your-classes/targets-and-run-`kapitan-compile`) and [revealed](####4.-Reveal-and-use-the-secrets) in any of the ways described above.
+
+Secrets can be [referenced](#3-reference-your-secrets-in-your-classestargets-and-run-kapitan-compile) and [revealed](#4-reveal-and-use-the-secrets) in any of the ways described above.
 
 For example, to reveal the secret stored at `path/to/secret_inside_kapitan`
+
 ```shell
-$ kapitan refs --reveal --tag "?{azkms:path/to/secret_inside_kapitan}"
+kapitan refs --reveal --tag "?{azkms:path/to/secret_inside_kapitan}"
 ```
 
-
-*Note:* Cryptographic algorithm used for encryption is _rsa-oaep-256_.
-
+*Note:* Cryptographic algorithm used for encryption is *rsa-oaep-256*.

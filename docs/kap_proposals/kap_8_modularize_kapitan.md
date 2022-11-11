@@ -3,9 +3,10 @@
 Kapitan is packaged in PYPI and as a binary along with all its dependencies. Adding an extra key/security backend means that we need to ship another dependency with that PYPI package, making deploying changes more complicated. This project would modularize kapitan into core dependencies and extra modules.
 
 ## Usage
+
 ```sh
-$ pip3 install --user kapitan # to install only core dependencies
-$ Pip3 install --user kapitan[gkms] ​# gkms is the module
+pip3 install --user kapitan # to install only core dependencies
+Pip3 install --user kapitan[gkms] ​# gkms is the module
 ```
 
 ## Implementation

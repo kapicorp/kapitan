@@ -1,0 +1,11 @@
+---
+default: true
+MD013:
+  line_length: 600
+MD024:
+  siblings_only: true
+MD033:
+  allowed_elements:
+    - "img"
+no-hard-tabs: false
+whitespace: false
