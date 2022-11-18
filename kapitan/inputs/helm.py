@@ -3,8 +3,9 @@ import os
 import tempfile
 
 import yaml
+import base64
 
-from kapitan.errors import HelmTemplateError
+from kapitan.errors import HelmTemplateError, CompileError
 from kapitan.helm_cli import helm_cli
 from kapitan.inputs.base import InputType, CompiledFile
 
@@ -90,6 +91,7 @@ class Helm(InputType):
                         target_name=target_name,
                     ) as fp:
                         yml_obj = list(yaml.safe_load_all(f))
+                        yml_obj = replace_b64_refs(yml_obj)
                         fp.write_yaml(yml_obj)
                         logger.debug("Wrote file %s to %s", full_file_name, item_path)
 
@@ -184,3 +186,27 @@ class Helm(InputType):
                 return helm_cli(helm_path, args, stdout=f)
         else:
             return helm_cli(helm_path, args, verbose="--debug" in flags)
+
+
+def replace_b64_refs(yml_obj):
+    """
+    recursively check if string is b64 encoded
+    decode all base64 encoded strings, especially secrets
+    """
+    if isinstance(yml_obj, dict):
+        for k, v in yml_obj.items():
+            yml_obj[k] = replace_b64_refs(v)
+    elif isinstance(yml_obj, list):
+        yml_obj = [replace_b64_refs(item) for item in yml_obj]
+    elif isinstance(yml_obj, str):
+        # print(yml_obj, end=' --> ')
+        # check if string is b64 encoded
+        try:
+            if base64.b64encode(base64.b64decode(yml_obj)).decode() == yml_obj:
+                yml_obj = base64.b64decode(yml_obj).decode()
+        except Exception as e:
+            # print(e, end=' ==> ')
+            pass
+        # finally:
+        #     print(yml_obj)
+    return yml_obj
