@@ -1,2 +1,2 @@
-pymdown-extensions==8.2
-markdown-include==0.6.0
+pymdown-extensions==9.8
+markdown-include==0.7.0
