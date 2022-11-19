@@ -2,7 +2,68 @@
 # pip install mkdocs mkdocs-material pymdown-extensions
 site_name: Kapitan documentation
 site_url: 'https://kapitan.dev'
-theme: material
+
+plugins:
+  - tags
+  - search
+theme:
+  name: material
+  custom_dir: overrides
+  logo: images/kapitan_logo.png
+  favicon: images/kapitan_logo.png
+  features:
+    - announce.dismiss
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - toc.follow
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - search.share
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      media: "(prefers-color-scheme: light)"
+      primary: blue
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      media: "(prefers-color-scheme: dark)"
+      primary: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    
+extra:
+  social:
+    - icon: fontawesome/brands/twitter 
+      link: https://twitter.com/kapitandev
+      name: kapitan on Twitter
+    - icon: fontawesome/brands/slack 
+      link: https://kubernetes.slack.com/archives/C981W2HD3
+      name: "#kapitan slack channel"
+  analytics:
+    provider: google
+    property: G-5E934SC0R8
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: >- 
+            Thanks for your feedback! Help us improve this page by
+            using our <a href="..." target="_blank" rel="noopener">feedback form</a>.
 use_directory_urls: true
 nav:
 - Home: README.md
@@ -24,6 +85,12 @@ nav:
 
 
 markdown_extensions:
+  - admonition
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.arithmatex
   - pymdownx.betterem:
       smart_enable: all
@@ -31,6 +98,7 @@ markdown_extensions:
   - pymdownx.critic
   - pymdownx.details
   - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:pymdownx.emoji.to_svg
   - pymdownx.inlinehilite
   - pymdownx.magiclink
@@ -42,6 +110,7 @@ markdown_extensions:
   - pymdownx.tilde
   - markdown_include.include:
       base_path: docs
+  - attr_list
 
 repo_name: 'kapicorp/kapitan'
 repo_url: 'https://github.com/kapicorp/kapitan'

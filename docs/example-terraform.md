@@ -1,3 +1,7 @@
+---
+tags:
+  - terraform
+---
 # Terraform example
 
 We will be looking at how to use Kapitan to compile terraform files with Jsonnet as the input type. It's possible to use other input types, however, Jsonnet is recommended.
