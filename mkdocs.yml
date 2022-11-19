@@ -42,6 +42,7 @@ markdown_extensions:
   - pymdownx.tilde
   - markdown_include.include:
       base_path: docs
+  - attr_list
 
 repo_name: 'kapicorp/kapitan'
 repo_url: 'https://github.com/kapicorp/kapitan'

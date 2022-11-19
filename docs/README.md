@@ -8,16 +8,26 @@
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
 
-Kapitan is the tool to help you manage the complexity of your configuration using an inventory and a choice of templates like [generators](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7), jsonnet, [kadet](https://github.com/kapicorp/kapitan/pull/190), jinja2 and helm.
+**`Kapitan`** is the <ins>one-stop tool</ins> to help you manage the complexity of your configurations. 
+
+You start by defining a *YAML based* **`inventory`** as a *Single Source Of Truth* (**`SSOT`**) of your setup.
+
+The **`inventory`** is then fed to a wide choice of template ***engines*** that support:
+
+* [generators](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7){target=_blank} - The simplest way of getting started with Kapitan
+* [jsonnet](https://jsonnet.org/){target=_blank} - *A powerful DSL for elegant description of JSON data*
+* [kadet](https://github.com/kapicorp/kadet){target=_blank} - Easily define and reuse complex Python objects that serialize into JSON or YAML.
+* [jinja2](https://jinja.palletsprojects.com/){target=_blank} - Jinja is a fast, expressive, extensible templating engine.
+* helm.
 
 Use Kapitan to build an inventory which you can then use to drive templates for your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
 
 ## Community
 
+* Join us on **kubernetes.slack.com** [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3) ([**Get invited**](https://kubernetes.slack.com))
 * **Main Blog, articles and tutorials**: [Kapitan Blog](https://medium.com/kapitan-blog)
 * [**Generators**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7) and reference kapitan repository: [Kapitan Reference](https://github.com/kapicorp/kapitan-reference)
 * [Kapitan Reference](https://github.com/kapicorp/kapitan-reference): our reference repository to get started with Kapitan.
-* **Slack** [`#kapitan`](https://kubernetes.slack.com)
 * **Twitter** [@kapitandev](https://twitter.com/kapitandev/) on Twitter. Follow us and share our tweets!
 * **Website** [**`https://kapitan.dev`**](https://kapitan.dev)
 * **Mailing List** [kapitan-discuss@googlegroups.com](mailto:kapitan-discuss@googlegroups.com)
