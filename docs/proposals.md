@@ -1,3 +1,7 @@
+---
+tags:
+  - community
+---
 # Kapitan proposals
 
 ## Introduction

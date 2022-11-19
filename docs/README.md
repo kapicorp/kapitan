@@ -8,31 +8,38 @@
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
 
-**`Kapitan`** is the <ins>one-stop tool</ins> to help you manage the complexity of your configurations. 
+**`Kapitan`** aims to be your *one-stop tool* to help you manage the ever growing complexity of your configurations. 
 
 You start by defining a *YAML based* **`inventory`** as a *Single Source Of Truth* (**`SSOT`**) of your setup.
 
-The **`inventory`** is then fed to a wide choice of template ***engines*** that support:
+The **`inventory`** becomes then available to a wide choice of ***templating engines*** supported by the following `input types`:
 
-* [generators](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7){target=_blank} - The simplest way of getting started with Kapitan
-* [jsonnet](https://jsonnet.org/){target=_blank} - *A powerful DSL for elegant description of JSON data*
-* [kadet](https://github.com/kapicorp/kadet){target=_blank} - Easily define and reuse complex Python objects that serialize into JSON or YAML.
-* [jinja2](https://jinja.palletsprojects.com/){target=_blank} - Jinja is a fast, expressive, extensible templating engine.
-* helm.
+| Input Type | Description |
+| ------------------ | ---- |
+| [generators](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7) | *The simplest way of getting started with Kapitan* |
+|[jsonnet](https://jsonnet.org/)|*A powerful DSL for elegant description of JSON data*|
+|[kadet](https://github.com/kapicorp/kadet)|*Easily define and reuse complex Python objects that serialize into JSON or YAML*|
+|[jinja2](https://jinja.palletsprojects.com/)|*Jinja is a fast, expressive, extensible templating engine*|
+|[helm](https://helm.sh/)|*The package manager for Kubernetes*|
+|[external](compile/#external-alphaexperimental)|*For when everything else fails: Bring your own engine!*|
 
-Use Kapitan to build an inventory which you can then use to drive templates for your Kubernetes manifests, your documentation, your Terraform configuration or even simplify your scripts.
+Once configured, you can use Kapitan to build an **`inventory`** of your setup, and use it to to drive templates that can generate for you any configuration you want, including **Kubernetes manifests**, documentation/playbooks, **Terraform configuration** or even scripts.
 
 ## Community
 
-* Join us on **kubernetes.slack.com** [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3) ([**Get invited**](https://kubernetes.slack.com))
+* Join us on **kubernetes.slack.com** [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)([**Get invited**](https://kubernetes.slack.com))
+* **Follow us on Twitter** [@kapitandev](https://twitter.com/kapitandev/).
+* **Website** [**`https://kapitan.dev`**](https://kapitan.dev)
+* **Mailing List** [kapitan-discuss@googlegroups.com](mailto:kapitan-discuss@googlegroups.com)([**Subscribe**](https://groups.google.com/g/kapitan-discuss))
+## Resources
 * **Main Blog, articles and tutorials**: [Kapitan Blog](https://medium.com/kapitan-blog)
 * [**Generators**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7) and reference kapitan repository: [Kapitan Reference](https://github.com/kapicorp/kapitan-reference)
 * [Kapitan Reference](https://github.com/kapicorp/kapitan-reference): our reference repository to get started with Kapitan.
-* **Twitter** [@kapitandev](https://twitter.com/kapitandev/) on Twitter. Follow us and share our tweets!
-* **Website** [**`https://kapitan.dev`**](https://kapitan.dev)
-* **Mailing List** [kapitan-discuss@googlegroups.com](mailto:kapitan-discuss@googlegroups.com)
 
-How is it different from [`helm`](https://github.com/kubernetes/helm) and [`kustomize`](https://github.com/kubernetes-sigs/kustomize)? Please look at our [FAQ](https://kapitan.dev/#faq)!
+!!! question
+
+    How is it different from [`helm`](https://github.com/kubernetes/helm) and [`kustomize`](https://github.com/kubernetes-sigs/kustomize)? Please look at our [FAQ](https://kapitan.dev/#faq)!
+
 
 <img src="images/kapitan_logo.png" width="250">
 
