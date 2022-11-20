@@ -59,10 +59,10 @@
 
 === "Linux"
 
-    `$HOME/.local/lib/python3.6/bin`
+    `$HOME/.local/lib/python3.7/bin`
 
     ```shell
-    sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip python3-yaml
+    sudo apt-get update && sudo apt-get install -y python3.7-dev python3-pip python3-yaml
     ```
 
 === "Mac"

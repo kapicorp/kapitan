@@ -18,7 +18,7 @@ Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
 ## [**Official site**](https://kapitan.dev) https://kapitan.dev
 
 
-## [**Quick Start**](https://kapitan.devkapitan_overview/#quickstart)
+## [**Quick Start**](https://kapitan.dev/kapitan_overview/#quickstart)
 
 ## Install Kapitan
 
@@ -32,16 +32,16 @@ On Linux you can add `-u $(id -u)` to `docker run` to preserve file permissions.
 
 ### Pip
 
-Kapitan needs Python 3.6.
+Kapitan needs Python 3.7.
 
-#### Install Python 3.6
+#### Install Python 3.7
 
-* Linux: `sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip python3-yaml`
+* Linux: `sudo apt-get update && sudo apt-get install -y python3.7-dev python3-pip python3-yaml`
 * Mac: `brew install python3 libyaml`
 
 #### Install Kapitan
 
-User (`$HOME/.local/lib/python3.6/bin` on Linux or `$HOME/Library/Python/3.6/bin` on macOS):
+User (`$HOME/.local/lib/python3.7/bin` on Linux or `$HOME/Library/Python/3.7/bin` on macOS):
 
 ```shell
 pip3 install --user --upgrade kapitan
