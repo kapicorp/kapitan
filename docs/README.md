@@ -1,12 +1,5 @@
 # :kapitan-logo: Kapitan: advanced configuration management tool
 
-![Unit Tests](https://github.com/kapicorp/kapitan/actions/workflows/test.yml/badge.svg)
-![Pyhton version](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)
-![Downloads](https://img.shields.io/pypi/dm/kapitan)
-![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)
-[![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
-[![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
-[![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
 
 **`Kapitan`** aims to be your *one-stop tool* to help you manage the ever growing complexity of your configurations.
 
@@ -21,9 +14,12 @@
 [Longer answer](FAQ.md#why-do-i-need-kapitan)
 
 ## Install Kapitan
+[![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 
 ### Docker (recommended)
-
+![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)
+[![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
+[![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
 === "Linux"
 
     ```shell
@@ -36,16 +32,15 @@
     docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan -h
     ```
 
-### Pip
+### Pip 
 
-Kapitan needs Python 3.6.
-
-#### Install Python 3.6
-
+#### Install Python
+![Python version](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)
+![Unit Tests](https://github.com/kapicorp/kapitan/actions/workflows/test.yml/badge.svg)
 === "Linux"
 
     ```shell
-    sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip python3-yaml
+    sudo apt-get update && sudo apt-get install -y python3.8-dev python3-pip python3-yaml
     ```
 
 === "Mac"
@@ -54,7 +49,8 @@ Kapitan needs Python 3.6.
     brew install python3 libyaml
     ```
 
-#### Install Kapitan
+#### Install Kapitan using pip
+![downloads](https://img.shields.io/pypi/dm/kapitan)
 
 ##### User
 
