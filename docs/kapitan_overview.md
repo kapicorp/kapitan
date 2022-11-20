@@ -250,3 +250,9 @@ The bare minimum structure that makes use of kapitan features may look as follow
 - `inventory/targets`: target files
 - `inventory/classes`: inventory classes to be inherited by targets
 - `refs`: references files
+
+## Credits
+
+* [Jsonnet](https://github.com/google/jsonnet)
+* [Jinja2](http://jinja.pocoo.org/docs/2.9/)
+* [reclass](https://github.com/salt-formulas/reclass)

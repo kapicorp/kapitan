@@ -20,12 +20,6 @@
 
 [Longer answer](FAQ.md#why-do-i-need-kapitan)
 
-
-### Dazzle me with a demo
-
-
-
-
 ## Install Kapitan
 
 ### Docker (recommended)
@@ -59,29 +53,7 @@ System-wide (not recommended):
 sudo pip3 install --upgrade kapitan
 ```
 
-
-## Credits
-
-* [Jsonnet](https://github.com/google/jsonnet)
-* [Jinja2](http://jinja.pocoo.org/docs/2.9/)
-* [reclass](https://github.com/salt-formulas/reclass)
-
-
 ## Related projects
 
 * [Tesoro](https://github.com/kapicorp/tesoro) - Kubernetes Admission Controller for Kapitan Secrets
-* [Kapitan Reference](https://github.com/kapicorp/kapitan-reference) - Reference repository to get started
-* [sublime-jsonnet-syntax](https://github.com/gburiola/sublime-jsonnet-syntax) - Jsonnet syntax highlighting for Sublime Text
-* [language-jsonnet](https://github.com/google/language-jsonnet) - Jsonnet syntax highlighting for Atom
-* [vim-jsonnet](https://github.com/google/vim-jsonnet) - Jsonnet plugin for Vim (requires a vim plugin manager)
-
-## Community
-
-* Join us on **kubernetes.slack.com** [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)([**Get invited**](https://kubernetes.slack.com))
-* **Follow us on Twitter** [@kapitandev](https://twitter.com/kapitandev/).
-* **Website** [**`https://kapitan.dev`**](https://kapitan.dev)
-* **Mailing List** [kapitan-discuss@googlegroups.com](mailto:kapitan-discuss@googlegroups.com)([**Subscribe**](https://groups.google.com/g/kapitan-discuss))
-## Resources
-* **Main Blog, articles and tutorials**: [Kapitan Blog](https://medium.com/kapitan-blog)
-* [**Generators**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7) and reference kapitan repository: [Kapitan Reference](https://github.com/kapicorp/kapitan-reference)
-* [Kapitan Reference](https://github.com/kapicorp/kapitan-reference): our reference repository to get started with Kapitan.
+* [Kapitan Reference](https://github.com/kapicorp/kapitan-reference) - our reference repository to get started with Kapitan

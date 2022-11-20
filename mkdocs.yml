@@ -79,9 +79,10 @@ nav:
   - Secret management: secrets.md
   - Manifest validation: validate.md
   - External dependency management: external_dependencies.md
-- Miscellaneous:
+- More:
   - Usage: usage.md
   - Proposals: proposals.md
+  - Related Projects: related.md
 - Examples:
     - Kubernetes: example-kubernetes.md
     - Terraform: example-terraform.md
