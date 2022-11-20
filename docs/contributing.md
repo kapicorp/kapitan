@@ -21,7 +21,7 @@ Our project needs your support to get noticed! Please let everyone know that you
 * **Tweet about us on Twitter** . Remember to add [@kapitandev](https://twitter.com/kapitandev/) to your tweets
 * **Share our website** [**`https://kapitan.dev`**](https://kapitan.dev)
 * **Write tutorials and blog posts** and join the many who have done it already! Get published on the [Kapitan Blog](https://medium.com/kapitan-blog)
-* **Share** what *Kapitan** does for you and for your company
+* **Share** what **Kapitan** does for you and for your company
 * Inspire your colleagues and network on **LinkedIn**
 
 ## Active contributions
@@ -146,3 +146,4 @@ After it's pushed, create a PR that targets our gh-pages branch from your gh-pag
 
 To package any extra resources/files in the pip package, make sure you modify both `MANIFEST.in`.
 
+## Leave a comment
