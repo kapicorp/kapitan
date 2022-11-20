@@ -108,7 +108,7 @@ jsonnet==0.18.0
     # via -r requirements.txt
 jsonschema==3.2.0
     # via -r requirements.txt
-kadet==0.2.1
+kadet==0.2.2
     # via -r requirements.txt
 markupsafe==2.0.1
     # via
