@@ -13,17 +13,18 @@ theme:
   favicon: images/kapitan_logo.png
   features:
     - announce.dismiss
-    - navigation.tracking
+    - content.tabs.link
+    - navigation.indexes
+    - navigation.sections
     - navigation.tabs
     - navigation.tabs.sticky
-    - navigation.sections
-    - navigation.indexes
     - navigation.top
-    - toc.follow
-    - toc.integrate
-    - search.suggest
+    - navigation.tracking
     - search.highlight
     - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
   palette:
     # Palette toggle for light mode
     - scheme: default
@@ -91,6 +92,8 @@ nav:
 
 markdown_extensions:
   - admonition
+  - pymdownx.tabbed:
+      alternate_style: true 
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid

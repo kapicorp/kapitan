@@ -24,11 +24,17 @@
 
 ### Docker (recommended)
 
-```shell
-docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan -h
-```
+=== "Linux"
 
-On Linux you can add `-u $(id -u)` to `docker run` to preserve file permissions.
+    ```shell
+    docker run -t --rm -u $(id -u) -v $(pwd):/src:delegated kapicorp/kapitan -h
+    ```
+
+=== "Mac"
+
+    ```shell
+    docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan -h
+    ```
 
 ### Pip
 
@@ -36,18 +42,40 @@ Kapitan needs Python 3.6.
 
 #### Install Python 3.6
 
-* Linux: `sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip python3-yaml`
-* Mac: `brew install python3 libyaml`
+=== "Linux"
+
+    ```shell
+    sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip python3-yaml
+    ```
+
+=== "Mac"
+
+    ```shell
+    brew install python3 libyaml
+    ```
 
 #### Install Kapitan
 
-User (`$HOME/.local/lib/python3.6/bin` on Linux or `$HOME/Library/Python/3.6/bin` on macOS):
+##### User
 
-```shell
-pip3 install --user --upgrade kapitan
-```
+=== "Linux"
 
-System-wide (not recommended):
+    `$HOME/.local/lib/python3.6/bin`
+
+    ```shell
+    sudo apt-get update && sudo apt-get install -y python3.6-dev python3-pip python3-yaml
+    ```
+
+=== "Mac"
+
+    `$HOME/Library/Python/3.6/bin`
+
+    ```shell
+    brew install python3 libyaml
+    ```
+
+
+##### System-wide (not recommended):
 
 ```shell
 sudo pip3 install --upgrade kapitan
