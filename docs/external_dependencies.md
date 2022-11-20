@@ -1,4 +1,4 @@
-# Fetching external dependencies
+# :kapitan-logo: Fetching external dependencies
 
 Kapitan is capable of fetching components stored in remote locations. This feature can be used by specifying those dependencies in the inventory under `parameters.kapitan.dependencies`. Supported types are:
 

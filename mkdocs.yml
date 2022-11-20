@@ -1,10 +1,11 @@
 # dependencies:
 # pip install mkdocs mkdocs-material pymdown-extensions
-site_name: Kapitan documentation
+site_name: "Kapitan: advanced configuration management tool"
 site_url: 'https://kapitan.dev'
 
 plugins:
-  - tags
+  - tags:
+      tags_file: tags.md
   - search
 theme:
   name: material
@@ -13,15 +14,18 @@ theme:
   favicon: images/kapitan_logo.png
   features:
     - announce.dismiss
-    - navigation.tracking
+    - content.tabs.link
+    - navigation.indexes
+    - navigation.sections
     - navigation.tabs
     - navigation.tabs.sticky
-    - navigation.sections
-    - toc.follow
-    - toc.integrate
-    - search.suggest
+    - navigation.top
+    - navigation.tracking
     - search.highlight
     - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
   palette:
     # Palette toggle for light mode
     - scheme: default
@@ -67,25 +71,30 @@ extra:
 use_directory_urls: true
 nav:
 - Home: README.md
-- Contributing: contributing.md
 - Getting started:
   - Kapitan Overview: kapitan_overview.md
+- Support: support.md
+- Contribute: contributing.md
+- Documentation:
   - Inventory: inventory.md
-  - Compiling components/templates: compile.md
-- Kapitan features:
+  - Input Types: compile.md
   - Secret management: secrets.md
   - Manifest validation: validate.md
   - External dependency management: external_dependencies.md
-- Miscellaneous:
+- More:
   - Usage: usage.md
   - Proposals: proposals.md
+  - Related Projects: related.md
 - Examples:
     - Kubernetes: example-kubernetes.md
     - Terraform: example-terraform.md
+- FAQ: FAQ.md
 
 
 markdown_extensions:
   - admonition
+  - pymdownx.tabbed:
+      alternate_style: true 
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -97,9 +106,14 @@ markdown_extensions:
   - pymdownx.caret
   - pymdownx.critic
   - pymdownx.details
+  - pymdownx.snippets:
+      base_path: examples
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      options:
+        custom_icons:
+          - overrides/.icons
   - pymdownx.inlinehilite
   - pymdownx.magiclink
   - pymdownx.mark

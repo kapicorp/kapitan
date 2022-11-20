@@ -1,4 +1,4 @@
-# Kapitan References (Formerly Secrets)
+# :kapitan-logo: Kapitan References
 
 Kapitan can manage references and secrets with the following key management services:
 
