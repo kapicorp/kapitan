@@ -7,12 +7,15 @@
 
 ## Why do I need **Kapitan**? 
 
-> I use [`Helm`](https://helm.sh)/[`Kustomize`](https://kustomize.io/)/bring-your-own-tool
+> I use [`Helm`](https://helm.sh)/[`Kustomize`](https://kustomize.io/)/that-new-kid-on-the-block
 
-**Kapitan** allows you to brings all your configuration needs under one home, creating a uniform way to manage your configuration that no other tool provides.
+**Kapitan** allows you to brings all your configuration needs under one home, creating a uniform way to manage your configuration that no other tool provides. Manage seamlessly configurations for Kubernetes, Terraform and any other application. Integrate with Helm (and even Kustomize). Safely store your secrets using a range of Secret Backends
 
 [Longer answer](FAQ.md#why-do-i-need-kapitan)
 
+## Dazzle me with a demo
+
+![demo](images/kapitan-demo.gif)
 ## Install Kapitan
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 
