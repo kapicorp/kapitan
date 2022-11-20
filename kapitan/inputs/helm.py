@@ -253,13 +253,11 @@ class HelmChart(BaseModel):
     helm_values: dict = {}
     helm_path: str = None
 
-    def body(self):
-        # TODO kadet.BaseModel.__init__ must initialise self.root = Dict()
-        # TODO as new BaseModel instances will append params globally
-        # TODO Doing here until a fix is in kadet module
-        self.root = Dict()
+    def new(self):
         for obj in self.load_chart():
-            self.root[f"{obj['metadata']['name'].lower()}-{obj['kind'].lower()}"] = BaseObj.from_dict(obj)
+            self.root[
+                f"{obj['metadata']['name'].lower()}-{obj['kind'].lower().replace(':','-')}"
+            ] = BaseObj.from_dict(obj)
 
     def load_chart(self):
         helm_values_file = None

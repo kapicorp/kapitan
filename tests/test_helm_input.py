@@ -15,7 +15,8 @@ import yaml
 
 from kapitan.cached import reset_cache
 from kapitan.cli import main
-from kapitan.inputs.helm import Helm
+from kapitan.inputs.helm import Helm, HelmChart
+from kapitan.inputs.kadet import BaseObj
 
 
 class HelmInputTest(unittest.TestCase):
@@ -193,6 +194,16 @@ class HelmInputTest(unittest.TestCase):
                 )
             )
             self.assertIn("--election-id=super_secret_ID", args)
+
+    def test_compile_kadet_helm_chart(self):
+        # Render chart
+        chart = HelmChart(chart_dir="charts/prometheus/")
+
+        # Number of keys must be greater than 0
+        self.assertTrue(len(chart.root.keys()) > 0)
+        # All values must be BaseObj
+        for resource_name in chart.root:
+            self.assertIsInstance(chart.root[resource_name], BaseObj)
 
     def tearDown(self):
         os.chdir("../../")
