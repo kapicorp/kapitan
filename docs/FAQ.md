@@ -1,3 +1,6 @@
+---
+comments: true
+---
 # :kapitan-logo: FAQ
 ## Why do I need Kapitan?
 
@@ -32,3 +35,6 @@ We quickly discovered that `Helm` did not fit well with our workflow, for the fo
 
 In short, we feel `Helm` is trying to be `apt-get` for Kubernetes charts, while we are trying to take you further than that.
 
+## Ask your question!
+
+Please use the comments facility below to ask your question
