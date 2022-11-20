@@ -17,6 +17,8 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
+    - navigation.indexes
+    - navigation.top
     - toc.follow
     - toc.integrate
     - search.suggest
@@ -67,12 +69,13 @@ extra:
 use_directory_urls: true
 nav:
 - Home: README.md
-- Contributing: contributing.md
 - Getting started:
   - Kapitan Overview: kapitan_overview.md
+- Support: support.md
+- Contribute: contributing.md
+- Documentation:
   - Inventory: inventory.md
-  - Compiling components/templates: compile.md
-- Kapitan features:
+  - Input Types: compile.md
   - Secret management: secrets.md
   - Manifest validation: validate.md
   - External dependency management: external_dependencies.md
@@ -82,6 +85,7 @@ nav:
 - Examples:
     - Kubernetes: example-kubernetes.md
     - Terraform: example-terraform.md
+- FAQ: FAQ.md
 
 
 markdown_extensions:
@@ -97,9 +101,14 @@ markdown_extensions:
   - pymdownx.caret
   - pymdownx.critic
   - pymdownx.details
+  - pymdownx.snippets:
+      base_path: examples
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      options:
+        custom_icons:
+          - overrides/.icons
   - pymdownx.inlinehilite
   - pymdownx.magiclink
   - pymdownx.mark
