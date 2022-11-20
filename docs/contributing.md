@@ -145,3 +145,4 @@ After it's pushed, create a PR that targets our gh-pages branch from your gh-pag
 ### Packaging extra resources in python package
 
 To package any extra resources/files in the pip package, make sure you modify both `MANIFEST.in`.
+

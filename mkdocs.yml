@@ -4,7 +4,8 @@ site_name: "Kapitan: advanced configuration management tool"
 site_url: 'https://kapitan.dev'
 
 plugins:
-  - tags
+  - tags:
+      tags_file: tags.md
   - search
 theme:
   name: material
