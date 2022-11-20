@@ -2,7 +2,7 @@
 tags:
   - community
 ---
-# Kapitan proposals
+# :kapitan-logo: Kapitan proposals
 
 ## Introduction
 

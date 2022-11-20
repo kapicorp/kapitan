@@ -1,4 +1,4 @@
-# FAQ
+# :kapitan-logo: FAQ
 ## Why do I need Kapitan?
 
 With Kapitan, we worked to de-compose several problems that most of the other solutions are treating as one.

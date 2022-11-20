@@ -1,4 +1,4 @@
-# Usage
+# :kapitan-logo: Usage
 
 To see all the available commands, run:
 

@@ -1,4 +1,4 @@
-# Kapitan: Generic templated configuration management for Kubernetes, Terraform and other things
+# Kapitan: advanced configuration management tool
 
 ![Unit Tests](https://github.com/kapicorp/kapitan/actions/workflows/test.yml/badge.svg)
 ![Python Version](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)

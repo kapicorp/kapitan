@@ -1,6 +1,6 @@
 # dependencies:
 # pip install mkdocs mkdocs-material pymdown-extensions
-site_name: Kapitan documentation
+site_name: "Kapitan: advanced configuration management tool"
 site_url: 'https://kapitan.dev'
 
 plugins:

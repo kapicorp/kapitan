@@ -1,4 +1,4 @@
-# :kapitan-logo: Kapitan: Advanced configuration management tool
+# :kapitan-logo: Kapitan: advanced configuration management tool
 
 ![Unit Tests](https://github.com/kapicorp/kapitan/actions/workflows/test.yml/badge.svg)
 ![Pyhton version](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)

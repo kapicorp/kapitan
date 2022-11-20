@@ -1,4 +1,4 @@
-# Related projects
+# :kapitan-logo: Related projects
 
 * [Tesoro](https://github.com/kapicorp/tesoro) - Kubernetes Admission Controller for Kapitan Secrets
 * [Kapitan Reference](https://github.com/kapicorp/kapitan-reference) - Reference repository to get started

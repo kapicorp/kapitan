@@ -1,4 +1,4 @@
-# Kapitan compile
+# :kapitan-logo: Kapitan compile
 
 **Note:** make sure to read up on [inventory](inventory.md) before moving on.
 
