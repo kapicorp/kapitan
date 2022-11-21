@@ -43,7 +43,8 @@ It's simple, just send us a PR with your improvements!
 
 ### This Website
 
-Find something odd? Let us know or change it yourself!
+Find something odd? Let us know or change it yourself: you can edit pages of this website on Github by clicking the pencil icon at the top right of this page!
+
 ## Submitting code
 
 We would like ask you to [fork](https://help.github.com/en/articles/fork-a-repo)
