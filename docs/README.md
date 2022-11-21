@@ -67,7 +67,7 @@
 
 === "Mac"
 
-    `$HOME/Library/Python/3.6/bin`
+    `$HOME/Library/Python/3.7/bin`
 
     ```shell
     brew install python3 libyaml

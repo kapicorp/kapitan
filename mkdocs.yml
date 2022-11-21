@@ -1,7 +1,7 @@
 # dependencies:
 # pip install mkdocs mkdocs-material pymdown-extensions
 site_name: "Kapitan: advanced configuration management tool"
-site_url: 'https://kapitan.dev'
+site_url: "https://kapitan.dev"
 
 plugins:
   - tags:
@@ -32,7 +32,7 @@ theme:
       media: "(prefers-color-scheme: light)"
       primary: blue
       toggle:
-        icon: material/brightness-7 
+        icon: material/brightness-7
         name: Switch to dark mode
 
     # Palette toggle for dark mode
@@ -42,13 +42,13 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-    
+
 extra:
   social:
-    - icon: fontawesome/brands/twitter 
+    - icon: fontawesome/brands/twitter
       link: https://twitter.com/kapitandev
       name: kapitan on Twitter
-    - icon: fontawesome/brands/slack 
+    - icon: fontawesome/brands/slack
       link: https://kubernetes.slack.com/archives/C981W2HD3
       name: "#kapitan slack channel"
   analytics:
@@ -65,36 +65,35 @@ extra:
         - icon: material/emoticon-sad-outline
           name: This page could be improved
           data: 0
-          note: >- 
+          note: >-
             Thanks for your feedback! Help us improve this page by
             using our <a href="..." target="_blank" rel="noopener">feedback form</a>.
 use_directory_urls: true
 nav:
-- Home: README.md
-- Getting started:
-  - Kapitan Overview: kapitan_overview.md
-- Support: support.md
-- Contribute: contributing.md
-- Documentation:
-  - Inventory: inventory.md
-  - Input Types: compile.md
-  - Secret management: secrets.md
-  - Manifest validation: validate.md
-  - External dependency management: external_dependencies.md
-- More:
-  - Usage: usage.md
-  - Proposals: proposals.md
-  - Related Projects: related.md
-- Examples:
-    - Kubernetes: example-kubernetes.md
-    - Terraform: example-terraform.md
-- FAQ: FAQ.md
-
+  - Home: README.md
+  - Getting started:
+      - Kapitan Overview: kapitan_overview.md
+  - Support: support.md
+  - Contribute: contributing.md
+  - Documentation:
+      - Inventory: inventory.md
+      - Input Types: compile.md
+      - Secret management: secrets.md
+      - Manifest validation: validate.md
+      - External dependency management: external_dependencies.md
+  - More:
+      - Usage: usage.md
+      - Proposals: proposals.md
+      - Related Projects: related.md
+  - Examples:
+      - Kubernetes: example-kubernetes.md
+      - Terraform: example-terraform.md
+  - FAQ: FAQ.md
 
 markdown_extensions:
   - admonition
   - pymdownx.tabbed:
-      alternate_style: true 
+      alternate_style: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -126,5 +125,5 @@ markdown_extensions:
       base_path: docs
   - attr_list
 
-repo_name: 'kapicorp/kapitan'
-repo_url: 'https://github.com/kapicorp/kapitan'
+repo_name: "kapicorp/kapitan"
+repo_url: "https://github.com/kapicorp/kapitan"
