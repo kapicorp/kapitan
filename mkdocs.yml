@@ -11,7 +11,7 @@ theme:
   name: material
   custom_dir: overrides
   logo: images/kapitan_logo.png
-  favicon: images/kapitan_logo.png
+  favicon: kapitan/logo
   features:
     - announce.dismiss
     - content.tabs.link
@@ -77,6 +77,7 @@ nav:
   - Contribute: contributing.md
   - Documentation:
       - Inventory: inventory.md
+      - Commands: commands.md
       - Input Types: compile.md
       - Secret management: secrets.md
       - Manifest validation: validate.md
