@@ -1,6 +1,8 @@
 
 classes:
   - common
+  - component.namespace
+
   - cluster.minikube
 
 parameters:

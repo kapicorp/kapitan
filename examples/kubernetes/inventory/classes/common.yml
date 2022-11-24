@@ -1,7 +1,7 @@
-classes:
-- component.namespace
-
 parameters:
+  namespace: ${target_name}
+  target_name: ${_reclass_:name:short}
+
   kapitan:
     vars:
       target: ${target_name}
