@@ -10,6 +10,7 @@ import itertools
 import json
 import logging
 import os
+import base64
 from collections.abc import Mapping
 
 import yaml
@@ -116,11 +117,15 @@ class CompilingFile(object):
         """recursively compile or reveal refs and convert obj to yaml and write to file"""
         indent = self.kwargs.get("indent", 2)
         reveal = self.kwargs.get("reveal", False)
+        encode_data_b64 = self.kwargs.get("encode_base64", False)
         target_name = self.kwargs.get("target_name", None)
         if reveal:
             obj = self.revealer.reveal_obj(obj)
         else:
             obj = self.revealer.compile_obj(obj, target_name=target_name)
+
+        if encode_data_b64:
+            obj = check_data_for_b64(obj)
 
         if obj:
             if isinstance(obj, Mapping):
@@ -178,3 +183,32 @@ class CompiledFile(object):
 
     def __exit__(self, *args):
         self.fp.close()
+
+
+def check_data_for_b64(yml_obj):
+    """
+    check for .data in kind: Secret / ConfigMap
+    replace b64 encoded strings
+    """
+    for item in yml_obj:
+        kind = item.get("kind", None)
+        if kind and (kind == "Secret" or kind == "ConfigMap"):
+            if item.get("data", None):
+                item["data"] = replace_b64_refs(item["data"])
+
+    return yml_obj
+
+
+def replace_b64_refs(yml_obj):
+    """
+    recursively check if string is b64 encoded
+    decode all base64 encoded strings, especially secrets
+    """
+    if isinstance(yml_obj, dict):
+        for k, v in yml_obj.items():
+            yml_obj[k] = replace_b64_refs(v)
+    elif isinstance(yml_obj, list):
+        yml_obj = [replace_b64_refs(item) for item in yml_obj]
+    elif isinstance(yml_obj, str):
+        yml_obj = base64.b64encode(yml_obj.encode()).decode()
+    return yml_obj

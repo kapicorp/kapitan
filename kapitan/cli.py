@@ -80,7 +80,7 @@ def trigger_compile(args):
         args.targets,
         args.labels,
         ref_controller,
-        prune=(args.prune),
+        prune=args.prune,
         indent=args.indent,
         reveal=args.reveal,
         cache=args.cache,
@@ -93,6 +93,8 @@ def trigger_compile(args):
         jinja2_filters=args.jinja2_filters,
         verbose=hasattr(args, "verbose") and args.verbose,
         use_go_jsonnet=args.use_go_jsonnet,
+        helm_secrets=args.helm_secrets,
+        encode_base64=args.encode_base64,
     )
 
 
@@ -234,7 +236,6 @@ def build_parser():
         action="store_true",
         default=from_dot_kapitan("compile", "embed-refs", False),
     )
-
     compile_parser.add_argument(
         "--inventory-path",
         default=from_dot_kapitan("compile", "inventory-path", "./inventory"),
@@ -262,20 +263,17 @@ def build_parser():
         action="store_true",
         default=from_dot_kapitan("compile", "ignore-version-check", False),
     )
-
     compile_parser.add_argument(
         "--use-go-jsonnet",
         help="use go-jsonnet",
         action="store_true",
         default=from_dot_kapitan("compile", "use-go-jsonnet", False),
     )
-
     compile_parser.add_argument(
         "--schemas-path",
         default=from_dot_kapitan("validate", "schemas-path", "./schemas"),
         help='set schema cache path, default is "./schemas"',
     )
-
     compile_parser.add_argument(
         "--yaml-multiline-string-style",
         type=str,
@@ -285,12 +283,25 @@ def build_parser():
         default=from_dot_kapitan("compile", "yaml-multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
-
     compile_parser.add_argument(
         "--yaml-dump-null-as-empty",
         default=from_dot_kapitan("compile", "yaml-dump-null-as-empty", False),
         action="store_true",
         help="dumps all none-type entries as empty, default is dumping as 'null'",
+    )
+    compile_parser.add_argument(
+        "--helm-secrets",
+        "-hs",
+        action="store_true",
+        default=from_dot_kapitan("compile", "helm-secrets", False),
+        help="TODO",
+    )
+    compile_parser.add_argument(
+        "--encode-base64",
+        "-b64",
+        action="store_true",
+        default=from_dot_kapitan("compile", "encode_base64", False),
+        help="TODO",
     )
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
