@@ -28,6 +28,8 @@ class Helm(InputType):
         self.helm_params = args.get("helm_params") or {}
         self.helm_path = args.get("helm_path")
         self.file_path = None
+        self.helm_secrets = args.get("helm_secrets", False)
+        self.encode_base64 = args.get("encode_base64", False)
 
         self.helm_values_file = None
         if "helm_values" in args:
@@ -48,9 +50,12 @@ class Helm(InputType):
         kwargs:
             reveal: default False, set to reveal refs on compile
             target_name: default None, set to current target being compiled
+            helm_secrets: default False, set to decode b64-encoded refs in kinds 'Secret' and 'ConfigMap'
         """
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
+        helm_secrets = kwargs.get("helm_secrets", False) or self.helm_secrets
+        encode_base64 = kwargs.get("encode_base64", False) or self.encode_base64
 
         if self.file_path is not None:
             raise CompileError(
@@ -89,9 +94,11 @@ class Helm(InputType):
                         mode="w",
                         reveal=reveal,
                         target_name=target_name,
+                        encode_base64=encode_base64,
                     ) as fp:
                         yml_obj = list(yaml.safe_load_all(f))
-                        yml_obj = replace_b64_refs(yml_obj)
+                        if helm_secrets:
+                            yml_obj = check_data_for_b64(yml_obj)
                         fp.write_yaml(yml_obj)
                         logger.debug("Wrote file %s to %s", full_file_name, item_path)
 
@@ -186,6 +193,20 @@ class Helm(InputType):
                 return helm_cli(helm_path, args, stdout=f)
         else:
             return helm_cli(helm_path, args, verbose="--debug" in flags)
+
+
+def check_data_for_b64(yml_obj):
+    """
+    check for .data in kind: Secret / ConfigMap
+    replace b64 encoded strings
+    """
+    for item in yml_obj:
+        kind = item.get("kind", None)
+        if kind and (kind == "Secret" or kind == "ConfigMap"):
+            if item.get("data", None):
+                item["data"] = replace_b64_refs(item["data"])
+
+    return yml_obj
 
 
 def replace_b64_refs(yml_obj):
