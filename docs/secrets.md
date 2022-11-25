@@ -1,4 +1,4 @@
-# Kapitan References (Formerly Secrets)
+# :kapitan-logo: Kapitan References
 
 Kapitan can manage references and secrets with the following key management services:
 
@@ -92,6 +92,7 @@ When referencing your secret in the inventory during compile, you can use the fo
 - `ed25519` - Generates a ed25519 private key (PKCS#8).
 - `publickey` - Derives the public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|publickey`
 - `rsapublic` - Derives an RSA public key from a revealed private key i.e. `||reveal:path/to/encrypted_private_key|rsapublic` (deprecated, use `publickey` instead)
+- `basicauth` - Generates a base64 encoded pair of `username:password`, i.e. `||basicauth:username:password`
 
 *Note*: The first operator here `||` is more similar to a logical OR. If the secret file doesn't exist, kapitan will generate it and apply the functions after the `||`. If the secret file already exists, no functions will run.
 

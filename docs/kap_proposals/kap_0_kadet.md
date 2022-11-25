@@ -1,3 +1,8 @@
+---
+tags:
+  - kubernetes
+  - kadet
+---
 # Kadet
 
 This introduces a new experimental input type called Kadet.

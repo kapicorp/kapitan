@@ -38,6 +38,7 @@ def get_func_lookup():
         "publickey": public_key,
         "reveal": reveal,
         "loweralphanum": loweralphanum,
+        "basicauth": basicauth,
     }
 
 
@@ -155,8 +156,8 @@ def loweralphanum(ctx, nchars="8"):
 def random(ctx, type="str", nchars="", special_chars=string.punctuation):
     """
     generates a text string, containing nchars of given type
-
     """
+
     pool_lookup = {
         "str": string.ascii_letters + string.digits + "-_",
         "int": string.digits,
@@ -206,3 +207,23 @@ def random(ctx, type="str", nchars="", special_chars=string.punctuation):
 
     # set ctx.data to generated string
     ctx.data = generated_str
+
+
+def basicauth(ctx, username="", password=""):
+    # check if parameters are specified
+    if not username:
+        # use random pet name as username
+        username = "".join(secrets.choice(string.ascii_lowercase) for i in range(8))
+
+    if not password:
+        # generate random password
+        pool = string.ascii_letters + string.digits
+        password = "".join(secrets.choice(pool) for i in range(8))
+    # generate basic-auth token (base64-encoded)
+    token = username + ":" + password
+    token_bytes = token.encode()
+    token_bytes_b64 = base64.b64encode(token_bytes)
+    token_b64 = token_bytes_b64.decode()
+
+    # set generated token to ctx.data
+    ctx.data = token_b64

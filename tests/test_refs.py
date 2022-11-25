@@ -550,3 +550,22 @@ class Base64RefsTest(unittest.TestCase):
         self.assertEqual(len(revealed), 32)
         intersection = set(string.punctuation).intersection(revealed)
         self.assertTrue(intersection.issubset(set(allowed_special_chars)))
+
+    def test_ref_function_basicauth(self):
+        "write basicauth to secret, confirm ref file exists, reveal and check"
+        tag = "?{plain:ref/basicauth||basicauth}"
+        REF_CONTROLLER[tag] = RefParams()
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/basicauth")))
+
+        file_with_tags = tempfile.mktemp()
+        with open(file_with_tags, "w") as fp:
+            fp.write("?{plain:ref/basicauth}")
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(len(revealed), 24)  # default length of basicauth is 17
+
+        # Test with parameters username=user123 and password=mysecretpassword
+        tag = "?{plain:ref/basicauth||basicauth:user123:mysecretpassword}"
+        REF_CONTROLLER[tag] = RefParams()
+        REVEALER._reveal_tag_without_subvar.cache_clear()
+        revealed = REVEALER.reveal_raw_file(file_with_tags)
+        self.assertEqual(revealed, "dXNlcjEyMzpteXNlY3JldHBhc3N3b3Jk")

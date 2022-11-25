@@ -1,4 +1,8 @@
-# Kapitan proposals
+---
+tags:
+  - community
+---
+# :kapitan-logo: Kapitan proposals
 
 ## Introduction
 

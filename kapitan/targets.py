@@ -399,6 +399,11 @@ def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
         try:
             inv_target = inv["nodes"][target_name]
             target_obj = inv_target["parameters"]["kapitan"]
+            # check if parameters.kapitan is empty
+            if not target_obj:
+                raise InventoryError(
+                    "InventoryError: {}: parameters.kapitan has no assignment".format(target_name)
+                )
             target_obj["target_full_path"] = inv_target["__reclass__"]["node"].replace("./", "")
             require_compile = not ignore_class_notfound
             valid_target_obj(target_obj, require_compile)
