@@ -1,37 +1,119 @@
 # dependencies:
 # pip install mkdocs mkdocs-material pymdown-extensions
-site_name: Kapitan documentation
-site_url: 'https://kapitan.dev'
-theme: material
+site_name: "Kapitan: advanced configuration management tool"
+site_url: "https://kapitan.dev"
+
+plugins:
+  - tags:
+      tags_file: tags.md
+  - search
+theme:
+  name: material
+  custom_dir: overrides
+  logo: images/kapitan_logo.png
+  favicon: kapitan/logo
+  features:
+    - announce.dismiss
+    - content.tabs.link
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      media: "(prefers-color-scheme: light)"
+      primary: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      media: "(prefers-color-scheme: dark)"
+      primary: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+extra:
+  social:
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/kapitandev
+      name: kapitan on Twitter
+    - icon: fontawesome/brands/slack
+      link: https://kubernetes.slack.com/archives/C981W2HD3
+      name: "#kapitan slack channel"
+  analytics:
+    provider: google
+    property: G-5E934SC0R8
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: >-
+            Thanks for your feedback! Help us improve this page by
+            using our <a href="..." target="_blank" rel="noopener">feedback form</a>.
 use_directory_urls: true
 nav:
-- Home: README.md
-- Contributing: contributing.md
-- Getting started:
-  - Kapitan Overview: kapitan_overview.md
-  - Inventory: inventory.md
-  - Compiling components/templates: compile.md
-- Kapitan features:
-  - Secret management: secrets.md
-  - Manifest validation: validate.md
-  - External dependency management: external_dependencies.md
-- Miscellaneous:
-  - Usage: usage.md
-  - Proposals: proposals.md
-- Examples:
-    - Kubernetes: example-kubernetes.md
-    - Terraform: example-terraform.md
-
+  - Home: README.md
+  - Getting started:
+      - Kapitan Overview: kapitan_overview.md
+  - Support: support.md
+  - Contribute: contributing.md
+  - Documentation:
+      - Inventory: inventory.md
+      - Commands: commands.md
+      - Input Types: compile.md
+      - Secret management: secrets.md
+      - Manifest validation: validate.md
+      - External dependency management: external_dependencies.md
+  - More:
+      - Usage: usage.md
+      - Proposals: proposals.md
+      - Related Projects: related.md
+  - Examples:
+      - Kubernetes: example-kubernetes.md
+      - Terraform: example-terraform.md
+  - FAQ: FAQ.md
 
 markdown_extensions:
+  - admonition
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.arithmatex
   - pymdownx.betterem:
       smart_enable: all
   - pymdownx.caret
   - pymdownx.critic
   - pymdownx.details
+  - pymdownx.snippets:
+      base_path: examples
   - pymdownx.emoji:
-      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      options:
+        custom_icons:
+          - overrides/.icons
   - pymdownx.inlinehilite
   - pymdownx.magiclink
   - pymdownx.mark
@@ -42,6 +124,7 @@ markdown_extensions:
   - pymdownx.tilde
   - markdown_include.include:
       base_path: docs
+  - attr_list
 
-repo_name: 'kapicorp/kapitan'
-repo_url: 'https://github.com/kapicorp/kapitan'
+repo_name: "kapicorp/kapitan"
+repo_url: "https://github.com/kapicorp/kapitan"

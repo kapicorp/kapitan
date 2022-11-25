@@ -32,13 +32,12 @@ A new `plain` backend type is introduced and will compile into revealed state in
 
 A new `base64` backend type will store a base64 encoded value as the backend suggests (replacing the old badly named `ref` backend).
 
-
 The command line for secrets will be instead:
 
 ```shell
-$ kapitan refs --write gpg:my/secret1 ...
-$ kapitan refs --write base64:my/file ...
-$ kapitan refs --write plain:my/info ...
+kapitan refs --write gpg:my/secret1 ...
+kapitan refs --write base64:my/file ...
+kapitan refs --write plain:my/info ...
 ```
 
 ### plain backend
@@ -48,13 +47,13 @@ The `plain` backend type will allow referring to external state by updating refs
 For example, one can update the value of an environment variable and use `?{plain:my/user}` as a reference in a template:
 
 ```shell
-$ echo $USER | kapitan refs --write plain:my/user -f -
+echo $USER | kapitan refs --write plain:my/user -f -
 ```
 
 Or update a docker image value as ref `?{plain:images/dev/envoy}`:
 
 ```shell
-$ echo 'envoyproxy/envoy:v1.10.0' | kapitan refs --write plain:images/dev/envoy -f -
+echo 'envoyproxy/envoy:v1.10.0' | kapitan refs --write plain:images/dev/envoy -f -
 ```
 
 These references will be compiled into their values instead of hashed tags.
@@ -68,7 +67,6 @@ Except that this time, the name is representative of what is actually happening 
 
 Refs will be stored by default in the `./refs` path set by `--refs-path` replacing the `--secrets-path` flag.
 
-
 ## Background
 
 ### Kapitan Secrets
@@ -79,10 +77,10 @@ On compile, secret tags are updated into hashed tags which validate and instruct
 
 ### Kapitan Secrets example
 
-The following command creates a GPG encrypted secret with the contents of _file.txt_ for recipient `ramaro@google.com` to read:
+The following command creates a GPG encrypted secret with the contents of *file.txt* for recipient `ramaro@google.com` to read:
 
 ```shell
-$ kapitan secrets --write gpg:my/secret1 -f file.txt --recipients ramaro@google.com
+kapitan secrets --write gpg:my/secret1 -f file.txt --recipients ramaro@google.com
 ```
 
 This secret can be referred to in a jsonnet compoment:

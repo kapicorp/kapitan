@@ -15,7 +15,7 @@ parameters:
    - type: git | http[s]
      output_path: <output_path>
      source: <git/http[s]_url>    
-``` 
+```
 
 The output path is the path to save the dependency into. For example, it could be `/components/external/manifest.jsonnet`. Then, the user can specify the fetched file as a `kapitan.compile` item along with the locally-created files.  
 
@@ -33,7 +33,7 @@ Git type may also include `ref` and `subdir` parameters as illustrated below:
 If the file already exists at `output_path`, the fetch will be skipped. For fresh fetch of the dependencies, users may add `--fetch` option as follows:
 
 ```bash
-$ kapitan compile --fetch
+kapitan compile --fetch
 ```
 
 Users can also add the `force_fetch: true` option to the `kapitan.dependencies` in the inventory in order to force fetch of the dependencies of the target every time.

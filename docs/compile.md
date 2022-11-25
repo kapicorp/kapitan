@@ -1,11 +1,10 @@
-# Kapitan compile
+# :kapitan-logo: Kapitan compile
 
 **Note:** make sure to read up on [inventory](inventory.md) before moving on.
 
+## Phases of the compile command
 
-### Phases of the compile command
-
-Now that we have a basic understanding of Kapitan `inventory`, we can talk about the `kapitan compile` command. 
+Now that we have a basic understanding of Kapitan `inventory`, we can talk about the `kapitan compile` command.
 
 The command has five distinct `phases`:
 
@@ -106,7 +105,7 @@ Note: unlike jinja2 templates, one jsonnet template can output multiple files (o
 
 Typical jsonnet files would start as follows:
 
-```
+```json
 local kap = import "lib/kapitan.libjsonnet";
 local inventory = kap.inventory();
 ```
@@ -115,7 +114,7 @@ The first line is required to access the kapitan inventory values.
 
 On the second line, `inventory()` callback is used to initialise a local variable through which inventory values for this target can be referenced. For example, the script below
 
-```
+```json
 local kap = import "lib/kapitan.libjsonnet";
 local inventory = kap.inventory();
 
@@ -133,7 +132,7 @@ If your jsonnet is not a dictionary, but is a valid json(net) object, then the o
 
 In addition, importing `kapitan.libjsonnet` makes available the following native_callback functions gluing reclass to jsonnet (amongst others):
 
-```
+```json
 yaml_load - returns a json string of the specified yaml file
 yaml_load_stream - returns a list of json strings of the specified yaml file
 yaml_dump - returns a string yaml from a json string
@@ -148,11 +147,12 @@ gzip_b64 - returns base64 encoded gzip of obj
 inventory - returns a dictionary with the inventory for target
 jsonschema - validates obj with schema, returns object with 'valid' and 'reason' keys
 ```
+
 ##### Jsonschema validation from jsonnet
 
 Given the follow example inventory:
 
-```
+```yaml
 mysql:
   storage: 10G
   storage_class: standard
@@ -161,7 +161,7 @@ mysql:
 
 The yaml inventory structure can be validated with the new `jsonschema()` function:
 
-```
+```json
 local schema = {
     type: "object",
     properties: {
@@ -179,7 +179,7 @@ If `validation.valid` is not true, it will then fail compilation and display `va
 
 For example, if defining the `storage` value with an invalid pattern (`10Z`), compile fails:
 
-```
+```shell
 Jsonnet error: failed to compile /code/components/mysql/main.jsonnet:
  RUNTIME ERROR: '10Z' does not match '^[0-9]+[MGT]{1}$'
 
@@ -198,7 +198,7 @@ Compile error: failed to compile target: minikube-mysql
 
 The following jsonnet snippet renders the jinja2 template in `templates/got.j2`:
 
-```
+```json
 local kap = import "lib/kapitan.libjsonnet";
 
 {
@@ -218,14 +218,14 @@ The following functions are provided by the class `BaseObj()`.
 
 Method definitions:
 
-* `new()`: Provides parameter checking capabilities
-* `body()`: Enables in-depth parameter configuration
+- `new()`: Provides parameter checking capabilities
+- `body()`: Enables in-depth parameter configuration
 
 Method functions:
 
-* `root()`: Defines values that will be compiled into the output
-* `need()`: Ability to check & define input parameters
-* `update_root()`: Updates the template file associated with the class
+- `root()`: Defines values that will be compiled into the output
+- `need()`: Ability to check & define input parameters
+- `update_root()`: Updates the template file associated with the class
 
 A class can be a resource such as a kubernetes Deployment as shown here:
 
@@ -277,6 +277,7 @@ For a deeper understanding of this input type please review the proposal documen
 *Supported output types:*
 
 - yaml (default)
+
 - json
 
 #### using kadet for "post processing" or "overlaying" manifests (alpha/experimental)
@@ -289,6 +290,7 @@ check it into your repository. This could make it harder to upgrade chart versio
 understand the motivation behind changes in the chart itself.
 
 Instead, you could create a kadet module that compiles after the helm input has compiled.
+
 ```yaml
 parameters:
   test_1:
@@ -299,14 +301,14 @@ parameters:
       input_type: helm
       output_path: ${test_1:output_path}
       input_paths:
-      	- <chart_path>
+        - <chart_path>
       helm_values:
         <object_with_values_to_override>
       helm_values_files:
         - <values_file_path>
       helm_params:
-	name: <chart_release_name>
-      	namespace: <substitutes_.Release.Namespace>
+        name: <chart_release_name>
+        namespace: <substitutes_.Release.Namespace>
     - name: add-metadata-test-1
       input_type: kadet
       output_path: ${test_1:output_path}
@@ -316,10 +318,11 @@ parameters:
         team_name: ops
         post_process_inputs: [template-helm-chart]
 ```
+
 Here you can clearly define the order in which your manifests are compiled and ensure that the helm
 chart is templated before your kadet module is run. The `input_params` injected are available in
 the main function as an object. `input_params` will always have the `compile_path` which is the absolute
-path to the compile directory where manifests are compiled on the current run. Any additional keys 
+path to the compile directory where manifests are compiled on the current run. Any additional keys
 placed on the `input_params` in the compile block can be accessed in the kadet module for that specific
 compile run.
 
@@ -394,9 +397,7 @@ Special flags:
       namespace: {{ .Release.Namespace }} # or any other custom values
     ```
 
-
 See the [helm doc](https://helm.sh/docs/helm/helm_template/) for further detail.
-
 
 #### Example
 
@@ -404,7 +405,7 @@ Let's use [nginx-ingress](https://github.com/helm/charts/tree/master/stable/ngin
 
 *On a side note, `https://helm.nginx.com/stable/` is the chart repository URL which you would `helm repo add`, and this repository should contain `index.yaml` that lists out all the available charts and their URLs. By locating this `index.yaml` file, you can locate all the charts available in the repository.*
 
-We can use version 0.3.3 found at https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz. We can create a simple target file as `inventory/targets/nginx-from-chart.yml` whose content is as follows:
+We can use version 0.3.3 found at <https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz>. We can create a simple target file as `inventory/targets/nginx-from-chart.yml` whose content is as follows:
 
 ```yaml
 parameters:
@@ -511,6 +512,7 @@ parameters:
 ```
 
 As a reminder, each input block within the compile array is run sequentially for a target in Kapitan. If we reversed the order of the inputs above like so:
+
 ```yaml
 parameters:
   target_name: removal

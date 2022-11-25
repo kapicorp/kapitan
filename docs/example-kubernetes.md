@@ -1,12 +1,16 @@
-# Kubernetes example
+---
+tags:
+  - kubernetes
+---
+# :kapitan-logo: Kubernetes example
 
-Here, we walk through how kapitan could be used to help create kubernetes manifests, whose values are customized for each target according to the inventory structure. The example folder can be found in our repository on Github at https://github.com/kapicorp/kapitan/tree/master/examples/kubernetes.
+Here, we walk through how kapitan could be used to help create kubernetes manifests, whose values are customized for each target according to the inventory structure. The example folder can be found in our repository on Github at <https://github.com/kapicorp/kapitan/tree/master/examples/kubernetes>.
 
 ## Directory structure
 
 The following tree shows what this directory looks like (only showing tree level 1):
 
-```
+```text
 ├── components
 ├── docs
 ├── inventory
@@ -22,7 +26,7 @@ We will describe the role of each folder in the following sections.
 
 This folder contains the inventory values used to render the templates for each target. The structure of this folder is as follows:
 
-```
+```text
 .
 ├── classes
 │   ├── cluster
@@ -98,7 +102,7 @@ Don't confuse the `components` folder with `inventory/classes/components` folder
 
 This folder contains the template files as discussed above, typically jsonnet and kadet files. The tree of this directory looks as follows:
 
-```
+```text
 .
 ├── elasticsearch
 │   ├── elasticsearch.container.jsonnet
@@ -119,7 +123,7 @@ Notice how the directory structure corresponds to that of `inventory/classes/com
 
 As mentioned above, we know that the target **minikube-nginx** inherits from `component.namespace`. Let's take a look at `components/namespace/main.jsonnet`:
 
-```
+```json
 local kube = import "lib/kube.libjsonnet";
 local kap = import "lib/kapitan.libjsonnet";
 local inventory = kap.inventory();
@@ -135,7 +139,7 @@ The first two lines import libjsonnet files under `lib` folder: this is the fold
 
 The actual object defined in `components/namespace/main.jsonnet` looks like this:
 
-```
+```json
 {
     "00_namespace": kube.Namespace(p.namespace),
     "10_serviceaccount": kube.ServiceAccount("default")

@@ -1,7 +1,7 @@
 import logging
 import os
 import subprocess
-from subprocess import PIPE, DEVNULL
+from subprocess import DEVNULL, PIPE
 
 logger = logging.getLogger(__name__)
 

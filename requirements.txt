@@ -108,7 +108,7 @@ jsonnet==0.18.0
     # via -r requirements.txt
 jsonschema==3.2.0
     # via -r requirements.txt
-kadet==0.2.1
+kadet==0.2.2
     # via -r requirements.txt
 markupsafe==2.0.1
     # via
@@ -127,7 +127,7 @@ msrest==0.6.21
     # via
     #   -r requirements.txt
     #   azure-keyvault-keys
-oauthlib==3.1.1
+oauthlib==3.2.1
     # via
     #   -r requirements.txt
     #   requests-oauthlib
@@ -143,7 +143,7 @@ portalocker==1.7.1
     # via
     #   -r requirements.txt
     #   msal-extensions
-protobuf==3.17.3
+protobuf==3.18.3
     # via
     #   -r requirements.txt
     #   google-api-core
