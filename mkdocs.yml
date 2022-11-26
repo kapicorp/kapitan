@@ -82,22 +82,26 @@ nav:
   - Home: README.md
   - Getting started:
       - Kapitan Overview: kapitan_overview.md
-  - Support: support.md
+  - Support: 
+      - Ask for support: support.md
+      - Related Projects: related.md
   - Contribute: contributing.md
   # Bazinga!
   # - Blog:
   #  - Welcome: blog/welcome.md
   - Documentation:
-      - Commands: commands.md
       - Inventory: inventory.md
       - Input Types: compile.md
       - Secret management: secrets.md
       - Manifest validation: validate.md
       - External dependency management: external_dependencies.md
-  - More:
-      - Usage: usage.md
       - Proposals: proposals.md
-      - Related Projects: related.md
+  - CLI reference: 
+      - compile: website/commands/kapitan_compile.md
+      - inventory: website/commands/kapitan_inventory.md
+      - lint: website/commands/kapitan_lint.md
+      - searchvar: website/commands/kapitan_searchvar.md
+      - kapitan dotfile: website/commands/kapitan_dotfile.md
   - Examples:
       - Kubernetes: example-kubernetes.md
       - Terraform: example-terraform.md
