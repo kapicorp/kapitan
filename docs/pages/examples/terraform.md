@@ -188,9 +188,9 @@ export OUTPUT_DIR=$(realpath -m ${DIR}/../../../output/{{inventory.parameters.na
 It is good practice to utilize this method to improve integration with various CLI based tools. Scripts help to ensure terraform and
 kapitan can function with your CI/CD systems. It generally depends on your organizational workflows.
 
-### secrets
+### References
 
-Although there are no particular secrets in this instance. It is possible to utilize Kapitan secrets as defined in [secrets management](secrets.md).
+Although there are no particular references in this instance. It is possible to utilize Kapitan references as defined in [referemce management](/references.md).
 
 ### Collaboration
 
