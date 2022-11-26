@@ -270,6 +270,52 @@ Also notice that the class name (`project.production`) is not in any ways influe
 
 ## Advanced Inventory Features
 
+
+### Target labels
+
+Kapitan allows you to define labels in your inventory, which can then be used to group together targets with similar labels.
+
+For instance you could define the following:
+
+!!! example ""
+
+    Defines a class to add the `customer` label to selected targets
+
+    !!! example "`inventory/classes/type/customer_project.yml`"
+        ```yaml
+        parameters:
+          customer_name: ${target_name} # Defaults to the target_name
+          kapitan:
+            labels:
+              customer: ${customer_name}
+        ```
+
+    Apply the class to the target for customer `acme`
+    !!! example "`inventory/targets/customers/acme.yml`"
+
+        ```yaml
+        classes:
+        ...
+        - type.customer_project
+
+        parameters:
+        ...
+        ```
+
+    You can now selectively compile targets for customer `acme` using the following (see see [**Labels**](/website/commands/kapitan_compile/#using-labels) for more details )
+
+    !!! example ""
+
+        ```shell
+        kapitan compile -l customer=acme
+        Compiled acme (0.06s)
+        Compiled acme-documentation (0.09s)
+        ```
+
+
+
+
+
 ### Remote Inventories
 
 Kapitan is capable of recursively fetching inventory items stored in remote locations and copy it to the specified output path. This feature can be used by specifying those inventory items in classes or targets under `parameters.kapitan.inventory`. Supported types are:
@@ -277,27 +323,6 @@ Kapitan is capable of recursively fetching inventory items stored in remote loca
 - [git type](#git-type)
 - [http type](#http-type)
 
-#### Commands
-Use the `--fetch` flag to fetch the remote inventories and the external dependencies.
-
-```shell
-kapitan compile --fetch
-```
-
-This will download the dependencies and store them at their respective `output_path`.
-By default, kapitan does not overwrite an existing item with the same name as that of the fetched inventory items.
-
-Use the `--force-fetch` flag to force fetch (update cache with freshly fetched items) and overwrite inventory items of the same name in the `output_path`.
-
-```shell
-kapitan compile --force-fetch
-```
-
-Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
-
-```shell
-kapitan compile --cache --fetch
-```
 
 Class items can be specified before they are locally available as long as they are fetched in the same run. [Example](#example) of this is given below.
 
@@ -307,7 +332,7 @@ Git types can fetch external inventories available via HTTP/HTTPS or SSH URLs. T
 
 **Note**: git types require git binary on your system.
 
-##### Usage
+##### Definition
 
 ```yaml
 parameters:
@@ -388,7 +413,7 @@ Lets create a simple target file `docker.yml`
 
 `http[s]` types can fetch external inventories available at `http://` or `https://` URL.
 
-##### definition
+##### Definition
 
 ```yaml
 parameters:
