@@ -85,26 +85,28 @@ nav:
   - Support: 
       - Ask for support: support.md
       - Related Projects: related.md
-  - Contribute: contributing.md
+  - Contribute: pages/contribute.md
   # Bazinga!
   # - Blog:
   #  - Welcome: blog/welcome.md
   - Documentation:
       - Inventory: inventory.md
       - Input Types: compile.md
-      - Secret management: secrets.md
-      - Manifest validation: validate.md
-      - External dependency management: external_dependencies.md
+      - References: references.md
+      - Advanced Kapitan:
+        - Manifest validation: validate.md
+        - Remote repositories: remote_repositories.md
+        - External dependencies: external_dependencies.md
       - Proposals: proposals.md
   - CLI reference: 
-      - compile: website/commands/kapitan_compile.md
-      - inventory: website/commands/kapitan_inventory.md
-      - lint: website/commands/kapitan_lint.md
-      - searchvar: website/commands/kapitan_searchvar.md
-      - kapitan dotfile: website/commands/kapitan_dotfile.md
+      - compile: pages/commands/kapitan_compile.md
+      - inventory: pages/commands/kapitan_inventory.md
+      - lint: pages/commands/kapitan_lint.md
+      - searchvar: pages/commands/kapitan_searchvar.md
+      - kapitan dotfile: pages/commands/kapitan_dotfile.md
   - Examples:
-      - Kubernetes: example-kubernetes.md
-      - Terraform: example-terraform.md
+      - Kubernetes: pages/examples/kubernetes.md
+      - Terraform: pages/examples/terraform.md
   - FAQ: FAQ.md
 
 markdown_extensions:
