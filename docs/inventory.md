@@ -153,7 +153,7 @@ Note that it is made of 2 sections:
 
 The next thing you want to learn about the inventory are [**classes**](#classes). A class is a yaml file containing a fragment of yaml that we want to import and merge into the inventory.
 
-[**Classes**](#classes) are *fragments* of yaml: feature sets, commonalities between targets. [**Classes**](#classes) let you compose your [**Inventory**](#inventory) from smaller bits, eliminating duplication and exposing all important parameters from a single, logically organised place. As the [**Inventory**](#inventory) lets you reference other parameters in the hierarchy, [**classes**](#classes) become places where you can define something that will then get referenced from another section of the inventory, allowing for composition.
+[**Classes**](#classes) are *fragments* of yaml: feature sets, commonalities between targets. [**Classes**](#classes) let you compose your [**Inventory**](/inventory/) from smaller bits, eliminating duplication and exposing all important parameters from a single, logically organised place. As the [**Inventory**](#inventory) lets you reference other parameters in the hierarchy, [**classes**](#classes) become places where you can define something that will then get referenced from another section of the inventory, allowing for composition.
 
 [**Classes**](#classes) are organised under the [`inventory/classes`](#classes) directory substructure. 
 They are organised hierarchically in subfolders, and the way they can be imported into a [**target**](#targets) or other [**classes**](#classes) depends on their location relative to the [`inventory/classes`](#classes) directory.

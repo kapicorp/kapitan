@@ -7,7 +7,9 @@ tags:
 
 Do you want to help the project? Great! There are many ways to do it
 
-## Sponsor **Kapitan**
+## Sponsor **Kapitan** 
+![GitHub Sponsors](https://img.shields.io/github/sponsors/kapicorp?style=for-the-badge)
+![GitHub Stars](https://img.shields.io/github/stars/kapicorp/kapitan?style=for-the-badge)
 
 We accept donations throught [GitHubs Sponsors](https://github.com/sponsors/kapicorp). Alternatively reach out for other ways to support us.
 
@@ -17,6 +19,7 @@ Companies and individuals sponsoring us on a regular base will be recognised and
 
 Our project needs your support to get noticed! Please let everyone know that you are using **Kapitan**
 
+* :fontawesome-brands-github: Help us grow: [give us a star](https://github.com/kapicorp/kapitan/stargazers)
 * Join us on **kubernetes.slack.com** [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)([**Get invited**](https://kubernetes.slack.com))
 * **Tweet about us on Twitter** . Remember to add [@kapitandev](https://twitter.com/kapitandev/) to your tweets
 * **Share our website** [**`https://kapitan.dev`**](https://kapitan.dev)

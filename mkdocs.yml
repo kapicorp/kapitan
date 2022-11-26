@@ -1,12 +1,14 @@
 # dependencies:
 # pip install mkdocs mkdocs-material pymdown-extensions
-site_name: "Kapitan: advanced configuration management tool"
+site_name: "Kapitan: Keep your ship together"
 site_url: "https://kapitan.dev"
-
+strict: true
 plugins:
   - tags:
       tags_file: tags.md
   - search
+extra_css:
+  - stylesheets/custom.css
 theme:
   name: material
   custom_dir: overrides
@@ -44,6 +46,13 @@ theme:
         name: Switch to light mode
 
 extra:
+  consent:
+    title: Cookie consent
+    description: >- 
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
   social:
     - icon: fontawesome/brands/twitter
       link: https://twitter.com/kapitandev
@@ -75,9 +84,12 @@ nav:
       - Kapitan Overview: kapitan_overview.md
   - Support: support.md
   - Contribute: contributing.md
+  # Bazinga!
+  # - Blog:
+  #  - Welcome: blog/welcome.md
   - Documentation:
-      - Inventory: inventory.md
       - Commands: commands.md
+      - Inventory: inventory.md
       - Input Types: compile.md
       - Secret management: secrets.md
       - Manifest validation: validate.md
@@ -128,3 +140,6 @@ markdown_extensions:
 
 repo_name: "kapicorp/kapitan"
 repo_url: "https://github.com/kapicorp/kapitan"
+
+copyright: >
+  <a href="#__consent">Change cookie settings</a>
