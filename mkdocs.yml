@@ -1,12 +1,14 @@
 # dependencies:
 # pip install mkdocs mkdocs-material pymdown-extensions
-site_name: "Kapitan: advanced configuration management tool"
+site_name: "Kapitan: Keep your ship together"
 site_url: "https://kapitan.dev"
-
+strict: true
 plugins:
   - tags:
       tags_file: tags.md
   - search
+extra_css:
+  - stylesheets/custom.css
 theme:
   name: material
   custom_dir: overrides
@@ -75,9 +77,12 @@ nav:
       - Kapitan Overview: kapitan_overview.md
   - Support: support.md
   - Contribute: contributing.md
+  # Bazinga!
+  # - Blog:
+  #  - Welcome: blog/welcome.md
   - Documentation:
-      - Inventory: inventory.md
       - Commands: commands.md
+      - Inventory: inventory.md
       - Input Types: compile.md
       - Secret management: secrets.md
       - Manifest validation: validate.md

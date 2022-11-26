@@ -1,9 +1,12 @@
-# :kapitan-logo: Kapitan: advanced configuration management tool
+# :kapitan-logo: Kapitan: Keep your ship together 
 
+![GitHub Sponsors](https://img.shields.io/github/sponsors/kapicorp?style=for-the-badge)
+![GitHub Stars](https://img.shields.io/github/stars/kapicorp/kapitan?style=for-the-badge)
 
 **`Kapitan`** aims to be your *one-stop tool* to help you manage the ever growing complexity of your configurations.
 
-:fontawesome-brands-slack: Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
+* :fontawesome-brands-slack: Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
+* :fontawesome-brands-github: Help us grow: [give us a star](https://github.com/kapicorp/kapitan/stargazers) or even better [sponsor our project](/contributing/#sponsor-kapitan)
 
 ## Why do I need **Kapitan**? 
 
@@ -19,21 +22,25 @@
 ## Install Kapitan
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 
-### Docker (recommended)
+### Docker
 ![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)
 [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
 [![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
-=== "Linux"
 
-    ```shell
-    docker run -t --rm -u $(id -u) -v $(pwd):/src:delegated kapicorp/kapitan -h
-    ```
+!!! success "recommended"
 
-=== "Mac"
+    
+    === "Linux"
 
-    ```shell
-    docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan -h
-    ```
+        ```shell
+        docker run -t --rm -u $(id -u) -v $(pwd):/src:delegated kapicorp/kapitan -h
+        ```
+
+    === "Mac"
+
+        ```shell
+        docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan -h
+        ```
 
 ### Pip 
 
@@ -59,26 +66,30 @@
 
 === "Linux"
 
-    `$HOME/.local/lib/python3.7/bin`
+    !!! note ""
+        `kapitan` will be installed in `$HOME/.local/lib/python3.7/bin`
 
     ```shell
-    sudo apt-get update && sudo apt-get install -y python3.7-dev python3-pip python3-yaml
+    pip3 install --user --upgrade kapitan
     ```
 
 === "Mac"
 
-    `$HOME/Library/Python/3.7/bin`
+    !!! note ""
+        `kapitan` will be installed in `$HOME/Library/Python/3.7/bin`
 
     ```shell
-    brew install python3 libyaml
+    pip3 install --user --upgrade kapitan
     ```
 
 
-##### System-wide (not recommended):
+##### System-wide
 
-```shell
-sudo pip3 install --upgrade kapitan
-```
+!!! attention "not recommended"
+
+    ```shell
+    sudo pip3 install --upgrade kapitan
+    ```
 
 ## Related projects
 
