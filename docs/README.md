@@ -22,24 +22,27 @@
 ## Install Kapitan
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 
-### Docker
-![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)
-[![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
-[![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
-
 !!! success "recommended"
+    ### Docker
+    ![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)
+    [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
+    [![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
+
+
 
     
     === "Linux"
 
         ```shell
-        docker run -t --rm -u $(id -u) -v $(pwd):/src:delegated kapicorp/kapitan -h
+        alias kapitan="docker run -t --rm -u $(id -u) -v $(pwd):/src:delegated kapicorp/kapitan"
+        kapitan -h
         ```
 
     === "Mac"
 
         ```shell
-        docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan -h
+        alias kapitan="docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan"
+        kapitan -h
         ```
 
 ### Pip 

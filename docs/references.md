@@ -204,7 +204,10 @@ Some reference backends require configuration, both in the Inventory and to conf
           ...
         ```
 
-    === "base64"
+        !!! danger "not encrypted"
+            This reference type does not support encryption: it is intended for non sensitive data only. *DO NOT* use `plain` for storing sensitive information!
+
+    === "base64" 
         ```yaml
         parameters:
           ...
@@ -212,6 +215,8 @@ Some reference backends require configuration, both in the Inventory and to conf
             root_password: ?{base64:targets/${target_name}/mysql/root_password}
           ...
         ```
+        !!! danger "not encrypted"
+            This reference type does not support encryption: it is intended for non sensitive data only. *DO NOT* use `base64` for storing sensitive information!
     === "gpg"
         ```yaml
         parameters:
@@ -340,7 +345,23 @@ You can assign values to your reference using the command line. Both reading fro
         cat input_file | kapitan refs --write azkms:refs/targets/${TARGET_NAME}/mysql/root_password -t ${TARGET_NAME} -f -
         ```
     === "env"
-        !!! note "taken from the environment"
+
+        !!! note "Setting default value only"
+            The `env` backend works in a slightly different ways, as it allows you to reference environment variables at runtime.
+
+            For example, for a reference called **`{?env:targets/envs_defaults/mysql_port_${target_name}}`**, **Kapitan** would look for an environment variable called **`KAPITAN_ENV_mysql_port_${TARGET_NAME}`**. 
+            
+            If that variable cannot be found in the **Kapitan** environment, the default will be taken from the **`refs/targets/envs_defaults/mysql_port_${TARGET_NAME}`** file instead.
+
+        ```shell
+        kapitan refs --write env:refs/targets/envs_defaults/mysql_port_${TARGET_NAME} -t ${TARGET_NAME} -f <input file>
+        ```
+
+        which also works with pipes
+
+        ```shell
+        cat input_file | kapitan refs --write env:refs/targets/envs_defaults/mysql_port_${TARGET_NAME} -t ${TARGET_NAME} -f -
+        ```
 
     === "vaultkv"
         ```shell
@@ -353,15 +374,14 @@ You can assign values to your reference using the command line. Both reading fro
         cat input_file | kapitan refs --write vaultkv:refs/targets/${TARGET_NAME}/mysql/root_password -t ${TARGET_NAME} -f -
         ```
     === "vaulttransit"
-        ```shell
-        kapitan refs --write vaulttransit:refs/targets/${TARGET_NAME}/mysql/root_password -t ${TARGET_NAME} -f <input file>
-        ```
 
-        which also works with pipes
+        This backend expects the value to be stored as a `key:value` pair. 
 
         ```shell
-        cat input_file | kapitan refs --write vaulttransit:refs/targets/${TARGET_NAME}/mysql/root_password -t ${TARGET_NAME} -f -
+        echo "a_key:a_value" | kapitan refs --write vaulttransit:refs/targets/${TARGET_NAME}/mysql/root_password -t ${TARGET_NAME} -f -
         ```
+
+        When reading from disk, the input file should be formatted accordingly.
 
 ### Automatically
 
@@ -543,73 +563,60 @@ kapitan refs --reveal --tag "?{base64:targets/all-glob/mysql/password:3192c15c}"
 
 for more convenience.
 
-### 5. Compile refs in embedded format
+## Embedded refs
 
-This allows revealing compiled files without needing access to ref files by using:
+Please refer to the [CLI reference](/pages/commands/kapitan_compile/#embed-references)
+
+## YAML References
+
+Kapitan is also able to use reference to store YAML content that can be later accessed using down to the individual keys. 
+
+This can be used to store YAML outputs coming straight from other tools. For instance, I could use the GCP `gcloud` command to get all the information about a cluster, and write it into a reference
 
 ```shell
-kapitan compile --embed-refs
+gcloud container clusters describe \
+  --project ${TARGET_NAME}-project \
+  gke-cluster --zone europe-west1 --format yaml \
+    | kapitan refs --write plain:clusters/${TARGET_NAME}/cluster -t ${TARGET_NAME} -f -
 ```
 
-Compiled files containing refs will now have the references embedded in the compiled file under the following format (gkms backend used as an example):
+knowing the output of `gcloud` to produce yaml that contain the following values:
 
 ```yaml
-?{gkms:ReallyLongBase64HereZ2FyZ2FiZQo=:embedded}
+...
+name: gke-cluster
+releaseChannel:
+  channel: REGULAR
+selfLink: https://container.googleapis.com/v1/projects/kapicorp/locations/europe-west1/clusters/gke-cluster
+...
 ```
 
-Which means that compiled outputs can now be completely distributed (e.g. in CI/CD systems that apply changes) without the need to access the refs directory.
-
-You can also check out [Tesoro](https://github.com/kapicorp/tesoro) for Kubernetes which will reveal embedded secret refs in the cluster.
-
-## Secret Sub-Variables
-
-As illustrated above, one file corresponds to one secret. It is now possible for users who would like to reduce the decryption overhead to manually create a yaml file that contains multiple secrets, each of which can be referenced by its object key. For example, consider the secret file `refs/mysql_secrets`:
-
-```yaml
-mysql_passwords:
-  secret_foo: hello_world
-  secret_bar: 54321password
-```
-
-This can be manually encrypted by:
-
-```shell
-kapitan refs --write gpg:components/secrets/mysql_secrets -t prod -f secrets/mysql_secrets
-```
-
-To reference `secret_foo`inside this file, you can specify it in the inventory as follows:
-
-`secret_foo: ${gpg:components/secrets/mysql_secrets@mysql_passwords.secret_foo}`
-
-### Environment References Backend
-
-It may be useful in some occasions when revealing references to have the values for the reference dynamically
-come from the environment in which Kapitan is executing. This backend provides such functionality. It will attempt
-to locate a value for a reference from the environment using a prefixed variable *`$KAPITAN_VAR_*`* convention
-and use this value with the refs command.
-
-```shell
-echo "my_default_value" | kapitan refs --write env:path/to/secret_inside_kapitan -t <target_name> -f -
-```
-
-When this reference is created and then referred to in the parameters, it will use the last path component, from a
-split, to locate a variable in the current environment to use as the value. If this variable cannot be found in the
-environment, it will use the default value written to the refs file on the filesystem.
+I can not reference the link to the cluster in the inventory using:
 
 ```yaml
 parameters:
-  mysql_passwordS:
-    secret_foo: ?{env:my/mysql/mysql_secret_foo}
-    secret_bar: ?{env:my/mysql/mysql_secret_bar}
+  cluster:
+    name: ?{plain:clusters/${target_name}/cluster@name} 
+    release_channel: ?{plain:clusters/${target_name}/cluster@releaseChannel.channel}
+    link: ?{plain:clusters/${target_name}/cluster@selfLink}
 ```
 
-When using the above parameters reference, values would be consulted in the environment from the following
-variables:
+Combined with a Jinja template, I could write automatically documentation containing the details of the clusters I use.
 
-- `$KAPITAN_VAR_mysql_secret_foo`
-- `$KAPITAN_VAR_mysql_secret_bar`
+```text
+{% set p = inventory.parameters %}
+# Documentation for {{p.target_name}}
 
-### Vaultkv Secret Backend (Read Only) - Addons
+Cluster [{{p.cluster.name}}]({{p.cluster.link}}) has release channel {{p.cluster.release_channel}}
+```
+
+
+
+## Hashicorp Vault
+
+### `vaultkv`
+
+!!! warning "Currently Kapitan supports only ReadOnly mode for this backend"
 
 Considering a key-value pair like `my_key`:`my_secret` in the path `secret/foo/bar` in a kv-v2(KV version 2) secret engine on the vault server, to use this as a secret use:
 
@@ -642,7 +649,7 @@ parameters:
         VAULT_CLIENT_CERT: /path/to/cert
 ```
 
-### Vaulttransit Secret Backend - Addons
+### `vaulttransit`
 
 Considering a key-value pair like `my_key`:`my_secret` in the path `secret/foo/bar` in a transit secret engine on the vault server, to use this as a secret use:
 
@@ -690,12 +697,12 @@ parameters:
         always_latest: False
 ```
 
-### Azure KMS Secret Backend
+## Azure KMS Secret Backend
 
 To encrypt secrets using keys stored in Azure's Key Vault, a `key_id` is required to identify an Azure key object uniquely.
 It should be of the form `https://{keyvault-name}.vault.azure.net/{object-type}/{object-name}/{object-version}`.
 
-#### Defining the KMS key
+### Defining the KMS key
 
 This is done in the inventory under `parameters.kapitan.secrets`.
 
@@ -712,7 +719,7 @@ parameters:
 
 The key can also be specified using the `--key` flag
 
-#### Creating a secret
+### Creating a secret
 
 Secrets can be created using any of the methods described in the ["creating your secret"](#2-create-your-secret) section.
 
@@ -728,7 +735,7 @@ Using the `--key` flag and a `key_id`
 echo "my_encrypted_secret" | kapitan refs --write azkms:path/to/secret_inside_kapitan --key=<key_id> -f -
 ```
 
-#### Referencing and revealing a secret
+### Referencing and revealing a secret
 
 Secrets can be [referenced](#3-reference-your-secrets-in-your-classestargets-and-run-kapitan-compile) and [revealed](#4-reveal-and-use-the-secrets) in any of the ways described above.
 
