@@ -278,6 +278,7 @@ def build_parser():
 
     compile_parser.add_argument(
         "--yaml-multiline-string-style",
+        "-L",
         type=str,
         choices=["literal", "folded", "double-quotes"],
         metavar="STYLE",
