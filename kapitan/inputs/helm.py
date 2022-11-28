@@ -57,6 +57,7 @@ class Helm(InputType):
         """
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
+        indent = kwargs.get("indent", 2)
 
         if self.file_path is not None:
             raise CompileError(
@@ -95,6 +96,7 @@ class Helm(InputType):
                         mode="w",
                         reveal=reveal,
                         target_name=target_name,
+                        indent=indent,
                     ) as fp:
                         yml_obj = list(yaml.safe_load_all(f))
                         fp.write_yaml(yml_obj)
