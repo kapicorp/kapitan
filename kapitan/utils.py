@@ -224,6 +224,11 @@ def multiline_str_presenter(dumper, data):
     if compile_args:
         style = compile_args.yaml_multiline_string_style
 
+    # check for inventory args too
+    inventory_args = cached.args.get("inventory", None)
+    if inventory_args:
+        style = inventory_args.multiline_string_style
+
     if style == "literal":
         style = "|"
     elif style == "folded":
