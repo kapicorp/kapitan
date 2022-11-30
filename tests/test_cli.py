@@ -512,9 +512,12 @@ class CliFuncsTest(unittest.TestCase):
 
         os.remove(test_tag_file)
 
-    def test_cli_secret_subvar_base64_ref(self):
+    def test_cli_secret_subvar_ref(self):
+        
+      def _test_cli_secret_subvar_generic_ref(self, reftype):
         """
-        run $ kapitan refs --write base64:test_secret
+        Generic function to test subvars
+        run $ kapitan refs --write reftype:test_secret
         and $ kapitan refs --reveal -f sometest_file
         """
         test_secret_content = """
@@ -531,7 +534,7 @@ class CliFuncsTest(unittest.TestCase):
             "kapitan",
             "refs",
             "--write",
-            "base64:test_secret_subvar",
+            f"{reftype}:test_secret_subvar",
             "-f",
             test_secret_file,
             "--refs-path",
@@ -539,9 +542,9 @@ class CliFuncsTest(unittest.TestCase):
         ]
         main()
 
-        test_tag_content = """
-        revealing1: ?{base64:test_secret_subvar@var1.var2}
-        revealing2: ?{base64:test_secret_subvar@var3.var4}
+        test_tag_content = f"""
+        revealing1: ?{{{reftype}}}:test_secret_subvar@var1.var2}}
+        revealing2: ?{{{reftype}}}:test_secret_subvar@var3.var4}}
         """
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
@@ -559,6 +562,9 @@ class CliFuncsTest(unittest.TestCase):
         """
         self.assertEqual(expected.format("hello", "world"), stdout.getvalue())
         os.remove(test_tag_file)
+    
+        _test_cli_secret_subvar_generic_ref(self, "plain")
+        _test_cli_secret_subvar_generic_ref(self, "base64")
 
     def test_cli_secret_subvar_gpg(self):
         """
