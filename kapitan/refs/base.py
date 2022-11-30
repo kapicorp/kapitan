@@ -48,8 +48,34 @@ class PlainRef(object):
     def reveal(self):
         return self.data
 
+    def _get_value_in_yaml_path(self, d, yaml_path):
+        """using the sub-variable path as nested keys, returns the value in the dictionary"""
+        keys = yaml_path.split(".")
+        value = d
+        for key in keys:
+            value = value[key]
+
+        return value
+
     def compile(self):
-        return self.data
+        if self.embedded_subvar_path:
+            data = base64.b64decode(self.data).decode("utf-8") if self.encoding == "base64" else self.data
+            yaml_data = yaml.load(data, Loader=YamlLoader)
+            if not isinstance(yaml_data, dict):
+                raise RefError(
+                    "PlainRef: revealed secret is not in embedded yaml, "
+                    "cannot access sub-variable at {}".format(self.embedded_subvar_path)
+                )
+            try:
+                logger.debug('PlainRef: embedded sub-variable path "%s"', self.embedded_subvar_path)
+                value = self._get_value_in_yaml_path(yaml_data, self.embedded_subvar_path)
+                return base64.b64encode(value.encode("utf-8")) if self.encoding == "base64" else value
+            except KeyError:
+                raise RefError(
+                    "PlainRef: cannot access sub-variable key {}".format(self.embedded_subvar_path)
+                )
+        else:
+            return self.data
 
     def __str__(self):
         return "{}".format(self.__dict__)
@@ -121,6 +147,11 @@ class PlainRefBackend(object):
             ref_path_data = "{}{}".format(ref_file_path, ref.data)
             ref.hash = hashlib.sha256(ref_path_data.encode()).hexdigest()
             ref.token = "{}:{}:{}".format(ref.type_name, ref.path, ref.hash[:8])
+
+            # if subvar is set, save path in 'embedded_subvar_path' key
+            subvar = ref_path.split("@")
+            if len(subvar) > 1:
+                ref.embedded_subvar_path = subvar[1]
             return ref
 
         raise KeyError(ref_path)
@@ -274,8 +305,9 @@ class Revealer(object):
             subvar_path = subvar_path[0][1:]
             logger.debug('Revealer: sub-variable path "%s" matched in tag %s', subvar_path, tag)
             tag_without_yaml_path = re.sub(REF_TOKEN_SUBVAR_PATTERN, "", tag)
-
             plaintext = self._reveal_tag_without_subvar(tag_without_yaml_path)
+            ref = self.ref_controller[tag_without_yaml_path]
+            plaintext = base64.b64decode(plaintext).decode("utf-8") if ref.encoding == "base64" else plaintext
             revealed_yaml = yaml.load(plaintext, Loader=YamlLoader)
             if not isinstance(revealed_yaml, dict):
                 raise RefError(
@@ -283,7 +315,8 @@ class Revealer(object):
                     "cannot access {} sub-variable at {}".format(subvar_path, tag)
                 )
             try:
-                return self._get_value_in_yaml_path(revealed_yaml, subvar_path)
+                value = self._get_value_in_yaml_path(revealed_yaml, subvar_path)
+                return base64.b64encode(value.encode("utf-8")) if ref.encoding == "base64" else value
             except KeyError:
                 raise RefError("Revealer: cannot access {} sub-variable key {}".format(tag, subvar_path))
 
