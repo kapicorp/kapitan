@@ -513,58 +513,57 @@ class CliFuncsTest(unittest.TestCase):
         os.remove(test_tag_file)
 
     def test_cli_secret_subvar_ref(self):
-        
-      def _test_cli_secret_subvar_generic_ref(self, reftype):
-        """
-        Generic function to test subvars
-        run $ kapitan refs --write reftype:test_secret
-        and $ kapitan refs --reveal -f sometest_file
-        """
-        test_secret_content = """
+        def _test_cli_secret_subvar_generic_ref(self, reftype):
+            """
+            Generic function to test subvars
+            run $ kapitan refs --write reftype:test_secret
+            and $ kapitan refs --reveal -f sometest_file
+            """
+            test_secret_content = """
         var1:
           var2: hello
         var3:
           var4: world
         """
-        test_secret_file = tempfile.mktemp()
-        with open(test_secret_file, "w") as fp:
-            fp.write(test_secret_content)
+            test_secret_file = tempfile.mktemp()
+            with open(test_secret_file, "w") as fp:
+                fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
-            "refs",
-            "--write",
-            f"{reftype}:test_secret_subvar",
-            "-f",
-            test_secret_file,
-            "--refs-path",
-            REFS_PATH,
-        ]
-        main()
+            sys.argv = [
+                "kapitan",
+                "refs",
+                "--write",
+                f"{reftype}:test_secret_subvar",
+                "-f",
+                test_secret_file,
+                "--refs-path",
+                REFS_PATH,
+            ]
+            main()
 
-        test_tag_content = f"""
+            test_tag_content = f"""
         revealing1: ?{{{reftype}}}:test_secret_subvar@var1.var2}}
         revealing2: ?{{{reftype}}}:test_secret_subvar@var3.var4}}
         """
-        test_tag_file = tempfile.mktemp()
-        with open(test_tag_file, "w") as fp:
-            fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
+            test_tag_file = tempfile.mktemp()
+            with open(test_tag_file, "w") as fp:
+                fp.write(test_tag_content)
+            sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
-        # set stdout as string
-        stdout = io.StringIO()
-        with contextlib.redirect_stdout(stdout):
-            main()
+            # set stdout as string
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                main()
 
-        expected = """
+            expected = """
         revealing1: {}
         revealing2: {}
         """
-        self.assertEqual(expected.format("hello", "world"), stdout.getvalue())
-        os.remove(test_tag_file)
-    
-        _test_cli_secret_subvar_generic_ref(self, "plain")
-        _test_cli_secret_subvar_generic_ref(self, "base64")
+            self.assertEqual(expected.format("hello", "world"), stdout.getvalue())
+            os.remove(test_tag_file)
+
+            _test_cli_secret_subvar_generic_ref(self, "plain")
+            _test_cli_secret_subvar_generic_ref(self, "base64")
 
     def test_cli_secret_subvar_gpg(self):
         """
