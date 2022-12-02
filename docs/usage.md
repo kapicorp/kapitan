@@ -83,6 +83,9 @@ optional arguments:
                         set multiline string style to STYLE, default is 'double-quotes'
   --yaml-dump-null-as-empty
                         dumps all none-type entries as empty, default is dumping as 'null'
+  --helm-secrets        enable kapitan secret engine on helm refs
+  --encode-base64, -b64
+                        (helm-only) encode .data key with base64
   --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
                         targets to compile, default is all
   --labels [key=value [key=value ...]], -l [key=value [key=value ...]]

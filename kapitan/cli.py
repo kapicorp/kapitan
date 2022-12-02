@@ -291,17 +291,16 @@ def build_parser():
     )
     compile_parser.add_argument(
         "--helm-secrets",
-        "-hs",
         action="store_true",
         default=from_dot_kapitan("compile", "helm-secrets", False),
-        help="TODO",
+        help="enable kapitan secret engine on helm refs",
     )
     compile_parser.add_argument(
         "--encode-base64",
         "-b64",
         action="store_true",
         default=from_dot_kapitan("compile", "encode_base64", False),
-        help="TODO",
+        help="(helm-only) encode .data key with base64",
     )
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
