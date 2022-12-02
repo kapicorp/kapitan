@@ -296,9 +296,9 @@ def generate_inventory(args):
                 inv = deep_get(inv, pattern)
         if args.flat:
             inv = flatten_dict(inv)
-            yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False)
+            yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False, indent=args.indent)
         else:
-            yaml.dump(inv, sys.stdout, Dumper=PrettyDumper, default_flow_style=False)
+            yaml.dump(inv, sys.stdout, Dumper=PrettyDumper, default_flow_style=False, indent=args.indent)
     except Exception as e:
         if not isinstance(e, KapitanError):
             logger.exception("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")

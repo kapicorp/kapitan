@@ -153,7 +153,7 @@ Note that it is made of 2 sections:
 
 The next thing you want to learn about the inventory are [**classes**](#classes). A class is a yaml file containing a fragment of yaml that we want to import and merge into the inventory.
 
-[**Classes**](#classes) are *fragments* of yaml: feature sets, commonalities between targets. [**Classes**](#classes) let you compose your [**Inventory**](#inventory) from smaller bits, eliminating duplication and exposing all important parameters from a single, logically organised place. As the [**Inventory**](#inventory) lets you reference other parameters in the hierarchy, [**classes**](#classes) become places where you can define something that will then get referenced from another section of the inventory, allowing for composition.
+[**Classes**](#classes) are *fragments* of yaml: feature sets, commonalities between targets. [**Classes**](#classes) let you compose your [**Inventory**](/inventory/) from smaller bits, eliminating duplication and exposing all important parameters from a single, logically organised place. As the [**Inventory**](#inventory) lets you reference other parameters in the hierarchy, [**classes**](#classes) become places where you can define something that will then get referenced from another section of the inventory, allowing for composition.
 
 [**Classes**](#classes) are organised under the [`inventory/classes`](#classes) directory substructure. 
 They are organised hierarchically in subfolders, and the way they can be imported into a [**target**](#targets) or other [**classes**](#classes) depends on their location relative to the [`inventory/classes`](#classes) directory.
@@ -270,175 +270,49 @@ Also notice that the class name (`project.production`) is not in any ways influe
 
 ## Advanced Inventory Features
 
-### Remote Inventories
 
-Kapitan is capable of recursively fetching inventory items stored in remote locations and copy it to the specified output path. This feature can be used by specifying those inventory items in classes or targets under `parameters.kapitan.inventory`. Supported types are:
+### Target labels
 
-- [git type](#git-type)
-- [http type](#http-type)
+Kapitan allows you to define labels in your inventory, which can then be used to group together targets with similar labels.
 
-#### Commands
-Use the `--fetch` flag to fetch the remote inventories and the external dependencies.
-
-```shell
-kapitan compile --fetch
-```
-
-This will download the dependencies and store them at their respective `output_path`.
-By default, kapitan does not overwrite an existing item with the same name as that of the fetched inventory items.
-
-Use the `--force-fetch` flag to force fetch (update cache with freshly fetched items) and overwrite inventory items of the same name in the `output_path`.
-
-```shell
-kapitan compile --force-fetch
-```
-
-Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
-
-```shell
-kapitan compile --cache --fetch
-```
-
-Class items can be specified before they are locally available as long as they are fetched in the same run. [Example](#example) of this is given below.
-
-#### Git type
-
-Git types can fetch external inventories available via HTTP/HTTPS or SSH URLs. This is useful for fetching repositories or their sub-directories, as well as accessing them in specific commits and branches (refs).
-
-**Note**: git types require git binary on your system.
-
-##### Usage
-
-```yaml
-parameters:
-  kapitan:
-    inventory:
-    - type: git
-      output_path: path/to/dir
-      source: git_url
-      subdir: relative/path/from/repo/root (optional)
-      ref: tag, commit, branch etc. (optional)
-```
-
-##### Example
-
-Lets say we want to fetch a class from our kapitan repository, specifically
-`kapicorp/kapitan/tree/master/examples/docker/inventory/classes/dockerfiles.yml`. 
-
-Lets create a simple target file `docker.yml`
+For instance you could define the following:
 
 !!! example ""
 
-    !!! note 
+    Defines a class to add the `customer` label to selected targets
 
-        [external dependencies](external_dependencies.md) are used to fetch dependency items in this example.
+    !!! example "`inventory/classes/type/customer_project.yml`"
+        ```yaml
+        parameters:
+          customer_name: ${target_name} # Defaults to the target_name
+          kapitan:
+            labels:
+              customer: ${customer_name}
+        ```
 
-    !!! example "`targets/docker.yml`"
-
+    Apply the class to the target for customer `acme`
+    !!! example "`inventory/targets/customers/acme.yml`"
 
         ```yaml
         classes:
-          - dockerfiles
+        ...
+        - type.customer_project
+
         parameters:
-          kapitan:
-            vars:
-              target: docker
-            inventory:
-              - type: git
-                source: https://github.com/kapicorp/kapitan
-                subdir: examples/docker/inventory/classes/
-                output_path: classes/
-            dependencies:
-              - type: git
-                source: https://github.com/kapicorp/kapitan
-                subdir: examples/docker/components
-                output_path: components/
-              - type: git
-                source: https://github.com/kapicorp/kapitan
-                subdir: examples/docker/templates
-                output_path: templates/
-          dockerfiles:
-          - name: web
-            image: amazoncorretto:11
-          - name: worker
-            image: amazoncorretto:8
+        ...
         ```
+
+    You can now selectively compile targets for customer `acme` using the following (see see [**Labels**](/website/commands/kapitan_compile/#using-labels) for more details )
 
     !!! example ""
 
         ```shell
-        kapitan compile --fetch
-        ```
-
-    ??? example "click to expand output" 
-        ```shell
-        [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
-        [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
-        Inventory https://github.com/kapicorp/kapitan: fetching now
-        Inventory https://github.com/kapicorp/kapitan: successfully fetched
-        Inventory https://github.com/kapicorp/kapitan: saved to inventory/classes
-        Dependency https://github.com/kapicorp/kapitan: saved to components
-        Dependency https://github.com/kapicorp/kapitan: saved to templates
-        Compiled docker (0.11s)
+        kapitan compile -l customer=acme
+        Compiled acme (0.06s)
+        Compiled acme-documentation (0.09s)
         ```
 
 
 
-#### http type
-
-`http[s]` types can fetch external inventories available at `http://` or `https://` URL.
-
-##### definition
-
-```yaml
-parameters:
-  kapitan:
-    inventory:
-    - type: http | https
-      output_path: full/path/to/file.yml
-      source: http[s]://<url>
-      unpack: True | False # False by default
-```
-
-##### Example
-
-!!! example ""
 
 
-    !!! example "`targets/mysql-generator-fetch.yml`"
-
-
-        ```yaml
-        classes:
-          - common
-          - kapitan.generators.kubernetes
-        parameters:
-          kapitan:
-            inventory:
-              - type: https
-                source: https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml
-                output_path: classes/kapitan/generators/kubernetes.yml
-          components:
-            mysql:
-              image: mysql
-        ```
-
-    !!! example ""
-
-        ```shell
-        kapitan compile --fetch
-        ```
-
-    ??? example "click to expand output" 
-        ```shell
-        ./kapitan compile -t mysql-generator-fetch --fetch
-        Inventory https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml: fetching now
-        Inventory https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml: successfully fetched
-        Inventory https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml: saved to inventory/classes/kapitan/generators/kubernetes.yml
-        
-        ...
-        cut
-        ...
-
-        Compiled mysql-generator-fetch (0.06s)
-        ```

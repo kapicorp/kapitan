@@ -1,12 +1,14 @@
 # dependencies:
 # pip install mkdocs mkdocs-material pymdown-extensions
-site_name: "Kapitan: advanced configuration management tool"
+site_name: "Kapitan: Keep your ship together"
 site_url: "https://kapitan.dev"
-
+strict: true
 plugins:
   - tags:
       tags_file: tags.md
   - search
+extra_css:
+  - stylesheets/custom.css
 theme:
   name: material
   custom_dir: overrides
@@ -44,6 +46,13 @@ theme:
         name: Switch to light mode
 
 extra:
+  consent:
+    title: Cookie consent
+    description: >- 
+      We use cookies to recognize your repeated visits and preferences, as well
+      as to measure the effectiveness of our documentation and whether users
+      find what they're searching for. With your consent, you're helping us to
+      make our documentation better.
   social:
     - icon: fontawesome/brands/twitter
       link: https://twitter.com/kapitandev
@@ -73,22 +82,31 @@ nav:
   - Home: README.md
   - Getting started:
       - Kapitan Overview: kapitan_overview.md
-  - Support: support.md
-  - Contribute: contributing.md
+  - Support: 
+      - Ask for support: support.md
+      - Related Projects: related.md
+  - Contribute: pages/contribute.md
+  # Bazinga!
+  # - Blog:
+  #  - Welcome: blog/welcome.md
   - Documentation:
       - Inventory: inventory.md
-      - Commands: commands.md
       - Input Types: compile.md
-      - Secret management: secrets.md
-      - Manifest validation: validate.md
-      - External dependency management: external_dependencies.md
-  - More:
-      - Usage: usage.md
+      - References: references.md
+      - Advanced Kapitan:
+        - Manifest validation: validate.md
+        - Remote repositories: remote_repositories.md
+        - External dependencies: external_dependencies.md
       - Proposals: proposals.md
-      - Related Projects: related.md
+  - CLI reference: 
+      - compile: pages/commands/kapitan_compile.md
+      - inventory: pages/commands/kapitan_inventory.md
+      - lint: pages/commands/kapitan_lint.md
+      - searchvar: pages/commands/kapitan_searchvar.md
+      - kapitan dotfile: pages/commands/kapitan_dotfile.md
   - Examples:
-      - Kubernetes: example-kubernetes.md
-      - Terraform: example-terraform.md
+      - Kubernetes: pages/examples/kubernetes.md
+      - Terraform: pages/examples/terraform.md
   - FAQ: FAQ.md
 
 markdown_extensions:
@@ -128,3 +146,6 @@ markdown_extensions:
 
 repo_name: "kapicorp/kapitan"
 repo_url: "https://github.com/kapicorp/kapitan"
+
+copyright: >
+  <a href="#__consent">Change cookie settings</a>

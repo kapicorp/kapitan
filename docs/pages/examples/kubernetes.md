@@ -53,7 +53,7 @@ The required sub-folder is `targets`: during compile, kapitan searches for the y
 
  Therefore, when you run `kapitan compile`, under the `compiled` folder that kapitan generates, you will see three folders named after these targets.
 
-`classes` is a folder that contains yaml files used as the "base class" in the hierarchical inventory database. The values defined here are inherited by the target files. For more explanation on how this works, look at the [inventory documentation](inventory.md). Notice how the classes are nicely divided up into components and clusters, such as nginx and mysql, in order to clearly define what components each target should contain and to make the classes reusable.
+`classes` is a folder that contains yaml files used as the "base class" in the hierarchical inventory database. The values defined here are inherited by the target files. For more explanation on how this works, look at the [inventory documentation](/inventory.md). Notice how the classes are nicely divided up into components and clusters, such as nginx and mysql, in order to clearly define what components each target should contain and to make the classes reusable.
 
 For example, take a look at `targets/nginx.yml`:
 
@@ -180,9 +180,9 @@ kapitan:
 
 Since `component.elasticsearch` is inherited by the target **minikube-es**, this generates files under `compiled/minikube-es/scripts` and `compiled/minikube-es/README.md`.
 
-### secrets
+### References
 
-This folder contains secrets created manually by the user, or automatically by kapitan. Refer to [secrets management](secrets.md) for how it works.
+This folder contains references created manually by the user, or automatically by kapitan. Refer to [references management](/references.md) for how it works.
 
 In this example, the configuration, such as the recipients, is declared in `inventory/classes/common.yml`:
 

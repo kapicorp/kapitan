@@ -64,6 +64,7 @@ class Helm(InputType):
         target_name = kwargs.get("target_name", None)
         helm_secrets = kwargs.get("helm_secrets", False) or self.helm_secrets
         encode_base64 = kwargs.get("encode_base64", False) or self.encode_base64
+        indent = kwargs.get("indent", 2)
 
         if self.file_path is not None:
             raise CompileError(
@@ -103,6 +104,7 @@ class Helm(InputType):
                         reveal=reveal,
                         target_name=target_name,
                         encode_base64=encode_base64,
+                        indent=indent,
                     ) as fp:
                         yml_obj = list(yaml.safe_load_all(f))
                         if helm_secrets:

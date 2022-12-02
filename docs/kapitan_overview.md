@@ -104,7 +104,7 @@ Use **kadet**, our home built Python library, to easily generate json and yaml m
 
 Using **kadet** is simple as using Python
 
-??? example "`examples/kubernetes/components/nginx-kadet/__init__.py`"
+???+ example "`examples/kubernetes/components/nginx-kadet/__init__.py`"
     ```python 
     --8<-- "kubernetes/components/nginx-kadet/__init__.py"
     ```
@@ -123,13 +123,10 @@ Use the **jsonnet** input type to compile `jsonnet` code, and have access to a l
 
 Find help in :fontawesome-brands-slack: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3) or :fontawesome-brands-slack: [`#jsonnet`](https://kubernetes.slack.com/archives/C6JLE4L9X)
 
-??? example "`examples/kubernetes/components/nginx-jsonnet/main.jsonnet`"
+???+ example "`examples/kubernetes/components/nginx-jsonnet/main.jsonnet`"
     ```python 
     --8<-- "kubernetes/components/nginx-jsonnet/main.jsonnet"
     ```
-
-**kadet** is what [**generators**](#generators) are being built with. See and example
-
 
 Head over to [jsonnet](https://jsonnet.org/) to learn more
 #### [***Jinja2***](http://jinja.pocoo.org/)
@@ -140,8 +137,8 @@ Good old Jinja to create text based templates for scripts and documentation.
 
 Don't underestimate the power of this very simple approach to create templated scripts and documentation!
 
-??? example "`examples/kubernetes/scripts/setup_cluster.sh`"
-    ```python 
+???+ example "`examples/kubernetes/scripts/setup_cluster.sh`"
+    ```shell 
     --8<-- "kubernetes/scripts/setup_cluster.sh"
     ```
 
@@ -151,26 +148,38 @@ Find help in :fontawesome-brands-slack: [`#kapitan`](https://kubernetes.slack.co
 
 Kapitan can also be used to manage **Helm**, giving you access to its enourmous catalogues of [**Helm charts**](https://artifacthub.io/packages/search?kind=0).
 
-??? example "example helm input_type"
+???+ example "`examples/kubernetes/inventory/classes/component/nginx-helm.yml`"
+    !!! note ""
+
+        [external dependencies](external_dependencies.md) are used to automatically fetch helm charts in this example.
+        
+        Please use the `kapitan compile --fetch` flag if the chart has not been downloaded already
 
     ```yaml
     parameters:
+        namespace:
+        nginx:
+            version: 4.4.0
+            replicas: 2
+            name: ${target_name}
+            namespace: ${target_name}
         kapitan:
+            dependencies:
+            - type: helm
+                output_path: charts/nginx-ingress
+                source: https://kubernetes.github.io/ingress-nginx
+                chart_name: ingress-nginx
             compile:
-            - output_path: <output_path>
-            input_type: helm
-            input_paths:
-                - <chart_path>
-            helm_values:
-                <object_with_values_to_override>
-            helm_values_files:
-                - <values_file_path>
-            helm_path: <helm binary>
-            helm_params:
-                name: <chart_release_name>
-                namespace: <substitutes_.Release.Namespace>
-                output_file: <string>
-                validate: true
+            - output_path: .
+                input_type: helm
+                input_paths:
+                - charts/nginx-ingress
+                helm_values:
+                controller:
+                    name: ${nginx:name}
+                helm_params:
+                name: ${nginx:name}
+                namespace: ${nginx:namespace}
     ```
 
 Find help in :fontawesome-brands-slack: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
@@ -218,7 +227,7 @@ Compiled sock-shop (4.36s)
 
     the `kapitan init` command leaves you with a bare configuration. Setting up Kapitan might require time. 
     
-    Please use the [**Kapitan Reference**](#kapitan-reference-setup) setup if you want to get started quicker.
+    Please use the [**Quickstart**](#quickstart) setup if you want to get started quicker.
 
 If you want to start off with a clean **kapitan** project, you can run `kapitan init --directory <directory>` to populate a new directory with the recommended kapitan folder structure.
 

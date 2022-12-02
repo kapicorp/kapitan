@@ -272,7 +272,7 @@ def main():
 Kadet uses a library called [addict](https://github.com/mewwts/addict) to organise the parameters inline with the yaml templates.
 As shown above we create a `BaseObject()` named output. We update the root of this output with the data structure returned from kubelib. This output is what is then returned to kapitan to be compiled into the desired output type.
 
-For a deeper understanding of this input type please review the proposal document at [kadet](/kap_proposals/kap_0_kadet) & the examples located at `examples/kubernetes/components/nginx`.
+For a deeper understanding of this input type please review the proposal document at [kadet](kap_proposals/kap_0_kadet.md) and the examples located at `examples/kubernetes/components/nginx`.
 
 *Supported output types:*
 
