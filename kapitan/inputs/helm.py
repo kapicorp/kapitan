@@ -291,7 +291,12 @@ def check_data_for_b64(yml_obj):
         kind = item.get("kind", None)
         if kind and (kind == "Secret" or kind == "ConfigMap"):
             if item.get("data", None):
-                item["data"] = replace_b64_refs(item["data"])
+                # Option 1:
+                # item["data"] = replace_b64_refs(item["data"])
+
+                # Option 2:
+                item["stringData"] = replace_b64_refs(item["data"])
+                item.pop("data")
 
     return yml_obj
 
@@ -307,14 +312,12 @@ def replace_b64_refs(yml_obj):
     elif isinstance(yml_obj, list):
         yml_obj = [replace_b64_refs(item) for item in yml_obj]
     elif isinstance(yml_obj, str):
-        # print(yml_obj, end=' --> ')
         # check if string is b64 encoded
         try:
-            if base64.b64encode(base64.b64decode(yml_obj)).decode() == yml_obj:
-                yml_obj = base64.b64decode(yml_obj).decode()
+            # the string could be encoded several times
+            while True:
+                if base64.b64encode(base64.b64decode(yml_obj)).decode() == yml_obj:
+                    yml_obj = base64.b64decode(yml_obj).decode()
         except Exception as e:
-            # print(e, end=' ==> ')
             pass
-        # finally:
-        #     print(yml_obj)
     return yml_obj

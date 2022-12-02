@@ -124,6 +124,7 @@ class CompilingFile(object):
         else:
             obj = self.revealer.compile_obj(obj, target_name=target_name)
 
+        # Option 1:
         if encode_data_b64:
             obj = check_data_for_b64(obj)
 
@@ -183,6 +184,9 @@ class CompiledFile(object):
 
     def __exit__(self, *args):
         self.fp.close()
+
+
+### Option 1: Manually encoding the .data key to base64 (postprocessing)
 
 
 def check_data_for_b64(yml_obj):
