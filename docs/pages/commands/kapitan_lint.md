@@ -1,4 +1,4 @@
-# :kapitan-logo: Commands | `kapitan lint`
+# :kapitan-logo: **CLI Reference** | `kapitan lint`
 
 ## `kapitan lint` 
 

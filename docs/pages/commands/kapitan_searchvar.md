@@ -1,4 +1,4 @@
-# :kapitan-logo: Commands | `kapitan searchvar`
+# :kapitan-logo: **CLI Reference** | `kapitan searchvar`
 
 ## `kapitan searchvar`
 

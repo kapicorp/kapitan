@@ -36,7 +36,7 @@ Use the `--force-fetch` flag to force fetch (update cache with freshly fetched d
 
 
 ```shell
-$ kapitan compile --force-fetch
+kapitan compile --force-fetch
 ```
 
 Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.

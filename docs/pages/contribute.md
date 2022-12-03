@@ -3,11 +3,12 @@ comments: true
 tags:
   - community
 ---
-# :kapitan-logo: How to Contribute
+# :kapitan-logo: **How to Contribute**
 
 Do you want to help the project? Great! There are many ways to do it
 
 ## Sponsor **Kapitan** 
+
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/kapicorp?style=for-the-badge)
 ![GitHub Stars](https://img.shields.io/github/stars/kapicorp/kapitan?style=for-the-badge)
 
@@ -38,6 +39,7 @@ Our documentation usully prevents new users from adopting **Kapitan**. Help us i
 ### Articles
 
 Write articles on Kapitan and share your way of working. Inspire others, and reach out to have your article published / endorsed by us.
+
 ### Kapitan code
 
 Many of our features come from contributions from external collaborators. Please help us improve **Kapitan** by extending it with your ideas, or help us squash bugs you discover.
@@ -59,9 +61,9 @@ targeting master branch. All submissions, including submissions by project membe
 We highly recommend that you create a dedicated Python environment for Kapitan.
 There are multiple solutions:
 
-- [pyenv](https://github.com/pyenv/pyenv)
-- [virtualenv](https://virtualenv.pypa.io/en/latest/)
-- [venv](https://docs.python.org/3/library/venv.html)
+* [pyenv](https://github.com/pyenv/pyenv)
+* [virtualenv](https://virtualenv.pypa.io/en/latest/)
+* [venv](https://docs.python.org/3/library/venv.html)
 
 Once you've done it, please install all Kapitan's dependencies:
 
@@ -108,9 +110,9 @@ Python Black is used to apply the formatting so make sure you have it installed 
 
 #### Apply via Git hook
 
-- Run `pip3 install pre-commit` to install precommit framework.
-- In the Kapitan root directory, run `pre-commit install`
-- Git add/commit any changed files you want.
+* Run `pip3 install pre-commit` to install precommit framework.
+* In the Kapitan root directory, run `pre-commit install`
+* Git add/commit any changed files you want.
 
 #### Apply manually
 
@@ -118,10 +120,10 @@ Run `make format_codestyle` before submitting.
 
 ### Releasing
 
-- Create a branch named `release-v<NUMBER>`. Use `v0.*.*-rc.*` if you want pre-release versions to be uploaded.
-- Update CHANGELOG.md with the release changes.
-- Once reviewed and merged, Github Actions will auto-release.
-- The merge has to happen with a merge commit not with squash/rebase so that the commit message still mentions `kapicorp/release-v*` inside.
+* Create a branch named `release-v<NUMBER>`. Use `v0.*.*-rc.*` if you want pre-release versions to be uploaded.
+* Update CHANGELOG.md with the release changes.
+* Once reviewed and merged, Github Actions will auto-release.
+* The merge has to happen with a merge commit not with squash/rebase so that the commit message still mentions `kapicorp/release-v*` inside.
 
 ## Update documentation
 
