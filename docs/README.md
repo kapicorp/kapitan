@@ -19,7 +19,9 @@
 ## Dazzle me with a demo
 
 ![demo](images/kapitan-demo.gif)
+
 ## Install Kapitan
+
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 
 !!! success "recommended"
@@ -48,6 +50,7 @@
 ### Pip 
 
 #### Install Python
+
 ![Python version](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)
 ![Unit Tests](https://github.com/kapicorp/kapitan/actions/workflows/test.yml/badge.svg)
 === "Linux"
@@ -63,6 +66,7 @@
     ```
 
 #### Install Kapitan using pip
+
 ![downloads](https://img.shields.io/pypi/dm/kapitan)
 
 ##### User

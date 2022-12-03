@@ -66,7 +66,9 @@ graph LR
 ```
 
 ## Essential concepts
+
 ### **Inventory**
+
 The **Inventory** is a hierarchical database of variables, defined in yaml files, that are passed to the targets during compilation. 
 
 The **Inventory** is the heart of **Kapitan**.
@@ -129,6 +131,7 @@ Find help in :fontawesome-brands-slack: [`#kapitan`](https://kubernetes.slack.co
     ```
 
 Head over to [jsonnet](https://jsonnet.org/) to learn more
+
 #### [***Jinja2***](http://jinja.pocoo.org/)
 
 > Jinja is a fast, expressive, extensible templating engine
@@ -143,7 +146,9 @@ Don't underestimate the power of this very simple approach to create templated s
     ```
 
 Find help in :fontawesome-brands-slack: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
+
 #### :simple-helm: [***Helm***](https://helm.sh/)
+
 > The package manager for Kubernetes
 
 Kapitan can also be used to manage **Helm**, giving you access to its enourmous catalogues of [**Helm charts**](https://artifacthub.io/packages/search?kind=0).
@@ -221,6 +226,7 @@ Compiled examples (2.60s)
 Compiled pritunl (2.03s)
 Compiled sock-shop (4.36s)
 ```
+
 ### From Scratch (Advanced)
 
 !!! warning
@@ -254,11 +260,11 @@ The bare minimum structure that makes use of kapitan features may look as follow
         └── example-com-tls.key
 ```
 
-- `components`: template files for kadet, jsonnet and helm
-- `templates`: stores Jinja2 templates for scripts and documentation
-- `inventory/targets`: target files
-- `inventory/classes`: inventory classes to be inherited by targets
-- `refs`: references files
+* `components`: template files for kadet, jsonnet and helm
+* `templates`: stores Jinja2 templates for scripts and documentation
+* `inventory/targets`: target files
+* `inventory/classes`: inventory classes to be inherited by targets
+* `refs`: references files
 
 ## Credits
 

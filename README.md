@@ -15,7 +15,7 @@
 
 Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
 
-## [**Official site**](https://kapitan.dev) https://kapitan.dev
+## [**Official site**](https://kapitan.dev) <https://kapitan.dev>
 
 
 ## [**Quick Start**](https://kapitan.dev/kapitan_overview/#quickstart)
