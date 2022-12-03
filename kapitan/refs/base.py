@@ -186,7 +186,7 @@ class PlainRefBackend(object):
                 pass
 
 
-class _reveal_replace_match(object):
+class Revealer(object):
     def __init__(self, ref_controller):
         "reveal files and objects"
         self.ref_controller = ref_controller
