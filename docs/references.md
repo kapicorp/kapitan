@@ -10,7 +10,7 @@ Kapitan has a built in support for **References**, which you can use to manage b
 |----------------|------------------------------------------------------------|------------------|
 | `plain`        | Plain text, (e.g. commit sha)                              | :material-close: |
 | `base64`       | Base64, non confidential but with base64 encoding          | :material-close: |
-| `gpg`          | Support for https://gnupg.org/                             | :material-check: |
+| `gpg`          | Support for <https://gnupg.org/>                           | :material-check: |
 | `gkms`         | GCP KMS                                                    | :material-check: |
 | `awskms`       | AWS KMS                                                    | :material-check: |
 | `azkms`        | Azure Key Vault                                            | :material-check: |
@@ -567,11 +567,27 @@ for more convenience.
 
 Please refer to the [CLI reference](/pages/commands/kapitan_compile/#embed-references)
 
-## YAML References
+## YAML SubVars References
 
-Kapitan is also able to use reference to store YAML content that can be later accessed using down to the individual keys. 
+Kapitan is also able to use access specific keys in YAML content by using subvars.
 
-This can be used to store YAML outputs coming straight from other tools. For instance, I could use the GCP `gcloud` command to get all the information about a cluster, and write it into a reference
+For instance given a reference `plain:larder` with content:
+
+```yaml
+food:
+  apples: 1
+```
+
+I could now have an inventory variable like:
+
+```yaml
+parameters:
+  number_of_apples: ?{plain:larder@food.apple}
+```
+
+### Using `subvars` to ingest yaml from command line tools
+
+Subvars can have a very practical use for storing YAML outputs coming straight from other tools. For instance, I could use the GCP `gcloud` command to get all the information about a cluster, and write it into a reference
 
 ```shell
 gcloud container clusters describe \
