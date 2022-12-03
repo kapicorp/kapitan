@@ -3,7 +3,7 @@ comments: true
 tags:
   - community
 ---
-# :kapitan-logo: How to Contribute
+# :kapitan-logo: **How to Contribute**
 
 Do you want to help the project? Great! There are many ways to do it
 

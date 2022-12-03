@@ -45,7 +45,7 @@ Kapitan supports the following input template types:
 - [helm](#helm) (alpha)
 - [copy](#copy)
 - [remove](#remove)
-- [external](#external-alphaexperimental)
+- [external](#external)
 
 ### jinja2
 
@@ -534,7 +534,7 @@ The first input block would throw an error because the copy input command hasn't
 
 *Supported output types*: N/A (no need to specify `output_type`)
 
-### External (alpha/experimental)
+### External
 
 This input type executes an external script or binary. This can be used to manipulate already compiled files or
 execute binaries outside of kapitan that generate or manipulate files.

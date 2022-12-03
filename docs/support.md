@@ -1,4 +1,4 @@
-# :kapitan-logo: Get support with **Kapitan**
+# :kapitan-logo: **Get support with Kapitan**
 
 ## Community
 

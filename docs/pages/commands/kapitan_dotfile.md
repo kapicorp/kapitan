@@ -1,4 +1,4 @@
-# :kapitan-logo: CLI Reference | `.kapitan` config file
+# :kapitan-logo: **CLI Reference** | `.kapitan` config file
 
 ## `.kapitan`
 

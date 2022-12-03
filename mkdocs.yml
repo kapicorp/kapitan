@@ -86,9 +86,8 @@ nav:
       - Ask for support: support.md
       - Related Projects: related.md
   - Contribute: pages/contribute.md
-  # Bazinga!
-  # - Blog:
-  #  - Welcome: blog/welcome.md
+  - Blog:
+    - 5 years of Kapitan: pages/blog/2022-12-04.md
   - Documentation:
       - Inventory: inventory.md
       - Input Types: compile.md

@@ -1,4 +1,4 @@
-# :kapitan-logo: Kapitan: Keep your ship together 
+# :kapitan-logo: **Kapitan: Keep your ship together**
 
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/kapicorp?style=for-the-badge)
 ![GitHub Stars](https://img.shields.io/github/stars/kapicorp/kapitan?style=for-the-badge)
@@ -14,7 +14,10 @@
 
 **Kapitan** allows you to bring all your configuration needs under one home, creating a uniform way to manage your configuration that no other tool provides. Seamlessly manage configurations for Kubernetes, Terraform and any other application. Integrate with Helm (and even Kustomize). Safely store your secrets using a range of Secret Backends
 
-[Longer answer](FAQ.md#why-do-i-need-kapitan)
+[Longer answer](pages/blog/2022-12-04.md#why-do-i-need-kapitan)
+
+!!! info
+        We are working hard to update all our documentation. Please reach out if you notice something that needs improving or you have other questions or comments. 
 
 ## Dazzle me with a demo
 

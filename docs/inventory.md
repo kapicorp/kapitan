@@ -1,4 +1,4 @@
-# :kapitan-logo: Inventory
+# :kapitan-logo: **Inventory**
 
 ## Overview
 

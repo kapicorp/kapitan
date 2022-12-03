@@ -1,68 +1,89 @@
-# :kapitan-logo: Kapitan Overview
+# :kapitan-logo: **Kapitan Overview**
 
 ## **Kapitan** at a glance
 
 
 ```mermaid
+%%{ init: { securityLevel: 'loose'} }%%
 graph LR
-  COMPILE["compile"]
-  GENERATORS["generators"]
-  INVENTORY[(inventory)]
-  CLASSES[classes]
-  TARGET1[target1]
-  TARGET2[target2]
-  TARGET1_OUTPUT[target1]
-  TARGET2_OUTPUT[target2]
-  JINJA["jinja"]
-  HELM["helm"]
-  JSONNET["jsonnet"]
-  EXTERNAL["external"]
-  KADET["kadet"]
-  KUBERNETES["manifests"]
-  DOCUMENTATION["docs"]
-  TERRAFORM["terraform"]
-  KMS["secrets backends"]
-  PLAIN["plain"]
-  REFERENCES["references"]
-  SCRIPTS["scripts"]
-  OUTPUT["output"]
+    classDef pink fill:#f9f,stroke:#333,stroke-width:4px,color:#000,font-weight: bold;
+    classDef blue fill:#00FFFF,stroke:#333,stroke-width:4px,color:#000,font-weight: bold;
+    TARGET1 --> KAPITAN
+    TARGET2 --> KAPITAN
+    TARGETN --> KAPITAN
+    KAPITAN --> EXTERNAL
+    KAPITAN --> GENERATORS
+    KAPITAN --> HELM
+    KAPITAN --> JINJA
+    KAPITAN --> JSONNET
+    KAPITAN --> KADET
+    EXTERNAL --> OUTPUT
+    GENERATORS --> OUTPUT
+    JINJA --> OUTPUT
+    JSONNET --> OUTPUT
+    KADET --> OUTPUT
+    HELM --> OUTPUT
+    GKMS --> REFERENCES
+    AWSKMS --> REFERENCES
+    VAULT --> REFERENCES
+    OTHER --> REFERENCES
+    PLAIN --> REFERENCES
+    OUTPUT --> TARGETN_OUTPUT
+    OUTPUT --> TARGET1_OUTPUT 
+    OUTPUT --> TARGET2_OUTPUT 
+    REFERENCES --> KAPITAN
+    TARGET1_OUTPUT --> DOCUMENTATION 
+    TARGET1_OUTPUT --> KUBERNETES
+    TARGET1_OUTPUT --> SCRIPTS 
+    TARGET1_OUTPUT --> TERRAFORM
+    CLASSES --> TARGET1
+    CLASSES --> TARGET2
+    CLASSES --> TARGETN
 
-  subgraph "input types" 
-  COMPILE --> GENERATORS
-  COMPILE --> JSONNET
-  COMPILE --> JINJA
-  COMPILE --> KADET
-  COMPILE --> EXTERNAL
-  COMPILE --> HELM
+    subgraph "Inventory"
+        CLASSES[classes]
+        TARGET1(["target 1"]):::pink
+        TARGET2(["target 2"])
+        TARGETN(["target N"])
+    end
 
-  GENERATORS --> OUTPUT
-  JINJA --> OUTPUT
-  KADET --> OUTPUT
-  JSONNET --> OUTPUT
-  EXTERNAL --> OUTPUT
-  end
+    subgraph "references"
+        direction TB
+        GKMS["GCP KMS"]
+        AWSKMS["AWS KMS"]
+        VAULT["Hashicorp Vault"]
+        OTHER["others"]
+        PLAIN["plain"]
+        REFERENCES["references"]
+    end
 
-  subgraph "inventory"
-  TARGET1 --> INVENTORY
-  TARGET2 --> INVENTORY
-  CLASSES --> INVENTORY
-  INVENTORY --> COMPILE
-  end
-  subgraph "references"
-  REFERENCES --> COMPILE
-  KMS --> REFERENCES
-  PLAIN --> REFERENCES
-  end
+    KAPITAN(("<img src='/images/kapitan_logo.png'; width='80'/>")):::blue
+    click EXTERNAL "/compile#external"
 
-  subgraph "compiled files"
-  TARGET1_OUTPUT --> SCRIPTS 
-  TARGET1_OUTPUT --> TERRAFORM
-  TARGET1_OUTPUT --> KUBERNETES
-  TARGET1_OUTPUT --> DOCUMENTATION 
-  
-  OUTPUT --> TARGET1_OUTPUT 
-  OUTPUT --> TARGET2_OUTPUT 
-  end
+    subgraph "Input Types" 
+        EXTERNAL["external"]
+        GENERATORS["generators"]
+        HELM["helm"]
+        JINJA["jinja"]
+        JSONNET["jsonnet"]
+        KADET["kadet"]
+    end
+
+    OUTPUT{{"compiled output"}}:::blue
+
+
+
+    subgraph " "
+        TARGET1_OUTPUT([target1]):::pink
+        DOCUMENTATION["docs"]
+        KUBERNETES["manifests"]
+        SCRIPTS["scripts"]
+        TERRAFORM["terraform"]
+    end
+       
+    TARGET2_OUTPUT(["target 2"])
+    TARGETN_OUTPUT(["target N"])
+
 ```
 
 ## Essential concepts
