@@ -58,6 +58,7 @@ class PlainRef(object):
         return value
 
     def compile(self):
+        # plain is not using the reveal function, and so we want to look for subvars here
         if self.embedded_subvar_path:
             data = base64.b64decode(self.data).decode("utf-8") if self.encoding == "base64" else self.data
             yaml_data = yaml.load(data, Loader=YamlLoader)
@@ -185,7 +186,7 @@ class PlainRefBackend(object):
                 pass
 
 
-class Revealer(object):
+class _reveal_replace_match(object):
     def __init__(self, ref_controller):
         "reveal files and objects"
         self.ref_controller = ref_controller

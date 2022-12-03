@@ -10,7 +10,7 @@ Kapitan has a built in support for **References**, which you can use to manage b
 |----------------|------------------------------------------------------------|------------------|
 | `plain`        | Plain text, (e.g. commit sha)                              | :material-close: |
 | `base64`       | Base64, non confidential but with base64 encoding          | :material-close: |
-| `gpg`          | Support for <https://gnupg.org/>                             | :material-check: |
+| `gpg`          | Support for <https://gnupg.org/>                           | :material-check: |
 | `gkms`         | GCP KMS                                                    | :material-check: |
 | `awskms`       | AWS KMS                                                    | :material-check: |
 | `azkms`        | Azure Key Vault                                            | :material-check: |
@@ -567,7 +567,7 @@ for more convenience.
 
 Please refer to the [CLI reference](/pages/commands/kapitan_compile/#embed-references)
 
-## References subvars (for accessing YAML)
+## YAML SubVars References
 
 Kapitan is also able to use access specific keys in YAML content by using subvars.
 
