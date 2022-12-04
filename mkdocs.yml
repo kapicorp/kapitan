@@ -16,6 +16,7 @@ theme:
   favicon: kapitan/logo
   features:
     - announce.dismiss
+    - content.code.annotate 
     - content.tabs.link
     - navigation.indexes
     - navigation.sections
@@ -87,13 +88,13 @@ nav:
       - Related Projects: related.md
   - Contribute: pages/contribute.md
   - Blog:
-    - 5 years of Kapitan: pages/blog/2022-12-04.md
+    - 2022:
+      - 5 years of Kapitan: pages/blog/2022-12-04.md
   - Documentation:
       - Inventory: inventory.md
       - Input Types: compile.md
       - References: references.md
       - Advanced Kapitan:
-        - Manifest validation: validate.md
         - Remote repositories: remote_repositories.md
         - External dependencies: external_dependencies.md
       - Proposals: proposals.md
@@ -102,6 +103,7 @@ nav:
       - inventory: pages/commands/kapitan_inventory.md
       - lint: pages/commands/kapitan_lint.md
       - searchvar: pages/commands/kapitan_searchvar.md
+      - validate: pages/commands/kapitan_validate.md
       - kapitan dotfile: pages/commands/kapitan_dotfile.md
   - Examples:
       - Kubernetes: pages/examples/kubernetes.md
