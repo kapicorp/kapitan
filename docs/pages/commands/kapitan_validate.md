@@ -78,17 +78,15 @@ Validates the schema of compiled output. Validate options are specified in the i
             Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_service_simple.yml
             ```
 
-### Kubernetes manifests
+### Kubernetes Setup
 
-#### Overview
+**Kubernetes** has different resource kinds, for instance:
 
-Kubernetes resources are identified by their `kind`. For example, they are:
+- `service`
+- `deployment`
+- `statefulset`
 
-- service
-- deployment
-- statefulset
-
-The manifest for each kind has certain restrictions such as required properties. Using **Kapitan**, you can validate against the schemas to confirm that your compiled output indeed is a valid kubernetes manifest.
+ **Kapitan** has built in support for validation of **Kubernetes** kinds, and automatically integrates with <https://kubernetesjsonschema.dev>. See [github.com/instrumenta/kubernetes-json-schema](https://github.com/instrumenta/kubernetes-json-schema) for more informations.
 
 !!! info
 
@@ -111,10 +109,11 @@ The manifest for each kind has certain restrictions such as required properties.
 
 Refer to the `mysql` example.
 
-```yaml hl_lines="19-30" title="kubernetes/inventory/classes/component/mysql.yml"
---8<-- "kubernetes/inventory/classes/component/mysql.yml"
+```yaml hl_lines="2-6" title="kubernetes/inventory/classes/component/mysql.yml"
+--8<-- "kubernetes/inventory/classes/component/mysql.yml:19:30"
 ```
 
-1. `type`: currently only **Kubernetes** is supported
-2. `output_paths`: list of files to validate
-3. `kind`: a **Kubernetes** resource kind
+1. **`type`** | currently only **Kubernetes** is supported
+2. **`output_paths`** | list of files to validate
+3. **`kind`** | a **Kubernetes** resource kind
+4. **`version`** | a Kubernetes API version, defaults to **`1.14.0`**
