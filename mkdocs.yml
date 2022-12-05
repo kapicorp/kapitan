@@ -101,8 +101,11 @@ nav:
           - Introduction: pages/input_types/introduction.md
           - Kadet: pages/input_types/kadet.md
           - Jinja: pages/input_types/jinja.md
-          - Jsonnet: pages/input_types/jsonnet.md
           - Helm: pages/input_types/helm.md
+          - Jsonnet: pages/input_types/jsonnet.md
+          - External: pages/input_types/external.md
+          - Copy: pages/input_types/copy.md
+          - Remove: pages/input_types/remove.md
       - References: references.md
       - Advanced Kapitan:
         - Remote repositories: remote_repositories.md
