@@ -182,30 +182,7 @@ Kapitan can also be used to manage **Helm**, giving you access to its enourmous 
         Please use the `kapitan compile --fetch` flag if the chart has not been downloaded already
 
     ```yaml
-    parameters:
-        namespace:
-        nginx:
-            version: 4.4.0
-            replicas: 2
-            name: ${target_name}
-            namespace: ${target_name}
-        kapitan:
-            dependencies:
-            - type: helm
-                output_path: charts/nginx-ingress
-                source: https://kubernetes.github.io/ingress-nginx
-                chart_name: ingress-nginx
-            compile:
-            - output_path: .
-                input_type: helm
-                input_paths:
-                - charts/nginx-ingress
-                helm_values:
-                controller:
-                    name: ${nginx:name}
-                helm_params:
-                name: ${nginx:name}
-                namespace: ${nginx:namespace}
+    --8<-- "kubernetes/inventory/classes/component/nginx-helm.yml"
     ```
 
 Find help in :fontawesome-brands-slack: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
