@@ -13,6 +13,9 @@ metadata:
   name: minikube-nginx-helm-ingress-nginx-minikube-nginx-helm
   namespace: minikube-nginx-helm
 spec:
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
   ports:
     - appProtocol: http
       name: http
