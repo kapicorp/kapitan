@@ -16,6 +16,7 @@ theme:
   favicon: kapitan/logo
   features:
     - announce.dismiss
+    - content.code.annotate 
     - content.tabs.link
     - navigation.indexes
     - navigation.sections
@@ -85,15 +86,28 @@ nav:
   - Support: 
       - Ask for support: support.md
       - Related Projects: related.md
-  - Contribute: pages/contribute.md
+  - Contribute: 
+      - Sponsor Us: pages/contribute/sponsor.md
+      - Talk about Kapitan: pages/contribute/talk.md
+      - Active contributions: 
+        - Documentation: pages/contribute/documentation.md
+        - Kapitan Code: pages/contribute/code.md
   - Blog:
-    - 5 years of Kapitan: pages/blog/2022-12-04.md
+    - 2022:
+      - 5 years of Kapitan: pages/blog/2022-12-04.md
   - Documentation:
       - Inventory: inventory.md
-      - Input Types: compile.md
+      - Input Types: 
+          - Introduction: pages/input_types/introduction.md
+          - Kadet: pages/input_types/kadet.md
+          - Jinja: pages/input_types/jinja.md
+          - Helm: pages/input_types/helm.md
+          - Jsonnet: pages/input_types/jsonnet.md
+          - External: pages/input_types/external.md
+          - Copy: pages/input_types/copy.md
+          - Remove: pages/input_types/remove.md
       - References: references.md
       - Advanced Kapitan:
-        - Manifest validation: validate.md
         - Remote repositories: remote_repositories.md
         - External dependencies: external_dependencies.md
       - Proposals: proposals.md
@@ -102,6 +116,7 @@ nav:
       - inventory: pages/commands/kapitan_inventory.md
       - lint: pages/commands/kapitan_lint.md
       - searchvar: pages/commands/kapitan_searchvar.md
+      - validate: pages/commands/kapitan_validate.md
       - kapitan dotfile: pages/commands/kapitan_dotfile.md
   - Examples:
       - Kubernetes: pages/examples/kubernetes.md
