@@ -82,15 +82,16 @@ Validates the schema of compiled output. Validate options are specified in the i
 
 **Kubernetes** has different resource kinds, for instance:
 
-- `service`
-- `deployment`
-- `statefulset`
+- `Service`
+- `Deployment`
+- `Statefulset`
 
- **Kapitan** has built in support for validation of **Kubernetes** kinds, and automatically integrates with <https://kubernetesjsonschema.dev>. See [github.com/instrumenta/kubernetes-json-schema](https://github.com/instrumenta/kubernetes-json-schema) for more informations.
+ **Kapitan** has built in support for validation of **Kubernetes** kinds, and automatically integrates with [kapicorp/kubernetes-json-schema](https://github.com/kapicorp/kubernetes-json-schema)
+
 
 !!! info
 
-    **Kapitan** will automatically download the schemas for Kubernetes Manifests directly from <https://kubernetesjsonschema.dev> 
+    **Kapitan** will automatically download the schemas for Kubernetes Manifests directly from [kapicorp/kubernetes-json-schema](https://github.com/kapicorp/kubernetes-json-schema)
     
     By default, the schemas are cached into `./schemas/`, which can be modified with the `--schemas-path` option.
     
@@ -109,11 +110,14 @@ Validates the schema of compiled output. Validate options are specified in the i
 
 Refer to the `mysql` example.
 
-```yaml hl_lines="2-6" title="kubernetes/inventory/classes/component/mysql.yml"
+```yaml hl_lines="2-12" title="kubernetes/inventory/classes/component/mysql.yml"
 --8<-- "kubernetes/inventory/classes/component/mysql.yml:19:30"
 ```
 
 1. **`type`** | currently only **Kubernetes** is supported
-2. **`output_paths`** | list of files to validate
-3. **`kind`** | a **Kubernetes** resource kind
-4. **`version`** | a Kubernetes API version, defaults to **`1.14.0`**
+2. **`output_paths`** | list of paths to validate, with supports for glob patterns
+3. **`fail_on_error`** | whether to fail compilation on error, defaults to **`True`**
+4. **`version`** | a Kubernetes API version, defaults to **`1.26.0`**
+5. **`verbose`** | whether to also print successful validations, defaults to **`False`**
+6. **`exclude.kind`** | list of Kubernetes kinds to exclude.
+7. **`exclude.paths`** | list of paths to exclude.

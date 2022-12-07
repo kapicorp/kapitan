@@ -6,6 +6,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "kapitan targets"
+import glob
+import itertools
 import json
 import logging
 import multiprocessing
@@ -186,12 +188,13 @@ def compile_targets(
 
         # validate the compiled outputs
         if kwargs.get("validate", False):
+            validation_start = time.time()
             validate_map = create_validate_mapping(target_objs, compile_path)
             worker = partial(
-                schema_validate_kubernetes_output,
-                cache_dir=kwargs.get("schemas_path", "./schemas"),
+                schema_validate_kubernetes_output, cache_dir=kwargs.get("schemas_path", "./schemas")
             )
             [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
+            logger.info("Validated targets (%.2fs)", time.time() - validation_start)
 
         # Save inventory and folders cache
         save_inv_cache(compile_path, targets)
@@ -622,26 +625,17 @@ def valid_target_obj(target_obj, require_compile=True):
                     "properties": {
                         "output_paths": {"type": "array"},
                         "type": {"type": "string", "enum": ["kubernetes"]},
-                        "kind": {"type": "string"},
-                        "version": {"type": "string"},
+                        "ignore": {
+                            "type": "object",
+                            "properties": {"kinds": {"type": "array"}, "paths": {"type": "array"}},
+                            "minItems": 1,
+                        },
+                        "verbose": {"type": "boolean"},
+                        "fail_on_error": {"type": "boolean"},
+                        "version": {"type": "string", "pattern": "^[1-9]?[0-9][.][1-9]?[0-9][.][1-9]?[0-9]$"},
                     },
                     "required": ["output_paths", "type"],
                     "minItems": 1,
-                    "allOf": [
-                        {
-                            "if": {"properties": {"type": {"const": "kubernetes"}}},
-                            "then": {
-                                "properties": {
-                                    "type": {},
-                                    "kind": {},
-                                    "output_paths": {},
-                                    "version": {},
-                                },
-                                "additionalProperties": False,
-                                "required": ["kind"],
-                            },
-                        },
-                    ],
                 },
             },
             "dependencies": {
@@ -822,31 +816,41 @@ def create_validate_mapping(target_objs, compiled_path):
             continue
 
         for validate_item in target_obj["validate"]:
+            validate_item["target_name"] = target_name
             validate_type = validate_item["type"]
             if validate_type == "kubernetes":
-                kind_version_pair = (
-                    validate_item["kind"],
-                    validate_item.get("version", defaults.DEFAULT_KUBERNETES_VERSION),
-                )
+                version = validate_item.setdefault("version", defaults.DEFAULT_KUBERNETES_VERSION)
+                files = set()
+                excluded_files = set()
                 for output_path in validate_item["output_paths"]:
-                    full_output_path = os.path.join(compiled_path, target_name, output_path)
-                    if not os.path.isfile(full_output_path):
-                        logger.warning(
-                            "%s does not exist for target '%s'. skipping", output_path, target_name
-                        )
-                        continue
-                    validate_files_map[kind_version_pair].append(full_output_path)
+                    full_path = os.path.join(compiled_path, target_name, output_path)
+                    globbed_files = glob.glob(full_path)
+                    # remove duplicate
+                    files.update(set(globbed_files))
+
+                for ignore_file_path in validate_item["exclude"]["paths"]:
+                    full_path = os.path.join(compiled_path, target_name, ignore_file_path)
+                    excluded_files.update(set(glob.glob(full_path)))
+
+                if files.intersection(excluded_files):
+                    logging.debug(f"Validation: Removing files because of exclude.paths: {excluded_files}")
+                    files.difference_update(excluded_files)
+
+                logging.debug(f"Validation: Final validation file list after exclude.files: {files}")
+                validate_item["output_files"] = files
+                validate_item["excluded_files"] = excluded_files
+                validate_files_map[version].append(validate_item)
+
             else:
                 logger.warning("type %s is not supported for validation. skipping", validate_type)
 
     return validate_files_map
 
 
-def schema_validate_kubernetes_output(validate_data, cache_dir):
+def schema_validate_kubernetes_output(validate_data, cache_dir, **kwargs):
     """
     validates given files according to kubernetes manifest schemas
     schemas are cached from/to cache_dir
-    validate_data must be of structure ((kind, version), validate_files)
+    validate_data must be of tuple (version, validate_files)
     """
-    (kind, version), validate_files = validate_data
-    KubernetesManifestValidator(cache_dir).validate(validate_files, kind=kind, version=version)
+    KubernetesManifestValidator(cache_dir).validate(validate_data, **kwargs)
