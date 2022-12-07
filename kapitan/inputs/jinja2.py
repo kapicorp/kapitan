@@ -30,7 +30,7 @@ class Jinja2(InputType):
         """
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
-        
+
         input_params = self.input_params
         # set compile_path allowing jsonnet to have context on where files
         # are being compiled on the current kapitan run
@@ -42,7 +42,7 @@ class Jinja2(InputType):
         context["inventory"] = inventory(self.search_paths, target_name)
         context["inventory_global"] = inventory(self.search_paths, None)
         context["input_params"] = input_params
-        
+
         jinja2_filters = kwargs.get("jinja2_filters")
 
         for item_key, item_value in render_jinja2(
