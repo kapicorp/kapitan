@@ -1,10 +1,12 @@
 classes:
   - common
   - cluster.minikube
+  - component.namespace
   - component.nginx-kadet
   - component.nginx-common
 
 parameters:
-  target_name: minikube-nginx-kadet
-  namespace: ${target_name}
+# These parameters are redundand because automatically set by `common`
+## target_name: minikube-nginx-kadet
+## namespace: ${target_name}
 

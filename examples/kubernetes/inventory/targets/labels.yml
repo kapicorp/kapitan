@@ -1,5 +1,6 @@
 classes:
   - common
+  - component.namespace
   - component.labels
 
 parameters:
