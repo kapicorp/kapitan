@@ -552,6 +552,11 @@ def unpack_downloaded_file(file_path, output_path, content_type):
             tar.extractall(path=output_path)
             tar.close()
             is_unpacked = True
+        elif (r"\.zip$", file_path):
+            zfile = ZipFile(file_path)
+            zfile.extractall(output_path)
+            zfile.close()
+            is_unpacked = True
         else:
             extension = re.findall(r"\..*$", file_path)[0]
             logger.debug("File extension %s not suported", extension)
