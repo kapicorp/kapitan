@@ -93,8 +93,8 @@ def trigger_compile(args):
         jinja2_filters=args.jinja2_filters,
         verbose=hasattr(args, "verbose") and args.verbose,
         use_go_jsonnet=args.use_go_jsonnet,
-        helm_secrets=args.helm_secrets,
-        encode_base64=args.encode_base64,
+        helm_refs=args.helm_refs,
+        helm_refs_base64=args.helm_refs_base64,
     )
 
 
@@ -291,14 +291,13 @@ def build_parser():
         help="dumps all none-type entries as empty, default is dumping as 'null'",
     )
     compile_parser.add_argument(
-        "--helm-secrets",
+        "--helm-refs",
         action="store_true",
         default=from_dot_kapitan("compile", "helm-secrets", False),
         help="enable kapitan secret engine on helm refs",
     )
     compile_parser.add_argument(
-        "--encode-base64",
-        "-b64",
+        "--helm-refs-base64",
         action="store_true",
         default=from_dot_kapitan("compile", "encode_base64", False),
         help="(helm-only) encode .data key with base64",

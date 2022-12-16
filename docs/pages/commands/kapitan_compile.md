@@ -195,9 +195,8 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
                                 ignore the version from .kapitan
           --schemas-path SCHEMAS_PATH
                                 set schema cache path, default is "./schemas"
-          --helm-secrets        enable kapitan secret engine on helm refs
-          --encode-base64, -b64
-                                (helm-only) encode .data key with base64
+          --helm-refs           enable kapitan ref engine on helm refs
+          --helm-refs-base64    encode .data key with base64 afterwards
           --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
                                 targets to compile, default is all
           --labels [key=value [key=value ...]], -l [key=value [key=value ...]]

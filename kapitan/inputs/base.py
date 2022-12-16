@@ -117,15 +117,14 @@ class CompilingFile(object):
         """recursively compile or reveal refs and convert obj to yaml and write to file"""
         indent = self.kwargs.get("indent", 2)
         reveal = self.kwargs.get("reveal", False)
-        encode_data_b64 = self.kwargs.get("encode_base64", False)
+        helm_refs_base64 = self.kwargs.get("helm_refs_base64", False)
         target_name = self.kwargs.get("target_name", None)
         if reveal:
             obj = self.revealer.reveal_obj(obj)
         else:
             obj = self.revealer.compile_obj(obj, target_name=target_name)
 
-        # Option 1:
-        if encode_data_b64:
+        if helm_refs_base64:
             obj = check_data_for_b64(obj)
 
         if obj:
@@ -186,9 +185,6 @@ class CompiledFile(object):
         self.fp.close()
 
 
-### Option 1: Manually encoding the .data key to base64 (postprocessing)
-
-
 def check_data_for_b64(yml_obj):
     """
     check for .data in kind: Secret / ConfigMap
@@ -196,7 +192,7 @@ def check_data_for_b64(yml_obj):
     """
     for item in yml_obj:
         kind = item.get("kind", None)
-        if kind and (kind == "Secret" or kind == "ConfigMap"):
+        if kind in ["Secret", "ConfigMap"]:
             if item.get("data", None):
                 item["data"] = replace_b64_refs(item["data"])
 

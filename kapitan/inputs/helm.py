@@ -39,8 +39,8 @@ class Helm(InputType):
         self.helm_params = args.get("helm_params") or {}
         self.helm_path = args.get("helm_path")
         self.file_path = None
-        self.helm_secrets = args.get("helm_secrets", False)
-        self.encode_base64 = args.get("encode_base64", False)
+        self.helm_refs = args.get("helm_refs", False)
+        self.helm_refs_base64 = args.get("helm_refs_base64", False)
 
         self.helm_values_file = None
         if "helm_values" in args:
@@ -62,8 +62,8 @@ class Helm(InputType):
         """
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
-        helm_secrets = kwargs.get("helm_secrets", False) or self.helm_secrets
-        encode_base64 = kwargs.get("encode_base64", False) or self.encode_base64
+        helm_refs = kwargs.get("helm_refs", False) or self.helm_refs
+        helm_refs_base64 = kwargs.get("helm_refs_base64", False) or self.helm_refs_base64
         indent = kwargs.get("indent", 2)
 
         if self.file_path is not None:
@@ -103,11 +103,11 @@ class Helm(InputType):
                         mode="w",
                         reveal=reveal,
                         target_name=target_name,
-                        encode_base64=encode_base64,
+                        helm_refs_base64=helm_refs_base64,
                         indent=indent,
                     ) as fp:
                         yml_obj = list(yaml.safe_load_all(f))
-                        if helm_secrets:
+                        if helm_refs:
                             yml_obj = check_data_for_b64(yml_obj)
                         fp.write_yaml(yml_obj)
                         logger.debug("Wrote file %s to %s", full_file_name, item_path)
@@ -291,14 +291,13 @@ def check_data_for_b64(yml_obj):
     """
     for item in yml_obj:
         kind = item.get("kind", None)
-        if kind and (kind == "Secret" or kind == "ConfigMap"):
-            if item.get("data", None):
-                # Option 1:
-                # item["data"] = replace_b64_refs(item["data"])
-
-                # Option 2:
+        if item.get("data", None):
+            if kind == "Secret":
                 item["stringData"] = replace_b64_refs(item["data"])
                 item.pop("data")
+
+            if kind == "ConfigMap":
+                item["data"] = replace_b64_refs(item["data"])
 
     return yml_obj
 
@@ -320,6 +319,7 @@ def replace_b64_refs(yml_obj):
             while True:
                 if base64.b64encode(base64.b64decode(yml_obj)).decode() == yml_obj:
                     yml_obj = base64.b64decode(yml_obj).decode()
+
         except Exception as e:
             pass
     return yml_obj
