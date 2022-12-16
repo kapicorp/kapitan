@@ -1,8 +1,8 @@
+classes:
+- common
+
 parameters:
-  target_name: removal
   kapitan:
-    vars:
-      target: ${target_name}
     compile:
       - input_type: copy
         input_paths:

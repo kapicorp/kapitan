@@ -36,7 +36,7 @@ Use the `--force-fetch` flag to force fetch (update cache with freshly fetched d
 
 
 ```shell
-$ kapitan compile --force-fetch
+kapitan compile --force-fetch
 ```
 
 Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
@@ -166,7 +166,7 @@ compiled inventory README.md
 This fetches the README.md file from the URL and save it locally.
 
 Another use case for http types is when we want to download an archive file, such as helm packages, and extract its content.
-Setting `unpack: True` will unpack zip or tar files onto the `output_path`. In such cases, set `output_path` to a folder where you extract the content, and not the file name. You can refer to [here](compile.md#helm) for the example.
+Setting `unpack: True` will unpack zip or tar files onto the `output_path`. In such cases, set `output_path` to a folder where you extract the content, and not the file name. You can refer to [here](/pages/input_types/helm.md) for the example.
 
 ## Helm type
 
