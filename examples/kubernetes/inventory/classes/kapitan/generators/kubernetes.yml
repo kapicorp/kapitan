@@ -1,0 +1,50 @@
+parameters:
+  kapitan:
+    dependencies:
+    - type: git
+      source: https://github.com/kapicorp/kapitan-reference.git
+      ref: master
+      subdir: components/generators/kubernetes
+      output_path: components/generators/kubernetes
+    compile:
+    - output_path: manifests
+      input_type: kadet
+      output_type: yml
+      input_paths:
+        - components/generators/kubernetes
+    - output_path: docs
+      input_type: kadet
+      output_type: plain
+      input_params:
+        function: generate_docs
+        template_path: templates/docs/service_component.md.j2
+      input_paths:
+        - components/generators/kubernetes
+    - output_path: pre-deploy
+      input_type: kadet
+      output_type: yml
+      input_params:
+        function: generate_pre_deploy
+      input_paths:
+        - components/generators/kubernetes
+    validate:
+    - type: kubernetes
+      fail_on_error: false
+      verbose: true
+      exclude:
+        kinds:
+        - HorizontalPodAutoscaler
+        paths:
+        - manifests/*-ingress.yml
+      output_paths:
+        - manifests/*.yml
+      version: 1.26.0
+
+  generators:
+    manifest:
+      default_config:
+        type: deployment
+        service_account:
+          create: false
+        annotations:
+          "manifests.kapicorp.com/generated": "true"

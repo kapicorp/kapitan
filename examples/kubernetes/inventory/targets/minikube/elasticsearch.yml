@@ -1,0 +1,10 @@
+classes:
+  - common
+  - cluster.minikube
+  - component.namespace
+  - component.elasticsearch
+  - component.busybox
+
+parameters:
+  elasticsearch:
+    replicas: 2

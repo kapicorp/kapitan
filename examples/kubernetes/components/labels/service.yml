@@ -1,11 +1,12 @@
-{% set params = inventory.parameters %}{% import 'templates/labels.j2' as labels with context  -%}
+{% set component = input_params %}
+{% import 'templates/labels.j2' as labels with context  -%}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ params.postgres.name }}
-  namespace: {{ namespace }}
+  name: {{ component.name }}
+  namespace: {{ component.namespace }}
   labels:
-    {{ labels.common(params.postgres) | indent(4)  }}
+    {{ labels.common(component) | indent(4)  }}
 spec:
   ports:
   - port: 5432

@@ -1,18 +1,6 @@
+classes:
+  - kapitan.common
+
 parameters:
   namespace: ${target_name}
   target_name: ${_reclass_:name:short}
-
-  kapitan:
-    vars:
-      target: ${target_name}
-      namespace: ${target_name}
-      managed_by: kapitan
-    secrets:
-      gpg:
-        recipients:
-          - name: example@kapitan.dev
-            fingerprint: D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C
-      gkms:
-        key: 'projects/<project>/locations/<location>/keyRings/<keyRing>/cryptoKeys/<key>'
-      awskms:
-        key: 'alias/nameOfKey'

@@ -1,0 +1,14 @@
+#!/bin/bash
+set -o nounset -o pipefail -o noclobber -o errexit
+
+DIR=$(dirname ${BASH_SOURCE[0]})
+ABS_PATH=$(cd "${DIR}"; pwd)
+
+KAPITAN_IMAGE=kapicorp/kapitan:fix_validate
+exec 2>&1
+
+KAPITAN_BINARY="docker run --rm -i -u $UID --network host -w /src \
+  -v $PWD:/src:delegated \
+  $KAPITAN_IMAGE"
+
+exec ${KAPITAN_BINARY} "$@"

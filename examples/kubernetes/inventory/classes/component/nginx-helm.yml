@@ -1,5 +1,4 @@
 parameters:
-  namespace:
   nginx:
     version: 4.4.0
     replicas: 2

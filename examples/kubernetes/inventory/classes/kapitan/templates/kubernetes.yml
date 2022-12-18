@@ -1,0 +1,3 @@
+parameters:
+  scripts:
+    - templates/scripts/kubernetes

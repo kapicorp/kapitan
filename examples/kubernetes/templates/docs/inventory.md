@@ -1,0 +1,3 @@
+```
+{{inventory.parameters | yaml}}
+```

@@ -19,7 +19,6 @@ theme:
     - content.code.annotate 
     - content.tabs.link
     - navigation.indexes
-    - navigation.sections
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top
@@ -81,21 +80,20 @@ extra:
 use_directory_urls: true
 nav:
   - Home: README.md
-  - Getting started:
-      - Kapitan Overview: kapitan_overview.md
-  - Support: 
+  - Getting started: getting_started.md
+  - Community: 
       - Ask for support: support.md
-      - Related Projects: related.md
-  - Contribute: 
       - Sponsor Us: pages/contribute/sponsor.md
       - Talk about Kapitan: pages/contribute/talk.md
       - Active contributions: 
         - Documentation: pages/contribute/documentation.md
         - Kapitan Code: pages/contribute/code.md
+      - Related Projects: related.md
   - Blog:
     - 2022:
       - 5 years of Kapitan: pages/blog/2022-12-04.md
   - Documentation:
+      - Kapitan Overview: kapitan_overview.md 
       - Inventory: inventory.md
       - Input Types: 
           - Introduction: pages/input_types/introduction.md
@@ -107,17 +105,17 @@ nav:
           - Copy: pages/input_types/copy.md
           - Remove: pages/input_types/remove.md
       - References: references.md
+      - CLI reference: 
+        - compile: pages/commands/kapitan_compile.md
+        - inventory: pages/commands/kapitan_inventory.md
+        - lint: pages/commands/kapitan_lint.md
+        - searchvar: pages/commands/kapitan_searchvar.md
+        - validate: pages/commands/kapitan_validate.md
+        - kapitan dotfile: pages/commands/kapitan_dotfile.md
       - Advanced Kapitan:
         - Remote repositories: remote_repositories.md
         - External dependencies: external_dependencies.md
       - Proposals: proposals.md
-  - CLI reference: 
-      - compile: pages/commands/kapitan_compile.md
-      - inventory: pages/commands/kapitan_inventory.md
-      - lint: pages/commands/kapitan_lint.md
-      - searchvar: pages/commands/kapitan_searchvar.md
-      - validate: pages/commands/kapitan_validate.md
-      - kapitan dotfile: pages/commands/kapitan_dotfile.md
   - Examples:
       - Kubernetes: pages/examples/kubernetes.md
       - Terraform: pages/examples/terraform.md

@@ -1,5 +1,4 @@
 parameters:
-  namespace: ${target_name}
   kapitan:
     compile:
     - output_path: pre-deploy

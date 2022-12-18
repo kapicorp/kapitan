@@ -1,21 +1,8 @@
 parameters:
+  templates:
+  - components/mysql/main.jsonnet
+
   kapitan:
-    compile:
-    - output_path: manifests
-      input_type: jsonnet
-      prune: true
-      input_paths:
-        - components/mysql/main.jsonnet
-      output_type: yml
-    - output_path: scripts
-      input_type: jinja2
-      input_paths:
-        - scripts
-    - output_path: .
-      output_type: yml
-      input_type: jinja2
-      input_paths:
-        - docs/mysql/README.md
     validate: 
     - type: kubernetes # mkdocs (1)! 
       output_paths: # mkdocs (2)! 
