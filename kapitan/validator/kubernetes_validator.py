@@ -168,7 +168,9 @@ class KubernetesManifestValidator(Validator):
         try:
             _, _ = make_request(url)
         except requests.exceptions.HTTPError:
-            raise RequestUnsuccessfulError("Validation: schema does not exist or could not fetch well known path %s", url)
+            raise RequestUnsuccessfulError(
+                "Validation: schema does not exist or could not fetch well known path %s", url
+            )
         return True
 
     def _get_schema_from_web(self, kind, version):
