@@ -473,7 +473,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
         output_path = comp_obj["output_path"]
 
         if input_type == "jinja2":
-            input_compiler = Jinja2(compile_path, search_paths, ref_controller)
+            input_compiler = Jinja2(compile_path, search_paths, ref_controller, comp_obj)
             if "input_params" in comp_obj:
                 input_compiler.set_input_params(comp_obj["input_params"])
         elif input_type == "jsonnet":
@@ -601,6 +601,8 @@ def valid_target_obj(target_obj, require_compile=True):
                         "input_params": {"type": "object"},
                         "env_vars": {"type": "object"},
                         "args": {"type": "array"},
+                        "strip_postfix": {"type": "boolean"},
+                        "stripped_postfix": {"type": "string"}
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
