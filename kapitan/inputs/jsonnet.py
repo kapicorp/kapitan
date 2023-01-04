@@ -149,9 +149,20 @@ class Jsonnet(InputType):
                     indent=indent,
                 ) as fp:
                     fp.write(item_value)
+            elif output == "toml":
+                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
+                with CompiledFile(
+                    file_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                    indent=indent,
+                ) as fp:
+                    fp.write_toml(item_value)
             else:
                 raise ValueError(
-                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'"
+                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml', 'toml' nor 'plain'"
                 )
 
     def default_output_type(self):

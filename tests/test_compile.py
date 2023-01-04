@@ -15,6 +15,7 @@ import contextlib
 import glob
 import shutil
 import yaml
+import toml
 from kapitan.cli import main
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
@@ -221,5 +222,42 @@ class PlainOutputTest(unittest.TestCase):
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def tearDown(self):
+        os.chdir(os.getcwd() + "/../../")
+        reset_cache()
+
+
+class TomlOutputTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        os.chdir(os.getcwd() + "/tests/test_resources/")
+        sys.argv = ["kapitan", "compile", "-t", "toml-output"]
+        main()
+
+    def setUp(self):
+        target_file_path = os.path.join(os.getcwd(), "inventory/targets/toml-output.yml")
+        with open(target_file_path) as target_file:
+            target = yaml.safe_load(target_file)
+        self.input_parameter = target["parameters"]["input"]
+
+    def test_jsonnet_output(self):
+        output_file_path = os.path.join(os.getcwd(), "compiled/toml-output/jsonnet-output/nested.toml")
+        expected = self.input_parameter["nested"]
+
+        with open(output_file_path) as output_file:
+            output = toml.load(output_file)
+
+        self.assertDictEqual(output, expected)
+
+    def test_kadet_output(self):
+        output_file_path = os.path.join(os.getcwd(), "compiled/toml-output/kadet-output/nested.toml")
+        expected = self.input_parameter["nested"]
+
+        with open(output_file_path) as output_file:
+            output = toml.load(output_file)
+
+        self.assertDictEqual(output, expected)
+
+    @classmethod
+    def tearDownClass(cls):
         os.chdir(os.getcwd() + "/../../")
         reset_cache()
