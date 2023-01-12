@@ -36,7 +36,6 @@ class Jinja2(InputType):
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
 
-
         # set ext_vars and inventory for jinja2 context
         context = ext_vars.copy()
         context["inventory"] = inventory(self.search_paths, target_name)

@@ -602,7 +602,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         "env_vars": {"type": "object"},
                         "args": {"type": "array"},
                         "suffix_remove": {"type": "boolean"},
-                        "suffix_stripped": {"type": "string"}
+                        "suffix_stripped": {"type": "string"},
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,

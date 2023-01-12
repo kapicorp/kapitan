@@ -115,26 +115,18 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
         main()
 
     def test_compile_postfix_strip_disabled(self):
-        self.assertListEqual(
-            os.listdir("compiled/jinja2-postfix-strip/unstripped"),
-            ["stub.txt.j2"]
-        )
+        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/unstripped"), ["stub.txt.j2"])
 
     def test_compile_postfix_strip_overridden(self):
-        self.assertListEqual(
-            os.listdir("compiled/jinja2-postfix-strip/stripped-overridden"),
-            ["stub"]
-        )
+        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/stripped-overridden"), ["stub"])
 
     def test_compile_postfix_strip_enabled(self):
-        self.assertListEqual(
-            os.listdir("compiled/jinja2-postfix-strip/stripped"),
-            ["stub.txt"]
-        )
+        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/stripped"), ["stub.txt"])
 
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")
         reset_cache()
+
 
 class CompileKubernetesTest(unittest.TestCase):
     def setUp(self):
