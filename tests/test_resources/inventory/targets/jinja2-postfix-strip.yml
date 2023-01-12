@@ -10,7 +10,7 @@ parameters:
         input_params:
           name: test1
           namespace: ns1
-        strip_postfix: true
+        suffix_remove: true
       - output_path: stripped-overridden/
         input_type: jinja2
         input_paths:
@@ -18,8 +18,8 @@ parameters:
         input_params:
           name: test2
           namespace: ns2
-        strip_postfix: true
-        stripped_postfix: .txt.j2
+        suffix_remove: true
+        suffix_stripped: .txt.j2
       - output_path: unstripped/
         input_type: jinja2
         input_paths:

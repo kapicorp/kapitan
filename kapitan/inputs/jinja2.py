@@ -19,8 +19,8 @@ class Jinja2(InputType):
     def __init__(self, compile_path, search_paths, ref_controller, args):
         super().__init__("jinja2", compile_path, search_paths, ref_controller)
         self.input_params = {}
-        self.strip_postfix = args.get("strip_postfix", False)
-        self.stripped_postfix = args.get("stripped_postfix", ".j2")
+        self.strip_postfix = args.get("suffix_remove", False)
+        self.stripped_postfix = args.get("suffix_stripped", ".j2")
 
     def set_input_params(self, input_params):
         self.input_params = input_params

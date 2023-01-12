@@ -601,8 +601,8 @@ def valid_target_obj(target_obj, require_compile=True):
                         "input_params": {"type": "object"},
                         "env_vars": {"type": "object"},
                         "args": {"type": "array"},
-                        "strip_postfix": {"type": "boolean"},
-                        "stripped_postfix": {"type": "string"}
+                        "suffix_remove": {"type": "boolean"},
+                        "suffix_stripped": {"type": "string"}
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
