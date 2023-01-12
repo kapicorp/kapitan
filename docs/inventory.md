@@ -50,11 +50,11 @@ A target is a file that lives under the [`inventory/targets`](#targets) subdirec
 
 What you do with a [**target**](#targets) is largely up to you and your setup. Common examples:
 
-* **clusters**: Each target to map to a cluster you have, and used to caputure all configurations needed for a given cluster. For instance `targets/clusters/production-cluster1.yml`
-* **applications**: When using **Kapitan** to manage **Kubernetes** applications, is to use a [**target**](#targets) file to define everything that you would normally deploy in a single namespace, including all its resources, scripts, secrets and documentation. For instance `targets/mysql.yaml`
+* **clusters**: Map each [**target**](#targets) to a cluster, caputuring all configurations needed for a given cluster. For instance: `targets/clusters/production-cluster1.yml`
+* **applications**: When using **Kapitan** to manage **Kubernetes** applications, you might define a [**target**](#targets) for everything that you would normally deploy in a single namespace, including all its resources, scripts, secrets and documentation. For instance: `targets/mysql.yml`
 * **environments**: You might have want to define a different [**target**](#targets) for each environment you have, like `dev.yml`, `test.yml` and `prod.yml`
-* **cloud projects**: When working with **Terraform**, you could find it convenient to group in a [**target**](#targets) all resource definitions needed for a given cloud project.
-* **single tenancy**: When working on deploying a single-tenancy application, you might combine the approaches above, and have a [**target**](#targets) `acme.yml` that is used to define both **Terraform** and **Kubernetes** resources for a given tenant, perhaps also with some **ArgoCD** or **Spinnaker** pipelines to go with it.
+* **cloud projects**: When working with **Terraform**, it may be convenient to group [**target**](#targets) by cloud project. For instance: `targets/gcp/projects/engineering-prod.yml`.
+* **single tenancy**: When deploying a single-tenancy application, you might combine the approaches above, and have a [**target**](#targets) `acme.yml` that is used to define both **Terraform** and **Kubernetes** resources for a given tenant, perhaps also with some **ArgoCD** or **Spinnaker** pipelines to go with it.
 
 
 !!! example
