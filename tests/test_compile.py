@@ -106,6 +106,28 @@ class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
         reset_cache()
 
 
+class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
+    def setUp(self):
+        os.chdir(os.getcwd() + "/tests/test_resources/")
+
+    def test_compile(self):
+        sys.argv = ["kapitan", "compile", "-t", "jinja2-postfix-strip"]
+        main()
+
+    def test_compile_postfix_strip_disabled(self):
+        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/unstripped"), ["stub.txt.j2"])
+
+    def test_compile_postfix_strip_overridden(self):
+        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/stripped-overridden"), ["stub"])
+
+    def test_compile_postfix_strip_enabled(self):
+        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/stripped"), ["stub.txt"])
+
+    def tearDown(self):
+        os.chdir(os.getcwd() + "/../../")
+        reset_cache()
+
+
 class CompileKubernetesTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/examples/kubernetes/")
