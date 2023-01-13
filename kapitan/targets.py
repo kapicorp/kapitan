@@ -610,7 +610,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         {
                             "properties": {
                                 "input_type": {"enum": ["jsonnet", "kadet", "copy", "remove"]},
-                                "output_type": {"enum": ["yml", "yaml", "json", "plain"]},
+                                "output_type": {"enum": ["yml", "yaml", "json", "plain", "toml"]},
                             },
                         },
                         {"properties": {"input_type": {"enum": ["jinja2", "helm", "external"]}}},
