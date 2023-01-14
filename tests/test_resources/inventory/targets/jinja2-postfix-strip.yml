@@ -1,0 +1,29 @@
+parameters:
+  kapitan:
+    vars:
+      target: jinja2-postfix-strip
+    compile:
+      - output_path: stripped/
+        input_type: jinja2
+        input_paths:
+          - templates/stub.txt.j2
+        input_params:
+          name: test1
+          namespace: ns1
+        suffix_remove: true
+      - output_path: stripped-overridden/
+        input_type: jinja2
+        input_paths:
+          - templates/stub.txt.j2
+        input_params:
+          name: test2
+          namespace: ns2
+        suffix_remove: true
+        suffix_stripped: .txt.j2
+      - output_path: unstripped/
+        input_type: jinja2
+        input_paths:
+          - templates/stub.txt.j2
+        input_params:
+          name: test2
+          namespace: ns2

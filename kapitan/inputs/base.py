@@ -13,6 +13,7 @@ import os
 from collections.abc import Mapping
 
 import yaml
+import toml
 
 from kapitan.errors import CompileError, KapitanError
 from kapitan.refs.base import Revealer
@@ -155,6 +156,20 @@ class CompilingFile(object):
             obj = self.revealer.compile_obj(obj, target_name=target_name)
         if obj:
             json.dump(obj, self.fp, indent=indent)
+            logger.debug("Wrote %s", self.fp.name)
+        else:
+            logger.debug("%s is Empty, skipped writing output", self.fp.name)
+
+    def write_toml(self, obj):
+        """recursively compile or reveal refs and convert obj to toml and write to file"""
+        reveal = self.kwargs.get("reveal", False)
+        target_name = self.kwargs.get("target_name", None)
+        if reveal:
+            obj = self.revealer.reveal_obj(obj)
+        else:
+            obj = self.revealer.compile_obj(obj, target_name=target_name)
+        if obj:
+            toml.dump(obj, self.fp)
             logger.debug("Wrote %s", self.fp.name)
         else:
             logger.debug("%s is Empty, skipped writing output", self.fp.name)

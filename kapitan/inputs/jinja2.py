@@ -16,9 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 class Jinja2(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller):
+    def __init__(self, compile_path, search_paths, ref_controller, args):
         super().__init__("jinja2", compile_path, search_paths, ref_controller)
         self.input_params = {}
+        self.strip_postfix = args.get("suffix_remove", False)
+        self.stripped_postfix = args.get("suffix_stripped", ".j2")
 
     def set_input_params(self, input_params):
         self.input_params = input_params
@@ -46,8 +48,9 @@ class Jinja2(InputType):
         for item_key, item_value in render_jinja2(
             file_path, context, jinja2_filters=jinja2_filters, search_paths=self.search_paths
         ).items():
+            if self.strip_postfix and item_key.endswith(self.stripped_postfix):
+                item_key = item_key.rstrip(self.stripped_postfix)
             full_item_path = os.path.join(compile_path, item_key)
-
             with CompiledFile(
                 full_item_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name
             ) as fp:

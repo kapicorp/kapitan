@@ -188,6 +188,8 @@ python-dateutil==2.8.2
     #   botocore
 python-gnupg==0.4.7
     # via -r requirements.txt
+python-magic==0.4.27
+    # via -r requirements.txt
 pytz==2021.1
     # via
     #   -r requirements.txt
