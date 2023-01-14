@@ -1,7 +1,9 @@
 ---
 name: Docker Build and Push
 on:
-  push: {}
+  push:
+    paths-ignore:
+      - 'docs/**'
   workflow_run:
     workflows:
       - Python Tests
