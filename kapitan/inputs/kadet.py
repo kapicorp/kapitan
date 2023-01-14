@@ -82,11 +82,8 @@ def load_from_search_paths(module_name):
 
 
 class Kadet(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller):
+    def __init__(self, compile_path, search_paths, ref_controller, input_params={}):
         super().__init__("kadet", compile_path, search_paths, ref_controller)
-        self.input_params = {}
-
-    def set_input_params(self, input_params):
         self.input_params = input_params
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
@@ -113,9 +110,8 @@ class Kadet(InputType):
         input_params = self.input_params
         # set compile_path allowing kadet functions to have context on where files
         # are being compiled on the current kapitan run
-        input_params["compile_path"] = compile_path
-        # reset between each compile if kadet component is used multiple times
-        self.input_params = {}
+        # we only do this if user didn't pass its own value
+        input_params.setdefault("compile_path", compile_path)
 
         kadet_module, spec = module_from_path(file_path)
         sys.modules[spec.name] = kadet_module
@@ -181,9 +177,20 @@ class Kadet(InputType):
                     indent=indent,
                 ) as fp:
                     fp.write(item_value)
+            elif output == "toml":
+                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
+                with CompiledFile(
+                    file_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                    indent=indent,
+                ) as fp:
+                    fp.write_toml(item_value)
             else:
                 raise ValueError(
-                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml' nor 'plain'"
+                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml', 'toml' nor 'plain'"
                 )
 
     def default_output_type(self):

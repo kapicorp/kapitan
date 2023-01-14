@@ -15,6 +15,7 @@ import contextlib
 import glob
 import shutil
 import yaml
+import toml
 from kapitan.cli import main
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
@@ -100,6 +101,28 @@ class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
                 name = manifest["metadata"]["name"]
                 self.assertEqual(namespace, "ns2")
                 self.assertEqual(name, "test2")
+
+    def tearDown(self):
+        os.chdir(os.getcwd() + "/../../")
+        reset_cache()
+
+
+class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
+    def setUp(self):
+        os.chdir(os.getcwd() + "/tests/test_resources/")
+
+    def test_compile(self):
+        sys.argv = ["kapitan", "compile", "-t", "jinja2-postfix-strip"]
+        main()
+
+    def test_compile_postfix_strip_disabled(self):
+        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/unstripped"), ["stub.txt.j2"])
+
+    def test_compile_postfix_strip_overridden(self):
+        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/stripped-overridden"), ["stub"])
+
+    def test_compile_postfix_strip_enabled(self):
+        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/stripped"), ["stub.txt"])
 
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")
@@ -221,5 +244,42 @@ class PlainOutputTest(unittest.TestCase):
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def tearDown(self):
+        os.chdir(os.getcwd() + "/../../")
+        reset_cache()
+
+
+class TomlOutputTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        os.chdir(os.getcwd() + "/tests/test_resources/")
+        sys.argv = ["kapitan", "compile", "-t", "toml-output"]
+        main()
+
+    def setUp(self):
+        target_file_path = os.path.join(os.getcwd(), "inventory/targets/toml-output.yml")
+        with open(target_file_path) as target_file:
+            target = yaml.safe_load(target_file)
+        self.input_parameter = target["parameters"]["input"]
+
+    def test_jsonnet_output(self):
+        output_file_path = os.path.join(os.getcwd(), "compiled/toml-output/jsonnet-output/nested.toml")
+        expected = self.input_parameter["nested"]
+
+        with open(output_file_path) as output_file:
+            output = toml.load(output_file)
+
+        self.assertDictEqual(output, expected)
+
+    def test_kadet_output(self):
+        output_file_path = os.path.join(os.getcwd(), "compiled/toml-output/kadet-output/nested.toml")
+        expected = self.input_parameter["nested"]
+
+        with open(output_file_path) as output_file:
+            output = toml.load(output_file)
+
+        self.assertDictEqual(output, expected)
+
+    @classmethod
+    def tearDownClass(cls):
         os.chdir(os.getcwd() + "/../../")
         reset_cache()
