@@ -1,4 +1,4 @@
-# :kapitan-logo: CLI Reference | `.kapitan` config file
+# :kapitan-logo: **CLI Reference** | `.kapitan` config file
 
 ## `.kapitan`
 
@@ -26,6 +26,7 @@ version: 0.30 # Allows any 0.30.x release to run
 
 ...
 ```
+
 ### `compile`
 
 You can also permanently define all command line flags in the `.kapitan` config file. For example:
@@ -45,6 +46,7 @@ kapitan compile --indent 4 --parallelism 8
 ```
 
 ### inventory
+
 In some cases, you might want to store the inventory under a different directory. You can configure the `inventory` section of the **Kapitan** dotfile to make sure it's persisted across all **Kapitan** runs.
 
 ```yaml

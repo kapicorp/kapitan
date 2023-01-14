@@ -1,6 +1,7 @@
 classes:
   - common
   - cluster.minikube
+  - component.namespace
   - component.elasticsearch
   - component.busybox
 

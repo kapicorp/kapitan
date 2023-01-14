@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  allow-snippet-annotations: 'true'
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: minikube-nginx-helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.5.1
+    helm.sh/chart: ingress-nginx-4.4.0
+  name: minikube-nginx-helm-ingress-nginx-minikube-nginx-helm
+  namespace: minikube-nginx-helm

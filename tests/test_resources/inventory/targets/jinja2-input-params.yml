@@ -7,6 +7,7 @@ parameters:
         input_type: jinja2
         input_paths:
           - templates/pod.yml
+          - templates/pod.yml # test https://github.com/kapicorp/kapitan/issues/906
         input_params:
           name: test1
           namespace: ns1

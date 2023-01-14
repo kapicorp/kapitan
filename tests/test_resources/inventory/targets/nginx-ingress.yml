@@ -19,3 +19,5 @@ parameters:
             electionID: ?{gpg:targets/nginx-ingress/electionID||randomstr|base64}
             image:
               repository: custom_repo
+        helm_params:
+          name: release-name

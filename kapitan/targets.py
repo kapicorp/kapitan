@@ -471,17 +471,14 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
         output_path = comp_obj["output_path"]
+        input_params = comp_obj.setdefault("input_params", {})
 
         if input_type == "jinja2":
-            input_compiler = Jinja2(compile_path, search_paths, ref_controller)
-            if "input_params" in comp_obj:
-                input_compiler.set_input_params(comp_obj["input_params"])
+            input_compiler = Jinja2(compile_path, search_paths, ref_controller, comp_obj)
         elif input_type == "jsonnet":
             input_compiler = Jsonnet(compile_path, search_paths, ref_controller, use_go=use_go_jsonnet)
         elif input_type == "kadet":
-            input_compiler = Kadet(compile_path, search_paths, ref_controller)
-            if "input_params" in comp_obj:
-                input_compiler.set_input_params(comp_obj["input_params"])
+            input_compiler = Kadet(compile_path, search_paths, ref_controller, input_params=input_params)
         elif input_type == "helm":
             input_compiler = Helm(compile_path, search_paths, ref_controller, comp_obj)
         elif input_type == "copy":
@@ -601,6 +598,8 @@ def valid_target_obj(target_obj, require_compile=True):
                         "input_params": {"type": "object"},
                         "env_vars": {"type": "object"},
                         "args": {"type": "array"},
+                        "suffix_remove": {"type": "boolean"},
+                        "suffix_stripped": {"type": "string"},
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
@@ -608,7 +607,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         {
                             "properties": {
                                 "input_type": {"enum": ["jsonnet", "kadet", "copy", "remove"]},
-                                "output_type": {"enum": ["yml", "yaml", "json", "plain"]},
+                                "output_type": {"enum": ["yml", "yaml", "json", "plain", "toml"]},
                             },
                         },
                         {"properties": {"input_type": {"enum": ["jinja2", "helm", "external"]}}},

@@ -1,4 +1,4 @@
-# :kapitan-logo: CLI Reference | `kapitan compile`
+# :kapitan-logo: **CLI Reference** | `kapitan compile`
 
 A reference guide for some uses of the `command` option
 

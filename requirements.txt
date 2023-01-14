@@ -34,7 +34,7 @@ cachetools==4.2.2
     # via
     #   -r requirements.txt
     #   google-auth
-certifi==2021.5.30
+certifi==2022.12.7
     # via
     #   -r requirements.txt
     #   msrest
@@ -60,7 +60,7 @@ gitdb==4.0.7
     # via
     #   -r requirements.txt
     #   gitpython
-gitpython==3.1.24
+gitpython==3.1.30
     # via -r requirements.txt
 google-api-core==1.31.1
     # via
@@ -187,6 +187,8 @@ python-dateutil==2.8.2
     #   -r requirements.txt
     #   botocore
 python-gnupg==0.4.7
+    # via -r requirements.txt
+python-magic==0.4.27
     # via -r requirements.txt
 pytz==2021.1
     # via
