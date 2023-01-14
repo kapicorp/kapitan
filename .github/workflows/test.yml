@@ -1,8 +1,12 @@
 ---
 name: Python Tests
 on:
-  push: {}
-  pull_request: {}
+  push:
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
   workflow_run:
     workflows:
       - Python Lint
