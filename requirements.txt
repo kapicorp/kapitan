@@ -60,7 +60,7 @@ gitdb==4.0.7
     # via
     #   -r requirements.txt
     #   gitpython
-gitpython==3.1.24
+gitpython==3.1.30
     # via -r requirements.txt
 google-api-core==1.31.1
     # via
