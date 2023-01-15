@@ -50,7 +50,7 @@ A target is a file that lives under the [`inventory/targets`](#targets) subdirec
 
 What you do with a [**target**](#targets) is largely up to you and your setup. Common examples:
 
-* **clusters**: Map each [**target**](#targets) to a cluster, caputuring all configurations needed for a given cluster. For instance: `targets/clusters/production-cluster1.yml`
+* **clusters**: Map each [**target**](#targets) to a cluster, capturing all configurations needed for a given cluster. For instance: `targets/clusters/production-cluster1.yml`
 * **applications**: When using **Kapitan** to manage **Kubernetes** applications, you might define a [**target**](#targets) for everything that you would normally deploy in a single namespace, including all its resources, scripts, secrets and documentation. For instance: `targets/mysql.yml`
 * **environments**: You might have want to define a different [**target**](#targets) for each environment you have, like `dev.yml`, `test.yml` and `prod.yml`
 * **cloud projects**: When working with **Terraform**, it may be convenient to group [**target**](#targets) by cloud project. For instance: `targets/gcp/projects/engineering-prod.yml`.
