@@ -93,6 +93,8 @@ nav:
         - Documentation: pages/contribute/documentation.md
         - Kapitan Code: pages/contribute/code.md
   - Blog:
+    - 2023:
+      - New Kapitan release: pages/blog/2023-01-16.md
     - 2022:
       - 5 years of Kapitan: pages/blog/2022-12-04.md
   - Documentation:
