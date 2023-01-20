@@ -159,31 +159,48 @@ class VaultSecret(Base64Ref):
         Return new VaultSecret from data and ref_params: target_name
         parameters will be grabbed from the inventory via target_name
         """
-
-        # print(ref_params.kwargs)
         try:
+            # set vault params as ref params
             target_name = ref_params.kwargs["target_name"]
             if target_name is None:
                 raise ValueError("target_name not set")
-
-            token = ref_params.kwargs.get("token")
-            if target_name is None:
-                raise RefError("Could not create VaultSecret: vaultkv parameters missing")
-
-            token_attrs = token.split(":")
-
-            if len(token_attrs) != 5:
-                raise VaultError("tok")
-
-            ref_params.kwargs["mount_in_vault"] = token_attrs[2]
-            ref_params.kwargs["path_in_vault"] = token_attrs[3]
-            ref_params.kwargs["key_in_vault"] = token_attrs[4]
 
             target_inv = cached.inv["nodes"].get(target_name, None)
             if target_inv is None:
                 raise ValueError("target_inv not set")
 
-            ref_params.kwargs["vault_params"] = target_inv["parameters"]["kapitan"]["secrets"]["vaultkv"]
+            vault_params = target_inv["parameters"]["kapitan"]["secrets"]["vaultkv"]
+            ref_params.kwargs["vault_params"] = vault_params
+
+            # set mount, path and key as ref params
+            token = ref_params.kwargs.get("token")
+            if token is None:
+                raise RefError("Could not create VaultSecret: vaultkv parameters missing")
+
+            token_attrs = token.split(":")
+
+            if len(token_attrs) != 5:
+                raise RefError("Could not create VaultSecret: ref token is invalid")
+
+            # set mount
+            # mount = token_attrs[2]
+            # if not mount:
+            #     mount = vault_params.get("mount")
+            # ref_params.kwargs["mount_in_vault"] = mount
+
+            # set path in vault
+            path_in_vault = token_attrs[3]
+            if not path_in_vault:
+                path_in_vault = token_attrs[1]  # ref path in kapitan as default
+            ref_params.kwargs["path_in_vault"] = path_in_vault
+
+            # set key
+            key = token_attrs[4]
+            if key:
+                ref_params.kwargs["key_in_vault"] = token_attrs[4]
+            else:
+                raise RefError("Could not create VaultSecret: vaultkv: key is missing")
+
             return cls(data, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create VaultSecret: vaultkv parameters missing")
@@ -226,6 +243,7 @@ class VaultSecret(Base64Ref):
             client.secrets.kv.v2.create_or_update_secret(
                 path=self.path, secret=secret, mount_point=self.vault_params.get("mount", "secret")
             )
+
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
