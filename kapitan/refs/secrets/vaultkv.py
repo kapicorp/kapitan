@@ -131,12 +131,25 @@ class VaultSecret(Base64Ref):
     Hashicorp Vault support for KV Secret Engine
     """
 
-    def __init__(self, data, vault_params, **kwargs):
+    def __init__(self, data, vault_params, encrypt=True, encode_base64=False, **kwargs):
         """
         Set vault parameter and encoding of data
         """
-        self.data = data
         self.vault_params = vault_params
+        # print('initital data: ', data)
+
+        self.mount = kwargs.get("mount_in_vault")
+        self.path = kwargs.get("path_in_vault")
+        self.key = kwargs.get("key_in_vault")
+
+        if encrypt:
+            # not really encryption --> storing key/value in vault
+            self._encrypt(data, encode_base64)
+        else:
+            self.data = data
+
+        self.data = self.data.encode()
+
         super().__init__(self.data, **kwargs)
         self.type_name = "vaultkv"
 
@@ -146,10 +159,25 @@ class VaultSecret(Base64Ref):
         Return new VaultSecret from data and ref_params: target_name
         parameters will be grabbed from the inventory via target_name
         """
+
+        # print(ref_params.kwargs)
         try:
             target_name = ref_params.kwargs["target_name"]
             if target_name is None:
                 raise ValueError("target_name not set")
+
+            token = ref_params.kwargs.get("token")
+            if target_name is None:
+                raise RefError("Could not create VaultSecret: vaultkv parameters missing")
+
+            token_attrs = token.split(":")
+
+            if len(token_attrs) != 5:
+                raise VaultError("tok")
+
+            ref_params.kwargs["mount_in_vault"] = token_attrs[2]
+            ref_params.kwargs["path_in_vault"] = token_attrs[3]
+            ref_params.kwargs["key_in_vault"] = token_attrs[4]
 
             target_inv = cached.inv["nodes"].get(target_name, None)
             if target_inv is None:
@@ -169,12 +197,52 @@ class VaultSecret(Base64Ref):
         Returns decrypted data
         """
         # can't use super().reveal() as we want bytes
-        try:
-            self.data = base64.b64decode(self.data, validate=True)
-        except b_error:
-            exit("non-alphabet characters in the data")
+        if self.encoding == "base64":
+            try:
+                self.data = base64.b64decode(self.data.decode(), validate=True)
+            except b_error:
+                raise VaultError(f"Error in encoding: {self.data}")
 
         return self._decrypt()
+
+    def _encrypt(self, data, encode_base64=False):
+        """
+        Authenticate with Vault server & write given data in path/key
+        """
+        try:
+            # get vault client
+            client = vault_obj(self.vault_params)
+
+            # try:
+            #     data = base64.b64decode(data).decode()
+            #     encode_base64 = True
+            # except b_error:
+            #     pass
+
+            secret = {}
+            secret[self.key] = data
+
+            # create secret in path
+            client.secrets.kv.v2.create_or_update_secret(
+                path=self.path, secret=secret, mount_point=self.vault_params.get("mount", "secret")
+            )
+        except Forbidden:
+            raise VaultError(
+                "Permission Denied. "
+                + "make sure the token is authorised to access {path} on Vault".format(path=data[0])
+            )
+
+        # set the data to path:key
+        data = f"{self.path}:{self.key}"
+
+        self.encoding = "original"
+        if encode_base64:
+            _data = base64.b64encode(data.encode())
+            self.encoding = "base64"
+        else:
+            _data = data
+
+        self.data = _data
 
     def _decrypt(self):
         """
@@ -184,8 +252,11 @@ class VaultSecret(Base64Ref):
         """
         try:
             client = vault_obj(self.vault_params)
+
             # token will comprise of two parts path_in_vault:key
-            data = self.data.decode("utf-8").rstrip().split(":")
+            self.data = base64.b64decode(self.data)
+            data = self.data.decode().split(":")
+
             return_data = ""
             if self.vault_params.get("engine") == "kv":
                 response = client.secrets.kv.v1.read_secret(

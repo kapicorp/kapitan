@@ -598,6 +598,22 @@ class RefController(object):
                             token, ref.token
                         )
                     )
+
+        # "type_name:path/to/ref:vault_mount:path/in/vault:key"
+        elif len(attrs) == 5:
+            type_name = attrs[0]
+            path_to_ref = attrs[1]
+            vault_mount = attrs[2]
+            path_in_vault = attrs[3]
+            key = attrs[4]
+
+            if key is None:
+                raise RefError(f"{token} is not a valid token (key in vault is needed)")
+            else:
+                backend = self._get_backend(type_name)
+                ref = backend[path_to_ref]
+                return ref
+
         else:
             return None
 
@@ -610,6 +626,20 @@ class RefController(object):
             backend = self._get_backend(type_name)
             assert isinstance(ref_obj, backend.ref_type)
             backend[path] = ref_obj
+
+        # used for writing(creating) secrets in vaultkv
+        elif len(attrs) == 5:
+
+            type_name = attrs[0]
+            path_to_ref = attrs[1]
+            vault_mount = attrs[2]
+            path_in_vault = attrs[3]
+            key = attrs[4]
+
+            backend = self._get_backend(type_name)
+            assert isinstance(ref_obj, backend.ref_type)
+            backend[path_to_ref] = ref_obj
+
         else:
             raise RefError(f"{token}: is not a valid token")
 
@@ -684,6 +714,9 @@ class RefController(object):
                 ctx.encode_base64 = False
                 ctx.ref_controller = self
                 ctx.token = token
+
+                # pass the token as ref param
+                value.kwargs["token"] = token
 
                 self._eval_func_str(ctx, func_str)
                 ref_type = self.token_type(token)
