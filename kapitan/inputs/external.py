@@ -28,10 +28,14 @@ class External(InputType):
         # Propagate HOME and PATH environment variables to external tool
         # This is necessary, because calling `subprocess.run()` with `env` set doesn't propagate
         # any environment variables from the current process.
-        if "PATH" not in env_vars:
-            env_vars["PATH"] = os.environ.get("PATH")
-        if "HOME" not in env_vars:
-            env_vars["HOME"] = os.environ.get("HOME")
+        # We only propagate HOME or PATH if they're present in Kapitan's environment, but aren't
+        # explicitly specified in the input's env_vars already. This ensures we don't run into
+        # issues when spawning the subprocess due to `None` values being present in the subprocess's
+        # environment.
+        if "PATH" not in env_vars and "PATH" in os.environ:
+            env_vars["PATH"] = os.environ["PATH"]
+        if "HOME" not in env_vars and "HOME" in os.environ:
+            env_vars["HOME"] = os.environ["HOME"]
         self.env_vars = env_vars
 
     def set_args(self, args):
