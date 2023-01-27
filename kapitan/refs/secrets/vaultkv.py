@@ -136,7 +136,12 @@ class VaultSecret(Base64Ref):
         Set vault parameter and encoding of data
         """
         self.vault_params = vault_params
-        # print('initital data: ', data)
+
+        encoding = kwargs.get("encoding", "original")
+
+        # ensure that data is always bytes
+        if encoding == "original":
+            data = data.encode()
 
         self.mount = kwargs.get("mount_in_vault")
         self.path = kwargs.get("path_in_vault")
@@ -148,62 +153,62 @@ class VaultSecret(Base64Ref):
         else:
             self.data = data
 
-        self.data = self.data.encode()
-
         super().__init__(self.data, **kwargs)
         self.type_name = "vaultkv"
 
     @classmethod
     def from_params(cls, data, ref_params):
         """
-        Return new VaultSecret from data and ref_params: target_name
+        Return new VaultSecret from data and ref_params: target_name, token
         parameters will be grabbed from the inventory via target_name
+        vault parameters will be read from token
         """
+
+        # set vault params as ref params
+        target_name = ref_params.kwargs["target_name"]
+        if target_name is None:
+            raise ValueError("target_name not set")
+
+        target_inv = cached.inv["nodes"].get(target_name, None)
+        if target_inv is None:
+            raise ValueError("target_inv not set")
+
         try:
-            # set vault params as ref params
-            target_name = ref_params.kwargs["target_name"]
-            if target_name is None:
-                raise ValueError("target_name not set")
-
-            target_inv = cached.inv["nodes"].get(target_name, None)
-            if target_inv is None:
-                raise ValueError("target_inv not set")
-
             vault_params = target_inv["parameters"]["kapitan"]["secrets"]["vaultkv"]
             ref_params.kwargs["vault_params"] = vault_params
-
-            # set mount, path and key as ref params
-            token = ref_params.kwargs.get("token")
-            if token is None:
-                raise RefError("Could not create VaultSecret: vaultkv parameters missing")
-
-            token_attrs = token.split(":")
-
-            if len(token_attrs) != 5:
-                raise RefError("Could not create VaultSecret: ref token is invalid")
-
-            # set mount
-            # mount = token_attrs[2]
-            # if not mount:
-            #     mount = vault_params.get("mount")
-            # ref_params.kwargs["mount_in_vault"] = mount
-
-            # set path in vault
-            path_in_vault = token_attrs[3]
-            if not path_in_vault:
-                path_in_vault = token_attrs[1]  # ref path in kapitan as default
-            ref_params.kwargs["path_in_vault"] = path_in_vault
-
-            # set key
-            key = token_attrs[4]
-            if key:
-                ref_params.kwargs["key_in_vault"] = token_attrs[4]
-            else:
-                raise RefError("Could not create VaultSecret: vaultkv: key is missing")
-
-            return cls(data, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create VaultSecret: vaultkv parameters missing")
+
+        # set mount, path and key as ref params, read from token
+        token = ref_params.kwargs.get("token")
+        if token is None:
+            raise RefError("Could not create VaultSecret: vaultkv parameters missing")
+
+        token_attrs = token.split(":")
+
+        if len(token_attrs) != 5:
+            raise RefError("Could not create VaultSecret: ref token is invalid")
+
+        # set mount
+        mount = token_attrs[2]
+        if not mount:
+            mount = vault_params.get("mount", "secret")  # secret is default mount point
+        ref_params.kwargs["mount_in_vault"] = mount
+
+        # set path in vault
+        path_in_vault = token_attrs[3]
+        if not path_in_vault:
+            path_in_vault = token_attrs[1]  # ref path in kapitan as default
+        ref_params.kwargs["path_in_vault"] = path_in_vault
+
+        # set key
+        key = token_attrs[4]
+        if key:
+            ref_params.kwargs["key_in_vault"] = token_attrs[4]
+        else:
+            raise RefError("Could not create VaultSecret: vaultkv: key is missing")
+
+        return cls(data, **ref_params.kwargs)
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -215,10 +220,7 @@ class VaultSecret(Base64Ref):
         """
         # can't use super().reveal() as we want bytes
         if self.encoding == "base64":
-            try:
-                self.data = base64.b64decode(self.data.decode(), validate=True)
-            except b_error:
-                raise VaultError(f"Error in encoding: {self.data}")
+            self.data = self.data.encode()
 
         return self._decrypt()
 
@@ -226,24 +228,20 @@ class VaultSecret(Base64Ref):
         """
         Authenticate with Vault server & write given data in path/key
         """
+        secret = {}
+        secret[self.key] = data.decode()
+
         try:
             # get vault client
             client = vault_obj(self.vault_params)
 
-            # try:
-            #     data = base64.b64decode(data).decode()
-            #     encode_base64 = True
-            # except b_error:
-            #     pass
-
-            secret = {}
-            secret[self.key] = data
+            # TODO: check if key would be overwritten by new secret and handle it
+            # ATM there can only be one key per path
 
             # create secret in path
             client.secrets.kv.v2.create_or_update_secret(
-                path=self.path, secret=secret, mount_point=self.vault_params.get("mount", "secret")
+                path=self.path, secret=secret, mount_point=self.mount
             )
-
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
@@ -258,7 +256,7 @@ class VaultSecret(Base64Ref):
             _data = base64.b64encode(data.encode())
             self.encoding = "base64"
         else:
-            _data = data
+            _data = data.encode()
 
         self.data = _data
 
@@ -271,9 +269,11 @@ class VaultSecret(Base64Ref):
         try:
             client = vault_obj(self.vault_params)
 
-            # token will comprise of two parts path_in_vault:key
-            self.data = base64.b64decode(self.data)
-            data = self.data.decode().split(":")
+            # data is always base64 encoded
+            data = base64.b64decode(self.data.decode())
+
+            # token will comprise of two parts, e.g. path/in/vault:key
+            data = data.decode().split(":")
 
             return_data = ""
             if self.vault_params.get("engine") == "kv":
@@ -297,6 +297,10 @@ class VaultSecret(Base64Ref):
 
         if return_data == "":
             raise VaultError("'{key}' doesn't exist on '{path}'".format(key=data[1], path=data[0]))
+
+        if self.encoding == "base64":
+            return_data = base64.b64decode(return_data, validate=True).decode()
+
         return return_data
 
     def dump(self):
