@@ -134,14 +134,9 @@ class VaultSecret(Base64Ref):
     def __init__(self, data, vault_params, encrypt=True, encode_base64=False, **kwargs):
         """
         Set vault parameter and encoding of data
+        data will be passed as bytes
         """
         self.vault_params = vault_params
-
-        encoding = kwargs.get("encoding", "original")
-
-        # ensure that data is always bytes
-        if encoding == "original":
-            data = data.encode()
 
         self.mount = kwargs.get("mount_in_vault")
         self.path = kwargs.get("path_in_vault")
@@ -163,6 +158,10 @@ class VaultSecret(Base64Ref):
         parameters will be grabbed from the inventory via target_name
         vault parameters will be read from token
         """
+
+        encoding = ref_params.kwargs.get("encoding", "original")
+        if encoding == "original":
+            data = data.encode()
 
         # set vault params as ref params
         target_name = ref_params.kwargs["target_name"]
@@ -270,7 +269,7 @@ class VaultSecret(Base64Ref):
             client = vault_obj(self.vault_params)
 
             # data is always base64 encoded
-            data = base64.b64decode(self.data.decode())
+            data = base64.b64decode(self.data)
 
             # token will comprise of two parts, e.g. path/in/vault:key
             data = data.decode().split(":")
