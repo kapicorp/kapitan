@@ -603,8 +603,6 @@ class RefController(object):
         elif len(attrs) == 5:
             type_name = attrs[0]
             path_to_ref = attrs[1]
-            vault_mount = attrs[2]
-            path_in_vault = attrs[3]
             key = attrs[4]
 
             if key is None:
@@ -629,13 +627,8 @@ class RefController(object):
 
         # used for writing(creating) secrets in vaultkv
         elif len(attrs) == 5:
-
             type_name = attrs[0]
             path_to_ref = attrs[1]
-            vault_mount = attrs[2]
-            path_in_vault = attrs[3]
-            key = attrs[4]
-
             backend = self._get_backend(type_name)
             assert isinstance(ref_obj, backend.ref_type)
             backend[path_to_ref] = ref_obj
