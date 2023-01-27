@@ -125,7 +125,7 @@ class VaultSecretTest(unittest.TestCase):
             secret=secret,
         )
         env = {"auth": "token"}
-        file_data = "foo:some_random_value".encode()
+        file_data = "foo:some_random_value"
         REF_CONTROLLER[tag] = VaultSecret(file_data, env)
 
         # confirming secret file exists
@@ -137,7 +137,7 @@ class VaultSecretTest(unittest.TestCase):
             fp.write("File contents revealed: {}".format(tag))
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
 
-        # confirming secerts are correctly revealed
+        # confirming secrets are correctly revealed
         self.assertEqual("File contents revealed: {}".format(secret["some_random_value"]), revealed)
 
     def test_vault_missing_secret(self):
@@ -146,7 +146,7 @@ class VaultSecretTest(unittest.TestCase):
         """
         tag = "?{vaultkv:secret/joker}"
         env = {"auth": "token"}
-        file_data = "foo:some_random_value".encode()
+        file_data = "foo:some_random_value"
         REF_CONTROLLER[tag] = VaultSecret(file_data, env)
 
         # confirming secret file exists
@@ -158,3 +158,28 @@ class VaultSecretTest(unittest.TestCase):
             fp.write("File contents revealed: {}".format(tag))
         with self.assertRaises(VaultError):
             REVEALER.reveal_raw_file(file_with_secret_tags)
+
+    def test_vault_write_secret(self):
+        """
+        test vaultkv tag with parameters
+        """
+        env = {"auth": "token", "mount": "secret"}
+        secret = "bar"
+
+        tag = "?{vaultkv:secret/harleyquinn:secret:testpath:foo}"
+        REF_CONTROLLER[tag] = VaultSecret(
+            secret, env, mount_in_vault="secret", path_in_vault="testpath", key_in_vault="foo"
+        )
+
+        # confirming ref file exists
+        self.assertTrue(
+            os.path.isfile(os.path.join(REFS_HOME, "secret/harleyquinn")), msg="Secret file doesn't exist"
+        )
+
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, "w") as fp:
+            fp.write("File contents revealed: {}".format(tag))
+        revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
+
+        # confirming secrets are correctly revealed
+        self.assertEqual("File contents revealed: {}".format(secret), revealed)
