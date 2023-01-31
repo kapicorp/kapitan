@@ -1,15 +1,10 @@
 {% extends "base.html" %}
-{#
-{% block announce %}
-  <!-- Add announcement here, including arbitrary HTML -->
-{% endblock %}
-#}
 
- <!--
- Hack: check whether the content contains a h1 headline. If it
- doesn't, the page title (or respectively site name) is used
- as the main headline.
- -->
+{% block announce %}
+<p>New <strong>kapitan</strong> release <a title="v0.31.0" href="/pages/blog/2023-01-16/">v0.31.0</a> now available!</p>
+{% endblock %}
+
+
  {% block content %}
  {% if not "\x3ch1" in page.content %}
     <h1>{{ page.title | d(config.site_name, true)}}</h1>
