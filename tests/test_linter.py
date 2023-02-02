@@ -24,7 +24,6 @@ class Object(object):
 
 class LinterTest(unittest.TestCase):
     def test_lint(self):
-
         args = Object()
         args.fail_on_warning = False
         args.skip_class_checks = False
