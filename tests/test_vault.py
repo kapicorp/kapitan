@@ -60,7 +60,7 @@ class VaultSecretTest(unittest.TestCase):
         cls.client.sys.enable_secrets_engine(backend_type="kv-v2", path="secret")
         test_policy = """
         path "secret/*" {
-          capabilities = ["read", "list"]
+          capabilities = ["read", "list", "create", "update"]
         }
         """
         policy = "test_policy"
@@ -116,51 +116,6 @@ class VaultSecretTest(unittest.TestCase):
 
     def test_vault_write_reveal(self):
         """
-        Write secret, confirm secret file exists, reveal and compare content
-        """
-        tag = "?{vaultkv:secret/batman}"
-        secret = {"some_random_value": "something_secret"}
-        self.client.secrets.kv.v2.create_or_update_secret(
-            path="foo",
-            secret=secret,
-        )
-        env = {"auth": "token"}
-        file_data = "foo:some_random_value"
-        REF_CONTROLLER[tag] = VaultSecret(file_data, env)
-
-        # confirming secret file exists
-        self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/batman")), msg="Secret file doesn't exist"
-        )
-        file_with_secret_tags = tempfile.mktemp()
-        with open(file_with_secret_tags, "w") as fp:
-            fp.write("File contents revealed: {}".format(tag))
-        revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
-
-        # confirming secrets are correctly revealed
-        self.assertEqual("File contents revealed: {}".format(secret["some_random_value"]), revealed)
-
-    def test_vault_missing_secret(self):
-        """
-        Access non existing secret, expect error
-        """
-        tag = "?{vaultkv:secret/joker}"
-        env = {"auth": "token"}
-        file_data = "foo:some_random_value"
-        REF_CONTROLLER[tag] = VaultSecret(file_data, env)
-
-        # confirming secret file exists
-        self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/joker")), msg="Secret file doesn't exist"
-        )
-        file_with_secret_tags = tempfile.mktemp()
-        with open(file_with_secret_tags, "w") as fp:
-            fp.write("File contents revealed: {}".format(tag))
-        with self.assertRaises(VaultError):
-            REVEALER.reveal_raw_file(file_with_secret_tags)
-
-    def test_vault_write_secret(self):
-        """
         test vaultkv tag with parameters
         """
         env = {"auth": "token", "mount": "secret"}
@@ -168,7 +123,7 @@ class VaultSecretTest(unittest.TestCase):
 
         tag = "?{vaultkv:secret/harleyquinn:secret:testpath:foo}"
         REF_CONTROLLER[tag] = VaultSecret(
-            secret, env, mount_in_vault="secret", path_in_vault="testpath", key_in_vault="foo"
+            secret.encode(), env, mount_in_vault="secret", path_in_vault="testpath", key_in_vault="foo"
         )
 
         # confirming ref file exists
@@ -183,3 +138,72 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming secrets are correctly revealed
         self.assertEqual("File contents revealed: {}".format(secret), revealed)
+
+    def test_vault_reveal(self):
+        """
+        Write secret, confirm secret file exists, reveal and compare content
+        """
+        # hardcode secret into vault
+        tag = "?{vaultkv:secret/batman}"
+        secret = {"some_key": "some_secret"}
+        self.client.secrets.kv.v2.create_or_update_secret(
+            path="foo",
+            secret=secret,
+        )
+        env = {"auth": "token"}
+        file_data = "foo:some_key".encode()
+        # encrypt false, because we want just reveal
+        REF_CONTROLLER[tag] = VaultSecret(file_data, env, encrypt=False)
+
+        # confirming secret file exists
+        self.assertTrue(
+            os.path.isfile(os.path.join(REFS_HOME, "secret/batman")), msg="Secret file doesn't exist"
+        )
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, "w") as fp:
+            fp.write("File contents revealed: {}".format(tag))
+        revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
+
+        # confirming secrets are correctly revealed
+        self.assertEqual("File contents revealed: {}".format(secret["some_key"]), revealed)
+
+    def test_vault_reveal_missing_path(self):
+        """
+        Access non existing secret, expect error
+        """
+        tag = "?{vaultkv:secret/joker}"
+        env = {"auth": "token"}
+        file_data = "some_not_existing_path:some_key".encode()
+        # encrypt false, because we want just reveal
+        REF_CONTROLLER[tag] = VaultSecret(file_data, env, encrypt=False)
+
+        # confirming secret file exists
+        self.assertTrue(
+            os.path.isfile(os.path.join(REFS_HOME, "secret/joker")), msg="Secret file doesn't exist"
+        )
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, "w") as fp:
+            fp.write("File contents revealed: {}".format(tag))
+        with self.assertRaises(VaultError):
+            REVEALER.reveal_raw_file(file_with_secret_tags)
+
+    def test_vault_reveal_missing_key(self):
+        """
+        Access non existing secret, expect error
+        """
+        tag = "?{vaultkv:secret/joker}"
+        env = {"auth": "token"}
+        # path foo exists from tests before
+        file_data = "foo:some_not_existing_key".encode()
+        # encrypt false, because we want just reveal
+        REF_CONTROLLER[tag] = VaultSecret(file_data, env, encrypt=False)
+
+        # confirming secret file exists
+        self.assertTrue(
+            os.path.isfile(os.path.join(REFS_HOME, "secret/joker")), msg="Secret file doesn't exist"
+        )
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, "w") as fp:
+            fp.write("File contents revealed: {}".format(tag))
+        with self.assertRaises(VaultError):
+            REVEALER.reveal_raw_file(file_with_secret_tags)
