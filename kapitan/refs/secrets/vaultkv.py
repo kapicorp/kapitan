@@ -233,6 +233,7 @@ class VaultSecret(Base64Ref):
                 "Invalid path: None, you have to specify the path where the secret gets stored (in vault)"
             )
 
+        client = None
         try:
             # get vault client
             client = vault_obj(self.vault_params)
@@ -268,6 +269,7 @@ class VaultSecret(Base64Ref):
 
         :returns: secret in plain text
         """
+        client = None
         try:
             client = vault_obj(self.vault_params)
 
