@@ -138,12 +138,11 @@ class VaultSecret(Base64Ref):
         """
         self.vault_params = vault_params
 
-        self.mount = kwargs.get("mount_in_vault")
-        self.path = kwargs.get("path_in_vault")
-        self.key = kwargs.get("key_in_vault")
-
         if encrypt:
             # not really encryption --> storing key/value in vault
+            self.mount = kwargs.get("mount_in_vault")
+            self.path = kwargs.get("path_in_vault")
+            self.key = kwargs.get("key_in_vault")
             self._encrypt(data, encode_base64)
         else:
             self.data = data
@@ -227,8 +226,12 @@ class VaultSecret(Base64Ref):
         """
         Authenticate with Vault server & write given data in path/key
         """
-        secret = {}
-        secret[self.key] = data.decode()
+        secret = {self.key: data.decode()}
+
+        if self.path is None:
+            raise VaultError(
+                "Invalid path: None, you have to specify the path where the secret gets stored (in vault)"
+            )
 
         try:
             # get vault client
@@ -244,20 +247,20 @@ class VaultSecret(Base64Ref):
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
-                + "make sure the token is authorised to access {path} on Vault".format(path=data[0])
+                + "make sure the token is authorised to access '{}' on Vault".format(self.path)
             )
+        finally:
+            client.adapter.close()
 
         # set the data to path:key
-        data = f"{self.path}:{self.key}"
+        data = f"{self.path}:{self.key}".encode()
 
         self.encoding = "original"
         if encode_base64:
-            _data = base64.b64encode(data.encode())
+            data = base64.b64encode(data)
             self.encoding = "base64"
-        else:
-            _data = data.encode()
 
-        self.data = _data
+        self.data = data
 
     def _decrypt(self):
         """
@@ -273,26 +276,33 @@ class VaultSecret(Base64Ref):
 
             # token will comprise of two parts, e.g. path/in/vault:key
             data = data.decode().split(":")
+            mount = self.vault_params.get("mount", "secret")
 
             return_data = ""
             if self.vault_params.get("engine") == "kv":
                 response = client.secrets.kv.v1.read_secret(
-                    path=data[0], mount_point=self.vault_params.get("mount", "secret")
+                    path=data[0],
+                    mount_point=mount,
                 )
                 return_data = response["data"][data[1]]
             else:
                 response = client.secrets.kv.v2.read_secret_version(
-                    path=data[0], mount_point=self.vault_params.get("mount", "secret")
+                    path=data[0],
+                    mount_point=mount,
                 )
                 return_data = response["data"]["data"][data[1]]
-            client.adapter.close()
+
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
-                + "make sure the token is authorised to access {path} on Vault".format(path=data[0])
+                + "make sure the token is authorised to access '{}' on Vault".format(data[0])
             )
         except InvalidPath:
-            raise VaultError("{path} does not exist on Vault secret".format(path=data[0]))
+            raise VaultError("path '{}' does not exist on Vault".format(data[0]))
+        except KeyError:
+            raise VaultError("key '{}' does not exist on Vault".format(data[1]))
+        finally:
+            client.adapter.close()
 
         if return_data == "":
             raise VaultError("'{key}' doesn't exist on '{path}'".format(key=data[1], path=data[0]))
