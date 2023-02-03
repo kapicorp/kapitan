@@ -240,8 +240,6 @@ def ref_write(args, ref_controller):
         else:
             raise RefError("Could not create VaultSecret: vaultkv: key is missing")
 
-        print(f"\n\n---\n{kwargs}\n---\n")
-
         secret_obj = VaultSecret(_data, vault_params, **kwargs)
         tag = "?{{vaultkv:{}}}".format(token_path)
         ref_controller[tag] = secret_obj
