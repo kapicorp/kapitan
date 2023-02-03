@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## NEXT RELEASE
+
+- New flag for `kapitan compile` `--compose-node-name`. This needs to be used in conjuction with `inventory/reclass-config.yml` option `compose_node_name: true`. This allows us to make the same subfolder structure in the inventory folder inside the compiled folder. More info on issue #932
+
 ## 0.30.0-rc.0
 
 - Helm binary support (KAP 09) (#701) special thanks @Jean-Daniel @sebradloff @srueg
