@@ -36,8 +36,8 @@ Kapitan needs Python 3.7.
 
 #### Install Python 3.7
 
-* Linux: `sudo apt-get update && sudo apt-get install -y python3.7-dev python3-pip python3-yaml`
-* Mac: `brew install python3 libyaml`
+* Linux: `sudo apt-get update && sudo apt-get install -y python3.7-dev python3-pip python3-yaml git`
+* Mac: `brew install python3 libyaml git libmagic`
 
 #### Install Kapitan
 
