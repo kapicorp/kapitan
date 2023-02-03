@@ -68,7 +68,10 @@ class InputType(object):
 
         logger.debug("Compiling %s", input_path)
         try:
-            _compile_path = os.path.join(self.compile_path, target_name, output_path)
+            if kwargs.get("compose_node_name", False):
+                _compile_path = os.path.join(self.compile_path, target_name.replace(".", "/"), output_path)
+            else:
+                _compile_path = os.path.join(self.compile_path, target_name, output_path)
             self.compile_file(
                 input_path,
                 _compile_path,
@@ -81,11 +84,13 @@ class InputType(object):
         except KapitanError as e:
             raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
 
-    def make_compile_dirs(self, target_name, output_path):
+    def make_compile_dirs(self, target_name, output_path, **kwargs):
         """make compile dirs, skips if dirs exist"""
         _compile_path = os.path.join(self.compile_path, target_name, output_path)
-        # support writing to an already existent dir
-        os.makedirs(_compile_path, exist_ok=True)
+        if kwargs.get("compose_node_name", False):
+            os.makedirs(_compile_path.replace(".", "/"), exist_ok=True)
+        else:
+            os.makedirs(_compile_path, exist_ok=True)
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """implements compilation for file_path to compile_path with ext_vars"""

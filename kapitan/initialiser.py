@@ -22,15 +22,17 @@ def initialise_skeleton(args):
 
     current_pwd = os.path.dirname(__file__)
     templates_directory = os.path.join(current_pwd, "inputs", "templates")
-
-    copy_tree(templates_directory, args.directory)
-
+    populated = copy_tree(templates_directory, args.directory)
     logger.info("Populated %s with:", args.directory)
-    for dirName, subdirList, fileList in os.walk(args.directory):
-        logger.info("%s", dirName)
-        for fname in fileList:
-            logger.info("\t %s", fname)
-        # Remove the first entry in the list of sub-directories
-        # if there are any sub-directories present
-        if len(subdirList) > 0:
-            del subdirList[0]
+    for directory, subs, file_list in os.walk(args.directory):
+        # In order to avoid adding the given directory itself in listing.
+        if directory == args.directory:
+            continue
+        if any([path.startswith(directory) for path in populated]):
+            level = directory.replace(args.directory, "").count(os.sep) - 1
+            indent = " " * 4 * (level)
+            logger.info("%s%s", indent, os.path.basename(directory))
+            for fname in file_list:
+                if os.path.join(directory, fname) in populated:
+                    sub_indent = " " * 4 * (level + 1)
+                    logger.info("%s%s", sub_indent, fname)

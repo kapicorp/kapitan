@@ -30,7 +30,6 @@ def azkms_obj(key_id):
     """
     # e.g of key_id https://kapitanbackend.vault.azure.net/keys/myKey/deadbeef
     if not cached.azkms_obj:
-
         url = urlparse(key_id)
         # ['', 'keys', 'myKey', 'deadbeef'] or ['kapitanbackend.vault.azure.net', 'keys', 'myKey', 'deadbeef']
         # depending on if key_id is prefixed with https://
@@ -138,7 +137,6 @@ class AzureKMSSecret(Base64Ref):
             if key == "mock":
                 ciphertext = base64.b64encode(_data)
             else:
-
                 request = azkms_obj(key).encrypt(EncryptionAlgorithm.rsa_oaep_256, _data)
                 ciphertext = request.ciphertext
 
