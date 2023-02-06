@@ -127,7 +127,7 @@ msrest==0.6.21
     # via
     #   -r requirements.txt
     #   azure-keyvault-keys
-oauthlib==3.2.1
+oauthlib==3.2.2
     # via
     #   -r requirements.txt
     #   requests-oauthlib
