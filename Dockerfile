@@ -1,6 +1,8 @@
 # Build the virtualenv for Kapitan
 FROM python:3.7-slim AS python-builder
 
+ARG TARGETARCH
+
 RUN mkdir /kapitan
 WORKDIR /kapitan
 
@@ -18,7 +20,7 @@ RUN apt-get update \
         build-essential
 
 # Install Go (for go-jsonnet)
-RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.17.3.linux-amd64.tar.gz \
+RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.17.3.linux-${TARGETARCH}.tar.gz \
     && tar -C /usr/local -xzf go.tar.gz \
     && rm go.tar.gz
 
