@@ -14,97 +14,23 @@ import subprocess
 import sys
 import tempfile
 import unittest
-import hvac
-import docker
-import socket
-from contextlib import closing
-from time import sleep
 from unittest.mock import patch
 
 from kapitan.cli import main, build_parser
-from kapitan.refs.secrets import vaultkv
-
-
-# used for vaultkv server
-def find_free_port():
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(("", 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return s.getsockname()[1]
-
-
-DOCKER_PORT = find_free_port()
+from kapitan.refs.secrets.vaultkv import VaultSecret
+from tests.vault_server import VaultServer
 
 REFS_PATH = tempfile.mkdtemp()
-
-# set GNUPGHOME if only running this test
-# otherwise it will reuse the value from test_gpg.py
-if os.environ.get("GNUPGHOME", None) is None:
-    GNUPGHOME = tempfile.mkdtemp()
-    os.environ["GNUPGHOME"] = GNUPGHOME
-
-# Create Vault docker container
-client = docker.from_env()
-env = {
-    "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'
-}
-
-vault_container = client.containers.run(
-    image="vault",
-    cap_add=["IPC_LOCK"],
-    ports={"8200": DOCKER_PORT},
-    environment=env,
-    detach=True,
-    remove=True,
-    command="server",
-)
 
 
 class CliFuncsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # make sure the container is up & running before testing
-        while vault_container.status != "running":
-            sleep(2)
-            vault_container.reload()
-
-        # Initialize vault, unseal, mount secret engine & add auth
-        os.environ["VAULT_ADDR"] = f"http://127.0.0.1:{DOCKER_PORT}"
-        cls.client = hvac.Client()
-        init = cls.client.sys.initialize()
-        cls.client.sys.submit_unseal_keys(init["keys"])
-        os.environ["VAULT_ROOT_TOKEN"] = init["root_token"]
-        cls.client.adapter.close()
-        cls.client = hvac.Client(token=init["root_token"])
-        cls.client.sys.enable_secrets_engine(backend_type="kv-v2", path="secret")
-        test_policy = """
-        path "secret/*" {
-          capabilities = ["read", "list", "create", "update"]
-        }
-        """
-        policy = "test_policy"
-        cls.client.sys.create_or_update_policy(name=policy, policy=test_policy)
-        os.environ["VAULT_USERNAME"] = "test_user"
-        os.environ["VAULT_PASSWORD"] = "test_password"
-        cls.client.sys.enable_auth_method("userpass")
-        cls.client.create_userpass(username="test_user", password="test_password", policies=[policy])
-        cls.client.sys.enable_auth_method("approle")
-        cls.client.create_role("test_role")
-        os.environ["VAULT_ROLE_ID"] = cls.client.get_role_id("test_role")
-        os.environ["VAULT_SECRET_ID"] = cls.client.create_role_secret_id("test_role")["data"]["secret_id"]
-        os.environ["VAULT_TOKEN"] = cls.client.create_token(policies=[policy], lease="1h")["auth"][
-            "client_token"
-        ]
+        cls.server = VaultServer(REFS_PATH, "test_vaultkv_cli")
 
     @classmethod
     def tearDownClass(cls):
-        cls.client.adapter.close()
-        vault_container.stop()
-        client.close()
-
-        shutil.rmtree(REFS_PATH, ignore_errors=True)
-        for i in ["ROOT_TOKEN", "TOKEN", "USERNAME", "PASSWORD", "ROLE_ID", "SECRET_ID"]:
-            del os.environ["VAULT_" + i]
+        cls.server.close_container()
 
     def setUp(self):
         example_key = "examples/kubernetes/refs/example@kapitan.dev.key"
@@ -732,7 +658,7 @@ class CliFuncsTest(unittest.TestCase):
             main()
         self.assertEqual(test_secret_content, stdout.getvalue())
 
-    @patch.object(vaultkv.VaultSecret, "_decrypt")
+    @patch.object(VaultSecret, "_decrypt")
     def test_cli_secret_write_vault(self, mock_reveal):
         """
         run $ kapitan refs --write vaultkv:test_secret
