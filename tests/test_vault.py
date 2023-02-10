@@ -17,7 +17,7 @@ from time import sleep
 
 import docker
 import hvac
-from kapitan.refs.base import RefController, Revealer
+from kapitan.refs.base import RefController, Revealer, RefParams
 from kapitan.refs.secrets.vaultkv import VaultSecret, VaultError, vault_obj
 
 
@@ -220,3 +220,53 @@ class VaultSecretTest(unittest.TestCase):
             fp.write("File contents revealed: {}".format(tag))
         with self.assertRaises(VaultError):
             REVEALER.reveal_raw_file(file_with_secret_tags)
+
+    def test_vault_secret_from_params(self):
+        """
+        Write secret via token, check if ref file exists
+        """
+        env = {"vault_params": {"auth": "token", "mount": "secret"}}
+        params = RefParams()
+        params.kwargs = env
+
+        tag = "?{vaultkv:secret/bane:secret:banes_testpath:banes_testkey||random:int:32}"
+        REF_CONTROLLER[tag] = params
+
+        # confirming ref file exists
+        self.assertTrue(
+            os.path.isfile(os.path.join(REFS_HOME, "secret/bane")), msg="Secret file doesn't exist"
+        )
+
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, "w") as fp:
+            fp.write("File contents revealed: {}".format(tag))
+        revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
+        revealed_secret = revealed[24:]
+
+        # confirming secrets are correctly revealed
+        self.assertTrue(len(revealed_secret) == 32 and revealed_secret.isnumeric())
+
+    def test_vault_secret_from_params_base64(self):
+        """
+        Write secret via token, check if ref file exists
+        """
+        env = {"vault_params": {"auth": "token", "mount": "secret"}}
+        params = RefParams()
+        params.kwargs = env
+
+        tag = "?{vaultkv:secret/robin:secret:robins_testpath:robins_testkey||random:int:32|base64}"
+        REF_CONTROLLER[tag] = params
+
+        # confirming ref file exists
+        self.assertTrue(
+            os.path.isfile(os.path.join(REFS_HOME, "secret/bane")), msg="Secret file doesn't exist"
+        )
+
+        file_with_secret_tags = tempfile.mktemp()
+        with open(file_with_secret_tags, "w") as fp:
+            fp.write("File contents revealed: {}".format(tag))
+        revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
+        revealed_secret = revealed[24:]
+
+        # confirming secrets are correctly revealed
+        self.assertTrue(len(revealed_secret) == 32 and revealed_secret.isnumeric())

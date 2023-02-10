@@ -163,19 +163,20 @@ class VaultSecret(Base64Ref):
             data = data.encode()
 
         # set vault params as ref params
-        target_name = ref_params.kwargs["target_name"]
-        if target_name is None:
-            raise ValueError("target_name not set")
+        if ref_params.kwargs.get("vault_params") is None:
+            target_name = ref_params.kwargs["target_name"]
+            if target_name is None:
+                raise ValueError("target_name not set")
 
-        target_inv = cached.inv["nodes"].get(target_name, None)
-        if target_inv is None:
-            raise ValueError("target_inv not set")
+            target_inv = cached.inv["nodes"].get(target_name, None)
+            if target_inv is None:
+                raise ValueError("target_inv not set")
 
-        try:
-            vault_params = target_inv["parameters"]["kapitan"]["secrets"]["vaultkv"]
-            ref_params.kwargs["vault_params"] = vault_params
-        except KeyError:
-            raise RefError("Could not create VaultSecret: vaultkv parameters missing")
+            try:
+                vault_params = target_inv["parameters"]["kapitan"]["secrets"]["vaultkv"]
+                ref_params.kwargs["vault_params"] = vault_params
+            except KeyError:
+                raise RefError("Could not create VaultSecret: vaultkv parameters missing")
 
         # set mount, path and key as ref params, read from token
         token = ref_params.kwargs.get("token")
