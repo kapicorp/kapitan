@@ -618,21 +618,14 @@ class RefController(object):
     def _set_to_token(self, token, ref_obj):
         attrs = token.split(":")
 
-        if len(attrs) == 2:
+        # 2: default ref tag
+        # 5: used for writing(creating) secrets in vaultkv
+        if len(attrs) in (2, 5):
             type_name = attrs[0]
             path = attrs[1]
             backend = self._get_backend(type_name)
             assert isinstance(ref_obj, backend.ref_type)
             backend[path] = ref_obj
-
-        # used for writing(creating) secrets in vaultkv
-        elif len(attrs) == 5:
-            type_name = attrs[0]
-            path_to_ref = attrs[1]
-            backend = self._get_backend(type_name)
-            assert isinstance(ref_obj, backend.ref_type)
-            backend[path_to_ref] = ref_obj
-
         else:
             raise RefError(f"{token}: is not a valid token")
 
