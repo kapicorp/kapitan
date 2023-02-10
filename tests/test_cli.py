@@ -15,12 +15,25 @@ import sys
 import tempfile
 import unittest
 import hvac
-from time import sleep
 import docker
+import socket
+from contextlib import closing
+from time import sleep
 from unittest.mock import patch
 
 from kapitan.cli import main, build_parser
 from kapitan.refs.secrets import vaultkv
+
+
+# used for vaultkv server
+def find_free_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(("", 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
+
+
+DOCKER_PORT = find_free_port()
 
 REFS_PATH = tempfile.mkdtemp()
 
@@ -39,7 +52,7 @@ env = {
 vault_container = client.containers.run(
     image="vault",
     cap_add=["IPC_LOCK"],
-    ports={"8200": "8200"},
+    ports={"8200": DOCKER_PORT},
     environment=env,
     detach=True,
     remove=True,
@@ -56,6 +69,7 @@ class CliFuncsTest(unittest.TestCase):
             vault_container.reload()
 
         # Initialize vault, unseal, mount secret engine & add auth
+        os.environ["VAULT_ADDR"] = f"http://127.0.0.1:{DOCKER_PORT}"
         cls.client = hvac.Client()
         init = cls.client.sys.initialize()
         cls.client.sys.submit_unseal_keys(init["keys"])
