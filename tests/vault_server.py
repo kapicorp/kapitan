@@ -28,6 +28,8 @@ class VaultServerError(KapitanError):
 
 
 class VaultServer:
+    """Opens a vault server in a container"""
+
     def __init__(self, ref_path, name=None):
         self.docker_client = docker.from_env()
         self.socket, self.port = self.find_free_port()

@@ -27,16 +27,18 @@ class VaultTransitTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # make sure the container is up & running before testing
+        # setup vaulttransit server (running in container)
         cls.server = VaultTransitServer(REFS_HOME, "test_vault_transit")
         cls.server.vault_client.secrets.transit.create_key(name="hvac_key")
         cls.server.vault_client.secrets.transit.create_key(name="hvac_updated_key")
 
+        # setup static vault client
         env = {"auth": "token", "crypto_key": "hvac_key"}
         cls.client = VaultClient(env)
 
     @classmethod
     def tearDownClass(cls):
+        # close connections
         cls.client.adapter.close()
         cls.server.close_container()
 

@@ -21,14 +21,7 @@ class VaultError(KapitanError):
 
 
 class VaultClient(hvac.Client):
-    """
-    vault_parameters: necessary parameters to authenticate & get value from vault, provided by inventory
-    e.g.:
-        auth: userpass
-        VAULT_ADDR: http://127.0.0.1:8200
-        VAULT_SKIP_VERIFY: false
-    Authenticate client to server and return client object
-    """
+    """client connects to vault server and authenticates itself"""
 
     def __init__(self, vault_parameters):
         self.vault_parameters = vault_parameters

@@ -26,10 +26,12 @@ REFS_PATH = tempfile.mkdtemp()
 class CliFuncsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # setup vault server (running in container)
         cls.server = VaultServer(REFS_PATH, "test_vaultkv_cli")
 
     @classmethod
     def tearDownClass(cls):
+        # close connection
         cls.server.close_container()
 
     def setUp(self):
