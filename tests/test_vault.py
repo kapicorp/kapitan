@@ -12,7 +12,7 @@ import tempfile
 import unittest
 
 from kapitan.refs.base import RefController, Revealer, RefParams
-from kapitan.refs.secrets.vaultkv import VaultSecret, VaultError, VaultClient
+from kapitan.refs.secrets.vaultkv import VaultSecret, VaultClient, VaultError
 from tests.vault_server import VaultServer
 
 
@@ -28,12 +28,24 @@ class VaultSecretTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.server = VaultServer(REFS_HOME, "test_vaultkv")
-        env = {"auth": "token"}
-        cls.client = VaultClient(env)
+        # parameters = {"auth": "token"}
+        # test_client = VaultClient(parameters)
+        # print(test_client.is_authenticated())
+        # secret = {"some_key": "some_secret"}
+        # try:
+        #     test_client.secrets.kv.v2.create_or_update_secret(
+        #         path="foo",
+        #         secret=secret,
+        #     )
+        # except Exception:
+        #     print("FORBIDDEN")
+
+        # test_client.adapter.close()
+        # cls.server.close_container()
+        # exit(1)
 
     @classmethod
     def tearDownClass(cls):
-        cls.client.adapter.close()
         cls.server.close_container()
 
     def test_token_authentication(self):
@@ -96,7 +108,8 @@ class VaultSecretTest(unittest.TestCase):
         env = {"auth": "token"}
         tag = "?{vaultkv:secret/batman}"
         secret = {"some_key": "some_secret"}
-        self.client.secrets.kv.v2.create_or_update_secret(
+        client = VaultClient(env)
+        client.secrets.kv.v2.create_or_update_secret(
             path="foo",
             secret=secret,
         )

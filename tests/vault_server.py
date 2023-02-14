@@ -30,10 +30,11 @@ class VaultServerError(KapitanError):
 class VaultServer:
     def __init__(self, ref_path, name=None):
         self.docker_client = docker.from_env()
-        self.port = self.find_free_port()
+        self.socket, self.port = self.find_free_port()
         self.container = self.setup_container(name)
 
         self.ref_path = ref_path
+        self.vault_client = None
         self.setup_vault()
 
     def setup_container(self, name=None):
@@ -58,16 +59,15 @@ class VaultServer:
         return vault_container
 
     def find_free_port(self):
-        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(("", 0))
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            return s.getsockname()[1]
+            return s, s.getsockname()[1]
 
     def setup_vault(self):
         init = self.prepare_vault()
         self.set_backend_path(init)
-        test_policy = self.get_policy()
-        self.set_vault_attributes(test_policy)
+        self.set_vault_attributes()
 
     def prepare_vault(self):
         # Initialize vault, unseal, mount secret engine & add auth
@@ -88,12 +88,13 @@ class VaultServer:
             path "secret/*" {
             capabilities = ["read", "list", "create", "update"]
             }
-            """
+        """
         return test_policy
 
-    def set_vault_attributes(self, policy):
-        policy_name = "test_policy"
-        self.vault_client.sys.create_or_update_policy(name=policy_name, policy=policy)
+    def set_vault_attributes(self):
+        policy = "test_policy"
+        test_policy = self.get_policy()
+        self.vault_client.sys.create_or_update_policy(name=policy, policy=test_policy)
         os.environ["VAULT_USERNAME"] = "test_user"
         os.environ["VAULT_PASSWORD"] = "test_password"
         self.vault_client.sys.enable_auth_method("userpass")
@@ -113,6 +114,7 @@ class VaultServer:
 
         self.container.stop()
         self.docker_client.close()
+        self.socket.close()
 
         shutil.rmtree(self.ref_path, ignore_errors=True)
         for i in ["ROOT_TOKEN", "TOKEN", "USERNAME", "PASSWORD", "ROLE_ID", "SECRET_ID"]:

@@ -31,7 +31,6 @@ class VaultClient(hvac.Client):
     """
 
     def __init__(self, vault_parameters):
-
         self.vault_parameters = vault_parameters
         self.env = get_env(vault_parameters)
 
@@ -86,9 +85,8 @@ class VaultClient(hvac.Client):
         else:
             raise VaultError("Authentication type '{}' not supported".format(auth_type))
 
-        if self.is_authenticated():
-            return self
-        else:
+        if not self.is_authenticated():
+            self.adapter.close()
             raise VaultError("Vault Authentication Error, Environment Variables defined?")
 
 

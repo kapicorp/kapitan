@@ -13,6 +13,7 @@ from kapitan.refs.secrets.vaulttransit import VaultTransit
 
 # from kapitan.refs.vault_resources import VaultClient, VaultError
 from tests.vault_server import VaultTransitServer
+from kapitan.refs.vault_resources import VaultClient
 
 
 # Create temporary folder
@@ -27,14 +28,16 @@ class VaultTransitTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # make sure the container is up & running before testing
-        cls.server = VaultTransitServer(REFS_HOME, "test_vaulttransit")
-
+        cls.server = VaultTransitServer(REFS_HOME, "test_vault_transit")
         cls.server.vault_client.secrets.transit.create_key(name="hvac_key")
         cls.server.vault_client.secrets.transit.create_key(name="hvac_updated_key")
 
+        env = {"auth": "token", "crypto_key": "hvac_key"}
+        cls.client = VaultClient(env)
+
     @classmethod
     def tearDownClass(cls):
-        cls.server.vault_client.adapter.close()
+        cls.client.adapter.close()
         cls.server.close_container()
 
     def test_vault_transit_enc_data(self):

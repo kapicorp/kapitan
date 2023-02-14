@@ -113,10 +113,11 @@ class VaultTransit(Base64Ref):
             # To guarantee _data is bytes
             if isinstance(data, str):
                 _data = data.encode()
+
+        client = VaultClient(self.vault_params)
+        # token will comprise of two parts path_in_vault:key
+        # data = self.data.decode("utf-8").rstrip().split(":")
         try:
-            client = VaultClient(self.vault_params)
-            # token will comprise of two parts path_in_vault:key
-            # data = self.data.decode("utf-8").rstrip().split(":")
             return_data = ""
             # Request encryption by vault
             response = client.secrets.transit.encrypt_data(
@@ -137,6 +138,8 @@ class VaultTransit(Base64Ref):
             )
         except InvalidPath:
             raise VaultError("{path} does not exist on Vault secret".format(path=data[0]))
+        finally:
+            client.adapter.close()
 
     def _decrypt(self, data):
         """
@@ -172,6 +175,8 @@ class VaultTransit(Base64Ref):
             )
         except InvalidPath:
             raise VaultError("{path} does not exist on Vault secret".format(path=data[0]))
+        finally:
+            client.adapter.close()
 
     def dump(self):
         """

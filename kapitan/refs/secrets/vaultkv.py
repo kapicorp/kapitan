@@ -127,23 +127,24 @@ class VaultSecret(Base64Ref):
                 "Invalid path: None, you have to specify the path where the secret gets stored (in vault)"
             )
 
+        # get vault client
+        client = VaultClient(self.vault_params)
+
+        # TODO: check if key would be overwritten by new secret and handle it
+        # ATM there can only be one key per path
+
         try:
-            # get vault client
-            client = VaultClient(self.vault_params)
-
-            # TODO: check if key would be overwritten by new secret and handle it
-            # ATM there can only be one key per path
-
             # create secret in path
             client.secrets.kv.v2.create_or_update_secret(
                 path=self.path, secret=secret, mount_point=self.mount
             )
-            client.adapter.close()
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
                 + "make sure the token is authorised to access '{}' on Vault".format(self.path)
             )
+        finally:
+            client.adapter.close()
 
         # set the data to path:key
         data = f"{self.path}:{self.key}".encode()
@@ -161,16 +162,16 @@ class VaultSecret(Base64Ref):
 
         :returns: secret in plain text
         """
+        client = VaultClient(self.vault_params)
+
+        # data is always base64 encoded
+        data = base64.b64decode(self.data)
+
+        # token will comprise of two parts, e.g. path/in/vault:key
+        data = data.decode().split(":")
+        mount = self.vault_params.get("mount", "secret")
+
         try:
-            client = VaultClient(self.vault_params)
-
-            # data is always base64 encoded
-            data = base64.b64decode(self.data)
-
-            # token will comprise of two parts, e.g. path/in/vault:key
-            data = data.decode().split(":")
-            mount = self.vault_params.get("mount", "secret")
-
             return_data = ""
             if self.vault_params.get("engine") == "kv":
                 response = client.secrets.kv.v1.read_secret(
@@ -184,7 +185,6 @@ class VaultSecret(Base64Ref):
                     mount_point=mount,
                 )
                 return_data = response["data"]["data"][data[1]]
-            client.adapter.close()
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
