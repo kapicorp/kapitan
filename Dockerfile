@@ -6,8 +6,8 @@ WORKDIR /kapitan
 
 COPY ./kapitan ./kapitan
 COPY ./MANIFEST.in ./MANIFEST.in
-COPY ./requirements.txt ./requirements.txt
-COPY ./setup.py ./setup.py
+COPY ./README.md ./README.md
+COPY ./pyproject.toml ./pyproject.toml
 
 ENV PATH="/opt/venv/bin:${PATH}"
 
@@ -22,10 +22,11 @@ RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.17.3.linux-amd64.tar.gz \
     && rm go.tar.gz
 
 RUN python -m venv /opt/venv \
-    && pip install --upgrade pip yq wheel \
+    && pip install --upgrade pip yq wheel poetry \
     && export PATH=$PATH:/usr/local/go/bin \
-    && pip install -r requirements.txt \
-    && pip install .[gojsonnet]
+    && poetry install --extras gojsonnet \
+    && poetry build \
+    && pip install dist/kapitan-*.tar.gz
 
 # Install Helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
