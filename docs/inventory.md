@@ -12,7 +12,7 @@ For instance, you might want to define a [**target**](#targets) for each environ
 
 The **Inventory** lets you also define and reuse common configurations through YAML files that are referred to as [**classes**](#classes): by listing classes into [**target**](#targets), their content gets merged together and allows you to compose complex configurations without repetitions.
 
-By combining [**target**](#targets) and [**classes**](#classes), the **Inventory** becomes the single source of truth (SSOT) for your whole configuration, and learning how to use it will unleash the real power of **Kapitan**.
+By combining [**target**](#targets) and [**classes**](#classes), the **Inventory** becomes the SSOT for your whole configuration, and learning how to use it will unleash the real power of **Kapitan**.
 
 !!! info
     The **Kapitan** **Inventory** is based on an open source project called [reclass](https://github.com/kapicorp/reclass) and you can find the full documentation on our Github clone. However we discourage you to look directly at the reclass documentation before you learn more about **Kapitan**, because **Kapitan** uses a fork of reclass and greatly simplifies the reclass experience.
@@ -313,7 +313,4 @@ For instance you could define the following:
         Compiled acme-documentation (0.09s)
         ```
 
-
-
-
-
+*[SSOT]: Single Source Of Truth
