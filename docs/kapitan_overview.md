@@ -94,7 +94,7 @@ The **Inventory** is a hierarchical database of variables, defined in yaml files
 
 The **Inventory** is the heart of **Kapitan**.
 
-Using simple reusable `yaml` files (classes), you can represent as a <abbr title="Single Source Of Truth">SSOT</abbr>
+Using simple reusable `yaml` files (classes), you can represent as a SSOT
 everything that matters in your setup, for instance you can define:
 
 * kubernetes `components` definitions
@@ -269,3 +269,5 @@ The bare minimum structure that makes use of kapitan features may look as follow
 * [Jsonnet](https://github.com/google/jsonnet)
 * [Jinja2](http://jinja.pocoo.org/docs/2.9/)
 * [reclass](https://github.com/salt-formulas/reclass)
+
+*[SSOT]: Single Source Of Truth
