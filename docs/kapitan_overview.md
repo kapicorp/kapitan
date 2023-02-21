@@ -102,10 +102,10 @@ everything that matters in your setup, for instance you can define:
 * business concepts
 * documentation and tooling
 * ...anything else you want!
-  
- Once you have it defined, you can reuse this data can be made available to the many templating engines [***Input types***](#input-types) available to Kapitan.
 
- Find more detaled explanation in the [inventory](inventory.md) section of the documentation.
+After defining it, you can make this data available to the various templating engines [***Input types***](#input-types) offered by Kapitan, allowing you to reuse it.
+
+Find more detaled explanation in the [inventory](inventory.md) section of the documentation.
 
 ### Input types
 
