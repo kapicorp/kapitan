@@ -159,6 +159,7 @@ markdown_extensions:
   - markdown_include.include:
       base_path: docs
   - attr_list
+  - abbr
 
 repo_name: "kapicorp/kapitan"
 repo_url: "https://github.com/kapicorp/kapitan"
