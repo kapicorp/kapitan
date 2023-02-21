@@ -109,7 +109,7 @@ Find more detaled explanation in the [inventory](inventory.md) section of the do
 
 ### Input types
 
-On compilation, **Kapitan** "renders" the **Inventory** and makes it available to templates that can generate any you any configuration you want, including **Kubernetes manifests**, documentation/playbooks, **Terraform configuration** or even scripts.
+On compilation, **Kapitan** "renders" the **Inventory** and makes it available to templates that can generate any configuration you want, including **Kubernetes manifests**, documentation/playbooks, **Terraform configuration** or even scripts.
 
 #### [**Generators**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7)
 
