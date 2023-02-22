@@ -113,7 +113,7 @@ What you do with a [**target**](#targets) is largely up to you and your setup. C
 
 ### Definition
 
-A tipical [**target**](#targets) might look like this:
+A typical [**target**](#targets) might look like this:
 
 !!! example "`inventory/targets/acme/dev.yaml`"
 
