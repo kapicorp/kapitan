@@ -40,6 +40,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Setup QEMU and Buildx to build multi-platform image
+      # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
