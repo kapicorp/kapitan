@@ -65,7 +65,7 @@
 === "Mac"
 
     ```shell
-    brew install python3 libyaml
+    brew install python3 libyaml libmagic
     ```
 
 #### Install Kapitan using pip

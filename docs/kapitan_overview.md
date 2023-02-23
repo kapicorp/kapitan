@@ -94,7 +94,7 @@ The **Inventory** is a hierarchical database of variables, defined in yaml files
 
 The **Inventory** is the heart of **Kapitan**.
 
-Using simple reusable `yaml` files (classes), you can represent as a *Single Source Of Truth* (**`SSOT`**)
+Using simple reusable `yaml` files (classes), you can represent as a SSOT
 everything that matters in your setup, for instance you can define:
 
 * kubernetes `components` definitions
@@ -102,14 +102,14 @@ everything that matters in your setup, for instance you can define:
 * business concepts
 * documentation and tooling
 * ...anything else you want!
-  
- Once you have it defined, you can reuse this data can be made available to the many templating engines [***Input types***](#input-types) available to Kapitan.
 
- Find more detaled explanation in the [inventory](inventory.md) section of the documentation.
+After defining it, you can make this data available to the various templating engines [***Input types***](#input-types) offered by Kapitan, allowing you to reuse it.
+
+Find more detaled explanation in the [inventory](inventory.md) section of the documentation.
 
 ### Input types
 
-On compilation, **Kapitan** "renders" the **Inventory** and makes it available to templates that can generate any you any configuration you want, including **Kubernetes manifests**, documentation/playbooks, **Terraform configuration** or even scripts.
+On compilation, **Kapitan** "renders" the **Inventory** and makes it available to templates that can generate any configuration you want, including **Kubernetes manifests**, documentation/playbooks, **Terraform configuration** or even scripts.
 
 #### [**Generators**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7)
 
@@ -269,3 +269,5 @@ The bare minimum structure that makes use of kapitan features may look as follow
 * [Jsonnet](https://github.com/google/jsonnet)
 * [Jinja2](http://jinja.pocoo.org/docs/2.9/)
 * [reclass](https://github.com/salt-formulas/reclass)
+
+*[SSOT]: Single Source Of Truth
