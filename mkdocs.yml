@@ -13,10 +13,10 @@ theme:
   name: material
   custom_dir: overrides
   logo: images/kapitan_logo.png
-  favicon: kapitan/logo
+  favicon: images/kapitan_logo.png
   features:
     - announce.dismiss
-    - content.code.annotate 
+    - content.code.annotate
     - content.tabs.link
     - navigation.indexes
     - navigation.sections
@@ -49,7 +49,7 @@ theme:
 extra:
   consent:
     title: Cookie consent
-    description: >- 
+    description: >-
       We use cookies to recognize your repeated visits and preferences, as well
       as to measure the effectiveness of our documentation and whether users
       find what they're searching for. With your consent, you're helping us to
@@ -83,13 +83,13 @@ nav:
   - Home: README.md
   - Getting started:
       - Kapitan Overview: kapitan_overview.md
-  - Support: 
+  - Support:
       - Ask for support: support.md
       - Related Projects: related.md
-  - Contribute: 
+  - Contribute:
       - Sponsor Us: pages/contribute/sponsor.md
       - Talk about Kapitan: pages/contribute/talk.md
-      - Active contributions: 
+      - Active contributions:
         - Documentation: pages/contribute/documentation.md
         - Kapitan Code: pages/contribute/code.md
   - Blog:
@@ -99,7 +99,7 @@ nav:
       - 5 years of Kapitan: pages/blog/2022-12-04.md
   - Documentation:
       - Inventory: inventory.md
-      - Input Types: 
+      - Input Types:
           - Introduction: pages/input_types/introduction.md
           - Kadet: pages/input_types/kadet.md
           - Jinja: pages/input_types/jinja.md
@@ -113,7 +113,7 @@ nav:
         - Remote repositories: remote_repositories.md
         - External dependencies: external_dependencies.md
       - Proposals: proposals.md
-  - CLI reference: 
+  - CLI reference:
       - compile: pages/commands/kapitan_compile.md
       - inventory: pages/commands/kapitan_inventory.md
       - lint: pages/commands/kapitan_lint.md
