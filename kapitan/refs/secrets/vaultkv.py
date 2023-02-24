@@ -227,8 +227,6 @@ class VaultSecret(Base64Ref):
         """
         Authenticate with Vault server & write given data in path/key
         """
-        secret = {self.key: data.decode()}
-
         if self.path is None:
             raise VaultError(
                 "Invalid path: None, you have to specify the path where the secret gets stored (in vault)"
@@ -237,13 +235,28 @@ class VaultSecret(Base64Ref):
         try:
             # get vault client
             client = vault_obj(self.vault_params)
+            secrets = {}
 
-            # TODO: check if key would be overwritten by new secret and handle it
-            # ATM there can only be one key per path
+            # fetch current secrets from vault
+            if self.vault_params.get("engine") == "kv":
+                response = client.secrets.kv.v1.read_secret(
+                    path=self.path,
+                    mount_point=self.mount,
+                )
+                secrets = response["data"]
+            else:
+                response = client.secrets.kv.v2.read_secret_version(
+                    path=self.path,
+                    mount_point=self.mount,
+                )
+                secrets = response["data"]["data"]
 
-            # create secret in path
+            # append new secret
+            secrets[self.key] = data.decode()
+
+            # write updated secrets back to vault
             client.secrets.kv.v2.create_or_update_secret(
-                path=self.path, secret=secret, mount_point=self.mount
+                path=self.path, secret=secrets, mount_point=self.mount
             )
             client.adapter.close()
         except Forbidden:
