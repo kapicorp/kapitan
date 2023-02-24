@@ -232,12 +232,12 @@ class VaultSecret(Base64Ref):
                 "Invalid path: None, you have to specify the path where the secret gets stored (in vault)"
             )
 
-        try:
-            # get vault client
-            client = vault_obj(self.vault_params)
-            secrets = {}
+        # get vault client
+        client = vault_obj(self.vault_params)
+        secrets = {}
 
-            # fetch current secrets from vault
+        # fetch current secrets from vault
+        try:
             if self.vault_params.get("engine") == "kv":
                 response = client.secrets.kv.v1.read_secret(
                     path=self.path,
@@ -250,11 +250,14 @@ class VaultSecret(Base64Ref):
                     mount_point=self.mount,
                 )
                 secrets = response["data"]["data"]
+        except InvalidPath:
+            pass  # comes up if vault is empty in specified path
 
-            # append new secret
-            secrets[self.key] = data.decode()
+        # append new secret
+        secrets[self.key] = data.decode()
 
-            # write updated secrets back to vault
+        # write updated secrets back to vault
+        try:
             client.secrets.kv.v2.create_or_update_secret(
                 path=self.path, secret=secrets, mount_point=self.mount
             )
