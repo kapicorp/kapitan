@@ -70,9 +70,9 @@ class VaultClient(hvac.Client):
         elif auth_type == "ldap":
             self.auth.ldap.login(username=username, password=password)
         elif auth_type == "userpass":
-            self.auth_userpass(username=username, password=password)
+            self.auth.userpass.login(username=username, password=password)
         elif auth_type == "approle":
-            self.auth_approle(os.getenv("VAULT_ROLE_ID"), secret_id=os.getenv("VAULT_SECRET_ID"))
+            self.auth.approle.login(os.getenv("VAULT_ROLE_ID"), secret_id=os.getenv("VAULT_SECRET_ID"))
         elif auth_type == "github":
             self.auth.github.login(token=self.env["token"])
         else:

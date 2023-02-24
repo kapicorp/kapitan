@@ -100,14 +100,18 @@ class VaultServer:
         os.environ["VAULT_USERNAME"] = "test_user"
         os.environ["VAULT_PASSWORD"] = "test_password"
         self.vault_client.sys.enable_auth_method("userpass")
-        self.vault_client.create_userpass(username="test_user", password="test_password", policies=[policy])
+        self.vault_client.auth.userpass.create_or_update_user(
+            username="test_user", password="test_password", policies=[policy]
+        )
         self.vault_client.sys.enable_auth_method("approle")
-        self.vault_client.create_role("test_role")
-        os.environ["VAULT_ROLE_ID"] = self.vault_client.get_role_id("test_role")
-        os.environ["VAULT_SECRET_ID"] = self.vault_client.create_role_secret_id("test_role")["data"][
-            "secret_id"
+        self.vault_client.auth.approle.create_or_update_approle("test_role")
+        os.environ["VAULT_ROLE_ID"] = self.vault_client.auth.approle.read_role_id("test_role")["data"][
+            "role_id"
         ]
-        os.environ["VAULT_TOKEN"] = self.vault_client.create_token(policies=[policy], lease="1h")["auth"][
+        os.environ["VAULT_SECRET_ID"] = self.vault_client.auth.approle.generate_secret_id("test_role")[
+            "data"
+        ]["secret_id"]
+        os.environ["VAULT_TOKEN"] = self.vault_client.auth.token.create(policies=[policy], ttl="1h")["auth"][
             "client_token"
         ]
 
