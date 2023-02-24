@@ -1,7 +1,7 @@
 # Kapitan: advanced configuration management tool
 
 ![Unit Tests](https://github.com/kapicorp/kapitan/actions/workflows/test.yml/badge.svg)
-![Python Version](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)
+![Python Version](https://img.shields.io/pypi/pyversions/kapitan)
 ![Downloads](https://img.shields.io/pypi/dm/kapitan)
 ![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)
 [![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
