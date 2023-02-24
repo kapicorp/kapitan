@@ -100,6 +100,7 @@ class VaultSecretTest(unittest.TestCase):
             path="foo",
             secret=secret,
         )
+        client.adapter.close()
 
         file_data = "foo:some_key".encode()
         # encrypt false, because we want just reveal
