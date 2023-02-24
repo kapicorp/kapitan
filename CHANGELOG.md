@@ -4,6 +4,12 @@
 
 - New flag for `kapitan compile` `--compose-node-name`. This needs to be used in conjuction with `inventory/reclass-config.yml` option `compose_node_name: true`. This allows us to make the same subfolder structure in the inventory folder inside the compiled folder. More info on issue #932
 
+### Breaking
+
+- [Reclass PR#10](https://github.com/kapicorp/reclass/pull/10) Value of inventory (Reclass) automatic variable `parameters._reclass_.name.short` has changed. Before it was the first value of a target name BEFORE a dot (`.`). AFTER it's the last value after a dot. Example, for a target called `test.project`:
+  - BEFORE: `parameters._reclass_.name.short = test`
+  - AFTER: `parameters._reclass_.name.short = project`
+
 ## 0.30.0-rc.0
 
 - Helm binary support (KAP 09) (#701) special thanks @Jean-Daniel @sebradloff @srueg
