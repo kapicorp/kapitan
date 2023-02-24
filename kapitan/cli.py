@@ -95,6 +95,7 @@ def trigger_compile(args):
         use_go_jsonnet=args.use_go_jsonnet,
         helm_refs=args.helm_refs,
         helm_refs_base64=args.helm_refs_base64,
+        compose_node_name=args.compose_node_name,
     )
 
 
@@ -269,6 +270,18 @@ def build_parser():
         action="store_true",
         default=from_dot_kapitan("compile", "use-go-jsonnet", False),
     )
+
+    # compose-node-name should be used in conjunction with reclass
+    # config "compose_node_name: true". This allows us to make the same subfolder
+    # structure in the inventory folder inside the compiled folder
+    # https://github.com/kapicorp/kapitan/issues/932
+    compile_parser.add_argument(
+        "--compose-node-name",
+        help="Create same subfolder structure from inventory/targets inside compiled folder",
+        action="store_true",
+        default=from_dot_kapitan("compile", "compose-node-name", False),
+    )
+
     compile_parser.add_argument(
         "--schemas-path",
         default=from_dot_kapitan("validate", "schemas-path", "./schemas"),

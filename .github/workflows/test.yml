@@ -1,8 +1,12 @@
 ---
 name: Python Tests
 on:
-  push: {}
-  pull_request: {}
+  push:
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
   workflow_run:
     workflows:
       - Python Lint
@@ -33,7 +37,7 @@ jobs:
           curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
           chmod 700 get_helm.sh
           sudo ./get_helm.sh
-          pip3 install -r requirements.txt
+          pip3 install --editable ".[test]"
           pip3 install coverage black
       - name: Run tests
         run: |-

@@ -9,6 +9,7 @@ from __future__ import print_function
 import collections
 import json
 import logging
+import magic
 import math
 import os
 import re
@@ -530,6 +531,11 @@ def make_request(source):
 
 def unpack_downloaded_file(file_path, output_path, content_type):
     """unpacks files of various MIME type and stores it to the output_path"""
+
+    if content_type == None or content_type == "application/octet-stream":
+        if re.search(r"^Zip archive data.*", magic.from_file(file_path)):
+            content_type = "application/zip"
+
     if content_type == "application/x-tar":
         tar = tarfile.open(file_path)
         tar.extractall(path=output_path)

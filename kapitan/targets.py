@@ -471,17 +471,14 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
     for comp_obj in compile_objs:
         input_type = comp_obj["input_type"]
         output_path = comp_obj["output_path"]
+        input_params = comp_obj.setdefault("input_params", {})
 
         if input_type == "jinja2":
-            input_compiler = Jinja2(compile_path, search_paths, ref_controller)
-            if "input_params" in comp_obj:
-                input_compiler.set_input_params(comp_obj["input_params"])
+            input_compiler = Jinja2(compile_path, search_paths, ref_controller, comp_obj)
         elif input_type == "jsonnet":
             input_compiler = Jsonnet(compile_path, search_paths, ref_controller, use_go=use_go_jsonnet)
         elif input_type == "kadet":
-            input_compiler = Kadet(compile_path, search_paths, ref_controller)
-            if "input_params" in comp_obj:
-                input_compiler.set_input_params(comp_obj["input_params"])
+            input_compiler = Kadet(compile_path, search_paths, ref_controller, input_params=input_params)
         elif input_type == "helm":
             input_compiler = Helm(compile_path, search_paths, ref_controller, comp_obj)
         elif input_type == "copy":
@@ -499,7 +496,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
             err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
             raise CompileError(err_msg.format(input_type))
 
-        input_compiler.make_compile_dirs(target_name, output_path)
+        input_compiler.make_compile_dirs(target_name, output_path, **kwargs)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 
     logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
@@ -603,6 +600,8 @@ def valid_target_obj(target_obj, require_compile=True):
                         "input_params": {"type": "object"},
                         "env_vars": {"type": "object"},
                         "args": {"type": "array"},
+                        "suffix_remove": {"type": "boolean"},
+                        "suffix_stripped": {"type": "string"},
                     },
                     "required": ["input_type", "input_paths", "output_path"],
                     "minItems": 1,
@@ -610,7 +609,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         {
                             "properties": {
                                 "input_type": {"enum": ["jsonnet", "kadet", "copy", "remove"]},
-                                "output_type": {"enum": ["yml", "yaml", "json", "plain"]},
+                                "output_type": {"enum": ["yml", "yaml", "json", "plain", "toml"]},
                             },
                         },
                         {"properties": {"input_type": {"enum": ["jinja2", "helm", "external"]}}},

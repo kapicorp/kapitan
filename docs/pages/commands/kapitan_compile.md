@@ -1,7 +1,8 @@
 # :kapitan-logo: **CLI Reference** | `kapitan compile`
 
-A reference guide for some uses of the `command` option
+## `kapitan compile`
 
+Merges inventory and inputs and produces generated files in the output folder (`/compiled` by default)
 
 ## Compile all targets
 
@@ -11,7 +12,7 @@ A reference guide for some uses of the `command` option
     kapitan compile
     ```
 
-    ??? example "click to expand output" 
+    ??? example "click to expand output"
         ```text
         Compiled mysql-generator-fetch (0.18s)
         Compiled vault (0.25s)
@@ -44,10 +45,9 @@ Compiles one or more targets selected by name using `--targets` or `-t`
 
     ```shell
     kapitan compile -t mysql tesoro
-
     ```
 
-    ??? example "click to expand output" 
+    ??? example "click to expand output"
         ```shell
         Compiled mysql (0.06s)
         Compiled tesoro (0.09s)
@@ -67,10 +67,10 @@ Compiles one or more targets selected matching **labels** with  `--labels` or `-
       kapitan:
         ...
         labels:
-          customer: acme 
+          customer: acme
     ```
 
-    see [**Labels**](/inventory/#target-labels) for more details 
+    see [**Labels**](/inventory/#target-labels) for more details
 
     ```shell
     $ kapitan compile -l customer=acme
@@ -127,7 +127,7 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
 
     See how the compiled output for this specific target changes to embed the actul encrypted content, (marked by `?{gpg: :embedded}` to indicate it is a **gpg** reference) rather than just holding a reference to it (like in this case `?{gpg:targets/minikube-mysql/mysql/password:ec3d54de}` which points to ).
 
-    ??? example "click to expand output" 
+    ??? example "click to expand output"
         ```shell
         diff --git a/examples/kubernetes/compiled/minikube-mysql/manifests/mysql_app.yml b/examples/kubernetes/compiled/minikube-mysql/manifests/mysql_app.yml
         [[ CUT ]]
@@ -147,18 +147,22 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
     kapitan compile --help
     ```
 
-    ??? example "click to expand output" 
+    ??? example "click to expand output"
         ```shell
         usage: kapitan compile [-h] [--search-paths JPATH [JPATH ...]]
                               [--jinja2-filters FPATH] [--verbose] [--prune]
-                              [--quiet] [--output-path PATH] [--fetch] [--force]
-                              [--validate] [--parallelism INT] [--indent INT]
+                              [--quiet] [--output-path PATH] [--fetch]
+                              [--force-fetch] [--force] [--validate]
+                              [--parallelism INT] [--indent INT]
                               [--refs-path REFS_PATH] [--reveal] [--embed-refs]
                               [--inventory-path INVENTORY_PATH] [--cache]
                               [--cache-paths PATH [PATH ...]]
-                              [--ignore-version-check] [--schemas-path SCHEMAS_PATH]
+                              [--ignore-version-check] [--use-go-jsonnet]
+                              [--compose-node-name] [--schemas-path SCHEMAS_PATH]
+                              [--yaml-multiline-string-style STYLE]
+                              [--yaml-dump-null-as-empty]
                               [--targets TARGET [TARGET ...] | --labels
-                              [key=value [key=value ...]]]
+                              [key=value ...]]
 
         optional arguments:
           -h, --help            show this help message and exit
@@ -172,6 +176,7 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
           --quiet               set quiet mode, only critical output
           --output-path PATH    set output path, default is "."
           --fetch               fetch remote inventories and/or external dependencies
+          --force-fetch         overwrite existing inventory and/or dependency item
           --force               overwrite existing inventory and/or dependency item
           --validate            validate compile output against schemas as specified
                                 in inventory
@@ -193,12 +198,21 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
                                 []
           --ignore-version-check
                                 ignore the version from .kapitan
+          --use-go-jsonnet      use go-jsonnet
+          --compose-node-name   Create same subfolder structure from inventory/targets
+                                inside compiled folder
           --schemas-path SCHEMAS_PATH
                                 set schema cache path, default is "./schemas"
+          --yaml-multiline-string-style STYLE, -L STYLE
+                                set multiline string style to STYLE, default is
+                                'double-quotes'
+          --yaml-dump-null-as-empty
+                                dumps all none-type entries as empty, default is
+                                dumping as 'null'
           --helm-refs           enable kapitan ref engine on helm refs
           --helm-refs-base64    encode .data key with base64 afterwards
           --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
                                 targets to compile, default is all
-          --labels [key=value [key=value ...]], -l [key=value [key=value ...]]
+          --labels [key=value ...], -l [key=value ...]
                                 compile targets matching the labels, default is all
           ```
