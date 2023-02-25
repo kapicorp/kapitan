@@ -54,7 +54,7 @@
 
 #### Install Python
 
-![Python version](https://img.shields.io/github/pipenv/locked/python-version/kapicorp/kapitan.svg)
+![Python version](https://img.shields.io/pypi/pyversions/kapitan)
 ![Unit Tests](https://github.com/kapicorp/kapitan/actions/workflows/test.yml/badge.svg)
 === "Linux"
 
