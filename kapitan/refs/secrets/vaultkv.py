@@ -183,9 +183,11 @@ class VaultSecret(Base64Ref):
 
         # token will comprise of two parts, e.g. path/in/vault:key
         data_attrs = data.decode().split(":")
-        if len(data) != 2:
+        if len(data_attrs) != 2:
             raise RefError(
-                "Invalid vault secret: secret should be stored as 'path/in/vault:key', not '{}'".format(data)
+                "Invalid vault secret: secret should be stored as 'path/in/vault:key', not '{}'".format(
+                    data.decode()
+                )
             )
         mount = self.vault_params.get("mount", "secret")
         secret_path = data_attrs[0]
