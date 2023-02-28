@@ -70,6 +70,7 @@ Compiled echo-server (0.14s)
 ## Other installation methods
 
 ### Docker
+
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 
 !!! success "recommended"
