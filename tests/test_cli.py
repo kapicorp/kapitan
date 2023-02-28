@@ -17,7 +17,8 @@ import unittest
 from unittest.mock import patch
 
 from kapitan.cli import main, build_parser
-from kapitan.refs.secrets import vaultkv
+from kapitan.refs.secrets.vaultkv import VaultSecret
+from tests.vault_server import VaultServer
 
 REFS_PATH = tempfile.mkdtemp()
 
@@ -29,6 +30,16 @@ if os.environ.get("GNUPGHOME", None) is None:
 
 
 class CliFuncsTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # setup vault server (running in container)
+        cls.server = VaultServer(REFS_PATH, "kapitan_test_vaultkv_cli")
+
+    @classmethod
+    def tearDownClass(cls):
+        # close connection
+        cls.server.close_container()
+
     def setUp(self):
         example_key = "examples/kubernetes/refs/example@kapitan.dev.key"
         example_key = os.path.join(os.getcwd(), example_key)
@@ -655,14 +666,13 @@ class CliFuncsTest(unittest.TestCase):
             main()
         self.assertEqual(test_secret_content, stdout.getvalue())
 
-    @patch.object(vaultkv.VaultSecret, "_decrypt")
+    @patch.object(VaultSecret, "_decrypt")
     def test_cli_secret_write_vault(self, mock_reveal):
         """
         run $ kapitan refs --write vaultkv:test_secret
         and $ kapitan refs --reveal -f sometest_file
         """
-        test_secret_content = "foo:secret_test_key"
-        test_secret_content_value = "secret_value"
+        test_secret_content = "secret_value"
         test_secret_file = tempfile.mktemp()
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
@@ -678,6 +688,12 @@ class CliFuncsTest(unittest.TestCase):
             REFS_PATH,
             "--vault-auth",
             "token",
+            "--vault-mount",
+            "secret",
+            "--vault-path",
+            "testpath",
+            "--vault-key",
+            "testkey",
         ]
         main()
 
@@ -686,14 +702,14 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
 
-        mock_reveal.return_value = test_secret_content_value
+        mock_reveal.return_value = test_secret_content
         sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH]
 
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
             main()
-        self.assertEqual("revealing: {value}".format(value=test_secret_content_value), stdout.getvalue())
+        self.assertEqual("revealing: {value}".format(value=test_secret_content), stdout.getvalue())
 
         os.remove(test_tag_file)
 

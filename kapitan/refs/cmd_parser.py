@@ -6,7 +6,7 @@ import os
 import sys
 import mimetypes
 
-from kapitan.errors import KapitanError, RefHashMismatchError
+from kapitan.errors import KapitanError, RefHashMismatchError, RefError
 from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.env import EnvRef
@@ -220,7 +220,28 @@ def ref_write(args, ref_controller):
                 " in parameters.kapitan.secrets.vaultkv.auth and use --target-name or use --vault-auth"
             )
 
-        secret_obj = VaultSecret(_data, vault_params)
+        kwargs = {}
+
+        # set mount
+        mount = args.vault_mount
+        if not mount:
+            mount = vault_params.get("mount", "secret")  # secret is default mount point
+        kwargs["mount_in_vault"] = mount
+
+        # set path in vault
+        path_in_vault = args.vault_path
+        if not path_in_vault:
+            path_in_vault = token_path  # token path in kapitan as default
+        kwargs["path_in_vault"] = path_in_vault
+
+        # set key
+        key = args.vault_key
+        if key:
+            kwargs["key_in_vault"] = key
+        else:
+            raise RefError("Could not create VaultSecret: vaultkv: key is missing")
+
+        secret_obj = VaultSecret(_data, vault_params, **kwargs)
         tag = "?{{vaultkv:{}}}".format(token_path)
         ref_controller[tag] = secret_obj
 
