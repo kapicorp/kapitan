@@ -206,3 +206,40 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming secrets are correctly revealed
         self.assertTrue(len(revealed_secret) == 32 and revealed_secret.isnumeric())
+
+    def test_multiple_secrets_in_path(self):
+        """
+        Write multiple secrets in one path and check if key gets overwritten
+        """
+        env = {"vault_params": {"auth": "token", "mount": "secret"}}
+        params = RefParams()
+        params.kwargs = env
+
+        # create two secrets that are in the same path in vault
+        tag_1 = "?{vaultkv:secret/kv1:secret:same/path:first_key||random:int:32}"  # numeric
+        tag_2 = "?{vaultkv:secret/kv2:secret:same/path:second_key||random:loweralpha:32}"  # alphabetic
+        REF_CONTROLLER[tag_1] = params
+        REF_CONTROLLER[tag_2] = params
+
+        # check if both secrets are still valid
+        revealed_1 = REVEALER.reveal_raw_string("File contents revealed: {}".format(tag_1))
+        revealed_2 = REVEALER.reveal_raw_string("File contents revealed: {}".format(tag_2))
+        revealed_secret_1 = revealed_1[24:]
+        revealed_secret_2 = revealed_2[24:]
+
+        # confirming secrets are correctly revealed
+        self.assertTrue(revealed_secret_1.isnumeric(), msg="Secret got overwritten")
+        self.assertTrue(revealed_secret_2.isalpha(), msg="Secret got overwritten")
+
+        # Advanced: Update one key with another secret
+        tag_3 = "?{vaultkv:secret/kv3:secret:same/path:first_key||random:loweralpha:32}"  # updating first key
+        REF_CONTROLLER[tag_3] = params
+
+        revealed_3 = REVEALER.reveal_raw_string("File contents revealed: {}".format(tag_3))
+        revealed_secret_3 = revealed_3[24:]
+
+        # confirm that secret in first_key is no longer numeric, but alphabetic
+        self.assertTrue(revealed_secret_3.isalpha(), msg="Error in updating an existing key")
+        self.assertTrue(
+            revealed_secret_2.isalpha(), msg="A non accessed key changed by accessing/updating another key"
+        )
