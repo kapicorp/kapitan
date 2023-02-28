@@ -90,6 +90,7 @@ Some reference backends require configuration, both in the Inventory and to conf
               vaultkv:
                 VAULT_ADDR: http://127.0.0.1:8200
                 auth: token
+                mount: secret
         ```
     === "vaulttransit"
         ```yaml
@@ -258,11 +259,20 @@ Some reference backends require configuration, both in the Inventory and to conf
           ...
         ```
     === "vaultkv"
+        read-only
         ```yaml
         parameters:
           ...
           mysql:
             root_password: ?{vaultkv:targets/${target_name}/mysql/root_password}
+          ...
+        ```
+        read-write:
+        ```yaml
+        parameters:
+          ...
+          mysql:
+            root_password: ?{vaultkv:targets/${target_name}/mysql/root_password:mount:path/in/vault:mykey}
           ...
         ```
     === "vaulttransit"
@@ -387,22 +397,19 @@ You can assign values to your reference using the command line. Both reading fro
 
 Kapitan has built in capabilities to initialise its references on creation, using an elegant combination of primary and secondary functions. This is extremely powerful because it allows for you to make sure they are always initialised with sensible values.
 
-??? warning "Limitations of the `vaultkv` backend"
-    `vaultkv` does not support automatical generation of secrets: Please use the [manual mode](#manually)
-
 #### primary functions
 
 To automate the creation of the reference, you can add one of the following primary functions to the reference tag by using the syntax `||primary_function:param1:param2`
 
 For instance, to automatically initialise a reference with a ***random string*** with a lenght of 32 characters, you can use the `random` primary function
 
-```yaml
-parameters:
-  ...
-  mysql:
-    root_password: ?{${backend}:targets/${target_name}/mysql/root_password||random:str:32}
-  ...
-```
+    ```yaml
+    parameters:
+      ...
+      mysql:
+        root_password: ?{${backend}:targets/${target_name}/mysql/root_password||random:str:32}
+      ...
+    ```
 
 !!! note "Initialise non existent references"
     The first operator here `||` is more similar to a ***logical OR***. 
@@ -518,48 +525,48 @@ parameters:
 
 You can reveal the secrets referenced in the outputs of `kapitan compile` via:
 
-```shell
-kapitan refs --reveal -f path/to/rendered/template
-```
+    ```shell
+    kapitan refs --reveal -f path/to/rendered/template
+    ```
 
 For example, `compiled/minikube-mysql/manifests/mysql_secret.yml` with the following content:
 
-```yaml
-apiVersion: v1
-data:
-  MYSQL_ROOT_PASSWORD: ?{gpg:targets/minikube-mysql/mysql/password:ec3d54de}
-  MYSQL_ROOT_PASSWORD_SHA256: ?{gpg:targets/minikube-mysql/mysql/password_sha256:122d2732}
-kind: Secret
-metadata:
-  annotations: {}
-  labels:
-    name: example-mysql
-  name: example-mysql
-  namespace: minikube-mysql
-type: Opaque
-```
+    ```yaml
+    apiVersion: v1
+    data:
+      MYSQL_ROOT_PASSWORD: ?{gpg:targets/minikube-mysql/mysql/password:ec3d54de}
+      MYSQL_ROOT_PASSWORD_SHA256: ?{gpg:targets/minikube-mysql/mysql/password_sha256:122d2732}
+    kind: Secret
+    metadata:
+      annotations: {}
+      labels:
+        name: example-mysql
+      name: example-mysql
+      namespace: minikube-mysql
+    type: Opaque
+    ```
 
 can be revealed as follows:
 
-```shell
-kapitan refs --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
-```
+    ```shell
+    kapitan refs --reveal -f compiled/minikube-mysql/manifests/mysql_secret.yml
+    ```
 
 This will substitute the referenced secrets with the actual decrypted secrets stored at the referenced paths and display the file content.
 
 You can also use:
 
-```shell
-kapitan refs --reveal --ref-file refs/targets/all-glob/mysql/password
-```
+    ```shell
+    kapitan refs --reveal --ref-file refs/targets/all-glob/mysql/password
+    ```
 
 or
 
-```shell
-kapitan refs --reveal --tag "?{base64:targets/all-glob/mysql/password}"
-# or
-kapitan refs --reveal --tag "?{base64:targets/all-glob/mysql/password:3192c15c}"
-```
+    ```shell
+    kapitan refs --reveal --tag "?{base64:targets/all-glob/mysql/password}"
+    # or
+    kapitan refs --reveal --tag "?{base64:targets/all-glob/mysql/password:3192c15c}"
+    ```
 
 for more convenience.
 
@@ -573,58 +580,58 @@ Kapitan is also able to use access specific keys in YAML content by using subvar
 
 For instance given a reference `plain:larder` with content:
 
-```yaml
-food:
-  apples: 1
-```
+    ```yaml
+    food:
+      apples: 1
+    ```
 
 I could now have an inventory variable like:
 
-```yaml
-parameters:
-  number_of_apples: ?{plain:larder@food.apple}
-```
+    ```yaml
+    parameters:
+      number_of_apples: ?{plain:larder@food.apple}
+    ```
 
 ### Using `subvars` to ingest yaml from command line tools
 
 Subvars can have a very practical use for storing YAML outputs coming straight from other tools. For instance, I could use the GCP `gcloud` command to get all the information about a cluster, and write it into a reference
 
-```shell
-gcloud container clusters describe \
-  --project ${TARGET_NAME}-project \
-  gke-cluster --zone europe-west1 --format yaml \
-    | kapitan refs --write plain:clusters/${TARGET_NAME}/cluster -t ${TARGET_NAME} -f -
-```
+    ```shell
+    gcloud container clusters describe \
+      --project ${TARGET_NAME}-project \
+      gke-cluster --zone europe-west1 --format yaml \
+        | kapitan refs --write plain:clusters/${TARGET_NAME}/cluster -t ${TARGET_NAME} -f -
+    ```
 
 knowing the output of `gcloud` to produce yaml that contain the following values:
 
-```yaml
-...
-name: gke-cluster
-releaseChannel:
-  channel: REGULAR
-selfLink: https://container.googleapis.com/v1/projects/kapicorp/locations/europe-west1/clusters/gke-cluster
-...
-```
+    ```yaml
+    ...
+    name: gke-cluster
+    releaseChannel:
+      channel: REGULAR
+    selfLink: https://container.googleapis.com/v1/projects/kapicorp/locations/europe-west1/clusters/gke-cluster
+    ...
+    ```
 
 I can not reference the link to the cluster in the inventory using:
 
-```yaml
-parameters:
-  cluster:
-    name: ?{plain:clusters/${target_name}/cluster@name} 
-    release_channel: ?{plain:clusters/${target_name}/cluster@releaseChannel.channel}
-    link: ?{plain:clusters/${target_name}/cluster@selfLink}
-```
+    ```yaml
+    parameters:
+      cluster:
+        name: ?{plain:clusters/${target_name}/cluster@name} 
+        release_channel: ?{plain:clusters/${target_name}/cluster@releaseChannel.channel}
+        link: ?{plain:clusters/${target_name}/cluster@selfLink}
+    ```
 
 Combined with a Jinja template, I could write automatically documentation containing the details of the clusters I use.
 
-```text
-{% set p = inventory.parameters %}
-# Documentation for {{p.target_name}}
+    ```text
+    {% set p = inventory.parameters %}
+    # Documentation for {{p.target_name}}
 
-Cluster [{{p.cluster.name}}]({{p.cluster.link}}) has release channel {{p.cluster.release_channel}}
-```
+    Cluster [{{p.cluster.name}}]({{p.cluster.link}}) has release channel {{p.cluster.release_channel}}
+    ```
 
 
 
@@ -632,13 +639,23 @@ Cluster [{{p.cluster.name}}]({{p.cluster.link}}) has release channel {{p.cluster
 
 ### `vaultkv`
 
-!!! warning "Currently Kapitan supports only ReadOnly mode for this backend"
-
 Considering a key-value pair like `my_key`:`my_secret` in the path `secret/foo/bar` in a kv-v2(KV version 2) secret engine on the vault server, to use this as a secret use:
 
-```shell
-echo "foo/bar:my_key"  | kapitan refs --write vaultkv:path/to/secret_inside_kapitan -t <target_name> -f -
-```
+    ```shell
+    echo "foo/bar:my_key"  | kapitan refs --write vaultkv:path/to/secret_inside_kapitan -t <target_name> -f -
+    ```
+
+To write a secret in the vault with kapitan use a ref tag with following structure:
+
+    ```yaml
+    parameters:
+      ...
+      secret:
+        my_secret: ?{vaultkv:targets/${target_name}/mypath:mount:path/in/vault:mykey||<functions>}
+      ...
+    ```
+
+Leave `mount` empty to use the specified mount from vault params from the inventory (see below). Same applies to the `path/in/vault` where the ref path in kapitan gets taken as default value.  
 
 Parameters in the secret file are collected from the inventory of the target we gave from CLI `-t <target_name>`. If target isn't provided then kapitan will identify the variables from the environment when revealing secret.
 
@@ -650,28 +667,28 @@ Extra parameters that can be defined in inventory are:
 - `engine`: secret engine used, either `kv-v2` or `kv` (default `kv-v2`)
 Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,`VAULT_SECRET_ID`.
 
-```yaml
-parameters:
-  kapitan:
-    secrets:
-      vaultkv:
-        auth: userpass
-        engine: kv-v2
-        mount: team-alpha-secret
-        VAULT_ADDR: http://127.0.0.1:8200
-        VAULT_NAMESPACE: CICD-alpha
-        VAULT_SKIP_VERIFY: false
-        VAULT_CLIENT_KEY: /path/to/key
-        VAULT_CLIENT_CERT: /path/to/cert
-```
+      ```yaml
+      parameters:
+        kapitan:
+          secrets:
+            vaultkv:
+              auth: userpass
+              engine: kv-v2
+              mount: team-alpha-secret
+              VAULT_ADDR: http://127.0.0.1:8200
+              VAULT_NAMESPACE: CICD-alpha
+              VAULT_SKIP_VERIFY: false
+              VAULT_CLIENT_KEY: /path/to/key
+              VAULT_CLIENT_CERT: /path/to/cert
+      ```
 
 ### `vaulttransit`
 
 Considering a key-value pair like `my_key`:`my_secret` in the path `secret/foo/bar` in a transit secret engine on the vault server, to use this as a secret use:
 
-```shell
-echo "any.value:whatever-you_may*like"  | kapitan refs --write vaulttransit:my_target/to/secret_inside_kapitan -t <target_name> -f -
-```
+    ```shell
+    echo "any.value:whatever-you_may*like"  | kapitan refs --write vaulttransit:my_target/to/secret_inside_kapitan -t <target_name> -f -
+    ```
 
 Parameters in the secret file are collected from the inventory of the target we gave from CLI `-t <target_name>`. If target isn't provided then kapitan will identify the variables from the environment when revealing secret.
 
@@ -684,34 +701,34 @@ Extra parameters that can be defined in inventory are:
 - `always_latest`: Always rewrap ciphertext to latest rotated crypto_key version
 Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,`VAULT_SECRET_ID`.
 
-```yaml
-parameters:
-  kapitan:
-    vars:
-      target: my_target
-      namespace: my_namespace
-    secrets:
-      vaulttransit:
-        VAULT_ADDR: http://vault.example.com:8200
-        VAULT_TOKEN: s.i53a1DL83REM61UxlJKLdQDY
-        VAULT_SKIP_VERIFY: "True"
-        auth: token
-        mount: transit
-        crypto_key: new_key
-        always_latest: False
-parameters:
-  target_name: secrets
-  kapitan:
-    secrets:
-      vaulttransit:
-        VAULT_ADDR: http://127.0.0.1:8200
-        VAULT_TOKEN: s.i53a1DL83REM61UxlJKLdQDY
-        VAULT_SKIP_VERIFY: "True"
-        auth: token
-        mount: transit
-        crypto_key: key
-        always_latest: False
-```
+      ```yaml
+      parameters:
+        kapitan:
+          vars:
+            target: my_target
+            namespace: my_namespace
+          secrets:
+            vaulttransit:
+              VAULT_ADDR: http://vault.example.com:8200
+              VAULT_TOKEN: s.i53a1DL83REM61UxlJKLdQDY
+              VAULT_SKIP_VERIFY: "True"
+              auth: token
+              mount: transit
+              crypto_key: new_key
+              always_latest: False
+      parameters:
+        target_name: secrets
+        kapitan:
+          secrets:
+            vaulttransit:
+              VAULT_ADDR: http://127.0.0.1:8200
+              VAULT_TOKEN: s.i53a1DL83REM61UxlJKLdQDY
+              VAULT_SKIP_VERIFY: "True"
+              auth: token
+              mount: transit
+              crypto_key: key
+              always_latest: False
+      ```
 
 ## Azure KMS Secret Backend
 
@@ -722,43 +739,43 @@ It should be of the form `https://{keyvault-name}.vault.azure.net/{object-type}/
 
 This is done in the inventory under `parameters.kapitan.secrets`.
 
-```yaml
-parameters:
-  kapitan:
-    vars:
-      target: ${target_name}
-      namespace: ${target_name}
-    secrets:
-      azkms:
-        key: 'https://<keyvault-name>.vault.azure.net/keys/<object-name>/<object-version>'
-```
+    ```yaml
+    parameters:
+      kapitan:
+        vars:
+          target: ${target_name}
+          namespace: ${target_name}
+        secrets:
+          azkms:
+            key: 'https://<keyvault-name>.vault.azure.net/keys/<object-name>/<object-version>'
+    ```
 
 The key can also be specified using the `--key` flag
 
 ### Creating a secret
 
-Secrets can be created using any of the methods described in the ["creating your secret"](#2-create-your-secret) section.
+Secrets can be created using any of the methods described in the "creating your secret" section.
 
 For example, if the key is defined in the `prod` target file
 
-```shell
-echo "my_encrypted_secret" | kapitan refs --write azkms:path/to/secret_inside_kapitan -t prod -f -
-```
+    ```shell
+    echo "my_encrypted_secret" | kapitan refs --write azkms:path/to/secret_inside_kapitan -t prod -f -
+    ```
 
 Using the `--key` flag and a `key_id`
 
-```shell
-echo "my_encrypted_secret" | kapitan refs --write azkms:path/to/secret_inside_kapitan --key=<key_id> -f -
-```
+    ```shell
+    echo "my_encrypted_secret" | kapitan refs --write azkms:path/to/secret_inside_kapitan --key=<key_id> -f -
+    ```
 
 ### Referencing and revealing a secret
 
-Secrets can be [referenced](#3-reference-your-secrets-in-your-classestargets-and-run-kapitan-compile) and [revealed](#4-reveal-and-use-the-secrets) in any of the ways described above.
+Secrets can be referenced and revealed in any of the ways described above.
 
 For example, to reveal the secret stored at `path/to/secret_inside_kapitan`
 
-```shell
-kapitan refs --reveal --tag "?{azkms:path/to/secret_inside_kapitan}"
-```
+    ```shell
+    kapitan refs --reveal --tag "?{azkms:path/to/secret_inside_kapitan}"
+    ```
 
 *Note:* Cryptographic algorithm used for encryption is *rsa-oaep-256*.
