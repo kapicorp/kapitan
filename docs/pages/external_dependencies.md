@@ -1,303 +1,212 @@
 # :kapitan-logo: External dependencies
 
-Kapitan is capable of fetching components stored in remote locations. This feature can be used by specifying those dependencies in the inventory under `parameters.kapitan.dependencies`. Supported types are:
+**Kapitan** has the functionality to fetch external dependencies from remote locations. 
 
-- [git type](#git-type)
-- [http type](#http-type)
-- [helm type](#helm-type)
+Supported dependencies types are:
 
-Some use cases of this feature may include:
+- [git](#git)
+- [http](#http)
+- [helm](#helm)
 
-- using templates/jsonnet libraries hosted remotely
-- using values in remote files via `file_read` jsonnet callback
 
 ## Usage
 
-```yaml
-parameters:
-  kapitan:
-    dependencies:
-    - type: <dependency_type>
-      output_path: path/to/file/or/dir
-      source: <source_of_dependency>
-      # other type-specific parameters, if any
-```
+*Kapitan* by default will not attempt to download any dependency, and rely on what is already available.
 
-Use `--fetch` option to fetch the dependencies:
+### Basic fetching
 
-```shell
-kapitan compile --fetch
-```
+You can use the `fetch` option to explicitly fetch the dependencies:
 
+=== "cli"
+
+    ```shell
+    kapitan compile --fetch
+    ```
+
+=== "dotfile" 
+
+    !!! code "`.kapitan`"
+        to make it default, then simply use `kapitan compile`
+
+        ```yaml 
+        ...
+        compile:
+          fetch: true 
+        ```
+
+    
 This will download the dependencies and store them at their respective `output_path`.
-By default, kapitan does not overwrite existing items with the same name as that of the fetched dependencies.
 
-Use the `--force-fetch` flag to force fetch (update cache with freshly fetched dependencies) and overwrite any existing item sharing the same name in the `output_path`.
+### Overwrite local changes
+
+When fetching a dependency, **Kapitan** will refuse to overwrite existing files to preserve your local modifications. 
+
+Use the `force-fetch` option to force overwrite your local files in the `output_path`.
 
 
-```shell
-kapitan compile --force-fetch
-```
+=== "cli"
 
-Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
+    ```shell
+    kapitan compile --force-fetch
+    ```
+
+=== "dotfile" 
+
+    !!! code "`.kapitan`"
+        to make it default, then simply use `kapitan compile`
+
+        ```yaml 
+        ...
+        compile:
+          force-fetch: true 
+        ```
+
+### Caching
+
+Kapitan also supports caching Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
 
 ```shell
 kapitan compile --cache --fetch
 ```
 
-## Git type
+=== "git"
 
-Git types can fetch external dependencies available via HTTP/HTTPS or SSH URLs. This is useful for fetching repositories or their sub-directories, as well as accessing them in specific commits and branches (refs).
+    ### Syntax
 
-**Note**: git types require git binary on your system.
+    ```yaml
+    parameters:
+      kapitan:
+        dependencies:
+        - type: git
+          output_path: path/to/dir
+          source: git_url # mkdocs (1)!
+          subdir: relative/path/from/repo/root (optional) # mkdocs (2)!
+          ref: tag, commit, branch etc. (optional) # mkdocs (3)!
+    ```
 
-### Usage
+    1. Git types can fetch external `git` repositories through either HTTP/HTTPS or SSH URLs. 
+    2. Optional supports for cloning just a sub-directory
+    3. Optional support for accessing them in specific commits and branches (refs).
 
-```yaml
-parameters:
-  kapitan:
-    dependencies:
-    - type: git
-      output_path: path/to/dir
-      source: git_url
-      subdir: relative/path/from/repo/root (optional)
-      ref: tag, commit, branch etc. (optional)
-```
+    !!! note
 
-### Example
+        This type depends on the `git` binary installed on your system and available to **Kapitan**.
 
-Say we want to fetch the source code from our kapitan repository, specifically, `kapicorp/kapitan/kapitan/version.py`. Let's create a very simple target file `inventory/targets/kapitan-example.yml`.
+    ### Example
 
-```yaml
-parameters:
-  kapitan:
-    vars:
-      target: kapitan-example
-    dependencies:
-    - type: git
-      output_path: source/kapitan
-      source: git@github.com:kapicorp/kapitan.git
-      subdir: kapitan
-      ref: master
-    compile:
-    - input_paths:
-      - source/kapitan/version.py
-      input_type: jinja2 # just to copy the file over to target
-      output_path: .
-```
+    Say we want to fetch the source code from our kapitan repository, specifically, `kapicorp/kapitan/kapitan/version.py`. Let's create a very simple target file `inventory/targets/kapitan-example.yml`.
 
-Then run:
+    ```yaml
+    parameters:
+      kapitan:
+        vars:
+          target: kapitan-example
+        dependencies:
+        - type: git
+          output_path: source/kapitan
+          source: git@github.com:kapicorp/kapitan.git
+          subdir: kapitan
+          ref: master
+        compile:
+        - input_paths:
+          - source/kapitan/version.py
+          input_type: jinja2 # just to copy the file over to target
+          output_path: .
+    ```
 
-```shell
-$ kapitan compile --fetch -t kapitan-example
-Dependency git@github.com:kapicorp/kapitan.git : fetching now
-Dependency git@github.com:kapicorp/kapitan.git : successfully fetched
-Dependency git@github.com:kapicorp/kapitan.git : saved to source/kapitan
-Compiled kapitan-example (0.02s)
+=== "`http`"
 
-$ ls source
-kapitan
-```
+    ### Syntax
 
-This will download the kapitan repository (kapicorp/kapitan), copy the sub-directory `kapitan` and save it to `source/kapitan`. Therefore, `kapicorp/kapitan/kapitan` corresponds to `source/kapitan` locally.
+    ```yaml
+    parameters:
+      kapitan:
+        dependencies:
+        - type: http | https # mkdocs (2)!
+          output_path: path/to/file # mkdocs (1)!
+          source: http[s]://<url> # mkdocs (2)!
+          unpack: True | False # mkdocs (3)! 
+    ```
 
-Note that even if you are not using `subdir` parameter, you can and should specify the repository name in the `output_path` parameter. If you only specify `source` as the `output_path`, then all the kapitan files will be under `source` and not `source/kapitan`.
+    1. `output_path` must fully specify the file name. For example:
+    2. http[s] types can fetch external dependencies available at `http://` or `https://` URL.
+    3. archive mode: download and unpack
 
-## HTTP type
+    ### Examples
 
-http[s] types can fetch external dependencies available at `http://` or `https://` URL.
+    === "Single file"
 
-### Usage
 
-```yaml
-parameters:
-  kapitan:
-    dependencies:
-    - type: http | https
-      output_path: path/to/file
-      source: http[s]://<url>
-      unpack: True | False
-```
+    === "Archive"
 
-`output_path` must fully specify the file name. For example:
+    Say we want to download kapitan README.md file. Since it's on Github, we can access it as <https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md>. Using the following inventory, we can copy this to our target folder:
 
-```yaml
-parameters:
-  kapitan:
-    dependencies:
-    - type: https
-      output_path: foo.txt
-      source: https://example.com/foo.txt
-```
+    ```yaml
+    parameters:
+      kapitan:
+        vars:
+          target: kapitan-example
+        dependencies:
+        - type: https
+          output_path: README.md
+          source: https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md
+        compile:
+        - input_paths:
+          - README.md
+          input_type: jinja2
+          output_path: .
+    ```
 
-### Example
+=== "`helm`"
 
-Say we want to download kapitan README.md file. Since it's on Github, we can access it as <https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md>. Using the following inventory, we can copy this to our target folder:
+    ### Syntax
 
-```yaml
-parameters:
-  kapitan:
-    vars:
-      target: kapitan-example
-    dependencies:
-    - type: https
-      output_path: README.md
-      source: https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md
-    compile:
-    - input_paths:
-      - README.md
-      input_type: jinja2
-      output_path: .
-```
+    ```yaml
+    parameters:
+      kapitan:
+        dependencies:
+        - type: helm
+          output_path: path/to/chart
+          source: http[s]|oci://<helm_chart_repository_url>
+          version: <specific chart version>
+          chart_name: <name of chart>
+          helm_path: <helm binary>
+    ```
 
-Then run:
+    Fetches helm charts and any specific subcharts in the `requirements.yaml` file.
 
-```shell
-$ kapitan compile --fetch -t kapitan-example
-Dependency https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md : fetching now
-Dependency https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md : successfully fetched
-Dependency https://raw.githubusercontent.com/kapicorp/kapitan/master/README.md : saved to README.md
-Compiled kapitan-example (0.02s)
+    `helm_path` can be used to specify where the `helm` binary name or path.
+    It defaults to the value of the `KAPITAN_HELM_PATH` environment var or simply to `helm` if neither is set.
+    You should specify only if you don't want the default behavior.
 
-$ ls
-compiled inventory README.md
-```
+    `source` can be either the URL to a chart repository, or the URL to a chart on an OCI registry (supported since Helm 3.8.0).
 
-This fetches the README.md file from the URL and save it locally.
+    ### Examples
 
-Another use case for http types is when we want to download an archive file, such as helm packages, and extract its content.
-Setting `unpack: True` will unpack zip or tar files onto the `output_path`. In such cases, set `output_path` to a folder where you extract the content, and not the file name. You can refer to [here](/pages/input_types/helm.md) for the example.
+    If we want to download the prometheus helm chart we simply add the dependency to the monitoring target.
+    We want a specific version `11.3.0` so we put that in.
 
-## Helm type
+    ```yaml
+    parameters:
+      kapitan:
+        vars:
+          target: monitoring
+        dependencies:
+          - type: helm
+            output_path: charts/prometheus
+            source: https://kubernetes-charts.storage.googleapis.com
+            version: 11.3.0
+            chart_name: prometheus
+        compile:
+          - input_type: helm
+            output_path: .
+            input_paths:
+              - charts/prometheus
+            helm_values:
+            alertmanager:
+                enabled: false
+            helm_params:
+              namespace: monitoring
+              name: prometheus
+    ```
 
-Fetches helm charts and any specific subcharts in the `requirements.yaml` file.
-
-`helm_path` can be used to specify where the `helm` binary name or path.
-It defaults to the value of the `KAPITAN_HELM_PATH` environment var or simply to `helm` if neither is set.
-You should specify only if you don't want the default behavior.
-
-`source` can be either the URL to a chart repository, or the URL to a chart on an OCI registry (supported since Helm 3.8.0).
-
-### Usage
-
-```yaml
-parameters:
-  kapitan:
-    dependencies:
-    - type: helm
-      output_path: path/to/chart
-      source: http[s]|oci://<helm_chart_repository_url>
-      version: <specific chart version>
-      chart_name: <name of chart>
-      helm_path: <helm binary>
-```
-
-### Example
-
-If we want to download the prometheus helm chart we simply add the dependency to the monitoring target.
-We want a specific version `11.3.0` so we put that in.
-
-```yaml
-parameters:
-  kapitan:
-    vars:
-      target: monitoring
-    dependencies:
-      - type: helm
-        output_path: charts/prometheus
-        source: https://kubernetes-charts.storage.googleapis.com
-        version: 11.3.0
-        chart_name: prometheus
-    compile:
-      - input_type: helm
-        output_path: .
-        input_paths:
-          - charts/prometheus
-        helm_values:
-         alertmanager:
-            enabled: false
-        helm_params:
-          namespace: monitoring
-          name: prometheus
-```
-
-Then run:
-
-```shell
-$ kapitan compile --fetch -t monitoring
-Dependency helm chart prometheus and version 11.3.0: fetching now
-Dependency helm chart prometheus and version 11.3.0: successfully fetched
-Dependency helm chart prometheus and version 11.3.0: saved to charts/prometheus
-Compiled monitoring (1.48s)
-
-$ tree -L 3
-├── charts
-│   └── prometheus
-│       ├── Chart.yaml
-│       ├── README.md
-│       ├── charts
-│       ├── requirements.lock
-│       ├── requirements.yaml
-│       ├── templates
-│       └── values.yaml
-├── compiled
-│   ├── monitoring
-├── inventory
-    ├── classes
-        ├── common.yml
-        ├── component
-```
-
-If you simply want the latest chart available, either don't include the `version` key or specify an empty string.
-
-```yaml
-parameters:
-  kapitan:
-    vars:
-      target: monitoring
-    dependencies:
-      - type: helm
-        output_path: charts/prometheus
-        source: https://kubernetes-charts.storage.googleapis.com
-        version: ""
-        chart_name: prometheus
-    compile:
-      - input_type: helm
-        output_path: .
-        input_paths:
-          - charts/prometheus
-        helm_values:
-         alertmanager:
-            enabled: false
-        helm_params:
-          namespace: monitoring
-          name: prometheus
-```
-
-Then run:
-
-```shell
-$ kapitan compile --fetch -t monitoring
-Dependency helm chart prometheus being fetch with using latest version available
-Dependency helm chart prometheus and version : fetching now
-Dependency helm chart prometheus and version : successfully fetched
-Dependency helm chart prometheus and version : saved to charts/prometheus
-Compiled monitoring (1.58s)
-
-$ tree -L 3
-├── charts
-│   └── prometheus
-│       ├── Chart.yaml
-│       ├── README.md
-│       ├── charts
-│       ├── requirements.lock
-│       ├── requirements.yaml
-│       ├── templates
-│       └── values.yaml
-├── compiled
-│   ├── monitoring
-├── inventory
-    ├── classes
-        ├── common.yml
-        ├── component
-```

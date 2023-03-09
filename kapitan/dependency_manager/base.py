@@ -59,7 +59,7 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
 
                 if full_output_path in deps_output_paths[source_uri]:
                     # if the output_path is duplicated for the same source_uri
-                    logger.warning("Skipping duplicate output path for uri %s", source_uri)
+                    logger.debug("Skipping duplicate output path for uri %s", source_uri)
                     continue
                 else:
                     deps_output_paths[source_uri].add(full_output_path)
@@ -124,10 +124,11 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
                     "{} {}: subdir {} not found in repo".format(item_type, source, sub_dir)
                 )
         if force:
-            copy_tree(copy_src_path, output_path)
+            copied = copy_tree(copy_src_path, output_path, verbose=0)
         else:
-            safe_copy_tree(copy_src_path, output_path)
-        logger.info("%s %s: saved to %s", item_type, source, output_path)
+            copied = safe_copy_tree(copy_src_path, output_path)
+        if copied:
+            logger.info("%s %s: saved to %s", item_type, source, output_path)
 
 
 def fetch_git_source(source, save_dir, item_type):
@@ -136,10 +137,10 @@ def fetch_git_source(source, save_dir, item_type):
     if os.path.exists(save_dir):
         rmtree(save_dir)
         logger.debug("Removed %s", save_dir)
-    logger.info("%s %s: fetching now", item_type, source)
+    logger.debug("%s %s: fetching now", item_type, source)
     try:
         Repo.clone_from(source, save_dir)
-        logger.info("%s %s: successfully fetched", item_type, source)
+        logger.debug("%s %s: successfully fetched", item_type, source)
         logger.debug("Git clone cached to %s", save_dir)
     except GitCommandError as e:
         logger.error(e)
@@ -194,7 +195,7 @@ def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
                 copyfile(cached_source_path, output_path)
             else:
                 safe_copy_file(cached_source_path, output_path)
-            logger.info("%s %s: saved to %s", item_type, source, output_path)
+            logger.debug("%s %s: saved to %s", item_type, source, output_path)
 
 
 def fetch_http_source(source, save_path, item_type):
@@ -203,9 +204,9 @@ def fetch_http_source(source, save_path, item_type):
     if os.path.exists(save_path):
         os.remove(save_path)
         logger.debug("Removed %s", save_path)
-    logger.info("%s %s: fetching now", item_type, source)
+    logger.debug("%s %s: fetching now", item_type, source)
     content, content_type = make_request(source)
-    logger.info("%s %s: successfully fetched", item_type, source)
+    logger.debug("%s %s: successfully fetched", item_type, source)
     if content is not None:
         with open(save_path, "wb") as f:
             f.write(content)
@@ -237,15 +238,18 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
         parent_dir = os.path.dirname(output_path)
         if parent_dir != "":
             os.makedirs(parent_dir, exist_ok=True)
+
         if force:
-            copy_tree(cached_repo_path, output_path)
+            copied = copy_tree(cached_repo_path, output_path, verbose=0)
         else:
-            safe_copy_tree(cached_repo_path, output_path)
-        logger.info("Dependency %s: saved to %s", source.chart_name, output_path)
+            copied = safe_copy_tree(cached_repo_path, output_path)
+
+        if copied:
+            logger.info("Dependency %s: saved to %s", source.chart_name, output_path)
 
 
 def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
-    logger.info("Dependency helm chart %s and version %s: fetching now", chart_name, version or "latest")
+    logger.debug("Dependency helm chart %s and version %s: fetching now", chart_name, version or "latest")
     # Fetch archive and untar it into parent dir
     save_dir = os.path.dirname(save_path)
     args = ["pull", "--destination", save_dir, "--untar"]
@@ -268,8 +272,8 @@ def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
     else:
         # rename chart to requested name
         os.rename(os.path.join(save_dir, chart_name), save_path)
-        logger.info("Dependency helm chart %s and version %s: successfully fetched", chart_name, version)
-        logger.info("Dependency helm chart %s and version %s: saved to %s", chart_name, version, save_path)
+        logger.debug("Dependency helm chart %s and version %s: successfully fetched", chart_name, version)
+        logger.debug("Dependency helm chart %s and version %s: saved to %s", chart_name, version, save_path)
 
 
 def exists_in_cache(item_path):
