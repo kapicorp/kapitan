@@ -23,6 +23,9 @@ from distutils.errors import DistutilsFileError
 from distutils.file_util import _copy_file_contents
 from functools import lru_cache, wraps
 from hashlib import sha256
+from pathlib import Path
+from shutil import copytree
+from typing import List
 from zipfile import ZipFile
 
 import jinja2
@@ -631,3 +634,19 @@ def safe_copy_tree(src, dst):
             outputs.append(dst_name)
 
     return outputs
+
+
+def copy_tree(source: Path, destination: Path, dirs_exist_ok: bool = False) -> List[str]:
+    """Recursively copy a given directory from `source` to `destination` using shutil.copytree
+    and return list of copied files. When `dirs_exist_ok` is set, the `FileExistsError` is
+    ignored when destination directory exists.
+    Args:
+        source (str): Path to a source directory
+        destination (str): Path to a destination directory
+    Returns:
+        list[str]: List of copied files
+    """
+    inventory_before = list(destination.rglob("*"))
+    copytree(source, destination, dirs_exist_ok=dirs_exist_ok)
+    inventory_after = list(destination.rglob("*"))
+    return [str(d) for d in inventory_after if d not in inventory_before]
