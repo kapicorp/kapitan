@@ -650,3 +650,32 @@ def copy_tree(source: Path, destination: Path, dirs_exist_ok: bool = False) -> L
     copytree(source, destination, dirs_exist_ok=dirs_exist_ok)
     inventory_after = list(destination.rglob("*"))
     return [str(d) for d in inventory_after if d not in inventory_before]
+
+
+def tree(start_path: Path, prefix: str = "", filter_func: callable = lambda a: True) -> None:
+    """A recursive generator, given a directory Path object will yield a visual tree structure
+    line by line with each line prefixed by the same characters. Possible to pass a filter
+    function that takes pathlib.Path and returns either True of False.
+    Taken from https://stackoverflow.com/a/59109706
+    Args:
+        start_path (Path): Path from which tree should be generated.
+        prefix (str, optional): Visual prefix to show the structure. Defaults to ''.
+        filter_func (callable, optional): Function that will apply to each path. Should return boolean.
+        Defaults to lambda a : True.
+    Yields:
+        str: Directory / File with a visual tree pointer.
+    """
+    space = "    "
+    branch = "│   "
+    tee = "├── "
+    last = "└── "
+
+    contents = [p for p in Path(start_path).iterdir() if filter_func(p)]
+    # contents each get pointers that are ├── with a final └── :
+    pointers = [tee] * (len(contents) - 1) + [last]
+    for pointer, path in zip(pointers, contents):
+        yield prefix + pointer + path.name
+        if path.is_dir():  # extend the prefix and recurse:
+            extension = branch if pointer == tee else space
+            # i.e. space because last, └── , above so no more |
+            yield from tree(start_path=path, prefix=prefix + extension, filter_func=filter_func)
