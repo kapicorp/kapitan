@@ -8,7 +8,6 @@
 "kapitan resources"
 
 import base64
-import errno
 import gzip
 import io
 import json
@@ -315,50 +314,58 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
 
     Does not throw errors if a class is not found while --fetch flag is enabled
     """
+    # if inventory is already cached theres nothing to do
+    if cached.inv:
+        return cached.inv
 
-    if not cached.inv:
-        reclass_config = {
-            "storage_type": "yaml_fs",
-            "inventory_base_uri": inventory_path,
-            "nodes_uri": os.path.join(inventory_path, "targets"),
-            "classes_uri": os.path.join(inventory_path, "classes"),
-            "compose_node_name": False,
-            "allow_none_override": True,
-            "ignore_class_notfound": ignore_class_notfound,
-        }
+    # set default values initially
+    reclass_config = reclass_config_defaults = {
+        "storage_type": "yaml_fs",
+        "inventory_base_uri": inventory_path,
+        "nodes_uri": "targets",
+        "classes_uri": "classes",
+        "compose_node_name": False,
+        "allow_none_override": True,
+        "ignore_class_notfound": ignore_class_notfound,  # false by default
+    }
 
-        try:
-            cfg_file = os.path.join(inventory_path, "reclass-config.yml")
-            with open(cfg_file) as reclass_cfg:
-                reclass_config = yaml.load(reclass_cfg, Loader=YamlLoader)
-                # normalise relative nodes_uri and classes_uri paths
-                for uri in ("nodes_uri", "classes_uri"):
-                    uri_val = reclass_config.get(uri)
-                    uri_path = os.path.join(inventory_path, uri_val)
-                    normalised_path = os.path.normpath(uri_path)
-                    reclass_config.update({uri: normalised_path})
-                logger.debug("Using reclass inventory config at: %s", cfg_file)
-        except IOError as ex:
-            # If file does not exist, ignore
-            if ex.errno == errno.ENOENT:
-                logger.debug("Using reclass inventory config defaults")
-
-        try:
-            storage = reclass.get_storage(
-                reclass_config["storage_type"],
-                reclass_config["nodes_uri"],
-                reclass_config["classes_uri"],
-                reclass_config["compose_node_name"],
+    # get reclass config from file 'inventory/reclass-config.yml'
+    cfg_file = os.path.join(inventory_path, "reclass-config.yml")
+    if os.path.isfile(cfg_file):
+        with open(cfg_file, "r") as fp:
+            config = yaml.load(fp.read(), Loader=YamlLoader)
+            logger.debug("Using reclass inventory config at: %s", cfg_file)
+        if config:
+            # set attributes, take default values if not present
+            for key, value in config.items():
+                reclass_config[key] = value
+        else:
+            logger.debug(
+                "{}: Invalid yaml or empty. Using reclass inventory config defaults".format(cfg_file)
             )
-            class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
-            _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
+    else:
+        logger.debug("Inventory reclass: No config file found. Using reclass inventory config defaults")
 
-            cached.inv = _reclass.inventory()
-        except ReclassException as e:
-            if isinstance(e, NotFoundError):
-                logger.error("Inventory reclass error: inventory not found")
-            else:
-                logger.error("Inventory reclass error: %s", e.message)
-            raise InventoryError(e.message)
+    # normalise relative nodes_uri and classes_uri paths and up
+    for uri in ("nodes_uri", "classes_uri"):
+        reclass_config[uri] = os.path.normpath(os.path.join(inventory_path, reclass_config[uri]))
+
+    try:
+        storage = reclass.get_storage(
+            reclass_config["storage_type"],
+            reclass_config["nodes_uri"],
+            reclass_config["classes_uri"],
+            reclass_config["compose_node_name"],
+        )
+        class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
+        _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
+
+        cached.inv = _reclass.inventory()
+    except ReclassException as e:
+        if isinstance(e, NotFoundError):
+            logger.error("Inventory reclass error: inventory not found")
+        else:
+            logger.error("Inventory reclass error: %s", e.message)
+        raise InventoryError(e.message)
 
     return cached.inv
