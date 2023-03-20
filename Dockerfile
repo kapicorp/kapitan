@@ -42,6 +42,7 @@ FROM python:3.8-slim
 COPY --from=python-builder /opt/venv /opt/venv
 
 ENV PATH="/opt/venv/bin:${PATH}"
+ENV HELM_CACHE_HOME=".cache/helm"
 ENV SEARCHPATH="/src"
 VOLUME ${SEARCHPATH}
 WORKDIR ${SEARCHPATH}
