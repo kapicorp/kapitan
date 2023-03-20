@@ -167,7 +167,6 @@ def compile_targets(
 
         os.makedirs(compile_path, exist_ok=True)
 
-
         # if '-t' is set on compile or only a few changed, only override selected targets
         if updated_targets:
             for target in target_objs:
