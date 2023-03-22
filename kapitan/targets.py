@@ -602,7 +602,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         "suffix_remove": {"type": "boolean"},
                         "suffix_stripped": {"type": "string"},
                     },
-                    "required": ["input_type", "input_paths", "output_path"],
+                    "required": ["input_type", "output_path"],
                     "minItems": 1,
                     "oneOf": [
                         {

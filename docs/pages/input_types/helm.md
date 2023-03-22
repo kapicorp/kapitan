@@ -1,6 +1,7 @@
 # :kapitan-logo: **Input Type | Helm**
 
-This is a Python binding to `helm template` command for users with helm charts. This does not require the helm executable, and the templates are rendered without the Tiller server.
+This is a Python binding to `helm template` command for users with helm charts. This requires the `helm` binary to be installed locally.
+If you're using the kapitan docker image, then the `helm` binary is already instealled inside the image.
 
 Unlike other input types, Helm input types support the following additional parameters under `kapitan.compile`:
 
@@ -25,11 +26,29 @@ parameters:
         …
 ```
 
+Alternatively, instead of using a local `chart_path`, you can omit the `input_path` and specify the URL and chart name directly
+
+```yaml
+parameters:
+  kapitan:
+    compile:
+    - output_path: <output_path>
+      input_type: helm
+      helm_params:
+        repo: https://charts.jetstack.io
+        chart_name: cert-manager
+        version: 1.1.0
+        …
+```
+
 `helm_values` is an object containing values specified that will override the default values in the input chart. This has exactly the same effect as specifying `--values custom_values.yml` for `helm template` command where `custom_values.yml` structure mirrors that of `helm_values`.
 
 `helm_values_files` is an array containing the paths to [helm values files](https://helm.sh/docs/chart_template_guide/values_files/) used as input for the chart. This has exactly the same effect as specifying `--file my_custom_values.yml` for the `helm template` command where `my_custom_values.yml` is a helm values file.
+
 If the same keys exist in `helm_values` and in multiple specified `helm_values_files`, the last indexed file in the `helm_values_files` will take precedence followed by the preceding `helm_values_files` and at the bottom the `helm_values` defined in teh compile block.
+
 There is an example in the tests. The `monitoring-dev`(kapitan/tests/test_resources/inventory/targets/monitoring-dev.yml) and `monitoring-prd`(kapitan/tests/test_resources/inventory/targets/monitoring-prd.yml) targets  both use the `monitoring`(tests/test_resources/inventory/classes/component/monitoring.yml) component.
+
 This component has helm chart input and takes a `common.yml` helm_values file which is "shared" by any target that uses the component and it also takes a dynamically defined file based on a kapitan variable defined in the target.
 
 `helm_path` can be use to provide the helm binary name or path.
@@ -55,7 +74,7 @@ Special flags:
 
 See the [helm doc](https://helm.sh/docs/helm/helm_template/) for further detail.
 
-#### Example
+## Example
 
 Let's use [nginx-ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress) helm chart as the input. Using [kapitan dependency manager](/external_dependencies.md), this chart can be fetched via a URL as listed in <https://helm.nginx.com/stable/index.yaml>.
 
@@ -107,18 +126,7 @@ $ grep "my-controller" compiled/nginx-from-chart/nginx-ingress/templates/control
         app: my-controller
 ```
 
-#### Building the binding from source
-
-Run
-
-```shell
-cd kapitan/inputs/helm
-./build.sh
-```
-
-This requires Go 1.14.
-
-#### Helm subcharts
+## Helm subcharts
 
 There is an [external dependency manager](/external_dependencies.md) of type `helm` which enables you to specify helm
 charts to download, including subcharts.

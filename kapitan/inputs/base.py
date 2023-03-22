@@ -40,7 +40,7 @@ class InputType(object):
 
         # expand any globbed paths, taking into account provided search paths
         input_paths = []
-        for input_path in comp_obj["input_paths"]:
+        for input_path in comp_obj.get("input_paths", []):
             globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
             inputs = list(itertools.chain.from_iterable(globbed_paths))
             # remove duplicate inputs
@@ -52,6 +52,11 @@ class InputType(object):
                     "search_paths: {}".format(input_path, ext_vars["target"], self.search_paths)
                 )
             input_paths.extend(inputs)
+
+        # Enable helm input type to compile without input_paths
+        # This is when we use helm CLI to download the chart
+        if input_type == "helm" and "input_paths" not in comp_obj:
+            self.compile_input_path("", comp_obj, ext_vars, **kwargs)
 
         for input_path in input_paths:
             self.compile_input_path(input_path, comp_obj, ext_vars, **kwargs)
