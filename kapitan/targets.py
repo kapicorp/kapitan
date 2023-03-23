@@ -602,7 +602,6 @@ def valid_target_obj(target_obj, require_compile=True):
                         "suffix_remove": {"type": "boolean"},
                         "suffix_stripped": {"type": "string"},
                     },
-                    "required": ["input_type", "output_path"],
                     "minItems": 1,
                     "oneOf": [
                         {
@@ -610,8 +609,24 @@ def valid_target_obj(target_obj, require_compile=True):
                                 "input_type": {"enum": ["jsonnet", "kadet", "copy", "remove"]},
                                 "output_type": {"enum": ["yml", "yaml", "json", "plain", "toml"]},
                             },
+                            "required": ["input_type", "input_paths", "output_path"],
                         },
-                        {"properties": {"input_type": {"enum": ["jinja2", "helm", "external"]}}},
+                        {
+                            "properties": {"input_type": {"enum": ["jinja2", "helm", "external"]}},
+                            "required": ["input_type", "input_paths", "output_path"],
+                        },
+                        {
+                            "properties": {
+                                "helm_params": {
+                                    "properties": {
+                                        "chart_name": {"type": "string"},
+                                        "repo": {"type": "string"},
+                                    },
+                                    "required": ["chart_name", "repo"],
+                                },
+                            },
+                            "required": ["input_type", "helm_params", "output_path"],
+                        },
                     ],
                 },
             },
