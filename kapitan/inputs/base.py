@@ -40,6 +40,8 @@ class InputType(object):
 
         # expand any globbed paths, taking into account provided search paths
         input_paths = []
+        # not all comp_obj will have input_paths.
+        # Example: For input_type helm, the input_path is optional.
         for input_path in comp_obj.get("input_paths", []):
             globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
             inputs = list(itertools.chain.from_iterable(globbed_paths))
