@@ -1,7 +1,7 @@
 # :kapitan-logo: **Input Type | Helm**
 
 This is a Python binding to `helm template` command for users with helm charts. This requires the `helm` binary to be installed locally.
-If you're using the kapitan docker image, then the `helm` binary is already instealled inside the image.
+If you're using the kapitan docker image, then the `helm` binary is already installed inside the image.
 
 Unlike other input types, Helm input types support the following additional parameters under `kapitan.compile`:
 
@@ -26,7 +26,8 @@ parameters:
         …
 ```
 
-Alternatively, instead of using a local `chart_path`, you can omit the `input_path` and specify the URL and chart name directly
+Alternatively, instead of using a local `chart_path`, you can omit the `input_path` and specify the URL and chart name directly. This way, nothing is cached locally and
+a request to the repo URL is made on every `kapitan compile` invocation.
 
 ```yaml
 parameters:
