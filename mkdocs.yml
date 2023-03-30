@@ -18,8 +18,8 @@ theme:
     - announce.dismiss
     - content.code.annotate
     - content.tabs.link
+    - navigation.instant
     - navigation.indexes
-    - navigation.sections
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top
@@ -81,24 +81,18 @@ extra:
 use_directory_urls: true
 nav:
   - Home: README.md
-  - Getting started:
-      - Kapitan Overview: kapitan_overview.md
-  - Support:
-      - Ask for support: support.md
-      - Related Projects: related.md
-  - Contribute:
-      - Sponsor Us: pages/contribute/sponsor.md
-      - Talk about Kapitan: pages/contribute/talk.md
-      - Active contributions:
-        - Documentation: pages/contribute/documentation.md
-        - Kapitan Code: pages/contribute/code.md
-  - Blog:
-    - 2023:
-      - New Kapitan release: pages/blog/2023-01-16.md
-    - 2022:
-      - 5 years of Kapitan: pages/blog/2022-12-04.md
+  - Getting started: getting_started.md
+      
+
   - Documentation:
-      - Inventory: inventory.md
+      - Overview: pages/kapitan_overview.md
+      - Inventory:
+        - Introduction: /inventory/introduction.md
+        - Targets: pages/inventory/targets.md
+        - Classes: pages/inventory/classes.md
+        - Parameters Interpolation: pages/inventory/parameters_interpolation.md
+        - Advanced: pages/inventory/advanced.md
+
       - Input Types:
           - Introduction: pages/input_types/introduction.md
           - Kadet: pages/input_types/kadet.md
@@ -110,19 +104,33 @@ nav:
           - Remove: pages/input_types/remove.md
       - References: references.md
       - Advanced Kapitan:
-        - Remote repositories: remote_repositories.md
-        - External dependencies: external_dependencies.md
-      - Proposals: proposals.md
-  - CLI reference:
-      - compile: pages/commands/kapitan_compile.md
-      - inventory: pages/commands/kapitan_inventory.md
-      - lint: pages/commands/kapitan_lint.md
-      - searchvar: pages/commands/kapitan_searchvar.md
-      - validate: pages/commands/kapitan_validate.md
-      - kapitan dotfile: pages/commands/kapitan_dotfile.md
+        - Remote repositories: pages/remote_repositories.md
+        - External dependencies: pages/external_dependencies.md
+      - CLI reference:
+          - compile: pages/commands/kapitan_compile.md
+          - inventory: pages/commands/kapitan_inventory.md
+          - lint: pages/commands/kapitan_lint.md
+          - searchvar: pages/commands/kapitan_searchvar.md
+          - validate: pages/commands/kapitan_validate.md
+          - kapitan dotfile: pages/commands/kapitan_dotfile.md
   - Examples:
       - Kubernetes: pages/examples/kubernetes.md
       - Terraform: pages/examples/terraform.md
+  - Blog:
+    - 2023:
+      - New Kapitan release: pages/blog/2023-01-16.md
+    - 2022:
+      - 5 years of Kapitan: pages/blog/2022-12-04.md
+  - Support:
+      - Ask for support: support.md
+      - Related Projects: related.md
+  - Contribute:
+      - Sponsor Us: pages/contribute/sponsor.md
+      - Talk about Kapitan: pages/contribute/talk.md
+      - Active contributions:
+        - Documentation: pages/contribute/documentation.md
+        - Kapitan Code: pages/contribute/code.md
+        - Proposals: proposals.md
   - FAQ: FAQ.md
 
 markdown_extensions:
