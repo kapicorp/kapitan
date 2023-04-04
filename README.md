@@ -8,7 +8,7 @@
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
 
-<img src="docs/images/kapitan_logo.png" width="25">  
+<img src="docs/images/kapitan_logo.png" width="25">
 
 
 **`Kapitan`** aims to be your *one-stop tool* to help you manage the ever growing complexity of your configurations.
@@ -52,6 +52,14 @@ System-wide (not recommended):
 ```shell
 sudo pip3 install --upgrade kapitan
 ```
+
+## Build Kapitan
+
+### Docker
+
+To build a docker image for the architecture of your machine, run `docker build . -t you-kapitan-image`, and to build for a specific platform, add `--platform linux/arm64`.
+
+To build a multi-platform image (as the CI does), follow [the docker multi-platform documentation](https://docs.docker.com/build/building/multi-platform/).
 
 ## Related projects
 

@@ -97,7 +97,7 @@ class Jsonnet(InputType):
         output_obj = json.loads(json_output)
 
         output = kwargs.get("output", "yaml")
-        prune = kwargs.get("prune_input", False)
+        prune = kwargs.get("prune_output", False)
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
         indent = kwargs.get("indent", 2)

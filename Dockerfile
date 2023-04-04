@@ -1,5 +1,7 @@
 # Build the virtualenv for Kapitan
-FROM python:3.7-slim AS python-builder
+FROM python:3.8-slim AS python-builder
+
+ARG TARGETARCH
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
@@ -18,7 +20,7 @@ RUN apt-get update \
         build-essential
 
 # Install Go (for go-jsonnet)
-RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.17.3.linux-amd64.tar.gz \
+RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.17.3.linux-${TARGETARCH}.tar.gz \
     && tar -C /usr/local -xzf go.tar.gz \
     && rm go.tar.gz
 
@@ -35,11 +37,12 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
     && rm get_helm.sh
 
 # Final image with virtualenv built in previous step
-FROM python:3.7-slim
+FROM python:3.8-slim
 
 COPY --from=python-builder /opt/venv /opt/venv
 
 ENV PATH="/opt/venv/bin:${PATH}"
+ENV HELM_CACHE_HOME=".cache/helm"
 ENV SEARCHPATH="/src"
 VOLUME ${SEARCHPATH}
 WORKDIR ${SEARCHPATH}

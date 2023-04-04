@@ -16,7 +16,7 @@ Here's some configuration from the nginx example
       ```
 
       1. We define a list with all the templates we want to compile with this input type
-      2. Then input type will render the files a the root of the target compiled folder e.g. `compiles/${target_name}`
+      2. Then input type will render the files a the root of the target compiled folder e.g. `compiled/${target_name}`
       3. We pass the list as `input_paths`
 
 !!! tip ""
@@ -46,7 +46,7 @@ We usually store documentation templates under the `templates/docs` directory.
 
 When we use Jinja to render scripts, we tend to call them "canned scripts" to indicate that these scripts have everything needed to run without extra parameters.
 
-We usually store documentation templates under the `templates/docs` directory.
+We usually store script templates under the `templates/scripts` directory.
 
 !!! example ""
     !!! note "examples/kubernetes/components/nginx-deploy.sh"
