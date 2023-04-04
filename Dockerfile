@@ -1,5 +1,5 @@
 # Build the virtualenv for Kapitan
-FROM python:3.7-slim AS python-builder
+FROM python:3.8-slim AS python-builder
 
 ARG TARGETARCH
 
@@ -37,7 +37,7 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
     && rm get_helm.sh
 
 # Final image with virtualenv built in previous step
-FROM python:3.7-slim
+FROM python:3.8-slim
 
 COPY --from=python-builder /opt/venv /opt/venv
 

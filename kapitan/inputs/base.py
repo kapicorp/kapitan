@@ -64,7 +64,7 @@ class InputType(object):
         target_name = ext_vars["target"]
         output_path = comp_obj["output_path"]
         output_type = comp_obj.get("output_type", self.default_output_type())
-        prune_input = comp_obj.get("prune", kwargs.get("prune", False))
+        prune_output = comp_obj.get("prune", kwargs.get("prune", False))
 
         logger.debug("Compiling %s", input_path)
         try:
@@ -78,7 +78,7 @@ class InputType(object):
                 ext_vars,
                 output=output_type,
                 target_name=target_name,
-                prune_input=prune_input,
+                prune_output=prune_output,
                 **kwargs,
             )
         except KapitanError as e:
