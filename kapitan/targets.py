@@ -169,9 +169,10 @@ def compile_targets(
 
         # if '-t' is set on compile or only a few changed, only override selected targets
         if updated_targets:
-            for target in updated_targets:
-                compile_path_target = os.path.join(compile_path, target)
-                temp_path_target = os.path.join(temp_compile_path, target)
+            for target in target_objs:
+                path = target["target_full_path"]
+                compile_path_target = os.path.join(compile_path, path)
+                temp_path_target = os.path.join(temp_compile_path, path)
 
                 os.makedirs(compile_path_target, exist_ok=True)
 
@@ -404,7 +405,7 @@ def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
                 raise InventoryError(
                     "InventoryError: {}: parameters.kapitan has no assignment".format(target_name)
                 )
-            target_obj["target_full_path"] = inv_target["__reclass__"]["node"].replace("./", "")
+            target_obj["target_full_path"] = inv_target["parameters"]["_reclass_"]["name"]["path"]
             require_compile = not ignore_class_notfound
             valid_target_obj(target_obj, require_compile)
             validate_matching_target_name(target_name, target_obj, inventory_path)
