@@ -334,7 +334,7 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
     if os.path.isfile(cfg_file):
         with open(cfg_file, "r") as fp:
             config = yaml.load(fp.read(), Loader=YamlLoader)
-            logger.debug("Using reclass inventory config at: %s", cfg_file)
+            logger.debug("Using reclass inventory config at: {}".format(cfg_file))
         if config:
             # set attributes, take default values if not present
             for key, value in config.items():
