@@ -346,7 +346,7 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
     else:
         logger.debug("Inventory reclass: No config file found. Using reclass inventory config defaults")
 
-    # normalise relative nodes_uri and classes_uri paths and up
+    # normalise relative nodes_uri and classes_uri paths
     for uri in ("nodes_uri", "classes_uri"):
         reclass_config[uri] = os.path.normpath(os.path.join(inventory_path, reclass_config[uri]))
 
