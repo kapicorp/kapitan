@@ -341,7 +341,7 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
                 reclass_config[key] = value
         else:
             logger.debug(
-                "{}: Invalid yaml or empty. Using reclass inventory config defaults".format(cfg_file)
+                "{}: Empty config file. Using reclass inventory config defaults".format(cfg_file)
             )
     else:
         logger.debug("Inventory reclass: No config file found. Using reclass inventory config defaults")
