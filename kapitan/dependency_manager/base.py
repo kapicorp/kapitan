@@ -114,6 +114,12 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
         else:
             repo.git.checkout("master")  # default ref
 
+        # initialising submodules
+        if "submodules" in dep:
+            if dep["submodules"]:
+                for submodule in repo.submodules:
+                    submodule.update(init=True)
+
         if "subdir" in dep:
             sub_dir = dep["subdir"]
             full_subdir = os.path.join(cached_repo_path, sub_dir)
