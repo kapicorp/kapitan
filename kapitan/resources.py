@@ -340,9 +340,7 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
             for key, value in config.items():
                 reclass_config[key] = value
         else:
-            logger.debug(
-                "{}: Empty config file. Using reclass inventory config defaults".format(cfg_file)
-            )
+            logger.debug("{}: Empty config file. Using reclass inventory config defaults".format(cfg_file))
     else:
         logger.debug("Inventory reclass: No config file found. Using reclass inventory config defaults")
 
