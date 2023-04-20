@@ -1,7 +1,0 @@
-Fixes issue #
-
-## Proposed Changes
-
--
--
--

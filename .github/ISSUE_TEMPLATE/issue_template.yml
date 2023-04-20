@@ -1,0 +1,115 @@
+name: Bug Report
+description: File a bug report
+title: "[bug]: "
+labels: ["bug"]
+body:
+  # information
+  - type: markdown
+    attributes:
+      value: | 
+        Thanks for taking the time to fill out this bug report!
+        *Note:* Please search to see if an issue already exists for the bug you encountered.
+  # bug description
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Description of the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+  # steps to reproduce
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: Tell us what steps you did to encounter the bug! Also provide parts of your inventory, if it's neccessary.
+      render: bash
+      value: |
+        1. 
+        2. 
+        3. 
+        4. 
+    validations:
+      required: true
+  # expected behavior
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description of what you expected to happen.
+      placeholder: Tell us what you'd expect to happen.
+    validations:
+      required: true
+  # additional context
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: | 
+        Add any other context about the problem here.
+        If applicable, you can add screenshots to help explain your problem.
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+  # section environment
+  - type: markdown
+    attributes:
+      value: |
+        ## Environment
+  # kapitan version
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version (kapitan)
+      description: |
+        Which version of kapitan are you running? 
+        If you are using an older version of kapitan, please try it against the master branch or the latest stable version.
+      options:
+        - v0.31.0 (stable)
+        - master
+      multiple: true
+    validations:
+      required: true
+  # python version
+  - type: dropdown
+    id: python-version
+    attributes:
+      label: Version (kapitan)
+      description: |
+        Which version of python are you using? Kapitan officially supports only version 3.8 and 3.9. 
+        If you are using an older version of python, please check if the bug still exists with a newer (supported) version.
+      options:
+        - '3.8'
+        - '3.9'
+        - 3.10 (future)
+        - I use kapitan directly (pip, docker)
+      multiple: true
+    validations:
+      required: true
+  # python virtual environment
+  - type: checkboxes
+    id: python-venv
+    attributes:
+      label: Python virtual environment
+      description: Are you using pyenv or virtualenv?
+      options:
+        - label: pyenv
+        - label: venv
+        - label: no environment
+  # os information
+  - type: input
+    id: os-information
+    attributes:
+      label: OS information
+      description: Which operation system do you use?
+      placeholder: Type in your operation system...
+  # logs
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: | 
+        Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+        Use the `--verbose` flag to see all the logs.
+      render: bash
