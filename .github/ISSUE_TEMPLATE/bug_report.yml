@@ -23,8 +23,8 @@ body:
     id: steps-to-reproduce
     attributes:
       label: Steps to reproduce
-      description: Steps to reproduce the behavior.
-      placeholder: Tell us what steps you did to encounter the bug! Also provide parts of your inventory, if it's neccessary.
+      description: Steps to reproduce the behavior. Also provide parts of your inventory, if it's neccessary.
+      placeholder: Tell us what steps you did to encounter the bug!
       render: bash
       value: |
         1. 
@@ -50,8 +50,7 @@ body:
       description: | 
         Add any other context about the problem here.
         If applicable, you can add screenshots to help explain your problem.
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
+      placeholder: Anything that might help us understanding your problem...
   # section environment
   - type: markdown
     attributes:
