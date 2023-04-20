@@ -17,21 +17,27 @@ targeting master branch. All submissions, including submissions by project membe
 
 ### Setup
 
-We highly recommend that you create a dedicated Python environment for Kapitan.
-There are multiple solutions:
+We build kapitan using `poetry`.
 
-* [pyenv](https://github.com/pyenv/pyenv)
-* [virtualenv](https://virtualenv.pypa.io/en/latest/)
-* [venv](https://docs.python.org/3/library/venv.html)
+1. Install poetry
 
-Once you've done it, please install all Kapitan's dependencies:
+    ```bash
+    pip install poetry
+    ```
 
-```shell
-python3 -m venv env
-source env/bin/activate
-pip3 install black # required for `make test_formatting`
-pip3 install -r requirements.txt
-```
+2. Install dependencies
+
+    ```bash
+    poetry install --with test
+    ```
+
+    Poetry creates a virtual environment with the required dependencies installed.
+
+3. Run kapitan with the own compiled code
+
+    ```bash
+    poetry run kapitan <your command>
+    ```
 
 Because we are using a pinned version of reclass which is added as a submodule into Kapitan's
 repository, you need to pull it separately by executing the command below:
