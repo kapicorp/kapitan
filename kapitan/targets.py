@@ -32,7 +32,7 @@ from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
 from kapitan.inputs.remove import Remove
 from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
-from kapitan.resources import inventory_reclass
+from kapitan.resources import get_inventory
 from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
 from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
@@ -241,7 +241,7 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
             ...
     }
     """
-    inv = inventory_reclass(inventory_path)
+    inv = get_inventory(inventory_path)
     cached.inv_cache = {}
     cached.inv_cache["inventory"] = {}
     cached.inv_cache["folder"] = {}
@@ -295,7 +295,7 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
 def changed_targets(inventory_path, output_path):
     """returns a list of targets that have changed since last compilation"""
     targets = []
-    inv = inventory_reclass(inventory_path)
+    inv = get_inventory(inventory_path)
 
     saved_inv_cache = None
     saved_inv_cache_path = os.path.join(output_path, "compiled/.kapitan_cache")
@@ -388,7 +388,7 @@ def save_inv_cache(compile_path, targets):
 def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
     """returns a list of target objects from the inventory"""
     target_objs = []
-    inv = inventory_reclass(inventory_path, ignore_class_notfound)
+    inv = get_inventory(inventory_path, ignore_class_notfound)
 
     # if '-t' is set on compile, only loop through selected targets
     if targets:
@@ -399,6 +399,7 @@ def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
     for target_name in targets_list:
         try:
             inv_target = inv["nodes"][target_name]
+            print(yaml.dump(inv_target))
             target_obj = inv_target["parameters"]["kapitan"]
             # check if parameters.kapitan is empty
             if not target_obj:
@@ -431,7 +432,7 @@ def search_targets(inventory_path, targets, labels):
         )
 
     targets_found = []
-    inv = inventory_reclass(inventory_path)
+    inv = get_inventory(inventory_path)
 
     for target_name in inv["nodes"]:
         matched_all_labels = False

@@ -26,6 +26,7 @@ from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_fi
 import reclass
 import reclass.core
 from reclass.errors import NotFoundError, ReclassException
+from omegaconf import OmegaConf, errors
 
 logger = logging.getLogger(__name__)
 
@@ -280,14 +281,14 @@ def inventory(search_paths, target, inventory_path=None):
         raise InventoryError(f"Inventory not found in search paths: {search_paths}")
 
     if target is None:
-        return inventory_reclass(full_inv_path)["nodes"]
+        return get_inventory(full_inv_path)["nodes"]
 
-    return inventory_reclass(full_inv_path)["nodes"][target]
+    return get_inventory(full_inv_path)["nodes"][target]
 
 
 def generate_inventory(args):
     try:
-        inv = inventory_reclass(args.inventory_path)
+        inv = get_inventory(args.inventory_path)
         if args.target_name != "":
             inv = inv["nodes"][args.target_name]
             if args.pattern != "":
@@ -304,6 +305,31 @@ def generate_inventory(args):
         sys.exit(1)
 
 
+def get_inventory(inventory_path, ignore_class_notfound=False):
+    """
+    generic inventory function that makes inventory backend pluggable
+    default backend is reclass
+    """
+
+    # if inventory is already cached theres nothing to do
+    if cached.inv:
+        return cached.inv
+
+    # get parsed args from cached.py
+    args = list(cached.args.values())[0]
+    use_omegaconf = args.omegaconf
+
+    if use_omegaconf:
+        logger.debug("Using omegaconf as inventory backend")
+        inv = inventory_omegaconf(inventory_path)
+    else:
+        logger.debug("Using reclass as inventory backend")
+        inv = inventory_reclass(inventory_path, ignore_class_notfound)
+
+    cached.inv = inv
+    return inv
+
+
 def inventory_reclass(inventory_path, ignore_class_notfound=False):
     """
     Runs a reclass inventory in inventory_path
@@ -314,12 +340,8 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
 
     Does not throw errors if a class is not found while --fetch flag is enabled
     """
-    # if inventory is already cached theres nothing to do
-    if cached.inv:
-        return cached.inv
-
     # set default values initially
-    reclass_config = reclass_config_defaults = {
+    reclass_config = {
         "storage_type": "yaml_fs",
         "inventory_base_uri": inventory_path,
         "nodes_uri": "targets",
@@ -358,7 +380,7 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
         class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
         _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
 
-        cached.inv = _reclass.inventory()
+        return _reclass.inventory()
     except ReclassException as e:
         if isinstance(e, NotFoundError):
             logger.error("Inventory reclass error: inventory not found")
@@ -366,4 +388,71 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
             logger.error("Inventory reclass error: %s", e.message)
         raise InventoryError(e.message)
 
-    return cached.inv
+
+def inventory_omegaconf(inventory_path, ignore_class_notfound=False):
+    """
+    generates inventory from yaml files using OmegaConf
+    """
+
+    # TBD: make log output pretty
+    logger.warning("\033[0;33mNOTE: OmegaConf inventory is currently in experimental mode.\033[0m")
+
+    # TBD: add config to specify paths
+    targets_path = os.path.join(inventory_path, "targets")
+    classes_path = os.path.join(inventory_path, "classes")
+
+    target_configs = {}
+    # load targets
+    # TBD: big opportunity to boost the performance with flag '-t' because we're able to skip targets directly
+    for root, dirs, files in os.walk(targets_path):
+        for target_name in files:
+            target_path = os.path.join(root, target_name)
+            target_config = OmegaConf.load(target_path)
+
+            target_config_classes = target_config.pop("classes", [])
+
+            # load classes for targets
+            for class_name in target_config_classes:
+
+                # resolve class name (relative paths TBD)
+                class_path = os.path.join(classes_path, *class_name.split(".")) + ".yml"
+                if os.path.isfile(class_path):
+                    # load classes recursively
+                    class_config = OmegaConf.load(class_path)
+
+                    target_config_classes.extend(class_config.pop("classes", []))
+
+                elif not ignore_class_notfound:
+                    raise InventoryError(f"Target: {target_name}: Class {class_name} not found.")
+                else:
+                    continue
+
+                # merge target with loaded classes
+                target_config = OmegaConf.merge(target_config, class_config)
+
+            # resolve references / interpolate values
+            try:
+                target_config = OmegaConf.to_container(target_config, resolve=True)
+            except errors.InterpolationKeyError as e:
+                raise InventoryError(f"{target_name}: {e.__context__}")
+
+            # obtain target name to insert in inv dict (legacy) (refactoring TBD)
+            try:
+                target_name = target_config["parameters"]["kapitan"]["vars"]["target"]
+            except KeyError:
+                logger.warning(f"Could not resolve target name on target {target_name}")
+                target_name = os.path.splitext(target_name)
+
+            # append meta data _reclass_ (legacy) (refactoring TBD)
+            # TBD: compose_node_name integration / behavior
+            target_config["parameters"]["_reclass_"] = {
+                "name": {"full": target_name, "path": target_name, "short": target_name}
+            }
+
+            # print(OmegaConf.to_yaml(target_config))
+            target_configs[target_name] = target_config
+
+    # TBD: refactor inventory accessing (targets.py, cmd_parser.py)
+    inv = {}
+    inv["nodes"] = target_configs
+    return inv

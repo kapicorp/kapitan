@@ -63,6 +63,7 @@ packaging = "^23.0"
 typing-extensions = "^4.0.0"
 gojsonnet = { version = "^0.17.0", optional = true }
 docker = { version = "^5.0.0", optional = true }
+omegaconf = "^2.3.0"
 
 [tool.poetry.extras]
 gojsonnet = ["gojsonnet"]
