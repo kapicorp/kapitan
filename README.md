@@ -32,16 +32,25 @@ On Linux you can add `-u $(id -u)` to `docker run` to preserve file permissions.
 
 ### Pip
 
-Kapitan needs Python 3.7.
+Kapitan needs Python 3.8.
 
-#### Install Python 3.7
+#### Install Python
 
-* Linux: `sudo apt-get update && sudo apt-get install -y python3.7-dev python3-pip python3-yaml git`
-* Mac: `brew install python3 libyaml git libmagic`
+* Linux: 
+
+  ```shell
+  sudo apt-get update && sudo apt-get install -y python3 python3-pip python3-yaml git
+  ```
+
+* Mac: 
+
+  ```shell
+  brew install python3 libyaml git libmagic
+  ```
 
 #### Install Kapitan
 
-User (`$HOME/.local/lib/python3.7/bin` on Linux or `$HOME/Library/Python/3.7/bin` on macOS):
+User (`$HOME/.local/lib/python3/bin` on Linux or `$HOME/Library/Python/3/bin` on macOS):
 
 ```shell
 pip3 install --user --upgrade kapitan
