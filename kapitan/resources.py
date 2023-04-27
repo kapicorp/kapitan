@@ -413,7 +413,6 @@ def inventory_omegaconf(inventory_path, ignore_class_notfound=False):
 
             # load classes for targets
             for class_name in target_config_classes:
-
                 # resolve class name (relative paths TBD)
                 class_path = os.path.join(classes_path, *class_name.split(".")) + ".yml"
                 if os.path.isfile(class_path):
