@@ -399,7 +399,6 @@ def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
     for target_name in targets_list:
         try:
             inv_target = inv["nodes"][target_name]
-            print(yaml.dump(inv_target))
             target_obj = inv_target["parameters"]["kapitan"]
             # check if parameters.kapitan is empty
             if not target_obj:
