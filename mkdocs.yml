@@ -87,7 +87,7 @@ nav:
   - Documentation:
       - Overview: pages/kapitan_overview.md
       - Inventory:
-        - Introduction: /inventory/introduction.md
+        - Introduction: pages/inventory/introduction.md
         - Targets: pages/inventory/targets.md
         - Classes: pages/inventory/classes.md
         - Parameters Interpolation: pages/inventory/parameters_interpolation.md
