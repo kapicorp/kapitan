@@ -92,13 +92,13 @@ class Kadet(InputType):
         ext_vars is not used in Kadet
         kwargs:
             output: default 'yaml', accepts 'json'
-            prune_input: default False
+            prune_output: default False
             reveal: default False, set to reveal refs on compile
             target_name: default None, set to current target being compiled
             indent: default 2
         """
         output = kwargs.get("output", "yaml")
-        prune_input = kwargs.get("prune_input", False)
+        prune_output = kwargs.get("prune_output", False)
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
         # inventory_path = kwargs.get("inventory_path", None)
@@ -135,7 +135,7 @@ class Kadet(InputType):
             raise CompileError(f"Could not load Kadet module: {spec.name[16:]}")
 
         output_obj = _to_dict(output_obj)
-        if prune_input:
+        if prune_output:
             output_obj = prune_empty(output_obj)
 
         # Return None if output_obj has no output
