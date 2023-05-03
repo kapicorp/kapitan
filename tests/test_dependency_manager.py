@@ -51,7 +51,7 @@ class DependencyManagerTest(unittest.TestCase):
         rmtree(temp_dir)
 
     def test_fetch_git_sources(self):
-        "Tests clonning git repo"
+        "Tests cloning git repo"
         temp_dir = tempfile.mkdtemp()
         repo_dir = os.path.join(temp_dir, "7a8f3940kapitan.git")
         # TODO: also test git ssh urls
@@ -62,7 +62,7 @@ class DependencyManagerTest(unittest.TestCase):
 
     def test_clone_repo_subdir(self):
         """
-        Tests clonning git repo and copy its' subdir
+        Tests cloning git repo and copy its' subdir
         """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
@@ -81,7 +81,7 @@ class DependencyManagerTest(unittest.TestCase):
 
     def test_clone_repo_submodules_false(self):
         """
-        Tests clonning git repo and copy its' submodule
+        Tests cloning git repo and check that submodule folder is empty
         """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
@@ -99,7 +99,7 @@ class DependencyManagerTest(unittest.TestCase):
 
     def test_clone_repo_without_submodules(self):
         """
-        Tests clonning git repo and copy its' submodule
+        Tests cloning a git repo without any submodules
         """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
@@ -118,7 +118,7 @@ class DependencyManagerTest(unittest.TestCase):
 
     def test_clone_repo_submodule(self):
         """
-        Tests clonning git repo and copy its' submodule
+        Tests cloning git repo and initialize its' submodule
         """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
@@ -137,7 +137,7 @@ class DependencyManagerTest(unittest.TestCase):
 
     def test_clone_repo_submodule_subdir(self):
         """
-        Tests clonning git repo and copy its' submodule
+        Tests cloning subdir in a git repo and initialize its' submodule
         """
         temp_dir = tempfile.mkdtemp()
         output_dir = tempfile.mkdtemp()
