@@ -6,7 +6,7 @@
 **`Kapitan`** aims to be your *one-stop tool* to help you manage the ever growing complexity of your configurations.
 
 * :fontawesome-brands-slack: Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
-* :fontawesome-brands-github: Help us grow: [give us a star](https://github.com/kapicorp/kapitan/stargazers) or even better [sponsor our project](/contributing/#sponsor-kapitan)
+* :fontawesome-brands-github: Help us grow: [give us a star](https://github.com/kapicorp/kapitan/stargazers) or even better [sponsor our project](pages/contribute/sponsor/)
 
 ## Why do I need **Kapitan**? 
 
