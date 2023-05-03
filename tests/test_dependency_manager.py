@@ -79,6 +79,82 @@ class DependencyManagerTest(unittest.TestCase):
         rmtree(temp_dir)
         rmtree(output_dir)
 
+    def test_clone_repo_submodules_false(self):
+        """
+        Tests clonning git repo and copy its' submodule
+        """
+        temp_dir = tempfile.mkdtemp()
+        output_dir = tempfile.mkdtemp()
+        source = "https://github.com/kapicorp/kapitan.git"
+        dep = [
+            {
+                "output_path": output_dir,
+                "ref": "master",
+            }
+        ]
+        fetch_git_dependency((source, dep), temp_dir, force=False)
+        self.assertTrue(os.listdir(os.path.join(output_dir, "kapitan", "reclass")) == [])
+        rmtree(temp_dir)
+        rmtree(output_dir)
+
+    def test_clone_repo_without_submodules(self):
+        """
+        Tests clonning git repo and copy its' submodule
+        """
+        temp_dir = tempfile.mkdtemp()
+        output_dir = tempfile.mkdtemp()
+        source = "https://github.com/kapicorp/reclass.git"
+        dep = [
+            {
+                "output_path": output_dir,
+                "ref": "master",
+                "submodules": "true",
+            }
+        ]
+        fetch_git_dependency((source, dep), temp_dir, force=False)
+        self.assertTrue(os.path.isdir(os.path.join(output_dir, "reclass")))
+        rmtree(temp_dir)
+        rmtree(output_dir)
+
+    def test_clone_repo_submodule(self):
+        """
+        Tests clonning git repo and copy its' submodule
+        """
+        temp_dir = tempfile.mkdtemp()
+        output_dir = tempfile.mkdtemp()
+        source = "https://github.com/kapicorp/kapitan.git"
+        dep = [
+            {
+                "output_path": output_dir,
+                "ref": "master",
+                "submodules": "true",
+            }
+        ]
+        fetch_git_dependency((source, dep), temp_dir, force=False)
+        self.assertTrue(os.listdir(os.path.join(output_dir, "kapitan", "reclass")))
+        rmtree(temp_dir)
+        rmtree(output_dir)
+
+    def test_clone_repo_submodule_subdir(self):
+        """
+        Tests clonning git repo and copy its' submodule
+        """
+        temp_dir = tempfile.mkdtemp()
+        output_dir = tempfile.mkdtemp()
+        source = "https://github.com/kapicorp/kapitan.git"
+        dep = [
+            {
+                "output_path": output_dir,
+                "ref": "master",
+                "subdir": "kapitan",
+                "submodules": "true",
+            }
+        ]
+        fetch_git_dependency((source, dep), temp_dir, force=False)
+        self.assertTrue(os.listdir(os.path.join(output_dir, "reclass")))
+        rmtree(temp_dir)
+        rmtree(output_dir)
+
     def test_fetch_helm_chart(self):
         """
         Tests fetching helm chart
