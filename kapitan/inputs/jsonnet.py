@@ -70,7 +70,7 @@ class Jsonnet(InputType):
         ext_vars will be passed as parameters to jsonnet_file()
         kwargs:
             output: default 'yaml', accepts 'json'
-            prune: default False, accepts True
+            prune_output: default False, accepts True
             reveal: default False, set to reveal refs on compile
             target_name: default None, set to current target being compiled
             indent: default 2
@@ -97,12 +97,12 @@ class Jsonnet(InputType):
         output_obj = json.loads(json_output)
 
         output = kwargs.get("output", "yaml")
-        prune = kwargs.get("prune_output", False)
+        prune_output = kwargs.get("prune_output", False)
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
         indent = kwargs.get("indent", 2)
 
-        if prune:
+        if prune_output:
             output_obj = prune_empty(output_obj)
             logger.debug("Pruned output for: %s", file_path)
 
