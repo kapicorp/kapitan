@@ -280,14 +280,14 @@ def inventory(search_paths, target, inventory_path=None):
         raise InventoryError(f"Inventory not found in search paths: {search_paths}")
 
     if target is None:
-        return inventory_reclass(full_inv_path)["nodes"]
+        return get_inventory(full_inv_path)["nodes"]
 
-    return inventory_reclass(full_inv_path)["nodes"][target]
+    return get_inventory(full_inv_path)["nodes"][target]
 
 
 def generate_inventory(args):
     try:
-        inv = inventory_reclass(args.inventory_path)
+        inv = get_inventory(args.inventory_path)
         if args.target_name != "":
             inv = inv["nodes"][args.target_name]
             if args.pattern != "":
@@ -304,6 +304,23 @@ def generate_inventory(args):
         sys.exit(1)
 
 
+def get_inventory(inventory_path, ignore_class_notfound=False):
+    """
+    generic inventory function that makes inventory backend pluggable
+    default backend is reclass
+    """
+
+    # if inventory is already cached theres nothing to do
+    if cached.inv:
+        return cached.inv
+
+    logger.debug("Using reclass as inventory backend")
+    inv = inventory_reclass(inventory_path, ignore_class_notfound)
+
+    cached.inv = inv
+    return inv
+
+
 def inventory_reclass(inventory_path, ignore_class_notfound=False):
     """
     Runs a reclass inventory in inventory_path
@@ -314,12 +331,8 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
 
     Does not throw errors if a class is not found while --fetch flag is enabled
     """
-    # if inventory is already cached theres nothing to do
-    if cached.inv:
-        return cached.inv
-
     # set default values initially
-    reclass_config = reclass_config_defaults = {
+    reclass_config = {
         "storage_type": "yaml_fs",
         "inventory_base_uri": inventory_path,
         "nodes_uri": "targets",
@@ -358,12 +371,10 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
         class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
         _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
 
-        cached.inv = _reclass.inventory()
+        return _reclass.inventory()
     except ReclassException as e:
         if isinstance(e, NotFoundError):
             logger.error("Inventory reclass error: inventory not found")
         else:
             logger.error("Inventory reclass error: %s", e.message)
         raise InventoryError(e.message)
-
-    return cached.inv
