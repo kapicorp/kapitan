@@ -4,9 +4,9 @@
 
 Supported dependencies types are:
 
-- [git](#git)
-- [http](#http)
-- [helm](#helm)
+- [git](#defining-dependencies)
+- [http](#defining-dependencies)
+- [helm](#defining-dependencies)
 
 
 ## Usage
@@ -65,9 +65,11 @@ Use the `force-fetch` option to force overwrite your local files in the `output_
 
 Kapitan also supports caching Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
 
-```shell
-kapitan compile --cache --fetch
-```
+    ```shell
+    kapitan compile --cache --fetch
+    ```
+
+### Defining dependencies
 
 === "git"
 
@@ -82,11 +84,13 @@ kapitan compile --cache --fetch
           source: git_url # mkdocs (1)!
           subdir: relative/path/from/repo/root (optional) # mkdocs (2)!
           ref: tag, commit, branch etc. (optional) # mkdocs (3)!
+          submodules: true/false (optional) # mkdocs (4)!
     ```
 
     1. Git types can fetch external `git` repositories through either HTTP/HTTPS or SSH URLs. 
     2. Optional supports for cloning just a sub-directory
     3. Optional support for accessing them in specific commits and branches (refs).
+    4. Optional support for fetching repo with its submodules.
 
     !!! note
 
@@ -107,6 +111,7 @@ kapitan compile --cache --fetch
           source: git@github.com:kapicorp/kapitan.git
           subdir: kapitan
           ref: master
+          submodules: true
         compile:
         - input_paths:
           - source/kapitan/version.py
@@ -114,7 +119,7 @@ kapitan compile --cache --fetch
           output_path: .
     ```
 
-=== "`http`"
+=== "http"
 
     ### Syntax
 
@@ -132,7 +137,7 @@ kapitan compile --cache --fetch
     2. http[s] types can fetch external dependencies available at `http://` or `https://` URL.
     3. archive mode: download and unpack
 
-    ### Examples
+    ### Example
 
     === "Single file"
 
@@ -157,7 +162,7 @@ kapitan compile --cache --fetch
           output_path: .
     ```
 
-=== "`helm`"
+=== "helm"
 
     ### Syntax
 
@@ -181,7 +186,7 @@ kapitan compile --cache --fetch
 
     `source` can be either the URL to a chart repository, or the URL to a chart on an OCI registry (supported since Helm 3.8.0).
 
-    ### Examples
+    ### Example
 
     If we want to download the prometheus helm chart we simply add the dependency to the monitoring target.
     We want a specific version `11.3.0` so we put that in.
