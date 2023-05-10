@@ -388,7 +388,7 @@ def save_inv_cache(compile_path, targets):
 def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
     """returns a list of target objects from the inventory"""
     target_objs = []
-    inv = get_inventory(inventory_path, ignore_class_notfound)
+    inv = get_inventory(inventory_path, ignore_class_notfound, targets)
 
     # if '-t' is set on compile, only loop through selected targets
     if targets:

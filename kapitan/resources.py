@@ -305,7 +305,7 @@ def generate_inventory(args):
         sys.exit(1)
 
 
-def get_inventory(inventory_path, ignore_class_notfound=False):
+def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
     """
     generic inventory function that makes inventory backend pluggable
     default backend is reclass
@@ -321,7 +321,7 @@ def get_inventory(inventory_path, ignore_class_notfound=False):
 
     if use_omegaconf:
         logger.debug("Using omegaconf as inventory backend")
-        inv = inventory_omegaconf(inventory_path)
+        inv = inventory_omegaconf(inventory_path, ignore_class_notfound, targets)
     else:
         logger.debug("Using reclass as inventory backend")
         inv = inventory_reclass(inventory_path, ignore_class_notfound)
@@ -389,7 +389,7 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
         raise InventoryError(e.message)
 
 
-def inventory_omegaconf(inventory_path, ignore_class_notfound=False):
+def inventory_omegaconf(inventory_path, ignore_class_notfound=False, targets=[], compose_node_name=False):
     """
     generates inventory from yaml files using OmegaConf
     """
@@ -397,24 +397,45 @@ def inventory_omegaconf(inventory_path, ignore_class_notfound=False):
     # TBD: make log output pretty
     logger.warning("\033[0;33mNOTE: OmegaConf inventory is currently in experimental mode.\033[0m")
 
-    # TBD: add config to specify paths
-    targets_path = os.path.join(inventory_path, "targets")
-    classes_path = os.path.join(inventory_path, "classes")
+    # TBD: add config to specify paths (do we need that?)
+    targets_searchpath = os.path.join(inventory_path, "targets")
+    classes_searchpath = os.path.join(inventory_path, "classes")
 
-    target_configs = {}
-    # load targets
-    # TBD: big opportunity to boost the performance with flag '-t' because we're able to skip targets directly
-    for root, dirs, files in os.walk(targets_path):
+    inv = {"nodes": {}}
+
+    # loop through targets searchpath and load all targets
+    for root, dirs, files in os.walk(targets_searchpath):
         for target_name in files:
             target_path = os.path.join(root, target_name)
-            target_config = OmegaConf.load(target_path)
+
+            # split file extension and check if yml/yaml
+            target_name, ext = os.path.splitext(target_name)
+            if ext not in (".yml", ".yaml"):
+                logger.debug(f"{target_name}: targets have to be .yml or .yaml files.")
+                continue
+
+            # skip targets if they are not specified with -t flag
+            if targets and target_name not in targets:
+                continue
+
+            # compose node name
+            if compose_node_name:
+                target_name = str(os.path.splitext(target_path)[0]).replace(targets_searchpath + os.sep, "")
+                target_name = target_name.replace("/", ".")
+
+            # look for duplicate targets
+            if target_name in inv["nodes"]:
+                raise InventoryError(f"{target_name}: duplicate target are not allowed")
+
+            # load the inventory
+            target_config = OmegaConf.create({"parameters": {}})  # OmegaConf.load(target_path)
 
             target_config_classes = target_config.pop("classes", [])
 
             # load classes for targets
             for class_name in target_config_classes:
                 # resolve class name (relative paths TBD)
-                class_path = os.path.join(classes_path, *class_name.split(".")) + ".yml"
+                class_path = os.path.join(classes_searchpath, *class_name.split(".")) + ".yml"
                 if os.path.isfile(class_path):
                     # load classes recursively
                     class_config = OmegaConf.load(class_path)
@@ -440,7 +461,6 @@ def inventory_omegaconf(inventory_path, ignore_class_notfound=False):
                 target_name = target_config["parameters"]["kapitan"]["vars"]["target"]
             except KeyError:
                 logger.warning(f"Could not resolve target name on target {target_name}")
-                target_name = os.path.splitext(target_name)
 
             # append meta data _reclass_ (legacy) (refactoring TBD)
             # TBD: compose_node_name integration / behavior
@@ -449,9 +469,7 @@ def inventory_omegaconf(inventory_path, ignore_class_notfound=False):
             }
 
             # print(OmegaConf.to_yaml(target_config))
-            target_configs[target_name] = target_config
+            inv["nodes"][target_name] = target_config
 
     # TBD: refactor inventory accessing (targets.py, cmd_parser.py)
-    inv = {}
-    inv["nodes"] = target_configs
     return inv
