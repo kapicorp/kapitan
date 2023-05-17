@@ -22,6 +22,7 @@ import yaml
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
+from kapitan.migrate_omegaconf import migrate
 
 import reclass
 import reclass.core
@@ -321,7 +322,26 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
 
     if use_omegaconf:
         logger.debug("Using omegaconf as inventory backend")
-        inv = inventory_omegaconf(inventory_path, ignore_class_notfound, targets)
+        logger.warning("\033[0;33mNOTE: OmegaConf inventory is currently in experimental mode.\033[0m")
+
+        # migrate a reclass inventory to omegaConf
+        while True:
+            query_result = input(f"Do you want to migrate your inventory to OmegaConf? (Y/n):").lower()
+            if not query_result or query_result[0] == "y":
+                output_path = inventory_path  # + "_omegaconf"
+                if not os.path.exists(output_path):
+                    os.mkdir(output_path)
+                migrate(inventory_path, output_path)
+                logger.info(f"Migrated inventory to OmegaConf in {output_path}")
+                break
+            elif query_result[0] == "n":
+                break
+            else:
+                logger.warning("Please answer with 'yes'(y) or 'no'(n)!")
+        try:
+            inv = inventory_omegaconf(inventory_path, ignore_class_notfound, targets)
+        except errors.OmegaConfBaseException:
+            raise InventoryError("")
     else:
         logger.debug("Using reclass as inventory backend")
         inv = inventory_reclass(inventory_path, ignore_class_notfound)
@@ -393,10 +413,6 @@ def inventory_omegaconf(inventory_path, ignore_class_notfound=False, targets=[],
     """
     generates inventory from yaml files using OmegaConf
     """
-
-    # TBD: make log output pretty
-    logger.warning("\033[0;33mNOTE: OmegaConf inventory is currently in experimental mode.\033[0m")
-
     # TBD: add config to specify paths (do we need that?)
     targets_searchpath = os.path.join(inventory_path, "targets")
     classes_searchpath = os.path.join(inventory_path, "classes")
@@ -428,7 +444,7 @@ def inventory_omegaconf(inventory_path, ignore_class_notfound=False, targets=[],
                 raise InventoryError(f"{target_name}: duplicate target are not allowed")
 
             # load the inventory
-            target_config = OmegaConf.create({"parameters": {}})  # OmegaConf.load(target_path)
+            target_config = OmegaConf.load(target_path)
 
             target_config_classes = target_config.pop("classes", [])
 
@@ -450,10 +466,18 @@ def inventory_omegaconf(inventory_path, ignore_class_notfound=False, targets=[],
                 # merge target with loaded classes
                 target_config = OmegaConf.merge(target_config, class_config)
 
+            if not target_config:
+                logger.warning(f"{target_name}: empty target")
+
+            # append meta data _reclass_ (legacy) (refactoring TBD)
+            target_config["parameters"]["_reclass_"] = {
+                "name": {"full": target_name, "path": target_name, "short": target_name}
+            }
+
             # resolve references / interpolate values
             try:
                 target_config = OmegaConf.to_container(target_config, resolve=True)
-            except errors.InterpolationKeyError as e:
+            except errors.OmegaConfBaseException as e:
                 raise InventoryError(f"{target_name}: {e.__context__}")
 
             # obtain target name to insert in inv dict (legacy) (refactoring TBD)
@@ -462,14 +486,8 @@ def inventory_omegaconf(inventory_path, ignore_class_notfound=False, targets=[],
             except KeyError:
                 logger.warning(f"Could not resolve target name on target {target_name}")
 
-            # append meta data _reclass_ (legacy) (refactoring TBD)
-            # TBD: compose_node_name integration / behavior
-            target_config["parameters"]["_reclass_"] = {
-                "name": {"full": target_name, "path": target_name, "short": target_name}
-            }
-
-            # print(OmegaConf.to_yaml(target_config))
             inv["nodes"][target_name] = target_config
 
     # TBD: refactor inventory accessing (targets.py, cmd_parser.py)
+    # that it only receives the targets and not everything
     return inv
