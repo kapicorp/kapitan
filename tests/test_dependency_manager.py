@@ -90,10 +90,11 @@ class DependencyManagerTest(unittest.TestCase):
             {
                 "output_path": output_dir,
                 "ref": "master",
+                "submodules": False,
             }
         ]
         fetch_git_dependency((source, dep), temp_dir, force=False)
-        self.assertTrue(os.listdir(os.path.join(output_dir, "kapitan", "reclass")) == [])
+        self.assertEqual(os.listdir(os.path.join(output_dir, "kapitan", "reclass")), [])
         rmtree(temp_dir)
         rmtree(output_dir)
 
@@ -108,7 +109,6 @@ class DependencyManagerTest(unittest.TestCase):
             {
                 "output_path": output_dir,
                 "ref": "master",
-                "submodules": "true",
             }
         ]
         fetch_git_dependency((source, dep), temp_dir, force=False)
@@ -116,7 +116,7 @@ class DependencyManagerTest(unittest.TestCase):
         rmtree(temp_dir)
         rmtree(output_dir)
 
-    def test_clone_repo_submodule(self):
+    def test_clone_repo_with_submodules(self):
         """
         Tests cloning git repo and initialize its' submodule
         """
@@ -127,7 +127,6 @@ class DependencyManagerTest(unittest.TestCase):
             {
                 "output_path": output_dir,
                 "ref": "master",
-                "submodules": "true",
             }
         ]
         fetch_git_dependency((source, dep), temp_dir, force=False)
@@ -135,7 +134,7 @@ class DependencyManagerTest(unittest.TestCase):
         rmtree(temp_dir)
         rmtree(output_dir)
 
-    def test_clone_repo_submodule_subdir(self):
+    def test_clone_repo_with_submodule_subdir(self):
         """
         Tests cloning subdir in a git repo and initialize its' submodule
         """
@@ -147,7 +146,6 @@ class DependencyManagerTest(unittest.TestCase):
                 "output_path": output_dir,
                 "ref": "master",
                 "subdir": "kapitan",
-                "submodules": "true",
             }
         ]
         fetch_git_dependency((source, dep), temp_dir, force=False)
