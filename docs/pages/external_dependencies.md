@@ -90,7 +90,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
     1. Git types can fetch external `git` repositories through either HTTP/HTTPS or SSH URLs. 
     2. Optional supports for cloning just a sub-directory
     3. Optional support for accessing them in specific commits and branches (refs).
-    4. Optional support for fetching repo with its submodules.
+    4. Optional support to disable fetching the submodules of a repo.
 
     !!! note
 
