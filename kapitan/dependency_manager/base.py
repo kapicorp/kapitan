@@ -115,11 +115,7 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
             repo.git.checkout("master")  # default ref
 
         # initialising submodules
-        if "submodules" in dep and not dep["submodules"]:
-            print("---\n")
-            print(dep["submodules"])
-            print("---")
-        else:
+        if "submodules" not in dep or dep["submodules"]:
             for submodule in repo.submodules:
                 submodule.update(init=True)
 
