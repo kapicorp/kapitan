@@ -459,15 +459,21 @@ def inventory_omegaconf(inventory_path, ignore_class_notfound=False, targets=[],
                     target_config_classes.extend(class_config.pop("classes", []))
 
                 elif not ignore_class_notfound:
-                    raise InventoryError(f"Target: {target_name}: Class {class_name} not found.")
+                    raise InventoryError(f"{target_name}: Class {class_name} not found.")
                 else:
                     continue
 
                 # merge target with loaded classes
-                target_config = OmegaConf.merge(target_config, class_config)
+                if target_config.get("parameters"):
+                    target_config = OmegaConf.merge(class_config, target_config, extend_lists=True)
+                else:
+                    target_config = class_config
 
             if not target_config:
-                logger.warning(f"{target_name}: empty target")
+                raise InventoryError(f"{target_name}: empty target")
+
+            if not target_config.get("parameters"):
+                raise InventoryError(f"{target_name}: target has no parameters")
 
             # append meta data _reclass_ (legacy) (refactoring TBD)
             target_config["parameters"]["_reclass_"] = {

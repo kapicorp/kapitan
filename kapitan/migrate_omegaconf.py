@@ -74,7 +74,6 @@ def migrate_file(input_file: str) -> None:
 
 
 def migrate(inv_path: str = "", output_path: str = "") -> None:
-
     targets_path = os.path.join(inv_path, "targets")
     classes_path = os.path.join(inv_path, "classes")
 
@@ -91,7 +90,6 @@ def migrate(inv_path: str = "", output_path: str = "") -> None:
 
 # support running the file without kapitan
 if __name__ == "__main__":
-
     if len(sys.argv) != 2:
         print("Usage: migrate_omegaconf.py INV_PATH")
         sys.exit(1)
