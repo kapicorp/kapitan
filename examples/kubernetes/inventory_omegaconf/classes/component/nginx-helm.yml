@@ -1,0 +1,24 @@
+parameters:
+  namespace:
+  nginx:
+    version: 4.4.0
+    replicas: 2
+    name: ${parameters.target_name}
+    namespace: ${parameters.target_name}
+  kapitan:
+    dependencies:
+      - type: helm
+        output_path: charts/nginx-ingress
+        source: https://kubernetes.github.io/ingress-nginx
+        chart_name: ingress-nginx
+    compile:
+      - output_path: .
+        input_type: helm
+        input_paths:
+          - charts/nginx-ingress
+        helm_values:
+          controller:
+            name: ${parameters.nginx.name}
+        helm_params:
+          name: ${parameters.nginx.name}
+          namespace: ${parameters.nginx.namespace}

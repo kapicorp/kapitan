@@ -1,0 +1,3 @@
+parameters:
+  kubectl:
+    insecure_skip_tls_verify: false

@@ -1,0 +1,19 @@
+# class for all targets deployed on minikube
+#
+classes:
+  - cluster.common
+parameters:
+  minikube:
+    memory: 4096
+    cpus: 4
+    version: v0.31.0
+
+  cluster:
+    type: minikube
+    id: minikube
+    name: minikube
+    user: minikube
+  vault:
+    address: https://localhost:8200
+  mysql:
+    hostname: localhost
