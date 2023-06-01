@@ -17,17 +17,18 @@ import sys
 from functools import partial
 
 import jsonschema
-import kapitan.cached as cached
-import yaml
-from kapitan import __file__ as kapitan_install_path
-from kapitan.errors import CompileError, InventoryError, KapitanError
-from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
-from kapitan.migrate_omegaconf import migrate
-
 import reclass
 import reclass.core
+import yaml
 from reclass.errors import NotFoundError, ReclassException
-from omegaconf import OmegaConf, errors
+
+import kapitan.cached as cached
+from kapitan import __file__ as kapitan_install_path
+from kapitan.errors import CompileError, InventoryError, KapitanError
+from kapitan.migrate_omegaconf import migrate
+from kapitan.omegaconf import inventory_omegaconf
+from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
+from omegaconf import errors
 
 logger = logging.getLogger(__name__)
 
@@ -407,93 +408,3 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
         else:
             logger.error("Inventory reclass error: %s", e.message)
         raise InventoryError(e.message)
-
-
-def inventory_omegaconf(inventory_path, ignore_class_notfound=False, targets=[], compose_node_name=False):
-    """
-    generates inventory from yaml files using OmegaConf
-    """
-    # TBD: add config to specify paths (do we need that?)
-    targets_searchpath = os.path.join(inventory_path, "targets")
-    classes_searchpath = os.path.join(inventory_path, "classes")
-
-    inv = {"nodes": {}}
-
-    # loop through targets searchpath and load all targets
-    for root, dirs, files in os.walk(targets_searchpath):
-        for target_name in files:
-            target_path = os.path.join(root, target_name)
-
-            # split file extension and check if yml/yaml
-            target_name, ext = os.path.splitext(target_name)
-            if ext not in (".yml", ".yaml"):
-                logger.debug(f"{target_name}: targets have to be .yml or .yaml files.")
-                continue
-
-            # skip targets if they are not specified with -t flag
-            if targets and target_name not in targets:
-                continue
-
-            # compose node name
-            if compose_node_name:
-                target_name = str(os.path.splitext(target_path)[0]).replace(targets_searchpath + os.sep, "")
-                target_name = target_name.replace("/", ".")
-
-            # look for duplicate targets
-            if target_name in inv["nodes"]:
-                raise InventoryError(f"{target_name}: duplicate target are not allowed")
-
-            # load the inventory
-            target_config = OmegaConf.load(target_path)
-
-            target_config_classes = target_config.pop("classes", [])
-
-            # load classes for targets
-            for class_name in target_config_classes:
-                # resolve class name (relative paths TBD)
-                class_path = os.path.join(classes_searchpath, *class_name.split(".")) + ".yml"
-                if os.path.isfile(class_path):
-                    # load classes recursively
-                    class_config = OmegaConf.load(class_path)
-
-                    target_config_classes.extend(class_config.pop("classes", []))
-
-                elif not ignore_class_notfound:
-                    raise InventoryError(f"{target_name}: Class {class_name} not found.")
-                else:
-                    continue
-
-                # merge target with loaded classes
-                if target_config.get("parameters"):
-                    target_config = OmegaConf.merge(class_config, target_config, extend_lists=True)
-                else:
-                    target_config = class_config
-
-            if not target_config:
-                raise InventoryError(f"{target_name}: empty target")
-
-            if not target_config.get("parameters"):
-                raise InventoryError(f"{target_name}: target has no parameters")
-
-            # append meta data _reclass_ (legacy) (refactoring TBD)
-            target_config["parameters"]["_reclass_"] = {
-                "name": {"full": target_name, "path": target_name, "short": target_name}
-            }
-
-            # resolve references / interpolate values
-            try:
-                target_config = OmegaConf.to_container(target_config, resolve=True)
-            except errors.OmegaConfBaseException as e:
-                raise InventoryError(f"{target_name}: {e.__context__}")
-
-            # obtain target name to insert in inv dict (legacy) (refactoring TBD)
-            try:
-                target_name = target_config["parameters"]["kapitan"]["vars"]["target"]
-            except KeyError:
-                logger.warning(f"Could not resolve target name on target {target_name}")
-
-            inv["nodes"][target_name] = target_config
-
-    # TBD: refactor inventory accessing (targets.py, cmd_parser.py)
-    # that it only receives the targets and not everything
-    return inv
