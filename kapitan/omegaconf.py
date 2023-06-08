@@ -2,8 +2,10 @@
 
 # Copyright 2023 nexenio
 import logging
-import multiprocessing
+from multiprocessing.pool import ThreadPool
+from functools import partial
 import os
+import time
 
 from kapitan.errors import InventoryError
 from omegaconf import Node, OmegaConf, errors
@@ -62,21 +64,47 @@ def inventory_omegaconf(inventory_path, ignore_class_notfound=False, targets=[],
             selected_targets.append({"name": target_name, "path": target_path})
 
     inv = {"nodes": {}}
+    # load targets parallel
+
+    stamp = time.time()
     for target in selected_targets:
-        inv["nodes"][target["name"]] = load_target(
-            target["name"], target["path"], classes_searchpath, ignore_class_notfound
-        )
+        try:
+            name, config = load_target(target, classes_searchpath, ignore_class_notfound)
+            inv["nodes"][name] = config
+        except Exception as e:
+            print(target, e)
+
+    # pool = ThreadPool(8)
+
+    # worker = partial(
+    #     load_target,
+    #     classes_searchpath=classes_searchpath,
+    #     ignore_class_notfound=ignore_class_notfound,
+    # )
+
+    # for p in pool.imap(worker, selected_targets):
+    #     name, config = p
+    #     inv["nodes"][name] = config
+
+    # pool.close()
+
+    print(f"real time: {time.time() - stamp}")
 
     # TBD: refactor inventory accessing (targets.py, cmd_parser.py)
     # that it only receives the targets and not everything
     return inv
 
 
-def load_target(
-    target_name: str, target_path: str, classes_searchpath: str, ignore_class_notfound: bool = False
-):
+def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bool = False):
     # load the target
-    target_config = OmegaConf.load(target_path)
+    target_name = target["name"]
+    target_path = target["path"]
+
+    try:
+        target_config = OmegaConf.load(target_path)
+    except:
+        print(target)
+        return "", {}
 
     target_config_classes = target_config.pop("classes", [])
 
@@ -123,4 +151,7 @@ def load_target(
     except KeyError:
         logger.warning(f"Could not resolve target name on target {target_name}")
 
-    return target_config
+    # # stamp = time.time()
+    # logger.info("loaded %s in %.4f", target_name, 1000*(time.time() - stamp))
+
+    return target_name, target_config

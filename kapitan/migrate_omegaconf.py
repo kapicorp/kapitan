@@ -6,7 +6,7 @@ from ruamel.yaml import YAML
 from pathlib import Path
 import regex as re
 
-REF_TOKEN = r"\${([^\${}]*+(?:(?R)[^\${}]*)*+)}"
+REF_TOKEN = r"(?<!\\)\${([^\${}]*+(?:(?R)[^\${}]*)*+)}"
 
 
 def replace_token(token: str) -> str:
@@ -64,27 +64,41 @@ def migrate_file(input_file: str) -> None:
 
     file_path = Path(input_file).resolve()
 
-    yaml_obj = yaml.load(file_path)
-    yaml.dump(yaml_obj, file_path)
-
-    yaml_obj = migrate_yaml_obj(yaml_obj)
+    try:
+        yaml_obj = yaml.load(file_path)
+        yaml_obj = migrate_yaml_obj(yaml_obj)
+    except:
+        print("ERROR in: ", file_path)
+        return
+    # yaml.dump(yaml_obj, file_path)
 
     yaml.indent(mapping=2, sequence=4, offset=2)
     yaml.dump(yaml_obj, file_path)
 
 
-def migrate(inv_path: str = "", output_path: str = "") -> None:
+def migrate(inv_path: str, output_path: str = "") -> None:
     targets_path = os.path.join(inv_path, "targets")
     classes_path = os.path.join(inv_path, "classes")
 
     for root, subdirs, files in os.walk(targets_path):
         for target_file in files:
             target_file = os.path.join(root, target_file)
+            _, ext = os.path.splitext(target_file)
+
+            if ext not in (".yml", ".yaml"):
+                continue
+
             migrate_file(target_file)
 
     for root, subdirs, files in os.walk(classes_path):
         for class_file in files:
             class_file = os.path.join(root, class_file)
+
+            _, ext = os.path.splitext(class_file)
+
+            if ext not in (".yml", ".yaml"):
+                continue
+
             migrate_file(class_file)
 
 
