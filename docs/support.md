@@ -2,7 +2,7 @@
 
 ## Community
 
-* Join us on **kubernetes.slack.com** [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)([**Get invited**](https://kubernetes.slack.com))
+* Join us on **kubernetes.slack.com** [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)([**Get invited**](https://slack.k8s.io/))
 * **Follow us on Twitter** [@kapitandev](https://twitter.com/kapitandev/).
 * **Website** [**`https://kapitan.dev`**](https://kapitan.dev)
 * **Mailing List** [kapitan-discuss@googlegroups.com](mailto:kapitan-discuss@googlegroups.com)([**Subscribe**](https://groups.google.com/g/kapitan-discuss))

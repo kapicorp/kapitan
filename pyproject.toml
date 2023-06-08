@@ -24,7 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
 ]
 license = "Apache-2.0"
-version = "0.31.1rc3"
+version = "0.32.0"
 packages = [
     { include = "kapitan" },
     { include = "kapitan/reclass" },
@@ -41,7 +41,7 @@ python = "^3.8"
 addict = "^2.4.0"
 azure-keyvault-keys = "^4.7.0"
 boto3 = "^1.18.17"
-cryptography = "^3.4.7"
+cryptography = ">=3.4.7,<40.0.0"
 gitpython = "^3.1.30"
 google-api-python-client = "^2.15.0"
 hvac = "^0.11.0"
