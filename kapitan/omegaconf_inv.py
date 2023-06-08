@@ -8,7 +8,7 @@ import os
 import time
 
 from kapitan.errors import InventoryError
-from omegaconf import Node, OmegaConf, errors
+from kapitan.oc.omegaconf import Node, OmegaConf, errors
 
 logger = logging.getLogger(__name__)
 

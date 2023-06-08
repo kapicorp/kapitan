@@ -26,9 +26,9 @@ import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.migrate_omegaconf import migrate
-from kapitan.omegaconf import inventory_omegaconf
+from kapitan.omegaconf_inv import inventory_omegaconf
 from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
-from omegaconf import errors
+from kapitan.oc.omegaconf import errors
 
 logger = logging.getLogger(__name__)
 
