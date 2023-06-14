@@ -110,12 +110,20 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
 
     # load classes for targets
     for class_name in target_config_classes:
-        # resolve class name (relative paths TBD)
+        # resolve class name
         class_path = os.path.join(classes_searchpath, *class_name.split(".")) + ".yml"
+
         if os.path.isfile(class_path):
             # load classes recursively
             class_config = OmegaConf.load(class_path)
-            target_config_classes.extend(class_config.pop("classes", []))
+
+            # TBD: deep relative paths (only one layer supported yet)
+            new_classes = class_config.pop("classes", [])
+            for new in new_classes:
+                if new.startswith("."):
+                    new = ".".join(class_name.split(".")[0:-1]) + new
+
+                target_config_classes.append(new)
 
         elif not ignore_class_notfound:
             raise InventoryError(f"{target_name}: Class {class_name} not found.")
