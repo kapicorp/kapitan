@@ -28,7 +28,7 @@ from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.migrate_omegaconf import migrate
 from kapitan.omegaconf_inv import inventory_omegaconf
 from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
-from kapitan.oc.omegaconf import errors
+from oc.omegaconf import errors
 
 logger = logging.getLogger(__name__)
 
