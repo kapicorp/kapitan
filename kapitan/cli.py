@@ -310,7 +310,14 @@ def build_parser():
         "--omegaconf",
         help="use omegaconf as inventory backend",
         action="store_true",
-        default=from_dot_kapitan("inventory", "omegaconf", False),
+        default=from_dot_kapitan("compile", "omegaconf", False),
+    )
+
+    compile_parser.add_argument(
+        "--migrate",
+        help="migrate inventory to omegaconf",
+        action="store_true",
+        default=from_dot_kapitan("compile", "migrate", False),
     )
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
