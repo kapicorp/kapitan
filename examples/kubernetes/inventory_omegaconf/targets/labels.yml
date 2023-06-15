@@ -1,6 +1,0 @@
-classes:
-  - common
-  - component.namespace
-  - component.labels
-parameters:
-  target_name: labels
