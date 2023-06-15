@@ -320,29 +320,24 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
     # get parsed args from cached.py
     args = list(cached.args.values())[0]
     use_omegaconf = args.omegaconf
+    migrate_omegaconf = args.migrate
 
     if use_omegaconf:
+        # show warning
         logger.debug("Using omegaconf as inventory backend")
         logger.warning("\033[0;33mNOTE: OmegaConf inventory is currently in experimental mode.\033[0m")
 
         # migrate a reclass inventory to omegaConf
-        while True:
-            query_result = input(f"Do you want to migrate your inventory to OmegaConf? (Y/n):").lower()
-            if not query_result or query_result[0] == "y":
-                output_path = inventory_path  # + "_omegaconf"
-                if not os.path.exists(output_path):
-                    os.mkdir(output_path)
-                migrate(inventory_path, output_path)
-                logger.info(f"Migrated inventory to OmegaConf in {output_path}")
-                break
-            elif query_result[0] == "n":
-                break
-            else:
-                logger.warning("Please answer with 'yes'(y) or 'no'(n)!")
+        if migrate_omegaconf:
+            output_path = inventory_path
+            if not os.path.exists(output_path):
+                os.mkdir(output_path)
+            migrate(inventory_path, output_path)
+            logger.info(f"Migrated inventory to OmegaConf in {output_path}")
         try:
             inv = inventory_omegaconf(inventory_path, ignore_class_notfound, targets)
-        except errors.OmegaConfBaseException:
-            raise InventoryError("")
+        except errors.OmegaConfBaseException as e:
+            raise InventoryError(e)
     else:
         logger.debug("Using reclass as inventory backend")
         inv = inventory_reclass(inventory_path, ignore_class_notfound)
