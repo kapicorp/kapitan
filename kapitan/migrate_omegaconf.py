@@ -4,6 +4,7 @@ import sys
 import os
 from ruamel.yaml import YAML
 from pathlib import Path
+from typing import Any
 import regex as re
 
 REF_TOKEN = r"(?<!\\)\${([^\${}]*+(?:(?R)[^\${}]*)*+)}"
@@ -42,7 +43,7 @@ def replace_str(input: str) -> str:
 
 
 # replace all references with OmegaConf syntax
-def migrate_yaml_obj(yaml_obj: dict | list | str) -> None:
+def migrate_yaml_obj(yaml_obj: Any) -> Any:
     # dictionary
     if isinstance(yaml_obj, dict):
         for k, v in yaml_obj.items():
