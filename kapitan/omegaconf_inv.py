@@ -79,24 +79,30 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
     # load classes for targets
     for class_name in target_config_classes:
         # resolve class paths
-        class_path = os.path.join(classes_searchpath, *class_name.split(".")) + ".yml"
+        class_path = os.path.join(classes_searchpath, *class_name.split("."))
 
-        if os.path.isfile(class_path):
-            # load classes recursively
-            class_config = OmegaConf.load(class_path)
-
-            # resolve relative class names
-            new_classes = class_config.pop("classes", [])
-            for new in new_classes:
-                if new.startswith("."):
-                    new = ".".join(class_name.split(".")[0:-1]) + new
-
-                target_config_classes.append(new)
-
-        elif not ignore_class_notfound:
-            raise InventoryError(f"{target_name}: Class {class_name} not found.")
+        # search for init file
+        if os.path.isdir(class_path):
+            init_path = os.path.join(classes_searchpath, *class_name.split("."), "init") + ".yml"
+            if os.path.isfile(init_path):
+                class_path = init_path
         else:
-            continue
+            class_path += ".yml"
+
+        if not os.path.isfile(class_path):
+            if not ignore_class_notfound:
+                raise InventoryError(f"Class {class_name} not found.")
+
+        # load classes recursively
+        class_config = OmegaConf.load(class_path)
+
+        # resolve relative class names
+        new_classes = class_config.pop("classes", [])
+        for new in new_classes:
+            if new.startswith("."):
+                new = ".".join(class_name.split(".")[0:-1]) + new
+
+            target_config_classes.append(new)
 
         # merge target with loaded classes
         if target_config.get("parameters"):
@@ -105,10 +111,10 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
             target_config = class_config
 
     if not target_config:
-        raise InventoryError(f"{target_name}: empty target")
+        raise InventoryError("empty target")
 
     if not target_config.get("parameters"):
-        raise InventoryError(f"{target_name}: target has no parameters")
+        raise InventoryError("target has no parameters")
 
     # append meta data _reclass_ (legacy)
     target_config["parameters"]["_reclass_"] = {
@@ -145,9 +151,9 @@ def fullkey(_node_: Node):
     return _node_._get_full_key("")
 
 
-def dep(name: str):
+def dep(name: str, name2):
     """resolver function, that returns a parameterized dependency"""
-    return f"dependency{name}"
+    return {name: "abc", name2: "ghf"}
 
 
 def register_resolvers():
