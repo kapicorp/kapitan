@@ -106,7 +106,7 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
 
         # merge target with loaded classes
         if target_config.get("parameters"):
-            target_config = OmegaConf.merge(class_config, target_config, list_merge_mode=ListMergeMode.EXTEND)
+            target_config = OmegaConf.unsafe_merge(class_config, target_config, list_merge_mode=ListMergeMode.EXTEND)
         else:
             target_config = class_config
 
