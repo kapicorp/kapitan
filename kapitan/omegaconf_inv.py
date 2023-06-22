@@ -106,7 +106,9 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
 
         # merge target with loaded classes
         if target_config.get("parameters"):
-            target_config = OmegaConf.unsafe_merge(class_config, target_config, list_merge_mode=ListMergeMode.EXTEND)
+            target_config = OmegaConf.unsafe_merge(
+                class_config, target_config, list_merge_mode=ListMergeMode.EXTEND
+            )
         else:
             target_config = class_config
 
@@ -128,7 +130,7 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
 
     # resolve references / interpolate values
     try:
-        target_config = OmegaConf.to_container(target_config, resolve=True)
+        target_config = OmegaConf.to_object(OmegaConf.create(OmegaConf.to_object(target_config)))
     except errors.OmegaConfBaseException as e:
         raise InventoryError(e.__context__)
 
@@ -146,20 +148,80 @@ def key(_node_: Node):
     return _node_._key()
 
 
+def parentkey(_parent_: Node):
+    """resolver function, that returns the name of its parent key"""
+    return _parent_._key()
+
+
 def fullkey(_node_: Node):
     """resolver function, that returns the full name of its parent key"""
     return _node_._get_full_key("")
 
 
-def dep(name: str, name2):
+def name(name: str):
     """resolver function, that returns a parameterized dependency"""
-    return {name: "abc", name2: "ghf"}
+    return {"name": name}
+
+
+def merge(*args):
+    """resolver function, that returns a parameterized dependency"""
+    merge = OmegaConf.merge(*args)
+    print(merge)
+    return merge
+
+
+def add(o1, o2):
+    return o1 + o2
+
+
+def namespace(component: str):
+    return "${oc.select:parameters.components." + component + ".namespace}"
+
+
+def deployment(component: str):
+    cfg = {
+        "namespace": f"${{oc.select:parameters.{component}-config.namespace,{component}}}",
+        "image": f"${{oc.select:parameters.{component}-config.image,${{parameters.config.container.base_image}}}}",
+    }
+
+    cfg |= service(component)
+    return cfg
+
+
+def service(component: str):
+
+    source = {
+        "service": {"type": "", "selector": {"app": ""}},
+        "ports": {"http": {"service_port": "187"}},
+    }
+
+    def replace(input_dict, path=""):
+        processed_dict = {}
+
+        for key, value in input_dict.items():
+            key_path = f"{path}.{key}" if path else key
+            if isinstance(value, dict):
+                processed_dict[key] = replace(value, path=key_path)
+            else:
+                search = f"parameters.{component}-config.{key_path}"
+                default = f"${{parameters.templates.deployment.{key_path}}}" if not value else value
+                processed_dict[key] = f"${{oc.select:{search},{default}}}"
+
+        return processed_dict
+
+    return replace(source)
 
 
 def register_resolvers():
     # utils
     OmegaConf.register_new_resolver("key", key)
+    OmegaConf.register_new_resolver("parentkey", parentkey)
     OmegaConf.register_new_resolver("fullkey", fullkey)
 
     # kapitan helpers
-    OmegaConf.register_new_resolver("dep", dep)
+    OmegaConf.register_new_resolver("name", name)
+    OmegaConf.register_new_resolver("merge", merge)
+    OmegaConf.register_new_resolver("add", add)
+    OmegaConf.register_new_resolver("namespace", namespace)
+    OmegaConf.register_new_resolver("deployment", deployment)
+    OmegaConf.register_new_resolver("service", service)
