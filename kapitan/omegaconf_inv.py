@@ -3,6 +3,7 @@
 # Copyright 2023 nexenio
 import logging
 import os
+import sys
 
 from kapitan.errors import InventoryError
 from omegaconf import Node, OmegaConf, errors, ListMergeMode
@@ -25,6 +26,14 @@ def inventory_omegaconf(
     classes_searchpath = os.path.join(inventory_path, "classes")
 
     register_resolvers()
+
+    # user resolvers
+    # import_path = os.path.join(os.getcwd(), inventory_path)
+    # print(import_path)
+    # sys.path.append(import_path)
+    # from resolvers import register_user_resolvers
+
+    # register_user_resolvers(OmegaConf)
 
     selected_targets = []
 
@@ -130,7 +139,10 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
 
     # resolve references / interpolate values
     try:
-        target_config = OmegaConf.to_object(OmegaConf.create(OmegaConf.to_object(target_config)))
+        OmegaConf.resolve(target_config)
+
+        target_config = OmegaConf.to_object(target_config)
+        # target_config = OmegaConf.to_object(OmegaConf.create(OmegaConf.to_object(target_config)))
     except errors.OmegaConfBaseException as e:
         raise InventoryError(e.__context__)
 
@@ -158,20 +170,28 @@ def fullkey(_node_: Node):
     return _node_._get_full_key("")
 
 
-def name(name: str):
-    """resolver function, that returns a parameterized dependency"""
-    return {"name": name}
-
-
 def merge(*args):
-    """resolver function, that returns a parameterized dependency"""
-    merge = OmegaConf.merge(*args)
-    print(merge)
+    merge = OmegaConf.merge(*args, list_merge_mode=ListMergeMode.EXTEND)
     return merge
 
 
-def add(o1, o2):
-    return o1 + o2
+def to_dict(input):
+
+    if not (isinstance(input, list) or OmegaConf.is_list(input)):
+        return input  # not supported
+
+    if not (isinstance(input[0], dict) or OmegaConf.is_dict(input[0])):
+        return input
+
+    return {key: item[key] for item in input for key in item}
+
+
+def to_list(input):
+
+    if isinstance(input, dict) or OmegaConf.is_dict(input):
+        return [{item[0]: item[1]} for item in input.items()]
+
+    return list(input)
 
 
 def namespace(component: str):
@@ -179,37 +199,11 @@ def namespace(component: str):
 
 
 def deployment(component: str):
-    cfg = {
-        "namespace": f"${{oc.select:parameters.{component}-config.namespace,{component}}}",
-        "image": f"${{oc.select:parameters.{component}-config.image,${{parameters.config.container.base_image}}}}",
-    }
-
-    cfg |= service(component)
-    return cfg
+    return "${merge:${parameters.templates.deployment},${parameters." + component + "}}"
 
 
-def service(component: str):
-
-    source = {
-        "service": {"type": "", "selector": {"app": ""}},
-        "ports": {"http": {"service_port": "187"}},
-    }
-
-    def replace(input_dict, path=""):
-        processed_dict = {}
-
-        for key, value in input_dict.items():
-            key_path = f"{path}.{key}" if path else key
-            if isinstance(value, dict):
-                processed_dict[key] = replace(value, path=key_path)
-            else:
-                search = f"parameters.{component}-config.{key_path}"
-                default = f"${{parameters.templates.deployment.{key_path}}}" if not value else value
-                processed_dict[key] = f"${{oc.select:{search},{default}}}"
-
-        return processed_dict
-
-    return replace(source)
+def copy(component: str, new_name):
+    return "${merge:${parameters.components." + component + "},${parameters." + new_name + "}}"
 
 
 def register_resolvers():
@@ -219,9 +213,43 @@ def register_resolvers():
     OmegaConf.register_new_resolver("fullkey", fullkey)
 
     # kapitan helpers
-    OmegaConf.register_new_resolver("name", name)
     OmegaConf.register_new_resolver("merge", merge)
-    OmegaConf.register_new_resolver("add", add)
+    OmegaConf.register_new_resolver("dict", to_dict)
+    OmegaConf.register_new_resolver("list", to_list)
     OmegaConf.register_new_resolver("namespace", namespace)
     OmegaConf.register_new_resolver("deployment", deployment)
-    OmegaConf.register_new_resolver("service", service)
+    OmegaConf.register_new_resolver("copy", copy)
+
+
+# def deployment(component: str):
+#     cfg = {
+#         "namespace": f"${{oc.select:parameters.{component}.namespace,{component}}}",
+#         "image": f"${{oc.select:parameters.{component}.image,${{parameters.config.container.base_image}}}}",
+#     }
+
+#     cfg |= service(component)
+#     return cfg
+
+
+# def service(component: str):
+
+#     source = {
+#         "service": {"type": "", "selector": {"app": ""}},
+#         "ports": {"http": {"service_port": "187"}},
+#     }
+
+#     def replace(input_dict, path=""):
+#         processed_dict = {}
+
+#         for key, value in input_dict.items():
+#             key_path = f"{path}.{key}" if path else key
+#             if isinstance(value, dict):
+#                 processed_dict[key] = replace(value, path=key_path)
+#             else:
+#                 search = f"parameters.{component}-config.{key_path}"
+#                 default = f"${{parameters.templates.deployment.{key_path}}}" if not value else value
+#                 processed_dict[key] = f"${{oc.select:{search},{default}}}"
+
+#         return processed_dict
+
+#     return replace(source)
