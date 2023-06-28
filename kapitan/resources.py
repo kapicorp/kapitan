@@ -320,7 +320,10 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
     # get parsed args from cached.py
     args = list(cached.args.values())[0]
     use_omegaconf = args.omegaconf
-    migrate_omegaconf = args.migrate
+    try:
+        migrate_omegaconf = args.migrate
+    except:
+        migrate_omegaconf = False
 
     if use_omegaconf:
         # show warning
@@ -337,7 +340,7 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
         try:
             inv = inventory_omegaconf(inventory_path, ignore_class_notfound, targets)
         except errors.OmegaConfBaseException as e:
-            raise InventoryError(e)
+            raise e  # InventoryError(e)
     else:
         logger.debug("Using reclass as inventory backend")
         inv = inventory_reclass(inventory_path, ignore_class_notfound)

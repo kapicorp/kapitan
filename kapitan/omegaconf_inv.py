@@ -68,7 +68,7 @@ def inventory_omegaconf(
             name, config = load_target(target, classes_searchpath, ignore_class_notfound)
             inv["nodes"][name] = config
         except Exception as e:
-            logger.error(f"{target['name']}: {e}")
+            raise e  # logger.error(f"{target['name']}: {e}")
 
     return inv
 
@@ -132,8 +132,8 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
         "name": {
             "full": target_name,
             "parts": target_name.split("."),
-            "path": target_name,
-            "short": target_name,
+            "path": target_name.replace(".", "/"),
+            "short": target_name.split(".")[-1],
         }
     }
 
@@ -144,7 +144,7 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
         target_config = OmegaConf.to_object(target_config)
         # target_config = OmegaConf.to_object(OmegaConf.create(OmegaConf.to_object(target_config)))
     except errors.OmegaConfBaseException as e:
-        raise InventoryError(e.__context__)
+        raise e  # InventoryError(e.__context__)
 
     # obtain target name to insert in inv dict
     try:
@@ -175,6 +175,11 @@ def merge(*args):
     return merge
 
 
+def merge_replace(*args):
+    merge = OmegaConf.merge(*args, list_merge_mode=ListMergeMode.REPLACE)
+    return merge
+
+
 def to_dict(input):
 
     if not (isinstance(input, list) or OmegaConf.is_list(input)):
@@ -194,6 +199,27 @@ def to_list(input):
     return list(input)
 
 
+def relpath(path: str, _node_: Node):
+
+    start = _node_._get_full_key("")
+    start = start.replace("[", ".")
+
+    path_parts = path.split(".")
+    start_parts = start.split(".")
+
+    while path_parts and start_parts and path_parts[0] == start_parts[0]:
+        path_parts.pop(0)
+        start_parts.pop(0)
+
+    # Construct relative path
+    rel_parts = ["."] * (len(start_parts))
+    reminder_path = ".".join(path_parts)
+
+    rel_path = "".join(rel_parts) + reminder_path
+
+    return f"${{{rel_path}}}"
+
+
 def namespace(component: str):
     return "${oc.select:parameters.components." + component + ".namespace}"
 
@@ -206,6 +232,34 @@ def copy(component: str, new_name):
     return "${merge:${parameters.components." + component + "},${parameters." + new_name + "}}"
 
 
+def helm_dep(name: str, source: str):
+
+    return {
+        "type": "helm",
+        "output_path": f"components/charts/${{parameters.{name}.chart_name}}/${{parameters.{name}.chart_version}}/${{parameters.{name}.application_version}}",
+        "source": source,
+        "version": f"${{parameters.{name}.chart_version}}",
+        "chart_name": f"${{parameters.{name}.chart_name}}",
+    }
+
+
+def helm_input(name: str):
+
+    return {
+        "input_type": "helm",
+        "input_paths": [
+            f"components/charts/${{parameters.{name}.chart_name}}/${{parameters.{name}.chart_version}}/${{parameters.{name}.application_version}}"
+        ],
+        "output_path": f"k8s/${{parameters.{name}.namespace}}",
+        "helm_params": {
+            "namespace": f"${{parameters.{name}.namespace}}",
+            "name": f"${{parameters.{name}.chart_name}}",
+            "output_file": f"{name}.yml",
+        },
+        "helm_values": f"${{parameters.{name}.helm_values}}",
+    }
+
+
 def register_resolvers():
     # utils
     OmegaConf.register_new_resolver("key", key)
@@ -214,8 +268,14 @@ def register_resolvers():
 
     # kapitan helpers
     OmegaConf.register_new_resolver("merge", merge)
+    OmegaConf.register_new_resolver("merge_replace", merge_replace)
     OmegaConf.register_new_resolver("dict", to_dict)
     OmegaConf.register_new_resolver("list", to_list)
+    OmegaConf.register_new_resolver("relpath", relpath)
+    OmegaConf.register_new_resolver("helm_dep", helm_dep)
+    OmegaConf.register_new_resolver("helm_input", helm_input)
+
+    # kubernetes helpers
     OmegaConf.register_new_resolver("namespace", namespace)
     OmegaConf.register_new_resolver("deployment", deployment)
     OmegaConf.register_new_resolver("copy", copy)
