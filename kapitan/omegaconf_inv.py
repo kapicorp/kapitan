@@ -39,7 +39,7 @@ def inventory_omegaconf(
         import resolvers
 
         for name, func in funcs.items():
-            OmegaConf.register_new_resolver(name, func)
+            OmegaConf.register_new_resolver(name, func, replace=True)
     except:
         logger.warning("Couldnt import user resolvers")
 
