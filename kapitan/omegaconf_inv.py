@@ -27,13 +27,21 @@ def inventory_omegaconf(
 
     register_resolvers()
 
-    # user resolvers
-    # import_path = os.path.join(os.getcwd(), inventory_path)
-    # print(import_path)
-    # sys.path.append(import_path)
-    # from resolvers import register_user_resolvers
+    # import user resolvers
+    try:
+        import_path = os.path.join(os.getcwd(), inventory_path)
+        sys.path.append(import_path)
 
-    # register_user_resolvers(OmegaConf)
+        from resolvers import pass_resolvers
+
+        funcs = pass_resolvers()
+
+        import resolvers
+
+        for name, func in funcs.items():
+            OmegaConf.register_new_resolver(name, func)
+    except:
+        logger.warning("Couldnt import user resolvers")
 
     selected_targets = []
 
