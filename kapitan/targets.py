@@ -658,6 +658,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         "unpack": {"type": "boolean"},
                         "version": {"type": "string"},
                         "force_fetch": {"type": "boolean"},
+                        "submodules": {"type": "boolean"},
                     },
                     "required": ["type", "output_path", "source"],
                     "additionalProperties": False,
