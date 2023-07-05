@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import sys
+import time
 from functools import partial
 
 import jsonschema
@@ -25,10 +26,8 @@ from reclass.errors import NotFoundError, ReclassException
 import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
-from kapitan.migrate_omegaconf import migrate
-from kapitan.omegaconf_inv import inventory_omegaconf
+from kapitan.omegaconf_inv import inventory_omegaconf, migrate
 from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
-from omegaconf import errors
 
 logger = logging.getLogger(__name__)
 
@@ -332,15 +331,15 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
 
         # migrate a reclass inventory to omegaConf
         if migrate_omegaconf:
-            output_path = inventory_path
-            if not os.path.exists(output_path):
-                os.mkdir(output_path)
-            migrate(inventory_path, output_path)
-            logger.info(f"Migrated inventory to OmegaConf in {output_path}")
+            migrate_start = time.time()
+            migrate(inventory_path)
+            logger.info("Migrated inventory to OmegaConf (%.2fs)", time.time() - migrate_start)
         try:
             inv = inventory_omegaconf(inventory_path, ignore_class_notfound, targets)
-        except errors.OmegaConfBaseException as e:
-            raise e  # InventoryError(e)
+        except Exception as e:
+            if not migrate_omegaconf:
+                logger.warning("Make sure to migrate your inventory using --migrate")
+            raise InventoryError(e)
     else:
         logger.debug("Using reclass as inventory backend")
         inv = inventory_reclass(inventory_path, ignore_class_notfound)

@@ -3,10 +3,12 @@
 # Copyright 2023 nexenio
 import logging
 import os
-import sys
+
+import regex
 
 from kapitan.errors import InventoryError
-from omegaconf import Node, OmegaConf, errors, ListMergeMode
+from kapitan.resolvers import register_resolvers
+from omegaconf import ListMergeMode, Node, OmegaConf, errors
 
 logger = logging.getLogger(__name__)
 
@@ -25,23 +27,7 @@ def inventory_omegaconf(
     targets_searchpath = os.path.join(inventory_path, "targets")
     classes_searchpath = os.path.join(inventory_path, "classes")
 
-    register_resolvers()
-
-    # import user resolvers
-    try:
-        import_path = os.path.join(os.getcwd(), inventory_path)
-        sys.path.append(import_path)
-
-        from resolvers import pass_resolvers
-
-        funcs = pass_resolvers()
-
-        import resolvers
-
-        for name, func in funcs.items():
-            OmegaConf.register_new_resolver(name, func, replace=True)
-    except:
-        logger.warning("Couldnt import user resolvers")
+    register_resolvers(inventory_path)
 
     selected_targets = []
 
@@ -68,6 +54,7 @@ def inventory_omegaconf(
 
             selected_targets.append({"name": target_name, "path": target_path})
 
+    # using nodes for reclass legacy code
     inv = {"nodes": {}}
 
     # load targets
@@ -76,7 +63,7 @@ def inventory_omegaconf(
             name, config = load_target(target, classes_searchpath, ignore_class_notfound)
             inv["nodes"][name] = config
         except Exception as e:
-            raise e  # logger.error(f"{target['name']}: {e}")
+            raise InventoryError(f"{target['name']}: {e}")
 
     return inv
 
@@ -90,25 +77,27 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
     target_path = target["path"]
 
     target_config = OmegaConf.load(target_path)
-
-    target_config_classes = target_config.pop("classes", [])
+    target_config_classes = target_config.get("classes", [])
+    target_config_parameters = OmegaConf.create(target_config.get("parameters", {}))
+    target_config = {}
 
     # load classes for targets
     for class_name in target_config_classes:
-        # resolve class paths
+        # resolve class path
         class_path = os.path.join(classes_searchpath, *class_name.split("."))
 
-        # search for init file
-        if os.path.isdir(class_path):
+        if os.path.isfile(class_path + ".yml"):
+            class_path += ".yml"
+        elif os.path.isdir(class_path):
+            # search for init file
             init_path = os.path.join(classes_searchpath, *class_name.split("."), "init") + ".yml"
             if os.path.isfile(init_path):
                 class_path = init_path
+        elif ignore_class_notfound:
+            logger.debug(f"Could not find {class_path}")
+            continue
         else:
-            class_path += ".yml"
-
-        if not os.path.isfile(class_path):
-            if not ignore_class_notfound:
-                raise InventoryError(f"Class {class_name} not found.")
+            raise InventoryError(f"Class {class_name} not found.")
 
         # load classes recursively
         class_config = OmegaConf.load(class_path)
@@ -121,22 +110,21 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
 
             target_config_classes.append(new)
 
+        class_config_parameters = OmegaConf.create(class_config.get("parameters", {}))
+
         # merge target with loaded classes
-        if target_config.get("parameters"):
-            target_config = OmegaConf.unsafe_merge(
-                class_config, target_config, list_merge_mode=ListMergeMode.EXTEND
+        if target_config_parameters:
+            target_config_parameters = OmegaConf.unsafe_merge(
+                class_config_parameters, target_config_parameters, list_merge_mode=ListMergeMode.EXTEND
             )
         else:
-            target_config = class_config
+            target_config_parameters = class_config_parameters
 
-    if not target_config:
+    if not target_config_parameters:
         raise InventoryError("empty target")
 
-    if not target_config.get("parameters"):
-        raise InventoryError("target has no parameters")
-
-    # append meta data _reclass_ (legacy)
-    target_config["parameters"]["_reclass_"] = {
+    # append meta data (legacy: _reclass_)
+    target_config_parameters["_reclass_"] = {
         "name": {
             "full": target_name,
             "parts": target_name.split("."),
@@ -146,13 +134,8 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
     }
 
     # resolve references / interpolate values
-    try:
-        OmegaConf.resolve(target_config)
-
-        target_config = OmegaConf.to_object(target_config)
-        # target_config = OmegaConf.to_object(OmegaConf.create(OmegaConf.to_object(target_config)))
-    except errors.OmegaConfBaseException as e:
-        raise e  # InventoryError(e.__context__)
+    OmegaConf.resolve(target_config_parameters)
+    target_config["parameters"] = OmegaConf.to_object(target_config_parameters)
 
     # obtain target name to insert in inv dict
     try:
@@ -163,161 +146,34 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
     return target_name, target_config
 
 
-def key(_node_: Node):
-    """resolver function, that returns the name of its parent key"""
-    return _node_._key()
+def migrate(inventory_path: str) -> None:
+    """migrates all .yml/.yaml files in the given path to omegaconfs syntax"""
 
+    for root, subdirs, files in os.walk(inventory_path):
+        for file in files:
+            file = os.path.join(root, file)
+            name, ext = os.path.splitext(file)
 
-def parentkey(_parent_: Node):
-    """resolver function, that returns the name of its parent key"""
-    return _parent_._key()
+            if ext not in (".yml", ".yaml"):
+                continue
 
+            try:
+                with open(file, "r+") as file:
+                    content = file.read()
+                    file.seek(0)
 
-def fullkey(_node_: Node):
-    """resolver function, that returns the full name of its parent key"""
-    return _node_._get_full_key("")
+                    # replace_colons_in_tags
+                    updated_content = regex.sub(
+                        r"(?<!\\)\${([^{}\\]+?)}",
+                        lambda match: "${" + match.group(1).replace(":", ".") + "}",
+                        content,
+                    )
 
+                    # replace escaped tags with specific resolver
+                    updated_content = regex.sub(
+                        r"\\\${([^{}]+?)}", lambda match: "${tag:" + match.group(1) + "}", updated_content
+                    )
 
-def merge(*args):
-    merge = OmegaConf.merge(*args, list_merge_mode=ListMergeMode.EXTEND)
-    return merge
-
-
-def merge_replace(*args):
-    merge = OmegaConf.merge(*args, list_merge_mode=ListMergeMode.REPLACE)
-    return merge
-
-
-def to_dict(input):
-
-    if not (isinstance(input, list) or OmegaConf.is_list(input)):
-        return input  # not supported
-
-    if not (isinstance(input[0], dict) or OmegaConf.is_dict(input[0])):
-        return input
-
-    return {key: item[key] for item in input for key in item}
-
-
-def to_list(input):
-
-    if isinstance(input, dict) or OmegaConf.is_dict(input):
-        return [{item[0]: item[1]} for item in input.items()]
-
-    return list(input)
-
-
-def relpath(path: str, _node_: Node):
-
-    start = _node_._get_full_key("")
-    start = start.replace("[", ".")
-
-    path_parts = path.split(".")
-    start_parts = start.split(".")
-
-    while path_parts and start_parts and path_parts[0] == start_parts[0]:
-        path_parts.pop(0)
-        start_parts.pop(0)
-
-    # Construct relative path
-    rel_parts = ["."] * (len(start_parts))
-    reminder_path = ".".join(path_parts)
-
-    rel_path = "".join(rel_parts) + reminder_path
-
-    return f"${{{rel_path}}}"
-
-
-def namespace(component: str):
-    return "${oc.select:parameters.components." + component + ".namespace}"
-
-
-def deployment(component: str):
-    return "${merge:${parameters.templates.deployment},${parameters." + component + "}}"
-
-
-def copy(component: str, new_name):
-    return "${merge:${parameters.components." + component + "},${parameters." + new_name + "}}"
-
-
-def helm_dep(name: str, source: str):
-
-    return {
-        "type": "helm",
-        "output_path": f"components/charts/${{parameters.{name}.chart_name}}/${{parameters.{name}.chart_version}}/${{parameters.{name}.application_version}}",
-        "source": source,
-        "version": f"${{parameters.{name}.chart_version}}",
-        "chart_name": f"${{parameters.{name}.chart_name}}",
-    }
-
-
-def helm_input(name: str):
-
-    return {
-        "input_type": "helm",
-        "input_paths": [
-            f"components/charts/${{parameters.{name}.chart_name}}/${{parameters.{name}.chart_version}}/${{parameters.{name}.application_version}}"
-        ],
-        "output_path": f"k8s/${{parameters.{name}.namespace}}",
-        "helm_params": {
-            "namespace": f"${{parameters.{name}.namespace}}",
-            "name": f"${{parameters.{name}.chart_name}}",
-            "output_file": f"{name}.yml",
-        },
-        "helm_values": f"${{parameters.{name}.helm_values}}",
-    }
-
-
-def register_resolvers():
-    # utils
-    OmegaConf.register_new_resolver("key", key)
-    OmegaConf.register_new_resolver("parentkey", parentkey)
-    OmegaConf.register_new_resolver("fullkey", fullkey)
-
-    # kapitan helpers
-    OmegaConf.register_new_resolver("merge", merge)
-    OmegaConf.register_new_resolver("merge_replace", merge_replace)
-    OmegaConf.register_new_resolver("dict", to_dict)
-    OmegaConf.register_new_resolver("list", to_list)
-    OmegaConf.register_new_resolver("relpath", relpath)
-    OmegaConf.register_new_resolver("helm_dep", helm_dep)
-    OmegaConf.register_new_resolver("helm_input", helm_input)
-
-    # kubernetes helpers
-    OmegaConf.register_new_resolver("namespace", namespace)
-    OmegaConf.register_new_resolver("deployment", deployment)
-    OmegaConf.register_new_resolver("copy", copy)
-
-
-# def deployment(component: str):
-#     cfg = {
-#         "namespace": f"${{oc.select:parameters.{component}.namespace,{component}}}",
-#         "image": f"${{oc.select:parameters.{component}.image,${{parameters.config.container.base_image}}}}",
-#     }
-
-#     cfg |= service(component)
-#     return cfg
-
-
-# def service(component: str):
-
-#     source = {
-#         "service": {"type": "", "selector": {"app": ""}},
-#         "ports": {"http": {"service_port": "187"}},
-#     }
-
-#     def replace(input_dict, path=""):
-#         processed_dict = {}
-
-#         for key, value in input_dict.items():
-#             key_path = f"{path}.{key}" if path else key
-#             if isinstance(value, dict):
-#                 processed_dict[key] = replace(value, path=key_path)
-#             else:
-#                 search = f"parameters.{component}-config.{key_path}"
-#                 default = f"${{parameters.templates.deployment.{key_path}}}" if not value else value
-#                 processed_dict[key] = f"${{oc.select:{search},{default}}}"
-
-#         return processed_dict
-
-#     return replace(source)
+                    file.write(updated_content)
+            except Exception as e:
+                InventoryError(f"{file}: error with migration: {e}")
