@@ -8,7 +8,6 @@ WORKDIR /kapitan
 
 COPY ./kapitan ./kapitan
 COPY ./MANIFEST.in ./MANIFEST.in
-COPY ./requirements.txt ./requirements.txt
 COPY ./pyproject.toml ./pyproject.toml
 COPY ./README.md ./README.md
 

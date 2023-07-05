@@ -37,7 +37,7 @@ env = {
 }
 
 vault_container = client.containers.run(
-    image="vault",
+    image="hashicorp/vault",
     cap_add=["IPC_LOCK"],
     ports={8200: DOCKER_PORT},
     environment=env,
