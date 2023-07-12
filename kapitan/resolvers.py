@@ -28,7 +28,7 @@ def fullkey(_node_: Node):
 
 def escape_tag(input: str):
     """resolver function, that returns an escaped tag with the input"""
-    return f"\\${{input}}"
+    return f"\\${{{input}}}"
 
 
 def merge(*args):
