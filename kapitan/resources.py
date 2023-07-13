@@ -335,14 +335,18 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
             migrate(inventory_path)
             logger.info("Migrated inventory to OmegaConf (%.2fs)", time.time() - migrate_start)
         try:
+            # inv_start = time.time()
             inv = inventory_omegaconf(inventory_path, ignore_class_notfound, targets)
+            # logger.info("REAL_TIME (%.2fs)", time.time() - inv_start)
         except Exception as e:
             if not migrate_omegaconf:
                 logger.warning("Make sure to migrate your inventory using --migrate")
             raise InventoryError(e)
     else:
         logger.debug("Using reclass as inventory backend")
+        # inv_start = time.time()
         inv = inventory_reclass(inventory_path, ignore_class_notfound)
+        # logger.info("REAL_TIME (%.2fs)", time.time() - inv_start)
 
     cached.inv = inv
     return inv

@@ -51,7 +51,7 @@ jsonschema = "^4.17.3"
 kadet = "^0.2.2"
 python-gnupg = "^0.4.7"
 pyyaml = "^6.0"
-omegaconf = { git = "https://github.com/omry/omegaconf.git" }
+omegaconf = { git = "https://github.com/neXenio/omegaconf.git", branch = "dev" }
 requests = "^2.28.2"
 six = "^1.16.0"
 toml = "^0.10.2"
