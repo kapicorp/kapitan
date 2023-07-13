@@ -3,6 +3,7 @@
 # Copyright 2023 nexenio
 import logging
 import os
+import time
 
 import regex
 
@@ -57,11 +58,16 @@ def inventory_omegaconf(
     # using nodes for reclass legacy code
     inv = {"nodes": {}}
 
+    # prepare logging
+    logger.info(f"Found {len(selected_targets)} targets")
+
     # load targets
     for target in selected_targets:
         try:
+            # start = time.time()
             name, config = load_target(target, classes_searchpath, ignore_class_notfound)
             inv["nodes"][name] = config
+            # print(time.time() - start)
         except Exception as e:
             raise InventoryError(f"{target['name']}: {e}")
 
@@ -81,10 +87,17 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
     target_config_parameters = OmegaConf.create(target_config.get("parameters", {}))
     target_config = {}
 
+    classes_redundancy_check = set()
+
     # load classes for targets
     for class_name in target_config_classes:
         # resolve class path
         class_path = os.path.join(classes_searchpath, *class_name.split("."))
+
+        if class_path in classes_redundancy_check:
+            continue
+
+        classes_redundancy_check.add(class_path)
 
         if os.path.isfile(class_path + ".yml"):
             class_path += ".yml"
@@ -162,16 +175,22 @@ def migrate(inventory_path: str) -> None:
                     content = file.read()
                     file.seek(0)
 
-                    # replace_colons_in_tags
+                    # replace colons in tags and replace _reclass_ with _meta_
                     updated_content = regex.sub(
                         r"(?<!\\)\${([^{}\\]+?)}",
-                        lambda match: "${" + match.group(1).replace(":", ".") + "}",
+                        lambda match: "${"
+                        + match.group(1).replace(":", ".").replace("_reclass_", "_meta_")
+                        + "}",
                         content,
                     )
 
                     # replace escaped tags with specific resolver
+                    excluded_chars = "!"
+                    invalid = any(c in updated_content for c in excluded_chars)
                     updated_content = regex.sub(
-                        r"\\\${([^{}]+?)}", lambda match: "${tag:" + match.group(1) + "}", updated_content
+                        r"\\\${([^{}]+?)}",
+                        lambda match: ("${tag:" if not invalid else "\\\\\\${") + match.group(1) + "}",
+                        updated_content,
                     )
 
                     file.write(updated_content)

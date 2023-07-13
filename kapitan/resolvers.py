@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def key(_node_: Node):
-    """resolver function, that returns the name of its parent key"""
+    """resolver function, that returns the name of its key"""
     return _node_._key()
 
 
@@ -22,13 +22,18 @@ def parentkey(_parent_: Node):
 
 
 def fullkey(_node_: Node):
-    """resolver function, that returns the full name of its parent key"""
+    """resolver function, that returns the full name of its key"""
     return _node_._get_full_key("")
 
 
-def escape_tag(input: str):
+def escape_tag(input: str, _node_: Node):
     """resolver function, that returns an escaped tag with the input"""
-    return f"\\${{{input}}}"
+    if "\n" in str(_node_):
+        escape = "\\\\\\"
+    else:
+        escape = "\\"
+
+    return escape + "${" + input + "}"
 
 
 def merge(*args):
