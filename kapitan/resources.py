@@ -318,12 +318,13 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
 
     # initialize inventory backend
     if args.reclass:
-        logger.debug("Using reclass as inventory backend")
         inventory_backend = ReclassBackend(inventory_path)
     elif args.omegaconf:
         inventory_backend = OmegaConfBackend(inventory_path)
     else:
-        logger.error("specify backend")
+        # warning or hint to use omegaconf
+        inventory_backend = ReclassBackend(inventory_path) # depricated (default at the moment)
+        
 
     # migrate if neccessary
     if args.migrate:

@@ -134,7 +134,7 @@ def build_parser():
         "--reclass",
         "-r",
         action="store_true",
-        default=from_dot_kapitan("inventory_backend", "reclass", True),
+        default=from_dot_kapitan("inventory_backend", "reclass", False),
         help="use reclass as inventory backend (default)",
     )
     inventory_backend_group.add_argument(

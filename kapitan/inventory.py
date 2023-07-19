@@ -60,9 +60,10 @@ class InventoryBackend(ABC):
 
 
 class OmegaConfBackend(InventoryBackend):
-    def __init__(self):
+    def __init__(self, *args):
         logger.debug("Using omegaconf as inventory backend")
         logger.warning("NOTE: OmegaConf inventory is currently in experimental mode.")
+        super().__init__(*args)
 
     def inventory(self):
         return inventory_omegaconf(
@@ -95,7 +96,7 @@ class OmegaConfBackend(InventoryBackend):
                         updated_content = regex.sub(
                             r"(?<!\\)\${([^{}\\]+?)}",
                             lambda match: "${"
-                            + match.group(1).replace(":", ".").replace("_reclass_", "_meta_")
+                            + match.group(1).replace(":", ".").replace("_reclass_", "_reclass_") # change to _meta_ in the future
                             + "}",
                             content,
                         )
@@ -115,6 +116,10 @@ class OmegaConfBackend(InventoryBackend):
 
 
 class ReclassBackend(InventoryBackend):
+    def __init__(self, *args):
+        logger.debug("Using reclass as inventory backend")
+        super().__init__(*args)
+    
     def inventory(self):
         """
         Runs a reclass inventory in inventory_path
