@@ -36,7 +36,7 @@ from kapitan.resources import get_inventory
 from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
 from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()  # logging.getLogger(__name__)
 
 
 def compile_targets(
@@ -500,7 +500,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
         input_compiler.make_compile_dirs(target_name, output_path, **kwargs)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 
-    logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
+    logger.warn("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
 
 
 @hashable_lru_cache

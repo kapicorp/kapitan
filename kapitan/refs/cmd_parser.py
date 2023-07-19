@@ -2,17 +2,17 @@ from __future__ import print_function
 
 import base64
 import logging
+import mimetypes
 import os
 import sys
-import mimetypes
 
 from kapitan.errors import KapitanError, RefHashMismatchError
 from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.env import EnvRef
 from kapitan.refs.secrets.awskms import AWSKMSSecret
-from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.azkms import AzureKMSSecret
+from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.refs.secrets.vaultkv import VaultSecret
 from kapitan.refs.secrets.vaulttransit import VaultTransit

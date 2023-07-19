@@ -9,7 +9,6 @@ from __future__ import print_function
 import collections
 import json
 import logging
-import magic
 import math
 import os
 import re
@@ -26,12 +25,16 @@ from hashlib import sha256
 from zipfile import ZipFile
 
 import jinja2
+import magic
 import requests
 import yaml
 
 from kapitan import cached, defaults
 from kapitan.errors import CompileError
-from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
+from kapitan.inputs.jinja2_filters import (
+    load_jinja2_filters,
+    load_jinja2_filters_from_file,
+)
 from kapitan.version import VERSION
 
 logger = logging.getLogger(__name__)

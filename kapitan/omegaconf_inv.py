@@ -6,10 +6,10 @@ import os
 import time
 
 import regex
+from omegaconf import ListMergeMode, Node, OmegaConf, errors
 
 from kapitan.errors import InventoryError
 from kapitan.resolvers import register_resolvers
-from omegaconf import ListMergeMode, Node, OmegaConf, errors
 
 logger = logging.getLogger(__name__)
 
@@ -157,42 +157,3 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
         logger.warning(f"Could not resolve target name on target {target_name}")
 
     return target_name, target_config
-
-
-def migrate(inventory_path: str) -> None:
-    """migrates all .yml/.yaml files in the given path to omegaconfs syntax"""
-
-    for root, subdirs, files in os.walk(inventory_path):
-        for file in files:
-            file = os.path.join(root, file)
-            name, ext = os.path.splitext(file)
-
-            if ext not in (".yml", ".yaml"):
-                continue
-
-            try:
-                with open(file, "r+") as file:
-                    content = file.read()
-                    file.seek(0)
-
-                    # replace colons in tags and replace _reclass_ with _meta_
-                    updated_content = regex.sub(
-                        r"(?<!\\)\${([^{}\\]+?)}",
-                        lambda match: "${"
-                        + match.group(1).replace(":", ".").replace("_reclass_", "_meta_")
-                        + "}",
-                        content,
-                    )
-
-                    # replace escaped tags with specific resolver
-                    excluded_chars = "!"
-                    invalid = any(c in updated_content for c in excluded_chars)
-                    updated_content = regex.sub(
-                        r"\\\${([^{}]+?)}",
-                        lambda match: ("${tag:" if not invalid else "\\\\\\${") + match.group(1) + "}",
-                        updated_content,
-                    )
-
-                    file.write(updated_content)
-            except Exception as e:
-                InventoryError(f"{file}: error with migration: {e}")

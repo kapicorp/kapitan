@@ -18,7 +18,12 @@ from functools import lru_cache
 
 import yaml
 
-from kapitan.errors import RefBackendError, RefError, RefFromFuncError, RefHashMismatchError
+from kapitan.errors import (
+    RefBackendError,
+    RefError,
+    RefFromFuncError,
+    RefHashMismatchError,
+)
 from kapitan.refs.functions import eval_func, get_func_lookup
 from kapitan.utils import PrettyDumper, list_all_paths
 

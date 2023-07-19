@@ -9,6 +9,7 @@ from functools import lru_cache
 import jsonschema
 import requests
 import yaml
+
 from kapitan import defaults
 from kapitan.errors import KubernetesManifestValidationError, RequestUnsuccessfulError
 from kapitan.utils import make_request

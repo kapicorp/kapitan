@@ -18,9 +18,10 @@ from random import Random, shuffle
 
 import toml
 import yaml
+from six import string_types
+
 from kapitan import cached, defaults, utils
 from kapitan.errors import CompileError
-from six import string_types
 
 logger = logging.getLogger(__name__)
 

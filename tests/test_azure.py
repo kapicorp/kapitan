@@ -1,16 +1,16 @@
 "Azure secrets test"
 
+import contextlib
+import io
 import os
+import sys
 import tempfile
 import unittest
-import io
-import sys
-import contextlib
 
 from kapitan import cached
 from kapitan.cli import main
 from kapitan.refs.base import RefController, RefParams, Revealer
-from kapitan.refs.secrets.azkms import AzureKMSSecret, AzureKMSError
+from kapitan.refs.secrets.azkms import AzureKMSError, AzureKMSSecret
 
 REFS_HOME = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_HOME)

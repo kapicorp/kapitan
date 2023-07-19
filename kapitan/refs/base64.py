@@ -11,6 +11,7 @@ import json
 import logging
 
 import yaml
+
 from kapitan.refs.base import PlainRef, PlainRefBackend
 
 try:

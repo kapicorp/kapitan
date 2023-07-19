@@ -16,7 +16,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from kapitan.cli import main, build_parser
+from kapitan.cli import build_parser, main
 from kapitan.refs.secrets import vaultkv
 
 REFS_PATH = tempfile.mkdtemp()

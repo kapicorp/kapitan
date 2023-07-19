@@ -1,16 +1,17 @@
 "vault transit tests"
 
-import socket
-from contextlib import closing
+import base64
 import os
 import shutil
+import socket
 import tempfile
 import unittest
-import base64
+from contextlib import closing
 from time import sleep
 
 import docker
 import hvac
+
 from kapitan.refs import secrets
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.vaulttransit import VaultError, VaultTransit, vault_obj

@@ -7,21 +7,23 @@
 
 "compile tests"
 
-import unittest
-import os
-import sys
-import io
 import contextlib
 import glob
+import io
+import os
 import shutil
-import yaml
+import sys
+import unittest
+
 import toml
-from kapitan.cli import main
-from kapitan.utils import directory_hash
+import yaml
+
 from kapitan.cached import reset_cache
-from kapitan.targets import validate_matching_target_name
-from kapitan.resources import get_inventory
+from kapitan.cli import main
 from kapitan.errors import InventoryError
+from kapitan.resources import get_inventory
+from kapitan.targets import validate_matching_target_name
+from kapitan.utils import directory_hash
 
 
 class CompileTestResourcesTestObjs(unittest.TestCase):

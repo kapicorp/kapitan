@@ -18,23 +18,17 @@ import sys
 
 import yaml
 
-from kapitan import cached, defaults, setup_logging
+from kapitan import cached, defaults
 from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import jsonnet_file
 from kapitan.lint import start_lint
+from kapitan.logger import setup_logging
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
 from kapitan.resources import generate_inventory, resource_callbacks, search_imports
 from kapitan.targets import compile_targets, schema_validate_compiled
 from kapitan.utils import check_version, from_dot_kapitan, searchvar
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
-
-logger = logging.getLogger(__name__)
-
-
-def print_deprecated_secrets_msg(args):
-    logger.error("Secrets have been renamed to refs, please refer to: '$ kapitan refs --help'")
-    sys.exit(1)
 
 
 def trigger_eval(args):
@@ -87,7 +81,6 @@ def trigger_compile(args):
         cache_paths=args.cache_paths,
         fetch=args.fetch,
         force_fetch=args.force_fetch,
-        force=args.force,  # deprecated
         validate=args.validate,
         schemas_path=args.schemas_path,
         jinja2_filters=args.jinja2_filters,
@@ -102,7 +95,65 @@ def build_parser():
     parser.add_argument("--version", action="version", version=VERSION)
     subparser = parser.add_subparsers(help="commands", dest="subparser_name")
 
-    eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
+    # setup parent parser to use log arguments in every subparser
+    logger_parser = argparse.ArgumentParser(add_help=False)
+    logger_group = logger_parser.add_argument_group("logging")
+    logger_group.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        default=from_dot_kapitan("logging", "quiet", False),
+        help="set the output level to 'quiet' and only see critical errors",
+    )
+    logger_group.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        default=from_dot_kapitan("logging", "verbose", False),
+        help="set the output level to 'verbose' and see debug information",
+    )
+    logger_group.add_argument(
+        "--no-color",
+        action="store_true",
+        default=from_dot_kapitan("logging", "no_color", False),
+        help="disable the coloring in the debug output",
+    )
+    logger_group.add_argument(
+        "--log-file",
+        type=str,
+        metavar="FILENAME",
+        action="store",
+        default=from_dot_kapitan("logging", "log_file", None),
+        help="specify a name/path if you want to have your debug output in a file",
+    )
+
+    # setup parser for inventory backend
+    inventory_backend_parser = argparse.ArgumentParser(add_help=False)
+    inventory_backend_group = inventory_backend_parser.add_argument_group("inventory_backend")
+    inventory_backend_group.add_argument(
+        "--reclass",
+        "-r",
+        action="store_true",
+        default=from_dot_kapitan("inventory_backend", "reclass", True),
+        help="use reclass as inventory backend (default)",
+    )
+    inventory_backend_group.add_argument(
+        "--omegaconf",
+        "-o",
+        action="store_true",
+        default=from_dot_kapitan("inventory_backend", "omegaconf", False),
+        help="use OmegaConf as inventory backend",
+    )
+    inventory_backend_group.add_argument(
+        "--migrate",
+        help="migrate inventory to specified backend",
+        action="store_true",
+        default=from_dot_kapitan("inventory_backend", "migrate", False),
+    )
+
+    eval_parser = subparser.add_parser(
+        "eval", aliases=["e"], help="evaluate jsonnet file", parents=[logger_parser]
+    )
     eval_parser.add_argument("jsonnet_file", type=str)
     eval_parser.set_defaults(func=trigger_eval, name="eval")
 
@@ -131,7 +182,9 @@ def build_parser():
         help='set search paths, default is ["."]',
     )
 
-    compile_parser = subparser.add_parser("compile", aliases=["c"], help="compile targets")
+    compile_parser = subparser.add_parser(
+        "compile", aliases=["c"], help="compile targets", parents=[logger_parser, inventory_backend_parser]
+    )
     compile_parser.set_defaults(func=trigger_compile, name="compile")
 
     compile_parser.add_argument(
@@ -153,23 +206,10 @@ def build_parser():
                                 them inside lib/jinja2_filters.py",
     )
     compile_parser.add_argument(
-        "--verbose",
-        "-v",
-        help="set verbose mode",
-        action="store_true",
-        default=from_dot_kapitan("compile", "verbose", False),
-    )
-    compile_parser.add_argument(
         "--prune",
         help="prune jsonnet output",
         action="store_true",
         default=from_dot_kapitan("compile", "prune", False),
-    )
-    compile_parser.add_argument(
-        "--quiet",
-        help="set quiet mode, only critical output",
-        action="store_true",
-        default=from_dot_kapitan("compile", "quiet", False),
     )
     compile_parser.add_argument(
         "--output-path",
@@ -189,12 +229,6 @@ def build_parser():
         help="overwrite existing inventory and/or dependency item",
         action="store_true",
         default=from_dot_kapitan("compile", "force-fetch", False),
-    )
-    compile_parser.add_argument(  # deprecated
-        "--force",
-        help="overwrite existing inventory and/or dependency item",
-        action="store_true",
-        default=from_dot_kapitan("compile", "force", False),
     )
     compile_parser.add_argument(
         "--validate",
@@ -306,20 +340,6 @@ def build_parser():
         help="dumps all none-type entries as empty, default is dumping as 'null'",
     )
 
-    compile_parser.add_argument(
-        "--omegaconf",
-        help="use omegaconf as inventory backend",
-        action="store_true",
-        default=from_dot_kapitan("compile", "omegaconf", False),
-    )
-
-    compile_parser.add_argument(
-        "--migrate",
-        help="migrate inventory to omegaconf",
-        action="store_true",
-        default=from_dot_kapitan("compile", "migrate", False),
-    )
-
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
     compile_selector_parser.add_argument(
         "--targets",
@@ -340,7 +360,9 @@ def build_parser():
         metavar="key=value",
     )
 
-    inventory_parser = subparser.add_parser("inventory", aliases=["i"], help="show inventory")
+    inventory_parser = subparser.add_parser(
+        "inventory", aliases=["i"], help="show inventory", parents=[logger_parser, inventory_backend_parser]
+    )
     inventory_parser.set_defaults(func=generate_inventory, name="inventory")
 
     inventory_parser.add_argument(
@@ -369,13 +391,6 @@ def build_parser():
         + ' or storage_*), default is ""',
     )
     inventory_parser.add_argument(
-        "--verbose",
-        "-v",
-        help="set verbose mode",
-        action="store_true",
-        default=from_dot_kapitan("inventory", "verbose", False),
-    )
-    inventory_parser.add_argument(
         "--indent",
         "-i",
         type=int,
@@ -393,15 +408,12 @@ def build_parser():
         default=from_dot_kapitan("inventory", "multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
-    inventory_parser.add_argument(
-        "--omegaconf",
-        help="use omegaconf as inventory backend",
-        action="store_true",
-        default=from_dot_kapitan("inventory", "omegaconf", False),
-    )
 
     searchvar_parser = subparser.add_parser(
-        "searchvar", aliases=["sv"], help="show all inventory files where var is declared"
+        "searchvar",
+        aliases=["sv"],
+        help="show all inventory files where var is declared",
+        parents=[logger_parser],
     )
     searchvar_parser.set_defaults(func=searchvar, name="searchvar")
 
@@ -417,13 +429,6 @@ def build_parser():
         help='set inventory path, default is "./inventory"',
     )
     searchvar_parser.add_argument(
-        "--verbose",
-        "-v",
-        help="set verbose mode",
-        action="store_true",
-        default=from_dot_kapitan("searchvar", "verbose", False),
-    )
-    searchvar_parser.add_argument(
         "--pretty-print",
         "-p",
         help="Pretty print content of var",
@@ -431,10 +436,7 @@ def build_parser():
         default=from_dot_kapitan("searchvar", "pretty-print", False),
     )
 
-    secrets_parser = subparser.add_parser("secrets", aliases=["s"], help="(DEPRECATED) please use refs")
-    secrets_parser.set_defaults(func=print_deprecated_secrets_msg, name="secrets")
-
-    refs_parser = subparser.add_parser("refs", aliases=["r"], help="manage refs")
+    refs_parser = subparser.add_parser("refs", aliases=["r"], help="manage refs", parents=[logger_parser])
     refs_parser.set_defaults(func=handle_refs_command, name="refs")
 
     refs_parser.add_argument(
@@ -518,21 +520,10 @@ def build_parser():
         help='set refs path, default is "./refs"',
         default=from_dot_kapitan("refs", "refs-path", "./refs"),
     )
-    refs_parser.add_argument(
-        "--verbose",
-        "-v",
-        help="set verbose mode (warning: this will potentially show sensitive data)",
-        action="store_true",
-        default=from_dot_kapitan("refs", "verbose", False),
-    )
-    refs_parser.add_argument(
-        "--omegaconf",
-        help="use omegaconf as inventory backend",
-        action="store_true",
-        default=from_dot_kapitan("inventory", "omegaconf", False),
-    )
 
-    lint_parser = subparser.add_parser("lint", aliases=["l"], help="linter for inventory and refs")
+    lint_parser = subparser.add_parser(
+        "lint", aliases=["l"], help="linter for inventory and refs", parents=[logger_parser]
+    )
     lint_parser.set_defaults(func=start_lint, name="lint")
 
     lint_parser.add_argument(
@@ -582,7 +573,9 @@ def build_parser():
     )
 
     init_parser = subparser.add_parser(
-        "init", help="initialize a directory with the recommended kapitan project skeleton."
+        "init",
+        help="initialize a directory with the recommended kapitan project skeleton.",
+        parents=[logger_parser],
     )
     init_parser.set_defaults(func=initialise_skeleton, name="init")
 
@@ -597,6 +590,7 @@ def build_parser():
         "validate",
         aliases=["v"],
         help="validates the compile output against schemas as specified in inventory",
+        parents=[logger_parser],
     )
     validate_parser.set_defaults(func=schema_validate_compiled, name="validate")
 
@@ -651,8 +645,6 @@ def main():
     if getattr(args, "func", None) == generate_inventory and args.pattern and args.target_name == "":
         parser.error("--pattern requires --target_name")
 
-    logger.debug("Running with args: %s", args)
-
     try:
         cmd = sys.argv[1]
     except IndexError:
@@ -662,11 +654,10 @@ def main():
     # cache args where key is subcommand
     assert "name" in args, "All cli commands must have provided default name"
     cached.args[args.name] = args
+    cached.args["all"] = args
 
-    if hasattr(args, "verbose") and args.verbose:
-        setup_logging(level=logging.DEBUG, force=True)
-    elif hasattr(args, "quiet") and args.quiet:
-        setup_logging(level=logging.CRITICAL, force=True)
+    logger = setup_logging(args)
+    logger.debug(f"Running with args: {vars(args)}")
 
     # call chosen command
     args.func(args)

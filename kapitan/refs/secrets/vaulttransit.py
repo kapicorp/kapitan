@@ -11,13 +11,13 @@ import os
 from binascii import Error as b_error
 from sys import exit
 
+import hvac
+from hvac.exceptions import Forbidden, InvalidPath
+
 from kapitan import cached
 from kapitan.errors import KapitanError
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
-
-import hvac
-from hvac.exceptions import Forbidden, InvalidPath
 
 logger = logging.getLogger(__name__)
 

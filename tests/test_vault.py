@@ -15,8 +15,9 @@ from time import sleep
 
 import docker
 import hvac
+
 from kapitan.refs.base import RefController, Revealer
-from kapitan.refs.secrets.vaultkv import VaultSecret, VaultError, vault_obj
+from kapitan.refs.secrets.vaultkv import VaultError, VaultSecret, vault_obj
 
 # Create temporary folder
 REFS_HOME = tempfile.mkdtemp()
