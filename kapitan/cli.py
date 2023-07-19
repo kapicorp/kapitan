@@ -306,6 +306,20 @@ def build_parser():
         help="dumps all none-type entries as empty, default is dumping as 'null'",
     )
 
+    compile_parser.add_argument(
+        "--omegaconf",
+        help="use omegaconf as inventory backend",
+        action="store_true",
+        default=from_dot_kapitan("compile", "omegaconf", False),
+    )
+
+    compile_parser.add_argument(
+        "--migrate",
+        help="migrate inventory to omegaconf",
+        action="store_true",
+        default=from_dot_kapitan("compile", "migrate", False),
+    )
+
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
     compile_selector_parser.add_argument(
         "--targets",
@@ -378,6 +392,12 @@ def build_parser():
         action="store",
         default=from_dot_kapitan("inventory", "multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
+    )
+    inventory_parser.add_argument(
+        "--omegaconf",
+        help="use omegaconf as inventory backend",
+        action="store_true",
+        default=from_dot_kapitan("inventory", "omegaconf", False),
     )
 
     searchvar_parser = subparser.add_parser(
@@ -505,6 +525,12 @@ def build_parser():
         action="store_true",
         default=from_dot_kapitan("refs", "verbose", False),
     )
+    refs_parser.add_argument(
+        "--omegaconf",
+        help="use omegaconf as inventory backend",
+        action="store_true",
+        default=from_dot_kapitan("inventory", "omegaconf", False),
+    )
 
     lint_parser = subparser.add_parser("lint", aliases=["l"], help="linter for inventory and refs")
     lint_parser.set_defaults(func=start_lint, name="lint")
@@ -547,6 +573,12 @@ def build_parser():
         "--inventory-path",
         default=from_dot_kapitan("lint", "inventory-path", "./inventory"),
         help='set inventory path, default is "./inventory"',
+    )
+    lint_parser.add_argument(
+        "--omegaconf",
+        help="use omegaconf as inventory backend",
+        action="store_true",
+        default=from_dot_kapitan("inventory", "omegaconf", False),
     )
 
     init_parser = subparser.add_parser(

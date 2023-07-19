@@ -14,18 +14,20 @@ import json
 import logging
 import os
 import sys
+import time
 from functools import partial
 
 import jsonschema
-import kapitan.cached as cached
-import yaml
-from kapitan import __file__ as kapitan_install_path
-from kapitan.errors import CompileError, InventoryError, KapitanError
-from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
-
 import reclass
 import reclass.core
+import yaml
 from reclass.errors import NotFoundError, ReclassException
+
+import kapitan.cached as cached
+from kapitan import __file__ as kapitan_install_path
+from kapitan.errors import CompileError, InventoryError, KapitanError
+from kapitan.omegaconf_inv import inventory_omegaconf, migrate
+from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
 
 logger = logging.getLogger(__name__)
 
@@ -280,14 +282,14 @@ def inventory(search_paths, target, inventory_path=None):
         raise InventoryError(f"Inventory not found in search paths: {search_paths}")
 
     if target is None:
-        return inventory_reclass(full_inv_path)["nodes"]
+        return get_inventory(full_inv_path)["nodes"]
 
-    return inventory_reclass(full_inv_path)["nodes"][target]
+    return get_inventory(full_inv_path)["nodes"][target]
 
 
 def generate_inventory(args):
     try:
-        inv = inventory_reclass(args.inventory_path)
+        inv = get_inventory(args.inventory_path)
         if args.target_name != "":
             inv = inv["nodes"][args.target_name]
             if args.pattern != "":
@@ -304,6 +306,52 @@ def generate_inventory(args):
         sys.exit(1)
 
 
+def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
+    """
+    generic inventory function that makes inventory backend pluggable
+    default backend is reclass
+    """
+
+    # if inventory is already cached theres nothing to do
+    if cached.inv:
+        return cached.inv
+
+    # get parsed args from cached.py
+    args = list(cached.args.values())[0]
+    use_omegaconf = args.omegaconf
+    try:
+        migrate_omegaconf = args.migrate
+    except:
+        migrate_omegaconf = False
+
+    if use_omegaconf:
+        # show warning
+        logger.debug("Using omegaconf as inventory backend")
+        logger.warning("\033[0;33mNOTE: OmegaConf inventory is currently in experimental mode.\033[0m")
+
+        # migrate a reclass inventory to omegaConf
+        if migrate_omegaconf:
+            migrate_start = time.time()
+            migrate(inventory_path)
+            logger.info("Migrated inventory to OmegaConf (%.2fs)", time.time() - migrate_start)
+        try:
+            # inv_start = time.time()
+            inv = inventory_omegaconf(inventory_path, ignore_class_notfound, targets)
+            # logger.info("REAL_TIME (%.2fs)", time.time() - inv_start)
+        except Exception as e:
+            if not migrate_omegaconf:
+                logger.warning("Make sure to migrate your inventory using --migrate")
+            raise InventoryError(e)
+    else:
+        logger.debug("Using reclass as inventory backend")
+        # inv_start = time.time()
+        inv = inventory_reclass(inventory_path, ignore_class_notfound)
+        # logger.info("REAL_TIME (%.2fs)", time.time() - inv_start)
+
+    cached.inv = inv
+    return inv
+
+
 def inventory_reclass(inventory_path, ignore_class_notfound=False):
     """
     Runs a reclass inventory in inventory_path
@@ -314,12 +362,8 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
 
     Does not throw errors if a class is not found while --fetch flag is enabled
     """
-    # if inventory is already cached theres nothing to do
-    if cached.inv:
-        return cached.inv
-
     # set default values initially
-    reclass_config = reclass_config_defaults = {
+    reclass_config = {
         "storage_type": "yaml_fs",
         "inventory_base_uri": inventory_path,
         "nodes_uri": "targets",
@@ -358,12 +402,10 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
         class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
         _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
 
-        cached.inv = _reclass.inventory()
+        return _reclass.inventory()
     except ReclassException as e:
         if isinstance(e, NotFoundError):
             logger.error("Inventory reclass error: inventory not found")
         else:
             logger.error("Inventory reclass error: %s", e.message)
         raise InventoryError(e.message)
-
-    return cached.inv

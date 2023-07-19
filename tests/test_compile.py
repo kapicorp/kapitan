@@ -20,7 +20,7 @@ from kapitan.cli import main
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
 from kapitan.targets import validate_matching_target_name
-from kapitan.resources import inventory_reclass
+from kapitan.resources import get_inventory
 from kapitan.errors import InventoryError
 
 
@@ -175,7 +175,7 @@ class CompileKubernetesTest(unittest.TestCase):
     def test_compile_vars_target_missing(self):
         inventory_path = "inventory"
         target_filename = "minikube-es"
-        target_obj = inventory_reclass(inventory_path)["nodes"][target_filename]["parameters"]["kapitan"]
+        target_obj = get_inventory(inventory_path)["nodes"][target_filename]["parameters"]["kapitan"]
         # delete vars.target
         del target_obj["vars"]["target"]
 

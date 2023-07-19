@@ -51,6 +51,7 @@ jsonschema = "^4.17.3"
 kadet = "^0.2.2"
 python-gnupg = "^0.4.7"
 pyyaml = "^6.0"
+omegaconf = { git = "https://github.com/neXenio/omegaconf.git", branch = "dev" }
 requests = "^2.28.2"
 six = "^1.16.0"
 toml = "^0.10.2"
@@ -63,6 +64,7 @@ packaging = "^23.0"
 typing-extensions = "^4.0.0"
 gojsonnet = { version = "^0.17.0", optional = true }
 docker = { version = "^5.0.0", optional = true }
+regex = "^2023.5.5"
 
 [tool.poetry.extras]
 gojsonnet = ["gojsonnet"]
