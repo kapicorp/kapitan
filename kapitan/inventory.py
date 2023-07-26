@@ -88,29 +88,31 @@ class OmegaConfBackend(InventoryBackend):
                     continue
 
                 try:
-                    with open(file, "r+") as file:
-                        content = file.read()
-                        file.seek(0)
+                    with open(file, "r") as fp:
+                        content = fp.read()
 
-                        # replace colons in tags and replace _reclass_ with _meta_
-                        updated_content = regex.sub(
-                            r"(?<!\\)\${([^{}\\]+?)}",
-                            lambda match: "${"
-                            + match.group(1).replace(":", ".").replace("_reclass_", "_reclass_") # change to _meta_ in the future
-                            + "}",
-                            content,
-                        )
+                    # replace colons in tags
+                    updated_content = regex.sub(
+                        r"(?<!\\)\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
+                        lambda match: "${"
+                        + match.group(1)
+                        .replace(":", ".")
+                        .replace("_reclass_", "_reclass_")  # change _reclass_ to _meta_ in the future
+                        + "}",
+                        content,
+                    )
 
-                        # replace escaped tags with specific resolver
-                        excluded_chars = "!"
-                        invalid = any(c in updated_content for c in excluded_chars)
-                        updated_content = regex.sub(
-                            r"\\\${([^{}]+?)}",
-                            lambda match: ("${tag:" if not invalid else "\\\\\\${") + match.group(1) + "}",
-                            updated_content,
-                        )
+                    # replace escaped tags with specific resolver
+                    excluded_chars = "!"
+                    invalid = any(c in updated_content for c in excluded_chars)
+                    updated_content = regex.sub(
+                        r"\\\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
+                        lambda match: ("${tag:" if not invalid else "\\\\\\${") + match.group(1) + "}",
+                        updated_content,
+                    )
 
-                        file.write(updated_content)
+                    with open(file, "w") as fp:
+                        fp.write(updated_content)
                 except Exception as e:
                     InventoryError(f"{file}: error with migration: {e}")
 
@@ -119,7 +121,7 @@ class ReclassBackend(InventoryBackend):
     def __init__(self, *args):
         logger.debug("Using reclass as inventory backend")
         super().__init__(*args)
-    
+
     def inventory(self):
         """
         Runs a reclass inventory in inventory_path
