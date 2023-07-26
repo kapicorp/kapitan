@@ -500,7 +500,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
         input_compiler.make_compile_dirs(target_name, output_path, **kwargs)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 
-    logger.warn("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
+    logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
 
 
 @hashable_lru_cache
