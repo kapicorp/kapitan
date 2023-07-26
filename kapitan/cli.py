@@ -18,11 +18,10 @@ import sys
 
 import yaml
 
-from kapitan import cached, defaults
+from kapitan import cached, defaults, setup_logging
 from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import jsonnet_file
 from kapitan.lint import start_lint
-from kapitan.logger import setup_logging
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
 from kapitan.resources import generate_inventory, resource_callbacks, search_imports
@@ -118,14 +117,14 @@ def build_parser():
         default=from_dot_kapitan("logging", "no_color", False),
         help="disable the coloring in the debug output",
     )
-    logger_group.add_argument(
-        "--log-file",
-        type=str,
-        metavar="FILENAME",
-        action="store",
-        default=from_dot_kapitan("logging", "log_file", None),
-        help="specify a name/path if you want to have your debug output in a file",
-    )
+    # logger_group.add_argument(
+    #     "--log-file",
+    #     type=str,
+    #     metavar="FILENAME",
+    #     action="store",
+    #     default=from_dot_kapitan("logging", "log_file", None),
+    #     help="specify a name/path if you want to have your debug output in a file",
+    # )
 
     # setup parser for inventory backend
     inventory_backend_parser = argparse.ArgumentParser(add_help=False)
@@ -656,8 +655,7 @@ def main():
     cached.args[args.name] = args
     cached.args["all"] = args
 
-    logger = setup_logging(args)
-    logger.debug(f"Running with args: {vars(args)}")
+    logging.debug(f"Running with args: {vars(args)}")
 
     # call chosen command
     args.func(args)
