@@ -3,10 +3,11 @@ from __future__ import print_function
 import base64
 import logging
 import os
+import re
 import sys
 import mimetypes
 
-from kapitan.errors import KapitanError, RefHashMismatchError
+from kapitan.errors import KapitanError, RefHashMismatchError, InventoryError, RefError
 from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.env import EnvRef
@@ -440,145 +441,69 @@ def secret_update_validate(args, ref_controller):
     # update gpg recipients/gkms/awskms key for all secrets in secrets_path
     # use --refs-path to set scanning path
     inv = inventory_reclass(args.inventory_path)
-    targets = set(inv["nodes"].keys())
-    secrets_path = os.path.abspath(args.refs_path)
-    target_token_paths = search_target_token_paths(secrets_path, targets)
+    targets = list(inv["nodes"].keys())
+    refs_path = os.path.abspath(args.refs_path)
+    target_token_paths = search_target_token_paths(refs_path, targets)
     ret_code = 0
 
     for target_name, token_paths in target_token_paths.items():
-        kap_inv_params = inv["nodes"][target_name]["parameters"]["kapitan"]
-        if "secrets" not in kap_inv_params:
-            raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
+        kapitan_params = inv["nodes"][target_name]["parameters"]["kapitan"]
+        secret_params = kapitan_params.get("secrets")
+        if not secret_params:
+            logger.error(f"{target_name}: missing key parameters.kapitan.secrets")
+            raise InventoryError()
 
-        try:
-            recipients = kap_inv_params["secrets"]["gpg"]["recipients"]
-        except KeyError:
-            recipients = None
-        try:
-            gkey = kap_inv_params["secrets"]["gkms"]["key"]
-        except KeyError:
-            gkey = None
-        try:
-            awskey = kap_inv_params["secrets"]["awskms"]["key"]
-        except KeyError:
-            awskey = None
-        try:
-            vaultkv = kap_inv_params["secrets"]["vaultkv"]["auth"]
-        except KeyError:
-            vaultkv = None
-        try:
-            # Referenced Auth
-            vkey = kap_inv_params["secrets"]["vaulttransit"]["key"]
-        except KeyError:
-            vkey = None
-        try:
-            azkey = kap_inv_params["secrets"]["azkms"]["key"]
-        except KeyError:
-            azkey = None
+        backend_details_cache = {}
 
         for token_path in token_paths:
-            if token_path.startswith("?{gpg:"):
-                if not recipients:
-                    logger.debug(
-                        "secret_update_validate: target: %s has no inventory gpg recipients, skipping %s",
-                        target_name,
-                        token_path,
-                    )
-                    continue
-                secret_obj = ref_controller[token_path]
-                target_fingerprints = set(lookup_fingerprints(recipients))
-                secret_fingerprints = set(lookup_fingerprints(secret_obj.recipients))
-                if target_fingerprints != secret_fingerprints:
-                    if args.validate_targets:
-                        logger.info("%s recipient mismatch", token_path)
-                        to_remove = secret_fingerprints.difference(target_fingerprints)
-                        to_add = target_fingerprints.difference(secret_fingerprints)
-                        if to_remove:
-                            logger.info("%s needs removal", to_remove)
-                        if to_add:
-                            logger.info("%s needs addition", to_add)
-                        ret_code = 1
-                    else:
-                        new_recipients = [
-                            dict(
-                                [
-                                    ("fingerprint", f),
-                                ]
-                            )
-                            for f in target_fingerprints
-                        ]
-                        secret_obj.update_recipients(new_recipients)
-                        ref_controller[token_path] = secret_obj
+            # get ref backend type
+            match = re.match(r"\?{(\w+):.+}", token_path)
+            backend = match.group(0)
 
-            elif token_path.startswith("?{gkms:"):
-                if not gkey:
-                    logger.debug(
-                        "secret_update_validate: target: %s has no inventory gkms key, skipping %s",
-                        target_name,
-                        token_path,
-                    )
-                    continue
-                secret_obj = ref_controller[token_path]
-                if gkey != secret_obj.key:
-                    if args.validate_targets:
-                        logger.info("%s key mismatch", token_path)
-                        ret_code = 1
-                    else:
-                        secret_obj.update_key(gkey)
-                        ref_controller[token_path] = secret_obj
+            if backend not in ("gpg", "gkms", "azkms", "awskms", "vaultkv", "vaulttransit"):
+                logger.info(f"Invalid secret {backend}, could not get type, skipping {token_path}")
+                continue
 
-            elif token_path.startswith("?{vaulttransit:"):
-                if not vkey:
-                    logger.debug(
-                        "secret_update_validate: target: %s has no inventory vaulttransit key, skipping %s",
-                        target_name,
-                        token_path,
-                    )
-                    continue
-                secret_obj = ref_controller[token_path]
-                if vkey != secret_obj.vault_params["key"]:
-                    if args.validate_targets:
-                        logger.info("%s key mismatch", token_path)
-                        ret_code = 1
-                    else:
-                        secret_obj.update_key(vkey)
-                        ref_controller[token_path] = secret_obj
+            backend_details = backend_details_cache.get(backend)
+            if not backend_details:
+                # get key from inventory
+                backend_params = secret_params.get(backend)
+                if not backend_params:
+                    logger.error(f"{target_name}: missing key parameters.kapitan.secrets.{backend}")
+                    raise InventoryError()
 
-            elif token_path.startswith("?{awskms:"):
-                if not awskey:
-                    logger.debug(
-                        "secret_update_validate: target: %s has no inventory awskms key, skipping %s",
-                        target_name,
-                        token_path,
-                    )
-                    continue
-                secret_obj = ref_controller[token_path]
-                if awskey != secret_obj.key:
-                    if args.validate_targets:
-                        logger.info("%s key mismatch", token_path)
-                        ret_code = 1
-                    else:
-                        secret_obj.update_key(awskey)
-                        ref_controller[token_path] = secret_obj
+                key = "key"
+                if backend == "gpg":
+                    key = "recipients"
+                elif backend == "vaultkv":
+                    key = "auth"
 
-            elif token_path.startswith("?{azkms:"):
-                if not azkey:
-                    logger.debug(
-                        "secret_update_validate: target: %s has no inventory azkms key, skipping %s",
-                        target_name,
-                        token_path,
-                    )
+                backend_details = backend_params.get(key)
+                if not backend_details:
+                    logger.debug(f"{target_name}: missing {backend} {key}, skipping {token_path}")
                     continue
-                secret_obj = ref_controller[token_path]
-                if azkey != secret_obj.key:
-                    if args.validate_targets:
-                        logger.info("%s key mismatch", token_path)
-                        ret_code = 1
-                    else:
-                        secret_obj.update_key(azkey)
-                        ref_controller[token_path] = secret_obj
 
+                backend_details_cache[backend] = backend_details
+
+            ref_obj = ref_controller[token_path]
+
+            ref_details
+            # backend custom behavior (refactoring possible)
+            if backend == "gpg":
+                backend_details = [{"fingerprint": f} for f in set(lookup_fingerprints(backend_details))]
+                ref_details = [{"fingerprint": f} for f in set(lookup_fingerprints(ref_obj.recipients))]
+            if backend == "vaulttransit":
+                ref_details = ref_obj.vault_params["key"]
             else:
-                logger.info("Invalid secret %s, could not get type, skipping", token_path)
+                ref_details = ref_obj.key
+
+            # check for mismatches
+            if backend_details != ref_details:
+                if args.validate_targets:
+                    logger.info(f"{token_path} {key} mismatch")
+                    ret_code = 1
+                else:
+                    ref_obj.update_key(backend_details)
+                    ref_controller[token_path] = ref_obj
 
     sys.exit(ret_code)
