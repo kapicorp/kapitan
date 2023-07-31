@@ -317,16 +317,18 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
     args = cached.args.get("all", {})
 
     # initialize inventory backend
-    if args.reclass:
-        inventory_backend = ReclassBackend(inventory_path)
-    elif args.omegaconf:
-        inventory_backend = OmegaConfBackend(inventory_path)
+    if hasattr(args, "reclass") and args.reclass:
+        inventory_backend = ReclassBackend(inventory_path, ignore_class_notfound)
+    elif hasattr(args, "omegaconf") and args.omegaconf:
+        inventory_backend = OmegaConfBackend(inventory_path, ignore_class_notfound, targets)
     else:
-        # warning or hint to use omegaconf
-        inventory_backend = ReclassBackend(inventory_path)  # depricated (default at the moment)
+        # warning or hint to use omegaconf (TODO)
+        # error that that no backend is specified (TODO)
+        # legacy (default at the moment)
+        inventory_backend = ReclassBackend(inventory_path, ignore_class_notfound)  
 
     # migrate if neccessary
-    if args.migrate:
+    if hasattr(args, "migrate") and args.migrate:
         inventory_backend.migrate(inventory_path)
 
     # fetch inventory
