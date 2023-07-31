@@ -40,7 +40,7 @@ def inventory_omegaconf(
             # split file extension and check if yml/yaml
             target_name, ext = os.path.splitext(target_name)
             if ext not in (".yml", ".yaml"):
-                logger.warning(f"{target_name}: targets have to be .yml or .yaml files.")
+                logger.debug(f"{target_name}: targets have to be .yml or .yaml files.")
                 # RAISE ERROR
                 continue
 

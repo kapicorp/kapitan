@@ -143,17 +143,17 @@ def compile_targets(
                     continue
 
                 deps_to_fetch = []
-                
+
                 # get value of "force_fetch" property
                 for dep_entry in dependencies:
                     if dep_entry.get("force_fetch", False):
-                        deps_to_fetch.append(dep_entry)              
+                        deps_to_fetch.append(dep_entry)
 
                 # fetch dependencies with force_fetch set to true
                 target_obj["dependencies"] = deps_to_fetch
-            
+
             # fetch the specified dependencies with force-fetch
-            fetch_objs = [t for t in target_objs if t.get("dependencies")] 
+            fetch_objs = [t for t in target_objs if t.get("dependencies")]
             if fetch_objs:
                 fetch_dependencies(output_path, target_objs, dep_cache_dir, True, pool)
 
