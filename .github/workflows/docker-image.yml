@@ -4,11 +4,6 @@ on:
   push:
     paths-ignore:
       - 'docs/**'
-  workflow_run:
-    workflows:
-      - Python Tests
-    types:
-      - completed
 
 jobs:
   build:
