@@ -7,3 +7,7 @@ repos:
     rev: v0.32.2
     hooks:
     - id: markdownlint-fix
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.0.9
+    hooks:
+      - id: isort
