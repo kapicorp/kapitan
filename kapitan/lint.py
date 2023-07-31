@@ -12,10 +12,11 @@ import os
 import sys
 from pprint import pformat
 
-from kapitan.errors import KapitanError
-from kapitan.utils import list_all_paths
 from yamllint import linter
 from yamllint.config import YamlLintConfig
+
+from kapitan.errors import KapitanError
+from kapitan.utils import list_all_paths
 
 logger = logging.getLogger(__name__)
 

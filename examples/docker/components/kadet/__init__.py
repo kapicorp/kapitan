@@ -1,7 +1,8 @@
-import os
 import json
-from kapitan.resources import jinja2_render_file
+import os
+
 from kapitan.inputs import kadet
+from kapitan.resources import jinja2_render_file
 
 inventory = kadet.inventory()
 

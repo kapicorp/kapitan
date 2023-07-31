@@ -1,17 +1,18 @@
 "azkms secret module"
 
-import os
-import logging
 import base64
+import logging
+import os
 from urllib.parse import urlparse
-from azure.keyvault.keys.crypto import CryptographyClient, EncryptionAlgorithm
-from azure.keyvault.keys import KeyClient
-from azure.identity import DefaultAzureCredential
 
-from kapitan.refs.base64 import Base64Ref, Base64RefBackend
-from kapitan.refs.base import RefError
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+from azure.keyvault.keys.crypto import CryptographyClient, EncryptionAlgorithm
+
 from kapitan import cached
 from kapitan.errors import KapitanError
+from kapitan.refs.base import RefError
+from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
 logger = logging.getLogger(__name__)
 

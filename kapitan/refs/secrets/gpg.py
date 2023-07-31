@@ -10,6 +10,7 @@ import logging
 import time
 
 import gnupg
+
 from kapitan import cached
 from kapitan.errors import KapitanError
 from kapitan.refs.base import RefError

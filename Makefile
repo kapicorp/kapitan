@@ -57,3 +57,10 @@ local_serve_documentation:
 mkdocs_gh_deploy: # to run locally assuming git ssh access
 	docker build -f Dockerfile.docs --no-cache -t kapitan-docs .
 	docker run --rm -it -v $(PWD):/src -v ~/.ssh:/root/.ssh -w /src kapitan-docs gh-deploy -f ./mkdocs.yml
+
+pull_oc:
+	rm -rf omegaconf
+	git clone --branch 1080-add-list-deep-merging https://github.com/nexenio/omegaconf.git oc
+	pip install -r oc/requirements/dev.txt -e oc/
+	mv oc/omegaconf .
+	rm -rf oc

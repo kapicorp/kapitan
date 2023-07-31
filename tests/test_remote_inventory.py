@@ -1,20 +1,22 @@
+import json
 import os
 import sys
-import unittest
 import tempfile
-from shutil import rmtree, copytree
+import unittest
 from distutils.dir_util import copy_tree
+from shutil import copytree, rmtree
+
+import yaml
+
 from kapitan.cached import reset_cache
 from kapitan.cli import main
-import yaml
-from kapitan.resources import yaml_load
-import json
 from kapitan.dependency_manager.base import (
     fetch_git_dependency,
-    fetch_http_dependency,
     fetch_git_source,
+    fetch_http_dependency,
     fetch_http_source,
 )
+from kapitan.resources import yaml_load
 
 
 class RemoteInventoryTest(unittest.TestCase):
