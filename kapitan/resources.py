@@ -325,7 +325,7 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
         # warning or hint to use omegaconf (TODO)
         # error that that no backend is specified (TODO)
         # legacy (default at the moment)
-        inventory_backend = ReclassBackend(inventory_path, ignore_class_notfound)  
+        inventory_backend = ReclassBackend(inventory_path, ignore_class_notfound)
 
     # migrate if neccessary
     if hasattr(args, "migrate") and args.migrate:
