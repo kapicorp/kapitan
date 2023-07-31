@@ -16,9 +16,6 @@ from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan.refs.vault_resources import VaultClient, VaultError
 
-
-from hvac.exceptions import Forbidden, InvalidPath
-
 logger = logging.getLogger(__name__)
 
 

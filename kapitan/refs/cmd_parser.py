@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from kapitan.errors import KapitanError, RefHashMismatchError, InventoryError, RefError
+from kapitan.errors import InventoryError, KapitanError, RefError, RefHashMismatchError
 from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.env import EnvRef

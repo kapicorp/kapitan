@@ -11,8 +11,8 @@ import os
 import tempfile
 import unittest
 
-from kapitan.refs.base import RefController, Revealer, RefParams
-from kapitan.refs.secrets.vaultkv import VaultSecret, VaultClient, VaultError
+from kapitan.refs.base import RefController, RefParams, Revealer
+from kapitan.refs.secrets.vaultkv import VaultClient, VaultError, VaultSecret
 from tests.vault_server import VaultServer
 
 # Create temporary folder

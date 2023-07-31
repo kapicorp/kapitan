@@ -2,9 +2,10 @@
 
 # Copyright 2023 neXenio
 
+import os
 import tempfile
 import unittest
-import os
+
 import yaml
 
 from kapitan.inventory import OmegaConfBackend

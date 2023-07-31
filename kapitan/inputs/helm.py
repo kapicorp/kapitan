@@ -5,13 +5,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import base64
 import logging
 import os
 import tempfile
 
 import yaml
-import base64
-
 
 from kapitan.errors import CompileError, HelmTemplateError
 from kapitan.helm_cli import helm_cli

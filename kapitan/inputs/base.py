@@ -5,12 +5,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import base64
 import glob
 import itertools
 import json
 import logging
 import os
-import base64
 from collections.abc import Mapping
 
 import toml
