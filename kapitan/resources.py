@@ -327,7 +327,7 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
 
     # migrate if neccessary
     if args.migrate:
-        inventory_backend.migrate()
+        inventory_backend.migrate(inventory_path)
 
     # fetch inventory
     try:

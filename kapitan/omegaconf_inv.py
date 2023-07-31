@@ -40,7 +40,7 @@ def inventory_omegaconf(
             # split file extension and check if yml/yaml
             target_name, ext = os.path.splitext(target_name)
             if ext not in (".yml", ".yaml"):
-                logger.debug(f"{target_name}: targets have to be .yml or .yaml files.")
+                logger.warning(f"{target_name}: targets have to be .yml or .yaml files.")
                 # RAISE ERROR
                 continue
 
@@ -64,10 +64,8 @@ def inventory_omegaconf(
     # load targets
     for target in selected_targets:
         try:
-            # start = time.time()
             name, config = load_target(target, classes_searchpath, ignore_class_notfound)
             inv["nodes"][name] = config
-            # print(time.time() - start)
         except Exception as e:
             raise InventoryError(f"{target['name']}: {e}")
 
@@ -137,7 +135,7 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
         raise InventoryError("empty target")
 
     # append meta data (legacy: _reclass_)
-    target_config_parameters["_reclass_"] = {
+    _meta_ = {
         "name": {
             "full": target_name,
             "parts": target_name.split("."),
@@ -145,6 +143,8 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
             "short": target_name.split(".")[-1],
         }
     }
+    target_config_parameters["_meta_"] = _meta_
+    target_config_parameters["_reclass_"] = _meta_  # legacy
 
     # resolve references / interpolate values
     OmegaConf.resolve(target_config_parameters)

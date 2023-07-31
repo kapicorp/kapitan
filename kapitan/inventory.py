@@ -7,6 +7,7 @@ Copyright 2023 neXenio
 import logging
 import os
 from abc import ABC, abstractmethod
+from typing import overload
 
 import reclass
 import reclass.core
@@ -76,10 +77,21 @@ class OmegaConfBackend(InventoryBackend):
     def searchvar(self):
         raise NotImplementedError()
 
-    def migrate(self):
+    @staticmethod
+    def migrate(input: str):
+        if os.path.exists(input):
+            if os.path.isdir(input):
+                OmegaConfBackend.migrate_dir(input)
+            elif os.path.isfile(input):
+                OmegaConfBackend.migrate_file(input)
+        else:
+            return OmegaConfBackend.migrate_str(input)
+
+    @staticmethod
+    def migrate_dir(path: str):
         """migrates all .yml/.yaml files in the given path to omegaconfs syntax"""
 
-        for root, subdirs, files in os.walk(self.inventory_path):
+        for root, subdirs, files in os.walk(path):
             for file in files:
                 file = os.path.join(root, file)
                 name, ext = os.path.splitext(file)
@@ -87,34 +99,42 @@ class OmegaConfBackend(InventoryBackend):
                 if ext not in (".yml", ".yaml"):
                     continue
 
+                logger.debug(f"Migrating file '{file}'")
+
                 try:
-                    with open(file, "r") as fp:
-                        content = fp.read()
-
-                    # replace colons in tags
-                    updated_content = regex.sub(
-                        r"(?<!\\)\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
-                        lambda match: "${"
-                        + match.group(1)
-                        .replace(":", ".")
-                        .replace("_reclass_", "_reclass_")  # change _reclass_ to _meta_ in the future
-                        + "}",
-                        content,
-                    )
-
-                    # replace escaped tags with specific resolver
-                    excluded_chars = "!"
-                    invalid = any(c in updated_content for c in excluded_chars)
-                    updated_content = regex.sub(
-                        r"\\\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
-                        lambda match: ("${tag:" if not invalid else "\\\\\\${") + match.group(1) + "}",
-                        updated_content,
-                    )
-
-                    with open(file, "w") as fp:
-                        fp.write(updated_content)
+                    OmegaConfBackend.migrate_file(file)
                 except Exception as e:
                     InventoryError(f"{file}: error with migration: {e}")
+
+    @staticmethod
+    def migrate_file(file: str):
+        with open(file, "r") as fp:
+            content = fp.read()
+
+        updated_content = OmegaConfBackend.migrate_str(content)
+
+        with open(file, "w") as fp:
+            fp.write(updated_content)
+
+    @staticmethod
+    def migrate_str(content: str):
+        # replace colons in tags and change _reclass_ to _meta_
+        updated_content = regex.sub(
+            r"(?<!\\)\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
+            lambda match: "${" + match.group(1).replace(":", ".").replace("_reclass_", "_meta_") + "}",
+            content,
+        )
+
+        # replace escaped tags with specific resolver
+        excluded_chars = "!"
+        invalid = any(c in updated_content for c in excluded_chars)
+        updated_content = regex.sub(
+            r"\\\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
+            lambda match: ("${tag:" if not invalid else "\\\\\\${") + match.group(1) + "}",
+            updated_content,
+        )
+
+        return updated_content
 
 
 class ReclassBackend(InventoryBackend):
