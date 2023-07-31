@@ -131,31 +131,31 @@ def compile_targets(
 
             fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
 
-        # otherwise only fetch dependencies which have force_fetch: true
-        else:
+        # only fetch dependencies which have 'force_fetch: true' (regardless of --fetch)
+        if not force_fetch:
             # ignore_class_notfound = False by default
             target_objs = load_target_inventory(inventory_path, updated_targets)
 
-            fetch_objs = []
             # iterate through targets
-            for target in target_objs:
-                # get value of "force_fetch" property
-                dependencies = target.get("dependencies")
+            for target_obj in target_objs:
+                dependencies = target_obj.get("dependencies")
                 if not dependencies:
                     continue
 
+                deps_to_fetch = []
+                
+                # get value of "force_fetch" property
                 for dep_entry in dependencies:
-                    if not dep_entry.get("force_fetch", False):
-                        # if no fetch is needed remove the dependency and don't fetch it
-                        target["dependencies"].remove(dep_entry)
+                    if dep_entry.get("force_fetch", False):
+                        deps_to_fetch.append(dep_entry)              
 
                 # fetch dependencies with force_fetch set to true
-                if target.get("dependencies", []):
-                    fetch_objs.append(target)
-
+                target_obj["dependencies"] = deps_to_fetch
+            
             # fetch the specified dependencies with force-fetch
+            fetch_objs = [t for t in target_objs if t.get("dependencies")] 
             if fetch_objs:
-                fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
+                fetch_dependencies(output_path, target_objs, dep_cache_dir, True, pool)
 
         if not target_objs:
             raise CompileError("Error: no targets found")
@@ -188,8 +188,8 @@ def compile_targets(
 
         # if '-t' is set on compile or only a few changed, only override selected targets
         if updated_targets:
-            for target in target_objs:
-                path = target["target_full_path"]
+            for target_obj in target_objs:
+                path = target_obj["target_full_path"]
                 compile_path_target = os.path.join(compile_path, path)
                 temp_path_target = os.path.join(temp_compile_path, path)
 
