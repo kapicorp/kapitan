@@ -461,7 +461,7 @@ def secret_update_validate(args, ref_controller):
     "Validate and/or update target secrets"
     # update gpg recipients/gkms/awskms key for all secrets in secrets_path
     # use --refs-path to set scanning path
-    inv = inventory_reclass(args.inventory_path)
+    inv = get_inventory(args.inventory_path)
     targets = list(inv["nodes"].keys())
     refs_path = os.path.abspath(args.refs_path)
     target_token_paths = search_target_token_paths(refs_path, targets)
