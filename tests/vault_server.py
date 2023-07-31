@@ -42,7 +42,7 @@ class VaultServer:
             "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'
         }
         vault_container = self.docker_client.containers.run(
-            image="vault",
+            image="hashicorp/vault",
             cap_add=["IPC_LOCK"],
             ports={"8200": self.port},
             environment=env,
