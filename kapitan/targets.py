@@ -36,7 +36,7 @@ from kapitan.resources import get_inventory
 from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
 from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
-logger = logging.getLogger()  # logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def compile_targets(
