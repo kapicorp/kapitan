@@ -10,6 +10,8 @@ import os
 import tempfile
 
 import yaml
+import base64
+
 
 from kapitan.errors import CompileError, HelmTemplateError
 from kapitan.helm_cli import helm_cli
@@ -37,6 +39,8 @@ class Helm(InputType):
         self.helm_params = args.get("helm_params") or {}
         self.helm_path = args.get("helm_path")
         self.file_path = None
+        self.helm_refs = args.get("helm_refs", False)
+        self.helm_refs_base64 = args.get("helm_refs_base64", False)
 
         self.helm_values_file = None
         if "helm_values" in args:
@@ -54,9 +58,12 @@ class Helm(InputType):
         kwargs:
             reveal: default False, set to reveal refs on compile
             target_name: default None, set to current target being compiled
+            helm_secrets: default False, set to decode b64-encoded refs in kinds 'Secret' and 'ConfigMap'
         """
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
+        helm_refs = kwargs.get("helm_refs", False) or self.helm_refs
+        helm_refs_base64 = kwargs.get("helm_refs_base64", False) or self.helm_refs_base64
         indent = kwargs.get("indent", 2)
 
         if self.file_path is not None:
@@ -96,9 +103,12 @@ class Helm(InputType):
                         mode="w",
                         reveal=reveal,
                         target_name=target_name,
+                        helm_refs_base64=helm_refs_base64,
                         indent=indent,
                     ) as fp:
                         yml_obj = list(yaml.safe_load_all(f))
+                        if helm_refs:
+                            yml_obj = check_data_for_b64(yml_obj)
                         fp.write_yaml(yml_obj)
                         logger.debug("Wrote file %s to %s", full_file_name, item_path)
 
@@ -272,3 +282,44 @@ class HelmChart(BaseModel):
             raise HelmTemplateError(error_message)
 
         return yaml.safe_load_all(output)
+
+
+def check_data_for_b64(yml_obj):
+    """
+    check for .data in kind: Secret / ConfigMap
+    replace b64 encoded strings
+    """
+    for item in yml_obj:
+        kind = item.get("kind", None)
+        if item.get("data", None):
+            if kind == "Secret":
+                item["stringData"] = replace_b64_refs(item["data"])
+                item.pop("data")
+
+            if kind == "ConfigMap":
+                item["data"] = replace_b64_refs(item["data"])
+
+    return yml_obj
+
+
+def replace_b64_refs(yml_obj):
+    """
+    recursively check if string is b64 encoded
+    decode all base64 encoded strings, especially secrets
+    """
+    if isinstance(yml_obj, dict):
+        for k, v in yml_obj.items():
+            yml_obj[k] = replace_b64_refs(v)
+    elif isinstance(yml_obj, list):
+        yml_obj = [replace_b64_refs(item) for item in yml_obj]
+    elif isinstance(yml_obj, str):
+        # check if string is b64 encoded
+        try:
+            # the string could be encoded several times
+            while True:
+                if base64.b64encode(base64.b64decode(yml_obj)).decode() == yml_obj:
+                    yml_obj = base64.b64decode(yml_obj).decode()
+
+        except Exception as e:
+            pass
+    return yml_obj

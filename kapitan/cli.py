@@ -73,7 +73,7 @@ def trigger_compile(args):
         args.targets,
         args.labels,
         ref_controller,
-        prune=(args.prune),
+        prune=args.prune,
         indent=args.indent,
         reveal=args.reveal,
         cache=args.cache,
@@ -85,6 +85,8 @@ def trigger_compile(args):
         jinja2_filters=args.jinja2_filters,
         verbose=hasattr(args, "verbose") and args.verbose,
         use_go_jsonnet=args.use_go_jsonnet,
+        helm_refs=args.helm_refs,
+        helm_refs_base64=args.helm_refs_base64,
         compose_node_name=args.compose_node_name,
     )
 
@@ -268,7 +270,6 @@ def build_parser():
         action="store_true",
         default=from_dot_kapitan("compile", "embed-refs", False),
     )
-
     compile_parser.add_argument(
         "--inventory-path",
         default=from_dot_kapitan("compile", "inventory-path", "./inventory"),
@@ -296,7 +297,6 @@ def build_parser():
         action="store_true",
         default=from_dot_kapitan("compile", "ignore-version-check", False),
     )
-
     compile_parser.add_argument(
         "--use-go-jsonnet",
         help="use go-jsonnet",
@@ -320,7 +320,6 @@ def build_parser():
         default=from_dot_kapitan("validate", "schemas-path", "./schemas"),
         help='set schema cache path, default is "./schemas"',
     )
-
     compile_parser.add_argument(
         "--yaml-multiline-string-style",
         "-L",
@@ -331,12 +330,23 @@ def build_parser():
         default=from_dot_kapitan("compile", "yaml-multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
-
     compile_parser.add_argument(
         "--yaml-dump-null-as-empty",
         default=from_dot_kapitan("compile", "yaml-dump-null-as-empty", False),
         action="store_true",
         help="dumps all none-type entries as empty, default is dumping as 'null'",
+    )
+    compile_parser.add_argument(
+        "--helm-refs",
+        action="store_true",
+        default=from_dot_kapitan("compile", "helm-secrets", False),
+        help="enable kapitan secret engine on helm refs",
+    )
+    compile_parser.add_argument(
+        "--helm-refs-base64",
+        action="store_true",
+        default=from_dot_kapitan("compile", "encode_base64", False),
+        help="(helm-only) encode .data key with base64",
     )
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
@@ -513,6 +523,24 @@ def build_parser():
         help="set authentication type for vault secrets",
         default=from_dot_kapitan("refs", "vault-auth", ""),
         metavar="AUTH",
+    )
+    refs_parser.add_argument(
+        "--vault-mount",
+        help="set mount point for vault secrets, default is 'secret'",
+        default=from_dot_kapitan("refs", "vault-mount", "secret"),
+        metavar="MOUNT",
+    )
+    refs_parser.add_argument(
+        "--vault-path",
+        help="set path for vault secrets where the secret gets stored on vault, default is the secret_path",
+        default=from_dot_kapitan("refs", "vault-path", ""),
+        metavar="PATH",
+    )
+    refs_parser.add_argument(
+        "--vault-key",
+        help="set key for vault secrets",
+        default=from_dot_kapitan("refs", "vault-key", ""),
+        metavar="KEY",
     )
     refs_parser.add_argument(
         "--refs-path",

@@ -72,34 +72,34 @@ Compiles one or more targets selected matching **labels** with  `--labels` or `-
 
     see [**Labels**](/inventory/#target-labels) for more details
 
-```shell
-$ kapitan compile -l customer=acme
-Compiled acme-project (0.14s)
-Compiled acme-pipelines (0.10s)
-```
+    ```shell
+    $ kapitan compile -l customer=acme
+    Compiled acme-project (0.14s)
+    Compiled acme-pipelines (0.10s)
+    ```
 
 ## Fetch on compile
 
 Use the `--fetch` flag to fetch [**Remote Inventories**](/inventory/#remote-inventories) and the [**External Dependencies**](/external_dependencies/).
 
-```shell
-kapitan compile --fetch
-```
+    ```shell
+    kapitan compile --fetch
+    ```
 
 This will download the dependencies according to their configurations
 By default, kapitan does not overwrite an existing item with the same name as that of the fetched inventory items.
 
 Use the `--force-fetch` flag to force fetch (update cache with freshly fetched items) and overwrite inventory items of the same name in the `output_path`.
 
-```shell
-kapitan compile --force-fetch
-```
+    ```shell
+    kapitan compile --force-fetch
+    ```
 
 Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
 
-```shell
-kapitan compile --cache --fetch
-```
+    ```shell
+    kapitan compile --cache --fetch
+    ```
 
 ## Embed references
 
@@ -209,6 +209,8 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
           --yaml-dump-null-as-empty
                                 dumps all none-type entries as empty, default is
                                 dumping as 'null'
+          --helm-refs           enable kapitan ref engine on helm refs
+          --helm-refs-base64    encode .data key with base64 afterwards
           --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
                                 targets to compile, default is all
           --labels [key=value ...], -l [key=value ...]

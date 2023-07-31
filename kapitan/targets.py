@@ -615,6 +615,8 @@ def valid_target_obj(target_obj, require_compile=True):
                             "properties": {"name": {"type": "string"}},
                             "additionalProperties": True,
                         },
+                        "helm_refs": {"type": "boolean"},
+                        "helm_refs_base64": {"type": "boolean"},
                         "input_params": {"type": "object"},
                         "env_vars": {"type": "object"},
                         "args": {"type": "array"},
