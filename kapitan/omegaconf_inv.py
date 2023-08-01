@@ -19,6 +19,7 @@ def inventory_omegaconf(
     ignore_class_notfound: bool = False,
     targets: list = [],
     compose_node_name: bool = False,
+    logfile: str = "",
 ) -> dict:
     """
     generates inventory from yaml files using OmegaConf
@@ -64,7 +65,7 @@ def inventory_omegaconf(
     # load targets
     for target in selected_targets:
         try:
-            name, config = load_target(target, classes_searchpath, ignore_class_notfound)
+            name, config = load_target(target, classes_searchpath, ignore_class_notfound, logfile)
             inv["nodes"][name] = config
         except Exception as e:
             raise InventoryError(f"{target['name']}: {e}")
@@ -72,7 +73,9 @@ def inventory_omegaconf(
     return inv
 
 
-def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bool = False):
+def load_target(
+    target: dict, classes_searchpath: str, ignore_class_notfound: bool = False, logfile: str = ""
+):
     """
     load only one target with all its classes
     """
@@ -126,7 +129,10 @@ def load_target(target: dict, classes_searchpath: str, ignore_class_notfound: bo
         # merge target with loaded classes
         if target_config_parameters:
             target_config_parameters = OmegaConf.unsafe_merge(
-                class_config_parameters, target_config_parameters, list_merge_mode=ListMergeMode.EXTEND
+                class_config_parameters,
+                target_config_parameters,
+                list_merge_mode=ListMergeMode.EXTEND,
+                log_filename=logfile,
             )
         else:
             target_config_parameters = class_config_parameters

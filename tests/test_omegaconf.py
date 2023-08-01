@@ -92,3 +92,131 @@ class OmegaConfMigrationTest(unittest.TestCase):
 
         migrated = OmegaConfBackend.migrate(content)
         self.assertEqual(migrated, expected)
+
+
+class OmegaConfInventoryTest(unittest.TestCase):
+    params: dict
+    logfile: str
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.inventory_path = tempfile.mkdtemp()
+
+        target = """
+        classes:
+            # test absolute class
+            - test.class
+        
+        parameters:
+            target_name: target
+            
+            # test value
+            value: test
+            
+            # test absolute interpolation
+            absolute_interpolation: ${value}
+            
+            # test relative interpolation
+            relative:
+                value: test
+                interpolation: ${.value}
+            
+            # test custom resolvers
+            tag: ${tag:TAG}
+            merge: ${merge:${merge1},${merge2}}
+            merge1: 
+                - value1
+            merge2:
+                - value2
+            key: ${key:}
+            full:
+                key: ${fullkey:}
+            
+            # test overwrite prefix    
+            overwrite: false
+            
+            # test redundant keys
+            redundant: redundant
+        """
+
+        testclass = """
+        classes:
+            # test absolute class
+            - .relative
+            
+        parameters:
+            # indicator for success
+            absolute_class: success
+            
+            # test redundant keys
+            redundant: redundant
+            
+            # test overwrite prefix
+            ~overwrite: true
+        """
+
+        relativeclass = """
+        parameters:
+            # indicator for success
+            relative_class: success
+        """
+
+        targets_path = os.path.join(cls.inventory_path, "targets")
+        os.makedirs(targets_path, exist_ok=True)
+        with open(os.path.join(targets_path, "target.yml"), "w") as f:
+            f.write(target)
+
+        classes_path = os.path.join(cls.inventory_path, "classes", "test")
+        os.makedirs(classes_path, exist_ok=True)
+        with open(os.path.join(classes_path, "class.yml"), "w") as f:
+            f.write(testclass)
+        with open(os.path.join(classes_path, "relative.yml"), "w") as f:
+            f.write(relativeclass)
+
+        _, cls.logfile = tempfile.mkstemp(suffix=".log")
+
+        # get inventory
+        backend = OmegaConfBackend(cls.inventory_path, False, [], cls.logfile)
+        inventory = backend.inventory()
+        cls.params = inventory["nodes"]["target"]["parameters"]
+
+    def test_absolute_class(self):
+        self.assertTrue(self.params.get("absolute_class"))
+
+    def test_relative_class(self):
+        self.assertTrue(self.params.get("relative_class"))
+
+    def test_value(self):
+        self.assertEqual(self.params.get("value"), "test")
+
+    def test_absolute_interpolation(self):
+        self.assertEqual(self.params.get("absolute_interpolation"), "test")
+
+    def test_relative_interpolation(self):
+        self.assertEqual(self.params.get("relative").get("interpolation"), "test")
+
+    def test_absolute_class(self):
+        self.assertEqual(self.params.get("value"), "test")
+
+    def test_absolute_class(self):
+        self.assertEqual(self.params.get("tag"), "${TAG}")
+        self.assertEqual(self.params.get("merge"), ["value1", "value2"])
+        self.assertEqual(self.params.get("key"), "key")
+        self.assertEqual(self.params.get("full").get("key"), "full.key")
+
+    def test_overwrite_prefix(self):
+        self.assertTrue(self.params.get("overwrite"))
+
+    def test_meta_data(self):
+        meta = self.params["_meta_"]
+        self.assertTrue(meta)
+
+    @unittest.skip
+    def test_redundant_key_check(self):
+        content = ""
+        print(self.logfile)
+        with open(self.logfile, "r") as f:
+            print(f.read())
+
+        expected = "value 'redundant' is defined redundantly in 'redundant'"
+        self.assertEqual(content, expected)

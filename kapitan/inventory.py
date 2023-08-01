@@ -6,6 +6,7 @@ Copyright 2023 neXenio
 
 import logging
 import os
+import tempfile
 from abc import ABC, abstractmethod
 from typing import overload
 
@@ -30,14 +31,10 @@ logger = logging.getLogger(__name__)
 class InventoryBackend(ABC):
     inventory_path: str
     ignore_class_notfound: bool
-    compose_node_name: bool
-    targets: list
 
     def __init__(self, inventory_path, ignore_class_notfound=False, compose_node_name=False, targets=[]):
         self.inventory_path = inventory_path
         self.ignore_class_notfound = ignore_class_notfound
-        self.compose_node_name = compose_node_name
-        self.targets = targets
 
     @abstractmethod
     def inventory(self) -> dict:
@@ -61,18 +58,43 @@ class InventoryBackend(ABC):
 
 
 class OmegaConfBackend(InventoryBackend):
-    def __init__(self, *args):
+    targets: list
+    compose_node_name: bool
+    logfile: str
+
+    def __init__(
+        self,
+        inventory_path: str,
+        ignore_class_notfound: bool = False,
+        targets: list = [],
+        compose_node_name: bool = False,
+        logfile: str = "",
+    ):
         logger.debug("Using omegaconf as inventory backend")
         logger.warning("NOTE: OmegaConf inventory is currently in experimental mode.")
-        super().__init__(*args)
+
+        self.targets = targets
+        self.compose_node_name = compose_node_name
+        self.logfile = logfile
+
+        super().__init__(inventory_path, ignore_class_notfound)
 
     def inventory(self):
         return inventory_omegaconf(
-            self.inventory_path, self.ignore_class_notfound, self.targets, self.compose_node_name
+            self.inventory_path,
+            self.ignore_class_notfound,
+            self.targets,
+            self.compose_node_name,
+            self.logfile,
         )
 
     def lint(self):
-        raise NotImplementedError()
+        temp = tempfile.mktemp()
+
+        self.inventory()
+        with open(temp, "r") as f:
+            for line in f.readlines():
+                logger.info(line)
 
     def searchvar(self):
         raise NotImplementedError()
