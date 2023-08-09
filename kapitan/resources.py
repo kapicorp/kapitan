@@ -301,7 +301,7 @@ def generate_inventory(args):
     except Exception as e:
         if not isinstance(e, KapitanError):
             logger.exception("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        sys.exit(1)
+        logger.error(e)
 
 
 def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
@@ -335,8 +335,8 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
     try:
         inventory = inventory_backend.inventory()
     except Exception as e:
-        if not args.migrate:
-            logger.warning("Make sure to migrate your inventory using --migrate")
+        # if hasattr(args, "omegaconf") and args.omegaconf and not args.migrate:
+        #     logger.warning("Make sure to migrate your inventory using --migrate if you are using omegaconf the first time")
         raise InventoryError(e)
 
     cached.inv = inventory

@@ -3,10 +3,8 @@
 # Copyright 2023 nexenio
 import logging
 import os
-import time
 
-import regex
-from omegaconf import ListMergeMode, Node, OmegaConf, errors
+from omegaconf import ListMergeMode, OmegaConf
 
 from kapitan.errors import InventoryError
 from kapitan.resolvers import register_resolvers
@@ -136,6 +134,8 @@ def load_target(
             )
         else:
             target_config_parameters = class_config_parameters
+
+        logger.debug(f"{target_name}: merged class {class_name}")
 
     if not target_config_parameters:
         raise InventoryError("empty target")

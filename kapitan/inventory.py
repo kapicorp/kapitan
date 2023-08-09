@@ -113,6 +113,8 @@ class OmegaConfBackend(InventoryBackend):
     def migrate_dir(path: str):
         """migrates all .yml/.yaml files in the given path to omegaconfs syntax"""
 
+        # TODO: write migrations to temp dir and copy only if suceeded
+
         for root, subdirs, files in os.walk(path):
             for file in files:
                 file = os.path.join(root, file)
@@ -140,20 +142,20 @@ class OmegaConfBackend(InventoryBackend):
 
     @staticmethod
     def migrate_str(content: str):
-        # replace colons in tags and change _reclass_ to _meta_
+
+        # TODO: dont migrate custom resolvers
+        # TODO: migrate interpolations with '.' in the keyname
+
+        # search for interpolation pattern
         updated_content = regex.sub(
             r"(?<!\\)\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
-            lambda match: "${" + match.group(1).replace(":", ".").replace("_reclass_", "_meta_") + "}",
+            lambda match: "${" + match.group(1)
+            # .replace(".", ",") # support interpolations with '.' in keyname
+            .replace(":", ".",).replace(  # migrate path delimiter
+                "_reclass_", "_meta_"
+            )
+            + "}",  # migrate meta data
             content,
-        )
-
-        # replace escaped tags with specific resolver
-        excluded_chars = "!"
-        invalid = any(c in updated_content for c in excluded_chars)
-        updated_content = regex.sub(
-            r"\\\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
-            lambda match: ("${tag:" if not invalid else "\\\\\\${") + match.group(1) + "}",
-            updated_content,
         )
 
         return updated_content

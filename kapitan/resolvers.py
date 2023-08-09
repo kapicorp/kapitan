@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 
-from omegaconf import ListMergeMode, Node, OmegaConf
+from omegaconf import Container, ListMergeMode, Node, OmegaConf
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +26,13 @@ def fullkey(_node_: Node):
     return _node_._get_full_key("")
 
 
-def escape_tag(input: str, _node_: Node):
-    """resolver function, that returns an escaped tag with the input"""
-    if "\n" in str(_node_):
-        escape = "\\\\\\"
-    else:
-        escape = "\\"
+def access_key_with_dots(*key: str, _root_: Container):
+    """resolver function, that accesses a key with dots in it"""
+    value = _root_
+    for part in key:
+        value = value[part]
 
-    return escape + "${" + input + "}"
+    return value
 
 
 def merge(*args):
@@ -120,7 +119,7 @@ def register_resolvers(inventory_path: str) -> None:
     OmegaConf.register_new_resolver("relpath", relpath)
 
     # yaml object utility functions
-    OmegaConf.register_new_resolver("tag", escape_tag)
+    OmegaConf.register_new_resolver("access", access_key_with_dots)
     OmegaConf.register_new_resolver("merge", merge)
     OmegaConf.register_new_resolver("dict", to_dict)
     OmegaConf.register_new_resolver("list", to_list)
