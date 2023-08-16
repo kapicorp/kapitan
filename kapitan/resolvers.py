@@ -85,10 +85,10 @@ def helm_dep(name: str, source: str):
     """kapitan template for a helm chart dependency"""
     return {
         "type": "helm",
-        "output_path": f"components/charts/${{parameters.{name}.chart_name}}/${{parameters.{name}.chart_version}}/${{parameters.{name}.application_version}}",
+        "output_path": f"components/charts/${{{name}.chart_name}}/${{{name}.chart_version}}/${{{name}.application_version}}",
         "source": source,
-        "version": f"${{parameters.{name}.chart_version}}",
-        "chart_name": f"${{parameters.{name}.chart_name}}",
+        "version": f"${{{name}.chart_version}}",
+        "chart_name": f"${{{name}.chart_name}}",
     }
 
 
@@ -97,15 +97,15 @@ def helm_input(name: str):
     return {
         "input_type": "helm",
         "input_paths": [
-            f"components/charts/${{parameters.{name}.chart_name}}/${{parameters.{name}.chart_version}}/${{parameters.{name}.application_version}}"
+            f"components/charts/${{{name}.chart_name}}/${{{name}.chart_version}}/${{{name}.application_version}}"
         ],
-        "output_path": f"k8s/${{parameters.{name}.namespace}}",
+        "output_path": f"k8s/${{{name}.namespace}}",
         "helm_params": {
-            "namespace": f"${{parameters.{name}.namespace}}",
-            "name": f"${{parameters.{name}.chart_name}}",
+            "namespace": f"${{{name}.namespace}}",
+            "name": f"${{{name}.chart_name}}",
             "output_file": f"{name}.yml",
         },
-        "helm_values": f"${{parameters.{name}.helm_values}}",
+        "helm_values": f"\\${{{name}.helm_values}}",  # \\ used for delaying the resolving of helm values
     }
 
 

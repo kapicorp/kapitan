@@ -153,7 +153,7 @@ def load_target(
     target_config_parameters["_reclass_"] = _meta_  # legacy
 
     # resolve references / interpolate values
-    OmegaConf.resolve(target_config_parameters)
+    OmegaConf.resolve(target_config_parameters, False)
     target_config["parameters"] = OmegaConf.to_object(target_config_parameters)
 
     # obtain target name to insert in inv dict

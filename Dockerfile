@@ -1,5 +1,5 @@
 # Build the virtualenv for Kapitan
-FROM python:3.8-slim AS python-builder
+FROM python:3.8-slim-bullseye AS python-builder
 
 ARG TARGETARCH
 
@@ -16,7 +16,9 @@ ENV PATH="/opt/venv/bin:${PATH}"
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         curl \
-        build-essential
+        build-essential \
+        git \
+        default-jre
 
 # Install Go (for go-jsonnet)
 RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.17.3.linux-${TARGETARCH}.tar.gz \
