@@ -843,7 +843,7 @@ PyYAML = ">=5.1.0"
 type = "git"
 url = "https://github.com/neXenio/omegaconf.git"
 reference = "try-escape-interpolations"
-resolved_reference = "5cb3689a95db045df09b081a2247c1efc90fab80"
+resolved_reference = "e6f68340e1c572b6ee72ebc37673f0a9f645a314"
 
 [[package]]
 name = "packaging"

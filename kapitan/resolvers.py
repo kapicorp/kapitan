@@ -34,6 +34,10 @@ def access_key_with_dots(*key: str, _root_: Container):
 
     return value
 
+def escape_interpolation(content: str):
+    """resolver function that escapes an interpolation for the next resolving step"""
+    return f"\\${{{content}}}"
+
 
 def merge(*args):
     """resolver function, that merges omegaconf objects"""
@@ -120,9 +124,11 @@ def register_resolvers(inventory_path: str) -> None:
 
     # yaml object utility functions
     OmegaConf.register_new_resolver("access", access_key_with_dots)
+    OmegaConf.register_new_resolver("escape", escape_interpolation)
     OmegaConf.register_new_resolver("merge", merge)
     OmegaConf.register_new_resolver("dict", to_dict)
     OmegaConf.register_new_resolver("list", to_list)
+    OmegaConf.register_new_resolver("add", lambda x,y: x + y)
 
     # kapitan helpers / templates
     OmegaConf.register_new_resolver("helm_dep", helm_dep)
