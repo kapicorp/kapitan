@@ -158,6 +158,15 @@ class OmegaConfBackend(InventoryBackend):
             content,
         )
 
+        # replace escaped tags with specific resolver
+        excluded_chars = "!"
+        invalid = any(c in updated_content for c in excluded_chars)
+        updated_content = regex.sub(
+            r"\\\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
+            lambda match: ("${escape:" if not invalid else "\\\\\\${") + match.group(1) + "}",
+            updated_content,
+        )
+
         return updated_content
 
 
