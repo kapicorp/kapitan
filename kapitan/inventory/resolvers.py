@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
-# Copyright 2023 nexenio
+# Copyright 2019 The Kapitan Authors
+# SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
+#
+# SPDX-License-Identifier: Apache-2.0
 
 import logging
 import os
@@ -116,24 +119,24 @@ def helm_input(name: str):
 
 def register_resolvers(inventory_path: str) -> None:
     """register pre-defined and user-defined resolvers"""
-
+    replace = True
     # yaml key utility functions
-    OmegaConf.register_new_resolver("key", key)
-    OmegaConf.register_new_resolver("parentkey", parentkey)
-    OmegaConf.register_new_resolver("fullkey", fullkey)
-    OmegaConf.register_new_resolver("relpath", relpath)
+    OmegaConf.register_new_resolver("key", key, replace=replace)
+    OmegaConf.register_new_resolver("parentkey", parentkey, replace=replace)
+    OmegaConf.register_new_resolver("fullkey", fullkey, replace=replace)
+    OmegaConf.register_new_resolver("relpath", relpath, replace=replace)
 
     # yaml object utility functions
-    OmegaConf.register_new_resolver("access", access_key_with_dots)
-    OmegaConf.register_new_resolver("escape", escape_interpolation)
-    OmegaConf.register_new_resolver("merge", merge)
-    OmegaConf.register_new_resolver("dict", to_dict)
-    OmegaConf.register_new_resolver("list", to_list)
-    OmegaConf.register_new_resolver("add", lambda x, y: x + y)
+    OmegaConf.register_new_resolver("access", access_key_with_dots, replace=replace)
+    OmegaConf.register_new_resolver("escape", escape_interpolation, replace=replace)
+    OmegaConf.register_new_resolver("merge", merge, replace=replace)
+    OmegaConf.register_new_resolver("dict", to_dict, replace=replace)
+    OmegaConf.register_new_resolver("list", to_list, replace=replace)
+    OmegaConf.register_new_resolver("add", lambda x, y: x + y, replace=replace)
 
     # kapitan helpers / templates
-    OmegaConf.register_new_resolver("helm_dep", helm_dep)
-    OmegaConf.register_new_resolver("helm_input", helm_input)
+    OmegaConf.register_new_resolver("helm_dep", helm_dep, replace=replace)
+    OmegaConf.register_new_resolver("helm_input", helm_input, replace=replace)
 
     # user defined resolvers
     user_resolver_file = os.path.join(inventory_path, "resolvers.py")

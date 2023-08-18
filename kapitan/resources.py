@@ -22,7 +22,8 @@ import yaml
 import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
-from kapitan.inventory import OmegaConfBackend, ReclassBackend
+from kapitan.inventory.omegaconf import OmegaConfBackend
+from kapitan.inventory.reclass import ReclassBackend
 from kapitan.utils import (
     PrettyDumper,
     deep_get,
@@ -335,8 +336,6 @@ def get_inventory(inventory_path, ignore_class_notfound=False, targets=[]):
     try:
         inventory = inventory_backend.inventory()
     except Exception as e:
-        # if hasattr(args, "omegaconf") and args.omegaconf and not args.migrate:
-        #     logger.warning("Make sure to migrate your inventory using --migrate if you are using omegaconf the first time")
         raise InventoryError(e)
 
     cached.inv = inventory
