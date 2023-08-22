@@ -410,12 +410,12 @@ gitdb = ">=4.0.1,<5"
 
 [[package]]
 name = "gojsonnet"
-version = "0.17.0"
+version = "0.20.0"
 description = "Python bindings for Jsonnet - The data templating language"
 optional = true
 python-versions = "*"
 files = [
-    {file = "gojsonnet-0.17.0.tar.gz", hash = "sha256:f6fc47d9b1dd0099158978216880c86cb0fcae866b4ca54a5e42e7416bec3b98"},
+    {file = "gojsonnet-0.20.0.tar.gz", hash = "sha256:9aede3b5734dee1c99dbec75dee3b086baaae92bd262d93f9217e21bf19c9682"},
 ]
 
 [[package]]
@@ -639,12 +639,12 @@ files = [
 
 [[package]]
 name = "jsonnet"
-version = "0.18.0"
+version = "0.20.0"
 description = "Python bindings for Jsonnet - The data templating language"
 optional = false
 python-versions = "*"
 files = [
-    {file = "jsonnet-0.18.0.tar.gz", hash = "sha256:4ccd13427e9097b6b7d6d38f78f638a55ab8b452a257639e8e9af2178ec235d4"},
+    {file = "jsonnet-0.20.0.tar.gz", hash = "sha256:7e770c7bf3a366b97b650a39430450f77612e74406731eb75c5bd59f3f104d4f"},
 ]
 
 [[package]]
