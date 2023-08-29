@@ -46,7 +46,7 @@ We provide some basic resolvers:
 
 * OmegaConf
   * `oc.env`: access a environment variable
-  * `oc.select`: provide a default value for an interpolation
+  * `oc.select`: provide a default value for an interpolation path
   * `oc.dict.keys`: get the keys of a dictionary object as a list
   * `oc.dict.values`: get the values of dictionary object as a list
 * Utilities
@@ -54,7 +54,10 @@ We provide some basic resolvers:
   * `fullkey`: get the full name of the key
   * `parentkey`: get the name of the nodes parent key
   * `relpath`: takes an absolute path and convert it to relative
-  * `tag`: creates an escaped interpolation
+  * `escape`: creates an escaped interpolation
+  * `eval`: evaluates a python statement
+  * `default`: takes more than one values as default values and chooses the first available
+  * `write`: takes a path and an object and writes (merge) object to path (works only for dicts)
 * Casting and Merging
   * `dict`: cast a dict inside a list into the actual dict
   * `list`: put a dict inside a list with that dict

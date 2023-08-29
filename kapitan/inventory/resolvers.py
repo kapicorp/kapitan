@@ -68,25 +68,67 @@ def to_list(input):
     return list(input)
 
 
-def relpath(path: str, _node_: Node):
-    """resolver function, that translates an absolute yaml-path to its relativ path"""
-    start = _node_._get_full_key("")
-    start = start.replace("[", ".")
+def default(*args):
+    output = ""
+    for arg in args[:-1]:
+        output += "${oc.select:" + str(arg) + ","
 
+    output += str(args[-1])
+    output += "}" * (len(args) - 1)
+    return output
+
+
+def relpath(path: str, _node_):
+    """
+    resolver function, that translates an absolute yaml-path to its relative path
+    """
+
+    node_parts = []
     path_parts = path.split(".")
-    start_parts = start.split(".")
+    relative_path = ""
 
-    while path_parts and start_parts and path_parts[0] == start_parts[0]:
-        path_parts.pop(0)
-        start_parts.pop(0)
+    i = 0
+    node = _node_
+    while node._key() is not None:
+        node_parts.append(node._key())
+        node = node._get_parent()
+        i += 1
 
-    # Construct relative path
-    rel_parts = ["."] * (len(start_parts))
-    reminder_path = ".".join(path_parts)
+    node_parts.reverse()
 
-    rel_path = "".join(rel_parts) + reminder_path
+    for idx, (path_part, node_path) in enumerate(zip(path_parts, node_parts)):
+        if not path_part == node_path:
+            rel_prefix = "." * (i - idx) if idx != 0 else ""
+            relative_path = rel_prefix + ".".join(path_parts[idx:])
+            break
 
-    return f"${{{rel_path}}}"
+    if not relative_path:
+        # print warning for self reference
+        return "SELF REFERENCE DETECTED"
+
+    relative_interpolation = "${" + relative_path + "}"
+
+    return relative_interpolation
+
+
+def write_to_key(location: str, content: dict, _root_):
+    """
+    resolver function to write any content to different place in the inventory
+    NOTE: Behavior for lists is not well defined
+    """
+    parts = location.split(".")
+    key = _root_
+
+    # iterate through parts and create dicts if part not found
+    for part in parts:
+        if not hasattr(key, part):
+            setattr(key, part, {})  # TODO: think about list managing
+
+        # update key
+        key = getattr(key, part)
+
+    # update target key
+    key.update(content)
 
 
 def helm_dep(name: str, source: str):
@@ -133,6 +175,8 @@ def register_resolvers(inventory_path: str) -> None:
     OmegaConf.register_new_resolver("dict", to_dict, replace=replace)
     OmegaConf.register_new_resolver("list", to_list, replace=replace)
     OmegaConf.register_new_resolver("add", lambda x, y: x + y, replace=replace)
+    OmegaConf.register_new_resolver("default", default, replace=replace)
+    OmegaConf.register_new_resolver("write", write_to_key, replace=replace)
 
     # kapitan helpers / templates
     OmegaConf.register_new_resolver("helm_dep", helm_dep, replace=replace)
@@ -144,7 +188,7 @@ def register_resolvers(inventory_path: str) -> None:
         try:
             register_user_resolvers(inventory_path)
         except:
-            logger.debug(f"Couldn't import {os.join(inventory_path, 'resolvers.py')}")
+            logger.warning(f"Couldn't import {os.path.join(inventory_path, 'resolvers.py')}")
 
 
 def register_user_resolvers(inventory_path: str) -> None:
@@ -155,8 +199,11 @@ def register_user_resolvers(inventory_path: str) -> None:
         from resolvers import pass_resolvers
 
         funcs = pass_resolvers()
-    except:
+    except ImportError:
         logger.warning("resolvers.py must contain function 'pass_resolvers()'")
+        return
+    except Exception as e:
+        logger.error(f"resolvers.py: {e}")
         return
 
     if not isinstance(funcs, dict):
