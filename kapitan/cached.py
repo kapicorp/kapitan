@@ -18,6 +18,7 @@ ref_controller_obj = None
 revealer_obj = None
 args = {}  # args won't need resetting
 inv_sources = set()
+pool = None
 
 
 def reset_cache():

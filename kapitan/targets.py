@@ -83,7 +83,10 @@ def compile_targets(
                 logger.info("No changes since last compilation.")
                 return
 
-    pool = multiprocessing.Pool(parallel)
+    num_targets = len(next(os.walk(os.path.join(inventory_path, "targets")))[2])
+    num_processes = max(1, min(parallel, num_targets))
+    pool = multiprocessing.Pool(num_processes)
+    cached.pool = pool
 
     try:
         # -------------------------------------------------

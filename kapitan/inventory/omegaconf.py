@@ -16,6 +16,7 @@ import regex
 import yaml
 from omegaconf import ListMergeMode, OmegaConf
 
+from kapitan import cached
 from kapitan.errors import InventoryError
 from kapitan.inventory.resolvers import register_resolvers
 
@@ -116,12 +117,11 @@ class OmegaConfBackend:
         InventoryClass.classes_path = self.classes_searchpath
 
     def inventory(self):
-
         register_resolvers(self.inventory_path)
         selected_targets = self.get_selected_targets()
 
         # TODO: add flag for multiprocessing
-        use_mp = False
+        use_mp = True
 
         if not use_mp:
             nodes = {}
@@ -132,17 +132,17 @@ class OmegaConfBackend:
                     nodes[target.name] = {"parameters": target.parameters}
                 except Exception as e:
                     raise InventoryError(f"{target.name}: {e}")
-
         else:
             # load targets parallel
-            nodes = mp.Manager().dict()
+            # t = time()
+            manager = mp.Manager()  # bottleneck --> 90 % of the inventory time
+            # print(time() - t)
 
+            nodes = manager.dict()
             mp.set_start_method("spawn", True)  # platform independent
-            with mp.Pool() as pool:
-                r = pool.map_async(
-                    self.inventory_worker, [(self, target, nodes) for target in selected_targets]
-                )
-                r.wait()
+            pool = cached.pool
+            r = pool.map_async(self.inventory_worker, [(self, target, nodes) for target in selected_targets])
+            r.wait()
 
         # using nodes for reclass legacy code
         return {"nodes": nodes}
@@ -157,7 +157,7 @@ class OmegaConfBackend:
             nodes[target.name] = {"parameters": target.parameters}
             logger.info(f"Rendered {target.name} ({round(time()-start, 2)})")
         except Exception as e:
-            logger.error(f"{target.name}: e")
+            logger.error(f"{target.name}: {e}")
 
     def lint(self):
         temp = tempfile.mktemp()
@@ -334,6 +334,9 @@ class OmegaConfBackend:
         # load classes recursively
         classes, parameters = self.load_config(class_path)
 
+        if not classes and not parameters:
+            return None
+
         # initialize inventory class
         inv_class = InventoryClass(class_path)
         inv_class.parameters = parameters
@@ -349,6 +352,10 @@ class OmegaConfBackend:
         with open(path, "r") as f:
             f.seek(0)
             config = yaml.load(f, yaml.SafeLoader)
+
+        if not config:
+            logger.debug(f"{path}: file is empty")
+            return [], {}
         classes = OmegaConf.create(config.get("classes", []))
         parameters = OmegaConf.create(config.get("parameters", {}))
         return classes, parameters
