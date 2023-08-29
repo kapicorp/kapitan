@@ -32,7 +32,7 @@ On Linux you can add `-u $(id -u)` to `docker run` to preserve file permissions.
 
 ### Pip
 
-Kapitan needs Python 3.8.
+Kapitan supports Python 3.8, 3.9 and 3.10.
 
 #### Install Python
 
