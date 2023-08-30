@@ -121,7 +121,7 @@ class OmegaConfBackend:
         selected_targets = self.get_selected_targets()
 
         # TODO: add flag for multiprocessing
-        use_mp = True
+        use_mp = False
 
         if not use_mp:
             nodes = {}
