@@ -8,6 +8,7 @@
 import logging
 import os
 import sys
+import copy
 
 from omegaconf import Container, ListMergeMode, Node, OmegaConf
 
@@ -111,24 +112,31 @@ def relpath(path: str, _node_):
     return relative_interpolation
 
 
-def write_to_key(location: str, content: dict, _root_):
+def write_to_key(destination: str, origin: str, _root_):
     """
     resolver function to write any content to different place in the inventory
     NOTE: Behavior for lists is not well defined
     """
-    parts = location.split(".")
-    key = _root_
+    # fetch and resolve content
+    try:
+        content = OmegaConf.select(_root_, origin)
+        if not content:
+            # TODO: warning: origin could not be found / empty content
+            return "NOT FOUND"
 
-    # iterate through parts and create dicts if part not found
-    for part in parts:
-        if not hasattr(key, part):
-            setattr(key, part, {})  # TODO: think about list managing
+        # resolve relative interpolations
+        try:
+            copied = copy.deepcopy(content)
+            OmegaConf.resolve(copied, True)
+        except Exception as e:
+            # resolver error
+            logger.warning(e)
 
-        # update key
-        key = getattr(key, part)
-
-    # update target key
-    key.update(content)
+        # write resolved content back to _root_
+        OmegaConf.update(_root_, destination, copied, merge=True, force_add=True)
+    except Exception as e:
+        raise e
+    return "DONE"
 
 
 def helm_dep(name: str, source: str):

@@ -56,9 +56,19 @@ class InventoryTarget:
             self.parameters = merged_parameters
 
     def _resolve(self):
+        # TODO: add throw_on_missing = True when resolving second time (--> wait for to_object support)
         escape_interpolation_strings = False
         OmegaConf.resolve(self.parameters, escape_interpolation_strings)
-        self.parameters = OmegaConf.to_object(self.parameters)
+
+        # remove specified keys
+        remove_location = "omegaconf.remove"
+        removed_keys = OmegaConf.select(self.parameters, remove_location, default=[])
+        for key in removed_keys:
+            OmegaConf.update(self.parameters, key, {}, merge=False)
+
+        # resolve second time and convert to object
+        OmegaConf.resolve(self.parameters, escape_interpolation_strings)
+        self.parameters = OmegaConf.to_container(self.parameters)
 
     def add_metadata(self):
         # append meta data (legacy: _reclass_)
