@@ -133,7 +133,6 @@ def build_parser():
     inventory_backend_group = inventory_backend_parser.add_argument_group("inventory_backend")
     inventory_backend_group.add_argument(
         "--reclass",
-        "-r",
         action="store_true",
         default=from_dot_kapitan("inventory_backend", "reclass", False),
         help="use reclass as inventory backend (default)",
@@ -445,7 +444,9 @@ def build_parser():
         default=from_dot_kapitan("searchvar", "pretty-print", False),
     )
 
-    refs_parser = subparser.add_parser("refs", aliases=["r"], help="manage refs", parents=[logger_parser])
+    refs_parser = subparser.add_parser(
+        "refs", aliases=["r"], help="manage refs", parents=[logger_parser, inventory_backend_parser]
+    )
     refs_parser.set_defaults(func=handle_refs_command, name="refs")
 
     refs_parser.add_argument(
