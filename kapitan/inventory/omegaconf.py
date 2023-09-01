@@ -131,7 +131,7 @@ class OmegaConfBackend:
         selected_targets = self.get_selected_targets()
 
         # TODO: add flag for multiprocessing
-        use_mp = False
+        use_mp = True
 
         if not use_mp:
             nodes = {}
@@ -150,9 +150,17 @@ class OmegaConfBackend:
 
             nodes = manager.dict()
             mp.set_start_method("spawn", True)  # platform independent
-            pool = cached.pool
-            r = pool.map_async(self.inventory_worker, [(self, target, nodes) for target in selected_targets])
-            r.wait()
+            
+            if cached.pool:
+                r = cached.pool.map_async(self.inventory_worker, [(self, target, nodes) for target in selected_targets])
+                r.wait()
+            else:
+                with mp.Pool(len(selected_targets)) as pool:
+                    r = pool.map_async(self.inventory_worker, [(self, target, nodes) for target in selected_targets])
+                    r.wait()
+                
+        # using nodes for reclass legacy code
+        nodes = dict(nodes)
 
         # using nodes for reclass legacy code
         return {"nodes": nodes}
