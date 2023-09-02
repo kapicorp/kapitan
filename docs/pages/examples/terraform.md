@@ -4,6 +4,11 @@ tags:
 ---
 # :kapitan-logo: **Terraform example**
 
+!!! danger
+    This documentation is not up-to-date. 
+    
+    Please refer to the [documentation](/pages/kapitan_overview/), [Getting started](/getting_started/) or look at the [Kapitan Reference](https://github.com/kapicorp/kapitan-reference) repository.
+
 We will be looking at how to use Kapitan to compile terraform files with Jsonnet as the input type. It's possible to use other input types, however, Jsonnet is recommended.
 For example, we could use the Kadet input to generate terraform files but this would require templates to be written in YAML then rendered into JSON.
 It is possible to allow Kadet to consume JSON as an input. This enables you to integrate your organizations pre-existing terraform JSON file's as templates.
