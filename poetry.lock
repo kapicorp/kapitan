@@ -827,7 +827,7 @@ portalocker = [
 
 [[package]]
 name = "omegaconf"
-version = "2.4.0.dev0"
+version = "2.4.0.dev1"
 description = "A flexible configuration library"
 category = "main"
 optional = false
@@ -842,8 +842,8 @@ PyYAML = ">=5.1.0"
 [package.source]
 type = "git"
 url = "https://github.com/neXenio/omegaconf.git"
-reference = "try-escape-interpolations"
-resolved_reference = "e6f68340e1c572b6ee72ebc37673f0a9f645a314"
+reference = "dev"
+resolved_reference = "19e054786e837b0b0bd51849a7de9986637218d0"
 
 [[package]]
 name = "packaging"
@@ -1552,4 +1552,4 @@ test = ["docker"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "557dc45857272e18b1627e920173e760fd30e1a544c3041a09239568b193285c"
+content-hash = "ba36274fd6df321e49466ebdb5f4502f58aae696d2b07d06f4364184f9333d50"
