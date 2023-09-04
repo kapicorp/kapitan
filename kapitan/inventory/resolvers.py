@@ -5,10 +5,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import copy
 import logging
 import os
 import sys
-import copy
 
 from omegaconf import Container, ListMergeMode, Node, OmegaConf
 
@@ -139,6 +139,36 @@ def write_to_key(destination: str, origin: str, _root_):
     return "DONE"
 
 
+def condition_if(condition: str, config: dict):
+    if bool(condition):
+        return config
+    else:
+        return {}
+
+
+def condition_if_else(condition: str, config_if: dict, config_else: dict):
+    if bool(condition):
+        return config_if
+    else:
+        return config_else
+
+
+def condition_not(condition: str):
+    return not bool(condition)
+
+
+def condition_and(*conditions: str):
+    return all(conditions)
+
+
+def condition_or(*conditions: str):
+    return any(conditions)
+
+
+def condition_equal(*configs):
+    return all(config == configs[0] for config in configs)
+
+
 def helm_dep(name: str, source: str):
     """kapitan template for a helm chart dependency"""
     return {
@@ -185,6 +215,14 @@ def register_resolvers(inventory_path: str) -> None:
     OmegaConf.register_new_resolver("add", lambda x, y: x + y, replace=replace)
     OmegaConf.register_new_resolver("default", default, replace=replace)
     OmegaConf.register_new_resolver("write", write_to_key, replace=replace)
+
+    # boolean algebra
+    OmegaConf.register_new_resolver("if", condition_if, replace=replace)
+    OmegaConf.register_new_resolver("ifelse", condition_if_else, replace=replace)
+    OmegaConf.register_new_resolver("and", condition_and, replace=replace)
+    OmegaConf.register_new_resolver("or", condition_or, replace=replace)
+    OmegaConf.register_new_resolver("not", condition_not, replace=replace)
+    OmegaConf.register_new_resolver("equal", condition_equal, replace=replace)
 
     # kapitan helpers / templates
     OmegaConf.register_new_resolver("helm_dep", helm_dep, replace=replace)
