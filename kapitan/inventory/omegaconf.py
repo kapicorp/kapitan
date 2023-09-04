@@ -150,15 +150,19 @@ class OmegaConfBackend:
 
             nodes = manager.dict()
             mp.set_start_method("spawn", True)  # platform independent
-            
+
             if cached.pool:
-                r = cached.pool.map_async(self.inventory_worker, [(self, target, nodes) for target in selected_targets])
+                r = cached.pool.map_async(
+                    self.inventory_worker, [(self, target, nodes) for target in selected_targets]
+                )
                 r.wait()
             else:
                 with mp.Pool(len(selected_targets)) as pool:
-                    r = pool.map_async(self.inventory_worker, [(self, target, nodes) for target in selected_targets])
+                    r = pool.map_async(
+                        self.inventory_worker, [(self, target, nodes) for target in selected_targets]
+                    )
                     r.wait()
-                
+
         # using nodes for reclass legacy code
         nodes = dict(nodes)
 
@@ -173,7 +177,7 @@ class OmegaConfBackend:
             register_resolvers(self.inventory_path)
             self.load_target(target)
             nodes[target.name] = {"parameters": target.parameters}
-            logger.info(f"Rendered {target.name} ({round(time()-start, 2)})")
+            logger.warning(f"Rendered {target.name} ({time()-start:.2f}s)")
         except Exception as e:
             logger.error(f"{target.name}: {e}")
 
@@ -297,15 +301,9 @@ class OmegaConfBackend:
         # load classes for targets
         for class_name in target.classes:
 
-            # search in cache, otherwise load class
-            if class_name in self.classes_cache.keys():
-                inv_class = self.classes_cache[class_name]
-            else:
-                inv_class = self.load_class(target, class_name)
-                self.classes_cache[class_name] = inv_class
-
+            inv_class = self.load_class(target, class_name)
             if not inv_class:
-                # TODO: display warning
+                # either redundantly defined or not found (with ignore_not_found: true)
                 continue
 
             params = deepcopy(inv_class.parameters)
@@ -331,9 +329,13 @@ class OmegaConfBackend:
         # resolve class path (has to be absolute)
         class_path = os.path.join(self.classes_searchpath, *class_name.split("."))
         if class_path in target.classes_redundancy_check:
+            logger.debug(f"{class_path}: class {class_name} is redundantly defined")
             return None
+        target.classes_redundancy_check.add(class_path)
 
-        # target.classes_redundancy_check.add(class_path)
+        # search in inventory classes cache, otherwise load class
+        if class_path in self.classes_cache.keys():
+            return self.classes_cache[class_name]
 
         # check if file exists
         if os.path.isfile(class_path + ".yml"):
@@ -363,6 +365,9 @@ class OmegaConfBackend:
             if c.startswith("."):
                 c = ".".join(class_name.split(".")[0:-1]) + c
             inv_class.dependents.append(c)
+
+        # add class to cache
+        self.classes_cache[class_path] = inv_class
 
         return inv_class
 
