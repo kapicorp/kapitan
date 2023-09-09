@@ -19,6 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
       - uses: psf/black@main
   
   test:
@@ -35,7 +37,7 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          cache: 'pip' # caching pip dependencies
+          cache: 'poetry'
           python-version: ${{ matrix.python-version }}
       
       - name: Install testing dependencies
