@@ -1,9 +1,6 @@
 ---
 name: Docker Build and Push
 on:
-  push:
-    paths-ignore:
-      - 'docs/**'
   workflow_run:
     workflows:
       - Python Tests
@@ -12,34 +9,14 @@ on:
 
 jobs:
   build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@master
         with:
           submodules: recursive
-      - name: Strip git ref prefix from tag version and store in TAG_VERSION
-        run: |
-          echo "TAG_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
-          echo "REF_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
-
-      - name: Strip full version and just keep major part in MAJOR_VERSION VAR
-        run: |
-          echo "MAJOR_VERSION=${TAG_VERSION:0:4}" >> $GITHUB_ENV
-
-      # Printing versions needs to be a separate step,
-      # as they aren't set during the previous two steps
-      - name: Print Versions
-        run: |
-          echo ${{ env.TAG_VERSION }}
-          echo ${{ env.MAJOR_VERSION }}
-          echo ${{ env.REF_NAME }}
-      - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+      
       # Setup QEMU and Buildx to build multi-platform image
       # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
       - name: Set up QEMU
@@ -47,30 +24,54 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build PR/versioned tags
-        if: github.ref != 'refs/heads/master'
-        uses: docker/build-push-action@v2
+      - name: Build and export to Docker
+        uses: docker/build-push-action@v4
         with:
-          tags: kapicorp/kapitan:${{ format('{0}', env.REF_NAME ) }}
+          load: true
+          tags: test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          
+      - name: Test Kapitan
+        run: |
+          docker run -t --rm test --version
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
+        if: env.DOCKERHUB_USERNAME != null
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
+        if: env.DOCKERHUB_USERNAME != null
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            ${{ env.DOCKERHUB_USERNAME }}/kapitan            
+          # generate Docker tags based on the following events/attributes
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha       
+
+      - name: Push Kapitan Image
+        uses: docker/build-push-action@v4
+        with:
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}  # push image only on non-pull_requests
           file: Dockerfile
-      # TODO push and tag as latest if release (and not RC)
-      - name: Build latest tag
-        uses: docker/build-push-action@v2
-        if: github.ref == 'refs/heads/master'
-        with:
-          tags: kapicorp/kapitan:${{ format('{0}', env.REF_NAME ) }},kapicorp/kapitan:latest
-          platforms: linux/amd64,linux/arm64
-          file: Dockerfile
-      - name: Test Dockerfile in current ref
-        run: |
-          [ ${{ env.REF_NAME }} == "master" ] && tagname="latest" || tagname=${{ env.REF_NAME }}
-          docker run -t --rm kapicorp/kapitan:${tagname} --version
-      - name: Build major version tag
-        uses: docker/build-push-action@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          tags: kapicorp/kapitan:${{ format('{0}', env.MAJOR_VERSION ) }}
-          platforms: linux/amd64,linux/arm64
-          file: Dockerfile
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

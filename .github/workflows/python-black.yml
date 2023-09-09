@@ -2,9 +2,9 @@
 name: Python Lint
 on: 
   push:
-    branches:
-      - master
-  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      
 jobs:
   lint:
     runs-on: ubuntu-latest

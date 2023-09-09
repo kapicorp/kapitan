@@ -2,8 +2,6 @@
 name: PEX Build and Upload
 
 on:
-  release:
-    types: [created]
   workflow_run:
     workflows:
       - Upload Python Package
