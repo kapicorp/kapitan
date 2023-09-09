@@ -28,11 +28,12 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
     && rm get_helm.sh
 
 
-
-
 COPY ./MANIFEST.in ./MANIFEST.in
 COPY ./pyproject.toml ./pyproject.toml
+COPY ./poetry.lock ./poetry.lock
 COPY ./README.md ./README.md
+
+
 COPY ./kapitan ./kapitan
 
 RUN pip install --editable .[test] \

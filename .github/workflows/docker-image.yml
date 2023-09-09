@@ -65,6 +65,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           platforms: linux/amd64,linux/arm64
+          load: true
           push: False 
           file: Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
