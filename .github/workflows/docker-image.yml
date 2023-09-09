@@ -64,7 +64,6 @@ jobs:
       - name: build Kapitan Image
         uses: docker/build-push-action@v4
         with:
-          platforms: linux/amd64,linux/arm64
           load: true
           push: False 
           file: Dockerfile
