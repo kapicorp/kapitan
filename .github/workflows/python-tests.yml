@@ -1,16 +1,21 @@
 ---
 name: Python Tests
-on:
-  workflow_run:
-    workflows:
-      - Python Lint
-    types:
-      - completed
 
+on: 
+  push:
+    branches:
+      - master
+      - main
+    paths-ignore:
+      - 'docs/**'
+
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       matrix:
         python-version: [3.8, 3.9]
@@ -25,6 +30,7 @@ jobs:
         with:
           cache: 'pip' # caching pip dependencies
           python-version: ${{ matrix.python-version }}
+      
       - name: Install testing dependencies
         run: |
           sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157

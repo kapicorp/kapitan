@@ -1,9 +1,13 @@
 ---
 name: Python Lint
-on: 
-  push:
-    paths-ignore:
-      - 'docs/**'
+
+on:
+  workflow_run:
+    # Starts at the same time as Python Tests
+    workflows:
+      - Python Tests
+    types:
+      - requested
       
 jobs:
   lint:
