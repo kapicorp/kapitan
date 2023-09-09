@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     if: success() || failure()  # Continue running if tests fail
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Checkout kapitan recursively
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Set up Python ${{ matrix.python-version }}
