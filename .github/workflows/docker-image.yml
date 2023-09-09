@@ -1,6 +1,8 @@
 ---
 name: Docker Build and Push
-run-name: Docker Build for ${{ github.actor }} for branch ${{ github.ref }}
+run-name: Docker Build for ${{ github.actor }} on branch ${{ github.ref }}
+
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-only-cancel-in-progress-jobs-or-runs-for-the-current-workflow
 concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
@@ -49,15 +51,15 @@ jobs:
           # list of Docker images to use as base name for tags
           images: |
             name=${{ env.DOCKERHUB_USERNAME }}/kapitan,enable=${{env.DOCKERHUB_USERNAME != null}}
+            local-test
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=schedule
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
             type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha       
+            type=sha
 
       - name: build Kapitan Image
         uses: docker/build-push-action@v4
@@ -72,7 +74,7 @@ jobs:
 
       - name: Test Kapitan
         run: |
-          docker run -t --rm test --version
+          docker run -t --rm local-test --version
 
       - name: Push Kapitan Image
         uses: docker/build-push-action@v4
