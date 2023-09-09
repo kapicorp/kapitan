@@ -1,5 +1,10 @@
 ---
 name: Build and deploy documentation on merge to master
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches:

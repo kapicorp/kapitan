@@ -1,5 +1,10 @@
 ---
 name: Docker Build and Push
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   workflow_run:
     workflows:
@@ -52,7 +57,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name=${{ env.DOCKERHUB_USERNAME }}/kapitan,enabled=${{env.DOCKERHUB_USERNAME != null}}
+            name=${{ env.DOCKERHUB_USERNAME }}/kapitan,enable=${{env.DOCKERHUB_USERNAME != null}}
           # generate Docker tags based on the following events/attributes
           tags: |
             type=schedule
