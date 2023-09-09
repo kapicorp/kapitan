@@ -4,7 +4,7 @@ run-name: Python tests for ${{ github.actor }} for branch ${{ github.ref }}
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-only-cancel-in-progress-jobs-or-runs-for-the-current-workflow
 concurrency:
-  group: ${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 on: 
