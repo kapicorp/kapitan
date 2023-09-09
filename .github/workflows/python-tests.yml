@@ -16,6 +16,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    if: success() || failure()  # Continue running if tests fail
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
@@ -25,6 +26,7 @@ jobs:
   
   test:
     runs-on: ubuntu-latest
+    if: success() || failure()  # Continue running if other one fails
     strategy:
       matrix:
         python-version: [3.8, 3.9]
