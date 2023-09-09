@@ -1,5 +1,6 @@
 ---
 name: Python Tests
+run-name: Python tests for ${{ github.actor }} for branch ${{ github.ref }}
 
 concurrency:
   group: ${{ github.ref }}
