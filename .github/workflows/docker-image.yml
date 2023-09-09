@@ -33,9 +33,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Test Kapitan
-        run: |
-          docker run -t --rm test --version
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -55,7 +52,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            ${{ env.DOCKERHUB_USERNAME }}/kapitan            
+            name=${{ env.DOCKERHUB_USERNAME }}/kapitan,enabled=${{env.DOCKERHUB_USERNAME != null}}
           # generate Docker tags based on the following events/attributes
           tags: |
             type=schedule
@@ -66,11 +63,29 @@ jobs:
             type=semver,pattern={{major}}
             type=sha       
 
-      - name: Push Kapitan Image
+      - name: build Kapitan Image
         uses: docker/build-push-action@v4
         with:
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}  # push image only on non-pull_requests
+          push: False 
+          file: Dockerfile
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Kapitan
+        run: |
+          docker run -t --rm test --version
+
+      - name: Push Kapitan Image
+        uses: docker/build-push-action@v4
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
+        if: env.DOCKERHUB_USERNAME != null
+        with:
+          platforms: linux/amd64,linux/arm64
+          push: True
           file: Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
