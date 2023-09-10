@@ -1,19 +1,25 @@
 ---
 name: Python Tests
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
 on:
   push:
     paths-ignore:
       - 'docs/**'
+      - 'requirements.docs.txt'
+      - 'mkdocs.yml'
+      - 'CNAME'
     branches:
       - master
+      
   pull_request:
     paths-ignore:
       - 'docs/**'
-  workflow_run:
-    workflows:
-      - Python Lint
-    types:
-      - completed
+      - 'requirements.docs.txt'
+      - 'mkdocs.yml'
+      - 'CNAME'
 
 jobs:
   test:

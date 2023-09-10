@@ -1,10 +1,27 @@
 ---
 name: Python Lint
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+  
 on: 
   push:
     branches:
       - master
+    paths-ignore:
+      - 'docs/**'
+      - 'requirements.docs.txt'
+      - 'mkdocs.yml'
+      - 'CNAME'
+
   pull_request:
+      paths-ignore:
+      - 'docs/**'
+      - 'requirements.docs.txt'
+      - 'mkdocs.yml'
+      - 'CNAME'
+
 jobs:
   lint:
     runs-on: ubuntu-latest
