@@ -1,33 +1,22 @@
 ---
 name: Build and deploy documentation on merge to master
+
 on:
   push:
     branches:
       - master
+    paths:
+      - 'docs/**'
+      - 'requirements.docs.txt'
+      - 'mkdocs.yml'
+      - 'CNAME'
+
 jobs:
-  build:
+  docs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout kapitan recursively
-        uses: actions/checkout@master
-        with:
-          submodules: recursive
-      - name: Strip git ref prefix from tag version and store in TAG_VERSION
-        run: |
-          echo "TAG_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
-          echo "REF_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
-
-      - name: Strip full version and just keep major part in MAJOR_VERSION VAR
-        run: |
-          echo "MAJOR_VERSION=${TAG_VERSION:0:4}" >> $GITHUB_ENV
-
-      # Printing versions needs to be a separate step,
-      # as they aren't set during the previous two steps
-      - name: Print Versions
-        run: |
-          echo ${{ env.TAG_VERSION }}
-          echo ${{ env.MAJOR_VERSION }}
-          echo ${{ env.REF_NAME }}
+        uses: actions/checkout@v4
 
       - name: Deploy docs
         uses: mhausenblas/mkdocs-deploy-gh-pages@master
