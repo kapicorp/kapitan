@@ -35,7 +35,7 @@ jobs:
           echo ${{ env.MAJOR_VERSION }}
           echo ${{ env.REF_NAME }}
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
