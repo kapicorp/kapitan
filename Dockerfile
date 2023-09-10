@@ -1,5 +1,6 @@
 # Build the virtualenv for Kapitan
-FROM python:3.8-slim AS python-builder
+ARG PYTHONVERSION 3.8
+FROM python:${PYTHONVERSION}-slim AS python-builder
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
 
@@ -44,7 +45,8 @@ RUN pip install --editable .[test] \
 
 
 # Final image with virtualenv built in previous step
-FROM python:3.8-slim
+ARG PYTHONVERSION 3.8
+FROM python:${PYTHONVERSION}-slim
 
 ENV PATH="/opt/venv/bin:${PATH}"
 ENV HELM_CACHE_HOME=".cache/helm"

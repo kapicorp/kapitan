@@ -51,7 +51,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.8, 3.9]
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
 
     steps:
       - name: Checkout kapitan recursively
@@ -81,7 +84,7 @@ jobs:
           make test_coverage 
 
   build:
-    name: build ${{ matrix.platform }} image
+    name: build py${{ matrix.python-version }}-${{ matrix.platform }}
     if: success() || failure()   # Continue running if other jobs fail
     runs-on: ubuntu-latest
     strategy:
@@ -90,6 +93,10 @@ jobs:
         platform:
           - linux/amd64
           - linux/arm64
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@v4
@@ -111,17 +118,19 @@ jobs:
           platforms: ${{ matrix.platform }}
           load: True
           file: Dockerfile
-          tags: local-test-${{ matrix.platform }}
-          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
+          tags: local-test-py${{ matrix.python-version }}-${{ matrix.platform }}
+          build-args:
+            PYTHONVERSION=${{ matrix.python-version }}
+          cache-from: type=gha,scope=$GITHUB_REF_NAME-py${{ matrix.python-version }}-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-py${{ matrix.python-version }}-${{ matrix.platform }}
 
-      - name: Test Kapitan for ${{ matrix.platform }}
+      - name: Test Kapitan for py${{ matrix.python-version }}-${{ matrix.platform }}
         run: |
-          docker run -t --rm local-test-${{ matrix.platform }} --version
+          docker run -t --rm local-test-py${{ matrix.python-version }}-${{ matrix.platform }} --version
 
 
   publish:
-    name: publish platform images
+    name: publish platform images for py${{ matrix.python-version }}
     # Only starts if everything else is successful
     needs: [lint, test, build]
     if: github.event_name != 'pull_request'
@@ -132,6 +141,10 @@ jobs:
         platform:
           - linux/amd64
           - linux/arm64
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@v4
@@ -171,7 +184,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
           flavor: |
-            suffix=-${{ matrix.platform }}
+            suffix=-py${{ matrix.python-version }}-${{ matrix.platform }}
 
       - name: Build and push by digest
         id: push-digest
@@ -183,16 +196,25 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          build-args:
+            PYTHONVERSION=${{ matrix.python-version }}
           labels: ${{steps.meta.output.labels}}
-          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
+          cache-from: type=gha,scope=$GITHUB_REF_NAME-py${{ matrix.python-version }}-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-py${{ matrix.python-version }}-${{ matrix.platform }}
 
   build-multi-architecture:
-    name: combine platform images
+    name: combine platform images for py${{ matrix.python-version }}
     needs:
       - publish
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
       # Setup QEMU and Buildx to build multi-platform image
       # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
@@ -226,7 +248,9 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            
+          flavor: |
+            suffix=-py${{ matrix.python-version }}
+        
       - uses: int128/docker-manifest-create-action@v1
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
