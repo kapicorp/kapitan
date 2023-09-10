@@ -82,10 +82,14 @@ jobs:
           tags: kapicorp/kapitan:${{ format('{0}', env.REF_NAME ) }},kapicorp/kapitan:latest
           platforms: linux/amd64,linux/arm64
           file: Dockerfile
-      - name: Test Dockerfile in current ref
-        run: |
-          [ ${{ env.REF_NAME }} == "master" ] && tagname="latest" || tagname=${{ env.REF_NAME }}
-          docker run -t --rm kapicorp/kapitan:${tagname} --version
+      # - name: Test Dockerfile in current ref
+      #   # This is completely broken. the image doesn't resolve locally because buildx has't exported the cache
+      #   # but buildx cannot export it with multi-platform enabled.
+      #   # Removing this check because we are basically always testing the latest tag from the docker hub repo
+      #   # Proof: https://github.com/kapicorp/kapitan/actions/runs/6136743793/job/16651888306
+      #   run: |
+      #     [ ${{ env.REF_NAME }} == "master" ] && tagname="latest" || tagname=${{ env.REF_NAME }}
+      #     docker run -t --rm kapicorp/kapitan:${tagname} --version
       - name: Build major version tag
         uses: docker/build-push-action@v4
         if: startsWith(github.ref, 'refs/tags/')
