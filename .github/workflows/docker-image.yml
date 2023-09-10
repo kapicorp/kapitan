@@ -1,14 +1,27 @@
 ---
 name: Docker Build and Push
-on:
+
+on: 
   push:
+    branches:
+      - master
+      - main
+      - test/*   # Only branches with test/ prefix will produce an image on the dockerhub account
     paths-ignore:
       - 'docs/**'
-  workflow_run:
-    workflows:
-      - Python Tests
-    types:
-      - completed
+      - 'requirements.docs.txt'
+      - 'mkdocs.yml'
+      - 'CNAME'
+
+  release:
+    types: [created]
+
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'requirements.docs.txt'
+      - 'mkdocs.yml'
+      - 'CNAME'
 
 jobs:
   build:
