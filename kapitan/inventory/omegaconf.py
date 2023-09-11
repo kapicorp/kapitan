@@ -77,7 +77,7 @@ class InventoryTarget:
                 "full": self.name,
                 "parts": self.name.split("."),
                 "path": self.name.replace(".", "/"),
-                "short": self.name.split(".")[-1],
+                "short": self.name,
             }
         }
         self.parameters["_meta_"] = _meta_
@@ -177,7 +177,7 @@ class OmegaConfBackend:
             register_resolvers(self.inventory_path)
             self.load_target(target)
             nodes[target.name] = {"parameters": target.parameters}
-            logger.warning(f"Rendered {target.name} ({time()-start:.2f}s)")
+            logger.info(f"Rendered {target.name} ({time()-start:.2f}s)")
         except Exception as e:
             logger.error(f"{target.name}: {e}")
 
@@ -286,6 +286,8 @@ class OmegaConfBackend:
 
                 # initialize target
                 target = InventoryTarget(target_name, target_path)
+                if self.compose_node_name:
+                    target.name = target.composed_name
                 selected_targets.append(target)
 
         return selected_targets
