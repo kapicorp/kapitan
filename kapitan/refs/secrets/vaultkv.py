@@ -147,12 +147,14 @@ class VaultSecret(Base64Ref):
             # comes up if vault is empty in specified path
 
             # throw if 'exists' was given
-            if data.decode() is _ALREADY_EXISTING_SECRET_:
+            # TODO add identity check to object
+            if data.decode() == _ALREADY_EXISTING_SECRET_:
                 msg = f"path '{self.mount}/{self.path}/{self.key}' does not exist on Vault, but received function 'exists'"
                 raise VaultError(msg)
 
         # only write new secrets
-        if data.decode() is not _ALREADY_EXISTING_SECRET_:
+        # TODO add identity check to object
+        if data.decode() != _ALREADY_EXISTING_SECRET_:
             # append / overwrite new secret
             secrets[self.key] = data.decode()
 
