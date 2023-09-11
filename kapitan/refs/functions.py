@@ -38,7 +38,6 @@ def get_func_lookup():
         "rsapublic": rsa_public_key,
         "publickey": public_key,
         "reveal": reveal,
-        "loweralphanum": loweralphanum,
         "basicauth": basicauth,
     }
 
@@ -145,13 +144,6 @@ def reveal(ctx, secret_path):
         raise RefError(
             f"|reveal function error: {secret_path} file in {ctx.token}|reveal:{secret_path} does not exist"
         )
-
-
-def loweralphanum(ctx, nchars="8"):
-    """generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars"""
-    # deprecated function
-    logger.info("DeprecationWarning: loweralphanum is deprecated. Use random:loweralphanum instead")
-    random(ctx, "loweralphanum", nchars)
 
 
 def random(ctx, type="str", nchars="", special_chars=string.punctuation):
