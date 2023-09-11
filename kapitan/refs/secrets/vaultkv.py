@@ -12,7 +12,7 @@ import hvac
 from hvac.exceptions import Forbidden, InvalidPath
 
 from kapitan import cached
-from kapitan.refs.base import RefError
+from kapitan.refs.base import RefError, _ALREADY_EXISTING_SECRET_
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan.refs.vault_resources import VaultClient, VaultError
 
@@ -143,23 +143,30 @@ class VaultSecret(Base64Ref):
                     mount_point=self.mount,
                 )
                 secrets = response["data"]["data"]
-        except InvalidPath:
-            pass  # comes up if vault is empty in specified path
+        except (InvalidPath, KeyError):
+            # comes up if vault is empty in specified path
 
-        # append new secret
-        secrets[self.key] = data.decode()
+            # throw if 'exists' was given
+            if data.decode() is _ALREADY_EXISTING_SECRET_:
+                msg = f"path '{self.mount}/{self.path}/{self.key}' does not exist on Vault, but received function 'exists'"
+                raise VaultError(msg)
 
-        # write updated secrets back to vault
-        try:
-            client.secrets.kv.v2.create_or_update_secret(
-                path=self.path, secret=secrets, mount_point=self.mount
-            )
-            client.adapter.close()
-        except Forbidden:
-            raise VaultError(
-                "Permission Denied. "
-                + "make sure the token is authorised to access '{}' on Vault".format(self.path)
-            )
+        # only write new secrets
+        if data.decode() is not _ALREADY_EXISTING_SECRET_:
+            # append / overwrite new secret
+            secrets[self.key] = data.decode()
+
+            # write updated secrets back to vault
+            try:
+                client.secrets.kv.v2.create_or_update_secret(
+                    path=self.path, secret=secrets, mount_point=self.mount
+                )
+                client.adapter.close()
+            except Forbidden:
+                raise VaultError(
+                    "Permission Denied. "
+                    + "make sure the token is authorised to access '{}' on Vault".format(self.path)
+                )
 
         # set the data to path:key
         data = f"{self.path}:{self.key}".encode()
