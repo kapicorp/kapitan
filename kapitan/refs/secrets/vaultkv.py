@@ -12,7 +12,7 @@ import hvac
 from hvac.exceptions import Forbidden, InvalidPath
 
 from kapitan import cached
-from kapitan.refs.base import RefError, _ALREADY_EXISTING_SECRET_
+from kapitan.refs.base import _ALREADY_EXISTING_SECRET_, RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan.refs.vault_resources import VaultClient, VaultError
 
@@ -199,6 +199,7 @@ class VaultSecret(Base64Ref):
                     data.decode()
                 )
             )
+        # TODO: don't have 'secret' as default (throw error instead)
         mount = self.vault_params.get("mount", "secret")
         secret_path = data_attrs[0]
         secret_key = data_attrs[1]

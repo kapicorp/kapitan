@@ -112,6 +112,15 @@ def relpath(path: str, _node_):
     return relative_interpolation
 
 
+def from_file(path: str):
+    if os.path.isfile(path):
+        with open(path, "r") as f:
+            return f.read()
+    else:
+        logger.error(f"from_file: file {path} does not exist")
+        raise
+
+
 def write_to_key(destination: str, origin: str, _root_):
     """
     resolver function to write any content to different place in the inventory
@@ -215,6 +224,7 @@ def register_resolvers(inventory_path: str) -> None:
     OmegaConf.register_new_resolver("add", lambda x, y: x + y, replace=replace)
     OmegaConf.register_new_resolver("default", default, replace=replace)
     OmegaConf.register_new_resolver("write", write_to_key, replace=replace)
+    OmegaConf.register_new_resolver("from_file", from_file, replace=replace)
 
     # boolean algebra
     OmegaConf.register_new_resolver("if", condition_if, replace=replace)

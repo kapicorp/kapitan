@@ -336,7 +336,7 @@ class OmegaConfBackend:
         target.classes_redundancy_check.add(class_path)
 
         # search in inventory classes cache, otherwise load class
-        if class_path in self.classes_cache.keys():
+        if class_name in self.classes_cache.keys():
             return self.classes_cache[class_name]
 
         # check if file exists
@@ -369,7 +369,7 @@ class OmegaConfBackend:
             inv_class.dependents.append(c)
 
         # add class to cache
-        self.classes_cache[class_path] = inv_class
+        self.classes_cache[class_name] = inv_class
 
         return inv_class
 
