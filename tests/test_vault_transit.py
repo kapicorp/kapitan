@@ -3,6 +3,7 @@
 import tempfile
 import unittest
 import base64
+import shutil
 
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.vaulttransit import VaultTransit
@@ -11,8 +12,8 @@ from kapitan.refs.vault_resources import VaultClient
 
 
 # Create temporary folder
-REFS_HOME = tempfile.mkdtemp()
-REF_CONTROLLER = RefController(REFS_HOME)
+REFS_PATH = tempfile.mkdtemp()
+REF_CONTROLLER = RefController(REFS_PATH)
 REVEALER = Revealer(REF_CONTROLLER)
 
 
@@ -22,7 +23,7 @@ class VaultTransitTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # setup vaulttransit server (running in container)
-        cls.server = VaultTransitServer(REFS_HOME, "kapitan_test_vault_transit")
+        cls.server = VaultTransitServer()
         cls.server.vault_client.secrets.transit.create_key(name="hvac_key")
         cls.server.vault_client.secrets.transit.create_key(name="hvac_updated_key")
 
@@ -35,6 +36,7 @@ class VaultTransitTest(unittest.TestCase):
         # close connections
         cls.client.adapter.close()
         cls.server.close_container()
+        shutil.rmtree(REFS_PATH, ignore_errors=True)
 
     def test_vault_transit_enc_data(self):
         """

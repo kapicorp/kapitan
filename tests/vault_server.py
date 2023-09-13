@@ -7,10 +7,8 @@
 
 import docker
 import os
-import shutil
 import logging
 
-import socket
 from time import sleep
 from kapitan.errors import KapitanError
 
@@ -28,27 +26,25 @@ class VaultServerError(KapitanError):
 class VaultServer:
     """Opens a vault server in a container"""
 
-    def __init__(self, ref_path, name=None):
+    def __init__(self):
         self.docker_client = docker.from_env()
-        self.socket, self.port = self.find_free_port()
-        self.container = self.setup_container(name)
-
-        self.ref_path = ref_path
+        self.container = self.setup_container()
+        self.port = self.container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0]["HostPort"]
         self.vault_client = None
         self.setup_vault()
 
-    def setup_container(self, name=None):
+    def setup_container(self):
         env = {
             "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'
         }
         vault_container = self.docker_client.containers.run(
             image="hashicorp/vault",
             cap_add=["IPC_LOCK"],
-            ports={"8200": self.port},
+            ports={"8200/tcp": ("127.0.0.1", None)},
             environment=env,
             detach=True,
-            remove=True,
-            command="server"
+            auto_remove=True,
+            command="server",
         )
         # make sure the container is up & running before testing
         while vault_container.status != "running":
@@ -56,12 +52,6 @@ class VaultServer:
             vault_container.reload()
 
         return vault_container
-
-    def find_free_port(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(("", 0))
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            return s, s.getsockname()[1]
 
     def setup_vault(self):
         init = self.prepare_vault()
@@ -117,9 +107,7 @@ class VaultServer:
 
         self.container.stop()
         self.docker_client.close()
-        self.socket.close()
 
-        shutil.rmtree(self.ref_path, ignore_errors=True)
         for i in ["ROOT_TOKEN", "TOKEN", "USERNAME", "PASSWORD", "ROLE_ID", "SECRET_ID"]:
             del os.environ["VAULT_" + i]
 

@@ -10,14 +10,15 @@
 import os
 import tempfile
 import unittest
+import shutil
 
 from kapitan.refs.base import RefController, Revealer, RefParams
 from kapitan.refs.secrets.vaultkv import VaultSecret, VaultClient, VaultError
 from tests.vault_server import VaultServer
 
 # Create temporary folder
-REFS_HOME = tempfile.mkdtemp()
-REF_CONTROLLER = RefController(REFS_HOME)
+REFS_PATH = tempfile.mkdtemp()
+REF_CONTROLLER = RefController(REFS_PATH)
 REVEALER = Revealer(REF_CONTROLLER)
 
 
@@ -27,12 +28,13 @@ class VaultSecretTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # setup vault server (running in container)
-        cls.server = VaultServer(REFS_HOME, "test_vaultkv")
+        cls.server = VaultServer()
 
     @classmethod
     def tearDownClass(cls):
         # close connection
         cls.server.close_container()
+        shutil.rmtree(REFS_PATH, ignore_errors=True)
 
     def test_token_authentication(self):
         """
@@ -75,7 +77,7 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming ref file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/harleyquinn")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/harleyquinn")), msg="Secret file doesn't exist"
         )
 
         file_with_secret_tags = tempfile.mktemp()
@@ -106,7 +108,7 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming secret file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/batman")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/batman")), msg="Secret file doesn't exist"
         )
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
@@ -128,7 +130,7 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming secret file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/joker")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/joker")), msg="Secret file doesn't exist"
         )
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
@@ -149,7 +151,7 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming secret file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/joker")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/joker")), msg="Secret file doesn't exist"
         )
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
@@ -170,7 +172,7 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming ref file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/bane")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/bane")), msg="Secret file doesn't exist"
         )
 
         file_with_secret_tags = tempfile.mktemp()
@@ -195,7 +197,7 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming ref file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/bane")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/bane")), msg="Secret file doesn't exist"
         )
 
         file_with_secret_tags = tempfile.mktemp()

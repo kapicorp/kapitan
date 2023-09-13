@@ -33,12 +33,13 @@ class CliFuncsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # setup vault server (running in container)
-        cls.server = VaultServer(REFS_PATH, "kapitan_test_vaultkv_cli")
+        cls.server = VaultServer()
 
     @classmethod
     def tearDownClass(cls):
         # close connection
         cls.server.close_container()
+        shutil.rmtree(REFS_PATH, ignore_errors=True)
 
     def setUp(self):
         example_key = "examples/kubernetes/refs/example@kapitan.dev.key"
