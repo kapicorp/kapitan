@@ -1,0 +1,231 @@
+---
+name: Test, Build and Publish docker image
+run-name: Docker Build for ${{ github.actor }} on branch ${{ github.ref_name }}
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+on: 
+  push:
+    branches:
+      - master
+      - main
+      - test/*
+    paths-ignore:
+      - 'docs/**'
+      - 'requirements.docs.txt'
+      - 'mkdocs.yml'
+      - 'CNAME'
+
+  release:
+    types: [created]
+
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'requirements.docs.txt'
+      - 'mkdocs.yml'
+      - 'CNAME'
+
+jobs:
+  lint:
+    name: linter
+    runs-on: ubuntu-latest
+    if: success() || failure()  # Continue running if other jobs fail
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - uses: psf/black@main
+  
+  test:
+    name: python ${{ matrix.python-version }} tests
+    runs-on: ubuntu-latest
+    if: success() || failure()   # Continue running if other jobs fail
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9]
+
+    steps:
+      - name: Checkout kapitan recursively
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          cache: 'pip'
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install testing dependencies
+        run: |
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
+          sudo apt-get -qq update
+          sudo apt-get install -y gnupg2 git curl
+          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+          chmod 700 get_helm.sh
+          sudo ./get_helm.sh
+          pip3 install --editable ".[test]"
+          pip3 install coverage black
+      - name: Run tests
+        run: |-
+          # includes make test
+          make test_coverage 
+
+  build:
+    name: build ${{ matrix.platform }} image
+    if: success() || failure()   # Continue running if other jobs fail
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - name: Checkout kapitan recursively
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      # Setup QEMU and Buildx to build multi-platform image
+      # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Builds docker image and allow scoped caching
+      - name: build Kapitan Image
+        uses: docker/build-push-action@v5
+        with:
+          push: False 
+          platforms: ${{ matrix.platform }}
+          load: True
+          file: Dockerfile
+          tags: local-test-${{ matrix.platform }}
+          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
+
+      - name: Test Kapitan for ${{ matrix.platform }}
+        run: |
+          docker run -t --rm local-test-${{ matrix.platform }} --version
+
+
+  publish:
+    name: publish platform images
+    # Only starts if everything else is successful
+    needs: [lint, test, build]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - name: Checkout kapitan recursively
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      # Setup QEMU and Buildx to build multi-platform image
+      # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
+        if: env.DOCKERHUB_USERNAME != null
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/kapitan
+          # generate Docker tags based on the following events/attributes
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+          flavor: |
+            suffix=-${{ matrix.platform }}
+
+      - name: Build and push by digest
+        id: push-digest
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
+        if: env.DOCKERHUB_USERNAME != null
+        uses: docker/build-push-action@v5
+        with:
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{steps.meta.output.labels}}
+          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
+
+  build-multi-architecture:
+    name: combine platform images
+    needs:
+      - publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Setup QEMU and Buildx to build multi-platform image
+      # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
+        if: env.DOCKERHUB_USERNAME != null
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/kapitan
+          # generate Docker tags based on the following events/attributes
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            
+      - uses: int128/docker-manifest-create-action@v1
+        with:
+          tags: ${{ steps.meta.outputs.tags }}
+          builder: buildx
+          suffixes: |
+            -linux-amd64
+            -linux-arm64
