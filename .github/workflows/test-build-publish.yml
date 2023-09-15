@@ -72,7 +72,8 @@ jobs:
           pip3 install coverage black
       - name: Run tests
         run: |-
-          make test && make test_coverage
+          # includes make test
+          make test_coverage 
 
   build:
     name: build ${{ matrix.platform }} image
@@ -112,6 +113,7 @@ jobs:
       - name: Test Kapitan for ${{ matrix.platform }}
         run: |
           docker run -t --rm local-test-${{ matrix.platform }} --version
+
 
   publish:
     name: publish platform images
