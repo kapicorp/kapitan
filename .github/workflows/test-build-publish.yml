@@ -155,7 +155,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name=${{ env.DOCKERHUB_REPOSITORY }}/kapitan
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/kapitan
           # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
@@ -211,7 +211,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name=${{ env.DOCKERHUB_REPOSITORY }}/kapitan
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/kapitan
           # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
