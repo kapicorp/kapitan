@@ -17,6 +17,7 @@ on:
       - 'requirements.docs.txt'
       - 'mkdocs.yml'
       - 'CNAME'
+      - 'Dockerfile.docs'
 
   release:
     types: [created]
@@ -27,6 +28,7 @@ on:
       - 'requirements.docs.txt'
       - 'mkdocs.yml'
       - 'CNAME'
+      - 'Dockerfile.docs'
 
 jobs:
   lint:
