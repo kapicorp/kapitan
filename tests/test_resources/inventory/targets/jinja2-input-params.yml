@@ -18,5 +18,3 @@ parameters:
         input_params:
           name: test2
           namespace: ns2
-
-

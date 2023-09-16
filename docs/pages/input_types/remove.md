@@ -45,4 +45,3 @@ parameters:
 The first input block would throw an error because the copy input command hasn't run yet to produce the file being removed by the remove input block.
 
 *Supported output types*: N/A (no need to specify `output_type`)
-

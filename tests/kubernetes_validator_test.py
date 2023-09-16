@@ -12,6 +12,7 @@ import unittest
 from shutil import copyfile
 
 import yaml
+
 from kapitan import defaults
 from kapitan.cached import reset_cache
 from kapitan.cli import main

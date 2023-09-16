@@ -26,4 +26,3 @@ data:
 {{- range $key, $value := .Values.controller.config }}
     {{- $key | nindent 2 }}: {{ $value | quote }}
 {{- end }}
-

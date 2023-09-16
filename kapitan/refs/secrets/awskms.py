@@ -6,12 +6,13 @@
 "awskms secrets module"
 
 import base64
+
 import boto3
 
-from kapitan.refs.base import RefError
-from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan import cached
 from kapitan.errors import KapitanError
+from kapitan.refs.base import RefError
+from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
 
 class AWSKMSError(KapitanError):

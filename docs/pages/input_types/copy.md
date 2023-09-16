@@ -16,4 +16,3 @@ Example
           - resources/state/${target_name}/.terraform.lock.hcl
         output_path: terraform/
 ```
-

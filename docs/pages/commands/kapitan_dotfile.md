@@ -6,7 +6,7 @@ Kapitan allows you to coveniently override defaults by specifying a local `.kapi
 
 This comes handy to make sure **Kapitan** runs consistently for your specific setup.
 
-!!! info 
+!!! info
     Any **Kapitan** command can be overridden in the `.kapitan` dotfile, but here are some of the most common examples.
 
 ### `version`

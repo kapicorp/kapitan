@@ -55,7 +55,7 @@ Special flags:
 
 See the [helm doc](https://helm.sh/docs/helm/helm_template/) for further detail.
 
-#### Example
+## Example
 
 Let's use [nginx-ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress) helm chart as the input. Using [kapitan dependency manager](/external_dependencies.md), this chart can be fetched via a URL as listed in <https://helm.nginx.com/stable/index.yaml>.
 
@@ -107,7 +107,7 @@ $ grep "my-controller" compiled/nginx-from-chart/nginx-ingress/templates/control
         app: my-controller
 ```
 
-#### Building the binding from source
+### Building the binding from source
 
 Run
 

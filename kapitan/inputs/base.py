@@ -12,8 +12,8 @@ import logging
 import os
 from collections.abc import Mapping
 
-import yaml
 import toml
+import yaml
 
 from kapitan.errors import CompileError, KapitanError
 from kapitan.refs.base import Revealer

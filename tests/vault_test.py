@@ -8,12 +8,12 @@
 "vault secrets tests"
 
 import os
+import shutil
 import tempfile
 import unittest
-import shutil
 
-from kapitan.refs.base import RefController, Revealer, RefParams
-from kapitan.refs.secrets.vaultkv import VaultSecret, VaultClient, VaultError
+from kapitan.refs.base import RefController, RefParams, Revealer
+from kapitan.refs.secrets.vaultkv import VaultClient, VaultError, VaultSecret
 from tests.vault_server import VaultServer
 
 # Create temporary folder

@@ -1,9 +1,48 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 22.10.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
     hooks:
-    - id: black
+      - id: trailing-whitespace
+      - id: check-docstring-first
+      - id: check-json
+        exclude: |
+          (?x)(
+              ^system/templates/|
+          )
+      - id: check-yaml
+        exclude: |
+          (?x)(
+              ^examples/|
+              ^tests/|
+              ^mkdocs.yml
+          )
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: name-tests-test
+        exclude: |
+          (?x)(
+              ^tests/vault_server.py
+          )
+      - id: requirements-txt-fixer
+      - id: check-merge-conflict
+  - repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+      - id: black
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: [--profile, black]
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.32.2
+    rev: v0.37.0
     hooks:
     - id: markdownlint-fix
+      args:
+      - --disable
+      - MD046
+      - MD051
+      - --
+  - repo: meta
+    hooks:
+      - id: check-useless-excludes

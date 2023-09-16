@@ -9,7 +9,7 @@ global:
   sds:
     enabled: true
     udsPath: "unix:/var/run/sds/uds_path"
-    useTrustworthyJwt: true 
+    useTrustworthyJwt: true
 
   trustDomain: ""
 

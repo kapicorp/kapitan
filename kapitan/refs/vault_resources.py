@@ -5,8 +5,9 @@
 
 "hashicorp vault resource functions"
 
-import os
 import logging
+import os
+
 import hvac
 
 from kapitan.errors import KapitanError

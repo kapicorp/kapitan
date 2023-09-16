@@ -12,9 +12,9 @@ import os
 import unittest
 
 from kapitan.resources import (
-    file_exists,
     dir_files_list,
     dir_files_read,
+    file_exists,
     gzip_b64,
     jsonschema_validate,
     yaml_dump,

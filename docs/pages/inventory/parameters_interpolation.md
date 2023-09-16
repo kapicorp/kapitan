@@ -9,20 +9,20 @@
       components:
         nginx:
           image: nginx:latest
-    ``` 
+    ```
 
-    Usually when we want to talk about the `image` subkey, we normally use either of the following: 
-    
+    Usually when we want to talk about the `image` subkey, we normally use either of the following:
+
       * `parameters.components.nginx.image`
       * `components.nginx.image`
 
     However, when used in parameter expansion, remember to:
-    
-      * replace the `.` with `:` 
+
+      * replace the `.` with `:`
       * omit the `parameters` initial key which is implied
       * wrap it into the `${}` variable interpolation syntax
 
-    The correct way to reference `parameters.nginx.image` then becomes `${components:nginx:image}`. 
+    The correct way to reference `parameters.nginx.image` then becomes `${components:nginx:image}`.
 
 The [**Inventory**](#inventory) allows you to refer to other values defined elsewhere in the structure, using parameter interpolation.
 
@@ -33,7 +33,7 @@ Given the example:
 parameters:
   cluster:
     location: europe
-  
+
   application:
     location: ${cluster:location}
 
@@ -64,4 +64,3 @@ classes:
 Here in this case `application.location` refers to a value `location` which has been defined elsewhere, perhaps (but not necessarily) in the `project.production` class.
 
 Also notice that the class name (`project.production`) is not in any ways influencing the name or the structed of the yaml it imports into the file
-

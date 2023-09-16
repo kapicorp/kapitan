@@ -1,6 +1,6 @@
 # :kapitan-logo: **CLI Reference** | `kapitan lint`
 
-## `kapitan lint` 
+## `kapitan lint`
 
 Perform a checkup on your inventory or refs.
 
@@ -10,7 +10,7 @@ Perform a checkup on your inventory or refs.
     ./kapitan lint
     ```
 
-    ??? example "click to expand output" 
+    ??? example "click to expand output"
         ```shell
         Running yamllint on all inventory files...
 

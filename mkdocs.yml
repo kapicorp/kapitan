@@ -82,7 +82,7 @@ use_directory_urls: true
 nav:
   - Home: README.md
   - Getting started: getting_started.md
-      
+
 
   - Documentation:
       - Overview: pages/kapitan_overview.md
