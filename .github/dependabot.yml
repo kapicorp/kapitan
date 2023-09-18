@@ -10,11 +10,10 @@ updates:
     schedule:
       interval: "weekly"
     commit-message:
-      prefix: "PIP dependency update"
+      prefix: "chore: "
     ignore:
       - dependency-name: "google-api-python-client"
     labels:
-      - "pip"
       - "dependencies"
     open-pull-requests-limit: 2
     reviewers:

@@ -12,6 +12,7 @@ on:
     paths:
       - 'docs/**'
       - 'requirements.docs.txt'
+      - 'Dockerfile.docs'
       - 'mkdocs.yml'
       - 'CNAME'
 
