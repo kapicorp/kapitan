@@ -103,6 +103,9 @@ class GPGSecret(Base64Ref):
         ref_data = base64.b64decode(self.data)
         return self._decrypt(ref_data)
 
+    def update_key(self, recipients):
+        return self.update_recipients(recipients)
+
     def update_recipients(self, recipients):
         """
         re-encrypts data with new recipients, respects original encoding
