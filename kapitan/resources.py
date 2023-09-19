@@ -211,12 +211,14 @@ def search_imports(cwd, import_str, search_paths):
     - search_paths is the location where to look for import_str if not in cwd
     The only supported parameters are cwd and import_str, so search_paths
     needs to be closured.
+    This function returns a tuple[str, bytes] since jsonnet 0.19.0 require the
+    content of the file to be provided as a bytes type instead of a str.
     """
     basename = os.path.basename(import_str)
     full_import_path = os.path.normpath(os.path.join(cwd, import_str))
 
     if full_import_path in JSONNET_CACHE:
-        return full_import_path, JSONNET_CACHE[full_import_path]
+        return full_import_path, JSONNET_CACHE[full_import_path].encode()
 
     if not os.path.exists(full_import_path):
         # if import_str not found, search in install_path
@@ -247,7 +249,7 @@ def search_imports(cwd, import_str, search_paths):
         normalised_path_content = f.read()
         JSONNET_CACHE[normalised_path] = normalised_path_content
 
-    return normalised_path, normalised_path_content
+    return normalised_path, normalised_path_content.encode()
 
 
 def inventory(search_paths, target, inventory_path=None):

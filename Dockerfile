@@ -1,17 +1,10 @@
 # Build the virtualenv for Kapitan
-FROM python:3.8-slim-bullseye AS python-builder
-
+FROM python:3.8-slim AS python-builder
 ARG TARGETARCH
+ENV TARGETARCH=${TARGETARCH:-amd64}
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
-
-COPY ./kapitan ./kapitan
-COPY ./MANIFEST.in ./MANIFEST.in
-COPY ./pyproject.toml ./pyproject.toml
-COPY ./README.md ./README.md
-
-ENV PATH="/opt/venv/bin:${PATH}"
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
@@ -20,16 +13,16 @@ RUN apt-get update \
         git \
         default-jre
 
+ENV POETRY_VERSION=1.4.0
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="$VIRTUAL_ENV/bin:/usr/local/go/bin:${PATH}"
+RUN python -m venv $VIRTUAL_ENV \
+    && pip install --upgrade pip yq wheel poetry==$POETRY_VERSION
+
 # Install Go (for go-jsonnet)
 RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.17.3.linux-${TARGETARCH}.tar.gz \
     && tar -C /usr/local -xzf go.tar.gz \
     && rm go.tar.gz
-
-RUN python -m venv /opt/venv \
-    && pip install --upgrade pip yq wheel \
-    && export PATH=$PATH:/usr/local/go/bin \
-    && pip install --editable .[test] \
-    && pip install .[gojsonnet]
 
 # Install Helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
@@ -37,10 +30,23 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
     && HELM_INSTALL_DIR=/opt/venv/bin ./get_helm.sh --no-sudo \
     && rm get_helm.sh
 
+
+COPY ./MANIFEST.in ./MANIFEST.in
+COPY ./pyproject.toml ./pyproject.toml
+COPY ./poetry.lock ./poetry.lock
+COPY ./README.md ./README.md
+
+# Installs and caches dependencies
+RUN poetry install --no-root --extras=gojsonnet
+
+COPY ./kapitan ./kapitan
+
+RUN pip install --editable .[test] \
+    && pip install .[gojsonnet]
+
+
 # Final image with virtualenv built in previous step
 FROM python:3.8-slim
-
-COPY --from=python-builder /opt/venv /opt/venv
 
 ENV PATH="/opt/venv/bin:${PATH}"
 ENV HELM_CACHE_HOME=".cache/helm"
@@ -59,6 +65,8 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --no-log-init --user-group kapitan
+
+COPY --from=python-builder /opt/venv /opt/venv
 
 USER kapitan
 
