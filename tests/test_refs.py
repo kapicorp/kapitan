@@ -368,12 +368,12 @@ class Base64RefsTest(unittest.TestCase):
             data = "message here: {}".format(ref_var_doesnt_exist.compile())
             revealed_data = REVEALER_EMBEDDED.reveal_raw(data)
 
-    def test_ref_function_randomstr(self):
+    def test_ref_function_random_str(self):
         "write randomstr to secret, confirm ref file exists, reveal and check"
 
-        tag = "?{base64:ref/randomstr||randomstr}"
+        tag = "?{base64:ref/randomstr||random:str}"
         REF_CONTROLLER[tag] = RefParams()
-        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/base64")))
+        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/randomstr")))
 
         file_with_tags = tempfile.mktemp()
         with open(file_with_tags, "w") as fp:
@@ -383,7 +383,7 @@ class Base64RefsTest(unittest.TestCase):
         self.assertTrue(get_entropy(revealed) > 4)
 
         # Test with parameter nbytes=16, correlating with string length 16
-        tag = "?{base64:ref/randomstr||randomstr:16}"
+        tag = "?{base64:ref/randomstr||random:str:16}"
         REF_CONTROLLER[tag] = RefParams()
         REVEALER._reveal_tag_without_subvar.cache_clear()
         revealed = REVEALER.reveal_raw_file(file_with_tags)
@@ -423,9 +423,9 @@ class Base64RefsTest(unittest.TestCase):
     # TODO write tests for RefController errors (lookups, etc..)
 
     def test_ref_function_random_loweralphanum(self):
-        "write loweralphanum to secret, confirm ref file exists, reveal and check"
+        "write random:loweralphanum to secret, confirm ref file exists, reveal and check"
 
-        tag = "?{plain:ref/loweralphanum||loweralphanum}"
+        tag = "?{plain:ref/loweralphanum||random:loweralphanum}"
         REF_CONTROLLER[tag] = RefParams()
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/loweralphanum")))
 
@@ -435,8 +435,8 @@ class Base64RefsTest(unittest.TestCase):
         revealed = REVEALER.reveal_raw_file(file_with_tags)
         self.assertEqual(len(revealed), 8)  # default length of loweralphanum string is 8
 
-        # Test with parameter chars=16, correlating with string length 16
-        tag = "?{plain:ref/loweralphanum||loweralphanum:16}"
+        # Test with parameter nchars=16, correlating with string length 16
+        tag = "?{plain:ref/loweralphanum||random:loweralphanum:16}"
         REF_CONTROLLER[tag] = RefParams()
         REVEALER._reveal_tag_without_subvar.cache_clear()
         revealed = REVEALER.reveal_raw_file(file_with_tags)

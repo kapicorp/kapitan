@@ -28,7 +28,6 @@ class InventoryTarget:
     logfile: str
 
     def __init__(self, target_name: str, target_path: str) -> None:
-
         self.path = target_path
         self.name = target_name
 
@@ -235,7 +234,6 @@ class OmegaConfBackend:
 
     @staticmethod
     def migrate_str(content: str):
-
         # TODO: dont migrate custom resolvers
         # TODO: migrate interpolations with '.' in the keyname
 
@@ -244,7 +242,10 @@ class OmegaConfBackend:
             r"(?<!\\)\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
             lambda match: "${" + match.group(1)
             # .replace(".", ",") # support interpolations with '.' in keyname
-            .replace(":", ".",).replace(  # migrate path delimiter
+            .replace(
+                ":",
+                ".",
+            ).replace(  # migrate path delimiter
                 "_reclass_", "_meta_"
             )
             + "}",  # migrate meta data
@@ -266,13 +267,11 @@ class OmegaConfBackend:
     # private
     # ----------
     def get_selected_targets(self):
-
         selected_targets = []
 
         # loop through targets searchpath and load all targets
         for root, dirs, files in os.walk(self.targets_searchpath):
             for target_file in files:
-
                 # split file extension and check if yml/yaml
                 target_path = os.path.join(root, target_file)
                 target_name, ext = os.path.splitext(target_file)
@@ -302,7 +301,6 @@ class OmegaConfBackend:
 
         # load classes for targets
         for class_name in target.classes:
-
             inv_class = self.load_class(target, class_name)
             if not inv_class:
                 # either redundantly defined or not found (with ignore_not_found: true)
@@ -327,7 +325,6 @@ class OmegaConfBackend:
             logger.warning(f"Could not resolve target name on target {target.name}")
 
     def load_class(self, target: InventoryTarget, class_name: str):
-
         # resolve class path (has to be absolute)
         class_path = os.path.join(self.classes_searchpath, *class_name.split("."))
         if class_path in target.classes_redundancy_check:
