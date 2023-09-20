@@ -1,3 +1,4 @@
+import argparse
 import os
 import sys
 import unittest
@@ -17,7 +18,7 @@ from kapitan.dependency_manager.base import (
 )
 
 
-class RemoteInventoryTest(unittest.TestCase):
+class RemoteInventoryTestFetch(unittest.TestCase):
     def setUp(self):
         os.chdir(
             os.path.join(
@@ -89,6 +90,17 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(temp_dir)
         rmtree(output_dir)
 
+
+class RemoteInventoryTest(unittest.TestCase):
+    extraArgv = []
+
+    def setUp(self):
+        os.chdir(
+            os.path.join(
+                os.path.abspath(os.path.dirname(__file__)), "test_remote_inventory", "environment_one"
+            )
+        )
+
     def test_compile_fetch(self):
         """Run $ kapitan compile --force-fetch --output-path=some/dir/ --inventory-path=another/dir --targets remoteinv-example remoteinv-nginx zippedinv
         were some/dir/ & another/dir/ are directories chosen by the user
@@ -119,7 +131,7 @@ class RemoteInventoryTest(unittest.TestCase):
             "remoteinv-example",
             "remoteinv-nginx",
             "zippedinv",
-        ]
+        ] + self.extraArgv
         main()
 
         self.assertTrue(os.path.isfile(os.path.join(temp_inv, "targets", "remoteinv-nginx.yml")))
@@ -152,7 +164,7 @@ class RemoteInventoryTest(unittest.TestCase):
             os.path.join(temp_dir, "inventory"),
             "-t",
             "nginx",
-        ]
+        ] + self.extraArgv
         main()
         self.assertTrue(os.path.exists(os.path.join(temp_dir, "compiled", "nginx")))
         rmtree(temp_dir)
@@ -186,7 +198,7 @@ class RemoteInventoryTest(unittest.TestCase):
             temp_inv,
             "--targets",
             "remoteinv-example",
-        ]
+        ] + self.extraArgv
         main()
 
         fname = os.path.join(temp_inv, "targets", "zippedinv.yml")
@@ -212,7 +224,7 @@ class RemoteInventoryTest(unittest.TestCase):
             temp_inv,
             "--targets",
             "remoteinv-example",
-        ]
+        ] + self.extraArgv
         main()
         # zippedinv.yml overwritten
         force_fetched_data = json.loads(yaml_load([os.path.dirname(fname)], os.path.basename(fname)))
@@ -224,3 +236,16 @@ class RemoteInventoryTest(unittest.TestCase):
     def tearDown(self):
         os.chdir("../../../")
         reset_cache()
+
+
+class RemoteInventoryTestReclassRs(RemoteInventoryTest):
+    def setUp(self):
+        super().setUp()
+        self.extraArgv = ["--inventory-backend=reclass-rs"]
+
+    @unittest.skip(
+        "Broken with reclass-rs due to duplicate key in class `component.mysql` "
+        + "(`parameters.mysql.storage` is duplicated)"
+    )
+    def test_compile_fetch(self):
+        pass
