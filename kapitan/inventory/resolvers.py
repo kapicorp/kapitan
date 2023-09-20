@@ -135,6 +135,7 @@ def write_to_key(destination: str, origin: str, _root_):
 
         # resolve relative interpolations
         try:
+            # TODO: replace with OC.to_object(), when it supports escaped interpolations
             copied = copy.deepcopy(content)
             OmegaConf.resolve(copied, True)
         except Exception as e:
@@ -142,7 +143,14 @@ def write_to_key(destination: str, origin: str, _root_):
             logger.warning(e)
 
         # write resolved content back to _root_
-        OmegaConf.update(_root_, destination, copied, merge=True, force_add=True)
+        # OmegaConf.set_readonly(copied.server, False)
+        # print(copied)
+        # print(copied.server._get_flag("readonly"))
+        # TODO: replace current workaround with clean flag overriding
+        obj = OmegaConf.to_container(copied)
+        config = OmegaConf.create(obj)
+
+        OmegaConf.update(_root_, destination, config, merge=True, force_add=True)
     except Exception as e:
         raise e
     return "DONE"
