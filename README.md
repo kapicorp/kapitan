@@ -1,10 +1,9 @@
 # Kapitan: advanced configuration management tool
 
-![Unit Tests](https://github.com/kapicorp/kapitan/actions/workflows/test.yml/badge.svg)
+[![Test, Build and Publish docker image](https://github.com/kapicorp/kapitan/actions/workflows/test-build-publish.yml/badge.svg?branch=master&event=push)](https://github.com/kapicorp/kapitan/actions/workflows/test-build-publish.yml)
 ![Python Version](https://img.shields.io/pypi/pyversions/kapitan)
 ![Downloads](https://img.shields.io/pypi/dm/kapitan)
 ![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)
-[![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
 
@@ -18,7 +17,7 @@ Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
 ## [**Official site**](https://kapitan.dev) <https://kapitan.dev>
 
 
-## [**Quick Start**](https://kapitan.dev/getting_started/#quickstart))
+## [**Quick Start**](https://kapitan.dev/getting_started/#quickstart)
 
 ## Install Kapitan
 
