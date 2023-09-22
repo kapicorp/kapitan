@@ -2,8 +2,6 @@
 name: PEX Build and Upload
 
 on:
-  release:
-    types: [created]
   workflow_run:
     workflows:
       - Upload Python Package
@@ -15,15 +13,15 @@ jobs:
     if: false  # disable as this is not working with multiple python versions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.x
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: 1.17
       - name: Install Python dependencies
