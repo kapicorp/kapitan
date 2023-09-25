@@ -31,7 +31,7 @@ class Base64Ref(PlainRef):
         super().__init__(data, **kwargs)
         self.type_name = "base64"
         self.encoding = kwargs.get("encoding", "original")
-        self.embed_refs = kwargs.get("embed_refs", True)
+        self.embed_refs = kwargs.get("embed_refs", False)
 
         # TODO data should be bytes only
         if from_base64:

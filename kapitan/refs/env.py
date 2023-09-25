@@ -5,38 +5,45 @@
 
 "environment refs module"
 
-import base64
-import hashlib
 import os
 
+from kapitan.errors import KapitanError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
-DEFAULT_ENV_REF_VAR_PREFIX = "KAPITAN_VAR_"
+DEFAULT_ENV_REF_VAR_PREFIX = "KAPITAN_ENV_"
+
+
+class EnvError(KapitanError):
+    """Generic Env errors"""
+
+    pass
 
 
 class EnvRef(Base64Ref):
     def __init__(self, data, **kwargs):
         """
-        writes plain data, which is the "default" value if the ref cannot be located in the KAPITAN_VAR_*
-        environment vars prefix during the reveal phase.
+        looks up KAPITAN_ENV_* when revealing
         """
-        super().__init__(data, from_base64=True, kwargs=kwargs)
+        super().__init__(data, from_base64=True, **kwargs)
         self.type_name = "env"
 
     def reveal(self):
         """
         Attempt to locate the variable in the environment w/ the suffix.
         """
-        path_part = self.path.split("/")[-1]
-        var_key = "{}{}".format(DEFAULT_ENV_REF_VAR_PREFIX, path_part)
-        return os.getenv(var_key, default=os.getenv(var_key.upper(), default=self.data))
+        env_var_key = self.path
+        env_var = f"{DEFAULT_ENV_REF_VAR_PREFIX}{env_var_key}"
+        value = os.getenv(env_var, default=os.getenv(env_var.upper()))
+        if value is None:
+            raise EnvError(f"env: variable {env_var} is not defined")
+        return value
 
-    # def compile(self):
-    #     """
-    #     Override the way an EnvRef is compiled, since we want to reveal it via the env later.
-    #     """
-    #     compiled = f"?{{{self.type_name}:{self.path}:{self.hash[:8]}}}"
-    #     return compiled
+    def compile(self):
+        return f"?{{env:{self.path}}}"
+
+    @classmethod
+    def from_path(cls, ref_full_path, **kwargs):
+        return cls(ref_full_path, **kwargs)
 
 
 class EnvRefBackend(Base64RefBackend):
