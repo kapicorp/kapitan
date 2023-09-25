@@ -10,7 +10,7 @@ import os
 from kapitan.errors import KapitanError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
-DEFAULT_ENV_REF_VAR_PREFIX = "KAPITAN_ENV_"
+DEFAULT_ENV_REF_VAR_PREFIX = ""  # "KAPITAN_ENV_" (testing only)
 
 
 class EnvError(KapitanError):
