@@ -548,6 +548,16 @@ def build_parser():
         help='set refs path, default is "./refs"',
         default=from_dot_kapitan("refs", "refs-path", "./refs"),
     )
+    refs_parser.add_argument(
+        "--yaml-multiline-string-style",
+        "-L",
+        type=str,
+        choices=["literal", "folded", "double-quotes"],
+        metavar="STYLE",
+        action="store",
+        default=from_dot_kapitan("refs", "yaml-multiline-string-style", "double-quotes"),
+        help="set multiline string style to STYLE, default is 'double-quotes'",
+    )
 
     lint_parser = subparser.add_parser(
         "lint", aliases=["l"], help="linter for inventory and refs", parents=[logger_parser]

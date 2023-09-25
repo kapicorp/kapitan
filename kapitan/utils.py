@@ -223,15 +223,20 @@ def multiline_str_presenter(dumper, data):
     Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
     """
     # get parsed args from cached.py
-    compile_args = cached.args.get("compile", None)
+    compile_args = cached.args.get("compile")
     style = None
     if compile_args:
         style = compile_args.yaml_multiline_string_style
 
     # check for inventory args too
-    inventory_args = cached.args.get("inventory", None)
+    inventory_args = cached.args.get("inventory")
     if inventory_args:
         style = inventory_args.multiline_string_style
+        
+    # check for refs args too
+    refs_args = cached.args.get("refs")
+    if refs_args:
+        style = refs_args.yaml_multiline_string_style
 
     if style == "literal":
         style = "|"
