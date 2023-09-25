@@ -112,15 +112,6 @@ def relpath(path: str, _node_):
     return relative_interpolation
 
 
-def from_file(path: str):
-    if os.path.isfile(path):
-        with open(path, "r") as f:
-            return f.read()
-    else:
-        logger.error(f"from_file: file {path} does not exist")
-        raise
-
-
 def write_to_key(destination: str, origin: str, _root_):
     """
     resolver function to write any content to different place in the inventory
@@ -156,6 +147,31 @@ def write_to_key(destination: str, origin: str, _root_):
     return "DONE"
 
 
+def from_file(path: str):
+    if os.path.isfile(path):
+        with open(path, "r") as f:
+            return f.read()
+    else:
+        logger.error(f"from_file: file {path} does not exist")
+        raise
+
+
+def filename(_node_: Node):
+    return _node_._get_flag("filename")
+
+
+def parent_filename(_parent_: Node):
+    return _parent_._get_flag("filename")
+
+
+def path(_node_: Node):
+    return _node_._get_flag("path")
+
+
+def parent_path(_parent_: Node):
+    return _parent_._get_flag("path")
+
+
 def condition_if(condition: str, config: dict):
     if bool(condition):
         return config
@@ -186,6 +202,7 @@ def condition_equal(*configs):
     return all(config == configs[0] for config in configs)
 
 
+# TODO: nexenio only
 def helm_dep(name: str, source: str):
     """kapitan template for a helm chart dependency"""
     return {
@@ -197,6 +214,7 @@ def helm_dep(name: str, source: str):
     }
 
 
+# TODO: nexenio only
 def helm_input(name: str):
     """kapitan template for a helm input type configuration"""
     return {
@@ -214,6 +232,10 @@ def helm_input(name: str):
     }
 
 
+# TODO: load / import user modules as resolver-libraries
+# * connect with flag
+# * merge as dict
+# * register resolvers  from dict
 def register_resolvers(inventory_path: str) -> None:
     """register pre-defined and user-defined resolvers"""
     replace = True
@@ -233,6 +255,10 @@ def register_resolvers(inventory_path: str) -> None:
     OmegaConf.register_new_resolver("default", default, replace=replace)
     OmegaConf.register_new_resolver("write", write_to_key, replace=replace)
     OmegaConf.register_new_resolver("from_file", from_file, replace=replace)
+    OmegaConf.register_new_resolver("filename", filename, replace=replace)
+    OmegaConf.register_new_resolver("parent_filename", parent_filename, replace=replace)
+    OmegaConf.register_new_resolver("path", path, replace=replace)
+    OmegaConf.register_new_resolver("parent_path", parent_path, replace=replace)
 
     # boolean algebra
     OmegaConf.register_new_resolver("if", condition_if, replace=replace)
