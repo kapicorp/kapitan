@@ -232,7 +232,7 @@ def multiline_str_presenter(dumper, data):
     inventory_args = cached.args.get("inventory")
     if inventory_args:
         style = inventory_args.multiline_string_style
-        
+
     # check for refs args too
     refs_args = cached.args.get("refs")
     if refs_args:
