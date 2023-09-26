@@ -8,7 +8,7 @@ import unittest
 
 import yaml
 
-from kapitan.inventory.omegaconf import OmegaConfBackend
+from kapitan.inventory.omegaconf_inv import OmegaConfBackend
 
 
 class OmegaConfMigrationTest(unittest.TestCase):

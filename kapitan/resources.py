@@ -22,7 +22,7 @@ import yaml
 import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
-from kapitan.inventory.omegaconf import OmegaConfBackend
+from kapitan.inventory.omegaconf_inv import OmegaConfBackend
 from kapitan.inventory.reclass import ReclassBackend
 from kapitan.utils import (
     PrettyDumper,

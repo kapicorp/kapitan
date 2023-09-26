@@ -380,4 +380,9 @@ class OmegaConfBackend:
             return [], {}
         classes = OmegaConf.create(config.get("classes", []))
         parameters = OmegaConf.create(config.get("parameters", {}))
+
+        # add metadata to nodes
+        filename = os.path.splitext(os.path.split(path)[1])[0]
+        parameters._set_flag(["filename", "path"], [filename, path], recursive=True)
+
         return classes, parameters
