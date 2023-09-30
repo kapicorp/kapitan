@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 search_path = ""
 ref_controller = ""
 test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_copy")
-logger.info("test_path: %s", test_path)
 compile_path = os.path.join(test_path, "output")
 file_path = os.path.join(test_path, "input")
 test_file_path = os.path.join(file_path, "test_copy_input")

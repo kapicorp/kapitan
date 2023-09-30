@@ -28,7 +28,8 @@ class VaultTransitTest(unittest.TestCase):
         cls.server.vault_client.secrets.transit.create_key(name="hvac_updated_key")
 
         # setup static vault client
-        env = {"auth": "token", "crypto_key": "hvac_key"}
+        parameters = {"auth": "token", "crypto_key": "hvac_key"}
+        env = dict(**parameters, **cls.server.parameters)
         cls.client = VaultClient(env)
 
     @classmethod
@@ -42,7 +43,9 @@ class VaultTransitTest(unittest.TestCase):
         """
         Check the encryption works
         """
-        env = {"auth": "token", "crypto_key": "hvac_key"}
+        parameters = {"auth": "token", "crypto_key": "hvac_key"}
+        env = dict(**parameters, **self.server.parameters)
+
         file_data = "foo:some_random_value"
         vault_transit_obj = VaultTransit(file_data, env)
 
@@ -60,7 +63,8 @@ class VaultTransitTest(unittest.TestCase):
         """
         Check the decryption works
         """
-        env = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
+        parameters = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
+        env = dict(**parameters, **self.server.parameters)
         file_data = "foo:some_random_value"
         vault_transit_obj = VaultTransit(file_data, env)
 
@@ -77,7 +81,8 @@ class VaultTransitTest(unittest.TestCase):
         """
         Checks the key update works
         """
-        env = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
+        parameters = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
+        env = dict(**parameters, **self.server.parameters)
         file_data = "foo:some_random_value"
         vault_transit_obj = VaultTransit(file_data, env)
 
