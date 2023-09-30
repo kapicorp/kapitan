@@ -29,7 +29,7 @@ class VaultServer:
     def __init__(self):
         self.docker_client = docker.from_env()
         self.container = self.setup_container()
-        self.port = self.container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0]["HostPort"]
+        
         self.vault_client = None
         self.setup_vault()
 
@@ -51,6 +51,7 @@ class VaultServer:
             sleep(2)
             vault_container.reload()
 
+        self.port = vault_container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0]["HostPort"]
         return vault_container
 
     def setup_vault(self):
@@ -61,6 +62,7 @@ class VaultServer:
     def prepare_vault(self):
         # Initialize vault, unseal, mount secret engine & add auth
         os.environ["VAULT_ADDR"] = f"http://127.0.0.1:{self.port}"
+        logger.info(f"VAULT_ADDR: {os.environ['VAULT_ADDR']}")
         self.vault_client = hvac.Client()
         init = self.vault_client.sys.initialize()
         self.vault_client.sys.submit_unseal_keys(init["keys"])
