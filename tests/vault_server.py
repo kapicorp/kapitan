@@ -29,7 +29,7 @@ class VaultServer:
     def __init__(self):
         self.docker_client = docker.from_env()
         self.container = self.setup_container()
-        
+
         self.vault_client = None
         self.setup_vault()
 
