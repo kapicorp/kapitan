@@ -47,6 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     if: success() || failure()   # Continue running if other jobs fail
     strategy:
+      fail-fast: false
       matrix:
         python-version: [3.8, 3.9]
 

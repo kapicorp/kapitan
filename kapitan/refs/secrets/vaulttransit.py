@@ -7,124 +7,17 @@
 
 import base64
 import logging
-import os
 from binascii import Error as b_error
 from sys import exit
 
 from kapitan import cached
-from kapitan.errors import KapitanError
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
+from kapitan.refs.vault_resources import VaultClient, VaultError
 
-import hvac
 from hvac.exceptions import Forbidden, InvalidPath
 
 logger = logging.getLogger(__name__)
-
-
-class VaultError(KapitanError):
-    """Generic vault errors"""
-
-    pass
-
-
-def get_env(parameter):
-    """
-    The following variables need to be exported to the environment or defined in inventory.
-        * VAULT_ADDR: url for vault
-        * VAULT_SKIP_VERIFY=true: if set, do not verify presented TLS certificate before communicating with Vault server.
-        * VAULT_CLIENT_KEY: path to an unencrypted PEM-encoded private key matching the client certificate
-        * VAULT_CLIENT_CERT: path to a PEM-encoded client certificate for TLS authentication to the Vault server
-        * VAULT_CACERT: path to a PEM-encoded CA cert file to use to verify the Vault server TLS certificate
-        * VAULT_CAPATH: path to a directory of PEM-encoded CA cert files to verify the Vault server TLS certificate
-        * VAULT_NAMESPACE: specify the Vault Namespace, if you have one
-
-    Following keys are used to creates a new hvac client instance.
-        :param url: Base URL for the Vault instance being addressed.
-        :type url: str
-        :param cert: Certificates for use in requests sent to the Vault instance. This should be a tuple with the
-            certificate and then key.
-        :type cert: tuple
-        :param verify: Either a boolean to indicate whether TLS verification should be performed when sending requests to Vault,
-            or a string pointing at the CA bundle to use for verification.
-            # ssl-cert-verification.
-            See http://docs.python-requests.org/en/master/user/advanced/
-        :type verify: Union[bool,str]
-        :param namespace: Optional Vault Namespace.
-        :type namespace: str
-    """
-    client_parameters = {}
-    client_parameters["url"] = parameter.get("VAULT_ADDR", os.getenv("VAULT_ADDR", default=""))
-    client_parameters["namespace"] = parameter.get(
-        "VAULT_NAMESPACE", os.getenv("VAULT_NAMESPACE", default="")
-    )
-    # VERIFY VAULT SERVER TLS CERTIFICATE
-    skip_verify = str(parameter.get("VAULT_SKIP_VERIFY", os.getenv("VAULT_SKIP_VERIFY", default="")))
-
-    if skip_verify.lower() == "false":
-        cert = parameter.get("VAULT_CACERT", os.getenv("VAULT_CACERT", default=""))
-        if not cert:
-            cert_path = parameter.get("VAULT_CAPATH", os.getenv("VAULT_CAPATH", default=""))
-            if not cert_path:
-                raise Exception("Neither VAULT_CACERT nor VAULT_CAPATH specified")
-            client_parameters["verify"] = cert_path
-        else:
-            client_parameters["verify"] = cert
-    else:
-        client_parameters["verify"] = False
-
-    # CLIENT CERTIFICATE FOR TLS AUTHENTICATION
-    client_key = parameter.get("VAULT_CLIENT_KEY", os.getenv("VAULT_CLIENT_KEY", default=""))
-    client_cert = parameter.get("VAULT_CLIENT_CERT", os.getenv("VAULT_CLIENT_CERT", default=""))
-    if client_key != "" and client_cert != "":
-        client_parameters["cert"] = (client_cert, client_key)
-    return client_parameters
-
-
-def vault_obj(vault_parameters):
-    """
-    vault_parameters: necessary parameters to authenticate & get value from vault, provided by inventory
-    e.g.:
-        auth: userpass
-        VAULT_ADDR: http://127.0.0.1:8200
-        VAULT_SKIP_VERIFY: false
-    Authenticate client to server and return client object
-    """
-    env = get_env(vault_parameters)
-
-    client = hvac.Client(**{k: v for k, v in env.items() if k != "auth"})
-
-    auth_type = vault_parameters["auth"]
-    # GET TOKEN EITHER FROM ENVIRONMENT OF FILE
-    if auth_type in ["token", "github"]:
-        env["token"] = os.getenv("VAULT_TOKEN")
-        if not env["token"]:
-            try:
-                token_file = os.path.join(os.path.expanduser("~"), ".vault-token")
-                with open(token_file, "r") as f:
-                    env["token"] = f.read()
-                if env["token"] == "":
-                    raise VaultError("{file} is empty".format(file=token_file))
-            except IOError:
-                raise VaultError("Cannot read file {file}".format(file=token_file))
-    # DIFFERENT LOGIN METHOD BASED ON AUTHENTICATION TYPE
-    if auth_type == "token":
-        client.token = env["token"]
-    elif auth_type == "ldap":
-        client.auth.ldap.login(username=os.getenv("VAULT_USERNAME"), password=os.getenv("VAULT_PASSWORD"))
-    elif auth_type == "userpass":
-        client.auth_userpass(username=os.getenv("VAULT_USERNAME"), password=os.getenv("VAULT_PASSWORD"))
-    elif auth_type == "approle":
-        client.auth_approle(os.getenv("VAULT_ROLE_ID"), secret_id=os.getenv("VAULT_SECRET_ID"))
-    elif auth_type == "github":
-        client.auth.github.login(token=env["token"])
-    else:
-        raise "Authentication type '{auth}' not supported".format(auth=auth_type)
-
-    if client.is_authenticated():
-        return client
-    else:
-        raise VaultError("Vault Authentication Error, Environment Variables defined?")
 
 
 class VaultTransit(Base64Ref):
@@ -217,11 +110,12 @@ class VaultTransit(Base64Ref):
             # To guarantee _data is bytes
             if isinstance(data, str):
                 _data = data.encode()
+
+        client = VaultClient(self.vault_params)
+        # token will comprise of two parts path_in_vault:key
+        # data = self.data.decode("utf-8").rstrip().split(":")
+
         try:
-            client = vault_obj(self.vault_params)
-            # token will comprise of two parts path_in_vault:key
-            # data = self.data.decode("utf-8").rstrip().split(":")
-            return_data = ""
             # Request encryption by vault
             response = client.secrets.transit.encrypt_data(
                 name=key,
@@ -229,8 +123,6 @@ class VaultTransit(Base64Ref):
                 plaintext=base64.b64encode(_data).decode("ascii"),
             )
             ciphertext = response["data"]["ciphertext"]
-
-            client.adapter.close()
 
             self.data = ciphertext.encode()
             self.vault_params["crypto_key"] = key
@@ -241,6 +133,8 @@ class VaultTransit(Base64Ref):
             )
         except InvalidPath:
             raise VaultError("{path} does not exist on Vault secret".format(path=data[0]))
+        finally:
+            client.adapter.close()
 
     def _decrypt(self, data):
         """
@@ -248,11 +142,13 @@ class VaultTransit(Base64Ref):
 
         :returns: secret in plain text
         """
-        client = vault_obj(self.vault_params)
-        try:
-            always_latest = self.vault_params["always_latest"]
-            key = self.vault_params.get("crypto_key")
+        client = VaultClient(self.vault_params)
+        always_latest = self.vault_params.get("always_latest", True)
+        key = self.vault_params.get("crypto_key")
+        if key is None:
+            raise RefError("Cannot access vault params")
 
+        try:
             if always_latest:
                 encrypt_data_response = client.secrets.transit.rewrap_data(
                     name=key,
@@ -276,6 +172,8 @@ class VaultTransit(Base64Ref):
             )
         except InvalidPath:
             raise VaultError("{path} does not exist on Vault secret".format(path=data[0]))
+        finally:
+            client.adapter.close()
 
     def dump(self):
         """
