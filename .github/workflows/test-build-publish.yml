@@ -178,8 +178,8 @@ jobs:
             name=${{ vars.DOCKERHUB_REPOSITORY }}/kapitan
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
-            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch,
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
@@ -243,7 +243,7 @@ jobs:
             name=${{ vars.DOCKERHUB_REPOSITORY }}/kapitan
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+            type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -259,5 +259,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           builder: buildx
           suffixes: |
+            -py-3.8-linux-amd64
+            -py-3.8-linux-arm64
             -linux-amd64
             -linux-arm64
