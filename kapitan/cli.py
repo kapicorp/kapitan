@@ -494,6 +494,24 @@ def build_parser():
         metavar="AUTH",
     )
     refs_parser.add_argument(
+        "--vault-mount",
+        help="set mount point for vault secrets, default is 'secret'",
+        default=from_dot_kapitan("refs", "vault-mount", "secret"),
+        metavar="MOUNT",
+    )
+    refs_parser.add_argument(
+        "--vault-path",
+        help="set path for vault secrets where the secret gets stored on vault, default is the secret_path",
+        default=from_dot_kapitan("refs", "vault-path", ""),
+        metavar="PATH",
+    )
+    refs_parser.add_argument(
+        "--vault-key",
+        help="set key for vault secrets",
+        default=from_dot_kapitan("refs", "vault-key", ""),
+        metavar="KEY",
+    )
+    refs_parser.add_argument(
         "--refs-path",
         help='set refs path, default is "./refs"',
         default=from_dot_kapitan("refs", "refs-path", "./refs"),
