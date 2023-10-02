@@ -1,6 +1,7 @@
 "vault transit tests"
 
 import base64
+import shutil
 import tempfile
 import unittest
 
