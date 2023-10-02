@@ -5,14 +5,14 @@
 
 "hashicorp vault resource functions"
 
-import docker
-import os
 import logging
-
+import os
 from time import sleep
-from kapitan.errors import KapitanError
 
+import docker
 import hvac
+
+from kapitan.errors import KapitanError
 
 logger = logging.getLogger(__name__)
 
