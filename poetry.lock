@@ -1063,13 +1063,13 @@ six = ">=1.5"
 
 [[package]]
 name = "python-gnupg"
-version = "0.4.9"
+version = "0.5.1"
 description = "A wrapper for the Gnu Privacy Guard (GPG or GnuPG)"
 optional = false
 python-versions = "*"
 files = [
-    {file = "python-gnupg-0.4.9.tar.gz", hash = "sha256:aaa748795572591aaf127b4ac8985684f3673ff82b39f370c836b006e68fc537"},
-    {file = "python_gnupg-0.4.9-py2.py3-none-any.whl", hash = "sha256:012960bde4d25dad631bb7650f563dda5e7271248a73f3584240063a293d99d8"},
+    {file = "python-gnupg-0.5.1.tar.gz", hash = "sha256:5674bad4e93876c0b0d3197e314d7f942d39018bf31e2b833f6788a6813c3fb8"},
+    {file = "python_gnupg-0.5.1-py2.py3-none-any.whl", hash = "sha256:bf9b2d9032ef38139b7d64184176cd0b293eaeae6e4f93f50e304c7051174482"},
 ]
 
 [[package]]
@@ -1484,4 +1484,4 @@ test = ["docker"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "2f790286414163af7fedb33db18cbdb40e223eb053030a3b2934827b2156c0cf"
+content-hash = "92eec997458d9e872857f5fc435744c2fd6cb86a8bcebe6b51e961b888bae7dc"
