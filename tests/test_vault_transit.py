@@ -10,8 +10,8 @@ from kapitan.refs.vault_resources import VaultClient
 from tests.vault_server import VaultTransitServer
 
 # Create temporary folder
-REFS_HOME = tempfile.mkdtemp()
-REF_CONTROLLER = RefController(REFS_HOME)
+REFS_PATH = tempfile.mkdtemp()
+REF_CONTROLLER = RefController(REFS_PATH)
 REVEALER = Revealer(REF_CONTROLLER)
 
 
@@ -21,12 +21,13 @@ class VaultTransitTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # setup vaulttransit server (running in container)
-        cls.server = VaultTransitServer(REFS_HOME, "kapitan_test_vault_transit")
+        cls.server = VaultTransitServer()
         cls.server.vault_client.secrets.transit.create_key(name="hvac_key")
         cls.server.vault_client.secrets.transit.create_key(name="hvac_updated_key")
 
         # setup static vault client
-        env = {"auth": "token", "crypto_key": "hvac_key"}
+        parameters = {"auth": "token", "crypto_key": "hvac_key"}
+        env = dict(**parameters, **cls.server.parameters)
         cls.client = VaultClient(env)
 
     @classmethod
@@ -34,12 +35,15 @@ class VaultTransitTest(unittest.TestCase):
         # close connections
         cls.client.adapter.close()
         cls.server.close_container()
+        shutil.rmtree(REFS_PATH, ignore_errors=True)
 
     def test_vault_transit_enc_data(self):
         """
         Check the encryption works
         """
-        env = {"auth": "token", "crypto_key": "hvac_key"}
+        parameters = {"auth": "token", "crypto_key": "hvac_key"}
+        env = dict(**parameters, **self.server.parameters)
+
         file_data = "foo:some_random_value"
         vault_transit_obj = VaultTransit(file_data, env)
 
@@ -57,7 +61,8 @@ class VaultTransitTest(unittest.TestCase):
         """
         Check the decryption works
         """
-        env = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
+        parameters = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
+        env = dict(**parameters, **self.server.parameters)
         file_data = "foo:some_random_value"
         vault_transit_obj = VaultTransit(file_data, env)
 
@@ -74,7 +79,8 @@ class VaultTransitTest(unittest.TestCase):
         """
         Checks the key update works
         """
-        env = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
+        parameters = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
+        env = dict(**parameters, **self.server.parameters)
         file_data = "foo:some_random_value"
         vault_transit_obj = VaultTransit(file_data, env)
 

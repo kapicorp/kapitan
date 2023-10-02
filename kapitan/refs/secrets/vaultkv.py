@@ -8,7 +8,6 @@
 import base64
 import logging
 
-import hvac
 from hvac.exceptions import Forbidden, InvalidPath
 
 from kapitan import cached

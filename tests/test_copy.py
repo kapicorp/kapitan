@@ -16,6 +16,9 @@ import unittest
 from kapitan.cli import main
 from kapitan.inputs.copy import Copy
 from kapitan.utils import directory_hash
+import logging
+
+logger = logging.getLogger(__name__)
 
 search_path = ""
 ref_controller = ""

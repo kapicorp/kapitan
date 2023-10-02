@@ -10,7 +10,6 @@ import logging
 from binascii import Error as b_error
 from sys import exit
 
-import hvac
 from hvac.exceptions import Forbidden, InvalidPath
 
 from kapitan import cached

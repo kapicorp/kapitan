@@ -10,14 +10,15 @@
 import os
 import tempfile
 import unittest
+import shutil
 
-from kapitan.refs.base import RefController, RefParams, Revealer
-from kapitan.refs.secrets.vaultkv import VaultClient, VaultError, VaultSecret
+from kapitan.refs.base import RefController, Revealer, RefParams
+from kapitan.refs.secrets.vaultkv import VaultSecret, VaultClient, VaultError
 from tests.vault_server import VaultServer
 
 # Create temporary folder
-REFS_HOME = tempfile.mkdtemp()
-REF_CONTROLLER = RefController(REFS_HOME)
+REFS_PATH = tempfile.mkdtemp()
+REF_CONTROLLER = RefController(REFS_PATH)
 REVEALER = Revealer(REF_CONTROLLER)
 
 
@@ -27,19 +28,21 @@ class VaultSecretTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # setup vault server (running in container)
-        cls.server = VaultServer(REFS_HOME, "test_vaultkv")
+        cls.server = VaultServer()
 
     @classmethod
     def tearDownClass(cls):
         # close connection
         cls.server.close_container()
+        shutil.rmtree(REFS_PATH, ignore_errors=True)
 
     def test_token_authentication(self):
         """
         Authenticate using token
         """
         parameters = {"auth": "token"}
-        test_client = VaultClient(parameters)
+        env = dict(**parameters, **self.server.parameters)
+        test_client = VaultClient(env)
         self.assertTrue(test_client.is_authenticated(), msg="Authentication with token failed")
         test_client.adapter.close()
 
@@ -48,7 +51,8 @@ class VaultSecretTest(unittest.TestCase):
         Authenticate using userpass
         """
         parameters = {"auth": "userpass"}
-        test_client = VaultClient(parameters)
+        env = dict(**parameters, **self.server.parameters)
+        test_client = VaultClient(env)
         self.assertTrue(test_client.is_authenticated(), msg="Authentication with userpass failed")
         test_client.adapter.close()
 
@@ -57,7 +61,8 @@ class VaultSecretTest(unittest.TestCase):
         Authenticate using approle
         """
         parameters = {"auth": "approle"}
-        test_client = VaultClient(parameters)
+        env = dict(**parameters, **self.server.parameters)
+        test_client = VaultClient(env)
         self.assertTrue(test_client.is_authenticated(), msg="Authentication with approle failed")
         test_client.adapter.close()
 
@@ -65,7 +70,8 @@ class VaultSecretTest(unittest.TestCase):
         """
         test vaultkv tag with parameters
         """
-        env = {"auth": "token", "mount": "secret"}
+        parameters = {"auth": "token", "mount": "secret"}
+        env = dict(**parameters, **self.server.parameters)
         secret = "bar"
 
         tag = "?{vaultkv:secret/harleyquinn:secret:testpath:foo}"
@@ -75,7 +81,7 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming ref file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/harleyquinn")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/harleyquinn")), msg="Secret file doesn't exist"
         )
 
         file_with_secret_tags = tempfile.mktemp()
@@ -91,7 +97,8 @@ class VaultSecretTest(unittest.TestCase):
         Write secret, confirm secret file exists, reveal and compare content
         """
         # hardcode secret into vault
-        env = {"auth": "token"}
+        parameters = {"auth": "token"}
+        env = dict(**parameters, **self.server.parameters)
         tag = "?{vaultkv:secret/batman}"
         secret = {"some_key": "something_secret"}
         client = VaultClient(env)
@@ -106,7 +113,7 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming secret file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/batman")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/batman")), msg="Secret file doesn't exist"
         )
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
@@ -121,14 +128,15 @@ class VaultSecretTest(unittest.TestCase):
         Access non existing secret, expect error
         """
         tag = "?{vaultkv:secret/joker}"
-        env = {"auth": "token"}
+        parameters = {"auth": "token"}
+        env = dict(**parameters, **self.server.parameters)
         file_data = "some_not_existing_path:some_key".encode()
         # encrypt false, because we want just reveal
         REF_CONTROLLER[tag] = VaultSecret(file_data, env, encrypt=False)
 
         # confirming secret file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/joker")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/joker")), msg="Secret file doesn't exist"
         )
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
@@ -141,7 +149,8 @@ class VaultSecretTest(unittest.TestCase):
         Access non existing secret, expect error
         """
         tag = "?{vaultkv:secret/joker}"
-        env = {"auth": "token"}
+        parameters = {"auth": "token"}
+        env = dict(**parameters, **self.server.parameters)
         # path foo exists from tests before
         file_data = "foo:some_not_existing_key".encode()
         # encrypt false, because we want just reveal
@@ -149,7 +158,7 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming secret file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/joker")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/joker")), msg="Secret file doesn't exist"
         )
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
@@ -161,16 +170,17 @@ class VaultSecretTest(unittest.TestCase):
         """
         Write secret via token, check if ref file exists
         """
-        env = {"vault_params": {"auth": "token", "mount": "secret"}}
+        parameters = {"auth": "token", "mount": "secret"}
+        env = dict(**parameters, **self.server.parameters)
         params = RefParams()
-        params.kwargs = env
+        params.kwargs = {"vault_params": env}
 
         tag = "?{vaultkv:secret/bane:secret:banes_testpath:banes_testkey||random:int:32}"
         REF_CONTROLLER[tag] = params
 
         # confirming ref file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/bane")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/bane")), msg="Secret file doesn't exist"
         )
 
         file_with_secret_tags = tempfile.mktemp()
@@ -186,16 +196,17 @@ class VaultSecretTest(unittest.TestCase):
         """
         Write secret via token, check if ref file exists
         """
-        env = {"vault_params": {"auth": "token", "mount": "secret"}}
+        parameters = {"auth": "token", "mount": "secret"}
+        env = dict(**parameters, **self.server.parameters)
         params = RefParams()
-        params.kwargs = env
+        params.kwargs = {"vault_params": env}
 
         tag = "?{vaultkv:secret/robin:secret:robins_testpath:robins_testkey||random:int:32|base64}"
         REF_CONTROLLER[tag] = params
 
         # confirming ref file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_HOME, "secret/bane")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/bane")), msg="Secret file doesn't exist"
         )
 
         file_with_secret_tags = tempfile.mktemp()
@@ -211,9 +222,10 @@ class VaultSecretTest(unittest.TestCase):
         """
         Write multiple secrets in one path and check if key gets overwritten
         """
-        env = {"vault_params": {"auth": "token", "mount": "secret"}}
+        parameters = {"auth": "token", "mount": "secret"}
+        env = dict(**parameters, **self.server.parameters)
         params = RefParams()
-        params.kwargs = env
+        params.kwargs = {"vault_params": env}
 
         # create two secrets that are in the same path in vault
         tag_1 = "?{vaultkv:secret/kv1:secret:same/path:first_key||random:int:32}"  # numeric
