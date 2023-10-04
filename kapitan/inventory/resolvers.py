@@ -46,8 +46,7 @@ def escape_interpolation(content: str):
 
 def merge(*args):
     """resolver function, that merges omegaconf objects"""
-    merge = OmegaConf.merge(*args, list_merge_mode=ListMergeMode.EXTEND)
-    return merge
+    return OmegaConf.merge(*args, list_merge_mode=ListMergeMode.EXTEND)
 
 
 def to_dict(input):
@@ -79,7 +78,7 @@ def default(*args):
     return output
 
 
-def relpath(path: str, _node_):
+def relpath(path: str, _node_: Node):
     """
     resolver function, that translates an absolute yaml-path to its relative path
     """
@@ -127,20 +126,16 @@ def write_to_key(destination: str, origin: str, _root_):
         # resolve relative interpolations
         try:
             # TODO: replace with OC.to_object(), when it supports escaped interpolations
-            copied = copy.deepcopy(content)
-            OmegaConf.resolve(copied, True)
+            config = copy.deepcopy(content)
+            OmegaConf.resolve(config, True)
         except Exception as e:
             # resolver error
             logger.warning(e)
 
-        # write resolved content back to _root_
-        # OmegaConf.set_readonly(copied.server, False)
-        # print(copied)
-        # print(copied.server._get_flag("readonly"))
-        # TODO: replace current workaround with clean flag overriding
-        obj = OmegaConf.to_container(copied)
-        config = OmegaConf.create(obj)
+        # TODO: remove when todo above is resolved
+        OmegaConf.set_readonly(config, False, recursive=True)
 
+        # write resolved content back to _root_
         OmegaConf.update(_root_, destination, config, merge=True, force_add=True)
     except Exception as e:
         raise e
