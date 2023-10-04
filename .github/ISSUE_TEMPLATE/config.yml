@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+contact_links:
+- name: '💬 Open a Discussion'
+  url: https://github.com/kapicorp/kapitan/discussions/new/choose
+  about: |
+    Share your thoughts, ideas, or concerns, and engage in discussions with the community to collaborate and improve the project.
+- name: '💬 Join us on Slack'
+  url: https://kubernetes.slack.com/archives/C981W2HD3
+  about: |
+    Join our Slack channel to connect with our community, ask questions, and stay updated on project developments.
