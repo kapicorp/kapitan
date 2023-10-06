@@ -12,6 +12,7 @@ import json
 import logging
 import os
 from collections.abc import Mapping
+from math import inf
 
 import toml
 import yaml
@@ -141,6 +142,7 @@ class CompilingFile(object):
                     indent=indent,
                     Dumper=PrettyDumper,
                     default_flow_style=False,
+                    width=inf,
                 )
             else:
                 yaml.dump_all(
@@ -149,6 +151,7 @@ class CompilingFile(object):
                     indent=indent,
                     Dumper=PrettyDumper,
                     default_flow_style=False,
+                    width=inf,
                 )
 
             logger.debug("Wrote %s", self.fp.name)
