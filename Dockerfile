@@ -34,14 +34,16 @@ COPY ./pyproject.toml ./pyproject.toml
 COPY ./poetry.lock ./poetry.lock
 COPY ./README.md ./README.md
 
-# Installs and caches dependencies
-RUN poetry install --no-root --extras=gojsonnet
+RUN poetry install --no-root --with=gojsonnet
 
 COPY ./kapitan ./kapitan
+RUN pip install .
 
-RUN pip install --editable .[test] \
-    && pip install .[gojsonnet]
+FROM python-builder AS python-tester
 
+RUN poetry install --no-root --with=test
+
+ENTRYPOINT [ "pytest", "tests" ]
 
 # Final image with virtualenv built in previous step
 FROM python:3.8-slim
