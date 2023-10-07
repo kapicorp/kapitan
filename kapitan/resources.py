@@ -17,15 +17,21 @@ import sys
 from functools import partial
 
 import jsonschema
-import kapitan.cached as cached
-import yaml
-from kapitan import __file__ as kapitan_install_path
-from kapitan.errors import CompileError, InventoryError, KapitanError
-from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
-
 import reclass
 import reclass.core
+import yaml
 from reclass.errors import NotFoundError, ReclassException
+
+import kapitan.cached as cached
+from kapitan import __file__ as kapitan_install_path
+from kapitan.errors import CompileError, InventoryError, KapitanError
+from kapitan.utils import (
+    PrettyDumper,
+    deep_get,
+    flatten_dict,
+    render_jinja2_file,
+    sha256_string,
+)
 
 logger = logging.getLogger(__name__)
 

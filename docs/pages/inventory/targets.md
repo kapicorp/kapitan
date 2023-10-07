@@ -92,7 +92,7 @@ A typical [**target**](#targets) might look like this:
 Note that it is made of 2 sections:
 
 * `classes` is a list of class files you will want to import.
-* `parameters` allows for local override of what is unique to this target. 
+* `parameters` allows for local override of what is unique to this target.
 
 !!! info
 

@@ -10,7 +10,7 @@ Shows all inventory files where a variable is declared:
     ./kapitan searchvar parameters.components.*.image
     ```
 
-    ??? example "click to expand output" 
+    ??? example "click to expand output"
         ```shell
         ./inventory/classes/components/vault.yml                     ${vault:image}
         ./inventory/classes/components/logstash.yml                  eu.gcr.io/antha-images/logstash:7.5.1

@@ -5,8 +5,8 @@ tags:
 # :kapitan-logo: **Terraform example**
 
 !!! danger
-    This documentation is not up-to-date. 
-    
+    This documentation is not up-to-date.
+
     Please refer to the [documentation](/pages/kapitan_overview/), [Getting started](/getting_started/) or look at the [Kapitan Reference](https://github.com/kapicorp/kapitan-reference) repository.
 
 We will be looking at how to use Kapitan to compile terraform files with Jsonnet as the input type. It's possible to use other input types, however, Jsonnet is recommended.
@@ -146,7 +146,7 @@ local cloudbuild = import "cloudbuild.jsonnet";
   [if name_in_resoures("cloudbuild") then "cloudbuild.tf"]: cloudbuild,
 ...
 }
-```  
+```
 
 Assuming that one of the configuration files for a specific environment has the parameter key `cloudbuild` set.
 These parameters will then be interpreted by the `cloudbuild.jsonnet` template.

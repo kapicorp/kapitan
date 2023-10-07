@@ -12,7 +12,7 @@ For example, rendering the inventory for the `mysql` target:
     kapitan inventory -t mysql
     ```
 
-    ??? example "click to expand output" 
+    ??? example "click to expand output"
         ```yaml
         __reclass__:
           environment: base

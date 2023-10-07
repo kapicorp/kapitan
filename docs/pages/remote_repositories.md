@@ -30,13 +30,13 @@ parameters:
 ### Example
 
 Lets say we want to fetch a class from our kapitan repository, specifically
-`kapicorp/kapitan/tree/master/examples/docker/inventory/classes/dockerfiles.yml`. 
+`kapicorp/kapitan/tree/master/examples/docker/inventory/classes/dockerfiles.yml`.
 
 Lets create a simple target file `docker.yml`
 
 !!! example ""
 
-    !!! note 
+    !!! note
 
         [external dependencies](external_dependencies.md) are used to fetch dependency items in this example.
 
@@ -77,7 +77,7 @@ Lets create a simple target file `docker.yml`
         kapitan compile --fetch
         ```
 
-    ??? example "click to expand output" 
+    ??? example "click to expand output"
         ```shell
         [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
         [WARNING] Reclass class not found: 'dockerfiles'. Skipped!
@@ -136,13 +136,13 @@ parameters:
         kapitan compile --fetch
         ```
 
-    ??? example "click to expand output" 
+    ??? example "click to expand output"
         ```shell
         ./kapitan compile -t mysql-generator-fetch --fetch
         Inventory https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml: fetching now
         Inventory https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml: successfully fetched
         Inventory https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml: saved to inventory/classes/kapitan/generators/kubernetes.yml
-        
+
         ...
         cut
         ...

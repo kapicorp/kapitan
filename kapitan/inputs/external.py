@@ -5,11 +5,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import subprocess
-import re
 import logging
 import os
+import re
 import shutil
+import subprocess
 from distutils.dir_util import copy_tree
 
 from kapitan.inputs.base import InputType

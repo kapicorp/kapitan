@@ -40,5 +40,3 @@ For instance you could define the following:
         Compiled acme (0.06s)
         Compiled acme-documentation (0.09s)
         ```
-
-

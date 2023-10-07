@@ -16,12 +16,12 @@ parameters:
       input_type: jinja2
       input_paths:
         - docs/mysql/README.md
-    validate: 
-    - type: kubernetes # mkdocs (1)! 
-      output_paths: # mkdocs (2)! 
+    validate:
+    - type: kubernetes # mkdocs (1)!
+      output_paths: # mkdocs (2)!
         - manifests/mysql_secret.yml
-      kind: secret # temporarily replaced with 'deployment' during test # mkdocs (3)! 
-      version: 1.14.0 # optional, defaults to 1.14.0 # mkdocs (4)! 
+      kind: secret # temporarily replaced with 'deployment' during test # mkdocs (3)!
+      version: 1.14.0 # optional, defaults to 1.14.0 # mkdocs (4)!
     - type: kubernetes
       output_paths:
         - manifests/mysql_service_jsonnet.yml

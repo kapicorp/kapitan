@@ -12,16 +12,16 @@ from functools import partial
 from mimetypes import MimeTypes
 from shutil import copyfile, rmtree
 
-from git import GitCommandError
-from git import Repo
-from kapitan.errors import GitSubdirNotFoundError, GitFetchingError, HelmFetchingError
+from git import GitCommandError, Repo
+
+from kapitan.errors import GitFetchingError, GitSubdirNotFoundError, HelmFetchingError
 from kapitan.helm_cli import helm_cli
 from kapitan.utils import (
     make_request,
-    unpack_downloaded_file,
-    safe_copy_tree,
-    safe_copy_file,
     normalise_join_path,
+    safe_copy_file,
+    safe_copy_tree,
+    unpack_downloaded_file,
 )
 
 logger = logging.getLogger(__name__)

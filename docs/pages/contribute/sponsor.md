@@ -3,7 +3,7 @@ comments: true
 tags:
   - community
 ---
-# :kapitan-logo: **Sponsor Kapitan** 
+# :kapitan-logo: **Sponsor Kapitan**
 
 Do you want to help the project? Great! There are many ways to do it
 

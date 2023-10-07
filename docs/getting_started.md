@@ -1,6 +1,6 @@
 # :kapitan-logo: **Kapitan Overview**
 
-## Setup your installation 
+## Setup your installation
 
 Using our reference repositories you can easily get started with **Kapitan**
 
@@ -9,7 +9,7 @@ Using our reference repositories you can easily get started with **Kapitan**
 [kapicorp/kapitan-reference](https://github.com/kapicorp/kapitan-reference) repository is meant show you many working examples of things you can do with Kapitan.
 You can use this to get familiar with **Kapitan**
 
-```
+```shell
 $ git clone git@github.com:kapicorp/kapitan-reference.git kapitan-templates
 $ cd kapitan-templates
 
@@ -94,7 +94,7 @@ Compiled echo-server (0.14s)
         kapitan -h
         ```
 
-### Pip 
+### Pip
 
 #### Install Python
 

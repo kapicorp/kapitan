@@ -6,7 +6,7 @@ concurrency:
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
   cancel-in-progress: true
 
-on: 
+on:
   push:
     branches:
       - master
@@ -36,12 +36,18 @@ jobs:
     runs-on: ubuntu-latest
     if: success() || failure()  # Continue running if other jobs fail
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+      - id: file_changes
+        uses: trilom/file-changes-action@v1.2.4
         with:
-          python-version: '3.9'
-      - uses: psf/black@main
-  
+          prNumber: ${{ github.event.number }}
+          output: ' '
+      - uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --files ${{ steps.file_changes.outputs.files }}
+
+
   test:
     name: python ${{ matrix.python-version }} tests
     runs-on: ubuntu-latest
@@ -62,7 +68,7 @@ jobs:
         with:
           cache: 'pip'
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Install testing dependencies
         run: |
           sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
@@ -76,7 +82,7 @@ jobs:
       - name: Run tests
         run: |-
           # includes make test
-          make test_coverage 
+          make test_coverage
 
   build:
     name: build ${{ matrix.platform }} image
@@ -93,7 +99,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      
+
       # Setup QEMU and Buildx to build multi-platform image
       # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
       - name: Set up QEMU
@@ -105,7 +111,7 @@ jobs:
       - name: build Kapitan Image
         uses: docker/build-push-action@v5
         with:
-          push: False 
+          push: False
           platforms: ${{ matrix.platform }}
           load: True
           file: Dockerfile
@@ -135,7 +141,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      
+
       # Setup QEMU and Buildx to build multi-platform image
       # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
       - name: Set up QEMU
@@ -224,7 +230,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            
+
       - uses: int128/docker-manifest-create-action@v1
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}

@@ -1,4 +1,4 @@
-classes: 
+classes:
   - common
   - component.namespace
   - component.busybox

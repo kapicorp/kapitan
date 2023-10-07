@@ -5,8 +5,8 @@ tags:
 # :kapitan-logo: **Kubernetes examples**
 
 !!! danger
-    This documentation is not up-to-date. 
-    
+    This documentation is not up-to-date.
+
     Please refer to the [documentation](/pages/kapitan_overview/), [Getting started](/getting_started/) or look at the [Kapitan Reference](https://github.com/kapicorp/kapitan-reference) repository.
 
 Here, we walk through how kapitan could be used to help create kubernetes manifests, whose values are customized for each target according to the inventory structure. The example folder can be found in our repository on Github at <https://github.com/kapicorp/kapitan/tree/master/examples/kubernetes>.

@@ -29,12 +29,12 @@ graph LR
     OTHER --> REFERENCES
     PLAIN --> REFERENCES
     OUTPUT --> TARGETN_OUTPUT
-    OUTPUT --> TARGET1_OUTPUT 
-    OUTPUT --> TARGET2_OUTPUT 
+    OUTPUT --> TARGET1_OUTPUT
+    OUTPUT --> TARGET2_OUTPUT
     REFERENCES --> KAPITAN
-    TARGET1_OUTPUT --> DOCUMENTATION 
+    TARGET1_OUTPUT --> DOCUMENTATION
     TARGET1_OUTPUT --> KUBERNETES
-    TARGET1_OUTPUT --> SCRIPTS 
+    TARGET1_OUTPUT --> SCRIPTS
     TARGET1_OUTPUT --> TERRAFORM
     CLASSES --> TARGET1
     CLASSES --> TARGET2
@@ -60,7 +60,7 @@ graph LR
     KAPITAN(("<img src='/images/kapitan_logo.png'; width='80'/>")):::blue
     click EXTERNAL "/compile#external"
 
-    subgraph "Input Types" 
+    subgraph "Input Types"
         EXTERNAL["external"]
         GENERATORS["generators"]
         HELM["helm"]
@@ -80,7 +80,7 @@ graph LR
         SCRIPTS["scripts"]
         TERRAFORM["terraform"]
     end
-       
+
     TARGET2_OUTPUT(["target 2"])
     TARGETN_OUTPUT(["target N"])
 
@@ -90,7 +90,7 @@ graph LR
 
 ### **Inventory**
 
-The **Inventory** is a hierarchical database of variables, defined in yaml files, that are passed to the targets during compilation. 
+The **Inventory** is a hierarchical database of variables, defined in yaml files, that are passed to the targets during compilation.
 
 The **Inventory** is the heart of **Kapitan**.
 
@@ -128,7 +128,7 @@ Use **kadet**, our home built Python library, to easily generate json and yaml m
 Using **kadet** is simple as using Python
 
 ???+ example "`examples/kubernetes/components/nginx-kadet/__init__.py`"
-    ```python 
+    ```python
     --8<-- "kubernetes/components/nginx-kadet/__init__.py"
     ```
 
@@ -147,7 +147,7 @@ Use the **jsonnet** input type to compile `jsonnet` code, and have access to a l
 Find help in :fontawesome-brands-slack: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3) or :fontawesome-brands-slack: [`#jsonnet`](https://kubernetes.slack.com/archives/C6JLE4L9X)
 
 ???+ example "`examples/kubernetes/components/nginx-jsonnet/main.jsonnet`"
-    ```python 
+    ```python
     --8<-- "kubernetes/components/nginx-jsonnet/main.jsonnet"
     ```
 
@@ -162,7 +162,7 @@ Good old Jinja to create text based templates for scripts and documentation.
 Don't underestimate the power of this very simple approach to create templated scripts and documentation!
 
 ???+ example "`examples/kubernetes/scripts/setup_cluster.sh`"
-    ```shell 
+    ```shell
     --8<-- "kubernetes/scripts/setup_cluster.sh"
     ```
 
@@ -178,7 +178,7 @@ Kapitan can also be used to manage **Helm**, giving you access to its enourmous 
     !!! note ""
 
         [external dependencies](external_dependencies.md) are used to automatically fetch helm charts in this example.
-        
+
         Please use the `kapitan compile --fetch` flag if the chart has not been downloaded already
 
     ```yaml

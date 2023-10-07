@@ -31,5 +31,3 @@ parameters:
           team_name: 'SRE'
           namespace: 'team-2'
           post_process_inputs: [gen-test-2]
-
-        

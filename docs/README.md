@@ -8,7 +8,7 @@
 * :fontawesome-brands-slack: Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
 * :fontawesome-brands-github: Help us grow: [give us a star](https://github.com/kapicorp/kapitan/stargazers) or even better [sponsor our project](pages/contribute/sponsor/)
 
-## Why do I need **Kapitan**? 
+## Why do I need **Kapitan**?
 
 > I use [`Helm`](https://helm.sh)/[`Kustomize`](https://kustomize.io/)/that-new-kid-on-the-block
 
@@ -17,7 +17,7 @@
 [Longer answer](pages/blog/2022-12-04.md#why-do-i-need-kapitan)
 
 !!! info
-        We are working hard to update all our documentation. Please reach out if you notice something that needs improving or you have other questions or comments. 
+        We are working hard to update all our documentation. Please reach out if you notice something that needs improving or you have other questions or comments.
 
 ## Dazzle me with a demo
 

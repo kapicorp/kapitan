@@ -1,5 +1,5 @@
 parameters:
-  input: 
+  input:
     nested:
       dictionary:
         foo: bar
@@ -23,4 +23,3 @@ parameters:
         output_type: toml
         input_paths:
           - components/input-to-output/main.jsonnet
-          

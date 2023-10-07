@@ -6,14 +6,15 @@
 "gkms secrets module"
 
 import base64
-import googleapiclient.discovery as gcloud
 import logging
 import warnings
 
-from kapitan.refs.base64 import Base64Ref, Base64RefBackend
-from kapitan.refs.base import RefError
+import googleapiclient.discovery as gcloud
+
 from kapitan import cached
 from kapitan.errors import KapitanError
+from kapitan.refs.base import RefError
+from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 # :kapitan-logo: **Input Type | Kadet**
 
-Kadet is an extensible **input type** for **Kapitan** that enables you to generate templates using **Python**. 
+Kadet is an extensible **input type** for **Kapitan** that enables you to generate templates using **Python**.
 
 The key benefit being the ability to utilize familiar programing principles while having access to **Kapitan**'s powerful inventory system.
 
@@ -36,9 +36,9 @@ class Deployment(BaseObj): # (1)!
         self.root.spec.template.spec.containers = self.kwargs.containers
 ```
 
-1. The deployment is an `BaseObj()` which has two main functions. 
+1. The deployment is an `BaseObj()` which has two main functions.
 2. `new(self)` is used to perform parameter validation & template compilation
-3. `body(self)` is utilized to set those parameters to be rendered. 
+3. `body(self)` is utilized to set those parameters to be rendered.
 4. `self.root.metadata.name` is a direct reference to a key in the corresponding yaml.
 
 

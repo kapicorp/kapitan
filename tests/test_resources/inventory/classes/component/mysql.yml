@@ -27,6 +27,6 @@ parameters:
         # password: ?{awskms:mysql/root/password|randomstr|base64}
 
         # Generates the sha256 checksum of the previously declared B64'ed password
-        # It's base64'ed again so that it can be used in kubernetes secrets 
+        # It's base64'ed again so that it can be used in kubernetes secrets
         password_sha256: ?{gpg:mysql/root/password_sha256|reveal:mysql/root/password|sha256|base64}
     storage: 20G # should trigger yamllint error

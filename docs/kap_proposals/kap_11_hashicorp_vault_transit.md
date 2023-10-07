@@ -66,7 +66,7 @@ parameters:
         VAULT_SKIP_VERIFY: "True"
         auth: token
         mount: transit
-        crypto_key: new_key   
+        crypto_key: new_key
         always_latest: False
 ```
 
@@ -76,7 +76,7 @@ Extra parameters that can be defined in inventory are:
 * `auth`: specify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`
 * `mount`: specify the mount point of key's path. e.g if path=`alpha-secret/foo/bar` then `mount: alpha-secret` (default `secret`)
 * `crypto_key`: Name of the `encryption key` defined in vault
-* `always_latest`: Always rewrap ciphertext to latest rotated `crypto_key` version  
+* `always_latest`: Always rewrap ciphertext to latest rotated `crypto_key` version
 Environment variables __should NOT__ be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,`VAULT_SECRET_ID`.
 This makes the secret_inside_kapitan file accessible throughout the inventory, where we can use the secret whenever necessary like `?{vaulttransit:${target_name}/secret_inside_kapitan}`
 
