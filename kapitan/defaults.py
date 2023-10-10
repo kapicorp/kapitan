@@ -9,12 +9,15 @@
 
 import os
 
-DEFAULT_KUBERNETES_VERSION = "1.14.0"
+DEFAULT_KUBERNETES_VERSION = "1.26.0"
 # standalone is used for standalone json schema (i.e. without external $refs)
 # strict is used as it behaves similarly to kubectl
 # see https://github.com/garethr/kubernetes-json-schema#kubernetes-json-schemas for more info
 SCHEMA_TYPE = "standalone-strict"
 FILE_PATH_FORMAT = "v{}-%s/{}.json" % SCHEMA_TYPE
+KUBERNETES_JSON_SCHEMA_URL = "https://raw.githubusercontent.com/kapicorp/kubernetes-json-schema/master/"
 
 # default path from where user defined custom filters are read
 DEFAULT_JINJA2_FILTERS_PATH = os.path.join("lib", "jinja2_filters.py")
+
+VALIDATION_ENABLED_ANNOTATION = "validation.kapicorp.com/enabled"

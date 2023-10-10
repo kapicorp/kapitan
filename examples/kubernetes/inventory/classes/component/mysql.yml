@@ -17,17 +17,17 @@ parameters:
       input_paths:
         - docs/mysql/README.md
     validate: 
-    - type: kubernetes # mkdocs (1)! 
+    - type: kubernetes # mkdocs (1)!
+      fail_on_error: true # mkdocs (3)!
+      verbose: true # mkdocs (5)!
+      exclude: 
+        kinds: # mkdocs (6)!
+        - StatefulSet
+        paths: # mkdocs (7)!
+        - manifest/excluded_from_validation.yml
       output_paths: # mkdocs (2)! 
-        - manifests/mysql_secret.yml
-      kind: secret # temporarily replaced with 'deployment' during test # mkdocs (3)! 
-      version: 1.14.0 # optional, defaults to 1.14.0 # mkdocs (4)! 
-    - type: kubernetes
-      output_paths:
-        - manifests/mysql_service_jsonnet.yml
-        - manifests/mysql_service_simple.yml
-      kind: service
-      version: 1.14.0
+        - manifests/*.yml
+      version: 1.26.0 # optional, defaults to 1.26.0 # mkdocs (4)! 
     # For vaultkv secrets it is important to declare auth in parameters
     secrets:
       vaultkv:
