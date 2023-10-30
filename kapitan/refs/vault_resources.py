@@ -80,7 +80,9 @@ class VaultClient(hvac.Client):
 
         if not self.is_authenticated():
             self.adapter.close()
-            raise VaultError("Vault Authentication Error, Environment Variables defined?")
+            raise VaultError(
+                "Vault Authentication Error, check if token in env:VAULT_TOKEN is valid and not expired"
+            )
 
 
 def get_env(parameter):
