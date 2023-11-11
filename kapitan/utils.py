@@ -9,6 +9,7 @@ from __future__ import print_function
 import collections
 import json
 import logging
+import magic
 import math
 import os
 import re
@@ -530,14 +531,6 @@ def make_request(source):
 
 def unpack_downloaded_file(file_path, output_path, content_type):
     """unpacks files of various MIME type and stores it to the output_path"""
-
-    try:
-        import magic
-    except ImportError:
-        logger.error(
-            "Error with unpacking content: libmagic is not installed. Install it with 'apt install libmagic1' or 'apk|brew install libmagic'"
-        )
-        sys.exit(1)
 
     if content_type == None or content_type == "application/octet-stream":
         if re.search(r"^Zip archive data.*", magic.from_file(file_path)):
