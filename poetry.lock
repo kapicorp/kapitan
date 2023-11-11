@@ -1192,6 +1192,21 @@ reference = "HEAD"
 resolved_reference = "856b34cb77811d665c6346883238d436ac5c4924"
 
 [[package]]
+name = "reclass-rs"
+version = "0.1.1"
+description = "Reclass defines a syntax and directory structure for recursively merging YAML data sources."
+optional = false
+python-versions = ">=3.8"
+files = []
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/projectsyn/reclass-rs"
+reference = "HEAD"
+resolved_reference = "6e60881ba84a176dac15d09988bb10c1bd1b8cff"
+
+[[package]]
 name = "referencing"
 version = "0.30.2"
 description = "JSON Referencing + Python"
@@ -1529,4 +1544,4 @@ test = ["docker"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "7b8194ce3f1956703d9c6b0b6575463e1250349ddb1ed8eb789021b690bd4b01"
+content-hash = "57fafa65771340a7a9a8bea7342adb946ff2b8b13321627b291f0e769ba9f67c"

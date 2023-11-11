@@ -32,6 +32,9 @@ packages = [
 [tool.poetry.scripts]
 kapitan = 'kapitan.cli:main'
 
+[tool.poetry.group.reclass-rs.dependencies]
+reclass-rs = {git = "https://github.com/projectsyn/reclass-rs"}
+
 [tool.poetry-version-plugin]
 source = "git-tag"
 

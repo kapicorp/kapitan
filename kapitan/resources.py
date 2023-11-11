@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import sys
+from datetime import datetime
 from functools import partial
 
 import jsonschema
@@ -26,6 +27,16 @@ from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_fi
 import reclass
 import reclass.core
 from reclass.errors import NotFoundError, ReclassException
+
+have_reclass_rs = False
+try:
+    from reclass_rs import Reclass
+
+    # Configure reclass-rs to use as many threads as there are logical cores in the system
+    Reclass.set_thread_count(0)
+    have_reclass_rs = True
+except ImportError:
+    print("Couldn't import reclass_rs, falling back to Python reclass", file=sys.stderr)
 
 logger = logging.getLogger(__name__)
 
@@ -350,6 +361,27 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
     for uri in ("nodes_uri", "classes_uri"):
         reclass_config[uri] = os.path.normpath(os.path.join(inventory_path, reclass_config[uri]))
 
+    if have_reclass_rs:
+        r = Reclass(
+            nodes_path=reclass_config["nodes_uri"],
+            classes_path=reclass_config["classes_uri"],
+            ignore_class_notfound=ignore_class_notfound,
+        )
+
+        print("running reclass_rs", file=sys.stderr)
+        start = datetime.now()
+        try:
+            inv = r.inventory()
+        except ValueError as e:
+            logger.error(f"Inventory reclass_rs error: {e}")
+            raise InventoryError(e)
+        elapsed = datetime.now() - start
+        print(f"Inventory (reclass_rs) took {elapsed}", file=sys.stderr)
+
+        cached.inv = inv.as_dict()
+        return cached.inv
+
+    print("Falling back to Python reclass", file=sys.stderr)
     try:
         storage = reclass.get_storage(
             reclass_config["storage_type"],
@@ -360,7 +392,11 @@ def inventory_reclass(inventory_path, ignore_class_notfound=False):
         class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
         _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
 
+        print("running reclass", file=sys.stderr)
+        start = datetime.now()
         cached.inv = _reclass.inventory()
+        elapsed = datetime.now() - start
+        print(f"Inventory (reclass) took {elapsed}", file=sys.stderr)
     except ReclassException as e:
         if isinstance(e, NotFoundError):
             logger.error("Inventory reclass error: inventory not found")

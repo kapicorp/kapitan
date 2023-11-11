@@ -10,7 +10,8 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         curl \
         build-essential \
-        git
+        git \
+        rustc
 
 ENV POETRY_VERSION=1.4.0
 ENV VIRTUAL_ENV=/opt/venv
