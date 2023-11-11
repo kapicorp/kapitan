@@ -74,7 +74,6 @@ target-version = ['py38']
 exclude = '''
 (
   /(
-      .*reclass.*
     | .*version.py
   )
 )
