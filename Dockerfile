@@ -11,7 +11,7 @@ RUN apt-get update \
         curl \
         build-essential
 
-ENV POETRY_VERSION=1.4.0
+ENV POETRY_VERSION=1.7.1
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:/usr/local/go/bin:${PATH}"
 RUN python -m venv $VIRTUAL_ENV \
@@ -29,19 +29,13 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master
     && rm get_helm.sh
 
 
-COPY ./MANIFEST.in ./MANIFEST.in
 COPY ./pyproject.toml ./pyproject.toml
 COPY ./poetry.lock ./poetry.lock
-COPY ./README.md ./README.md
 
 # Installs and caches dependencies
-RUN poetry install --no-root --extras=gojsonnet
+RUN  poetry install --no-root --extras=gojsonnet
 
-COPY ./kapitan ./kapitan
-
-RUN pip install --editable .[test] \
-    && pip install .[gojsonnet]
-
+RUN  --mount=type=bind,source=./,target=./ poetry install
 
 # Final image with virtualenv built in previous step
 FROM python:3.8-slim
