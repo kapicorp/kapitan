@@ -23,6 +23,7 @@ from reclass.errors import NotFoundError, ReclassException
 
 from kapitan import cached, defaults
 from kapitan.dependency_manager.base import fetch_dependencies
+from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
 from kapitan.inputs.external import External
@@ -31,9 +32,8 @@ from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
 from kapitan.inputs.remove import Remove
-from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
-from kapitan.resources import inventory_reclass
-from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
+from kapitan.inventory import Inventory, ReclassInventory
+from kapitan.utils import hashable_lru_cache
 from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
 logger = logging.getLogger(__name__)
@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 def compile_targets(
     inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs
 ):
+    _ = ReclassInventory(inventory_path)
     """
     Searches and loads target files, and runs compile_target() on a
     multiprocessing pool with parallel number of processes.
@@ -54,29 +55,9 @@ def compile_targets(
     temp_compile_path = os.path.join(temp_path, "compiled")
     dep_cache_dir = temp_path
 
-    updated_targets = targets
-    try:
-        updated_targets = search_targets(inventory_path, targets, labels)
-    except CompileError as e:
-        logger.error(e)
-        sys.exit(1)
-
-    # If --cache is set
-    if kwargs.get("cache"):
-        additional_cache_paths = kwargs.get("cache_paths")
-        generate_inv_cache_hashes(inventory_path, targets, additional_cache_paths)
-        # to cache fetched dependencies and inventories
-        dep_cache_dir = os.path.join(output_path, ".dependency_cache")
-        os.makedirs(dep_cache_dir, exist_ok=True)
-
-        if not targets:
-            updated_targets = changed_targets(inventory_path, output_path)
-            logger.debug("Changed targets since last compilation: %s", updated_targets)
-            if len(updated_targets) == 0:
-                logger.info("No changes since last compilation.")
-                return
-
     pool = multiprocessing.Pool(parallel)
+
+    updated_targets = Inventory.get().search_targets()
 
     try:
         rendering_start = time.time()
@@ -94,10 +75,10 @@ def compile_targets(
 
         if fetch:
             # skip classes that are not yet available
-            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=True)
+            target_objs = load_target_inventory(updated_targets)
         else:
             # ignore_class_notfound = False by default
-            target_objs = load_target_inventory(inventory_path, updated_targets)
+            target_objs = load_target_inventory(updated_targets)
 
         # append "compiled" to output_path so we can safely overwrite it
         compile_path = os.path.join(output_path, "compiled")
@@ -105,49 +86,6 @@ def compile_targets(
         if not target_objs:
             raise CompileError("Error: no targets found")
 
-        # fetch inventory
-        if fetch:
-            # new_source checks for new sources in fetched inventory items
-            new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
-            while new_sources:
-                fetch_inventories(
-                    inventory_path,
-                    target_objs,
-                    dep_cache_dir,
-                    force_fetch,
-                    pool,
-                )
-                cached.reset_inv()
-                target_objs = load_target_inventory(
-                    inventory_path, updated_targets, ignore_class_notfound=True
-                )
-                cached.inv_sources.update(new_sources)
-                new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
-            # reset inventory cache and load target objs to check for missing classes
-            cached.reset_inv()
-            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
-        # fetch dependencies
-        if fetch:
-            fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
-        # fetch targets which have force_fetch: true
-        elif not kwargs.get("force_fetch", False):
-            fetch_objs = []
-            # iterate through targets
-            for target in target_objs:
-                try:
-                    # get value of "force_fetch" property
-                    dependencies = target["dependencies"]
-                    # dependencies is still a list
-                    for entry in dependencies:
-                        force_fetch = entry["force_fetch"]
-                        if force_fetch:
-                            fetch_objs.append(target)
-                except KeyError:
-                    # targets may have no "dependencies" or "force_fetch" key
-                    continue
-            # fetch dependencies from targets with force_fetch set to true
-            if fetch_objs:
-                fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
 
         logger.info("Rendered inventory (%.2fs)", time.time() - rendering_start)
 
@@ -163,14 +101,14 @@ def compile_targets(
 
         # compile_target() returns None on success
         # so p is only not None when raising an exception
-        [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+        [p.get() for p in pool.imap_unordered(worker, target_objs.values()) if p]
 
         os.makedirs(compile_path, exist_ok=True)
 
         # if '-t' is set on compile or only a few changed, only override selected targets
         if updated_targets:
-            for target in target_objs:
-                path = target["target_full_path"]
+            for target in target_objs.values():
+                path = target["_reclass_"]["name"]["path"]
                 compile_path_target = os.path.join(compile_path, path)
                 temp_path_target = os.path.join(temp_compile_path, path)
 
@@ -185,17 +123,6 @@ def compile_targets(
             shutil.copytree(temp_compile_path, compile_path)
             logger.debug("Copied %s into %s", temp_compile_path, compile_path)
 
-        # validate the compiled outputs
-        if kwargs.get("validate", False):
-            validate_map = create_validate_mapping(target_objs, compile_path)
-            worker = partial(
-                schema_validate_kubernetes_output,
-                cache_dir=kwargs.get("schemas_path", "./schemas"),
-            )
-            [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
-
-        # Save inventory and folders cache
-        save_inv_cache(compile_path, targets)
         pool.close()
 
     except ReclassException as e:
@@ -225,239 +152,51 @@ def compile_targets(
         logger.debug("Removed %s", temp_path)
 
 
-def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
-    """
-    generates the hashes for the inventory per target and jsonnet/jinja2 folders for caching purposes
-    struct: {
-        inventory:
-            <target>:
-                classes: <sha256>
-                parameters: <sha256>
-        folder:
-            components: <sha256>
-            docs: <sha256>
-            lib: <sha256>
-            scripts: <sha256>
-            ...
-    }
-    """
-    inv = inventory_reclass(inventory_path)
-    cached.inv_cache = {}
-    cached.inv_cache["inventory"] = {}
-    cached.inv_cache["folder"] = {}
-
-    if targets:
-        for target in targets:
-            try:
-                cached.inv_cache["inventory"][target] = {}
-                cached.inv_cache["inventory"][target]["classes"] = dictionary_hash(
-                    inv["nodes"][target]["classes"]
-                )
-                cached.inv_cache["inventory"][target]["parameters"] = dictionary_hash(
-                    inv["nodes"][target]["parameters"]
-                )
-            except KeyError:
-                raise CompileError("target not found: {}".format(target))
-    else:
-        for target in inv["nodes"]:
-            cached.inv_cache["inventory"][target] = {}
-            cached.inv_cache["inventory"][target]["classes"] = dictionary_hash(
-                inv["nodes"][target]["classes"]
-            )
-            cached.inv_cache["inventory"][target]["parameters"] = dictionary_hash(
-                inv["nodes"][target]["parameters"]
-            )
-
-            compile_obj = inv["nodes"][target]["parameters"]["kapitan"]["compile"]
-            for obj in compile_obj:
-                for input_path in obj["input_paths"]:
-                    base_folder = os.path.dirname(input_path).split("/")[0]
-                    if base_folder == "":
-                        base_folder = os.path.basename(input_path).split("/")[0]
-
-                    if base_folder not in cached.inv_cache["folder"].keys():
-                        if os.path.exists(base_folder) and os.path.isdir(base_folder):
-                            cached.inv_cache["folder"][base_folder] = directory_hash(base_folder)
-
-                # Cache additional folders set by --cache-paths
-                for path in cache_paths:
-                    if path not in cached.inv_cache["folder"].keys():
-                        if os.path.exists(path) and os.path.isdir(path):
-                            cached.inv_cache["folder"][path] = directory_hash(path)
-
-        # Most commonly changed but not referenced in input_paths
-        for common in ("lib", "vendor", "secrets"):
-            if common not in cached.inv_cache["folder"].keys():
-                if os.path.exists(common) and os.path.isdir(common):
-                    cached.inv_cache["folder"][common] = directory_hash(common)
-
-
-def changed_targets(inventory_path, output_path):
-    """returns a list of targets that have changed since last compilation"""
-    targets = []
-    inv = inventory_reclass(inventory_path)
-
-    saved_inv_cache = None
-    saved_inv_cache_path = os.path.join(output_path, "compiled/.kapitan_cache")
-    if os.path.exists(saved_inv_cache_path):
-        with open(saved_inv_cache_path, "r") as f:
-            try:
-                saved_inv_cache = yaml.safe_load(f)
-            except Exception:
-                raise CompileError("Failed to load kapitan cache: %s", saved_inv_cache_path)
-
-    targets_list = list(inv["nodes"])
-
-    # If .kapitan_cache doesn't exist or failed to load, recompile all targets
-    if not saved_inv_cache:
-        return targets_list
-    else:
-        for key, hash in cached.inv_cache["folder"].items():
-            try:
-                if hash != saved_inv_cache["folder"][key]:
-                    logger.debug("%s folder hash changed, recompiling all targets", key)
-                    return targets_list
-            except KeyError:
-                # Errors usually occur when saved_inv_cache doesn't contain a new folder
-                # Recompile anyway to be safe
-                return targets_list
-
-        for target in targets_list:
-            try:
-                if (
-                    cached.inv_cache["inventory"][target]["classes"]
-                    != saved_inv_cache["inventory"][target]["classes"]
-                ):
-                    logger.debug("classes hash changed in %s, recompiling", target)
-                    targets.append(target)
-                elif (
-                    cached.inv_cache["inventory"][target]["parameters"]
-                    != saved_inv_cache["inventory"][target]["parameters"]
-                ):
-                    logger.debug("parameters hash changed in %s, recompiling", target)
-                    targets.append(target)
-            except KeyError:
-                # Errors usually occur when saved_inv_cache doesn't contain a new target
-                # Recompile anyway to be safe
-                targets.append(target)
-
-    return targets
-
-
-def save_inv_cache(compile_path, targets):
-    """save the cache to .kapitan_cache for inventories per target and folders"""
-    if cached.inv_cache:
-        inv_cache_path = os.path.join(compile_path, ".kapitan_cache")
-        # If only some targets were selected (-t), overwride only their inventory
-        if targets:
-            saved_inv_cache = None
-            try:
-                with open(inv_cache_path, "r") as f:
-                    saved_inv_cache = yaml.safe_load(f)
-            except Exception:
-                pass
-
-            if saved_inv_cache:
-                if "inventory" not in saved_inv_cache:
-                    saved_inv_cache["inventory"] = {}
-            else:
-                saved_inv_cache = {}
-                saved_inv_cache["inventory"] = {}
-
-            for target in targets:
-                if target not in saved_inv_cache["inventory"]:
-                    saved_inv_cache["inventory"][target] = {}
-
-                saved_inv_cache["inventory"][target]["classes"] = cached.inv_cache["inventory"][target][
-                    "classes"
-                ]
-                saved_inv_cache["inventory"][target]["parameters"] = cached.inv_cache["inventory"][target][
-                    "parameters"
-                ]
-
-            with open(inv_cache_path, "w") as f:
-                logger.debug("Saved .kapitan_cache for targets: %s", targets)
-                yaml.dump(saved_inv_cache, stream=f, default_flow_style=False)
-
-        else:
-            with open(inv_cache_path, "w") as f:
-                logger.debug("Saved .kapitan_cache")
-                yaml.dump(cached.inv_cache, stream=f, default_flow_style=False)
-
-
-def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
+def load_target_inventory(targets):
     """returns a list of target objects from the inventory"""
-    target_objs = []
-    inv = inventory_reclass(inventory_path, ignore_class_notfound)
 
     # if '-t' is set on compile, only loop through selected targets
-    if targets:
-        targets_list = targets
+    if not targets:
+        return Inventory.get().inventory
     else:
-        targets_list = inv["nodes"]
-
-    for target_name in targets_list:
-        try:
-            inv_target = inv["nodes"][target_name]
-            target_obj = inv_target["parameters"]["kapitan"]
-            # check if parameters.kapitan is empty
-            if not target_obj:
-                raise InventoryError(
-                    "InventoryError: {}: parameters.kapitan has no assignment".format(target_name)
-                )
-            target_obj["target_full_path"] = inv_target["parameters"]["_reclass_"]["name"]["path"]
-            require_compile = not ignore_class_notfound
-            valid_target_obj(target_obj, require_compile)
-            validate_matching_target_name(target_name, target_obj, inventory_path)
-            logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
-            target_objs.append(target_obj)
-        except KeyError:
-            logger.debug("load_target_inventory: target %s has no kapitan compile obj", target_name)
-            pass
-
-    return target_objs
+        return Inventory.get().get_targets(targets)
 
 
-def search_targets(inventory_path, targets, labels):
-    """returns a list of targets where the labels match, otherwise just return the original targets"""
-    if not labels:
-        return targets
+# def filter_targets_to_compile(targets, labels):
+#     """returns a list of targets where the labels match, otherwise just return the original targets"""
+#     if not labels:
+#         return targets
 
-    try:
-        labels_dict = dict(label.split("=") for label in labels)
-    except ValueError:
-        raise CompileError(
-            "Compile error: Failed to parse labels, should be formatted like: kapitan compile -l env=prod app=example"
-        )
+#     try:
+#         labels_dict = dict(label.split("=") for label in labels)
+#     except ValueError:
+#         raise CompileError(
+#             "Failed to parse labels. Your command should be formatted like: kapitan compile --labels env=prod app=example"
+#         )
 
-    targets_found = []
-    inv = inventory_reclass(inventory_path)
+#     for target_name in targets:
+#         matched_all_labels = False
+#         for label, value in labels_dict.items():
+#             try:
+#                 if inv["nodes"][target_name]["parameters"]["kapitan"]["labels"][label] == value:
+#                     matched_all_labels = True
+#                     continue
+#             except KeyError:
+#                 logger.debug("search_targets: label %s=%s didn't match target %s", label, value, target_name)
 
-    for target_name in inv["nodes"]:
-        matched_all_labels = False
-        for label, value in labels_dict.items():
-            try:
-                if inv["nodes"][target_name]["parameters"]["kapitan"]["labels"][label] == value:
-                    matched_all_labels = True
-                    continue
-            except KeyError:
-                logger.debug("search_targets: label %s=%s didn't match target %s", label, value, target_name)
+#             matched_all_labels = False
+#             break
 
-            matched_all_labels = False
-            break
+#         if matched_all_labels:
+#             targets_found.append(target_name)
 
-        if matched_all_labels:
-            targets_found.append(target_name)
-
-    if len(targets_found) == 0:
-        raise CompileError("No targets found with labels: {}".format(labels))
-
-    return targets_found
+#     return targets_found
 
 
 def compile_target(target_obj, search_paths, compile_path, ref_controller, globals_cached=None, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
+    target_obj = target_obj["kapitan"]
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
@@ -500,7 +239,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
         input_compiler.make_compile_dirs(target_name, output_path, **kwargs)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
 
-    logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
+    logger.info(f"Compiled target ({time.time() - start:.2f}s)")
 
 
 @hashable_lru_cache
@@ -762,92 +501,3 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
             "Target name should match the name of the target yml file in inventory"
         )
         raise InventoryError(error_message)
-
-
-def schema_validate_compiled(args):
-    """
-    validates compiled output according to schemas specified in the inventory
-    """
-    if not os.path.isdir(args.compiled_path):
-        logger.error("compiled-path %s not found", args.compiled_path)
-        sys.exit(1)
-
-    if not os.path.isdir(args.schemas_path):
-        os.makedirs(args.schemas_path)
-        logger.info("created schema-cache-path at %s", args.schemas_path)
-
-    worker = partial(schema_validate_kubernetes_output, cache_dir=args.schemas_path)
-    pool = multiprocessing.Pool(args.parallelism)
-
-    try:
-        target_objs = load_target_inventory(args.inventory_path, args.targets)
-        validate_map = create_validate_mapping(target_objs, args.compiled_path)
-
-        [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
-        pool.close()
-
-    except ReclassException as e:
-        if isinstance(e, NotFoundError):
-            logger.error("Inventory reclass error: inventory not found")
-        else:
-            logger.error("Inventory reclass error: %s", e.message)
-        raise InventoryError(e.message)
-    except Exception as e:
-        pool.terminate()
-        logger.debug("Validate pool terminated")
-        # only print traceback for errors we don't know about
-        if not isinstance(e, KapitanError):
-            logger.exception("Unknown (Non-Kapitan) Error occured")
-
-        logger.error("\n")
-        logger.error(e)
-        sys.exit(1)
-    finally:
-        # always wait for other worker processes to terminate
-        pool.join()
-
-
-def create_validate_mapping(target_objs, compiled_path):
-    """
-    creates mapping of (kind, version) tuple to output_paths across different targets
-    this is required to avoid redundant schema fetch when multiple targets use the same schema for validation
-    """
-    validate_files_map = defaultdict(list)
-    for target_obj in target_objs:
-        target_name = target_obj["vars"]["target"]
-        if "validate" not in target_obj:
-            logger.debug(
-                "target '%s' does not have 'validate' parameter in inventory. skipping",
-                target_name,
-            )
-            continue
-
-        for validate_item in target_obj["validate"]:
-            validate_type = validate_item["type"]
-            if validate_type == "kubernetes":
-                kind_version_pair = (
-                    validate_item["kind"],
-                    validate_item.get("version", defaults.DEFAULT_KUBERNETES_VERSION),
-                )
-                for output_path in validate_item["output_paths"]:
-                    full_output_path = os.path.join(compiled_path, target_name, output_path)
-                    if not os.path.isfile(full_output_path):
-                        logger.warning(
-                            "%s does not exist for target '%s'. skipping", output_path, target_name
-                        )
-                        continue
-                    validate_files_map[kind_version_pair].append(full_output_path)
-            else:
-                logger.warning("type %s is not supported for validation. skipping", validate_type)
-
-    return validate_files_map
-
-
-def schema_validate_kubernetes_output(validate_data, cache_dir):
-    """
-    validates given files according to kubernetes manifest schemas
-    schemas are cached from/to cache_dir
-    validate_data must be of structure ((kind, version), validate_files)
-    """
-    (kind, version), validate_files = validate_data
-    KubernetesManifestValidator(cache_dir).validate(validate_files, kind=kind, version=version)

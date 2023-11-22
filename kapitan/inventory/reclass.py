@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class ReclassInventory(Inventory):
     
-    def get_parameters(self, ignore_class_notfound=False) -> dict:
+    def get_parameters(self, ignore_class_notfound: bool = False) -> dict:
         """
         Runs a reclass inventory in inventory_path
         (same output as running ./reclass.py -b inv_base_uri/ --inventory)
@@ -36,13 +36,25 @@ class ReclassInventory(Inventory):
             class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
             _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
 
-            return _reclass.inventory()
+            return {name: node["parameters"] for name, node in _reclass.inventory()["nodes"].items()}
         except ReclassException as e:
             if isinstance(e, NotFoundError):
                 logger.error("Inventory reclass error: inventory not found")
             else:
                 logger.error(f"Inventory reclass error: {e.message}")
             raise InventoryError(e.message)
+    
+    def get_targets(self, target_names: list[str]) -> dict:
+        targets = {}
+        
+        for target_name in target_names:
+            target = self.inventory.get(target_name)
+            if not target:
+                raise InventoryError(f"target '{target_name}' not found")
+            
+            targets[target_name] = target
+            
+        return targets
         
         
     def get_config(self) -> dict:
@@ -65,13 +77,13 @@ class ReclassInventory(Inventory):
         if os.path.isfile(cfg_file):
             with open(cfg_file, "r") as fp:
                 config = yaml.load(fp.read(), Loader=YamlLoader)
-                logger.debug("Using reclass inventory config at: {}".format(cfg_file))
+                logger.debug(f"Using reclass inventory config at: {cfg_file}")
             if config:
                 # set attributes, take default values if not present
                 for key, value in config.items():
                     reclass_config[key] = value
             else:
-                logger.debug("{}: Empty config file. Using reclass inventory config defaults".format(cfg_file))
+                logger.debug(f"Reclass config: Empty config file at {cfg_file}. Using reclass inventory config defaults")
         else:
             logger.debug("Inventory reclass: No config file found. Using reclass inventory config defaults")
             

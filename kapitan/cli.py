@@ -25,7 +25,7 @@ from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
 from kapitan.resources import generate_inventory, resource_callbacks, search_imports
-from kapitan.targets import compile_targets, schema_validate_compiled
+from kapitan.targets import compile_targets
 from kapitan.utils import check_version, from_dot_kapitan, searchvar
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
@@ -584,7 +584,7 @@ def build_parser():
         aliases=["v"],
         help="validates the compile output against schemas as specified in inventory",
     )
-    validate_parser.set_defaults(func=schema_validate_compiled, name="validate")
+    # validate_parser.set_defaults(func=schema_validate_compiled, name="validate")
 
     validate_parser.add_argument(
         "--compiled-path",
