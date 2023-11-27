@@ -11,14 +11,14 @@ from __future__ import print_function
 
 import argparse
 import json
-import logging
+import logging.config
 import multiprocessing
 import os
 import sys
 
 import yaml
 
-from kapitan import cached, defaults, setup_logging
+from kapitan import cached, defaults, logging_config
 from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import jsonnet_file
 from kapitan.lint import start_lint
@@ -94,6 +94,16 @@ def trigger_compile(args):
         verbose=hasattr(args, "verbose") and args.verbose,
         use_go_jsonnet=args.use_go_jsonnet,
         compose_node_name=args.compose_node_name,
+    )
+
+
+def add_logging_argument(parser):
+    parser.add_argument(
+        "--logging-config",
+        metavar="FILE",
+        action=LoggingConfigAction,
+        # default=from_dot_kapitan # TODO
+        help="python logging configuration",
     )
 
 
@@ -306,6 +316,8 @@ def build_parser():
         help="dumps all none-type entries as empty, default is dumping as 'null'",
     )
 
+    add_logging_argument(compile_parser)
+
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
     compile_selector_parser.add_argument(
         "--targets",
@@ -379,6 +391,7 @@ def build_parser():
         default=from_dot_kapitan("inventory", "multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
+    add_logging_argument(inventory_parser)
 
     searchvar_parser = subparser.add_parser(
         "searchvar", aliases=["sv"], help="show all inventory files where var is declared"
@@ -622,6 +635,63 @@ def build_parser():
     return parser
 
 
+# def is_valid_file(parser, arg):
+#     if not os.path.exists(arg):
+#         parser.error("The file %s does not exist!" % arg)
+#     else:
+#         return open(arg, "r")
+class LoggingConfigAction(argparse.Action):
+    """LoggingConfigAction configures Python's logging."""
+
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        super().__init__(option_strings, dest, **kwargs)
+
+    def __call__(
+        self,
+        parser,
+        namespace,
+        values,
+        option_string,
+    ):
+        print("values:", values)
+        # if isinstance(values, list):
+        #     for logger_value in values:
+        #         if "=" not in logger:
+        #             continue
+
+        #         name, level = logger_value.split("=")
+        #         log = logging.getLogger(name)
+        #         log.setLevel(level.upper())
+
+
+def setup_logging(args=None):  # level=None, force=False
+    """Setups logging using the args
+    The default configuration is:
+        kapitan and reclass on INFO as they are for regular output to users
+
+    The logging-config option takes precedence over all. It reads a yaml file with based on the https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
+
+    The verbose option option takes precedence over the quiet one. When they are used
+    """
+    if hasattr(args, "logging_config") and args.logging_config:
+        print("TODO")
+    else:
+        if hasattr(args, "verbose") and args.verbose:
+            set_common_loggers("DEBUG", "extended")
+        elif hasattr(args, "quiet") and args.quiet:
+            set_common_loggers("CRITICAL", "extended")
+
+        logging.config.dictConfig(logging_config)
+
+
+def set_common_loggers(level, stream):
+    logging_config["loggers"] = {
+        "kapitan": {"level": level, "propagate": True},
+        "reclass": {"level": level, "propagate": True},
+    }
+    logging_config["root"] = {"level": level, "handlers": [stream]}
+
+
 def main():
     """main function for command line usage"""
     try:
@@ -649,10 +719,7 @@ def main():
     assert "name" in args, "All cli commands must have provided default name"
     cached.args[args.name] = args
 
-    if hasattr(args, "verbose") and args.verbose:
-        setup_logging(level=logging.DEBUG, force=True)
-    elif hasattr(args, "quiet") and args.quiet:
-        setup_logging(level=logging.CRITICAL, force=True)
+    setup_logging(args)
 
     # call chosen command
     args.func(args)

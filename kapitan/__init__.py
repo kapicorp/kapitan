@@ -7,32 +7,35 @@
 
 import os
 import sys
-import logging
 
-
-def setup_logging(name=None, level=logging.INFO, force=False):
-    "setup logging and deal with logging behaviours in MacOS python 3.8 and below"
-    # default opts
-    kwopts = {"format": "%(message)s", "level": level}
-
-    if level == logging.DEBUG:
-        kwopts["format"] = "%(asctime)s %(name)-12s %(levelname)-8s %(message)s"
-
-    if sys.version_info >= (3, 8) and force:
-        kwopts["force"] = True
-
-    logging.basicConfig(**kwopts)
-
-    if sys.version_info < (3, 8) and force:
-        logging.getLogger(name).setLevel(level)
-
-
-# XXX in MacOS, updating logging level in __main__ doesn't work for python3.8+
-# XXX this is a hack that seems to work
-if "-v" in sys.argv or "--verbose" in sys.argv:
-    setup_logging(level=logging.DEBUG)
-else:
-    setup_logging()
+# this dict is used to confgiure in various places, such as setup spawned processes
+logging_config = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "brief": {"format": "%(message)s"},
+        "extended": {"format": "%(asctime)s %(name)-12s %(levelname)-8s %(message)s"},
+    },
+    "handlers": {
+        "brief": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "brief",
+            "stream": "ext://sys.stdout",
+        },
+        "extended": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "extended",
+            "stream": "ext://sys.stdout",
+        },
+    },
+    "loggers": {
+        "kapitan": {"level": "INFO", "propagate": True},
+        "reclass": {"level": "INFO", "propagate": True},
+    },
+    "root": {"level": "ERROR", "handlers": ["brief"]},
+}
 
 # Adding reclass to PYTHONPATH
 sys.path.insert(0, os.path.dirname(__file__) + "/reclass")

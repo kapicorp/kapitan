@@ -4,7 +4,7 @@ import os
 from collections import defaultdict
 from functools import partial
 
-from kapitan import cached
+from kapitan import cached, logging_config
 from kapitan.dependency_manager.base import fetch_git_dependency, fetch_http_dependency
 from kapitan.utils import normalise_join_path
 
@@ -69,7 +69,13 @@ def fetch_inventories(inventory_path, target_objs, save_dir, force, pool):
             logger.debug("Target object %s has no inventory key", target_obj["vars"]["target"])
             continue
 
-    git_worker = partial(fetch_git_dependency, save_dir=save_dir, force=force, item_type="Inventory")
+    git_worker = partial(
+        fetch_git_dependency,
+        save_dir=save_dir,
+        force=force,
+        item_type="Inventory",
+        logging_config_dict=logging_config,
+    )
     http_worker = partial(fetch_http_dependency, save_dir=save_dir, force=force, item_type="Inventory")
     [p.get() for p in pool.imap_unordered(git_worker, git_inventories.items()) if p]
     [p.get() for p in pool.imap_unordered(http_worker, http_inventories.items()) if p]
