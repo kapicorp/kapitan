@@ -28,7 +28,7 @@ We build kapitan using `poetry`.
 2. Install dependencies
 
     ```bash
-    poetry install --with test
+    poetry install --all-extras --with dev
     ```
 
     Poetry creates a virtual environment with the required dependencies installed.
