@@ -27,6 +27,7 @@ from kapitan.errors import InventoryError
 class CompileTestResourcesTestObjs(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/tests/test_resources/")
+        reset_cache()
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "test-objects"]
@@ -46,6 +47,7 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
 class CompileTestResourcesTestKadet(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/tests/test_resources/")
+        reset_cache()
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "kadet-test"]
@@ -78,6 +80,7 @@ class CompileTestResourcesTestKadet(unittest.TestCase):
 class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/tests/test_resources/")
+        reset_cache()
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "jinja2-input-params"]
@@ -110,6 +113,7 @@ class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
 class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/tests/test_resources/")
+        reset_cache()
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "jinja2-postfix-strip"]
@@ -132,6 +136,7 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
 class CompileKubernetesTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/examples/kubernetes/")
+        reset_cache()
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-c"]
@@ -219,6 +224,7 @@ class CompileKubernetesTest(unittest.TestCase):
 class CompileTerraformTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/examples/terraform/")
+        reset_cache()
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile"]
@@ -235,6 +241,7 @@ class CompileTerraformTest(unittest.TestCase):
 class PlainOutputTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/examples/docker/")
+        reset_cache()
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile"]
@@ -252,6 +259,7 @@ class TomlOutputTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         os.chdir(os.getcwd() + "/tests/test_resources/")
+        reset_cache()
         sys.argv = ["kapitan", "compile", "-t", "toml-output"]
         main()
 
