@@ -97,16 +97,6 @@ def trigger_compile(args):
     )
 
 
-def add_logging_argument(parser):
-    parser.add_argument(
-        "--logging-config",
-        metavar="FILE",
-        action=LoggingConfigAction,
-        # default=from_dot_kapitan # TODO
-        help="python logging configuration",
-    )
-
-
 def build_parser():
     parser = argparse.ArgumentParser(prog=PROJECT_NAME, description=DESCRIPTION)
     parser.add_argument("--version", action="version", version=VERSION)
@@ -315,8 +305,7 @@ def build_parser():
         action="store_true",
         help="dumps all none-type entries as empty, default is dumping as 'null'",
     )
-
-    add_logging_argument(compile_parser)
+    add_logging_argument("compile", compile_parser)
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
     compile_selector_parser.add_argument(
@@ -391,7 +380,7 @@ def build_parser():
         default=from_dot_kapitan("inventory", "multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
-    add_logging_argument(inventory_parser)
+    add_logging_argument("inventory", inventory_parser)
 
     searchvar_parser = subparser.add_parser(
         "searchvar", aliases=["sv"], help="show all inventory files where var is declared"
@@ -635,56 +624,51 @@ def build_parser():
     return parser
 
 
-# def is_valid_file(parser, arg):
-#     if not os.path.exists(arg):
-#         parser.error("The file %s does not exist!" % arg)
-#     else:
-#         return open(arg, "r")
-class LoggingConfigAction(argparse.Action):
-    """LoggingConfigAction configures Python's logging."""
+def add_logging_argument(command, parser):
+    """Adds logging argument for command to a parser.
 
-    def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        super().__init__(option_strings, dest, **kwargs)
-
-    def __call__(
-        self,
-        parser,
-        namespace,
-        values,
-        option_string,
-    ):
-        print("values:", values)
-        # if isinstance(values, list):
-        #     for logger_value in values:
-        #         if "=" not in logger:
-        #             continue
-
-        #         name, level = logger_value.split("=")
-        #         log = logging.getLogger(name)
-        #         log.setLevel(level.upper())
+    Args:
+        command (str): the command like compile, inventory
+        parser (ArgumentParser): the argument parser to which to add the argument
+    """
+    parser.add_argument(
+        "--logging-config",
+        metavar="FILE",
+        default=from_dot_kapitan(command, "logging", ""),
+        help="python logging configuration",
+    )
 
 
-def setup_logging(args=None):  # level=None, force=False
+def setup_logging(args=None):
     """Setups logging using the args
     The default configuration is:
         kapitan and reclass on INFO as they are for regular output to users
 
-    The logging-config option takes precedence over all. It reads a yaml file with based on the https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
+    The logging-config option takes precedence over all. It reads a yaml file with based
+    on the https://docs.python.org/3/library/logging.config.html#logging-config-dictschema.
 
-    The verbose option option takes precedence over the quiet one. When they are used
+    The verbose option option takes precedence over the quiet one when they are used.
     """
-    if hasattr(args, "logging_config") and args.logging_config:
-        print("TODO")
+    if hasattr(args, "logging_config") and args.logging_config != "":
+        with open(args.logging_config, "r", encoding="ascii") as f:
+            logging_config.update(yaml.safe_load(f))
+        logging.config.fileConfig(args.logging_config)
     else:
         if hasattr(args, "verbose") and args.verbose:
-            set_common_loggers("DEBUG", "extended")
+            set_kapitan_loggers("DEBUG", "extended")
         elif hasattr(args, "quiet") and args.quiet:
-            set_common_loggers("CRITICAL", "extended")
+            set_kapitan_loggers("CRITICAL", "extended")
 
-        logging.config.dictConfig(logging_config)
+    logging.config.dictConfig(logging_config)
 
 
-def set_common_loggers(level, stream):
+def set_kapitan_loggers(level, stream):
+    """Set logging level of kapitan and reclass loggers.
+
+    Args:
+        level (str): the log level to use
+        stream (str): the stream to use
+    """
     logging_config["loggers"] = {
         "kapitan": {"level": level, "propagate": True},
         "reclass": {"level": level, "propagate": True},
