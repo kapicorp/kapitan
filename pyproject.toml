@@ -40,6 +40,7 @@ black = "^23.11.0"
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.3"
 pytest-xdist = "^3.5.0"
+pytest-forked = "^1.6.0"
 
 [tool.poetry-version-plugin]
 source = "git-tag"
