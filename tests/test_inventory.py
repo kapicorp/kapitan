@@ -7,12 +7,22 @@
 
 "inventory tests"
 
+import sys
 import unittest
 
+import kapitan.cached
+from kapitan.cli import build_parser
 from kapitan.resources import inventory
 
 
 class InventoryTargetTest(unittest.TestCase):
+    
+    def setUp(self) -> None:    
+        sys.argv = ["kapitan", "compile" ] 
+        args = build_parser().parse_args()
+        kapitan.cached.args[args.name] = args
+    
+        
     def test_inventory_target(self):
         inv = inventory(["examples/kubernetes"], "minikube-es")
         self.assertEqual(inv["parameters"]["cluster"]["name"], "minikube")
