@@ -8,7 +8,7 @@
 import os
 import sys
 
-# this dict is used to confgiure in various places, such as setup spawned processes
+# this dict is used to confgiure the python logging in various places, such as setup spawned processes
 logging_config = {
     "version": 1,
     "disable_existing_loggers": False,
