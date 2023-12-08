@@ -652,7 +652,6 @@ def setup_logging(args=None):
     if hasattr(args, "logging_config") and args.logging_config != "":
         with open(args.logging_config, "r", encoding="ascii") as f:
             logging_config.update(yaml.safe_load(f))
-        logging.config.fileConfig(args.logging_config)
     else:
         if hasattr(args, "verbose") and args.verbose:
             set_kapitan_loggers("DEBUG", "extended")
