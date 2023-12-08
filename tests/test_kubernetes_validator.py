@@ -5,6 +5,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import contextlib
+import io
 import os
 import sys
 import tempfile
@@ -84,14 +86,16 @@ class KubernetesValidatorTest(unittest.TestCase):
             yaml.dump(d, fp, default_flow_style=False)
 
         sys.argv = ["kapitan", "validate", "--schemas-path", self.cache_dir]
-        with self.assertRaises(SystemExit), self.assertLogs(logger="kapitan.targets", level="ERROR") as log:
+        with contextlib.redirect_stdout(io.StringIO()) as captured_out, self.assertRaises(
+            SystemExit
+        ), self.assertLogs(logger="kapitan.targets", level="ERROR") as log:
             try:
                 main()
             finally:
                 # copy back the original file
                 copyfile(copied_file, original_file)
                 os.remove(copied_file)
-        self.assertTrue(" ".join(log.output).find("invalid '{}' manifest".format(wrong_manifest_kind)) != -1)
+        self.assertTrue(captured_out.getvalue().find("invalid '{}' manifest".format(wrong_manifest_kind)) != -1)
 
     def test_validate_after_compile(self):
         sys.argv = [
