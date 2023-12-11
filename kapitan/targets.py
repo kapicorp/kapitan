@@ -40,7 +40,14 @@ logger = logging.getLogger(__name__)
 
 
 def compile_targets(
-    inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs
+    inventory_path,
+    search_paths,
+    output_path,
+    parallel,
+    targets,
+    labels,
+    ref_controller,
+    **kwargs,
 ):
     """
     Searches and loads target files, and runs compile_target() on a
@@ -72,13 +79,16 @@ def compile_targets(
         if not targets:
             updated_targets = changed_targets(inventory_path, output_path)
             logger.debug("Changed targets since last compilation: %s", updated_targets)
-            if len(updated_targets) == 0:
+            if not updated_targets:
                 logger.info("No changes since last compilation.")
                 return
 
     pool = multiprocessing.Pool(parallel)
 
     try:
+        # -------------------------------------------------
+        # Rendering inventory
+        # -------------------------------------------------
         rendering_start = time.time()
 
         # check if --fetch or --force-fetch is enabled
@@ -92,21 +102,13 @@ def compile_targets(
             )
             force_fetch = True
 
+        # -------------------------------------------------
+        # Fetch inventory and dependencies
+        # -------------------------------------------------
         if fetch:
             # skip classes that are not yet available
             target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=True)
-        else:
-            # ignore_class_notfound = False by default
-            target_objs = load_target_inventory(inventory_path, updated_targets)
 
-        # append "compiled" to output_path so we can safely overwrite it
-        compile_path = os.path.join(output_path, "compiled")
-
-        if not target_objs:
-            raise CompileError("Error: no targets found")
-
-        # fetch inventory
-        if fetch:
             # new_source checks for new sources in fetched inventory items
             new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
             while new_sources:
@@ -126,31 +128,43 @@ def compile_targets(
             # reset inventory cache and load target objs to check for missing classes
             cached.reset_inv()
             target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
-        # fetch dependencies
-        if fetch:
+
             fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
-        # fetch targets which have force_fetch: true
-        elif not kwargs.get("force_fetch", False):
+
+        # otherwise only fetch dependencies which have force_fetch: true
+        else:
+            # ignore_class_notfound = False by default
+            target_objs = load_target_inventory(inventory_path, updated_targets)
+
             fetch_objs = []
             # iterate through targets
             for target in target_objs:
-                try:
-                    # get value of "force_fetch" property
-                    dependencies = target["dependencies"]
-                    # dependencies is still a list
-                    for entry in dependencies:
-                        force_fetch = entry["force_fetch"]
-                        if force_fetch:
-                            fetch_objs.append(target)
-                except KeyError:
-                    # targets may have no "dependencies" or "force_fetch" key
+                # get value of "force_fetch" property
+                dependencies = target.get("dependencies")
+                if not dependencies:
                     continue
-            # fetch dependencies from targets with force_fetch set to true
+
+                for dep_entry in dependencies:
+                    if not dep_entry.get("force_fetch", False):
+                        # if no fetch is needed remove the dependency and don't fetch it
+                        target["dependencies"].remove(dep_entry)
+
+                # fetch dependencies with force_fetch set to true
+                if target.get("dependencies", []):
+                    fetch_objs.append(target)
+
+            # fetch the specified dependencies with force-fetch
             if fetch_objs:
                 fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
 
+        if not target_objs:
+            raise CompileError("Error: no targets found")
+
         logger.info("Rendered inventory (%.2fs)", time.time() - rendering_start)
 
+        # -------------------------------------------------
+        # Compile targets
+        # -------------------------------------------------
         worker = partial(
             compile_target,
             search_paths=search_paths,
@@ -165,6 +179,11 @@ def compile_targets(
         # so p is only not None when raising an exception
         [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
+        # -------------------------------------------------
+        # Write output to files
+        # -------------------------------------------------
+        # append "compiled" to output_path so we can safely overwrite it
+        compile_path = os.path.join(output_path, "compiled")
         os.makedirs(compile_path, exist_ok=True)
 
         # if '-t' is set on compile or only a few changed, only override selected targets
