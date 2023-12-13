@@ -18,23 +18,8 @@ import toml
 from kapitan.errors import CompileError, KapitanError
 from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper
-from enum import Enum
 
 logger = logging.getLogger(__name__)
-
-
-class InputTypes(Enum):
-    """
-    All currently supported input types in the inventory for parameters.kapitan.compile
-    """
-
-    KADET = "kadet"
-    JSONNET = "jsonnet"
-    JINJA2 = "jinja2"
-    HELM = "helm"
-    EXTERNAL = "external"
-    COPY = "copy"
-    REMOVE = "remove"
 
 
 class InputType(object):
