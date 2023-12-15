@@ -45,33 +45,17 @@ class InventoryTarget(dict):
 
 
 class Inventory(ABC):
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        """
-        create only one specific inventory instance (singleton)
-        """
-        if Inventory._instance is None:
-            Inventory._instance = super().__new__(cls)
-        return Inventory._instance
-
-    def __init__(self, inventory_path: str, compose_node_name: dict = False):
+    def __init__(self, inventory_path: str, ignore_class_not_found: bool = False):
         self.inventory_path = inventory_path
         self.targets_path = os.path.join(inventory_path, "targets")
         self.classes_path = os.path.join(inventory_path, "classes")
 
         # config
-        self.compose_node_name = compose_node_name
+        # self.compose_node_name = compose_node_name
 
         # used as cache for inventory
         self._targets = {}
         self._parameters = {}
-
-    @classmethod
-    def get(cls):
-        if cls._instance is None:
-            raise InventoryError("no type specified")
-        return cls._instance
 
     @property
     def inventory(self) -> dict:
@@ -127,49 +111,6 @@ class Inventory(ABC):
         get parameters for multiple targets
         """
         raise NotImplementedError
-
-    def fetch_dependencies(self, fetch, force_fetch):
-        # fetch inventory
-        if fetch:
-            # new_source checks for new sources in fetched inventory items
-            new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
-            while new_sources:
-                fetch_inventories(
-                    inventory_path,
-                    target_objs,
-                    dep_cache_dir,
-                    force_fetch,
-                    pool,
-                )
-                cached.reset_inv()
-                target_objs = load_target_inventory(updated_targets)
-                cached.inv_sources.update(new_sources)
-                new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
-            # reset inventory cache and load target objs to check for missing classes
-            cached.reset_inv()
-            target_objs = load_target_inventory(updated_targets)
-        # fetch dependencies
-        if fetch:
-            fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
-        # fetch targets which have force_fetch: true
-        elif not kwargs.get("force_fetch", False):
-            fetch_objs = []
-            # iterate through targets
-            for target in target_objs:
-                try:
-                    # get value of "force_fetch" property
-                    dependencies = target["dependencies"]
-                    # dependencies is still a list
-                    for entry in dependencies:
-                        force_fetch = entry["force_fetch"]
-                        if force_fetch:
-                            fetch_objs.append(target)
-                except KeyError:
-                    # targets may have no "dependencies" or "force_fetch" key
-                    continue
-            # fetch dependencies from targets with force_fetch set to true
-            if fetch_objs:
-                fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
 
 
 class InventoryError(KapitanError):

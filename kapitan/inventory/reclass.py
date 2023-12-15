@@ -35,8 +35,10 @@ class ReclassInventory(Inventory):
             )
             class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
             _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
+            
+            # TODO: return only target: parameters --> {name: node["parameters"] for name, node in ["nodes"].items()}
+            return _reclass.inventory()
 
-            return {name: node["parameters"] for name, node in _reclass.inventory()["nodes"].items()}
         except ReclassException as e:
             if isinstance(e, NotFoundError):
                 logger.error("Inventory reclass error: inventory not found")

@@ -308,8 +308,16 @@ def get_inventory(inventory_path, ignore_class_notfound=False):
     if cached.inv:
         return cached.inv
 
-    logger.debug("Using reclass as inventory backend")
-    inv = inventory_reclass(inventory_path, ignore_class_notfound)
+    inventory_backend: Inventory = None
 
-    cached.inv = inv
-    return inv
+    # select inventory backend
+    if cached.args.get("inventory-backend") == "my-new-inventory":
+        logger.debug("Using my-new-inventory as inventory backend")
+    else:
+        logger.debug("Using reclass as inventory backend")
+        inventory_backend = ReclassInventory(inventory_path, ignore_class_notfound)
+
+    inventory = inventory_backend.inventory
+
+    cached.inv = inventory
+    return inventory
