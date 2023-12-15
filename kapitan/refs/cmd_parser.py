@@ -16,7 +16,7 @@ from kapitan.refs.secrets.azkms import AzureKMSSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.refs.secrets.vaultkv import VaultSecret
 from kapitan.refs.secrets.vaulttransit import VaultTransit
-from kapitan.resources import Inventory
+from kapitan.resources import get_inventory
 from kapitan.utils import fatal_error, search_target_token_paths
 
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ def ref_write(args, ref_controller):
         type_name, token_path = token_name.split(":")
         recipients = [dict((("name", name),)) for name in args.recipients]
         if args.target_name:
-            inv = Inventory(args.inventory_path).inventory
+            inv = get_inventory(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
@@ -95,7 +95,7 @@ def ref_write(args, ref_controller):
         type_name, token_path = token_name.split(":")
         key = args.key
         if args.target_name:
-            inv = Inventory(args.inventory_path).inventory
+            inv = get_inventory(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
@@ -123,7 +123,7 @@ def ref_write(args, ref_controller):
         type_name, token_path = token_name.split(":")
         key = args.key
         if args.target_name:
-            inv = Inventory(args.inventory_path).inventory
+            inv = get_inventory(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
@@ -152,7 +152,7 @@ def ref_write(args, ref_controller):
         type_name, token_path = token_name.split(":")
         key = args.key
         if args.target_name:
-            inv = Inventory(args.inventory_path).inventory
+            inv = get_inventory(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
@@ -196,7 +196,7 @@ def ref_write(args, ref_controller):
         vault_params = {}
         encoding = "original"
         if args.target_name:
-            inv = Inventory(args.inventory_path).inventory
+            inv = get_inventory(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
@@ -251,7 +251,7 @@ def ref_write(args, ref_controller):
         _data = data.encode()
         vault_params = {}
         if args.target_name:
-            inv = Inventory(args.inventory_path).inventory
+            inv = get_inventory(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
@@ -323,7 +323,7 @@ def secret_update(args, ref_controller):
             for name in args.recipients
         ]
         if args.target_name:
-            inv = Inventory(args.inventory_path).inventory
+            inv = get_inventory(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
@@ -351,7 +351,7 @@ def secret_update(args, ref_controller):
     elif token_name.startswith("gkms:"):
         key = args.key
         if args.target_name:
-            inv = Inventory(args.inventory_path).inventory
+            inv = get_inventory(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
@@ -377,7 +377,7 @@ def secret_update(args, ref_controller):
     elif token_name.startswith("azkms:"):
         key = args.key
         if args.target_name:
-            inv = Inventory(args.inventory_path).inventory
+            inv = get_inventory(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
@@ -403,7 +403,7 @@ def secret_update(args, ref_controller):
     elif token_name.startswith("awskms:"):
         key = args.key
         if args.target_name:
-            inv = Inventory(args.inventory_path).inventory
+            inv = get_inventory(args.inventory_path)
             kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
@@ -460,7 +460,7 @@ def secret_update_validate(args, ref_controller):
     "Validate and/or update target secrets"
     # update gpg recipients/gkms/awskms key for all secrets in secrets_path
     # use --refs-path to set scanning path
-    inv = Inventory(args.inventory_path).inventory
+    inv = get_inventory(args.inventory_path)
     targets = set(inv["nodes"].keys())
     secrets_path = os.path.abspath(args.refs_path)
     target_token_paths = search_target_token_paths(secrets_path, targets)

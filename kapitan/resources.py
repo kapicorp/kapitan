@@ -273,18 +273,16 @@ def inventory(search_paths, target, inventory_path=None):
     if not inv_path_exists:
         raise InventoryError(f"Inventory not found in search paths: {search_paths}")
 
-    inv = ReclassInventory(full_inv_path).inventory
+    if target is None:
+        return get_inventory(full_inv_path)["nodes"]
 
-    if target:
-        return {"parameters": inv[target]}
-
-    return {name: {"parameters": params} for name, params in inv.items()}
+    return get_inventory(full_inv_path)["nodes"][target]
 
 
 def generate_inventory(args):
     try:
-        inv = Inventory.get().inventory
-        if not args.target_name:
+        inv = get_inventory(args.inventory_path)
+        if args.target_name != "":
             inv = inv["nodes"][args.target_name]
             if args.pattern != "":
                 pattern = args.pattern.split(".")
@@ -298,3 +296,20 @@ def generate_inventory(args):
         if not isinstance(e, KapitanError):
             logger.exception("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         sys.exit(1)
+
+
+def get_inventory(inventory_path, ignore_class_notfound=False):
+    """
+    generic inventory function that makes inventory backend pluggable
+    default backend is reclass
+    """
+
+    # if inventory is already cached theres nothing to do
+    if cached.inv:
+        return cached.inv
+
+    logger.debug("Using reclass as inventory backend")
+    inv = inventory_reclass(inventory_path, ignore_class_notfound)
+
+    cached.inv = inv
+    return inv
