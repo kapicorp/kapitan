@@ -95,7 +95,9 @@ class KubernetesValidatorTest(unittest.TestCase):
                 # copy back the original file
                 copyfile(copied_file, original_file)
                 os.remove(copied_file)
-        self.assertTrue(captured_out.getvalue().find("invalid '{}' manifest".format(wrong_manifest_kind)) != -1)
+        self.assertTrue(
+            captured_out.getvalue().find("invalid '{}' manifest".format(wrong_manifest_kind)) != -1
+        )
 
     def test_validate_after_compile(self):
         sys.argv = [
