@@ -6,11 +6,20 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/worklows/documentation.yml'
+      - 'requirements.docs.txt'
+      - 'Dockerfile.docs'
+      - 'mkdocs.yml'
+      - 'CNAME' 
   push:
     branches:
       - master
     paths:
       - 'docs/**'
+      - '.github/worklows/documentation.yml'
       - 'requirements.docs.txt'
       - 'Dockerfile.docs'
       - 'mkdocs.yml'
@@ -22,8 +31,11 @@ jobs:
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@v4
-
+      - uses: actions/setup-python@v2
+      - run: pip install --upgrade pip && pip install -r requirements.docs.txt
+      - run: mkdocs build
       - name: Deploy docs
+        if: github.event_name != 'pull_request' && github.ref == github.event.repository.default_branch
         uses: mhausenblas/mkdocs-deploy-gh-pages@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
