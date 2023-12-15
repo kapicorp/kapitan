@@ -5,12 +5,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
 import logging
 import os
-from kapitan import cached
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
+from kapitan import cached
 from kapitan.errors import InventoryError, KapitanError
 
 logger = logging.getLogger(__name__)

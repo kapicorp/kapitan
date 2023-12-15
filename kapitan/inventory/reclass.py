@@ -1,13 +1,13 @@
-from kapitan.inventory.base import Inventory
-import os
-import yaml
 import logging
+import os
 
 import reclass
 import reclass.core
+import yaml
 from reclass.errors import NotFoundError, ReclassException
 
 from kapitan.errors import InventoryError
+from kapitan.inventory.base import Inventory
 
 logger = logging.getLogger(__name__)
 

@@ -86,7 +86,6 @@ def compile_targets(
         if not target_objs:
             raise CompileError("Error: no targets found")
 
-
         logger.info("Rendered inventory (%.2fs)", time.time() - rendering_start)
 
         worker = partial(

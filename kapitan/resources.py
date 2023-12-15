@@ -272,14 +272,13 @@ def inventory(search_paths, target, inventory_path=None):
 
     if not inv_path_exists:
         raise InventoryError(f"Inventory not found in search paths: {search_paths}")
-    
+
     inv = ReclassInventory(full_inv_path).inventory
-    
+
     if target:
         return {"parameters": inv[target]}
-    
-    return {name: {"parameters": params} for name, params in inv.items()}
 
+    return {name: {"parameters": params} for name, params in inv.items()}
 
 
 def generate_inventory(args):
