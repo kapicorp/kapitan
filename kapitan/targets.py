@@ -474,6 +474,12 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
         output_path = comp_obj["output_path"]
         input_params = comp_obj.setdefault("input_params", {})
 
+        if not comp_obj.get("condition", True):
+            logger.warning(
+                "Skipping compile for type %s and output_path %s because condition is false", input_type, output_path
+            )
+            continue
+
         if input_type == "jinja2":
             input_compiler = Jinja2(compile_path, search_paths, ref_controller, comp_obj)
         elif input_type == "jsonnet":
@@ -584,6 +590,7 @@ def valid_target_obj(target_obj, require_compile=True):
                 "items": {
                     "type": "object",
                     "properties": {
+                        "conditon": {"type": "boolean"},
                         "name": {"type": "string"},
                         "input_paths": {"type": "array"},
                         "input_type": {"type": "string"},
@@ -649,6 +656,7 @@ def valid_target_obj(target_obj, require_compile=True):
                 "items": {
                     "type": "object",
                     "properties": {
+                        "condition": {"type": "boolean"},
                         "chart_name": {"type": "string"},
                         "type": {"type": "string", "enum": ["git", "http", "https", "helm"]},
                         "output_path": {"type": "string"},
@@ -667,6 +675,7 @@ def valid_target_obj(target_obj, require_compile=True):
                             "if": {"properties": {"type": {"enum": ["http", "https"]}}},
                             "then": {
                                 "properties": {
+                                    "condition": {},
                                     "type": {},
                                     "source": {"format": "uri"},
                                     "output_path": {},
@@ -680,6 +689,7 @@ def valid_target_obj(target_obj, require_compile=True):
                             "if": {"properties": {"type": {"enum": ["helm"]}}},
                             "then": {
                                 "properties": {
+                                    "condition": {},
                                     "type": {},
                                     "source": {"format": "uri"},
                                     "output_path": {},
