@@ -151,6 +151,24 @@ def compile_targets(
 
         logger.info("Rendered inventory (%.2fs)", time.time() - rendering_start)
 
+        if kwargs.get("multiprocess_objects"):
+            # append target information to compile objects
+            new_target_objs = []
+            for target_obj in target_objs:
+                compile_objs = target_obj["compile"]
+                objects_length = len(compile_objs)
+
+                for id, compile_obj in enumerate(compile_objs):
+                    generated_target_obj = target_obj.copy()
+                    generated_target_obj["compile"] = [compile_obj]
+                    generated_target_obj["id"] = id
+                    generated_target_obj["max_id"] = objects_length - 1
+                    new_target_objs.append(generated_target_obj)
+
+            target_objs = new_target_objs
+
+        compile_start = time.time()
+
         worker = partial(
             compile_target,
             search_paths=search_paths,
@@ -164,6 +182,9 @@ def compile_targets(
         # compile_target() returns None on success
         # so p is only not None when raising an exception
         [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+
+        if kwargs.get("multiprocess_objects"):
+            logger.info(f"\nCompiled {len(target_objs)} compile targets ({time.time() - compile_start:.2f}s)")
 
         os.makedirs(compile_path, exist_ok=True)
 
@@ -499,6 +520,18 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
 
         input_compiler.make_compile_dirs(target_name, output_path, **kwargs)
         input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
+
+    if kwargs.get("multiprocess_objects"):
+        current_id = target_obj["id"]
+        max_id = target_obj["max_id"]
+        # contains only one element
+        if current_id != max_id:
+            logger.debug(
+                f"Compiled {target_obj['target_full_path']} - {compile_objs[0]['input_type']} ({current_id} / {max_id})"
+            )
+        else:
+            logger.info(f"Compiled {target_obj['target_full_path']}")
+        return
 
     logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
 
