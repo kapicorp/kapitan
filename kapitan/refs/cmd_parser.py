@@ -2,17 +2,17 @@ from __future__ import print_function
 
 import base64
 import logging
+import mimetypes
 import os
 import sys
-import mimetypes
 
-from kapitan.errors import KapitanError, RefHashMismatchError, RefError
+from kapitan.errors import KapitanError, RefError, RefHashMismatchError
 from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.env import EnvRef
 from kapitan.refs.secrets.awskms import AWSKMSSecret
-from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.azkms import AzureKMSSecret
+from kapitan.refs.secrets.gkms import GoogleKMSSecret
 from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
 from kapitan.refs.secrets.vaultkv import VaultSecret
 from kapitan.refs.secrets.vaulttransit import VaultTransit
@@ -66,7 +66,7 @@ def ref_write(args, ref_controller):
         recipients = [dict((("name", name),)) for name in args.recipients]
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
                     "parameters.kapitan.secrets not defined in inventory of target {}".format(
@@ -96,7 +96,7 @@ def ref_write(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
                     "parameters.kapitan.secrets not defined in inventory of target {}".format(
@@ -124,7 +124,7 @@ def ref_write(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
                     "parameters.kapitan.secrets not defined in inventory of target {}".format(
@@ -153,7 +153,7 @@ def ref_write(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
                     "parameters.kapitan.secrets not defined in inventory of target {}".format(
@@ -197,7 +197,7 @@ def ref_write(args, ref_controller):
         encoding = "original"
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
                     "parameters.kapitan.secrets not defined in inventory of target {}".format(
@@ -252,7 +252,7 @@ def ref_write(args, ref_controller):
         vault_params = {}
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
@@ -324,7 +324,7 @@ def secret_update(args, ref_controller):
         ]
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
@@ -352,7 +352,7 @@ def secret_update(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
@@ -378,7 +378,7 @@ def secret_update(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
@@ -404,7 +404,7 @@ def secret_update(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv["nodes"][args.target_name]["parameters"]["kapitan"]
+            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
@@ -461,13 +461,13 @@ def secret_update_validate(args, ref_controller):
     # update gpg recipients/gkms/awskms key for all secrets in secrets_path
     # use --refs-path to set scanning path
     inv = get_inventory(args.inventory_path)
-    targets = set(inv["nodes"].keys())
+    targets = set(inv.targets.keys())
     secrets_path = os.path.abspath(args.refs_path)
     target_token_paths = search_target_token_paths(secrets_path, targets)
     ret_code = 0
 
     for target_name, token_paths in target_token_paths.items():
-        kap_inv_params = inv["nodes"][target_name]["parameters"]["kapitan"]
+        kap_inv_params = inv.get_target(target_name)["kapitan"]
         if "secrets" not in kap_inv_params:
             raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
 

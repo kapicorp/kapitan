@@ -1,2 +1,2 @@
-from .base import Inventory
-from .reclass import ReclassInventory
+from .inv_reclass import ReclassInventory
+from .inventory import Inventory

@@ -10,6 +10,7 @@ import logging
 import time
 
 import gnupg
+
 from kapitan import cached
 from kapitan.errors import KapitanError
 from kapitan.refs.base import RefError
@@ -75,16 +76,14 @@ class GPGSecret(Base64Ref):
             if target_name is None:
                 raise ValueError("target_name not set")
 
-            target_inv = cached.inv["nodes"].get(target_name, None)
-            if target_inv is None:
-                raise ValueError("target_inv not set")
+            target_inv = cached.inv.get_target(target_name)
 
-            if "secrets" not in target_inv["parameters"]["kapitan"]:
+            if "secrets" not in target_inv["kapitan"]:
                 raise KapitanError(
                     f"parameters.kapitan.secrets not defined in inventory of target {target_name}"
                 )
 
-            recipients = target_inv["parameters"]["kapitan"]["secrets"]["gpg"]["recipients"]
+            recipients = target_inv["kapitan"]["secrets"]["gpg"]["recipients"]
 
             return cls(data, recipients, **ref_params.kwargs)
         except KeyError:

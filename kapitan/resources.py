@@ -17,11 +17,12 @@ import sys
 from functools import partial
 
 import jsonschema
-from kapitan.inventory import Inventory, ReclassInventory
-import kapitan.cached as cached
 import yaml
+
+import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
+from kapitan.inventory import Inventory, ReclassInventory
 from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
 
 logger = logging.getLogger(__name__)
@@ -243,7 +244,7 @@ def search_imports(cwd, import_str, search_paths):
     return normalised_path, normalised_path_content.encode()
 
 
-def inventory(search_paths, target, inventory_path=None):
+def inventory(search_paths: list, target, inventory_path: str = None):
     """
     Reads inventory (set by inventory_path) in search_paths.
     set nodes_uri to change reclass nodes_uri the default value
@@ -273,20 +274,26 @@ def inventory(search_paths, target, inventory_path=None):
     if not inv_path_exists:
         raise InventoryError(f"Inventory not found in search paths: {search_paths}")
 
-    if target is None:
-        return get_inventory(full_inv_path)["nodes"]
+    inv = get_inventory(full_inv_path)
 
-    return get_inventory(full_inv_path)["nodes"][target]
+    if target:
+        return {"parameters": inv.get_target(target)}
+
+    return inv.inventory
 
 
 def generate_inventory(args):
     try:
         inv = get_inventory(args.inventory_path)
-        if args.target_name != "":
-            inv = inv["nodes"][args.target_name]
-            if args.pattern != "":
+
+        if args.target_name:
+            inv = inv.get_target(args.target_name)
+            if args.pattern:
                 pattern = args.pattern.split(".")
                 inv = deep_get(inv, pattern)
+        else:
+            inv = inv.inventory
+
         if args.flat:
             inv = flatten_dict(inv)
             yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False, indent=args.indent)
@@ -298,14 +305,14 @@ def generate_inventory(args):
         sys.exit(1)
 
 
-def get_inventory(inventory_path, ignore_class_notfound=False):
+def get_inventory(inventory_path, ignore_class_notfound=False) -> Inventory:
     """
     generic inventory function that makes inventory backend pluggable
     default backend is reclass
     """
 
-    # if inventory is already cached theres nothing to do
-    if cached.inv:
+    # if inventory is already cached there is nothing to do
+    if cached.inv and cached.inv.targets:
         return cached.inv
 
     inventory_backend: Inventory = None
@@ -315,9 +322,9 @@ def get_inventory(inventory_path, ignore_class_notfound=False):
         logger.debug("Using my-new-inventory as inventory backend")
     else:
         logger.debug("Using reclass as inventory backend")
-        inventory_backend = ReclassInventory(inventory_path, ignore_class_notfound)
+        inventory_backend = ReclassInventory(inventory_path)
 
-    inventory = inventory_backend.inventory
+    inventory_backend.search_targets()
 
-    cached.inv = inventory
-    return inventory
+    cached.inv = inventory_backend
+    return inventory_backend
