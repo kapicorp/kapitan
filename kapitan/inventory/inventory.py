@@ -27,7 +27,7 @@ class InventoryTarget:
 
 class Inventory(ABC):
     path: str = "inventory"
-    targets: dict[str, InventoryTarget] = {}
+    targets: dict = {}
 
     def __init__(self, path: str = path, compose_target_name: bool = False):
         self.inventory_path = path
