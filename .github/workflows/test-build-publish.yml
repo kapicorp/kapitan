@@ -52,7 +52,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
@@ -95,7 +94,6 @@ jobs:
           - linux/amd64
           - linux/arm64
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
@@ -144,7 +142,6 @@ jobs:
           - linux/amd64
           - linux/arm64
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
@@ -215,7 +212,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version:
-          - "3.8"
           - "3.9"
           - "3.10"
           - "3.11"
@@ -263,7 +259,5 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           builder: buildx
           suffixes: |
-            -py-3.8-linux-amd64
-            -py-3.8-linux-arm64
             -linux-amd64
             -linux-arm64
