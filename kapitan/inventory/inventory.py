@@ -10,6 +10,7 @@ import os
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from typing import overload, Union
 
 from kapitan.errors import KapitanError
 from kapitan.reclass.reclass.values import item
@@ -23,6 +24,7 @@ class InventoryTarget:
     path: str
     composed_name: str
     parameters: dict = field(default_factory=dict)
+    classes: list = field(default_factory=list)
 
 
 class Inventory(ABC):
@@ -40,16 +42,19 @@ class Inventory(ABC):
 
     @property
     def inventory(self) -> dict:
+        """
+        get all targets from inventory
+        targets will be rendered
+        """
         if not self.targets:
-            return self.render_targets()
-        return {name: target.parameters for name, target in self.targets.items()}
+            self.search_targets()
 
-    @abstractmethod
-    def render_targets(self, targets: list = None, ignore_class_notfound: bool = False) -> dict:
-        """
-        create the inventory depending on which backend gets used
-        """
-        raise NotImplementedError
+        inventory = self.get_targets([*self.targets.keys()])
+
+        return {
+            target_name: {"parameters": target.parameters, "classes": target.classes}
+            for target_name, target in inventory.items()
+        }
 
     def search_targets(self) -> dict:
         """
@@ -84,16 +89,44 @@ class Inventory(ABC):
 
         return self.targets
 
-    def get_target(self, target_name: str) -> dict:
+    def get_target(self, target_name: str, ignore_class_not_found: bool = False) -> InventoryTarget:
         """
-        helper function to get parameters for a specific target
+        helper function to get rendered InventoryTarget object for single target
         """
-        return self.get_targets([target_name])[target_name]
+        return self.get_targets([target_name], ignore_class_not_found)[target_name]
+
+    def get_targets(self, target_names: list, ignore_class_not_found: bool = False) -> dict:
+        """
+        helper function to get rendered InventoryTarget objects for multiple targets
+        """
+        targets_to_render = []
+
+        for target_name in target_names:
+            target = self.targets.get(target_name)
+            if not target:
+                raise InventoryError(f"target '{target_name}' not found")
+
+            if not target.parameters:
+                targets_to_render.append(target)
+
+        self.render_targets(targets_to_render, ignore_class_not_found)
+
+        return {name: target for name, target in self.targets.items() if name in target_names}
+
+    def get_parameters(self, target_names: Union[str, list], ignore_class_not_found: bool = False) -> dict:
+        """
+        helper function to get rendered parameters for single target or multiple targets
+        """
+        if type(target_names) is str:
+            target = self.get_target(target_names, ignore_class_not_found)
+            return target.parameters
+
+        return {name: target.parameters for name, target in self.get_targets(target_names)}
 
     @abstractmethod
-    def get_targets(self, target_names: list) -> dict:
+    def render_targets(self, targets: list = None, ignore_class_notfound: bool = False):
         """
-        helper function to get parameters for multiple targets
+        create the inventory depending on which backend gets used
         """
         raise NotImplementedError
 

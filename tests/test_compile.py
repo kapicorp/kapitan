@@ -173,7 +173,7 @@ class CompileKubernetesTest(unittest.TestCase):
     def test_compile_vars_target_missing(self):
         inventory_path = "inventory"
         target_filename = "minikube-es"
-        target_obj = get_inventory(inventory_path).get_target(target_filename)["kapitan"]
+        target_obj = get_inventory(inventory_path).get_parameters(target_filename)["kapitan"]
         # delete vars.target
         del target_obj["vars"]["target"]
 

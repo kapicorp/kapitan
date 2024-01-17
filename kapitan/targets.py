@@ -250,15 +250,15 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
         for target in targets:
             try:
                 cached.inv_cache["inventory"][target] = {}
-                cached.inv_cache["inventory"][target] = dictionary_hash(inv.get_target(target))
+                cached.inv_cache["inventory"][target] = dictionary_hash(inv.get_parameters(target))
             except KeyError:
                 raise CompileError(f"target not found: {target}")
     else:
         for target in inv.targets.keys():
             cached.inv_cache["inventory"][target] = {}
-            cached.inv_cache["inventory"][target] = dictionary_hash(inv.get_target(target))
+            cached.inv_cache["inventory"][target] = dictionary_hash(inv.get_parameters(target))
 
-            compile_obj = inv.get_target(target)["kapitan"]["compile"]
+            compile_obj = inv.get_parameters(target)["kapitan"]["compile"]
             for obj in compile_obj:
                 for input_path in obj["input_paths"]:
                     base_folder = os.path.dirname(input_path).split("/")[0]
@@ -374,8 +374,7 @@ def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
 
     for target_name in targets_list:
         try:
-            target_obj = inv.get_target(target_name)
-            target_obj = target_obj.get("kapitan")
+            target_obj = inv.get_parameters(target_name, ignore_class_notfound).get("kapitan")
             # check if parameters.kapitan is empty
             if not target_obj:
                 raise InventoryError(f"InventoryError: {target_name}: parameters.kapitan has no assignment")
@@ -410,7 +409,7 @@ def search_targets(inventory_path, targets, labels):
         matched_all_labels = False
         for label, value in labels_dict.items():
             try:
-                if inv.get_target(target_name)["kapitan"]["labels"][label] == value:
+                if inv.get_parameters(target_name)["kapitan"]["labels"][label] == value:
                     matched_all_labels = True
                     continue
             except KeyError:

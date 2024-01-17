@@ -50,7 +50,7 @@ class VaultTransit(Base64Ref):
             if target_name is None:
                 raise ValueError("target_name not set")
 
-            target_inv = cached.inv.get_target(target_name)
+            target_inv = cached.inv.get_parameters(target_name)
 
             ref_params.kwargs["vault_params"] = target_inv["kapitan"]["secrets"]["vaulttransit"]
 

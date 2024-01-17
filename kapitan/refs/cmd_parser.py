@@ -66,7 +66,7 @@ def ref_write(args, ref_controller):
         recipients = [dict((("name", name),)) for name in args.recipients]
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
+            kap_inv_params = inv.get_parameters(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
                     "parameters.kapitan.secrets not defined in inventory of target {}".format(
@@ -96,7 +96,7 @@ def ref_write(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
+            kap_inv_params = inv.get_parameters(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
                     "parameters.kapitan.secrets not defined in inventory of target {}".format(
@@ -124,7 +124,7 @@ def ref_write(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
+            kap_inv_params = inv.get_parameters(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
                     "parameters.kapitan.secrets not defined in inventory of target {}".format(
@@ -153,7 +153,7 @@ def ref_write(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
+            kap_inv_params = inv.get_parameters(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
                     "parameters.kapitan.secrets not defined in inventory of target {}".format(
@@ -197,7 +197,7 @@ def ref_write(args, ref_controller):
         encoding = "original"
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
+            kap_inv_params = inv.get_parameters(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError(
                     "parameters.kapitan.secrets not defined in inventory of target {}".format(
@@ -252,7 +252,7 @@ def ref_write(args, ref_controller):
         vault_params = {}
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
+            kap_inv_params = inv.get_parameters(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
@@ -324,7 +324,7 @@ def secret_update(args, ref_controller):
         ]
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
+            kap_inv_params = inv.get_parameters(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
@@ -352,7 +352,7 @@ def secret_update(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
+            kap_inv_params = inv.get_parameters(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
@@ -378,7 +378,7 @@ def secret_update(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
+            kap_inv_params = inv.get_parameters(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
@@ -404,7 +404,7 @@ def secret_update(args, ref_controller):
         key = args.key
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv.get_target(args.target_name)["kapitan"]
+            kap_inv_params = inv.get_parameters(args.target_name)["kapitan"]
             if "secrets" not in kap_inv_params:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
@@ -467,7 +467,7 @@ def secret_update_validate(args, ref_controller):
     ret_code = 0
 
     for target_name, token_paths in target_token_paths.items():
-        kap_inv_params = inv.get_target(target_name)["kapitan"]
+        kap_inv_params = inv.get_parameters(target_name)["kapitan"]
         if "secrets" not in kap_inv_params:
             raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
 

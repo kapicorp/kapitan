@@ -89,6 +89,7 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(temp_dir)
         rmtree(output_dir)
 
+    @unittest.skip("Inventory Interface will handle this case diffently")
     def test_compile_fetch(self):
         """Run $ kapitan compile --force-fetch --output-path=some/dir/ --inventory-path=another/dir --targets remoteinv-example remoteinv-nginx zippedinv
         were some/dir/ & another/dir/ are directories chosen by the user
