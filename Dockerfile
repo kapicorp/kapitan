@@ -44,7 +44,7 @@ RUN pip install --editable .[test] \
 
 
 # Final image with virtualenv built in previous step
-FROM python:3.8-slim
+FROM python:3.11-slim
 
 ENV PATH="/opt/venv/bin:${PATH}"
 ENV HELM_CACHE_HOME=".cache/helm"
