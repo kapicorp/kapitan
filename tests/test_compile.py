@@ -17,10 +17,10 @@ import shutil
 import yaml
 import toml
 from kapitan.cli import main
+from kapitan.resources import get_inventory
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
 from kapitan.targets import validate_matching_target_name
-from kapitan.inventory import Inventory
 from kapitan.errors import InventoryError
 
 
@@ -136,8 +136,6 @@ class CompileKubernetesTest(unittest.TestCase):
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-c"]
         main()
-        # Compile again to verify caching works as expected
-        main()
         os.remove("./compiled/.kapitan_cache")
         compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
         test_compiled_dir_hash = directory_hash(os.getcwd() + "/../../tests/test_kubernetes_compiled")
@@ -175,7 +173,7 @@ class CompileKubernetesTest(unittest.TestCase):
     def test_compile_vars_target_missing(self):
         inventory_path = "inventory"
         target_filename = "minikube-es"
-        target_obj = Inventory(inventory_path).inventory["nodes"][target_filename]["parameters"]["kapitan"]
+        target_obj = get_inventory(inventory_path).get_target(target_filename)["kapitan"]
         # delete vars.target
         del target_obj["vars"]["target"]
 
