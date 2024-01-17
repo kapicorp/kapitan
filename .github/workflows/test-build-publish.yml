@@ -218,6 +218,7 @@ jobs:
           - "3.8"
           - "3.9"
           - "3.10"
+          - "3.11"
     steps:
       # Setup QEMU and Buildx to build multi-platform image
       # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
