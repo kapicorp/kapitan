@@ -1,5 +1,5 @@
 # Build the virtualenv for Kapitan
-FROM python:3.8-slim AS python-builder
+FROM python:3.11-slim AS python-builder
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
 
@@ -11,7 +11,7 @@ RUN apt-get update \
         curl \
         build-essential
 
-ENV POETRY_VERSION=1.4.0
+ENV POETRY_VERSION=1.7.1
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:/usr/local/go/bin:${PATH}"
 RUN python -m venv $VIRTUAL_ENV \
