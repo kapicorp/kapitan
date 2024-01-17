@@ -91,7 +91,7 @@ class Inventory(ABC):
         return self.get_targets([target_name])[target_name]
 
     @abstractmethod
-    def get_targets(self, target_names: list[str]) -> dict:
+    def get_targets(self, target_names: list) -> dict:
         """
         helper function to get parameters for multiple targets
         """

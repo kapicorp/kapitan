@@ -50,7 +50,7 @@ class ReclassInventory(Inventory):
                 logger.error(f"Inventory reclass error: {e.message}")
             raise InventoryError(e.message)
     
-    def get_targets(self, target_names: list[str]) -> dict:
+    def get_targets(self, target_names: list) -> dict:
 
         for target_name in target_names:
             target = self.targets.get(target_name)
