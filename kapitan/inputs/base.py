@@ -82,13 +82,13 @@ class InputType(object):
                 prune_output=prune_output,
                 **kwargs,
             )
-            if (permissions is not None):
+            if permissions is not None:
                 for perm in permissions:
-                    pattern = perm.get('pattern', None)
-                    mode = perm.get('mode', None)
-                    assert(pattern is not None and mode is not None)
+                    pattern = perm.get("pattern", None)
+                    mode = perm.get("mode", None)
+                    assert pattern is not None and mode is not None
                     logger.debug("Find files in %s, pattern %s, file mode %s", _compile_path, pattern, mode)
-                    for item in glob.glob(_compile_path + "/" + pattern, recursive = True):
+                    for item in glob.glob(_compile_path + "/" + pattern, recursive=True):
                         logger.debug("Set permission for file %s, mode %s", item, mode)
                         os.chmod(item, mode)
 
