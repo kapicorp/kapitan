@@ -65,6 +65,7 @@ class InputType(object):
         output_path = comp_obj["output_path"]
         output_type = comp_obj.get("output_type", self.default_output_type())
         prune_output = comp_obj.get("prune", kwargs.get("prune", False))
+        permissions = comp_obj.get("permissions", None)
 
         logger.debug("Compiling %s", input_path)
         try:
@@ -81,6 +82,16 @@ class InputType(object):
                 prune_output=prune_output,
                 **kwargs,
             )
+            if (permissions is not None):
+                for perm in permissions:
+                    pattern = perm.get('pattern', None)
+                    mode = perm.get('mode', None)
+                    assert(pattern is not None and mode is not None)
+                    logger.debug("Find files in %s, pattern %s, file mode %s", _compile_path, pattern, mode)
+                    for item in glob.glob(_compile_path + "/" + pattern, recursive = True):
+                        logger.debug("Set permission for file %s, mode %s", item, mode)
+                        os.chmod(item, mode)
+
         except KapitanError as e:
             raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
 
