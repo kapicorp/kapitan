@@ -15,6 +15,9 @@ parameters:
         input_type: jinja2
         input_paths:
           - templates/scripts
+        permissions:
+          - pattern: my_script.sh
+            mode: 0o700
 
       - output_path: .
         output_type: yaml
