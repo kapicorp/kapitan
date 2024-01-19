@@ -11,14 +11,14 @@ from __future__ import print_function
 
 import argparse
 import json
-import logging
+import logging.config
 import multiprocessing
 import os
 import sys
 
 import yaml
 
-from kapitan import cached, defaults, setup_logging
+from kapitan import cached, defaults, logging_config
 from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import jsonnet_file
 from kapitan.lint import start_lint
@@ -305,6 +305,7 @@ def build_parser():
         action="store_true",
         help="dumps all none-type entries as empty, default is dumping as 'null'",
     )
+    add_logging_argument("compile", compile_parser)
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
     compile_selector_parser.add_argument(
@@ -379,6 +380,7 @@ def build_parser():
         default=from_dot_kapitan("inventory", "multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
+    add_logging_argument("inventory", inventory_parser)
 
     searchvar_parser = subparser.add_parser(
         "searchvar", aliases=["sv"], help="show all inventory files where var is declared"
@@ -622,6 +624,57 @@ def build_parser():
     return parser
 
 
+def add_logging_argument(command, parser):
+    """Adds logging argument for command to a parser.
+
+    Args:
+        command (str): the command like compile, inventory
+        parser (ArgumentParser): the argument parser to which to add the argument
+    """
+    parser.add_argument(
+        "--logging-config",
+        metavar="FILE",
+        default=from_dot_kapitan(command, "logging", ""),
+        help="python logging configuration",
+    )
+
+
+def setup_logging(args=None):
+    """Setups logging using the args
+    The default configuration is:
+        kapitan and reclass on INFO as they are for regular output to users
+
+    The logging-config option takes precedence over all. It reads a yaml file with based
+    on the https://docs.python.org/3/library/logging.config.html#logging-config-dictschema.
+
+    The verbose option option takes precedence over the quiet one when they are used.
+    """
+    if hasattr(args, "logging_config") and args.logging_config != "":
+        with open(args.logging_config, "r", encoding="ascii") as f:
+            logging_config.update(yaml.safe_load(f))
+    else:
+        if hasattr(args, "verbose") and args.verbose:
+            set_kapitan_loggers("DEBUG", "extended")
+        elif hasattr(args, "quiet") and args.quiet:
+            set_kapitan_loggers("CRITICAL", "extended")
+
+    logging.config.dictConfig(logging_config)
+
+
+def set_kapitan_loggers(level, stream):
+    """Set logging level of kapitan and reclass loggers.
+
+    Args:
+        level (str): the log level to use
+        stream (str): the stream to use
+    """
+    logging_config["loggers"] = {
+        "kapitan": {"level": level, "propagate": True},
+        "reclass": {"level": level, "propagate": True},
+    }
+    logging_config["root"] = {"level": level, "handlers": [stream]}
+
+
 def main():
     """main function for command line usage"""
     try:
@@ -649,10 +702,7 @@ def main():
     assert "name" in args, "All cli commands must have provided default name"
     cached.args[args.name] = args
 
-    if hasattr(args, "verbose") and args.verbose:
-        setup_logging(level=logging.DEBUG, force=True)
-    elif hasattr(args, "quiet") and args.quiet:
-        setup_logging(level=logging.CRITICAL, force=True)
+    setup_logging(args)
 
     # call chosen command
     args.func(args)

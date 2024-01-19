@@ -4,6 +4,7 @@
 
 import hashlib
 import logging
+import logging.config
 import multiprocessing
 import os
 from collections import defaultdict, namedtuple
@@ -14,6 +15,7 @@ from shutil import copyfile, rmtree
 
 from git import GitCommandError
 from git import Repo
+from kapitan import logging_config
 from kapitan.errors import GitSubdirNotFoundError, GitFetchingError, HelmFetchingError
 from kapitan.helm_cli import helm_cli
 from kapitan.utils import (
@@ -82,20 +84,37 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
             )
             continue
 
-    git_worker = partial(fetch_git_dependency, save_dir=save_dir, force=force)
-    http_worker = partial(fetch_http_dependency, save_dir=save_dir, force=force)
-    helm_worker = partial(fetch_helm_chart, save_dir=save_dir, force=force)
+    git_worker = partial(
+        fetch_git_dependency,
+        save_dir=save_dir,
+        force=force,
+        logging_config_dict=logging_config,
+    )
+    http_worker = partial(
+        fetch_http_dependency,
+        save_dir=save_dir,
+        force=force,
+        logging_config_dict=logging_config,
+    )
+    helm_worker = partial(
+        fetch_helm_chart,
+        save_dir=save_dir,
+        force=force,
+        logging_config_dict=logging_config,
+    )
     [p.get() for p in pool.imap_unordered(http_worker, http_deps.items()) if p]
     [p.get() for p in pool.imap_unordered(git_worker, git_deps.items()) if p]
     [p.get() for p in pool.imap_unordered(helm_worker, helm_deps.items()) if p]
 
 
-def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
+def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency", logging_config_dict=None):
     """
     fetches a git repository at source into save_dir, and copy the repository into
     output_path stored in dep_mapping. ref is used to checkout if exists, fetches master branch by default.
     only subdir is copied into output_path if specified.
     """
+    if logging_config_dict is not None:
+        logging.config.dictConfig(logging_config_dict)
     source, deps = dep_mapping
     # to avoid collisions between basename(source)
     path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
@@ -152,11 +171,13 @@ def fetch_git_source(source, save_dir, item_type):
         raise GitFetchingError("{} {}: fetching unsuccessful\n{}".format(item_type, source, e.stderr))
 
 
-def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
+def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency", logging_config_dict=None):
     """
     fetches a http[s] file at source and saves into save_dir, after which it is copied into
     the output_path stored in dep_mapping
     """
+    if logging_config_dict is not None:
+        logging.config.dictConfig(logging_config_dict)
     source, deps = dep_mapping
     # to avoid collisions between basename(source)
     path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
@@ -221,10 +242,12 @@ def fetch_http_source(source, save_path, item_type):
     return None
 
 
-def fetch_helm_chart(dep_mapping, save_dir, force):
+def fetch_helm_chart(dep_mapping, save_dir, force, logging_config_dict=None):
     """
     downloads a helm chart and its subcharts from source then untars and moves it to save_dir
     """
+    if logging_config_dict is not None:
+        logging.config.dictConfig(logging_config_dict)
     source, deps = dep_mapping
 
     # to avoid collisions between source.chart_name/source.version

@@ -16,7 +16,7 @@ import glob
 import shutil
 import yaml
 import toml
-from kapitan.cli import main
+from kapitan.cli import main, setup_logging
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
 from kapitan.targets import validate_matching_target_name
@@ -152,11 +152,8 @@ class CompileKubernetesTest(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
 
     def test_compile_not_matching_targets(self):
-        with self.assertLogs(logger="kapitan.targets", level="ERROR") as cm, contextlib.redirect_stdout(
-            io.StringIO()
-        ):
-            # as of now, we cannot capture stdout with contextlib.redirect_stdout
-            # since we only do logger.error(e) in targets.py before exiting
+        setup_logging()
+        with contextlib.redirect_stdout(io.StringIO()) as captured_out:
             with self.assertRaises(SystemExit) as ca:
                 unmatched_filename = "inventory/targets/minikube-es-fake.yml"
                 correct_filename = "inventory/targets/minikube-es.yml"
@@ -170,7 +167,7 @@ class CompileKubernetesTest(unittest.TestCase):
                     if os.path.exists(unmatched_filename):
                         os.rename(src=unmatched_filename, dst=correct_filename)
         error_message_substr = "is missing the corresponding yml file"
-        self.assertTrue(" ".join(cm.output).find(error_message_substr) != -1)
+        self.assertTrue(captured_out.getvalue().find(error_message_substr) != -1)
 
     def test_compile_vars_target_missing(self):
         inventory_path = "inventory"

@@ -8,6 +8,7 @@
 "kapitan targets"
 import json
 import logging
+import logging.config
 import multiprocessing
 import os
 import shutil
@@ -21,7 +22,7 @@ import jsonschema
 import yaml
 from reclass.errors import NotFoundError, ReclassException
 
-from kapitan import cached, defaults
+from kapitan import cached, defaults, logging_config
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
@@ -158,6 +159,7 @@ def compile_targets(
             ref_controller=ref_controller,
             inventory_path=inventory_path,
             globals_cached=cached.as_dict(),
+            logging_config_dict=logging_config,
             **kwargs,
         )
 
@@ -187,10 +189,13 @@ def compile_targets(
 
         # validate the compiled outputs
         if kwargs.get("validate", False):
-            validate_map = create_validate_mapping(target_objs, compile_path)
+            validate_map = create_validate_mapping(
+                target_objs, compile_path, logging_config_dict=logging_config
+            )
             worker = partial(
                 schema_validate_kubernetes_output,
                 cache_dir=kwargs.get("schemas_path", "./schemas"),
+                logging_config_dict=logging_config,
             )
             [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
 
@@ -455,8 +460,19 @@ def search_targets(inventory_path, targets, labels):
     return targets_found
 
 
-def compile_target(target_obj, search_paths, compile_path, ref_controller, globals_cached=None, **kwargs):
+def compile_target(
+    target_obj,
+    search_paths,
+    compile_path,
+    ref_controller,
+    globals_cached=None,
+    logging_config_dict=None,
+    **kwargs,
+):
     """Compiles target_obj and writes to compile_path"""
+
+    if logging_config_dict is not None:
+        logging.config.dictConfig(logging_config_dict)
     start = time.time()
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
@@ -776,12 +792,18 @@ def schema_validate_compiled(args):
         os.makedirs(args.schemas_path)
         logger.info("created schema-cache-path at %s", args.schemas_path)
 
-    worker = partial(schema_validate_kubernetes_output, cache_dir=args.schemas_path)
+    worker = partial(
+        schema_validate_kubernetes_output,
+        cache_dir=args.schemas_path,
+        logging_config_dict=logging_config,
+    )
     pool = multiprocessing.Pool(args.parallelism)
 
     try:
         target_objs = load_target_inventory(args.inventory_path, args.targets)
-        validate_map = create_validate_mapping(target_objs, args.compiled_path)
+        validate_map = create_validate_mapping(
+            target_objs, args.compiled_path, logging_config_dict=logging_config
+        )
 
         [p.get() for p in pool.imap_unordered(worker, validate_map.items()) if p]
         pool.close()
@@ -807,11 +829,13 @@ def schema_validate_compiled(args):
         pool.join()
 
 
-def create_validate_mapping(target_objs, compiled_path):
+def create_validate_mapping(target_objs, compiled_path, logging_config_dict=None):
     """
     creates mapping of (kind, version) tuple to output_paths across different targets
     this is required to avoid redundant schema fetch when multiple targets use the same schema for validation
     """
+    if logging_config_dict is not None:
+        logging.config.dictConfig(logging_config_dict)
     validate_files_map = defaultdict(list)
     for target_obj in target_objs:
         target_name = target_obj["vars"]["target"]
@@ -843,11 +867,13 @@ def create_validate_mapping(target_objs, compiled_path):
     return validate_files_map
 
 
-def schema_validate_kubernetes_output(validate_data, cache_dir):
+def schema_validate_kubernetes_output(validate_data, cache_dir, logging_config_dict=None):
     """
     validates given files according to kubernetes manifest schemas
     schemas are cached from/to cache_dir
     validate_data must be of structure ((kind, version), validate_files)
     """
     (kind, version), validate_files = validate_data
+    if logging_config_dict is not None:
+        logging.config.dictConfig(logging_config_dict)
     KubernetesManifestValidator(cache_dir).validate(validate_files, kind=kind, version=version)
