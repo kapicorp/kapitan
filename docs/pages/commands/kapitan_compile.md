@@ -213,4 +213,4 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
                                 targets to compile, default is all
           --labels [key=value ...], -l [key=value ...]
                                 compile targets matching the labels, default is all
-          ```
+        ```
