@@ -8,12 +8,12 @@
 import base64
 import logging
 
+from hvac.exceptions import Forbidden, InvalidPath
+
 from kapitan import cached
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan.refs.vault_resources import VaultClient, VaultError
-
-from hvac.exceptions import Forbidden, InvalidPath
 
 logger = logging.getLogger(__name__)
 
@@ -60,12 +60,10 @@ class VaultSecret(Base64Ref):
             if target_name is None:
                 raise ValueError("target_name not set")
 
-            target_inv = cached.inv["nodes"].get(target_name, None)
-            if target_inv is None:
-                raise ValueError("target_inv not set")
+            target_inv = cached.inv.get_parameters(target_name)
 
             try:
-                vault_params = target_inv["parameters"]["kapitan"]["secrets"]["vaultkv"]
+                vault_params = target_inv["kapitan"]["secrets"]["vaultkv"]
                 ref_params.kwargs["vault_params"] = vault_params
             except KeyError:
                 raise RefError("Could not create VaultSecret: vaultkv parameters missing")

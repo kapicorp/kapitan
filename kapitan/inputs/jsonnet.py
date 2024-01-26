@@ -10,6 +10,7 @@ import logging
 import os
 import sys
 
+from kapitan import cached
 from kapitan.errors import CompileError
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.resources import resource_callbacks, search_imports
