@@ -152,8 +152,9 @@ class CompileKubernetesTest(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
 
     def test_compile_not_matching_targets(self):
-        with self.assertLogs(logger="kapitan.targets", level="ERROR") as cm, contextlib.redirect_stdout(
-            io.StringIO()
+        with (
+            self.assertLogs(logger="kapitan.targets", level="ERROR") as cm,
+            contextlib.redirect_stdout(io.StringIO()),
         ):
             # as of now, we cannot capture stdout with contextlib.redirect_stdout
             # since we only do logger.error(e) in targets.py before exiting
