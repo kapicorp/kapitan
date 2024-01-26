@@ -27,6 +27,7 @@ class ReclassInventory(Inventory):
         """
         reclass_config = get_reclass_config(self.inventory_path)
         reclass_config.setdefault("ignore_class_notfound", ignore_class_notfound)
+        reclass_config["compose_node_name"] = self.compose_target_name
         
         try:
             storage = reclass.get_storage(

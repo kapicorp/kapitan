@@ -306,7 +306,7 @@ def generate_inventory(args):
         sys.exit(1)
 
 
-def get_inventory(inventory_path, ignore_class_notfound=False) -> Inventory:
+def get_inventory(inventory_path) -> Inventory:
     """
     generic inventory function that makes inventory backend pluggable
     default backend is reclass

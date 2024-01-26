@@ -131,6 +131,7 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
 
 class CompileKubernetesTest(unittest.TestCase):
     def setUp(self):
+        reset_cache()
         os.chdir(os.getcwd() + "/examples/kubernetes/")
 
     def test_compile(self):

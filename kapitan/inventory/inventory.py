@@ -28,12 +28,12 @@ class InventoryTarget:
 
 
 class Inventory(ABC):
-    path: str = "inventory"
+    _default_path: str = "inventory"
 
-    def __init__(self, path: str = path, compose_target_name: bool = False):
-        self.inventory_path = path
-        self.targets_path = os.path.join(path, "targets")
-        self.classes_path = os.path.join(path, "classes")
+    def __init__(self, inventory_path: str = _default_path, compose_target_name: bool = False):
+        self.inventory_path = inventory_path
+        self.targets_path = os.path.join(inventory_path, "targets")
+        self.classes_path = os.path.join(inventory_path, "classes")
 
         # config
         self.compose_target_name = compose_target_name
@@ -104,6 +104,8 @@ class Inventory(ABC):
         for target_name in target_names:
             target = self.targets.get(target_name)
             if not target:
+                if ignore_class_not_found:
+                    continue
                 raise InventoryError(f"target '{target_name}' not found")
 
             if not target.parameters:

@@ -2,7 +2,7 @@ import os
 import sys
 import unittest
 import tempfile
-from shutil import rmtree, copytree
+from shutil import rmtree
 from distutils.dir_util import copy_tree
 from kapitan.cached import reset_cache
 from kapitan.cli import main
@@ -89,7 +89,6 @@ class RemoteInventoryTest(unittest.TestCase):
         rmtree(temp_dir)
         rmtree(output_dir)
 
-    @unittest.skip("Inventory Interface will handle this case diffently")
     def test_compile_fetch(self):
         """Run $ kapitan compile --force-fetch --output-path=some/dir/ --inventory-path=another/dir --targets remoteinv-example remoteinv-nginx zippedinv
         were some/dir/ & another/dir/ are directories chosen by the user
