@@ -55,7 +55,7 @@ class AWSKMSSecret(Base64Ref):
             if target_name is None:
                 raise ValueError("target_name not set")
 
-            target_inv = cached.inv.get_target(target_name)
+            target_inv = cached.inv.get_parameters(target_name)
             if target_inv is None:
                 raise ValueError("target_inv not set")
 

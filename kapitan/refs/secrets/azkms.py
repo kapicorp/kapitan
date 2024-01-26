@@ -79,7 +79,7 @@ class AzureKMSSecret(Base64Ref):
             if target_name is None:
                 raise ValueError("target_name not set")
 
-            target_inv = cached.inv.get_target(target_name)
+            target_inv = cached.inv.get_parameters(target_name)
 
             key = target_inv["kapitan"]["secrets"]["azkms"]["key"]
             return cls(data, key, **ref_params.kwargs)

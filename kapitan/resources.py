@@ -244,7 +244,7 @@ def search_imports(cwd, import_str, search_paths):
     return normalised_path, normalised_path_content.encode()
 
 
-def inventory(search_paths: list, target, inventory_path: str = None):
+def inventory(search_paths: list, target_name: str = None, inventory_path: str = "./inventory"):
     """
     Reads inventory (set by inventory_path) in search_paths.
     set nodes_uri to change reclass nodes_uri the default value
@@ -276,8 +276,9 @@ def inventory(search_paths: list, target, inventory_path: str = None):
 
     inv = get_inventory(full_inv_path)
 
-    if target:
-        return {"parameters": inv.get_target(target)}
+    if target_name:
+        target = inv.get_target(target_name)
+        return {"parameters": target.parameters, "classes": target.classes}
 
     return inv.inventory
 
@@ -287,7 +288,7 @@ def generate_inventory(args):
         inv = get_inventory(args.inventory_path)
 
         if args.target_name:
-            inv = inv.get_target(args.target_name)
+            inv = inv.get_parameters(args.target_name)
             if args.pattern:
                 pattern = args.pattern.split(".")
                 inv = deep_get(inv, pattern)
@@ -305,7 +306,7 @@ def generate_inventory(args):
         sys.exit(1)
 
 
-def get_inventory(inventory_path, ignore_class_notfound=False) -> Inventory:
+def get_inventory(inventory_path) -> Inventory:
     """
     generic inventory function that makes inventory backend pluggable
     default backend is reclass

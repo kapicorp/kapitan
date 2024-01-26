@@ -27,6 +27,7 @@ class ReclassInventory(Inventory):
         """
         reclass_config = get_reclass_config(self.inventory_path)
         reclass_config.setdefault("ignore_class_notfound", ignore_class_notfound)
+        reclass_config["compose_node_name"] = self.compose_target_name
         
         try:
             storage = reclass.get_storage(
@@ -40,8 +41,12 @@ class ReclassInventory(Inventory):
             rendered_inventory = _reclass.inventory()
 
             # store parameters and classes
-            for name, rendered_target in rendered_inventory["nodes"].items():
-                self.targets[name].parameters = rendered_target["parameters"]
+            for target_name, rendered_target in rendered_inventory["nodes"].items():
+                self.targets[target_name].parameters = rendered_target["parameters"]
+
+            for class_name, referenced_targets in rendered_inventory["classes"].items():
+                for target_name in referenced_targets:
+                    self.targets[target_name].classes += class_name
 
         except ReclassException as e:
             if isinstance(e, NotFoundError):
@@ -49,20 +54,6 @@ class ReclassInventory(Inventory):
             else:
                 logger.error(f"Inventory reclass error: {e.message}")
             raise InventoryError(e.message)
-    
-    def get_targets(self, target_names: list[str]) -> dict:
-
-        for target_name in target_names:
-            target = self.targets.get(target_name)
-            if not target:
-                raise InventoryError(f"target '{target_name}' not found")
-            
-            if not target.parameters:
-                # reclass has no optimization for rendering only some specific targets,
-                # so we have to render the whole inventory
-                self.render_targets()
-            
-        return {name: target.parameters for name, target in self.targets.items() if name in target_names}
 
 
 def get_reclass_config(inventory_path: str) -> dict:
