@@ -43,10 +43,7 @@ class ReclassInventory(Inventory):
             # store parameters and classes
             for target_name, rendered_target in rendered_inventory["nodes"].items():
                 self.targets[target_name].parameters = rendered_target["parameters"]
-
-            for class_name, referenced_targets in rendered_inventory["classes"].items():
-                for target_name in referenced_targets:
-                    self.targets[target_name].classes += class_name
+                self.targets[target_name].classes = rendered_target["classes"]
 
         except ReclassException as e:
             if isinstance(e, NotFoundError):
