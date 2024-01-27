@@ -1,35 +1,41 @@
 ---
 name: Build and deploy documentation on merge to master
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
 on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/worklows/documentation.yml'
+      - 'requirements.docs.txt'
+      - 'Dockerfile.docs'
+      - 'mkdocs.yml'
+      - 'CNAME' 
   push:
     branches:
       - master
+    paths:
+      - 'docs/**'
+      - '.github/worklows/documentation.yml'
+      - 'requirements.docs.txt'
+      - 'Dockerfile.docs'
+      - 'mkdocs.yml'
+      - 'CNAME'
+
 jobs:
-  build:
+  docs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout kapitan recursively
-        uses: actions/checkout@master
-        with:
-          submodules: recursive
-      - name: Strip git ref prefix from tag version and store in TAG_VERSION
-        run: |
-          echo "TAG_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
-          echo "REF_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
-
-      - name: Strip full version and just keep major part in MAJOR_VERSION VAR
-        run: |
-          echo "MAJOR_VERSION=${TAG_VERSION:0:4}" >> $GITHUB_ENV
-
-      # Printing versions needs to be a separate step,
-      # as they aren't set during the previous two steps
-      - name: Print Versions
-        run: |
-          echo ${{ env.TAG_VERSION }}
-          echo ${{ env.MAJOR_VERSION }}
-          echo ${{ env.REF_NAME }}
-
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v2
+      - run: pip install --upgrade pip && pip install -r requirements.docs.txt
+      - run: mkdocs build
       - name: Deploy docs
+        if: github.event_name != 'pull_request' && github.ref == github.event.repository.default_branch
         uses: mhausenblas/mkdocs-deploy-gh-pages@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -32,7 +32,7 @@ from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
 from kapitan.inputs.remove import Remove
 from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
-from kapitan.resources import inventory_reclass
+from kapitan.resources import get_inventory
 from kapitan.utils import dictionary_hash, directory_hash, hashable_lru_cache
 from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
@@ -241,7 +241,7 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
             ...
     }
     """
-    inv = inventory_reclass(inventory_path)
+    inv = get_inventory(inventory_path)
     cached.inv_cache = {}
     cached.inv_cache["inventory"] = {}
     cached.inv_cache["folder"] = {}
@@ -250,25 +250,15 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
         for target in targets:
             try:
                 cached.inv_cache["inventory"][target] = {}
-                cached.inv_cache["inventory"][target]["classes"] = dictionary_hash(
-                    inv["nodes"][target]["classes"]
-                )
-                cached.inv_cache["inventory"][target]["parameters"] = dictionary_hash(
-                    inv["nodes"][target]["parameters"]
-                )
+                cached.inv_cache["inventory"][target] = dictionary_hash(inv.get_parameters(target))
             except KeyError:
-                raise CompileError("target not found: {}".format(target))
+                raise CompileError(f"target not found: {target}")
     else:
-        for target in inv["nodes"]:
+        for target in inv.targets.keys():
             cached.inv_cache["inventory"][target] = {}
-            cached.inv_cache["inventory"][target]["classes"] = dictionary_hash(
-                inv["nodes"][target]["classes"]
-            )
-            cached.inv_cache["inventory"][target]["parameters"] = dictionary_hash(
-                inv["nodes"][target]["parameters"]
-            )
+            cached.inv_cache["inventory"][target] = dictionary_hash(inv.get_parameters(target))
 
-            compile_obj = inv["nodes"][target]["parameters"]["kapitan"]["compile"]
+            compile_obj = inv.get_parameters(target)["kapitan"]["compile"]
             for obj in compile_obj:
                 for input_path in obj["input_paths"]:
                     base_folder = os.path.dirname(input_path).split("/")[0]
@@ -295,7 +285,7 @@ def generate_inv_cache_hashes(inventory_path, targets, cache_paths):
 def changed_targets(inventory_path, output_path):
     """returns a list of targets that have changed since last compilation"""
     targets = []
-    inv = inventory_reclass(inventory_path)
+    inv = get_inventory(inventory_path)
 
     saved_inv_cache = None
     saved_inv_cache_path = os.path.join(output_path, "compiled/.kapitan_cache")
@@ -306,7 +296,7 @@ def changed_targets(inventory_path, output_path):
             except Exception:
                 raise CompileError("Failed to load kapitan cache: %s", saved_inv_cache_path)
 
-    targets_list = list(inv["nodes"])
+    targets_list = list(inv.targets.keys())
 
     # If .kapitan_cache doesn't exist or failed to load, recompile all targets
     if not saved_inv_cache:
@@ -324,16 +314,7 @@ def changed_targets(inventory_path, output_path):
 
         for target in targets_list:
             try:
-                if (
-                    cached.inv_cache["inventory"][target]["classes"]
-                    != saved_inv_cache["inventory"][target]["classes"]
-                ):
-                    logger.debug("classes hash changed in %s, recompiling", target)
-                    targets.append(target)
-                elif (
-                    cached.inv_cache["inventory"][target]["parameters"]
-                    != saved_inv_cache["inventory"][target]["parameters"]
-                ):
+                if cached.inv_cache["inventory"][target] != saved_inv_cache["inventory"][target]:
                     logger.debug("parameters hash changed in %s, recompiling", target)
                     targets.append(target)
             except KeyError:
@@ -368,12 +349,7 @@ def save_inv_cache(compile_path, targets):
                 if target not in saved_inv_cache["inventory"]:
                     saved_inv_cache["inventory"][target] = {}
 
-                saved_inv_cache["inventory"][target]["classes"] = cached.inv_cache["inventory"][target][
-                    "classes"
-                ]
-                saved_inv_cache["inventory"][target]["parameters"] = cached.inv_cache["inventory"][target][
-                    "parameters"
-                ]
+                saved_inv_cache["inventory"][target] = cached.inv_cache["inventory"][target]
 
             with open(inv_cache_path, "w") as f:
                 logger.debug("Saved .kapitan_cache for targets: %s", targets)
@@ -388,32 +364,28 @@ def save_inv_cache(compile_path, targets):
 def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
     """returns a list of target objects from the inventory"""
     target_objs = []
-    inv = inventory_reclass(inventory_path, ignore_class_notfound)
+    inv = get_inventory(inventory_path)
 
     # if '-t' is set on compile, only loop through selected targets
     if targets:
         targets_list = targets
     else:
-        targets_list = inv["nodes"]
+        targets_list = inv.targets.keys()
 
     for target_name in targets_list:
         try:
-            inv_target = inv["nodes"][target_name]
-            target_obj = inv_target["parameters"]["kapitan"]
+            target_obj = inv.get_parameters(target_name, ignore_class_notfound).get("kapitan")
             # check if parameters.kapitan is empty
             if not target_obj:
-                raise InventoryError(
-                    "InventoryError: {}: parameters.kapitan has no assignment".format(target_name)
-                )
-            target_obj["target_full_path"] = inv_target["parameters"]["_reclass_"]["name"]["path"]
+                raise InventoryError(f"InventoryError: {target_name}: parameters.kapitan has no assignment")
+            target_obj["target_full_path"] = inv.targets[target_name].name
             require_compile = not ignore_class_notfound
             valid_target_obj(target_obj, require_compile)
             validate_matching_target_name(target_name, target_obj, inventory_path)
-            logger.debug("load_target_inventory: found valid kapitan target %s", target_name)
+            logger.debug(f"load_target_inventory: found valid kapitan target {target_name}")
             target_objs.append(target_obj)
         except KeyError:
-            logger.debug("load_target_inventory: target %s has no kapitan compile obj", target_name)
-            pass
+            logger.debug(f"load_target_inventory: target {target_name} has no kapitan compile obj")
 
     return target_objs
 
@@ -431,17 +403,17 @@ def search_targets(inventory_path, targets, labels):
         )
 
     targets_found = []
-    inv = inventory_reclass(inventory_path)
+    inv = get_inventory(inventory_path)
 
-    for target_name in inv["nodes"]:
+    for target_name in inv.targets.keys():
         matched_all_labels = False
         for label, value in labels_dict.items():
             try:
-                if inv["nodes"][target_name]["parameters"]["kapitan"]["labels"][label] == value:
+                if inv.get_parameters(target_name)["kapitan"]["labels"][label] == value:
                     matched_all_labels = True
                     continue
             except KeyError:
-                logger.debug("search_targets: label %s=%s didn't match target %s", label, value, target_name)
+                logger.debug(f"search_targets: label {label}={value} didn't match target {target_name}")
 
             matched_all_labels = False
             break
@@ -450,7 +422,7 @@ def search_targets(inventory_path, targets, labels):
             targets_found.append(target_name)
 
     if len(targets_found) == 0:
-        raise CompileError("No targets found with labels: {}".format(labels))
+        raise CompileError("No targets found with labels: {labels}")
 
     return targets_found
 
@@ -658,6 +630,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         "unpack": {"type": "boolean"},
                         "version": {"type": "string"},
                         "force_fetch": {"type": "boolean"},
+                        "submodules": {"type": "boolean"},
                     },
                     "required": ["type", "output_path", "source"],
                     "additionalProperties": False,

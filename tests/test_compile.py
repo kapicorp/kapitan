@@ -17,10 +17,10 @@ import shutil
 import yaml
 import toml
 from kapitan.cli import main
+from kapitan.resources import get_inventory
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
 from kapitan.targets import validate_matching_target_name
-from kapitan.resources import inventory_reclass
 from kapitan.errors import InventoryError
 
 
@@ -131,12 +131,11 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
 
 class CompileKubernetesTest(unittest.TestCase):
     def setUp(self):
+        reset_cache()
         os.chdir(os.getcwd() + "/examples/kubernetes/")
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-c"]
-        main()
-        # Compile again to verify caching works as expected
         main()
         os.remove("./compiled/.kapitan_cache")
         compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
@@ -152,8 +151,9 @@ class CompileKubernetesTest(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
 
     def test_compile_not_matching_targets(self):
-        with self.assertLogs(logger="kapitan.targets", level="ERROR") as cm, contextlib.redirect_stdout(
-            io.StringIO()
+        with (
+            self.assertLogs(logger="kapitan.targets", level="ERROR") as cm,
+            contextlib.redirect_stdout(io.StringIO()),
         ):
             # as of now, we cannot capture stdout with contextlib.redirect_stdout
             # since we only do logger.error(e) in targets.py before exiting
@@ -175,7 +175,7 @@ class CompileKubernetesTest(unittest.TestCase):
     def test_compile_vars_target_missing(self):
         inventory_path = "inventory"
         target_filename = "minikube-es"
-        target_obj = inventory_reclass(inventory_path)["nodes"][target_filename]["parameters"]["kapitan"]
+        target_obj = get_inventory(inventory_path).get_parameters(target_filename)["kapitan"]
         # delete vars.target
         del target_obj["vars"]["target"]
 

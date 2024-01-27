@@ -592,7 +592,7 @@ def safe_copy_file(src, dst):
         dir = os.path.dirname(dst)
 
     if os.path.isfile(dst):
-        logger.warning("Not updating %s (file already exists)", dst)
+        logger.debug("Not updating %s (file already exists)", dst)
         return (dst, 0)
     _copy_file_contents(src, dst)
     logger.debug("Copied %s to %s", src, dir)
@@ -630,8 +630,9 @@ def safe_copy_tree(src, dst):
             outputs.extend(safe_copy_tree(src_name, dst_name))
 
         else:
-            safe_copy_file(src_name, dst_name)
-            outputs.append(dst_name)
+            _, value = safe_copy_file(src_name, dst_name)
+            if value:
+                outputs.append(dst_name)
 
     return outputs
 

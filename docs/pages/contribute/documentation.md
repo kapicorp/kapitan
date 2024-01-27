@@ -25,7 +25,9 @@ Updating our gh-pages is therefore a two-step process.
 
 Submit a PR for our master branch that updates the `.md` file(s). Test how the changes would look like when deployed to gh-pages by serving it on localhost:
 
-`make local_serve_documentation`
+1. Edit the `strict` property in `mkdocs.yml` and set it to `false`.
+2. `make local_serve_documentation`
+3. Now the documentation site should be available at [`localhost:8000`](http://127.0.0.1:8000).
 
 ### Submit a PR
 

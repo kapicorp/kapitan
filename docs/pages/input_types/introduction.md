@@ -1,4 +1,4 @@
-# :kapitan-logo: **Input Types | Introduction**
+# Introduction
 
 **Note:** make sure to read up on [inventory](/inventory.md) before moving on.
 

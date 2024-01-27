@@ -2,7 +2,7 @@ import os
 import sys
 import unittest
 import tempfile
-from shutil import rmtree, copytree
+from shutil import rmtree
 from distutils.dir_util import copy_tree
 from kapitan.cached import reset_cache
 from kapitan.cli import main

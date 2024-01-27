@@ -102,6 +102,15 @@ def build_parser():
     parser.add_argument("--version", action="version", version=VERSION)
     subparser = parser.add_subparsers(help="commands", dest="subparser_name")
 
+    inventory_backend_parser = argparse.ArgumentParser(add_help=False)
+    inventory_backend_group = inventory_backend_parser.add_argument_group("inventory_backend")
+    inventory_backend_group.add_argument(
+        "--reclass",
+        action="store_true",
+        default=from_dot_kapitan("inventory_backend", "reclass", False),
+        help="use reclass as inventory backend (default)",
+    )
+
     eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
     eval_parser.add_argument("jsonnet_file", type=str)
     eval_parser.set_defaults(func=trigger_eval, name="eval")
@@ -131,7 +140,9 @@ def build_parser():
         help='set search paths, default is ["."]',
     )
 
-    compile_parser = subparser.add_parser("compile", aliases=["c"], help="compile targets")
+    compile_parser = subparser.add_parser(
+        "compile", aliases=["c"], help="compile targets", parents=[inventory_backend_parser]
+    )
     compile_parser.set_defaults(func=trigger_compile, name="compile")
 
     compile_parser.add_argument(
@@ -326,7 +337,9 @@ def build_parser():
         metavar="key=value",
     )
 
-    inventory_parser = subparser.add_parser("inventory", aliases=["i"], help="show inventory")
+    inventory_parser = subparser.add_parser(
+        "inventory", aliases=["i"], help="show inventory", parents=[inventory_backend_parser]
+    )
     inventory_parser.set_defaults(func=generate_inventory, name="inventory")
 
     inventory_parser.add_argument(
@@ -414,7 +427,9 @@ def build_parser():
     secrets_parser = subparser.add_parser("secrets", aliases=["s"], help="(DEPRECATED) please use refs")
     secrets_parser.set_defaults(func=print_deprecated_secrets_msg, name="secrets")
 
-    refs_parser = subparser.add_parser("refs", aliases=["r"], help="manage refs")
+    refs_parser = subparser.add_parser(
+        "refs", aliases=["r"], help="manage refs", parents=[inventory_backend_parser]
+    )
     refs_parser.set_defaults(func=handle_refs_command, name="refs")
 
     refs_parser.add_argument(
@@ -492,6 +507,24 @@ def build_parser():
         help="set authentication type for vault secrets",
         default=from_dot_kapitan("refs", "vault-auth", ""),
         metavar="AUTH",
+    )
+    refs_parser.add_argument(
+        "--vault-mount",
+        help="set mount point for vault secrets, default is 'secret'",
+        default=from_dot_kapitan("refs", "vault-mount", "secret"),
+        metavar="MOUNT",
+    )
+    refs_parser.add_argument(
+        "--vault-path",
+        help="set path for vault secrets where the secret gets stored on vault, default is the secret_path",
+        default=from_dot_kapitan("refs", "vault-path", ""),
+        metavar="PATH",
+    )
+    refs_parser.add_argument(
+        "--vault-key",
+        help="set key for vault secrets",
+        default=from_dot_kapitan("refs", "vault-key", ""),
+        metavar="KEY",
     )
     refs_parser.add_argument(
         "--refs-path",
