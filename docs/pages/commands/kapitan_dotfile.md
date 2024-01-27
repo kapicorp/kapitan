@@ -58,3 +58,14 @@ global:
 ```
 
 which would be equivalent to running any command with `--inventory-path=./some_path`.
+
+Another flag that you may want to set in the `global` section is `inventory-backend` to select a non-default inventory backend implementation.
+
+```yaml
+global:
+  inventory-backend: reclass
+```
+
+which would be equivalent to always running **Kapitan** with `--inventory-backend=reclass`.
+
+Please note that the `inventory-backend` flag currently can't be set through the command-specific sections of the **Kapitan** config file.
