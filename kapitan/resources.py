@@ -22,7 +22,7 @@ import yaml
 import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
-from kapitan.inventory import Inventory, ReclassInventory
+from kapitan.inventory import Inventory, ReclassInventory, AVAILABLE_BACKENDS
 from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
 
 logger = logging.getLogger(__name__)
@@ -316,13 +316,15 @@ def get_inventory(inventory_path) -> Inventory:
     if cached.inv and cached.inv.targets:
         return cached.inv
 
-    inventory_backend: Inventory = None
-
     # select inventory backend
-    if cached.args.get("inventory-backend") == "my-new-inventory":
-        logger.debug("Using my-new-inventory as inventory backend")
+    backend_id = cached.args.get("inventory-backend")
+    backend = AVAILABLE_BACKENDS.get(backend_id)
+    inventory_backend: Inventory = None
+    if backend != None:
+        logger.debug(f"Using {backend_id} as inventory backend")
+        inventory_backend = backend(inventory_path)
     else:
-        logger.debug("Using reclass as inventory backend")
+        logger.debug(f"Backend {backend_id} is unknown, falling back to reclass as inventory backend")
         inventory_backend = ReclassInventory(inventory_path)
 
     inventory_backend.search_targets()

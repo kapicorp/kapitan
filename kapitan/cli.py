@@ -21,6 +21,7 @@ import yaml
 from kapitan import cached, defaults, setup_logging
 from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import jsonnet_file
+from kapitan.inventory import AVAILABLE_BACKENDS
 from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
@@ -103,12 +104,12 @@ def build_parser():
     subparser = parser.add_subparsers(help="commands", dest="subparser_name")
 
     inventory_backend_parser = argparse.ArgumentParser(add_help=False)
-    inventory_backend_group = inventory_backend_parser.add_argument_group("inventory_backend")
-    inventory_backend_group.add_argument(
-        "--reclass",
-        action="store_true",
-        default=from_dot_kapitan("inventory_backend", "reclass", False),
-        help="use reclass as inventory backend (default)",
+    inventory_backend_parser.add_argument(
+        "--inventory-backend",
+        action="store",
+        default=from_dot_kapitan("inventory_backend", "inventory-backend", "reclass"),
+        choices=AVAILABLE_BACKENDS.keys(),
+        help="Select the inventory backend to use (default=reclass)",
     )
 
     eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
@@ -663,6 +664,8 @@ def main():
     # cache args where key is subcommand
     assert "name" in args, "All cli commands must have provided default name"
     cached.args[args.name] = args
+    if "inventory_backend" in args:
+        cached.args["inventory-backend"] = args.inventory_backend
 
     if hasattr(args, "verbose") and args.verbose:
         setup_logging(level=logging.DEBUG, force=True)
