@@ -15,6 +15,9 @@ kapitan.egg-info/
 _site/
 site/
 
+# Environment
+.envrc
+
 # IDEs
 .vscode/
 
