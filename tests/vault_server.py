@@ -35,6 +35,9 @@ class VaultServer:
         self.vault_container = self.setup_container()
         self.setup_vault()
 
+        # disable tls verify for all clients
+        self.parameters["VAULT_SKIP_VERIFY"] = True
+
     def setup_container(self):
         env = {
             "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'
