@@ -327,6 +327,10 @@ def get_inventory(inventory_path) -> Inventory:
         logger.debug(f"Backend {backend_id} is unknown, falling back to reclass as inventory backend")
         inventory_backend = ReclassInventory(inventory_path)
 
+    # migrate inventory to selected inventory backend
+    if cached.args.get("migrate"):
+        inventory_backend.migrate()
+
     inventory_backend.search_targets()
 
     cached.inv = inventory_backend

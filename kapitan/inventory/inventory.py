@@ -132,6 +132,12 @@ class Inventory(ABC):
         """
         raise NotImplementedError
 
+    def migrate(self):
+        """
+        migrate the inventory, e.g. change interpolation syntax to new syntax
+        """
+        pass
+
     def __getitem__(self, key):
         return self.inventory[key]
 
