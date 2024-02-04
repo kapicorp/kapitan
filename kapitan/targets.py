@@ -361,10 +361,10 @@ def save_inv_cache(compile_path, targets):
                 yaml.dump(cached.inv_cache, stream=f, default_flow_style=False)
 
 
-def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
+def load_target_inventory(inventory_path, targets, ignore_class_notfound=False, compose_target_name=True):
     """returns a list of target objects from the inventory"""
     target_objs = []
-    inv = get_inventory(inventory_path)
+    inv = get_inventory(inventory_path, compose_target_name)
 
     # if '-t' is set on compile, only loop through selected targets
     if targets:
@@ -374,7 +374,7 @@ def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
 
     for target_name in targets_list:
         try:
-            target_obj = inv.get_parameters(target_name, ignore_class_notfound).get("kapitan")
+            target_obj = inv.get_parameters(target_name).get("kapitan")
             # check if parameters.kapitan is empty
             if not target_obj:
                 raise InventoryError(f"InventoryError: {target_name}: parameters.kapitan has no assignment")

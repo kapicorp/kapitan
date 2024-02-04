@@ -79,23 +79,17 @@ class Inventory(ABC):
                 if self.compose_target_name:
                     target.name = target.composed_name
 
-                # check for same name
-                if self.targets.get(target.name):
-                    raise InventoryError(
-                        f"Conflicting targets {target.name}: {target.path} and {self.targets[target.name].path}"
-                    )
-
                 self.targets[target.name] = target
 
         return self.targets
 
-    def get_target(self, target_name: str, ignore_class_not_found: bool = False) -> InventoryTarget:
+    def get_target(self, target_name: str) -> InventoryTarget:
         """
         helper function to get rendered InventoryTarget object for single target
         """
-        return self.get_targets([target_name], ignore_class_not_found)[target_name]
+        return self.get_targets([target_name])[target_name]
 
-    def get_targets(self, target_names: list, ignore_class_not_found: bool = False) -> dict:
+    def get_targets(self, target_names: list) -> dict:
         """
         helper function to get rendered InventoryTarget objects for multiple targets
         """
@@ -104,23 +98,21 @@ class Inventory(ABC):
         for target_name in target_names:
             target = self.targets.get(target_name)
             if not target:
-                if ignore_class_not_found:
-                    continue
                 raise InventoryError(f"target '{target_name}' not found")
 
             if not target.parameters:
                 targets_to_render.append(target)
 
-        self.render_targets(targets_to_render, ignore_class_not_found)
+        self.render_targets(targets_to_render)
 
         return {name: target for name, target in self.targets.items() if name in target_names}
 
-    def get_parameters(self, target_names: Union[str, list], ignore_class_not_found: bool = False) -> dict:
+    def get_parameters(self, target_names: Union[str, list]) -> dict:
         """
         helper function to get rendered parameters for single target or multiple targets
         """
         if type(target_names) is str:
-            target = self.get_target(target_names, ignore_class_not_found)
+            target = self.get_target(target_names)
             return target.parameters
 
         return {name: target.parameters for name, target in self.get_targets(target_names)}
