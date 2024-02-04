@@ -160,7 +160,7 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
                        [--inventory-path INVENTORY_PATH] [--cache]
                        [--cache-paths PATH [PATH ...]]
                        [--ignore-version-check] [--use-go-jsonnet]
-                       [--compose-node-name] [--schemas-path SCHEMAS_PATH]
+                       [--compose-target-name] [--schemas-path SCHEMAS_PATH]
                        [--yaml-multiline-string-style STYLE]
                        [--yaml-dump-null-as-empty]
                        [--targets TARGET [TARGET ...] | --labels
@@ -203,7 +203,7 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
           --ignore-version-check
                                 ignore the version from .kapitan
           --use-go-jsonnet      use go-jsonnet
-          --compose-node-name   Create same subfolder structure from inventory/targets
+          --compose-target-name   Create same subfolder structure from inventory/targets
                                 inside compiled folder
           --schemas-path SCHEMAS_PATH
                                 set schema cache path, default is "./schemas"
