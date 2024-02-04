@@ -290,8 +290,6 @@ def build_parser():
         default=from_dot_kapitan("compile", "use-go-jsonnet", False),
     )
 
-
-
     compile_parser.add_argument(
         "--schemas-path",
         default=from_dot_kapitan("validate", "schemas-path", "./schemas"),
@@ -664,6 +662,9 @@ def main():
     cached.args[args.name] = args
     if "inventory_backend" in args:
         cached.args["inventory-backend"] = args.inventory_backend
+    
+    cached.args.setdefault("global", {})["inventory-backend"] = args.inventory_backend
+    cached.args.setdefault("global", {})["compose_node_name"] = args.compose_node_name
 
     if hasattr(args, "verbose") and args.verbose:
         setup_logging(level=logging.DEBUG, force=True)

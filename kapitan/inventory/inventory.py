@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import overload, Union
 
 from kapitan.errors import KapitanError
+from kapitan.cached import args
 from reclass.values import item
 
 logger = logging.getLogger(__name__)
@@ -30,13 +31,13 @@ class InventoryTarget:
 class Inventory(ABC):
     _default_path: str = "inventory"
 
-    def __init__(self, inventory_path: str = _default_path, compose_target_name: bool = False):
+    def __init__(self, inventory_path: str = _default_path):
         self.inventory_path = inventory_path
         self.targets_path = os.path.join(inventory_path, "targets")
         self.classes_path = os.path.join(inventory_path, "classes")
 
         # config
-        self.compose_target_name = compose_target_name
+        self.compose_target_name = args["global"].get("compose_node_name")
 
         self.targets = {}
 

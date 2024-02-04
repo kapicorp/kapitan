@@ -274,7 +274,7 @@ def inventory(search_paths: list, target_name: str = None, inventory_path: str =
     if not inv_path_exists:
         raise InventoryError(f"Inventory not found in search paths: {search_paths}")
 
-    inv = get_inventory(full_inv_path, cached.args.get("compile").compose_node_name)
+    inv = get_inventory(full_inv_path)
 
     if target_name:
         target = inv.get_target(target_name)
@@ -306,7 +306,7 @@ def generate_inventory(args):
         sys.exit(1)
 
 
-def get_inventory(inventory_path, compose_node_name) -> Inventory:
+def get_inventory(inventory_path) -> Inventory:
     """
     generic inventory function that makes inventory backend pluggable
     default backend is reclass
@@ -322,10 +322,10 @@ def get_inventory(inventory_path, compose_node_name) -> Inventory:
     inventory_backend: Inventory = None
     if backend != None:
         logger.debug(f"Using {backend_id} as inventory backend")
-        inventory_backend = backend(inventory_path, compose_target_name=compose_node_name)
+        inventory_backend = backend(inventory_path)
     else:
         logger.debug(f"Backend {backend_id} is unknown, falling back to reclass as inventory backend")
-        inventory_backend = ReclassInventory(inventory_path, compose_target_name=compose_node_name)
+        inventory_backend = ReclassInventory(inventory_path)
 
     inventory_backend.search_targets()
 

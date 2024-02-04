@@ -15,18 +15,20 @@ logger = logging.getLogger(__name__)
 
 class ReclassInventory(Inventory):
 
-    def __init__(self, inventory_path, compose_target_name: bool = False, **kwargs):
+    def __init__(self, inventory_path):
+        super().__init__(inventory_path)
+        
         self.reclass_config = get_reclass_config(inventory_path)
 
-        compose_node_name = self.reclass_config.get("compose_node_name", compose_target_name)
-        if compose_node_name != compose_target_name:
+        compose_node_name = self.reclass_config.get("compose_node_name", self.compose_target_name)
+        if compose_node_name != self.compose_target_name:
             logger.warning(
-                f"reclass-config.yml has compose_node_name={compose_node_name} but kapitan has --compose-node-name={compose_target_name}."
+                f"reclass-config.yml has compose_node_name={compose_node_name} but kapitan has --compose-node-name={self.compose_target_name}."
             )
             logger.warning(
-                f"Using --compose-node-name={compose_target_name}: Please update reclass-config.yml to remove this warning."
+                f"Using --compose-node-name={self.compose_target_name}: Please update reclass-config.yml to remove this warning."
             )
-            compose_node_name = compose_target_name
+            compose_node_name = self.compose_target_name
 
         self.reclass_config.setdefault("ignore_class_notfound", True)
 
@@ -50,7 +52,6 @@ class ReclassInventory(Inventory):
                 logger.error(f"Inventory reclass error: {e.message}")
             raise InventoryError(e.message)
 
-        super().__init__(inventory_path, compose_target_name=compose_target_name, **kwargs)
 
     def render_targets(
         self,
