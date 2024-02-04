@@ -17,22 +17,15 @@ import sys
 from functools import partial
 
 import jsonschema
-import kapitan.cached as cached
 import yaml
+
+import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
+from kapitan.inventory import Inventory, ReclassInventory, AVAILABLE_BACKENDS
 from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
 
-import reclass
-import reclass.core
-from reclass.errors import NotFoundError, ReclassException
-
 logger = logging.getLogger(__name__)
-
-try:
-    from yaml import CSafeLoader as YamlLoader
-except ImportError:
-    from yaml import SafeLoader as YamlLoader
 
 JSONNET_CACHE = {}
 
@@ -251,7 +244,7 @@ def search_imports(cwd, import_str, search_paths):
     return normalised_path, normalised_path_content.encode()
 
 
-def inventory(search_paths, target, inventory_path=None):
+def inventory(search_paths: list, target_name: str = None, inventory_path: str = "./inventory"):
     """
     Reads inventory (set by inventory_path) in search_paths.
     set nodes_uri to change reclass nodes_uri the default value
@@ -281,20 +274,27 @@ def inventory(search_paths, target, inventory_path=None):
     if not inv_path_exists:
         raise InventoryError(f"Inventory not found in search paths: {search_paths}")
 
-    if target is None:
-        return inventory_reclass(full_inv_path)["nodes"]
+    inv = get_inventory(full_inv_path)
 
-    return inventory_reclass(full_inv_path)["nodes"][target]
+    if target_name:
+        target = inv.get_target(target_name)
+        return {"parameters": target.parameters, "classes": target.classes}
+
+    return inv.inventory
 
 
 def generate_inventory(args):
     try:
-        inv = inventory_reclass(args.inventory_path)
-        if args.target_name != "":
-            inv = inv["nodes"][args.target_name]
-            if args.pattern != "":
+        inv = get_inventory(args.inventory_path)
+
+        if args.target_name:
+            inv = inv.get_parameters(args.target_name)
+            if args.pattern:
                 pattern = args.pattern.split(".")
                 inv = deep_get(inv, pattern)
+        else:
+            inv = inv.inventory
+
         if args.flat:
             inv = flatten_dict(inv)
             yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False, indent=args.indent)
@@ -306,66 +306,28 @@ def generate_inventory(args):
         sys.exit(1)
 
 
-def inventory_reclass(inventory_path, ignore_class_notfound=False):
+def get_inventory(inventory_path) -> Inventory:
     """
-    Runs a reclass inventory in inventory_path
-    (same output as running ./reclass.py -b inv_base_uri/ --inventory)
-    Will attempt to read reclass config from 'reclass-config.yml' otherwise
-    it will failback to the default config.
-    Returns a reclass style dictionary
+    generic inventory function that makes inventory backend pluggable
+    default backend is reclass
+    """
 
-    Does not throw errors if a class is not found while --fetch flag is enabled
-    """
-    # if inventory is already cached theres nothing to do
-    if cached.inv:
+    # if inventory is already cached there is nothing to do
+    if cached.inv and cached.inv.targets:
         return cached.inv
 
-    # set default values initially
-    reclass_config = reclass_config_defaults = {
-        "storage_type": "yaml_fs",
-        "inventory_base_uri": inventory_path,
-        "nodes_uri": "targets",
-        "classes_uri": "classes",
-        "compose_node_name": False,
-        "allow_none_override": True,
-        "ignore_class_notfound": ignore_class_notfound,  # false by default
-    }
-
-    # get reclass config from file 'inventory/reclass-config.yml'
-    cfg_file = os.path.join(inventory_path, "reclass-config.yml")
-    if os.path.isfile(cfg_file):
-        with open(cfg_file, "r") as fp:
-            config = yaml.load(fp.read(), Loader=YamlLoader)
-            logger.debug("Using reclass inventory config at: {}".format(cfg_file))
-        if config:
-            # set attributes, take default values if not present
-            for key, value in config.items():
-                reclass_config[key] = value
-        else:
-            logger.debug("{}: Empty config file. Using reclass inventory config defaults".format(cfg_file))
+    # select inventory backend
+    backend_id = cached.args.get("inventory-backend")
+    backend = AVAILABLE_BACKENDS.get(backend_id)
+    inventory_backend: Inventory = None
+    if backend != None:
+        logger.debug(f"Using {backend_id} as inventory backend")
+        inventory_backend = backend(inventory_path)
     else:
-        logger.debug("Inventory reclass: No config file found. Using reclass inventory config defaults")
+        logger.debug(f"Backend {backend_id} is unknown, falling back to reclass as inventory backend")
+        inventory_backend = ReclassInventory(inventory_path)
 
-    # normalise relative nodes_uri and classes_uri paths
-    for uri in ("nodes_uri", "classes_uri"):
-        reclass_config[uri] = os.path.normpath(os.path.join(inventory_path, reclass_config[uri]))
+    inventory_backend.search_targets()
 
-    try:
-        storage = reclass.get_storage(
-            reclass_config["storage_type"],
-            reclass_config["nodes_uri"],
-            reclass_config["classes_uri"],
-            reclass_config["compose_node_name"],
-        )
-        class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
-        _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
-
-        cached.inv = _reclass.inventory()
-    except ReclassException as e:
-        if isinstance(e, NotFoundError):
-            logger.error("Inventory reclass error: inventory not found")
-        else:
-            logger.error("Inventory reclass error: %s", e.message)
-        raise InventoryError(e.message)
-
-    return cached.inv
+    cached.inv = inventory_backend
+    return inventory_backend

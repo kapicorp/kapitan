@@ -23,6 +23,9 @@ from distutils.errors import DistutilsFileError
 from distutils.file_util import _copy_file_contents
 from functools import lru_cache, wraps
 from hashlib import sha256
+from pathlib import Path
+from shutil import copytree
+from typing import List
 from zipfile import ZipFile
 
 import jinja2
@@ -410,19 +413,15 @@ def dot_kapitan_config():
 
 def from_dot_kapitan(command, flag, default):
     """
-    Returns the 'flag' for 'command' from .kapitan file. If failed, returns 'default'
+    Returns the 'flag' from the '<command>' or from the 'global' section in the  .kapitan file. If
+    neither section proivdes a value for the flag, the value passed in `default` is returned.
     """
     kapitan_config = dot_kapitan_config()
 
-    try:
-        if kapitan_config[command]:
-            flag_value = kapitan_config[command][flag]
-            if flag_value:
-                return flag_value
-    except KeyError:
-        pass
+    global_config = kapitan_config.get("global", {})
+    cmd_config = kapitan_config.get(command, {})
 
-    return default
+    return cmd_config.get(flag, global_config.get(flag, default))
 
 
 def compare_versions(v1_raw, v2_raw):
@@ -632,3 +631,19 @@ def safe_copy_tree(src, dst):
                 outputs.append(dst_name)
 
     return outputs
+
+
+def copy_tree(source: Path, destination: Path, dirs_exist_ok: bool = False) -> List[str]:
+    """Recursively copy a given directory from `source` to `destination` using shutil.copytree
+    and return list of copied files. When `dirs_exist_ok` is set, the `FileExistsError` is
+    ignored when destination directory exists.
+    Args:
+        source (str): Path to a source directory
+        destination (str): Path to a destination directory
+    Returns:
+        list[str]: List of copied files
+    """
+    inventory_before = list(destination.rglob("*"))
+    copytree(source, destination, dirs_exist_ok=dirs_exist_ok)
+    inventory_after = list(destination.rglob("*"))
+    return [str(d) for d in inventory_after if d not in inventory_before]

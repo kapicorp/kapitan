@@ -21,6 +21,7 @@ import yaml
 from kapitan import cached, defaults, setup_logging
 from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import jsonnet_file
+from kapitan.inventory import AVAILABLE_BACKENDS
 from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
@@ -102,6 +103,15 @@ def build_parser():
     parser.add_argument("--version", action="version", version=VERSION)
     subparser = parser.add_subparsers(help="commands", dest="subparser_name")
 
+    inventory_backend_parser = argparse.ArgumentParser(add_help=False)
+    inventory_backend_parser.add_argument(
+        "--inventory-backend",
+        action="store",
+        default=from_dot_kapitan("inventory_backend", "inventory-backend", "reclass"),
+        choices=AVAILABLE_BACKENDS.keys(),
+        help="Select the inventory backend to use (default=reclass)",
+    )
+
     eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
     eval_parser.add_argument("jsonnet_file", type=str)
     eval_parser.set_defaults(func=trigger_eval, name="eval")
@@ -131,7 +141,9 @@ def build_parser():
         help='set search paths, default is ["."]',
     )
 
-    compile_parser = subparser.add_parser("compile", aliases=["c"], help="compile targets")
+    compile_parser = subparser.add_parser(
+        "compile", aliases=["c"], help="compile targets", parents=[inventory_backend_parser]
+    )
     compile_parser.set_defaults(func=trigger_compile, name="compile")
 
     compile_parser.add_argument(
@@ -326,7 +338,9 @@ def build_parser():
         metavar="key=value",
     )
 
-    inventory_parser = subparser.add_parser("inventory", aliases=["i"], help="show inventory")
+    inventory_parser = subparser.add_parser(
+        "inventory", aliases=["i"], help="show inventory", parents=[inventory_backend_parser]
+    )
     inventory_parser.set_defaults(func=generate_inventory, name="inventory")
 
     inventory_parser.add_argument(
@@ -414,7 +428,9 @@ def build_parser():
     secrets_parser = subparser.add_parser("secrets", aliases=["s"], help="(DEPRECATED) please use refs")
     secrets_parser.set_defaults(func=print_deprecated_secrets_msg, name="secrets")
 
-    refs_parser = subparser.add_parser("refs", aliases=["r"], help="manage refs")
+    refs_parser = subparser.add_parser(
+        "refs", aliases=["r"], help="manage refs", parents=[inventory_backend_parser]
+    )
     refs_parser.set_defaults(func=handle_refs_command, name="refs")
 
     refs_parser.add_argument(
@@ -648,6 +664,8 @@ def main():
     # cache args where key is subcommand
     assert "name" in args, "All cli commands must have provided default name"
     cached.args[args.name] = args
+    if "inventory_backend" in args:
+        cached.args["inventory-backend"] = args.inventory_backend
 
     if hasattr(args, "verbose") and args.verbose:
         setup_logging(level=logging.DEBUG, force=True)

@@ -25,7 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 license = "Apache-2.0"
-version = "0.32.0"
+version = "0.33.0"
 packages = [
     { include = "kapitan" },
     { include = "kapitan/reclass" },
@@ -38,7 +38,7 @@ kapitan = 'kapitan.cli:main'
 source = "git-tag"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 addict = "^2.4.0"
 azure-keyvault-keys = "^4.7.0"
 boto3 = "^1.18.17"

@@ -257,9 +257,9 @@ class HelmChart(BaseModel):
 
     def new(self):
         for obj in self.load_chart():
-            self.root[
-                f"{obj['metadata']['name'].lower()}-{obj['kind'].lower().replace(':','-')}"
-            ] = BaseObj.from_dict(obj)
+            self.root[f"{obj['metadata']['name'].lower()}-{obj['kind'].lower().replace(':','-')}"] = (
+                BaseObj.from_dict(obj)
+            )
 
     def load_chart(self):
         helm_values_file = None

@@ -1,17 +1,18 @@
 "azkms secret module"
 
-import os
-import logging
 import base64
+import logging
+import os
 from urllib.parse import urlparse
-from azure.keyvault.keys.crypto import CryptographyClient, EncryptionAlgorithm
-from azure.keyvault.keys import KeyClient
-from azure.identity import DefaultAzureCredential
 
-from kapitan.refs.base64 import Base64Ref, Base64RefBackend
-from kapitan.refs.base import RefError
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+from azure.keyvault.keys.crypto import CryptographyClient, EncryptionAlgorithm
+
 from kapitan import cached
 from kapitan.errors import KapitanError
+from kapitan.refs.base import RefError
+from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
 logger = logging.getLogger(__name__)
 
@@ -78,11 +79,9 @@ class AzureKMSSecret(Base64Ref):
             if target_name is None:
                 raise ValueError("target_name not set")
 
-            target_inv = cached.inv["nodes"].get(target_name, None)
-            if target_inv is None:
-                raise ValueError("target_inv not set")
+            target_inv = cached.inv.get_parameters(target_name)
 
-            key = target_inv["parameters"]["kapitan"]["secrets"]["azkms"]["key"]
+            key = target_inv["kapitan"]["secrets"]["azkms"]["key"]
             return cls(data, key, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create AzureKMSSecret: target_name missing")
