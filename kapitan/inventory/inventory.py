@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import overload, Union
 
 from kapitan.errors import KapitanError
-from kapitan.reclass.reclass.values import item
+from reclass.values import item
 
 logger = logging.getLogger(__name__)
 
