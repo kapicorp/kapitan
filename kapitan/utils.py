@@ -410,19 +410,15 @@ def dot_kapitan_config():
 
 def from_dot_kapitan(command, flag, default):
     """
-    Returns the 'flag' for 'command' from .kapitan file. If failed, returns 'default'
+    Returns the 'flag' from the '<command>' or from the 'global' section in the  .kapitan file. If
+    neither section proivdes a value for the flag, the value passed in `default` is returned.
     """
     kapitan_config = dot_kapitan_config()
 
-    try:
-        if kapitan_config[command]:
-            flag_value = kapitan_config[command][flag]
-            if flag_value:
-                return flag_value
-    except KeyError:
-        pass
+    global_config = kapitan_config.get("global", {})
+    cmd_config = kapitan_config.get(command, {})
 
-    return default
+    return cmd_config.get(flag, global_config.get(flag, default))
 
 
 def compare_versions(v1_raw, v2_raw):

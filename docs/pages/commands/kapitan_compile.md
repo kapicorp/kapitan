@@ -148,24 +148,28 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
     ```
 
     ??? example "click to expand output"
-        ```shell
-        usage: kapitan compile [-h] [--search-paths JPATH [JPATH ...]]
-                              [--jinja2-filters FPATH] [--verbose] [--prune]
-                              [--quiet] [--output-path PATH] [--fetch]
-                              [--force-fetch] [--force] [--validate]
-                              [--parallelism INT] [--indent INT]
-                              [--refs-path REFS_PATH] [--reveal] [--embed-refs]
-                              [--inventory-path INVENTORY_PATH] [--cache]
-                              [--cache-paths PATH [PATH ...]]
-                              [--ignore-version-check] [--use-go-jsonnet]
-                              [--compose-node-name] [--schemas-path SCHEMAS_PATH]
-                              [--yaml-multiline-string-style STYLE]
-                              [--yaml-dump-null-as-empty]
-                              [--targets TARGET [TARGET ...] | --labels
-                              [key=value ...]]
 
-        optional arguments:
+        ```shell
+        usage: kapitan compile [-h] [--inventory-backend {reclass}]
+                       [--search-paths JPATH [JPATH ...]]
+                       [--jinja2-filters FPATH] [--verbose] [--prune]
+                       [--quiet] [--output-path PATH] [--fetch]
+                       [--force-fetch] [--force] [--validate]
+                       [--parallelism INT] [--indent INT]
+                       [--refs-path REFS_PATH] [--reveal] [--embed-refs]
+                       [--inventory-path INVENTORY_PATH] [--cache]
+                       [--cache-paths PATH [PATH ...]]
+                       [--ignore-version-check] [--use-go-jsonnet]
+                       [--compose-node-name] [--schemas-path SCHEMAS_PATH]
+                       [--yaml-multiline-string-style STYLE]
+                       [--yaml-dump-null-as-empty]
+                       [--targets TARGET [TARGET ...] | --labels
+                       [key=value ...]]
+
+        options:
           -h, --help            show this help message and exit
+          --inventory-backend {reclass}
+                                Select the inventory backend to use (default=reclass)
           --search-paths JPATH [JPATH ...], -J JPATH [JPATH ...]
                                 set search paths, default is ["."]
           --jinja2-filters FPATH, -J2F FPATH
