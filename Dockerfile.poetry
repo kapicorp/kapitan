@@ -1,0 +1,97 @@
+# syntax=docker/dockerfile:1.2
+FROM python:3.8-slim AS builder
+
+ARG TARGETARCH
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    # Force the stdout and stderr streams to be unbuffered
+    PYTHONUNBUFFERED=1 \
+    # Prevents python creating .pyc files
+    PYTHONDONTWRITEBYTECODE=1 \
+    # PIP configs
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100 \
+    # Poetry configs
+    POETRY_VERSION="1.4.0" \
+    POETRY_HOME="/opt/poetry" \
+    # Create the virtualenv inside the project’s root directory (.venv)
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    # Do not ask any interactive question
+    POETRY_NO_INTERACTION=1 \
+    # Paths
+    KAPITAN_PATH="/kapitan" \
+    VENV_PATH="/kapitan/.venv"
+
+# Prepend poetry and venv to path
+ENV PATH="${POETRY_HOME}/bin:${VENV_PATH}/bin:${PATH}"
+
+# Prepend go path (for go-jsonnet)
+ENV PATH="/usr/local/go/bin:${PATH}"
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        # Dependencies for installing poetry
+        curl \
+        # Dependencies for building python deps
+        build-essential
+
+# Install poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+# Install Go (for go-jsonnet)
+RUN curl -fsSL -o go.tar.gz "https://go.dev/dl/go1.17.3.linux-${TARGETARCH}.tar.gz" \
+    && tar -C /usr/local -xzf go.tar.gz \
+    && rm go.tar.gz
+
+# Copy metadata
+COPY MANIFEST.in README.md /kapitan/
+
+# Install dependencies
+WORKDIR $KAPITAN_PATH
+COPY poetry.lock pyproject.toml ./
+RUN --mount=type=cache,target=/home/.cache/pypoetry/cache \
+    --mount=type=cache,target=/home/.cache/pypoetry/artifacts \
+    poetry install --no-root --compile -E gojsonnet
+
+# Install Helm
+RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
+    && chmod 700 get_helm.sh \
+    && HELM_INSTALL_DIR=${VENV_PATH}/bin ./get_helm.sh --no-sudo \
+    && rm get_helm.sh
+
+# Install Kapitan
+COPY ./kapitan ./kapitan/
+RUN --mount=type=cache,target=/home/.cache/pypoetry/cache \
+    --mount=type=cache,target=/home/.cache/pypoetry/artifacts \
+    poetry install --only-root
+
+
+FROM python:3.8-slim AS production
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        # Kapitan's runtime dependencies
+        git \
+        ssh-client \
+        libmagic1 \
+        gnupg \
+        ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --no-log-init --user-group kapitan
+
+COPY --from=builder /kapitan /kapitan
+
+ENV PATH="/kapitan/.venv/bin:${PATH}"
+
+ENV HELM_CACHE_HOME=".cache/helm" \
+    SEARCHPATH="/src"
+
+VOLUME ${SEARCHPATH}
+
+WORKDIR ${SEARCHPATH}
+
+USER kapitan
+
+ENTRYPOINT ["kapitan"]
