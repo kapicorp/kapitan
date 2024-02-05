@@ -318,14 +318,15 @@ def get_inventory(inventory_path) -> Inventory:
 
     # select inventory backend
     backend_id = cached.args.get("inventory-backend")
+    compose_node_name = cached.args["global"].get("compose_node_name")
     backend = AVAILABLE_BACKENDS.get(backend_id)
     inventory_backend: Inventory = None
     if backend != None:
         logger.debug(f"Using {backend_id} as inventory backend")
-        inventory_backend = backend(inventory_path, cached.args["global"].get("compose_node_name"))
+        inventory_backend = backend(inventory_path, compose_node_name)
     else:
         logger.debug(f"Backend {backend_id} is unknown, falling back to reclass as inventory backend")
-        inventory_backend = ReclassInventory(inventory_path, cached.args["global"].get("compose_node_name"))
+        inventory_backend = ReclassInventory(inventory_path, compose_node_name)
 
     inventory_backend.search_targets()
 
