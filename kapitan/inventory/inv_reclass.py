@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 class ReclassInventory(Inventory):
 
-    def __init__(self, inventory_path):
-        super().__init__(inventory_path)
+    def __init__(self, inventory_path, compose_target_name=False):
+        super().__init__(inventory_path, compose_target_name=compose_target_name)
         
         self.reclass_config = get_reclass_config(inventory_path)
 
@@ -56,6 +56,7 @@ class ReclassInventory(Inventory):
     def render_targets(
         self,
         targets: list = None,
+        ignore_class_notfound: bool = False,
     ):
         """
         Runs a reclass inventory in inventory_path

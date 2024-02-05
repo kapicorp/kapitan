@@ -285,7 +285,7 @@ def inventory(search_paths: list, target_name: str = None, inventory_path: str =
 
 def generate_inventory(args):
     try:
-        inv = get_inventory(args.inventory_path, args.compose_node_name)
+        inv = get_inventory(args.inventory_path)
 
         if args.target_name:
             inv = inv.get_parameters(args.target_name)
@@ -322,10 +322,10 @@ def get_inventory(inventory_path) -> Inventory:
     inventory_backend: Inventory = None
     if backend != None:
         logger.debug(f"Using {backend_id} as inventory backend")
-        inventory_backend = backend(inventory_path)
+        inventory_backend = backend(inventory_path, cached.args["global"].get("compose_node_name"))
     else:
         logger.debug(f"Backend {backend_id} is unknown, falling back to reclass as inventory backend")
-        inventory_backend = ReclassInventory(inventory_path)
+        inventory_backend = ReclassInventory(inventory_path, cached.args["global"].get("compose_node_name"))
 
     inventory_backend.search_targets()
 
