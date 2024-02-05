@@ -662,9 +662,10 @@ def main():
     cached.args[args.name] = args
     if "inventory_backend" in args:
         cached.args["inventory-backend"] = args.inventory_backend
+        cached.args.setdefault("global", {}).setdefault("inventory-backend", args.inventory_backend)
     
-    cached.args.setdefault("global", {}).setdefault("inventory-backend", args.inventory_backend)
-    cached.args.setdefault("global", {}).setdefault("compose_node_name", args.compose_node_name)
+    if "compose_node_name" in args:
+        cached.args.setdefault("global", {}).setdefault("compose_node_name", args.compose_node_name)
 
     if hasattr(args, "verbose") and args.verbose:
         setup_logging(level=logging.DEBUG, force=True)
