@@ -8,3 +8,11 @@ parameters:
         input_type: helm
         input_paths:
           - charts/acs-engine-autoscaler
+
+      - output_path: .
+        input_type: helm
+        helm_params:
+          repo: https://charts.jetstack.io
+          chart_name: cert-manager
+          version: 1.1.0
+          output_file: expanded-cert-manager-chart.yaml

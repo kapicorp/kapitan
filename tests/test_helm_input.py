@@ -49,18 +49,12 @@ class HelmInputTest(unittest.TestCase):
         temp = tempfile.mkdtemp()
         sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "acs-engine-autoscaler"]
         main()
+        base_path = os.path.join(temp, "compiled", "acs-engine-autoscaler")
         self.assertTrue(
-            os.path.isfile(
-                os.path.join(
-                    temp,
-                    "compiled",
-                    "acs-engine-autoscaler",
-                    "acs-engine-autoscaler",
-                    "templates",
-                    "secrets.yaml",
-                )
-            )
+            os.path.isfile(os.path.join(base_path, "acs-engine-autoscaler", "templates", "secrets.yaml"))
         )
+
+        self.assertTrue(os.path.isfile(os.path.join(base_path, "expanded-cert-manager-chart.yaml")))
 
     def test_compile_subcharts(self):
         temp = tempfile.mkdtemp()
