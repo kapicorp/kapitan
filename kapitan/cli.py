@@ -81,7 +81,7 @@ def trigger_compile(args):
         args.targets,
         args.labels,
         ref_controller,
-        prune=(args.prune),
+        prune=args.prune,
         indent=args.indent,
         reveal=args.reveal,
         cache=args.cache,
@@ -92,9 +92,9 @@ def trigger_compile(args):
         validate=args.validate,
         schemas_path=args.schemas_path,
         jinja2_filters=args.jinja2_filters,
-        verbose=hasattr(args, "verbose") and args.verbose,
+        verbose=args.verbose,
         use_go_jsonnet=args.use_go_jsonnet,
-        compose_node_name=args.compose_node_name,
+        compose_target_name=args.compose_target_name or args.compose_node_name,
     )
 
 
@@ -110,6 +110,12 @@ def build_parser():
         default=from_dot_kapitan("inventory_backend", "inventory-backend", "reclass"),
         choices=AVAILABLE_BACKENDS.keys(),
         help="Select the inventory backend to use (default=reclass)",
+    )
+    inventory_backend_parser.add_argument(
+        "--compose-target-name",
+        help="Create same subfolder structure from inventory/targets inside compiled folder",
+        action="store_true",
+        default=from_dot_kapitan("inventory_backend", "compose-target-name", False),
     )
 
     eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
@@ -283,10 +289,7 @@ def build_parser():
         default=from_dot_kapitan("compile", "use-go-jsonnet", False),
     )
 
-    # compose-node-name should be used in conjunction with reclass
-    # config "compose_node_name: true". This allows us to make the same subfolder
-    # structure in the inventory folder inside the compiled folder
-    # https://github.com/kapicorp/kapitan/issues/932
+    # deprecated
     compile_parser.add_argument(
         "--compose-node-name",
         help="Create same subfolder structure from inventory/targets inside compiled folder",
@@ -655,22 +658,19 @@ def main():
 
     logger.debug("Running with args: %s", args)
 
-    try:
-        cmd = sys.argv[1]
-    except IndexError:
+    if len(sys.argv) < 2:
         parser.print_help()
         sys.exit(1)
 
-    # cache args where key is subcommand
-    assert "name" in args, "All cli commands must have provided default name"
-    cached.args[args.name] = args
-    if "inventory_backend" in args:
-        cached.args["inventory-backend"] = args.inventory_backend
+    cached.args = args
 
     if hasattr(args, "verbose") and args.verbose:
-        setup_logging(level=logging.DEBUG, force=True)
+        logging_level = logging.DEBUG
     elif hasattr(args, "quiet") and args.quiet:
-        setup_logging(level=logging.CRITICAL, force=True)
+        logging_level = logging.CRITICAL
+    else:
+        logging_level = logging.INFO
+    setup_logging(level=logging_level, force=True)
 
     # call chosen command
     args.func(args)

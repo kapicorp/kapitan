@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "cached module"
+from argparse import Namespace
 
 inv = {}
 inv_cache = {}
@@ -16,7 +17,7 @@ azkms_obj = None
 dot_kapitan = {}
 ref_controller_obj = None
 revealer_obj = None
-args = {}  # args won't need resetting
+args = Namespace()  # args won't need resetting
 inv_sources = set()
 
 

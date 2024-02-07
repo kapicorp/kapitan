@@ -76,8 +76,8 @@ class Inventory(ABC):
                     .lstrip(".")
                 )
                 target = InventoryTarget(name, path, composed_name)
-                if self.compose_target_name:
-                    target.name = target.composed_name
+                # if self.compose_target_name:
+                #     target.name = target.composed_name
 
                 # check for same name
                 if self.targets.get(target.name):

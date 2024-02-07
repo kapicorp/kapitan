@@ -252,10 +252,7 @@ def inventory(search_paths: list, target_name: str = None, inventory_path: str =
     set inventory_path to read custom path. None defaults to value set via cli
     Returns a dictionary with the inventory for target
     """
-    if inventory_path is None:
-        # grab inventory_path value from cli subcommand
-        inventory_path_arg = cached.args.get("compile") or cached.args.get("inventory")
-        inventory_path = inventory_path_arg.inventory_path
+    inventory_path = inventory_path or cached.args.inventory_path
 
     inv_path_exists = False
 
@@ -316,16 +313,19 @@ def get_inventory(inventory_path) -> Inventory:
     if cached.inv and cached.inv.targets:
         return cached.inv
 
+    compose_target_name = hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
+    if hasattr(cached.args, "compose_node_name") and cached.args.compose_node_name:
+        logger.warning(
+            "inventory flag '--compose-node-name' is deprecated and scheduled to be dropped with the next release. "
+            "Please use '--compose-target-name' instead."
+        )
+        compose_target_name = True
+
     # select inventory backend
-    backend_id = cached.args.get("inventory-backend")
-    backend = AVAILABLE_BACKENDS.get(backend_id)
-    inventory_backend: Inventory = None
-    if backend != None:
-        logger.debug(f"Using {backend_id} as inventory backend")
-        inventory_backend = backend(inventory_path)
-    else:
-        logger.debug(f"Backend {backend_id} is unknown, falling back to reclass as inventory backend")
-        inventory_backend = ReclassInventory(inventory_path)
+    backend_id = cached.args.inventory_backend if hasattr(cached.args, "compose_target_name") else "reclass"
+    backend = AVAILABLE_BACKENDS.get(backend_id, ReclassInventory)
+    logger.debug(f"Using {backend_id} as inventory backend")
+    inventory_backend: Inventory = backend(inventory_path=inventory_path, compose_target_name=compose_target_name)
 
     inventory_backend.search_targets()
 
