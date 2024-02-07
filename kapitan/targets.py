@@ -726,9 +726,6 @@ def validate_matching_target_name(target_filename, target_obj, inventory_path):
         )
         raise InventoryError(error_message)
 
-    if cached.args.compose_target_name or cached.args.compose_node_name:
-        target_filename = target_filename.split(".")[-1]
-
     if target_filename != target_name:
         target_path = os.path.join(os.path.abspath(inventory_path), "targets")
 
