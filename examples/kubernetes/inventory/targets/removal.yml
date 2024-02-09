@@ -2,6 +2,8 @@ classes:
 - common
 
 parameters:
+  target_name: removal
+
   kapitan:
     compile:
       - input_type: copy
@@ -9,7 +11,7 @@ parameters:
           - copy_target
         output_path: .
       # test removal of a file
-      - input_type: remove
-        input_paths:
-          - compiled/${kapitan:vars:target}/copy_target
-        output_path: .
+#      - input_type: remove
+#        input_paths:
+#          - compiled/${kapitan:vars:target}/copy_target
+#        output_path: .

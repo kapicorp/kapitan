@@ -322,7 +322,7 @@ def get_inventory(inventory_path) -> Inventory:
         compose_target_name = True
 
     # select inventory backend
-    backend_id = cached.args.inventory_backend if hasattr(cached.args, "compose_target_name") else "reclass"
+    backend_id = cached.args.inventory_backend if hasattr(cached.args, "inventory_backend") else "reclass"
     backend = AVAILABLE_BACKENDS.get(backend_id, ReclassInventory)
     logger.debug(f"Using {backend_id} as inventory backend")
     inventory_backend: Inventory = backend(inventory_path=inventory_path, compose_target_name=compose_target_name)

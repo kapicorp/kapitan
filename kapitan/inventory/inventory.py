@@ -81,6 +81,7 @@ class Inventory(ABC):
 
                 # check for same name
                 if self.targets.get(target.name):
+                    # TODO: hint for compose node name
                     raise InventoryError(
                         f"Conflicting targets {target.name}: {target.path} and {self.targets[target.name].path}"
                     )
