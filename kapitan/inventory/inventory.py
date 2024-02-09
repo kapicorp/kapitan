@@ -114,7 +114,7 @@ class Inventory(ABC):
 
         self.render_targets(targets_to_render, ignore_class_not_found)
 
-        return {name: target for name, target in self.targets.items() if name in target_names}
+        return {target_name: self.targets[target_name] for target_name in target_names}
 
     def get_parameters(self, target_names: Union[str, list], ignore_class_not_found: bool = False) -> dict:
         """
