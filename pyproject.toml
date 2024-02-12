@@ -24,7 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 license = "Apache-2.0"
-version = "0.33.0"
+version = "0.33.1"
 packages = [
     { include = "kapitan" },
 ]
