@@ -8,6 +8,7 @@
 "kapitan resources"
 
 import base64
+import dataclasses
 import gzip
 import io
 import json
@@ -278,7 +279,7 @@ def inventory(search_paths: list, target_name: str = None, inventory_path: str =
 
     if target_name:
         target = inv.get_target(target_name)
-        return {"parameters": target.parameters, "classes": target.classes}
+        return dataclasses.asdict(target)
 
     return inv.inventory
 
