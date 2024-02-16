@@ -211,6 +211,24 @@ class CompileKubernetesTest(unittest.TestCase):
         sys.argv = ["kapitan", "compile"]
         main()
 
+    def test_compile_jsonnet_env(self):
+        shutil.rmtree("compiled")
+        sys.argv = ["kapitan", "compile", "-t", "jsonnet-env"]
+        main()
+        self.assertTrue(os.path.exists("compiled/jsonnet-env/jsonnet-env/env.yml"))
+        with open("compiled/jsonnet-env/jsonnet-env/env.yml", "r", encoding="utf-8") as f:
+            env = dict(yaml.safe_load(f))
+            self.assertEqual(set(env.keys()), {"applications", "parameters", "classes", "exports"})
+            self.assertEqual(env["applications"], ["a", "b", "c"])
+            self.assertEqual(env["classes"], ["common", "jsonnet-env"])
+            self.assertTrue("a" in env["parameters"])
+            self.assertEqual(env["parameters"]["a"], "aaaaa")
+            self.assertTrue("b" in env["parameters"])
+            self.assertEqual(env["parameters"]["b"], "bbbbb")
+            self.assertTrue("c" in env["parameters"])
+            self.assertEqual(env["parameters"]["c"], "ccccc")
+            self.assertEqual(env["exports"], {})
+
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")
         reset_cache()
