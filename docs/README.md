@@ -28,4 +28,4 @@ Empower your team to make changes to your infrastructure whilst maintaining full
         <iframe width="1024" height="576" src="https://www.youtube.com/embed/clPkDuC2bY4?si=GQwMGNpXuucUTwri" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
     === "Rawkode: Introduction to Kapitan"
-        <iframe width="1024" height="576" src="https://www.youtube.com/embed/SF-6OARg9WM?si=zc_Mx-fulBoMDLjO" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        <iframe width="1024" height="576" src="https://www.youtube.com/embed/8QZvgJi0vII?si=iqLZXv9VvoJD4hTT" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
