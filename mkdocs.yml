@@ -85,7 +85,7 @@ nav:
       
 
   - Documentation:
-      - Overview: pages/kapitan_overview.md
+      - Core Concepts: pages/kapitan_overview.md
       - Inventory:
         - Introduction: pages/inventory/introduction.md
         - Targets: pages/inventory/targets.md
@@ -113,7 +113,6 @@ nav:
           - searchvar: pages/commands/kapitan_searchvar.md
           - validate: pages/commands/kapitan_validate.md
           - kapitan dotfile: pages/commands/kapitan_dotfile.md
-  - Generators: https://generators.kapitan.dev/
   - Blog:
     - 2023:
       - Kapitan Generators: pages/blog/2023-08-27.md
@@ -130,6 +129,8 @@ nav:
         - Documentation: pages/contribute/documentation.md
         - Kapitan Code: pages/contribute/code.md
         - Proposals: proposals.md
+  - Generators: https://generators.kapitan.dev/
+  - Tesoro: https://github.com/kapicorp/tesoro
   - FAQ: FAQ.md
 
 markdown_extensions:
