@@ -81,9 +81,8 @@ extra:
 use_directory_urls: true
 nav:
   - Home: README.md
+  - Trusted by: ADOPTERS.md
   - Getting started: getting_started.md
-      
-
   - Documentation:
       - Core Concepts: pages/kapitan_overview.md
       - Inventory:
@@ -92,7 +91,6 @@ nav:
         - Classes: pages/inventory/classes.md
         - Parameters Interpolation: pages/inventory/parameters_interpolation.md
         - Advanced: pages/inventory/advanced.md
-
       - Input Types:
           - Introduction: pages/input_types/introduction.md
           - Kadet: pages/input_types/kadet.md
