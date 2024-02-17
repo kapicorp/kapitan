@@ -86,110 +86,35 @@ graph LR
 
 ```
 
-## Essential concepts
+**Kapitan** is a powerful configuration management tool designed to help engineers manage complex systems through code. It centralizes and simplifies the management of configurations with a structured approach that revolves around a few core concepts. 
 
-### **Inventory**
+Let's explore these concepts in a way that's accessible to new users:
 
-The **Inventory** is a hierarchical database of variables, defined in yaml files, that are passed to the targets during compilation. 
+## Core Concepts of Kapitan
 
-The **Inventory** is the heart of **Kapitan**.
+### Inventory: The Backbone
 
-Using simple reusable `yaml` files (classes), you can represent as a SSOT
-everything that matters in your setup, for instance you can define:
+At the core of **Kapitan** lies the Inventory, a structured database of variables meticulously organized in YAML files. 
+This hierarchical setup serves as the single source of truth (SSOT) for your system's configurations, making it easier to manage and reference the essential components of your infrastructure. Whether you're dealing with Kubernetes configurations, Terraform resources, or even business logic, the Inventory allows you to define and store these elements efficiently. This central repository then feeds into **Kapitan**'s templating engines, enabling seamless reuse across various applications and services.
 
-* kubernetes `components` definitions
-* terraform resources
-* business concepts
-* documentation and tooling
-* ...anything else you want!
+### Templating with Input Types
 
-After defining it, you can make this data available to the various templating engines [***Input types***](#input-types) offered by Kapitan, allowing you to reuse it.
+**Kapitan** takes the information stored in the Inventory and brings it to life through its templating engines upon compilation. This process transforms static data into dynamic configurations, capable of generating a wide array of outputs like Kubernetes manifests, Terraform plans, documentation, and scripts. It's about making your configurations work for you, tailored to the specific needs of your projects.
 
-Find more detaled explanation in the [inventory](inventory/introduction.md) section of the documentation.
+#### Getting Started with Generators
 
-### Input types
+Generators offer a straightforward entry point into using **Kapitan**, requiring minimal to no coding experience. These are essentially pre-made templates that allow you to generate common configuration files, such as Kubernetes manifests, directly from your Inventory data. **Kapitan** provides a wealth of resources, including the **Kapitan** Reference repository and various blog posts, to help users get up and running with generators.
 
-On compilation, **Kapitan** "renders" the **Inventory** and makes it available to templates that can generate any configuration you want, including **Kubernetes manifests**, documentation/playbooks, **Terraform configuration** or even scripts.
+#### Kadet: Advanced Configuration with Python
 
-#### [**Generators**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7)
+For those looking to leverage the full power of **Kapitan**, Kadet introduces a method to define and reuse complex configurations through Python. This internal library facilitates the creation of JSON and YAML manifests programmatically, offering a higher degree of customization and reuse. Kadet empowers users to craft intricate configurations with the simplicity and flexibility of Python.
 
-> Generators are simplest way of getting started with **Kapitan** and require no code at all. Check out our [**Kapitan** Reference](https://github.com/kapicorp/kapitan-reference) repository to get started or our Read our blog post [**Keep your ship together with Kapitan**](https://medium.com/kapitan-blog/keep-your-ship-together-with-kapitan-d82d441cc3e7).
+### **Kapitan** References: Your Flexible Configuration Superpower
 
-The simplest way to get started with Kapitan.
-Generators are ***universal templates*** that are a simplified way to generate configuration
-files (for instance, Kubernetes manifests) without using any templating at all.
-
-#### [**Kadet**](https://github.com/kapicorp/kadet)
-
-> Easily define and reuse complex Python objects that serialize into JSON or YAML
-
-Use **kadet**, our home built Python library, to easily generate json and yaml manifests for your applications.
-
-Using **kadet** is simple as using Python
-
-???+ example "`examples/kubernetes/components/nginx-kadet/__init__.py`"
-    ```python 
-    --8<-- "kubernetes/components/nginx-kadet/__init__.py"
-    ```
-
-**kadet** is what [**generators**](#generators) are being built with. See and example
-
-Head over to [**kapicorp/kadet**](https://github.com/kapicorp/kadet) for more details
-
-Find help in :fontawesome-brands-slack: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
-
-#### [**Jsonnet**](https://jsonnet.org/)
-
-> A powerful DSL for elegant description of JSON data
-
-Use the **jsonnet** input type to compile `jsonnet` code, and have access to a large amount of available `jsonnet` libraries like [**bitnami-labs/kube-libsonnet**](https://github.com/bitnami-labs/kube-libsonnet)
-
-Find help in :fontawesome-brands-slack: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3) or :fontawesome-brands-slack: [`#jsonnet`](https://kubernetes.slack.com/archives/C6JLE4L9X)
-
-???+ example "`examples/kubernetes/components/nginx-jsonnet/main.jsonnet`"
-    ```python 
-    --8<-- "kubernetes/components/nginx-jsonnet/main.jsonnet"
-    ```
-
-Head over to [jsonnet](https://jsonnet.org/) to learn more
-
-#### [***Jinja2***](http://jinja.pocoo.org/)
-
-> Jinja is a fast, expressive, extensible templating engine
-
-Good old Jinja to create text based templates for scripts and documentation.
-
-Don't underestimate the power of this very simple approach to create templated scripts and documentation!
-
-???+ example "`examples/kubernetes/scripts/setup_cluster.sh`"
-    ```shell 
-    --8<-- "kubernetes/scripts/setup_cluster.sh"
-    ```
-
-Find help in :fontawesome-brands-slack: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
-
-#### :simple-helm: [***Helm***](https://helm.sh/)
-
-> The package manager for Kubernetes
-
-Kapitan can also be used to manage **Helm**, giving you access to its enourmous catalogues of [**Helm charts**](https://artifacthub.io/packages/search?kind=0).
-
-???+ example "`examples/kubernetes/inventory/classes/component/nginx-helm.yml`"
-    !!! note ""
-
-        [external dependencies](external_dependencies.md) are used to automatically fetch helm charts in this example.
-        
-        Please use the `kapitan compile --fetch` flag if the chart has not been downloaded already
-
-    ```yaml
-    --8<-- "kubernetes/inventory/classes/component/nginx-helm.yml"
-    ```
-
-Find help in :fontawesome-brands-slack: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
-
-### [References](https://medium.com/kapitan-blog/declarative-secret-management-for-gitops-with-kapitan-b3c596eab088)
-
-Use Kapitan to securely generate and manage secrets with GPG, AWS KMS, gCloud KMS and Vault.
+**Kapitan** references provide a secure way to store passwords, settings, and other essential data within your project. Think of them as special code placeholders.
+Flexibility: Update a password once, and Kapitan updates it everywhere automatically.
+Organization: References tidy up your project, especially when you're juggling multiple settings or environments (dev, staging, production).
+Security: Protect sensitive information like passwords with encryption
 
 !!! tip
 
