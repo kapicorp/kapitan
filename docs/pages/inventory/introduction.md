@@ -1,5 +1,7 @@
 ## Overview
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/M81qU94FCLQ?si=SGlQG-gP2mmA1n9b" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
 The **Inventory** is a core component of Kapitan: this section aims to explain how it works and how to best take advantage of it.
 
 The **Inventory** is a hierarchical `YAML` based structure which you use to capture anything that you want to make available to **Kapitan**, so that it can be passed on to its templating engines.

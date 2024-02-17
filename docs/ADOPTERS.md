@@ -1,6 +1,6 @@
 # Who uses **Kapitan**
 
-If you're using **Kapitan** in your organization, please let us know by adding to this list on the [ADOPTERS.md](ADOPTERS.md) file.
+If you're using **Kapitan** in your organization, please let us know by adding to this list on the [docs/ADOPTERS.md](https://github.com/kapicorp/kapitan/blob/master/docs/ADOPTERS.md) file.
 
 
 | Organization                                      | Contact (optional)                        | Notes |

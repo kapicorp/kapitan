@@ -127,8 +127,9 @@ nav:
         - Documentation: pages/contribute/documentation.md
         - Kapitan Code: pages/contribute/code.md
         - Proposals: proposals.md
-  - Generators: https://generators.kapitan.dev/
+  - Generators: https://generators.kapitan.dev
   - Tesoro: https://github.com/kapicorp/tesoro
+  - Kapitan Reference: https://github.com/kapicorp/kapitan-reference
   - FAQ: FAQ.md
 
 markdown_extensions:

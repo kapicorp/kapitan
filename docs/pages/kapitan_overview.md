@@ -95,6 +95,8 @@ Let's explore these concepts in a way that's accessible to new users:
 At the core of **Kapitan** lies the **Inventory**, a structured database of variables meticulously organized in YAML files. 
 This hierarchical setup serves as the single source of truth (SSOT) for your system's configurations, making it easier to manage and reference the essential components of your infrastructure. Whether you're dealing with Kubernetes configurations, Terraform resources, or even business logic, the Inventory allows you to define and store these elements efficiently. This central repository then feeds into **Kapitan**'s templating engines, enabling seamless reuse across various applications and services.
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/M81qU94FCLQ?si=SGlQG-gP2mmA1n9b" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
 ## [**Input Types**](/pages/input_types/introduction/)
 
 **Kapitan** takes the information stored in the Inventory and brings it to life through its templating engines upon compilation. This process transforms static data into dynamic configurations, capable of generating a wide array of outputs like Kubernetes manifests, Terraform plans, documentation, and scripts. It's about making your configurations work for you, tailored to the specific needs of your projects.
