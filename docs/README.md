@@ -3,45 +3,29 @@
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/kapicorp?style=for-the-badge)
 ![GitHub Stars](https://img.shields.io/github/stars/kapicorp/kapitan?style=for-the-badge)
 
-**`Kapitan`** aims to be your *one-stop **Platform Engineering** tool* to help you manage the ever growing complexity of your configurations.
+**Kapitan** aims to be your *one-stop configuration management solution* to help you manage the ever growing complexity of your configurations by enabling **Platform Engineering** and **GitOps** workflows. 
 
-Empower your engineers to make changes to your infrastructure whilst maintaining full control, with a GitOps approach and full transparency.
+It streamlines complex deployments across heterogeneous environments while providing a secure and adaptable framework for managing infrastructure configurations.  **Kapitan**'s inventory-driven model, powerful templating capabilities, and native secret management tools offer granular control, fostering consistency, reducing errors, and safeguarding sensitive data.
+
+Empower your team to make changes to your infrastructure whilst maintaining full control, with a GitOps approach and full transparency.
 
 * :fontawesome-brands-slack: Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
 * :fontawesome-brands-github: Help us grow: [give us a star](https://github.com/kapicorp/kapitan/stargazers) or even better [sponsor our project](pages/contribute/sponsor/)
 
-## Why do I need **Kapitan**? 
+## [Why do I need **Kapitan**?](pages/blog/2022-12-04.md#why-do-i-need-kapitan) 
 
-**Kapitan** allows you to bring all your configuration needs under one home, enabling **Platform Engineering** by creating a uniform way to manage your configuration that no other tool provides. 
+## [Video Tutorials to get started](https://www.youtube.com/@kapitandev)
 
-Seamlessly manage:
+!!! info "[Kapitan Youtube Channel](https://www.youtube.com/@kapitandev)"
 
-* Kubernetes
-* Terraform
-* Ansible
-* Documentation
-* Any other tool you can think of!
+    === "Inventory"
+        <iframe width="1024" height="576" src="https://www.youtube.com/embed/M81qU94FCLQ?si=SGlQG-gP2mmA1n9b" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-Powerful integrations 
+    === "References"
+        <iframe width="1024" height="576" src="https://www.youtube.com/embed/I3Ss66zhC50?si=lK4hMtCpxDiJEygH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-* Integrate with Helm (and even Kustomize). 
-* Secret Backends
-  * gkms
-  * vault
-  * awskms
-  * azurekms
-  * ...and more
+    === "Helm and Generators integration"
+        <iframe width="1024" height="576" src="https://www.youtube.com/embed/clPkDuC2bY4?si=GQwMGNpXuucUTwri" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-[Longer answer](pages/blog/2022-12-04.md#why-do-i-need-kapitan)
-
-
-## Video Tutorials to get started
-
-[Kapitan Youtube Channel](https://t.co/djBtelEPPH)
-
-
-## Related projects
-
-* [Generators](https://github.com/kapicorp/generators) - Kapitan's powerful generators libraries
-* [Tesoro](https://github.com/kapicorp/tesoro) - Kubernetes Admission Controller for Kapitan Secrets
-* [Kapitan Reference](https://github.com/kapicorp/kapitan-reference) - our reference repository to get started with Kapitan
+    === "Rawkode: Introduction to Kapitan"
+        <iframe width="1024" height="576" src="https://www.youtube.com/embed/SF-6OARg9WM?si=zc_Mx-fulBoMDLjO" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
