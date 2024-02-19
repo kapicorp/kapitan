@@ -6,3 +6,4 @@ If you're using **Kapitan** in your organization, please let us know by adding t
 | Organization                                      | Contact (optional)                        | Notes |
 |---------------------------------------------------|-------------------------------------------| ----- |
 | [Isomorphic Labs](https://www.isomorphiclabs.com) | [@ademariag](https://github.com/ademariag) | Used to generate Kubernetes and Terraform resources, documentation and scripts |
+| [Airfund](https://airfund.io) | [@pbrissaud](https://github.com/pbrissaud) | Used to generate Kubernetes resources |
