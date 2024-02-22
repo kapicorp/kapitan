@@ -111,7 +111,8 @@ class Inventory(ABC):
             if not target.parameters:
                 targets_to_render.append(target)
 
-        self.render_targets(targets_to_render, ignore_class_not_found)
+        if targets_to_render:
+            self.render_targets(targets_to_render, ignore_class_not_found)
 
         return {name: target for name, target in self.targets.items() if name in target_names}
 
