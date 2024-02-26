@@ -24,9 +24,9 @@ class ReclassInventory(Inventory):
 
         Does not throw errors if a class is not found while ignore_class_notfound is specified
         """
-        reclass_config = get_reclass_config(self.inventory_path)
-        reclass_config.setdefault("ignore_class_notfound", ignore_class_notfound)
-        reclass_config["compose_node_name"] = self.compose_target_name
+        reclass_config = get_reclass_config(
+            self.inventory_path, ignore_class_notfound, self.compose_target_name
+        )
 
         try:
             storage = reclass.get_storage(
@@ -54,15 +54,20 @@ class ReclassInventory(Inventory):
             raise InventoryError(e.message)
 
 
-def get_reclass_config(inventory_path: str) -> dict:
+def get_reclass_config(
+    inventory_path: str,
+    ignore_class_notfound: bool = False,
+    compose_node_name: bool = False,
+) -> dict:
     # set default values initially
     reclass_config = {
         "storage_type": "yaml_fs",
         "inventory_base_uri": inventory_path,
         "nodes_uri": "targets",
         "classes_uri": "classes",
-        "compose_node_name": False,
+        "compose_node_name": compose_node_name,
         "allow_none_override": True,
+        "ignore_class_notfound": ignore_class_notfound,
     }
     try:
         from yaml import CSafeLoader as YamlLoader
