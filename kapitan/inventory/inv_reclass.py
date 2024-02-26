@@ -58,6 +58,7 @@ def get_reclass_config(
     inventory_path: str,
     ignore_class_notfound: bool = False,
     compose_node_name: bool = False,
+    normalise_nodes_classes: bool = True,
 ) -> dict:
     # set default values initially
     reclass_config = {
@@ -92,7 +93,8 @@ def get_reclass_config(
         logger.debug("Inventory reclass: No config file found. Using reclass inventory config defaults")
 
     # normalise relative nodes_uri and classes_uri paths
-    for uri in ("nodes_uri", "classes_uri"):
-        reclass_config[uri] = os.path.normpath(os.path.join(inventory_path, reclass_config[uri]))
+    if normalise_nodes_classes:
+        for uri in ("nodes_uri", "classes_uri"):
+            reclass_config[uri] = os.path.normpath(os.path.join(inventory_path, reclass_config[uri]))
 
     return reclass_config
