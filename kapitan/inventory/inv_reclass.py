@@ -14,36 +14,36 @@ logger = logging.getLogger(__name__)
 
 
 class ReclassInventory(Inventory):
-    
-    def render_targets(self, targets: list = None, ignore_class_notfound: bool = False):
-        """
-        Runs a reclass inventory in inventory_path
-        (same output as running ./reclass.py -b inv_base_uri/ --inventory)
-        Will attempt to read reclass config from 'reclass-config.yml' otherwise
-        it will fall back to the default config.
-        Returns a reclass style dictionary
 
-        Does not throw errors if a class is not found while ignore_class_notfound is specified
-        """
-        reclass_config = get_reclass_config(self.inventory_path)
-        reclass_config.setdefault("ignore_class_notfound", ignore_class_notfound)
-        reclass_config["compose_node_name"] = self.compose_target_name
+    def __init__(self, inventory_path, compose_target_name=False):
+        super().__init__(inventory_path, compose_target_name=compose_target_name)
         
+        self.reclass_config = get_reclass_config(inventory_path)
+
+        compose_node_name = self.reclass_config.get("compose_node_name", self.compose_target_name)
+        if compose_node_name != self.compose_target_name:
+            logger.warning(
+                f"reclass-config.yml has compose_node_name={compose_node_name} but kapitan has --compose-node-name={self.compose_target_name}."
+            )
+            logger.warning(
+                f"Using --compose-node-name={self.compose_target_name}: Please update reclass-config.yml to remove this warning."
+            )
+            compose_node_name = self.compose_target_name
+
+        self.reclass_config.setdefault("ignore_class_notfound", True)
+
         try:
             storage = reclass.get_storage(
-                reclass_config["storage_type"],
-                reclass_config["nodes_uri"],
-                reclass_config["classes_uri"],
-                reclass_config["compose_node_name"],
+                self.reclass_config["storage_type"],
+                self.reclass_config["nodes_uri"],
+                self.reclass_config["classes_uri"],
+                compose_node_name,
             )
-            class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
-            _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
-            rendered_inventory = _reclass.inventory()
-
-            # store parameters and classes
-            for target_name, rendered_target in rendered_inventory["nodes"].items():
-                self.targets[target_name].parameters = rendered_target["parameters"]
-                self.targets[target_name].classes = rendered_target["classes"]
+            class_mappings = self.reclass_config.get("class_mappings")  # this defaults to None (disabled)
+            _reclass = reclass.core.Core(
+                storage, class_mappings, reclass.settings.Settings(self.reclass_config)
+            )
+            self.rendered_inventory = _reclass.inventory()
 
         except ReclassException as e:
             if isinstance(e, NotFoundError):
@@ -53,6 +53,26 @@ class ReclassInventory(Inventory):
             raise InventoryError(e.message)
 
 
+    def render_targets(
+        self,
+        targets: list = None,
+        ignore_class_notfound: bool = False,
+    ):
+        """
+        Runs a reclass inventory in inventory_path
+        (same output as running ./reclass.py -b inv_base_uri/ --inventory)
+        Will attempt to read reclass config from 'reclass-config.yml' otherwise
+        it will fall back to the default config.
+        Returns a reclass style dictionary
+
+        Does not throw errors if a class is not found while ignore_class_notfound is specified
+        """
+        # store parameters and classes
+        for target_name, rendered_target in self.rendered_inventory["nodes"].items():
+            self.targets[target_name].parameters = rendered_target["parameters"]
+            self.targets[target_name].classes = rendered_target["classes"]
+
+
 def get_reclass_config(inventory_path: str) -> dict:
     # set default values initially
     reclass_config = {
@@ -60,7 +80,6 @@ def get_reclass_config(inventory_path: str) -> dict:
         "inventory_base_uri": inventory_path,
         "nodes_uri": "targets",
         "classes_uri": "classes",
-        "compose_node_name": False,
         "allow_none_override": True,
     }
     try:
@@ -79,7 +98,9 @@ def get_reclass_config(inventory_path: str) -> dict:
             for key, value in config.items():
                 reclass_config[key] = value
         else:
-            logger.debug(f"Reclass config: Empty config file at {cfg_file}. Using reclass inventory config defaults")
+            logger.debug(
+                f"Reclass config: Empty config file at {cfg_file}. Using reclass inventory config defaults"
+            )
     else:
         logger.debug("Inventory reclass: No config file found. Using reclass inventory config defaults")
 
