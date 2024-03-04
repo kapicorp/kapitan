@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class ReclassInventory(Inventory):
-    
     def render_targets(self, targets: list = None, ignore_class_notfound: bool = False):
         """
         Runs a reclass inventory in inventory_path
@@ -28,7 +27,7 @@ class ReclassInventory(Inventory):
         reclass_config = get_reclass_config(self.inventory_path)
         reclass_config.setdefault("ignore_class_notfound", ignore_class_notfound)
         reclass_config["compose_node_name"] = self.compose_target_name
-        
+
         try:
             storage = reclass.get_storage(
                 reclass_config["storage_type"],
@@ -44,6 +43,8 @@ class ReclassInventory(Inventory):
             for target_name, rendered_target in rendered_inventory["nodes"].items():
                 self.targets[target_name].parameters = rendered_target["parameters"]
                 self.targets[target_name].classes = rendered_target["classes"]
+                self.targets[target_name].applications = rendered_target["applications"]
+                self.targets[target_name].exports = rendered_target["exports"]
 
         except ReclassException as e:
             if isinstance(e, NotFoundError):
@@ -79,7 +80,9 @@ def get_reclass_config(inventory_path: str) -> dict:
             for key, value in config.items():
                 reclass_config[key] = value
         else:
-            logger.debug(f"Reclass config: Empty config file at {cfg_file}. Using reclass inventory config defaults")
+            logger.debug(
+                f"Reclass config: Empty config file at {cfg_file}. Using reclass inventory config defaults"
+            )
     else:
         logger.debug("Inventory reclass: No config file found. Using reclass inventory config defaults")
 
