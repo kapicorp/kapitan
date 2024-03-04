@@ -2,6 +2,8 @@ import logging
 import os
 import reclass_rs
 
+from datetime import datetime
+
 from kapitan.errors import InventoryError
 
 from .inventory import Inventory, InventoryTarget
@@ -28,7 +30,10 @@ class ReclassRsInventory(Inventory):
     def render_targets(self, targets: list = None, ignore_class_notfound: bool = False):
         try:
             r = self._make_reclass_rs(ignore_class_notfound)
+            start = datetime.now()
             inv = r.inventory()
+            elapsed = datetime.now() - start
+            logger.debug(f"Inventory rendering with reclass-rs took {elapsed}")
 
             for target_name, nodeinfo in inv.nodes.items():
                 self.targets[target_name].parameters = nodeinfo.parameters

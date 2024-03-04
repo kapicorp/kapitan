@@ -1,6 +1,8 @@
 import logging
 import os
 
+from datetime import datetime
+
 import reclass
 import reclass.core
 import yaml
@@ -37,7 +39,10 @@ class ReclassInventory(Inventory):
             )
             class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
             _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
+            start = datetime.now()
             rendered_inventory = _reclass.inventory()
+            elapsed = datetime.now() - start
+            logger.debug(f"Inventory rendering with reclass took {elapsed}")
 
             # store parameters and classes
             for target_name, rendered_target in rendered_inventory["nodes"].items():
