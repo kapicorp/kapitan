@@ -91,6 +91,7 @@ nav:
         - Classes: pages/inventory/classes.md
         - Parameters Interpolation: pages/inventory/parameters_interpolation.md
         - Advanced: pages/inventory/advanced.md
+        - reclass-rs Backend: pages/inventory/reclass-rs.md
       - Input Types:
           - Introduction: pages/input_types/introduction.md
           - Kadet: pages/input_types/kadet.md
