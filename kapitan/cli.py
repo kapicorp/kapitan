@@ -111,6 +111,12 @@ def build_parser():
         choices=AVAILABLE_BACKENDS.keys(),
         help="Select the inventory backend to use (default=reclass)",
     )
+    inventory_backend_parser.add_argument(
+        "--migrate",
+        action="store_true",
+        default=from_dot_kapitan("inventory_backend", "migrate", False),
+        help="Migrate your inventory to your selected inventory backend.",
+    )
 
     eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
     eval_parser.add_argument("jsonnet_file", type=str)
