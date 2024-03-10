@@ -95,6 +95,7 @@ def trigger_compile(args):
         verbose=hasattr(args, "verbose") and args.verbose,
         use_go_jsonnet=args.use_go_jsonnet,
         compose_node_name=args.compose_node_name,
+        multiprocess_objects=args.multiprocess_objects,
     )
 
 
@@ -316,6 +317,12 @@ def build_parser():
         default=from_dot_kapitan("compile", "yaml-dump-null-as-empty", False),
         action="store_true",
         help="dumps all none-type entries as empty, default is dumping as 'null'",
+    )
+    compile_parser.add_argument(
+        "--multiprocess-objects",
+        default=from_dot_kapitan("compile", "multiprocess-objects", False),
+        action="store_true",
+        help="compute compile objects in parallel, default is 'false'",
     )
 
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
