@@ -168,7 +168,7 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
 
         options:
           -h, --help            show this help message and exit
-          --inventory-backend {reclass}
+          --inventory-backend {reclass,reclass-rs}
                                 Select the inventory backend to use (default=reclass)
           --search-paths JPATH [JPATH ...], -J JPATH [JPATH ...]
                                 set search paths, default is ["."]
