@@ -26,7 +26,7 @@ class InventoryTarget:
     parameters: dict = field(default_factory=dict)
     classes: list = field(default_factory=list)
     applications: list = field(default_factory=list)
-    exports: list = field(default_factory=list)
+    exports: list = field(default_factory=dict)
 
 
 class Inventory(ABC):

@@ -38,6 +38,8 @@ class ReclassRsInventory(Inventory):
             for target_name, nodeinfo in inv.nodes.items():
                 self.targets[target_name].parameters = nodeinfo.parameters
                 self.targets[target_name].classes = nodeinfo.classes
+                self.targets[target_name].applications = nodeinfo.applications
+                self.targets[target_name].exports = nodeinfo.exports
 
         except ValueError as e:
             logger.error(f"Reclass-rs error: {e}")
