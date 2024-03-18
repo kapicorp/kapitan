@@ -130,12 +130,14 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
 
 
 class CompileKubernetesTest(unittest.TestCase):
+    extraArgv = []
+
     def setUp(self):
         reset_cache()
         os.chdir(os.getcwd() + "/examples/kubernetes/")
 
     def test_compile(self):
-        sys.argv = ["kapitan", "compile", "-c"]
+        sys.argv = ["kapitan", "compile", "-c"] + self.extraArgv
         main()
         os.remove("./compiled/.kapitan_cache")
         compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
@@ -161,7 +163,7 @@ class CompileKubernetesTest(unittest.TestCase):
                 unmatched_filename = "inventory/targets/minikube-es-fake.yml"
                 correct_filename = "inventory/targets/minikube-es.yml"
                 os.rename(src=correct_filename, dst=unmatched_filename)
-                sys.argv = ["kapitan", "compile"]
+                sys.argv = ["kapitan", "compile"] + self.extraArgv
 
                 try:
                     main()
@@ -190,30 +192,30 @@ class CompileKubernetesTest(unittest.TestCase):
 
     def test_compile_specific_target(self):
         shutil.rmtree("compiled")
-        sys.argv = ["kapitan", "compile", "-t", "minikube-mysql"]
+        sys.argv = ["kapitan", "compile", "-t", "minikube-mysql"] + self.extraArgv
         main()
         self.assertTrue(
             os.path.exists("compiled/minikube-mysql") and not os.path.exists("compiled/minikube-es")
         )
         # Reset compiled dir
-        sys.argv = ["kapitan", "compile"]
+        sys.argv = ["kapitan", "compile"] + self.extraArgv
         main()
 
     def test_compile_target_with_label(self):
         shutil.rmtree("compiled")
-        sys.argv = ["kapitan", "compile", "-l", "type=kadet"]
+        sys.argv = ["kapitan", "compile", "-l", "type=kadet"] + self.extraArgv
         main()
         self.assertTrue(
             os.path.exists("compiled/minikube-nginx-kadet")
             and not os.path.exists("compiled/minikube-nginx-jsonnet")
         )
         # Reset compiled dir
-        sys.argv = ["kapitan", "compile"]
+        sys.argv = ["kapitan", "compile"] + self.extraArgv
         main()
 
     def test_compile_jsonnet_env(self):
         shutil.rmtree("compiled")
-        sys.argv = ["kapitan", "compile", "-t", "jsonnet-env"]
+        sys.argv = ["kapitan", "compile", "-t", "jsonnet-env"] + self.extraArgv
         main()
         self.assertTrue(os.path.exists("compiled/jsonnet-env/jsonnet-env/env.yml"))
         with open("compiled/jsonnet-env/jsonnet-env/env.yml", "r", encoding="utf-8") as f:
@@ -232,6 +234,16 @@ class CompileKubernetesTest(unittest.TestCase):
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")
         reset_cache()
+
+
+class CompileKubernetesTestReclassRs(CompileKubernetesTest):
+    def setUp(self):
+        super().setUp()
+        self.extraArgv = ["--inventory-backend=reclass-rs"]
+
+    @unittest.skip("Unnecessary to test with reclass-rs")
+    def test_compile_not_enough_args(self):
+        pass
 
 
 class CompileTerraformTest(unittest.TestCase):
