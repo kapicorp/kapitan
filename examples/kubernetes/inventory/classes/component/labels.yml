@@ -6,9 +6,6 @@ parameters:
     version: "11.0"
 
   kapitan:
-    vars:
-      target: ${target_name}
-      namespace: ${target_name}
     compile:
       - output_path: ./labels
         input_type: jinja2

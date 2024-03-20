@@ -27,20 +27,17 @@ parameters:
         masters: ${elasticsearch:masters}
 
   kapitan:
-    vars:
-      target: ${target_name}
-      namespace: ${target_name}
     compile:
-    - output_path: manifests
-      input_type: jsonnet
-      input_paths:
-        - components/elasticsearch/main.jsonnet
-      output_type: yml
-    - output_path: scripts
-      input_type: jinja2
-      input_paths:
-        - scripts
-    - output_path: .
-      input_type: jinja2
-      input_paths:
-        - docs/elasticsearch/README.md
+      - output_path: manifests
+        input_type: jsonnet
+        input_paths:
+          - components/elasticsearch/main.jsonnet
+        output_type: yml
+      - output_path: scripts
+        input_type: jinja2
+        input_paths:
+          - scripts
+      - output_path: .
+        input_type: jinja2
+        input_paths:
+          - docs/elasticsearch/README.md

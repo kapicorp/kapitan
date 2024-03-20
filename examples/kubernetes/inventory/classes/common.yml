@@ -4,7 +4,7 @@ parameters:
 
   kapitan:
     vars:
-      target: ${target_name}
+      target: ${_reclass_:name:full}
       namespace: ${target_name}
       managed_by: kapitan
     secrets:

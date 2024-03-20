@@ -219,23 +219,22 @@ def multiline_str_presenter(dumper, data):
     By default, strings are getting dumped with style='"'.
     Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
     """
-    # get parsed args from cached.py
-    compile_args = cached.args.get("compile", None)
-    style = None
-    if compile_args:
-        style = compile_args.yaml_multiline_string_style
 
-    # check for inventory args too
-    inventory_args = cached.args.get("inventory", None)
-    if inventory_args:
-        style = inventory_args.multiline_string_style
-
-    if style == "literal":
-        style = "|"
-    elif style == "folded":
-        style = ">"
+    if hasattr(cached.args, "multiline_string_style"):
+        style_selection = cached.args.multiline_string_style
+    elif hasattr(cached.args, "yaml_multiline_string_style"):
+        style_selection = cached.args.yaml_multiline_string_style
     else:
-        style = '"'
+        style_selection = "double-quotes"
+
+    supported_styles = {
+        "literal": "|",
+        "folded": ">",
+        "double-quotes": '"'
+    }
+
+    style = supported_styles.get(style_selection)
+
     if data.count("\n") > 0:  # check for multiline string
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
@@ -247,10 +246,7 @@ PrettyDumper.add_representer(str, multiline_str_presenter)
 def null_presenter(dumper, data):
     """Configures yaml for omitting value from null-datatype"""
     # get parsed args from cached.py
-    compile_args = cached.args.get("compile", None)
-    flag_value = None
-    if compile_args:
-        flag_value = compile_args.yaml_dump_null_as_empty
+    flag_value = cached.args.yaml_dump_null_as_empty
 
     if flag_value:
         return dumper.represent_scalar("tag:yaml.org,2002:null", "")

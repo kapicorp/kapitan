@@ -84,7 +84,8 @@ class Inventory(ABC):
                 # check for same name
                 if self.targets.get(target.name):
                     raise InventoryError(
-                        f"Conflicting targets {target.name}: {target.path} and {self.targets[target.name].path}"
+                        f"Conflicting targets {target.name}: {target.path} and {self.targets[target.name].path}. "
+                        f"Consider using '--compose-target-name'."
                     )
 
                 self.targets[target.name] = target
@@ -116,7 +117,7 @@ class Inventory(ABC):
         if targets_to_render:
             self.render_targets(targets_to_render, ignore_class_not_found)
 
-        return {name: target for name, target in self.targets.items() if name in target_names}
+        return {target_name: self.targets[target_name] for target_name in target_names}
 
     def get_parameters(self, target_names: Union[str, list], ignore_class_not_found: bool = False) -> dict:
         """

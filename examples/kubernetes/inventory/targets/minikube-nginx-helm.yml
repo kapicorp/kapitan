@@ -5,6 +5,4 @@ classes:
   - component.nginx-common
 
 parameters:
-# These parameters are redundand because automatically set by `common`
-## target_name: minikube-nginx-helm
-## namespace: ${target_name}
+  target_name: minikube-nginx-helm

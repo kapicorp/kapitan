@@ -25,9 +25,8 @@ from kapitan.utils import prune_empty
 kadet.ABORT_EXCEPTION_TYPE = CompileError
 
 logger = logging.getLogger(__name__)
-inventory_path = cached.args.get(
-    "inventory_path"
-)  # XXX think about this as it probably breaks usage as library
+inventory_path = vars(cached.args).get("inventory_path")
+# XXX think about this as it probably breaks usage as library
 search_paths = contextvars.ContextVar("current search_paths in thread")
 current_target = contextvars.ContextVar("current target in thread")
 
