@@ -12,7 +12,7 @@ Empower your team to make changes to your infrastructure whilst maintaining full
 * :fontawesome-brands-slack: Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
 * :fontawesome-brands-github: Help us grow: [give us a star](https://github.com/kapicorp/kapitan/stargazers) or even better [sponsor our project](pages/contribute/sponsor/)
 
-## [Why do I need **Kapitan**?](pages/blog/2022-12-04.md#why-do-i-need-kapitan) 
+## [Why do I need **Kapitan**?](pages/blog/posts/2022-12-04.md#why-do-i-need-kapitan) 
 
 ## [Video Tutorials to get started](https://www.youtube.com/@kapitandev)
 

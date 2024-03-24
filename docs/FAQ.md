@@ -5,7 +5,7 @@ comments: true
 
 ## Why do I need **Kapitan**?
 
-See [Why do I need **Kapitan**?](pages/blog/2022-12-04.md#why-do-i-need-kapitan)
+See [Why do I need **Kapitan**?](pages/blog/posts/2022-12-04.md#why-do-i-need-kapitan)
 
 ## Ask your question
 
