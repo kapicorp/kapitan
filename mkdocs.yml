@@ -117,6 +117,7 @@ nav:
   - FAQ: FAQ.md
 
 markdown_extensions:
+  - md_in_html
   - admonition
   - pymdownx.tabbed:
       alternate_style: true
