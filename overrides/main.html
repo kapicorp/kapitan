@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block announce %}
+<p>New <strong>kapitan</strong> release <a title="v0.33.1" href="/pages/blog/2024-02-12/">v0.33.1</a> now available!</p>
+{% endblock %}
+{% block scripts %}
+  {{ super() }}
+   <!-- Google Tag Manager (noscript) -->
+   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WPN4JBMH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+{% endblock %}
+
+ {% block content %}
+
+
+  <!-- Edit button -->
+  {% if page.edit_url %}
+  <a
+      href="{{ page.edit_url }}"
+      title="{{ lang.t('edit.link.title') }}"
+      class="md-content__button md-icon"
+  >
+      {% include ".icons/material/pencil.svg" %}
+  </a>
+{% endif %}
+{{ page.content }}
+{% endblock %}
