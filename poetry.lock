@@ -681,7 +681,7 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kadet"
-version = "0.2.2"
+version = "0.3.0"
 description = "Easily define and reuse complex Python objects that serialize into JSON or YAML."
 optional = false
 python-versions = ">=3.10"
@@ -698,7 +698,7 @@ typeguard = ">=3.0.0"
 type = "git"
 url = "https://github.com/kapicorp/kadet"
 reference = "pydantic-upgrade"
-resolved_reference = "6547e5d43dba06858f43012c0f4e9293139e752e"
+resolved_reference = "231018927bdf7fa4773b732ab63a547a356ce941"
 
 [[package]]
 name = "markupsafe"
