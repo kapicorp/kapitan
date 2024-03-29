@@ -36,7 +36,7 @@ kapitan = 'kapitan.cli:main'
 source = "git-tag"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.10,<3.12"
 addict = "^2.4.0"
 azure-keyvault-keys = "^4.7.0"
 boto3 = "^1.18.17"
@@ -47,7 +47,7 @@ hvac = "1.2.1"
 jinja2 = "^3.0.1"
 jsonnet = "^0.20.0"
 jsonschema = "^4.17.3"
-kadet = "^0.2.2"
+kadet = {git = "https://github.com/kapicorp/kadet", branch = "pydantic-upgrade"}
 python-gnupg = ">=0.4.7,<0.6.0"
 pyyaml = "^6.0"
 requests = "^2.28.2"
@@ -63,7 +63,7 @@ typing-extensions = "^4.0.0"
 gojsonnet = { version = "^0.20.0", optional = true }
 docker = { version = ">=5,<8", optional = true }
 reclass = {git = "https://github.com/kapicorp/reclass"}
-reclass-rs = {version = "^0.4.0", optional = true}
+reclass-rs = {version = "^0.4.0"}
 
 [tool.poetry.extras]
 gojsonnet = ["gojsonnet"]
