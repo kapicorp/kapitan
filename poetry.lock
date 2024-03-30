@@ -96,17 +96,17 @@ typing-extensions = ">=4.0.1"
 
 [[package]]
 name = "boto3"
-version = "1.34.73"
+version = "1.34.74"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.73-py3-none-any.whl", hash = "sha256:4d68e7c7c1339e251c661fd6e2a34e31d281177106326712417fed839907fa84"},
-    {file = "boto3-1.34.73.tar.gz", hash = "sha256:f45503333286c03fb692a3ce497b6fdb4e88c51c98a3b8ff05071d7f56571448"},
+    {file = "boto3-1.34.74-py3-none-any.whl", hash = "sha256:71f551491fb12fe07727d371d5561c5919fdf33dbc1d4251c57940d267a53a9e"},
+    {file = "boto3-1.34.74.tar.gz", hash = "sha256:b703e22775561a748adc4576c30424b81abd2a00d3c6fb28eec2e5cde92c1eed"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.73,<1.35.0"
+botocore = ">=1.34.74,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -115,13 +115,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.73"
+version = "1.34.74"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.73-py3-none-any.whl", hash = "sha256:88d660b711cc5b5b049e15d547cb09526f86e48c15b78dacad78522109502b91"},
-    {file = "botocore-1.34.73.tar.gz", hash = "sha256:8df020b6682b9f1e9ee7b0554d5d0c14b7b23e3de070c85bcdf07fb20bfe4e2b"},
+    {file = "botocore-1.34.74-py3-none-any.whl", hash = "sha256:5d2015b5d91d6c402c122783729ce995ed7283a746b0380957026dc2b3b75969"},
+    {file = "botocore-1.34.74.tar.gz", hash = "sha256:32bb519bae62483893330c18a0ea4fd09d1ffa32bc573cd8559c2d9a08fb8c5c"},
 ]
 
 [package.dependencies]
@@ -685,20 +685,16 @@ version = "0.3.0"
 description = "Easily define and reuse complex Python objects that serialize into JSON or YAML."
 optional = false
 python-versions = ">=3.10"
-files = []
-develop = false
+files = [
+    {file = "kadet-0.3.0-py3-none-any.whl", hash = "sha256:029d69edf1e1b33aac1e21a859e239728fce18b5f75600c794d3eb846b88dbbb"},
+    {file = "kadet-0.3.0.tar.gz", hash = "sha256:babdf4cd2c5453920af2c1d060315793901317ea57bc17d1ad8a6440c633ebbc"},
+]
 
 [package.dependencies]
 pydantic = ">=2.0"
 python-box = "6.0.2"
 PyYAML = ">=5.3.1"
 typeguard = ">=3.0.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/kapicorp/kadet"
-reference = "pydantic-upgrade"
-resolved_reference = "231018927bdf7fa4773b732ab63a547a356ce941"
 
 [[package]]
 name = "markupsafe"
@@ -912,13 +908,13 @@ pyasn1 = ">=0.4.6,<0.7.0"
 
 [[package]]
 name = "pycparser"
-version = "2.21"
+version = "2.22"
 description = "C parser in Python"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=3.8"
 files = [
-    {file = "pycparser-2.21-py2.py3-none-any.whl", hash = "sha256:8ee45429555515e1f6b185e78100aea234072576aa43ab53aefcae078162fca9"},
-    {file = "pycparser-2.21.tar.gz", hash = "sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206"},
+    {file = "pycparser-2.22-py3-none-any.whl", hash = "sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc"},
+    {file = "pycparser-2.22.tar.gz", hash = "sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6"},
 ]
 
 [[package]]
@@ -1617,4 +1613,4 @@ test = ["docker", "reclass-rs"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.12"
-content-hash = "65abf8b5a19c70fb847737c007a338d23b6b257e705e2c2340ebc9e45e419f53"
+content-hash = "5418c84390fbe900a473e093d73d303ba955aa42634ca33b8171b554e0d9159b"
