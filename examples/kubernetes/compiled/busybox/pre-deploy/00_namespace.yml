@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  annotations: {}
-  labels:
-    name: busybox
-  name: busybox
-  namespace: busybox
-spec: {}
