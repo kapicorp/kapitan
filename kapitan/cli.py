@@ -28,6 +28,7 @@ from kapitan.resources import generate_inventory, resource_callbacks, search_imp
 from kapitan.targets import schema_validate_compiled
 from kapitan.utils import from_dot_kapitan, searchvar
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
+from kapitan.triggers.compile import trigger_compile
 
 logger = logging.getLogger(__name__)
 
