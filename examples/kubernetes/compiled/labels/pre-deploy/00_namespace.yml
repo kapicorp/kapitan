@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations: {}
+  labels:
+    name: labels
+  name: labels
+  namespace: labels
+spec: {}

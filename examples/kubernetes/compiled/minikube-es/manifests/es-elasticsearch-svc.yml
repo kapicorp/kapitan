@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: elasticsearch
+  name: elasticsearch
+  namespace: minikube-es
+spec:
+  ports:
+    - name: client
+      port: 9200
+      protocol: TCP
+      targetPort: client
+    - name: transport
+      port: 9300
+      protocol: TCP
+      targetPort: transport
+  selector:
+    name: cluster-client
+    role: client
+  type: NodePort
