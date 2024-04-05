@@ -16,4 +16,5 @@ If you're using **Kapitan** in your organization, please let us know by adding t
 -   [![RingCentral](adopters_logos/ringcentral.png){: style="height:100px"}](https://www.ringcentral.com/)
 -   [![Ubisoft](adopters_logos/ubisoft.png){: style="height:100px"}](https://www.ubisoft.com/)
 -   [![VSHN AG](adopters_logos/vhsn.png){: style="height:100px"}](https://www.vshn.ch)
+-   [![Flower Labs](adopters_logos/flower.png){: style="height:100px"}](https://www.flower.ai)
 </div>
