@@ -23,7 +23,6 @@ from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
 from kapitan.inputs.remove import Remove
-from kapitan.validator.kubernetes_validator import KubernetesManifestValidator
 
 logger = logging.getLogger(__name__)
 
