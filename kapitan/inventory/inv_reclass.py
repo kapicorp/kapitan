@@ -62,7 +62,7 @@ class ReclassInventory(Inventory):
 def get_reclass_config(
     inventory_path: str,
     ignore_class_notfound: bool = False,
-    compose_node_name: bool = False,
+    compose_target_name: bool = False,
     normalise_nodes_classes: bool = True,
 ) -> dict:
     # set default values initially
@@ -71,7 +71,7 @@ def get_reclass_config(
         "inventory_base_uri": inventory_path,
         "nodes_uri": "targets",
         "classes_uri": "classes",
-        "compose_node_name": compose_node_name,
+        "compose_node_name": compose_target_name,
         "allow_none_override": True,
         "ignore_class_notfound": ignore_class_notfound,
     }

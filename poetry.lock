@@ -62,20 +62,20 @@ aio = ["aiohttp (>=3.0)"]
 
 [[package]]
 name = "azure-identity"
-version = "1.15.0"
+version = "1.16.0"
 description = "Microsoft Azure Identity Library for Python"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "azure-identity-1.15.0.tar.gz", hash = "sha256:4c28fc246b7f9265610eb5261d65931183d019a23d4b0e99357facb2e6c227c8"},
-    {file = "azure_identity-1.15.0-py3-none-any.whl", hash = "sha256:a14b1f01c7036f11f148f22cd8c16e05035293d714458d6b44ddf534d93eb912"},
+    {file = "azure-identity-1.16.0.tar.gz", hash = "sha256:6ff1d667cdcd81da1ceab42f80a0be63ca846629f518a922f7317a7e3c844e1b"},
+    {file = "azure_identity-1.16.0-py3-none-any.whl", hash = "sha256:722fdb60b8fdd55fa44dc378b8072f4b419b56a5e54c0de391f644949f3a826f"},
 ]
 
 [package.dependencies]
-azure-core = ">=1.23.0,<2.0.0"
+azure-core = ">=1.23.0"
 cryptography = ">=2.5"
-msal = ">=1.24.0,<2.0.0"
-msal-extensions = ">=0.3.0,<2.0.0"
+msal = ">=1.24.0"
+msal-extensions = ">=0.3.0"
 
 [[package]]
 name = "azure-keyvault-keys"
@@ -96,17 +96,17 @@ typing-extensions = ">=4.0.1"
 
 [[package]]
 name = "boto3"
-version = "1.34.74"
+version = "1.34.82"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.74-py3-none-any.whl", hash = "sha256:71f551491fb12fe07727d371d5561c5919fdf33dbc1d4251c57940d267a53a9e"},
-    {file = "boto3-1.34.74.tar.gz", hash = "sha256:b703e22775561a748adc4576c30424b81abd2a00d3c6fb28eec2e5cde92c1eed"},
+    {file = "boto3-1.34.82-py3-none-any.whl", hash = "sha256:6e0ee12e87b37fa81133e9308d0957fce4200c1ff37c96346538dba5e857da18"},
+    {file = "boto3-1.34.82.tar.gz", hash = "sha256:fcdb84936b04d5f78c8c8667b65bf5b9803cf39fd25bb7fe57ba237074e36171"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.74,<1.35.0"
+botocore = ">=1.34.82,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -115,13 +115,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.74"
+version = "1.34.82"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.74-py3-none-any.whl", hash = "sha256:5d2015b5d91d6c402c122783729ce995ed7283a746b0380957026dc2b3b75969"},
-    {file = "botocore-1.34.74.tar.gz", hash = "sha256:32bb519bae62483893330c18a0ea4fd09d1ffa32bc573cd8559c2d9a08fb8c5c"},
+    {file = "botocore-1.34.82-py3-none-any.whl", hash = "sha256:8f839e9a88e7ac7185e406be4cf9926673374e8a6ecc295302f56f7e3c618692"},
+    {file = "botocore-1.34.82.tar.gz", hash = "sha256:2fd14676152f9d64541099090cc64973fdf8232744256454de443583e35e497d"},
 ]
 
 [package.dependencies]
@@ -431,20 +431,21 @@ smmap = ">=3.0.1,<6"
 
 [[package]]
 name = "gitpython"
-version = "3.1.42"
+version = "3.1.43"
 description = "GitPython is a Python library used to interact with Git repositories"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "GitPython-3.1.42-py3-none-any.whl", hash = "sha256:1bf9cd7c9e7255f77778ea54359e54ac22a72a5b51288c457c881057b7bb9ecd"},
-    {file = "GitPython-3.1.42.tar.gz", hash = "sha256:2d99869e0fef71a73cbd242528105af1d6c1b108c60dfabd994bf292f76c3ceb"},
+    {file = "GitPython-3.1.43-py3-none-any.whl", hash = "sha256:eec7ec56b92aad751f9912a73404bc02ba212a23adb2c7098ee668417051a1ff"},
+    {file = "GitPython-3.1.43.tar.gz", hash = "sha256:35f314a9f878467f5453cc1fee295c3e18e52f1b99f10f6cf5b1682e968a9e7c"},
 ]
 
 [package.dependencies]
 gitdb = ">=4.0.1,<5"
 
 [package.extras]
-test = ["black", "coverage[toml]", "ddt (>=1.1.1,!=1.4.3)", "mock", "mypy", "pre-commit", "pytest (>=7.3.1)", "pytest-cov", "pytest-instafail", "pytest-mock", "pytest-sugar"]
+doc = ["sphinx (==4.3.2)", "sphinx-autodoc-typehints", "sphinx-rtd-theme", "sphinxcontrib-applehelp (>=1.0.2,<=1.0.4)", "sphinxcontrib-devhelp (==1.0.2)", "sphinxcontrib-htmlhelp (>=2.0.0,<=2.0.1)", "sphinxcontrib-qthelp (==1.0.3)", "sphinxcontrib-serializinghtml (==1.1.5)"]
+test = ["coverage[toml]", "ddt (>=1.1.1,!=1.4.3)", "mock", "mypy", "pre-commit", "pytest (>=7.3.1)", "pytest-cov", "pytest-instafail", "pytest-mock", "pytest-sugar", "typing-extensions"]
 
 [[package]]
 name = "gojsonnet"
@@ -481,13 +482,13 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
 [[package]]
 name = "google-api-python-client"
-version = "2.124.0"
+version = "2.125.0"
 description = "Google API Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google-api-python-client-2.124.0.tar.gz", hash = "sha256:f6d3258420f7c76b0f5266b5e402e6f804e30351b018a10083f4a46c3ec33773"},
-    {file = "google_api_python_client-2.124.0-py2.py3-none-any.whl", hash = "sha256:07dc674449ed353704b1169fdee792f74438d024261dad71b6ce7bb9c683d51f"},
+    {file = "google-api-python-client-2.125.0.tar.gz", hash = "sha256:51a0385cff65ec135106e8be60ee7112557396dde5f44113ae23912baddda143"},
+    {file = "google_api_python_client-2.125.0-py2.py3-none-any.whl", hash = "sha256:0a62b60fbd61b61a455f15d925264b3301099b67cafd2d33cf8bf151f1fca4f4"},
 ]
 
 [package.dependencies]
@@ -583,13 +584,13 @@ requests = ">=2.27.1,<3.0.0"
 
 [[package]]
 name = "idna"
-version = "3.6"
+version = "3.7"
 description = "Internationalized Domain Names in Applications (IDNA)"
 optional = false
 python-versions = ">=3.5"
 files = [
-    {file = "idna-3.6-py3-none-any.whl", hash = "sha256:c05567e9c24a6b9faaa835c4821bad0590fbb9d5779e7caa6e1cc4978e7eb24f"},
-    {file = "idna-3.6.tar.gz", hash = "sha256:9ecdbbd083b06798ae1e86adcbfe8ab1479cf864e4ee30fe4e46a003d12491ca"},
+    {file = "idna-3.7-py3-none-any.whl", hash = "sha256:82fee1fc78add43492d3a1898bfa6d8a904cc97d8427f683ed8e798d07761aa0"},
+    {file = "idna-3.7.tar.gz", hash = "sha256:028ff3aadf0609c1fd278d8ea3089299412a7a8b9bd005dd08b9f8285bcb5cfc"},
 ]
 
 [[package]]
@@ -681,13 +682,13 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kadet"
-version = "0.3.0"
+version = "0.3.1"
 description = "Easily define and reuse complex Python objects that serialize into JSON or YAML."
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "kadet-0.3.0-py3-none-any.whl", hash = "sha256:029d69edf1e1b33aac1e21a859e239728fce18b5f75600c794d3eb846b88dbbb"},
-    {file = "kadet-0.3.0.tar.gz", hash = "sha256:babdf4cd2c5453920af2c1d060315793901317ea57bc17d1ad8a6440c633ebbc"},
+    {file = "kadet-0.3.1-py3-none-any.whl", hash = "sha256:9b29a316af7d51a57defe859c42d388531f53c87a56ba1816afe152b21d62338"},
+    {file = "kadet-0.3.1.tar.gz", hash = "sha256:bfe727c3e695dcf2b936de810c6aef9cbed9ab907c1f4120a179963835ea3957"},
 ]
 
 [package.dependencies]
@@ -1550,13 +1551,13 @@ test = ["coverage[toml] (>=7)", "mypy (>=1.2.0)", "pytest (>=7)"]
 
 [[package]]
 name = "typing-extensions"
-version = "4.10.0"
+version = "4.11.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "typing_extensions-4.10.0-py3-none-any.whl", hash = "sha256:69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475"},
-    {file = "typing_extensions-4.10.0.tar.gz", hash = "sha256:b0abd7c89e8fb96f98db18d86106ff1d90ab692004eb746cf6eda2682f91b3cb"},
+    {file = "typing_extensions-4.11.0-py3-none-any.whl", hash = "sha256:c1f94d72897edaf4ce775bb7558d5b79d8126906a14ea5ed1635921406c0387a"},
+    {file = "typing_extensions-4.11.0.tar.gz", hash = "sha256:83f085bd5ca59c80295fc2a82ab5dac679cbe02b9f33f7d83af68e241bea51b0"},
 ]
 
 [[package]]
