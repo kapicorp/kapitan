@@ -445,6 +445,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
         input_type = comp_obj["input_type"]
         output_path = comp_obj["output_path"]
         input_params = comp_obj.setdefault("input_params", {})
+        continue_on_compile_error = comp_obj.get("continue_on_compile_error", False)
 
         if input_type == "jinja2":
             input_compiler = Jinja2(compile_path, search_paths, ref_controller, comp_obj)
@@ -470,7 +471,14 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path, **kwargs)
-        input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
+        try:
+            input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
+        except Exception as e:
+            if continue_on_compile_error:
+                logger.error("Error compiling %s: %s", target_name, e)
+                continue
+            else:
+                raise CompileError(f"Error compiling {target_name}: {e}")
 
     logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
 
@@ -559,6 +567,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         "name": {"type": "string"},
                         "input_paths": {"type": "array"},
                         "input_type": {"type": "string"},
+                        "continue_on_compile_error": {"type": "boolean"},
                         "output_path": {"type": "string"},
                         "output_type": {"type": "string"},
                         "helm_values": {"type": "object"},
