@@ -74,7 +74,18 @@ class CompileTestResourcesTestKadet(unittest.TestCase):
         os.chdir(os.getcwd() + "/../../")
         reset_cache()
 
+class FailCompileTestResourcesTestKadet(unittest.TestCase):
+    def setUp(self):
+        os.chdir(os.getcwd() + "/tests/test_resources/")
 
+    def test_compile(self):
+        sys.argv = ["kapitan", "compile", "-t", "fail-compile"]
+        main()
+
+    def tearDown(self):
+        os.chdir(os.getcwd() + "/../../")
+        reset_cache()
+        
 class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/tests/test_resources/")
