@@ -81,6 +81,7 @@ class InputType(object):
                 prune_output=prune_output,
                 **kwargs,
             )
+
         except KapitanError as e:
             raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
 

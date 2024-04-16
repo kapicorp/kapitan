@@ -378,7 +378,7 @@ def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
             # check if parameters.kapitan is empty
             if not target_obj:
                 raise InventoryError(f"InventoryError: {target_name}: parameters.kapitan has no assignment")
-            target_obj["target_full_path"] = inv.targets[target_name].name
+            target_obj["target_full_path"] = inv.targets[target_name].name.replace(".", "/")
             require_compile = not ignore_class_notfound
             valid_target_obj(target_obj, require_compile)
             validate_matching_target_name(target_name, target_obj, inventory_path)
