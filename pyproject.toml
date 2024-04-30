@@ -32,6 +32,11 @@ packages = [
 [tool.poetry.scripts]
 kapitan = 'kapitan.cli:main'
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.0"
+coverage = "^7.5.0"
+docker = "^7.0.0"
+
 [tool.poetry-version-plugin]
 source = "git-tag"
 

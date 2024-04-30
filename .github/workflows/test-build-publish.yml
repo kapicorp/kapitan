@@ -65,14 +65,10 @@ jobs:
       
       - name: Install testing dependencies
         run: |
-          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
-          sudo apt-get -qq update
-          sudo apt-get install -y gnupg2 git curl
-          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
-          chmod 700 get_helm.sh
-          sudo ./get_helm.sh
-          pip3 install --editable ".[test]"
-          pip3 install coverage black
+          sudo apt-get -qq update && apt-get install -y gnupg2 git curl
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          pip3 install poetry
+          poetry install --no-root 
       - name: Run tests
         run: |-
           # includes make test
