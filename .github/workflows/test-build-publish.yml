@@ -76,6 +76,7 @@ jobs:
           verbose: true
           emoji: true
           job-summary: true
+          custom-pytest: poetry run pytest
           custom-arguments: '-q'
           click-to-expand: true
           report-title: 'Kapitan tests'
