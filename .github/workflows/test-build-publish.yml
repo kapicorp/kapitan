@@ -65,7 +65,8 @@ jobs:
       
       - name: Install testing dependencies
         run: |
-          sudo apt-get -qq update && apt-get install -y gnupg2 git curl
+          sudo apt-get -qq update
+          sudo apt-get install -y gnupg2 git curl
           curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
           pip3 install poetry
           poetry install --no-root 
