@@ -10,7 +10,8 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         curl \
         build-essential \
-        git
+        git \
+        default-jre
 
 ENV POETRY_VERSION=1.7.1
 ENV VIRTUAL_ENV=/opt/venv

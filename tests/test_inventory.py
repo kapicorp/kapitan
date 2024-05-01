@@ -17,12 +17,11 @@ from kapitan.resources import inventory
 
 class InventoryTargetTest(unittest.TestCase):
     def setUp(self):
-        # Setup `cached.args` if it's not setup yet
-        cached.args.setdefault("compile", argparse.Namespace())
         # Configure `compile.inventory_path` and `inventory-backend`. This
         # allows us to reuse the tests by inheriting from this test class.
-        cached.args["compile"].inventory_path = "inventory"
-        cached.args["inventory-backend"] = "reclass"
+
+        cached.args.inventory_backend = "reclass"
+        cached.args.inventory_path = "inventory"
 
     def test_inventory_target(self):
         inv = inventory(["examples/kubernetes"], "minikube-es")
@@ -39,4 +38,4 @@ class InventoryTargetTestReclassRs(InventoryTargetTest):
             self.skipTest("reclass-rs not available")
 
         super().setUp()
-        cached.args["inventory-backend"] = "reclass-rs"
+        cached.args.inventory_backend = "reclass-rs"

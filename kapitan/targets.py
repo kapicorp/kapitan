@@ -124,8 +124,9 @@ def compile_targets(
                 cached.inv_sources.update(new_sources)
                 new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
             # reset inventory cache and load target objs to check for missing classes
-            cached.reset_inv()
-            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
+            if new_sources:
+                cached.reset_inv()
+                target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
         # fetch dependencies
         if fetch:
             fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
@@ -403,6 +404,7 @@ def search_targets(inventory_path, targets, labels):
         )
 
     targets_found = []
+    # It should come back already rendered
     inv = get_inventory(inventory_path)
 
     for target_name in inv.targets.keys():
@@ -478,6 +480,8 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
                 logger.error("Error compiling %s: %s", target_name, e)
                 continue
             else:
+                import traceback
+                traceback.print_exception(type(e), e, e.__traceback__)
                 raise CompileError(f"Error compiling {target_name}: {e}")
 
     logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
