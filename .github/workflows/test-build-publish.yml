@@ -74,7 +74,7 @@ jobs:
         uses: pavelzw/pytest-action@v2
         with:
           verbose: true
-          emoji: true
+          emoji: false
           job-summary: true
           custom-pytest: poetry run pytest
           custom-arguments: '-q'

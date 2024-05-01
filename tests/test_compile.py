@@ -23,10 +23,10 @@ from kapitan.cached import reset_cache
 from kapitan.targets import validate_matching_target_name
 from kapitan.errors import InventoryError
 
-reset_cache()
 
 class CompileTestResourcesTestObjs(unittest.TestCase):
     def setUp(self):
+        reset_cache()
         os.chdir(os.getcwd() + "/tests/test_resources/")
 
     def test_compile(self):
