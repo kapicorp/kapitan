@@ -89,9 +89,9 @@ class InputType(object):
         """make compile dirs, skips if dirs exist"""
         _compile_path = os.path.join(self.compile_path, target_name, output_path)
         if kwargs.get("compose_target_name", False):
-            os.makedirs(_compile_path.replace(".", "/"), exist_ok=True)
-        else:
-            os.makedirs(_compile_path, exist_ok=True)
+            _compile_path = _compile_path.replace(".", "/")
+
+        os.makedirs(_compile_path, exist_ok=True)
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """implements compilation for file_path to compile_path with ext_vars"""

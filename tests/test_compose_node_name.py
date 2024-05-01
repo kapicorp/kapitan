@@ -17,10 +17,16 @@ class ReclassComposeNodeNameTest(unittest.TestCase):
 
     def test_compose_target_name(self):
         inventory_path = "examples/kubernetes/inventory"
-        example_target_names = [
-            os.path.splitext(f)[0] for f in os.listdir(os.path.join(inventory_path, "targets"))
-        ]
-
+        targets_path = os.path.join(inventory_path, "targets") 
+        example_target_names = []
+        
+        for root, dirs, files in os.walk(targets_path):
+            for file in files:
+                # split file extension and check if yml/yaml
+                path = os.path.relpath(os.path.join(root, file), targets_path)
+                name = os.path.splitext(path)[0].replace(os.sep, ".")
+                example_target_names.append(name)
+        
         temp_inventory_dir = tempfile.mkdtemp()
         shutil.copytree(inventory_path, temp_inventory_dir, dirs_exist_ok=True)
 
@@ -28,7 +34,7 @@ class ReclassComposeNodeNameTest(unittest.TestCase):
         compose_target_name = True
         inv = self.inventory(temp_inventory_dir, compose_target_name)
         found_targets = inv.search_targets()
-        self.assertEqual(example_target_names, list(found_targets.keys()))
+        self.assertEqual(sorted(example_target_names), sorted(list(found_targets.keys())))
         # ensure that actual rendering finds the same nodes as `search_targets()`
         for t in example_target_names:
             nodeinfo = inv.get_target(t)

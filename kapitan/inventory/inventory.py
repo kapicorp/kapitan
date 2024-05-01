@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 class InventoryTarget:
     name: str
     path: str
-    composed_name: str
     parameters: dict = field(default_factory=dict)
     classes: list = field(default_factory=list)
     applications: list = field(default_factory=list)
@@ -48,47 +47,43 @@ class Inventory(ABC):
         get all targets from inventory
         targets will be rendered
         """
-        if not self.targets:
-            self.search_targets()
-
-        inventory = self.get_targets([*self.targets.keys()])
 
         return {
-            target_name: {"parameters": target.parameters, "classes": target.classes}
-            for target_name, target in inventory.items()
+            target.name: {"parameters": target.parameters, "classes": target.classes}
+            for target in self.get_targets().values()
         }
 
     def search_targets(self) -> dict:
         """
         look for targets at '<inventory_path>/targets/' and return targets without rendering parameters
         """
+        
         for root, dirs, files in os.walk(self.targets_path):
             for file in files:
                 # split file extension and check if yml/yaml
-                path = os.path.join(root, file)
-                name, ext = os.path.splitext(file)
+                path = os.path.relpath(os.path.join(root, file), self.targets_path)
+
+                if self.compose_target_name:
+                    name, ext = os.path.splitext(path)
+                    name = name.replace(os.sep, ".")
+                else:
+                    name, ext = os.path.splitext(file)
+                    
                 if ext not in (".yml", ".yaml"):
-                    logger.debug(f"{file}: targets have to be .yml or .yaml files.")
+                    logger.debug(f"ignoring {file}: targets have to be .yml or .yaml files.")
                     continue
 
-                # initialize target
-                composed_name = (
-                    os.path.splitext(os.path.relpath(path, self.targets_path))[0]
-                    .replace(os.sep, ".")
-                    .lstrip(".")
-                )
-                target = InventoryTarget(name, path, composed_name)
-                if self.compose_target_name:
-                    target.name = target.composed_name
+                target = InventoryTarget(name, path)
 
-                # check for same name
+
+
                 if self.targets.get(target.name):
                     raise InventoryError(
-                        f"Conflicting targets {target.name}: {target.path} and {self.targets[target.name].path}"
+                        f"Conflicting targets {target.name}: {target.path} and {self.targets[target.name].path}. "
+                        f"Consider using '--compose-target-name'."
                     )
-
+                
                 self.targets[target.name] = target
-
         return self.targets
 
     def get_target(self, target_name: str, ignore_class_not_found: bool = False) -> InventoryTarget:
@@ -97,28 +92,35 @@ class Inventory(ABC):
         """
         return self.get_targets([target_name], ignore_class_not_found)[target_name]
 
-    def get_targets(self, target_names: list, ignore_class_not_found: bool = False) -> dict:
+    def get_targets(self, target_names: list[str] = [], ignore_class_not_found: bool = False) -> dict:
         """
         helper function to get rendered InventoryTarget objects for multiple targets
         """
+        if not self.targets:
+            self.search_targets()
+            
         targets_to_render = []
+        targets = {}
+        
+        if not target_names:
+            targets = self.targets
+        else:
+            try:
+                targets = { target_name : self.targets[target_name] for target_name in target_names }
+            except KeyError as e:
+                if not ignore_class_not_found:
+                    raise InventoryError(f"targets not found: {set(target_names)-set(self.targets)}" )
 
-        for target_name in target_names:
-            target = self.targets.get(target_name)
-            if not target:
-                if ignore_class_not_found:
-                    continue
-                raise InventoryError(f"target '{target_name}' not found")
-
+        for target in targets.values():
             if not target.parameters:
                 targets_to_render.append(target)
 
         if targets_to_render:
             self.render_targets(targets_to_render, ignore_class_not_found)
 
-        return {name: target for name, target in self.targets.items() if name in target_names}
+        return self.targets
 
-    def get_parameters(self, target_names: Union[str, list], ignore_class_not_found: bool = False) -> dict:
+    def get_parameters(self, target_names: str | list[str], ignore_class_not_found: bool = False) -> dict:
         """
         helper function to get rendered parameters for single target or multiple targets
         """
@@ -129,11 +131,17 @@ class Inventory(ABC):
         return {name: target.parameters for name, target in self.get_targets(target_names)}
 
     @abstractmethod
-    def render_targets(self, targets: list = None, ignore_class_notfound: bool = False):
+    def render_targets(self, targets: list[InventoryTarget] = None, ignore_class_notfound: bool = False) -> None:
         """
         create the inventory depending on which backend gets used
         """
         raise NotImplementedError
+
+    def migrate(self):
+        """
+        migrate the inventory, e.g. change interpolation syntax to new syntax
+        """
+        pass
 
     def __getitem__(self, key):
         return self.inventory[key]

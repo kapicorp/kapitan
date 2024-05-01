@@ -10,13 +10,14 @@ from reclass.errors import NotFoundError, ReclassException
 
 from kapitan.errors import InventoryError
 
-from .inventory import Inventory
+from .inventory import Inventory, InventoryTarget
 
 logger = logging.getLogger(__name__)
 
 
 class ReclassInventory(Inventory):
-    def render_targets(self, targets: list = None, ignore_class_notfound: bool = False):
+    
+    def render_targets(self, targets: list[InventoryTarget] = None, ignore_class_notfound: bool = False) -> None:
         """
         Runs a reclass inventory in inventory_path
         (same output as running ./reclass.py -b inv_base_uri/ --inventory)

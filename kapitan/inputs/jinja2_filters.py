@@ -79,7 +79,7 @@ def load_jinja2_filters_from_file(env, jinja2_filters):
 # Custom filters
 def reveal_maybe(ref_tag):
     "Will reveal ref_tag if valid and --reveal flag is used"
-    if cached.args["compile"].reveal:
+    if cached.args.reveal:
         return cached.revealer_obj.reveal_raw(ref_tag)
     else:
         return ref_tag
