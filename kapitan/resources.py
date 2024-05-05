@@ -276,7 +276,7 @@ def inventory(search_paths: list, target_name: str = None, inventory_path: str =
 
     if target_name:
         target = inv.get_target(target_name)
-        return dataclasses.asdict(target)
+        return target.model_dump()
 
     return inv.inventory
 

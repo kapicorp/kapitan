@@ -7,25 +7,20 @@
 
 import logging
 import os
-import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import overload, Union
-
+from pydantic import BaseModel
 from kapitan.errors import KapitanError
-from reclass.values import item
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class InventoryTarget:
+class InventoryTarget(BaseModel):
     name: str
     path: str
-    parameters: dict = field(default_factory=dict)
-    classes: list = field(default_factory=list)
-    applications: list = field(default_factory=list)
-    exports: list = field(default_factory=dict)
+    parameters: dict = dict()
+    classes: list = list()
+    applications: list = list()
+    exports: list = list()
 
 
 class Inventory(ABC):
@@ -73,7 +68,7 @@ class Inventory(ABC):
                     logger.debug(f"ignoring {file}: targets have to be .yml or .yaml files.")
                     continue
 
-                target = InventoryTarget(name, path)
+                target = InventoryTarget(name=name, path=path)
 
 
 
