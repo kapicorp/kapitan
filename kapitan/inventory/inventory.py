@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class InventoryTarget(BaseModel):
-    name: str
-    path: str
+    name: str = Field(exclude=True)
+    path: str = Field(exclude=True) 
     parameters: dict = dict()
     classes: list = list()
     applications: list = list()
@@ -25,6 +25,7 @@ class InventoryTarget(BaseModel):
 
 class Inventory(ABC, BaseModel):
     inventory_path: str = "inventory"
+    initialised: bool = Field(default=False, exclude=True)
     compose_target_name: bool = False
     targets: dict[str, InventoryTarget] = {}
     targets_path: Optional[str] = None
@@ -36,7 +37,6 @@ class Inventory(ABC, BaseModel):
         inventory_path = values.get('inventory_path', "inventory")
         values['targets_path'] = values.get("targets_path", os.path.join(inventory_path, 'targets'))
         values['classes_path'] = values.get("classes_path", os.path.join(inventory_path, 'classes'))
-        logger.error("values: %s", values)
         return values
     
     @property
@@ -46,43 +46,39 @@ class Inventory(ABC, BaseModel):
         targets will be rendered
         """
 
-        return {
-            target.name: {"parameters": target.parameters, "classes": target.classes}
-            for target in self.get_targets().values()
-        }
-
-    def search_targets(self) -> dict:
-        """
-        look for targets at '<inventory_path>/targets/' and return targets without rendering parameters
-        """
-        
-        for root, dirs, files in os.walk(self.targets_path):
-            for file in files:
-                # split file extension and check if yml/yaml
-                path = os.path.relpath(os.path.join(root, file), self.targets_path)
-
-                if self.compose_target_name:
-                    name, ext = os.path.splitext(path)
-                    name = name.replace(os.sep, ".")
-                else:
-                    name, ext = os.path.splitext(file)
-                    
-                if ext not in (".yml", ".yaml"):
-                    logger.debug(f"ignoring {file}: targets have to be .yml or .yaml files.")
-                    continue
-
-                target = InventoryTarget(name=name, path=path)
-
-
-
-                if self.targets.get(target.name):
-                    raise InventoryError(
-                        f"Conflicting targets {target.name}: {target.path} and {self.targets[target.name].path}. "
-                        f"Consider using '--compose-target-name'."
-                    )
-                
-                self.targets[target.name] = target
         return self.targets
+
+    def initialise(self) -> bool:
+        """
+        look for targets at '<inventory_path>/targets/' and initialise them.
+        """
+        if not self.initialised:
+            for root, dirs, files in os.walk(self.targets_path):
+                for file in files:
+                    # split file extension and check if yml/yaml
+                    path = os.path.relpath(os.path.join(root, file), self.targets_path)
+
+                    if self.compose_target_name:
+                        name, ext = os.path.splitext(path)
+                        name = name.replace(os.sep, ".")
+                    else:
+                        name, ext = os.path.splitext(file)
+                        
+                    if ext not in (".yml", ".yaml"):
+                        logger.debug(f"ignoring {file}: targets have to be .yml or .yaml files.")
+                        continue
+
+                    target = InventoryTarget(name=name, path=path)
+
+                    if self.targets.get(target.name):
+                        raise InventoryError(
+                            f"Conflicting targets {target.name}: {target.path} and {self.targets[target.name].path}. "
+                            f"Consider using '--compose-target-name'."
+                        )
+                    
+                    self.targets[target.name] = target
+                self.initialised = True
+        return self.initialised
 
     def get_target(self, target_name: str, ignore_class_not_found: bool = False) -> InventoryTarget:
         """
@@ -95,7 +91,7 @@ class Inventory(ABC, BaseModel):
         helper function to get rendered InventoryTarget objects for multiple targets
         """
         if not self.targets:
-            self.search_targets()
+            self.initialise()
             
         targets_to_render = []
         targets = {}
@@ -104,8 +100,8 @@ class Inventory(ABC, BaseModel):
             targets = self.targets
         else:
             try:
-                targets = { target_name : self.targets[target_name] for target_name in target_names }
-            except KeyError as e:
+                targets = {target_name: self.targets[target_name] for target_name in target_names}
+            except KeyError:
                 if not ignore_class_not_found:
                     raise InventoryError(f"targets not found: {set(target_names)-set(self.targets)}" )
 

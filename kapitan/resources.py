@@ -336,6 +336,6 @@ def get_inventory(inventory_path) -> Inventory:
     if hasattr(cached.args, "migrate") and cached.args.migrate:
         inventory_backend.migrate()
 
-    inventory_backend.search_targets()
+    inventory_backend.initialise()
 
     return inventory_backend
