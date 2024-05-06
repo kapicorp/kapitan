@@ -33,7 +33,6 @@ class ReclassComposeNodeNameTest(unittest.TestCase):
         # ensure normal rendering works
         compose_target_name = True
         inv = self.inventory(inventory_path=temp_inventory_dir, compose_target_name=compose_target_name)
-        inv.initialise()
         found_targets = inv.targets
         self.assertEqual(sorted(example_target_names), sorted(list(found_targets.keys())))
         # ensure that actual rendering finds the same nodes as `search_targets()`
@@ -52,14 +51,12 @@ class ReclassComposeNodeNameTest(unittest.TestCase):
 
         # ensure inventory detects name collision
         compose_target_name = False
-        inv = self.inventory(inventory_path=temp_inventory_dir, compose_target_name=compose_target_name)
         with self.assertRaises(InventoryError):
-            inv.initialise()
+            inv = self.inventory(inventory_path=temp_inventory_dir, compose_target_name=compose_target_name)
 
         # ensure compose_target_name works as intended
         compose_target_name = True
         inv = self.inventory(inventory_path=temp_inventory_dir, compose_target_name=compose_target_name)
-        inv.initialise()
         found_targets = inv.targets
 
         self.assertEqual(set(composed_target_names), set(found_targets.keys()))
