@@ -8,9 +8,9 @@
 import logging
 import os
 from abc import ABC, abstractmethod
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from kapitan.errors import KapitanError
-
+from typing import Annotated, Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 
@@ -23,19 +23,22 @@ class InventoryTarget(BaseModel):
     exports: list = list()
 
 
-class Inventory(ABC):
-    _default_path: str = "inventory"
+class Inventory(ABC, BaseModel):
+    inventory_path: str = "inventory"
+    compose_target_name: bool = False
+    targets: dict[str, InventoryTarget] = {}
+    targets_path: Optional[str] = None
+    classes_path: Optional[str] = None
 
-    def __init__(self, inventory_path: str = _default_path, compose_target_name: bool = False):
-        self.inventory_path = inventory_path
-        self.targets_path = os.path.join(inventory_path, "targets")
-        self.classes_path = os.path.join(inventory_path, "classes")
-
-        # config
-        self.compose_target_name = compose_target_name
-
-        self.targets = {}
-
+    @model_validator(mode='before')
+    @classmethod
+    def post_update(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        inventory_path = values.get('inventory_path', "inventory")
+        values['targets_path'] = values.get("targets_path", os.path.join(inventory_path, 'targets'))
+        values['classes_path'] = values.get("classes_path", os.path.join(inventory_path, 'classes'))
+        logger.error("values: %s", values)
+        return values
+    
     @property
     def inventory(self) -> dict:
         """

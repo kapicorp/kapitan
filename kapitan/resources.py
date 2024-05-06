@@ -329,7 +329,7 @@ def get_inventory(inventory_path) -> Inventory:
     inventory_backend: Inventory = None
     
     logger.debug(f"Using {backend_id} as inventory backend")
-    inventory_backend = backend(inventory_path, compose_target_name)
+    inventory_backend = backend(inventory_path=inventory_path, compose_target_name=compose_target_name)
 
     cached.inv = inventory_backend
     # migrate inventory to selected inventory backend
