@@ -362,29 +362,35 @@ def save_inv_cache(compile_path, targets):
                 yaml.dump(cached.inv_cache, stream=f, default_flow_style=False)
 
 
-def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
+def load_target_inventory(inventory_path, requested_targets, ignore_class_notfound=False):
     """returns a list of target objects from the inventory"""
     target_objs = []
-    inv = get_inventory(inventory_path)
+    inv = get_inventory(inventory_path, ignore_class_notfound)
 
     # if '-t' is set on compile, only loop through selected targets
-    if targets:
-        targets_list = targets
+    if requested_targets:
+        targets = inv.get_targets(requested_targets)
     else:
-        targets_list = inv.targets.keys()
+        targets = inv.targets
 
-    for target_name in targets_list:
+    for target_name, target in targets.items():
         try:
-            target_obj = inv.get_parameters(target_name, ignore_class_notfound).get("kapitan")
+            if not target.parameters:
+                if ignore_class_notfound:
+                    continue
+                else:
+                    raise InventoryError(f"InventoryError: {target_name}: parameters is empty")
+                
+            kapitan_target_configs = inv.get_parameters(target_name, ignore_class_notfound).get("kapitan")
             # check if parameters.kapitan is empty
-            if not target_obj:
+            if not kapitan_target_configs:
                 raise InventoryError(f"InventoryError: {target_name}: parameters.kapitan has no assignment")
-            target_obj["target_full_path"] = inv.targets[target_name].name.replace(".", "/")
+            kapitan_target_configs["target_full_path"] = inv.targets[target_name].name.replace(".", "/")
             require_compile = not ignore_class_notfound
-            valid_target_obj(target_obj, require_compile)
-            validate_matching_target_name(target_name, target_obj, inventory_path)
+            valid_target_obj(kapitan_target_configs, require_compile)
+            validate_matching_target_name(target_name, kapitan_target_configs, inventory_path)
             logger.debug(f"load_target_inventory: found valid kapitan target {target_name}")
-            target_objs.append(target_obj)
+            target_objs.append(kapitan_target_configs)
         except KeyError:
             logger.debug(f"load_target_inventory: target {target_name} has no kapitan compile obj")
 

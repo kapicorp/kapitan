@@ -276,7 +276,7 @@ def inventory(search_paths: list, target_name: str = None, inventory_path: str =
 
     if target_name:
         target = inv.get_target(target_name)
-        return dataclasses.asdict(target)
+        return target.model_dump()
 
     return inv.inventory
 
@@ -304,7 +304,7 @@ def generate_inventory(args):
         sys.exit(1)
 
 
-def get_inventory(inventory_path) -> Inventory:
+def get_inventory(inventory_path, ignore_class_notfound: bool = False) -> Inventory:
     """
     generic inventory function that makes inventory backend pluggable
     default backend is reclass
@@ -329,13 +329,11 @@ def get_inventory(inventory_path) -> Inventory:
     inventory_backend: Inventory = None
     
     logger.debug(f"Using {backend_id} as inventory backend")
-    inventory_backend = backend(inventory_path, compose_target_name)
+    inventory_backend = backend(inventory_path=inventory_path, compose_target_name=compose_target_name, ignore_class_notfound=ignore_class_notfound)
 
     cached.inv = inventory_backend
     # migrate inventory to selected inventory backend
     if hasattr(cached.args, "migrate") and cached.args.migrate:
         inventory_backend.migrate()
 
-    inventory_backend.search_targets()
-
-    return inventory_backend
+    return cached.inv
