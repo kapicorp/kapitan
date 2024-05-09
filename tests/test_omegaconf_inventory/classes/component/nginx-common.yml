@@ -1,0 +1,13 @@
+parameters:
+  nginx:
+    image: nginx:1:15.8
+
+  templates: #(1)!
+    - docs/nginx/README.md
+    - components/nginx-deploy.sh
+
+  kapitan:
+    compile:
+      - output_path: . #(2)!
+        input_type: jinja2
+        input_paths: ${templates} #(3)!

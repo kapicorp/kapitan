@@ -7,35 +7,63 @@
 
 "inventory tests"
 
-import argparse
 import importlib
 import unittest
+import logging
 
-from kapitan import cached
+logger = logging.getLogger(__name__)
+
+from kapitan.cached import reset_cache, args
 from kapitan.resources import inventory
 
+reset_cache()
 
-class InventoryTargetTest(unittest.TestCase):
-    def setUp(self):
-        # Configure `compile.inventory_path` and `inventory-backend`. This
-        # allows us to reuse the tests by inheriting from this test class.
 
-        cached.args.inventory_backend = "reclass"
-        cached.args.inventory_path = "inventory"
+class InventoryTargetTestBase(unittest.TestCase):
+    def setUp(self) -> None:
+        reset_cache()
+        if not importlib.util.find_spec(self.backend_id):
+            self.skipTest(f"backend module {self.backend_id} not available")
 
+        self.inventory_path = "examples/kubernetes/inventory"
+        
+        args.inventory_backend = self.backend_id 
+        
     def test_inventory_target(self):
-        inv = inventory(["examples/kubernetes"], "minikube-es")
+        inv = inventory(inventory_path=self.inventory_path, target_name="minikube-es")
+        logger.error(inv)
         self.assertEqual(inv["parameters"]["cluster"]["name"], "minikube")
 
     def test_inventory_all_targets(self):
-        inv = inventory(["examples/kubernetes"], None)
+        inv = inventory(inventory_path=self.inventory_path)
         self.assertNotEqual(inv.get("minikube-es"), None)
+        self.assertEqual(len(inv), self.expected_targets_count)
 
 
-class InventoryTargetTestReclassRs(InventoryTargetTest):
+class InventoryTargetTestReclass(InventoryTargetTestBase):
     def setUp(self):
-        if not importlib.util.find_spec("reclass_rs"):
-            self.skipTest("reclass-rs not available")
-
+        self.backend_id = "reclass"
+        self.expected_targets_count = 10
         super().setUp()
-        cached.args.inventory_backend = "reclass-rs"
+
+
+class InventoryTargetTestReclassRs(InventoryTargetTestBase):
+    def setUp(self):
+        self.backend_id = "reclass_rs"
+        self.expected_targets_count = 10
+        super().setUp()
+
+
+class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
+    def setUp(self):
+        self.backend_id = "omegaconf"
+        self.expected_targets_count = 1
+        super().setUp()
+        
+        self.inventory_path = "tests/test_omegaconf_inventory"
+
+
+
+
+
+del (InventoryTargetTestBase)  # remove InventoryTargetTestBase so that it doesn't run

@@ -245,7 +245,7 @@ def search_imports(cwd, import_str, search_paths):
     return normalised_path, normalised_path_content.encode()
 
 
-def inventory(search_paths: list, target_name: str = None, inventory_path: str = "./inventory"):
+def inventory(search_paths: list = [], target_name: str = None, inventory_path: str = "./inventory"):
     """
     Reads inventory (set by inventory_path) in search_paths.
     set nodes_uri to change reclass nodes_uri the default value
@@ -304,7 +304,7 @@ def generate_inventory(args):
         sys.exit(1)
 
 
-def get_inventory(inventory_path, ignore_class_notfound: bool = False) -> Inventory:
+def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inventory:
     """
     generic inventory function that makes inventory backend pluggable
     default backend is reclass
@@ -329,7 +329,7 @@ def get_inventory(inventory_path, ignore_class_notfound: bool = False) -> Invent
     inventory_backend: Inventory = None
     
     logger.debug(f"Using {backend_id} as inventory backend")
-    inventory_backend = backend(inventory_path=inventory_path, compose_target_name=compose_target_name, ignore_class_notfound=ignore_class_notfound)
+    inventory_backend = backend(inventory_path=inventory_path, compose_target_name=compose_target_name, ignore_class_not_found=ignore_class_not_found)
 
     cached.inv = inventory_backend
     # migrate inventory to selected inventory backend

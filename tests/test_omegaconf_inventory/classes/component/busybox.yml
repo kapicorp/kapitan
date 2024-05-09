@@ -1,0 +1,20 @@
+parameters:
+  kapitan:
+    vars:
+      target: ${target_name}
+      namespace: ${target_name}
+    compile:
+      - output_path: ./copy
+        input_type: copy
+        input_paths:
+          - components/busybox/pod.yml
+      # test copying over existing output_path to check for clobbering
+      - input_type: copy
+        input_paths:
+          - copy_target
+        output_path: ./copy
+      # test copying over root output_path
+      - input_type: copy
+        input_paths:
+          - copy_target
+        output_path: .

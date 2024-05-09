@@ -1,0 +1,13 @@
+classes:
+  - common
+  - cluster.minikube
+  - component.namespace
+  - component.elasticsearch
+  - component.busybox
+
+parameters:
+  target_name: minikube-es
+  uninterpolated: ${.target_name}
+
+  elasticsearch:
+    replicas: 2
