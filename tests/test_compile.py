@@ -16,6 +16,7 @@ import glob
 import shutil
 import yaml
 import toml
+import tempfile
 from kapitan.cli import main
 from kapitan.resources import get_inventory
 from kapitan.utils import directory_hash
@@ -23,11 +24,17 @@ from kapitan.cached import reset_cache
 from kapitan.targets import validate_matching_target_name
 from kapitan.errors import InventoryError
 
+TEST_PWD = os.getcwd()
+TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")
+TEST_DOCKER_PATH = os.path.join(os.getcwd(), "examples/docker/")
+TEST_TERRAFORM_PATH = os.path.join(os.getcwd(), "examples/terraform/")
+TEST_KUBERNETES_PATH = os.path.join(os.getcwd(), "examples/kubernetes/")
+
 
 class CompileTestResourcesTestObjs(unittest.TestCase):
     def setUp(self):
         reset_cache()
-        os.chdir(os.getcwd() + "/tests/test_resources/")
+        os.chdir(TEST_RESOURCES_PATH)
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "test-objects"]
@@ -40,13 +47,13 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
                 self.assertTrue("?{plain:" not in f.read())
 
     def tearDown(self):
-        os.chdir(os.getcwd() + "/../../")
+        os.chdir(TEST_PWD)
         reset_cache()
 
 
 class CompileTestResourcesTestKadet(unittest.TestCase):
     def setUp(self):
-        os.chdir(os.getcwd() + "/tests/test_resources/")
+        os.chdir(TEST_RESOURCES_PATH)
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "kadet-test"]
@@ -72,24 +79,24 @@ class CompileTestResourcesTestKadet(unittest.TestCase):
                 self.assertEqual(team_name, "SRE")
 
     def tearDown(self):
-        os.chdir(os.getcwd() + "/../../")
+        os.chdir(TEST_PWD)
         reset_cache()
 
 class FailCompileTestResourcesTestKadet(unittest.TestCase):
     def setUp(self):
-        os.chdir(os.getcwd() + "/tests/test_resources/")
+        os.chdir(TEST_RESOURCES_PATH)
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "fail-compile"]
         main()
 
     def tearDown(self):
-        os.chdir(os.getcwd() + "/../../")
+        os.chdir(TEST_PWD)
         reset_cache()
         
 class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
     def setUp(self):
-        os.chdir(os.getcwd() + "/tests/test_resources/")
+        os.chdir(TEST_RESOURCES_PATH)
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "jinja2-input-params"]
@@ -115,13 +122,13 @@ class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
                 self.assertEqual(name, "test2")
 
     def tearDown(self):
-        os.chdir(os.getcwd() + "/../../")
+        os.chdir(TEST_PWD)
         reset_cache()
 
 
 class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
     def setUp(self):
-        os.chdir(os.getcwd() + "/tests/test_resources/")
+        os.chdir(TEST_RESOURCES_PATH)
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "jinja2-postfix-strip"]
@@ -137,23 +144,24 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
         self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/stripped"), ["stub.txt"])
 
     def tearDown(self):
-        os.chdir(os.getcwd() + "/../../")
+        os.chdir(TEST_PWD)
         reset_cache()
 
 
 class CompileKubernetesTest(unittest.TestCase):
     extraArgv = []
+    inventory_path = TEST_KUBERNETES_PATH
 
     def setUp(self):
         reset_cache()
-        os.chdir(os.getcwd() + "/examples/kubernetes/")
+        os.chdir(self.inventory_path)
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-c"] + self.extraArgv
         main()
         os.remove("./compiled/.kapitan_cache")
         compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
-        test_compiled_dir_hash = directory_hash(os.getcwd() + "/../../tests/test_kubernetes_compiled")
+        test_compiled_dir_hash = directory_hash(os.path.join(TEST_PWD, 'tests/test_kubernetes_compiled'))
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def test_compile_not_enough_args(self):
@@ -222,7 +230,7 @@ class CompileKubernetesTest(unittest.TestCase):
             self.assertEqual(env["exports"], {})
 
     def tearDown(self):
-        os.chdir(os.getcwd() + "/../../")
+        os.chdir(TEST_PWD)
         reset_cache()
 
 
@@ -231,14 +239,35 @@ class CompileKubernetesTestReclassRs(CompileKubernetesTest):
         super().setUp()
         self.extraArgv = ["--inventory-backend=reclass-rs"]
 
-    @unittest.skip("Unnecessary to test with reclass-rs")
+    @unittest.skip("Already tested")
     def test_compile_not_enough_args(self):
         pass
 
 
+class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
+    temp_dir = tempfile.mkdtemp()
+    
+    def setUp(self):
+        
+        shutil.copytree(self.inventory_path, self.temp_dir, dirs_exist_ok=True)
+        self.inventory_path = self.temp_dir
+        super().setUp()
+        self.extraArgv = ["--inventory-backend=omegaconf"]
+        from kapitan.inventory.inv_omegaconf import migrate
+        migrate.migrate(self.temp_dir)
+
+    @unittest.skip("Already tested")
+    def test_compile_not_enough_args(self):
+        pass
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+        super().tearDown()
+
+
 class CompileTerraformTest(unittest.TestCase):
     def setUp(self):
-        os.chdir(os.getcwd() + "/examples/terraform/")
+        os.chdir(TEST_TERRAFORM_PATH)
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile"]
@@ -248,13 +277,13 @@ class CompileTerraformTest(unittest.TestCase):
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def tearDown(self):
-        os.chdir(os.getcwd() + "/../../")
+        os.chdir(TEST_PWD)
         reset_cache()
 
 
 class PlainOutputTest(unittest.TestCase):
     def setUp(self):
-        os.chdir(os.getcwd() + "/examples/docker/")
+        os.chdir(TEST_DOCKER_PATH)
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile"]
@@ -264,14 +293,14 @@ class PlainOutputTest(unittest.TestCase):
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def tearDown(self):
-        os.chdir(os.getcwd() + "/../../")
+        os.chdir(TEST_PWD)
         reset_cache()
 
 
 class TomlOutputTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        os.chdir(os.getcwd() + "/tests/test_resources/")
+        os.chdir(TEST_RESOURCES_PATH)
         sys.argv = ["kapitan", "compile", "-t", "toml-output"]
         main()
 
@@ -301,5 +330,5 @@ class TomlOutputTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.chdir(os.getcwd() + "/../../")
+        os.chdir(TEST_PWD)
         reset_cache()

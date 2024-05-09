@@ -58,8 +58,7 @@ def compile_targets(
     try:
         updated_targets = search_targets(inventory_path, targets, labels)
     except CompileError as e:
-        logger.error(e)
-        sys.exit(1)
+        raise CompileError(f"Error searching targets: {e}")
 
     # If --cache is set
     if kwargs.get("cache"):
@@ -94,9 +93,9 @@ def compile_targets(
 
         if fetch:
             # skip classes that are not yet available
-            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=True)
+            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_not_found=True)
         else:
-            # ignore_class_notfound = False by default
+            # ignore_class_not_found = False by default
             target_objs = load_target_inventory(inventory_path, updated_targets)
 
         # append "compiled" to output_path so we can safely overwrite it
@@ -119,14 +118,14 @@ def compile_targets(
                 )
                 cached.reset_inv()
                 target_objs = load_target_inventory(
-                    inventory_path, updated_targets, ignore_class_notfound=True
+                    inventory_path, updated_targets, ignore_class_not_found=True
                 )
                 cached.inv_sources.update(new_sources)
                 new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
             # reset inventory cache and load target objs to check for missing classes
             if new_sources:
                 cached.reset_inv()
-                target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
+                target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_not_found=False)
         # fetch dependencies
         if fetch:
             fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
@@ -362,10 +361,10 @@ def save_inv_cache(compile_path, targets):
                 yaml.dump(cached.inv_cache, stream=f, default_flow_style=False)
 
 
-def load_target_inventory(inventory_path, requested_targets, ignore_class_notfound=False):
+def load_target_inventory(inventory_path, requested_targets, ignore_class_not_found=False):
     """returns a list of target objects from the inventory"""
     target_objs = []
-    inv = get_inventory(inventory_path, ignore_class_notfound)
+    inv = get_inventory(inventory_path, ignore_class_not_found)
 
     # if '-t' is set on compile, only loop through selected targets
     if requested_targets:
@@ -376,17 +375,17 @@ def load_target_inventory(inventory_path, requested_targets, ignore_class_notfou
     for target_name, target in targets.items():
         try:
             if not target.parameters:
-                if ignore_class_notfound:
+                if ignore_class_not_found:
                     continue
                 else:
                     raise InventoryError(f"InventoryError: {target_name}: parameters is empty")
                 
-            kapitan_target_configs = inv.get_parameters(target_name, ignore_class_notfound).get("kapitan")
+            kapitan_target_configs = inv.get_parameters(target_name, ignore_class_not_found)["kapitan"]
             # check if parameters.kapitan is empty
             if not kapitan_target_configs:
                 raise InventoryError(f"InventoryError: {target_name}: parameters.kapitan has no assignment")
             kapitan_target_configs["target_full_path"] = inv.targets[target_name].name.replace(".", "/")
-            require_compile = not ignore_class_notfound
+            require_compile = not ignore_class_not_found
             valid_target_obj(kapitan_target_configs, require_compile)
             validate_matching_target_name(target_name, kapitan_target_configs, inventory_path)
             logger.debug(f"load_target_inventory: found valid kapitan target {target_name}")
@@ -493,7 +492,6 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
     logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
 
 
-@hashable_lru_cache
 def valid_target_obj(target_obj, require_compile=True):
     """
     Validates a target_obj
