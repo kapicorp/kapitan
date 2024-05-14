@@ -95,6 +95,7 @@ class RemoteInventoryTest(unittest.TestCase):
     extraArgv = []
 
     def setUp(self):
+        reset_cache()
         os.chdir(
             os.path.join(
                 os.path.abspath(os.path.dirname(__file__)), "test_remote_inventory", "environment_one"

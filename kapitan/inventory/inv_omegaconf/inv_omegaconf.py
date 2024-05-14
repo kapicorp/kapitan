@@ -81,20 +81,42 @@ class OmegaConfInventory(Inventory):
             raise
         
     @cached(cache=LRUCache(maxsize=1024))
-    def resolve_class_file_path(self, class_name: str, class_parent_dir: str = None):
+    def resolve_class_file_path(self, class_name: str, class_parent_dir: str = None, class_parent_name: str = None):
         class_file = None
-        
+       
+        # Finds relative paths based on the parent directory 
         if class_name.startswith(".") and class_parent_dir:
-            class_name = class_parent_dir + class_name
+            class_path_base = os.path.join(self.classes_path, class_parent_dir)
+        else:
+            class_path_base = self.classes_path
+             
+        # Now try to find the class file
+        extension = ".yml"
         
-        class_path_base = os.path.join(self.classes_path, *class_name.split("."))
-        
-        if os.path.isfile(os.path.join(class_path_base, "init.yml")):
-            class_file = os.path.join(class_path_base, "init.yml")
-        elif os.path.isfile(class_path_base + ".yml"):
-            class_file = f"{class_path_base}.yml"
+        cases = [
+            # case components.kapicorp is absolute and a directory, look for components/kapicorp/init.yml
+            # case .components.kapicorp is relative and a directory, look for <class_parent_dir>/components/kapicorp/init.yml
+            os.path.join(class_path_base, *class_name.split("."), "init" + extension),
             
-        return class_file
+            # case components.kapicorp is absolute and a file, look for components/kapicorp.yml
+            # case components.kapicorp is relative and a file, look for <class_parent_dir>/components/kapicorp.yml
+            os.path.join(class_path_base, *class_name.split(".")) + extension,
+            
+            # Reclass compatibility mode
+            # case .components.kapicorp  points to <class_parent_dir>/kapicorp.yml
+            os.path.join(class_path_base, *class_name.split(".")[2:]) + extension,
+            
+            # case components.kapicorp points to components/kapicorp/init.yml
+            os.path.join(class_path_base, *class_name.split(".")[2:], "init" + extension),
+        ]
+        
+        for case in cases:
+            if os.path.isfile(case):
+                class_file = case
+                return class_file
+            
+        logger.error(f"class file not found for class {class_name}, tried {cases}")
+        return None
 
     @cached(cache=LRUCache(maxsize=1024))
     def load_file(self, filename):
@@ -117,21 +139,22 @@ class OmegaConfInventory(Inventory):
         # first processes all classes 
         for class_name in _classes:
             class_parent_dir = os.path.dirname(filename.removeprefix(self.classes_path).removeprefix("/"))
-            class_file = self.resolve_class_file_path(class_name, class_parent_dir=class_parent_dir)
+            class_parent_name = os.path.basename(filename)
+            class_file = self.resolve_class_file_path(class_name, class_parent_dir=class_parent_dir, class_parent_name=class_parent_name)
             if not class_file:
                 if self.ignore_class_not_found:
                     continue
                 raise InventoryError(f"Class {class_name} not found")
             p, c, a, e = self.load_parameters_from_file(class_file)
-            parameters.merge_update(p, box_merge_lists="extend")
+            parameters.merge_update(p, box_merge_lists="unique")
             classes.extend(c)
             applications.extend(a)
-            exports.merge_update(e, box_merge_lists="extend")
+            exports.merge_update(e, box_merge_lists="unique")
         
         # finally merges the parameters from the current file
-        parameters.merge_update(_parameters, box_merge_lists="extend")
+        parameters.merge_update(_parameters, box_merge_lists="unique")
         classes.extend(_classes)
-        exports.merge_update(_exports, box_merge_lists="extend")
+        exports.merge_update(_exports, box_merge_lists="unique")
         applications.extend(_applications)
         return parameters, classes, applications, exports
      

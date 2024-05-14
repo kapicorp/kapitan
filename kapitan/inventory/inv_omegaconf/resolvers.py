@@ -42,7 +42,7 @@ def access_key_with_dots(*key: str, _root_: Container):
 
 def escape_interpolation(content: str):
     """resolver function that escapes an interpolation for the next resolving step"""
-    return f"\\${{{content}}}"
+    return f"${{{content}}}"
 
 
 def merge(*args):

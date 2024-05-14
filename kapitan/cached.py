@@ -7,7 +7,7 @@
 
 "cached module"
 from argparse import Namespace
-from kapitan.inputs.kadet import Dict
+from kadet import Dict
 
 inv = {}
 global_inv = Dict({})

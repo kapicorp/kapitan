@@ -103,7 +103,7 @@ def compile_targets(
                 # reset inventory cache and load target objs to check for missing classes
                 if new_sources:
                     cached.reset_inv()
-                    target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_not_found=False)
+                target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_not_found=False)
             # fetch dependencies
             if fetch:
                 fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
