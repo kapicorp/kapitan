@@ -60,7 +60,7 @@ class OmegaConfInventory(Inventory):
         manager = mp.Manager()
         shared_targets = manager.dict()
         mp.set_start_method("spawn", True)  # platform independent
-        with mp.Pool(min(max(len(targets), 1), os.cpu_count())) as pool:
+        with mp.Pool(min(len(targets), os.cpu_count())) as pool:
             r = pool.map_async(self.inventory_worker, [(self, target, shared_targets) for target in targets.values()])
             r.wait()
         
