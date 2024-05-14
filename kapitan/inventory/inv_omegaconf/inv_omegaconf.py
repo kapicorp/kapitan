@@ -13,10 +13,12 @@ from omegaconf import OmegaConf
 from ..inventory import InventoryError, Inventory, InventoryTarget
 from .resolvers import register_resolvers
 from kadet import Dict
+from .migrate import migrate
 
 
 logger = logging.getLogger(__name__)
-    
+
+   
 class OmegaConfTarget(InventoryTarget):
     resolved: bool = False
 
@@ -144,7 +146,11 @@ class OmegaConfInventory(Inventory):
         target.classes = c
         target.applications = a
         target.exports = e
+    
+    def migrate(self):
+        migrate(self.inventory_path)
         
+    
     def resolve_targets(self, targets: list[OmegaConfTarget] = None) -> None:
         if not targets:
             targets = self.targets.values()
