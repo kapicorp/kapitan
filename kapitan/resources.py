@@ -287,7 +287,7 @@ def generate_inventory(args):
         inv = get_inventory(args.inventory_path)
 
         if args.target_name:
-            inv = inv.get_parameters(args.target_name)
+            inv = inv.inventory[args.target_name]
             if args.pattern:
                 pattern = args.pattern.split(".")
                 inv = deep_get(inv, pattern)

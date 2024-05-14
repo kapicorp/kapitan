@@ -8,6 +8,7 @@
 import logging
 import os
 from abc import ABC, abstractmethod
+import functools
 from pydantic import BaseModel, Field
 from kapitan.errors import KapitanError
 from typing import Dict
@@ -37,13 +38,13 @@ class Inventory(ABC):
         if initialise:
             self.__initialise(ignore_class_not_found=ignore_class_not_found)
         
-    @property
+    @functools.cached_property
     def inventory(self) -> dict:
         """
         get all targets from inventory
         """
 
-        return self.get_targets()
+        return {target.name: target.model_dump() for target in self.targets.values()}
 
     def __initialise(self, ignore_class_not_found) -> bool:
         """

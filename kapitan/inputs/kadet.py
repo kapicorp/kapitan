@@ -15,28 +15,25 @@ from importlib.util import module_from_spec, spec_from_file_location
 import kadet
 from kadet import BaseModel, BaseObj, Dict
 
-from kapitan import cached
 from kapitan.errors import CompileError
+from functools import lru_cache
 from kapitan.inputs.base import CompiledFile, InputType
-from kapitan.resources import inventory as inventory_func
 from kapitan.utils import prune_empty
+from kapitan import cached
 
 # Set external kadet exception to kapitan.error.CompileError
 kadet.ABORT_EXCEPTION_TYPE = CompileError
 
 logger = logging.getLogger(__name__)
-inventory_path = vars(cached.args).get("inventory_path")
-# XXX think about this as it probably breaks usage as library
 search_paths = contextvars.ContextVar("current search_paths in thread")
 current_target = contextvars.ContextVar("current target in thread")
 
+@lru_cache(maxsize=None)
+def inventory_global(lazy=False):
+    return cached.global_inv
 
 def inventory(lazy=False):
-    return Dict(inventory_func(search_paths.get(), current_target.get(), inventory_path), default_box=lazy)
-
-
-def inventory_global(lazy=False):
-    return Dict(inventory_func(search_paths.get(), None, inventory_path), default_box=lazy)
+    return inventory_global()[current_target.get()]
 
 
 def module_from_path(path, check_name=None):
@@ -100,7 +97,6 @@ class Kadet(InputType):
         prune_output = kwargs.get("prune_output", False)
         reveal = kwargs.get("reveal", False)
         target_name = kwargs.get("target_name", None)
-        # inventory_path = kwargs.get("inventory_path", None)
         indent = kwargs.get("indent", 2)
 
         current_target.set(target_name)

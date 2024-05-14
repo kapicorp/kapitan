@@ -20,7 +20,7 @@ TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")
 
 from kapitan.inventory.inv_omegaconf.inv_omegaconf import OmegaConfInventory as inventory_backend
 
-class InventoryTestOmegaconf(unittest.TestCase):
+class InventoryTestOmegaConf(unittest.TestCase):
     temp_dir = tempfile.mkdtemp()
     
     def setUp(self) -> None:

@@ -14,7 +14,7 @@ from ..inventory import InventoryError, Inventory, InventoryTarget
 from .resolvers import register_resolvers
 from kadet import Dict
 from .migrate import migrate
-
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -53,21 +53,19 @@ class OmegaConfTarget(InventoryTarget):
 
 
 class OmegaConfInventory(Inventory):
-    classes_cache: dict = {}
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, target_class=OmegaConfTarget)
    
     def render_targets(self, targets: list[OmegaConfTarget] = None, ignore_class_not_found: bool = False) -> None:
-        manager = mp.Manager()
-        shared_targets = manager.dict()
-        mp.set_start_method("spawn", True)  # platform independent
-        with mp.Pool(min(len(targets), os.cpu_count())) as pool:
-            r = pool.map_async(self.inventory_worker, [(self, target, shared_targets) for target in targets.values()])
-            r.wait()
-        
-        for target in shared_targets.values():
-            self.targets[target.name] = target
+        if not self.initialised:
+            manager = mp.Manager()
+            shared_targets = manager.dict()
+            with mp.Pool(min(len(targets), os.cpu_count())) as pool:
+                r = pool.map_async(self.inventory_worker, [(self, target, shared_targets) for target in targets.values()])
+                r.wait()
+            
+            for target in shared_targets.values():
+                self.targets[target.name] = target
         
     @staticmethod
     def inventory_worker(zipped_args):
@@ -81,7 +79,7 @@ class OmegaConfInventory(Inventory):
         except Exception as e:
             logger.error(f"{target.name}: could not render due to error {e}")
             raise
-
+        
     @cached(cache=LRUCache(maxsize=1024))
     def resolve_class_file_path(self, class_name: str, class_parent_dir: str = None):
         class_file = None
@@ -100,9 +98,9 @@ class OmegaConfInventory(Inventory):
 
     @cached(cache=LRUCache(maxsize=1024))
     def load_file(self, filename):
-        return Dict.from_yaml(filename=filename)
+        with open(filename, "r") as f:
+            return yaml.safe_load(f)
         
-    @cached(cache=LRUCache(maxsize=1024))
     def load_parameters_from_file(self, filename, parameters={}) -> Dict:
         parameters = Dict(parameters)
         applications = []
@@ -150,7 +148,6 @@ class OmegaConfInventory(Inventory):
     def migrate(self):
         migrate(self.inventory_path)
         
-    
     def resolve_targets(self, targets: list[OmegaConfTarget] = None) -> None:
         if not targets:
             targets = self.targets.values()

@@ -7,8 +7,10 @@
 
 "cached module"
 from argparse import Namespace
+from kapitan.inputs.kadet import Dict
 
 inv = {}
+global_inv = Dict({})
 inv_cache = {}
 gpg_obj = None
 gkms_obj = None
@@ -22,9 +24,10 @@ inv_sources = set()
 
 
 def reset_cache():
-    global inv, inv_cache, gpg_obj, gkms_obj, awskms_obj, azkms_obj, dot_kapitan, ref_controller_obj, revealer_obj, inv_sources
+    global inv, global_inv, inv_cache, gpg_obj, gkms_obj, awskms_obj, azkms_obj, dot_kapitan, ref_controller_obj, revealer_obj, inv_sources
 
     inv = {}
+    global_inv = Dict({})
     inv_cache = {}
     inv_sources = set()
     gpg_obj = None
@@ -37,9 +40,10 @@ def reset_cache():
 
 
 def from_dict(cache_dict):
-    global inv, inv_cache, gpg_obj, gkms_obj, awskms_obj, azkms_obj, dot_kapitan, ref_controller_obj, revealer_obj, inv_sources, args
+    global inv, global_inv, inv_cache, gpg_obj, gkms_obj, awskms_obj, azkms_obj, dot_kapitan, ref_controller_obj, revealer_obj, inv_sources, args
 
     inv = cache_dict["inv"]
+    global_inv = Dict(inv.inventory)
     inv_cache = cache_dict["inv_cache"]
     inv_sources = cache_dict["inv_sources"]
     gpg_obj = cache_dict["gpg_obj"]
@@ -55,6 +59,7 @@ def from_dict(cache_dict):
 def as_dict():
     return {
         "inv": inv,
+        "global_inv": global_inv,
         "inv_cache": inv_cache,
         "inv_sources": inv_sources,
         "gpg_obj": gpg_obj,

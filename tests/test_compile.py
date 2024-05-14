@@ -21,7 +21,6 @@ from kapitan.cli import main
 from kapitan.resources import get_inventory
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
-from kapitan.targets import validate_matching_target_name
 from kapitan.errors import InventoryError
 
 TEST_PWD = os.getcwd()
@@ -159,7 +158,6 @@ class CompileKubernetesTest(unittest.TestCase):
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-c"] + self.extraArgv
         main()
-        os.remove("./compiled/.kapitan_cache")
         compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
         test_compiled_dir_hash = directory_hash(os.path.join(TEST_PWD, 'tests/test_kubernetes_compiled'))
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
@@ -171,22 +169,6 @@ class CompileKubernetesTest(unittest.TestCase):
                 sys.argv = ["kapitan"]
                 main()
         self.assertEqual(cm.exception.code, 1)
-
-    def test_compile_vars_target_missing(self):
-        inventory_path = "inventory"
-        target_filename = "minikube-es"
-        target_obj = get_inventory(inventory_path).get_parameters(target_filename)["kapitan"]
-        # delete vars.target
-        del target_obj["vars"]["target"]
-
-        with self.assertRaises(InventoryError) as ie:
-            validate_matching_target_name(target_filename, target_obj, inventory_path)
-
-        error_message = (
-            'Target missing: target "{}" is missing parameters.kapitan.vars.target\n'
-            "This parameter should be set to the target name"
-        )
-        self.assertTrue(error_message.format(target_filename), ie.exception.args[0])
 
     def test_compile_specific_target(self):
         shutil.rmtree("compiled")

@@ -26,7 +26,7 @@ from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
 from kapitan.resources import generate_inventory, resource_callbacks, search_imports
-from kapitan.targets import compile_targets, schema_validate_compiled
+from kapitan.targets import compile_targets
 from kapitan.utils import check_version, from_dot_kapitan, searchvar
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
@@ -596,48 +596,6 @@ def build_parser():
         help="set path, in which to generate the project skeleton,"
         'assumes directory already exists. default is "./"',
     )
-
-    validate_parser = subparser.add_parser(
-        "validate",
-        aliases=["v"],
-        help="validates the compile output against schemas as specified in inventory",
-        parents=[inventory_backend_parser]
-    )
-    validate_parser.set_defaults(func=schema_validate_compiled, name="validate")
-
-    validate_parser.add_argument(
-        "--compiled-path",
-        default=from_dot_kapitan("compile", "compiled-path", "./compiled"),
-        help='set compiled path, default is "./compiled',
-    )
-    validate_parser.add_argument(
-        "--inventory-path",
-        default=from_dot_kapitan("compile", "inventory-path", "./inventory"),
-        help='set inventory path, default is "./inventory"',
-    )
-    validate_parser.add_argument(
-        "--targets",
-        "-t",
-        help="targets to validate, default is all",
-        type=str,
-        nargs="+",
-        default=from_dot_kapitan("compile", "targets", []),
-        metavar="TARGET",
-    ),
-    validate_parser.add_argument(
-        "--schemas-path",
-        default=from_dot_kapitan("validate", "schemas-path", "./schemas"),
-        help='set schema cache path, default is "./schemas"',
-    )
-    validate_parser.add_argument(
-        "--parallelism",
-        "-p",
-        type=int,
-        default=from_dot_kapitan("validate", "parallelism", 4),
-        metavar="INT",
-        help="Number of concurrent validate processes, default is 4",
-    )
-
     return parser
 
 
