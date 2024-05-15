@@ -8,11 +8,11 @@
 import copy
 import logging
 import os
-import sys
+import yaml
 from typing import Any
 
 from omegaconf import Container, Node, OmegaConf, ListMergeMode
-
+from omegaconf.resolvers import oc
 logger = logging.getLogger(__name__)
 
 
@@ -69,6 +69,11 @@ def to_list(input_obj: Any):
         return [{k: v} for k, v in input_obj.items()]
 
     return list(input_obj)
+
+
+def to_yaml(key: str, _root_: Container):
+    content = OmegaConf.select(_root_, key)
+    return yaml.dump(OmegaConf.to_container(content, resolve=True))
 
 
 def default(*args):
@@ -218,6 +223,7 @@ def register_resolvers(inventory_path: str) -> None:
     OmegaConf.register_new_resolver("merge", merge, replace=replace)
     OmegaConf.register_new_resolver("dict", to_dict, replace=replace)
     OmegaConf.register_new_resolver("list", to_list, replace=replace)
+    OmegaConf.register_new_resolver("yaml", to_yaml, replace=replace)
     OmegaConf.register_new_resolver("add", lambda x, y: x + y, replace=replace)
     OmegaConf.register_new_resolver("default", default, replace=replace)
     OmegaConf.register_new_resolver("write", write_to_key, replace=replace)
