@@ -271,7 +271,6 @@ def flatten_dict(d, parent_key="", sep="."):
     return dict(items)
 
 
-@hashable_lru_cache
 def deep_get(dictionary, keys, previousKey=None):
     """Search recursively for 'keys' in 'dictionary' and return value, otherwise return None"""
     value = None

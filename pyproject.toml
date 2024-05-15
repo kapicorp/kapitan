@@ -67,7 +67,7 @@ certifi = "*"
 gitdb = "^4.0.10"
 packaging = "^23.0"
 typing-extensions = "^4.0.0"
-omegaconf = { git = "https://github.com/kapicorp/omegaconf.git"}
+omegaconf = "^2.4.0.dev3"
 gojsonnet = { version = "^0.20.0", optional = true }
 docker = { version = ">=5,<8", optional = true }
 reclass = {git = "https://github.com/kapicorp/reclass"}

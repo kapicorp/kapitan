@@ -59,7 +59,7 @@ def migrate_str(content: str):
     )
 
     # replace escaped tags with specific resolver
-    excluded_chars = "!"
+    excluded_chars = "!()"
     invalid = any(c in updated_content for c in excluded_chars)
     updated_content = regex.sub(
         r"\\\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",

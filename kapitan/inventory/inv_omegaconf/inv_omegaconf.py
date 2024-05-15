@@ -8,6 +8,7 @@
 import logging
 import multiprocessing as mp
 import os
+from functools import singledispatch
 from cachetools import cached, LRUCache
 from omegaconf import OmegaConf
 from ..inventory import InventoryError, Inventory, InventoryTarget
@@ -18,7 +19,21 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-   
+@singledispatch
+def keys_to_strings(ob):
+    return ob
+
+
+@keys_to_strings.register
+def _handle_dict(ob: dict):
+    return {str(k): keys_to_strings(v) for k, v in ob.items()}
+
+
+@keys_to_strings.register
+def _handle_list(ob: list):
+    return [keys_to_strings(v) for v in ob]
+
+ 
 class OmegaConfTarget(InventoryTarget):
     resolved: bool = False
 
@@ -30,12 +45,10 @@ class OmegaConfTarget(InventoryTarget):
         if not self.resolved:
             parameters = self.parameters
             if isinstance(parameters, Dict):
-                parameters = OmegaConf.create(parameters.to_dict())
-            elif isinstance(parameters, dict):
-                parameters = OmegaConf.create(parameters)
-            OmegaConf.resolve(parameters, escape_interpolation_strings=False)
+                parameters = parameters.to_dict()
+                parameters = OmegaConf.create(keys_to_strings(parameters))
 
-            self.parameters = OmegaConf.to_container(parameters)
+            self.parameters = OmegaConf.to_container(parameters, resolve=True)
             self.resolved = True
         return self
 
