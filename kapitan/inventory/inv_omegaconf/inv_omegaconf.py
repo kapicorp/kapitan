@@ -8,11 +8,13 @@
 import logging
 import multiprocessing as mp
 import os
+import time
 from functools import singledispatch
 from cachetools import cached, LRUCache
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, ListMergeMode, DictConfig
+from pydantic import ConfigDict
 from ..inventory import InventoryError, Inventory, InventoryTarget
-from .resolvers import register_resolvers
+from .resolvers import register_resolvers, register_user_resolvers
 from kadet import Dict
 from .migrate import migrate
 import yaml
@@ -41,17 +43,6 @@ class OmegaConfTarget(InventoryTarget):
         super().__init__(*args, **kwargs)
         self.__add_metadata()
         
-    def resolve(self):
-        if not self.resolved:
-            parameters = self.parameters
-            if isinstance(parameters, Dict):
-                parameters = parameters.to_dict()
-                parameters = OmegaConf.create(keys_to_strings(parameters))
-
-            self.parameters = OmegaConf.to_container(parameters, resolve=True)
-            self.resolved = True
-        return self
-
     def __add_metadata(self):
         metadata = {
             "name": {
@@ -68,7 +59,7 @@ class OmegaConfTarget(InventoryTarget):
 class OmegaConfInventory(Inventory):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, target_class=OmegaConfTarget)
-   
+
     def render_targets(self, targets: list[OmegaConfTarget] = None, ignore_class_not_found: bool = False) -> None:
         if not self.initialised:
             manager = mp.Manager()
@@ -84,9 +75,9 @@ class OmegaConfInventory(Inventory):
     def inventory_worker(zipped_args):
         self, target, shared_targets = zipped_args
         try:
-            self.load_target(target)
             register_resolvers(self.inventory_path)
-            target.resolve()
+            # register_user_resolvers(self.inventory_path)
+            self.load_target(target)
             shared_targets[target.name] = target
             
         except Exception as e:
@@ -137,7 +128,7 @@ class OmegaConfInventory(Inventory):
             return yaml.safe_load(f)
         
     def load_parameters_from_file(self, filename, parameters={}) -> Dict:
-        parameters = Dict(parameters)
+        parameters = OmegaConf.create(parameters)
         applications = []
         classes = []
         exports = Dict()
@@ -145,12 +136,13 @@ class OmegaConfInventory(Inventory):
         content = self.load_file(filename)
         
         _classes = content.get("classes", [])
-        _parameters = content.get("parameters", {})
+        _parameters = keys_to_strings(content.get("parameters", {}))
         _applications = content.get("applications", [])
-        _exports = content.get("exports", Dict())
+        _exports = content.get("exports", {})
 
         # first processes all classes 
         for class_name in _classes:
+
             class_parent_dir = os.path.dirname(filename.removeprefix(self.classes_path).removeprefix("/"))
             class_parent_name = os.path.basename(filename)
             class_file = self.resolve_class_file_path(class_name, class_parent_dir=class_parent_dir, class_parent_name=class_parent_name)
@@ -158,15 +150,16 @@ class OmegaConfInventory(Inventory):
                 if self.ignore_class_not_found:
                     continue
                 raise InventoryError(f"Class {class_name} not found")
+            classes.append(class_name)
             p, c, a, e = self.load_parameters_from_file(class_file)
-            parameters.merge_update(p, box_merge_lists="unique")
+            parameters = OmegaConf.unsafe_merge(parameters, p, list_merge_mode=ListMergeMode.EXTEND_UNIQUE)
             classes.extend(c)
             applications.extend(a)
             exports.merge_update(e, box_merge_lists="unique")
         
         # finally merges the parameters from the current file
-        parameters.merge_update(_parameters, box_merge_lists="unique")
-        classes.extend(_classes)
+        parameters = OmegaConf.unsafe_merge(parameters, _parameters, list_merge_mode=ListMergeMode.EXTEND_UNIQUE)
+        
         exports.merge_update(_exports, box_merge_lists="unique")
         applications.extend(_applications)
         return parameters, classes, applications, exports
@@ -174,12 +167,18 @@ class OmegaConfInventory(Inventory):
     def load_target(self, target: OmegaConfTarget):
         full_target_path = os.path.join(self.targets_path, target.path)
         
-        parameters = Dict(target.parameters, frozen_box=True)
+        start = time.perf_counter()
+        parameters = OmegaConf.create(keys_to_strings(target.parameters))
         p, c, a, e = self.load_parameters_from_file(full_target_path, parameters=parameters)
+        load_parameters = time.perf_counter() - start
+        p = OmegaConf.to_container(p, resolve=True)
+        to_container = time.perf_counter() - load_parameters
         target.parameters = p
         target.classes = c
         target.applications = a
         target.exports = e
+        finish_loading = time.perf_counter() - start
+        logger.debug(f"{target.name}: Config loaded in {load_parameters:.2f}s, resolved in {to_container:.2f}s. Total {finish_loading:.2f}s")
     
     def migrate(self):
         migrate(self.inventory_path)

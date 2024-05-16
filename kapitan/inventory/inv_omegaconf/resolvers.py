@@ -9,10 +9,10 @@ import copy
 import logging
 import os
 import yaml
+import sys
 from typing import Any
 
 from omegaconf import Container, Node, OmegaConf, ListMergeMode
-from omegaconf.resolvers import oc
 logger = logging.getLogger(__name__)
 
 
@@ -240,3 +240,40 @@ def register_resolvers(inventory_path: str) -> None:
     OmegaConf.register_new_resolver("or", condition_or, replace=replace)
     OmegaConf.register_new_resolver("not", condition_not, replace=replace)
     OmegaConf.register_new_resolver("equal", condition_equal, replace=replace)
+
+    
+    # user defined resolvers
+    user_resolver_file = os.path.join(inventory_path, "resolvers.py")
+    if os.path.exists(user_resolver_file):
+        try:
+            register_user_resolvers(inventory_path)
+        except :
+            logger.warning(f"Couldn't import {os.path.join(inventory_path, 'resolvers.py')}")
+
+
+def register_user_resolvers(inventory_path: str) -> None:
+    """import user resolvers specified in inventory/resolvers.py"""
+    try:
+        import_path = os.path.join(os.getcwd(), inventory_path)
+        sys.path.append(import_path)
+        from resolvers import pass_resolvers
+
+        funcs = pass_resolvers()
+    except ImportError:
+        logger.warning("resolvers.py must contain function 'pass_resolvers()'")
+        return
+    except Exception as e:
+        logger.error(f"resolvers.py: {e}")
+        return
+
+    if not isinstance(funcs, dict):
+        logger.warning("pass_resolvers() should return a dict")
+        return
+
+    import resolvers
+
+    for name, func in funcs.items():
+        try:
+            OmegaConf.register_new_resolver(name, func, replace=True)
+        except:
+            logger.warning(f"Could not load resolver {name}")
