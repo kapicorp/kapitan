@@ -207,7 +207,7 @@ def condition_equal(*configs):
     return all(config == configs[0] for config in configs)
 
 
-def register_resolvers(inventory_path: str) -> None:
+def register_resolvers() -> None:
     """register pre-defined and user-defined resolvers"""
     replace = True
 
@@ -243,18 +243,24 @@ def register_resolvers(inventory_path: str) -> None:
 
     
     # user defined resolvers
-    user_resolver_file = os.path.join(inventory_path, "resolvers.py")
+    user_resolver_file = os.path.join(os.getcwd(), "system/omegaconf/resolvers/resolvers.py")
+
     if os.path.exists(user_resolver_file):
         try:
-            register_user_resolvers(inventory_path)
-        except :
-            logger.warning(f"Couldn't import {os.path.join(inventory_path, 'resolvers.py')}")
+            register_user_resolvers(user_resolver_file)
+        except Exception as e:
+            logger.warning(f"Couldn't import {user_resolver_file}: error {e}")
 
 
-def register_user_resolvers(inventory_path: str) -> None:
-    """import user resolvers specified in inventory/resolvers.py"""
+def register_user_resolvers(user_resolver_file: str) -> None:
+    """import user resolvers specified in resolvers_path"""
+    if os.path.exists(user_resolver_file):
+        logger.debug(f"File {user_resolver_file} does not exist, ignoring")
+        return
+
+    import_path = os.path.dirname(user_resolver_file)
+
     try:
-        import_path = os.path.join(os.getcwd(), inventory_path)
         sys.path.append(import_path)
         from resolvers import pass_resolvers
 

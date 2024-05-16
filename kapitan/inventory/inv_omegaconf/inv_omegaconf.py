@@ -75,8 +75,7 @@ class OmegaConfInventory(Inventory):
     def inventory_worker(zipped_args):
         self, target, shared_targets = zipped_args
         try:
-            register_resolvers(self.inventory_path)
-            # register_user_resolvers(self.inventory_path)
+            register_resolvers()
             self.load_target(target)
             shared_targets[target.name] = target
             
