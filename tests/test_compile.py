@@ -35,7 +35,7 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
         reset_cache()
         os.chdir(TEST_RESOURCES_PATH)
 
-    def test_compile(self):
+    def test_single_target_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "test-objects"]
         main()
 

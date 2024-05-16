@@ -34,7 +34,7 @@ class InventoryTestOmegaConf(unittest.TestCase):
 
     def test_load_and_resolve_single_target(self):
         target_name = "minikube"
-        target_kapitan_metadata = dict({'_kapitan_': {'name': {'short': 'minikube', 'full': 'minikube', 'path': 'minikube-es', 'parts': ('minikube', )}}})
+        target_kapitan_metadata = dict({'_kapitan_': {'name': {'short': 'minikube', 'full': 'minikube', 'path': 'minikube-es', 'parts': ['minikube']}}})
         
         # Load inventory but does not initialises targets
         inventory = self.inventory_backend

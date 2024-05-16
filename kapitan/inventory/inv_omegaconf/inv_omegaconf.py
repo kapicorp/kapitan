@@ -150,15 +150,17 @@ class OmegaConfInventory(Inventory):
                 if self.ignore_class_not_found:
                     continue
                 raise InventoryError(f"Class {class_name} not found")
-            classes.append(class_name)
             p, c, a, e = self.load_parameters_from_file(class_file)
-            parameters = OmegaConf.unsafe_merge(parameters, p, list_merge_mode=ListMergeMode.EXTEND_UNIQUE)
+            if p:
+                parameters = OmegaConf.unsafe_merge(parameters, p, list_merge_mode=ListMergeMode.EXTEND_UNIQUE)
             classes.extend(c)
+            classes.append(class_name)
             applications.extend(a)
             exports.merge_update(e, box_merge_lists="unique")
         
         # finally merges the parameters from the current file
-        parameters = OmegaConf.unsafe_merge(parameters, _parameters, list_merge_mode=ListMergeMode.EXTEND_UNIQUE)
+        if _parameters:
+            parameters = OmegaConf.unsafe_merge(parameters, _parameters, list_merge_mode=ListMergeMode.EXTEND_UNIQUE)
         
         exports.merge_update(_exports, box_merge_lists="unique")
         applications.extend(_applications)
@@ -171,9 +173,8 @@ class OmegaConfInventory(Inventory):
         parameters = OmegaConf.create(keys_to_strings(target.parameters))
         p, c, a, e = self.load_parameters_from_file(full_target_path, parameters=parameters)
         load_parameters = time.perf_counter() - start
-        p = OmegaConf.to_container(p, resolve=True)
+        target.parameters = OmegaConf.to_container(p, resolve=True)
         to_container = time.perf_counter() - load_parameters
-        target.parameters = p
         target.classes = c
         target.applications = a
         target.exports = e
