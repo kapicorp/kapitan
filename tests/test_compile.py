@@ -154,6 +154,7 @@ class CompileKubernetesTest(unittest.TestCase):
     def setUp(self):
         reset_cache()
         os.chdir(self.inventory_path)
+        shutil.rmtree("compiled", ignore_errors=True)
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-c"] + self.extraArgv
@@ -171,7 +172,7 @@ class CompileKubernetesTest(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
 
     def test_compile_specific_target(self):
-        shutil.rmtree("compiled")
+        
         sys.argv = ["kapitan", "compile", "-t", "minikube-mysql"] + self.extraArgv
         main()
         self.assertTrue(
@@ -182,7 +183,6 @@ class CompileKubernetesTest(unittest.TestCase):
         main()
 
     def test_compile_target_with_label(self):
-        shutil.rmtree("compiled")
         sys.argv = ["kapitan", "compile", "-l", "type=kadet"] + self.extraArgv
         main()
         self.assertTrue(
@@ -194,7 +194,6 @@ class CompileKubernetesTest(unittest.TestCase):
         main()
 
     def test_compile_jsonnet_env(self):
-        shutil.rmtree("compiled")
         sys.argv = ["kapitan", "compile", "-t", "jsonnet-env"] + self.extraArgv
         main()
         self.assertTrue(os.path.exists("compiled/jsonnet-env/jsonnet-env/env.yml"))
@@ -212,6 +211,7 @@ class CompileKubernetesTest(unittest.TestCase):
             self.assertEqual(env["exports"], {})
 
     def tearDown(self):
+        shutil.rmtree("compiled", ignore_errors=True)
         os.chdir(TEST_PWD)
         reset_cache()
 

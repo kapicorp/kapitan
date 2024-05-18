@@ -231,9 +231,9 @@ def build_parser():
         "--parallelism",
         "-p",
         type=int,
-        default=from_dot_kapitan("compile", "parallelism", 4),
+        default=from_dot_kapitan("compile", "parallelism", None),
         metavar="INT",
-        help="Number of concurrent compile processes, default is 4",
+        help="Number of concurrent compile processes, default is min(len(targets), os.cpu_count())",
     )
     compile_parser.add_argument(
         "--indent",

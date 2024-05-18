@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 def compile_targets(
-    inventory_path, search_paths, output_path, parallel, targets, labels, ref_controller, **kwargs
+    inventory_path, search_paths, output_path, parallel, desidered_targets, labels, ref_controller, **kwargs
 ):
     """
     Searches and loads target files, and runs compile_target() on a
@@ -48,16 +48,39 @@ def compile_targets(
     temp_compile_path = os.path.join(temp_path, "compiled")
     dep_cache_dir = temp_path
 
-    updated_targets = targets
+    rendering_start = time.time()
+    inventory = get_inventory(inventory_path)
+    discovered_targets = inventory.targets.keys()
+
+    logger.info(f"Looking for [{','.join(desidered_targets)}] with labels {labels}, discovered {len(discovered_targets)} targets in inventory.")
+    logger.info(f"Rendered inventory (%.2fs): discovered {len(discovered_targets)} targets.", time.time() - rendering_start)
+
+    if discovered_targets == 0:
+        raise CompileError("No inventory targets discovered at path: {inventory_path}")
+
+    targets = desidered_targets if len(desidered_targets) > 0 else discovered_targets
+
     try:
-        updated_targets = search_targets(inventory_path, targets, labels)
+        targets = search_targets(inventory, targets, labels)
+            
     except CompileError as e:
         raise CompileError(f"Error searching targets: {e}")
 
+    if len(targets) == 0:
+        raise CompileError(f"No matching targets found in inventory: {labels if labels else desidered_targets}")
+
+    logger.info(f"Compiling {len(targets)}/{len(discovered_targets)} targets... CPUs: {os.cpu_count()} Parallel: {parallel}")
+    
+    if parallel is None:
+        parallel = min(len(targets), os.cpu_count())
+        logger.info(f"Parallel not set, defaulting to {parallel} processes {os.cpu_count()} {len(targets)}")
+
+    assert parallel > 0, "Number of processes must be greater than 0"
+
     with multiprocessing.Pool(parallel) as pool:
         try:
-            rendering_start = time.time()
-
+            logger.info(f"Using {parallel} processes...")
+            fetching_start = time.time()
             # check if --fetch or --force-fetch is enabled
             force_fetch = kwargs.get("force_fetch", False)
             fetch = kwargs.get("fetch", False) or force_fetch
@@ -71,10 +94,10 @@ def compile_targets(
 
             if fetch:
                 # skip classes that are not yet available
-                target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_not_found=True)
+                target_objs = load_target_inventory(inventory, targets, ignore_class_not_found=True)
             else:
                 # ignore_class_not_found = False by default
-                target_objs = load_target_inventory(inventory_path, updated_targets)
+                target_objs = load_target_inventory(inventory, targets)
 
             # append "compiled" to output_path so we can safely overwrite it
             compile_path = os.path.join(output_path, "compiled")
@@ -82,28 +105,6 @@ def compile_targets(
             if not target_objs:
                 raise CompileError("Error: no targets found")
 
-            # fetch inventory
-            if fetch:
-                # new_source checks for new sources in fetched inventory items
-                new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
-                while new_sources:
-                    fetch_inventories(
-                        inventory_path,
-                        target_objs,
-                        dep_cache_dir,
-                        force_fetch,
-                        pool,
-                    )
-                    cached.reset_inv()
-                    target_objs = load_target_inventory(
-                        inventory_path, updated_targets, ignore_class_not_found=True
-                    )
-                    cached.inv_sources.update(new_sources)
-                    new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
-                # reset inventory cache and load target objs to check for missing classes
-                if new_sources:
-                    cached.reset_inv()
-                target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_not_found=False)
             # fetch dependencies
             if fetch:
                 fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
@@ -126,9 +127,9 @@ def compile_targets(
                 # fetch dependencies from targets with force_fetch set to true
                 if fetch_objs:
                     fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
-
-            logger.info("Rendered inventory (%.2fs)", time.time() - rendering_start)
-
+                    logger.info("Fetched dependencies (%.2fs)", time.time() - fetching_start)
+            
+            compile_start = time.time()
             worker = partial(
                 compile_target,
                 search_paths=search_paths,
@@ -143,10 +144,12 @@ def compile_targets(
             # so p is only not None when raising an exception
             [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
+            logger.info(f"Compiled {len(targets)} targets in (%.2fs)", time.time() - compile_start)
+            copy_start = time.time()
             os.makedirs(compile_path, exist_ok=True)
 
             # if '-t' is set on compile or only a few changed, only override selected targets
-            if updated_targets:
+            if targets:
                 for target in target_objs:
                     path = target["target_full_path"]
                     compile_path_target = os.path.join(compile_path, path)
@@ -162,7 +165,8 @@ def compile_targets(
                 shutil.rmtree(compile_path)
                 shutil.copytree(temp_compile_path, compile_path)
                 logger.debug("Copied %s into %s", temp_compile_path, compile_path)
-
+            logger.info("Copied files in (%.2fs)", time.time() - copy_start)
+            logger.info("Complete in (%.2fs)", time.time() - rendering_start)
         except ReclassException as e:
             if isinstance(e, NotFoundError):
                 logger.error("Inventory reclass error: inventory not found")
@@ -188,16 +192,15 @@ def compile_targets(
         logger.debug("Removed %s", temp_path)
 
 
-def load_target_inventory(inventory_path, requested_targets, ignore_class_not_found=False):
+def load_target_inventory(inventory, requested_targets, ignore_class_not_found=False):
     """returns a list of target objects from the inventory"""
     target_objs = []
-    inv = get_inventory(inventory_path, ignore_class_not_found)
 
     # if '-t' is set on compile, only loop through selected targets
     if requested_targets:
-        targets = inv.get_targets(requested_targets)
+        targets = inventory.get_targets(requested_targets)
     else:
-        targets = inv.targets
+        targets = inventory.targets
 
     for target_name, target in targets.items():
         try:
@@ -211,7 +214,7 @@ def load_target_inventory(inventory_path, requested_targets, ignore_class_not_fo
             # check if parameters.kapitan is empty
             if not kapitan_target_configs:
                 raise InventoryError(f"InventoryError: {target_name}: parameters.kapitan has no assignment")
-            kapitan_target_configs["target_full_path"] = inv.targets[target_name].name.replace(".", "/")
+            kapitan_target_configs["target_full_path"] = inventory.targets[target_name].name.replace(".", "/")
             logger.debug(f"load_target_inventory: found valid kapitan target {target_name}")
             target_objs.append(kapitan_target_configs)
         except KeyError:
@@ -220,7 +223,7 @@ def load_target_inventory(inventory_path, requested_targets, ignore_class_not_fo
     return target_objs
 
 
-def search_targets(inventory_path, targets, labels):
+def search_targets(inventory, targets, labels):
     """returns a list of targets where the labels match, otherwise just return the original targets"""
     if not labels:
         return targets
@@ -234,23 +237,23 @@ def search_targets(inventory_path, targets, labels):
 
     targets_found = []
     # It should come back already rendered
-    inv = get_inventory(inventory_path)
 
-    for target_name in inv.targets.keys():
+    for target in inventory.targets.values():
+        target_labels = target.parameters["kapitan"].get("labels", {})
         matched_all_labels = False
         for label, value in labels_dict.items():
             try:
-                if inv.get_parameters(target_name)["kapitan"]["labels"][label] == value:
+                if target_labels[label] == value:
                     matched_all_labels = True
                     continue
             except KeyError:
-                logger.debug(f"search_targets: label {label}={value} didn't match target {target_name}")
+                logger.debug(f"search_targets: label {label}={value} didn't match target {target.name} {target_labels}")
 
             matched_all_labels = False
             break
 
         if matched_all_labels:
-            targets_found.append(target_name)
+            targets_found.append(target.name)
 
     if len(targets_found) == 0:
         raise CompileError("No targets found with labels: {labels}")
