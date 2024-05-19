@@ -60,7 +60,6 @@ def module_from_path(path, check_name=None):
 
     return mod, spec
 
-
 def load_from_search_paths(module_name):
     """
     loads and executes python module with module_name from search paths

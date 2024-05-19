@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 def compile_targets(
-    inventory_path, search_paths, output_path, parallel, desidered_targets, labels, ref_controller, **kwargs
+    inventory_path, search_paths, output_path, parallelism, desidered_targets, labels, ref_controller, **kwargs
 ):
     """
     Searches and loads target files, and runs compile_target() on a
@@ -51,7 +51,6 @@ def compile_targets(
     inventory = get_inventory(inventory_path)
     discovered_targets = inventory.targets.keys()
 
-    logger.info(f"Looking for [{','.join(desidered_targets)}] with labels {labels}, discovered {len(discovered_targets)} targets in inventory.")
     logger.info(f"Rendered inventory (%.2fs): discovered {len(discovered_targets)} targets.", time.time() - rendering_start)
 
     if discovered_targets == 0:
@@ -68,17 +67,15 @@ def compile_targets(
     if len(targets) == 0:
         raise CompileError(f"No matching targets found in inventory: {labels if labels else desidered_targets}")
 
-    logger.info(f"Compiling {len(targets)}/{len(discovered_targets)} targets... CPUs: {os.cpu_count()} Parallel: {parallel}")
     
-    if parallel is None:
-        parallel = min(len(targets), os.cpu_count())
-        logger.info(f"Parallel not set, defaulting to {parallel} processes {os.cpu_count()} {len(targets)}")
+    if parallelism is None:
+        parallelism = min(len(targets), os.cpu_count())
+        logger.debug(f"Parallel not set, defaulting to {parallelism} processes {os.cpu_count()} {len(targets)}")
+    
+    logger.info(f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)")
 
-    assert parallel > 0, "Number of processes must be greater than 0"
-
-    with multiprocessing.Pool(parallel) as pool:
+    with multiprocessing.Pool(parallelism) as pool:
         try:
-            logger.info(f"Using {parallel} processes...")
             fetching_start = time.time()
             # check if --fetch or --force-fetch is enabled
             force_fetch = kwargs.get("force_fetch", False)
@@ -143,8 +140,6 @@ def compile_targets(
             # so p is only not None when raising an exception
             [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
-            logger.info(f"Compiled {len(targets)} targets in (%.2fs)", time.time() - compile_start)
-            copy_start = time.time()
             os.makedirs(compile_path, exist_ok=True)
 
             # if '-t' is set on compile or only a few changed, only override selected targets
@@ -164,8 +159,7 @@ def compile_targets(
                 shutil.rmtree(compile_path)
                 shutil.copytree(temp_compile_path, compile_path)
                 logger.debug("Copied %s into %s", temp_compile_path, compile_path)
-            logger.info("Copied files in (%.2fs)", time.time() - copy_start)
-            logger.info("Complete in (%.2fs)", time.time() - rendering_start)
+            logger.info(f"Compiled {len(targets)} targets in (%.2fs)", time.time() - compile_start)
         except ReclassException as e:
             if isinstance(e, NotFoundError):
                 logger.error("Inventory reclass error: inventory not found")
