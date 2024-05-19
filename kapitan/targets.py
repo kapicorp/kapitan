@@ -17,7 +17,7 @@ from functools import partial
 
 from reclass.errors import NotFoundError, ReclassException
 
-from kapitan import cached, defaults
+from kapitan import cached
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs.copy import Copy
@@ -27,7 +27,6 @@ from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
 from kapitan.inputs.remove import Remove
-from kapitan.remoteinventory.fetch import fetch_inventories, list_sources
 from kapitan.resources import get_inventory
 
 logger = logging.getLogger(__name__)
