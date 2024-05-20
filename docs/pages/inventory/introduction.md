@@ -17,6 +17,11 @@ By combining [**target**](#targets) and [**classes**](#classes), the **Inventory
 !!! info
     The **Kapitan** **Inventory** is based on an open source project called [reclass](https://github.com/kapicorp/reclass) and you can find the full documentation on our Github clone. However we discourage you to look directly at the reclass documentation before you learn more about **Kapitan**, because **Kapitan** uses a fork of reclass and greatly simplifies the reclass experience.
 
+!!! info
+    Kapitan allows users to switch the inventory backend to [reclass-rs](https://github.com/projectsyn/reclass-rs). You can switch the backend to reclass-rs by passing `--inventory-backend=reclass-rs` on the command line. Alternatively, you can define the backend in the [.kapitan config file](../commands/kapitan_dotfile.md).
+
+    See the [reclass-rs inventory backend](reclass-rs.md) documentation for more details.
+
 !!! note
     Kapitan enforces very little structure for the **Inventory**, so that you can adapt it to your specific needs: this might be overwhelming at the beginning: don’t worry, we will explain best practice and give guidelines soon.
 

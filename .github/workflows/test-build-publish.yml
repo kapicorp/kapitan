@@ -50,33 +50,36 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.10', '3.11']
-
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
+      - name: Install poetry
+        run: pipx install poetry
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          cache: 'pip'
+          cache: 'poetry'
           python-version: ${{ matrix.python-version }}
-      
-      - name: Install testing dependencies
+      - name: Install libraries dependencies
         run: |
-          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 762E3157
+          poetry install --no-root 
+      - name: Install testing dependencies (Helm)
+        run: |
           sudo apt-get -qq update
           sudo apt-get install -y gnupg2 git curl
-          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
-          chmod 700 get_helm.sh
-          sudo ./get_helm.sh
-          pip3 install --editable ".[test]"
-          pip3 install coverage black
-      - name: Run tests
-        run: |-
-          # includes make test
-          make test_coverage 
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - name: Run pytest
+        uses: pavelzw/pytest-action@v2
+        with:
+          verbose: true
+          emoji: false
+          job-summary: true
+          custom-pytest: poetry run pytest
+          custom-arguments: '-q'
+          click-to-expand: true
+          report-title: 'Kapitan tests'
 
   build:
     name: build ${{ matrix.platform }} image

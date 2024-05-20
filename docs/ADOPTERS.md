@@ -3,12 +3,18 @@
 If you're using **Kapitan** in your organization, please let us know by adding to this list on the [docs/ADOPTERS.md](https://github.com/kapicorp/kapitan/blob/master/docs/ADOPTERS.md) file.
 
 
-| Organization                                      | Contact (optional)                        | Notes |
-|---------------------------------------------------|-------------------------------------------| ----- |
-| [Airfund](https://airfund.io) | [@pbrissaud](https://github.com/pbrissaud) | Used to generate Kubernetes resources |
-| [Isomorphic Labs](https://www.isomorphiclabs.com) | [@ademariag](https://github.com/ademariag) | Used to generate Kubernetes and Terraform resources, documentation and scripts |
-| [neXenio GmbH](https://www.nexenio.com) | [@DaMo86](https://github.com/DaMo86) | Used to generate Kubernetes, documentation and scripts |
-| [Phaidra](https://phaidra.ai) | [@ramaro](https://github.com/ramaro) | Used to generate Kubernetes and Terraform resources, documentation and scripts |
-| [Skyscanner](https://skyscanner.net/) | [@gjtempleton](https://github.com/gjtempleton) | Used to generate Kubernetes cluster definitions including cluster and add-on definitions/values plus deployment pipelines. |
-| [Synthace](https://www.synthace.com/) | [bsda](https://github.com/bsda) | Used to generate Kubernetes, documentation, spinnaker pipelines and scripts |
-| [VSHN AG](https://www.vshn.ch) | [@projectsyn](https://github.com/projectsyn) | Used as a building block in [Commodore](https://github.com/projectsyn/commodore). Commodore provides opinionated tenant-aware management of Kapitan inventories and templates. VSHN uses Project Syn and Commodore to generate Kubernetes and Terraform manifests for 30+ tenants and over 75 Kubernetes clusters. |
+<div class="grid cards" markdown>
+-   [![Airfund](adopters_logos/airfund.png){: style="height:100px"}](https://airfund.io)
+-   [![Isomorphic Labs](adopters_logos/isomorphiclabs.png){: style="height:100px"}](https://www.isomorphiclabs.com)
+-   [![Morgan Stanley](adopters_logos/morganstanley.png){: style="height:100px"}](https://www.morganstanley.com/)
+-   [![neXenio GmbH](adopters_logos/nexenio.png){: style="height:100px"}](https://www.nexenio.com)
+-   [![noon](adopters_logos/noon.png){: style="height:100px"}](https://www.noon.com/)
+-   [![Phaidra](adopters_logos/phaidra.png){: style="height:100px"}](https://phaidra.ai)
+-   [![SoftwareAG](adopters_logos/softwareag.png){: style="height:100px"}](https://www.softwareag.com/)
+-   [![Skyscanner](adopters_logos/skyscanner.png){: style="height:100px"}](https://skyscanner.net/)
+-   [![Synthace](adopters_logos/synthace.png){: style="height:100px"}](https://www.synthace.com/)
+-   [![RingCentral](adopters_logos/ringcentral.png){: style="height:100px"}](https://www.ringcentral.com/)
+-   [![Ubisoft](adopters_logos/ubisoft.png){: style="height:100px"}](https://www.ubisoft.com/)
+-   [![VSHN AG](adopters_logos/vhsn.png){: style="height:100px"}](https://www.vshn.ch)
+-   [![Flower Labs](adopters_logos/flower.png){: style="height:100px"}](https://www.flower.ai)
+</div>

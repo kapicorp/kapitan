@@ -10,7 +10,8 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         curl \
         build-essential \
-        git
+        git \
+        default-jre
 
 ENV POETRY_VERSION=1.7.1
 ENV VIRTUAL_ENV=/opt/venv
@@ -36,7 +37,7 @@ COPY ./poetry.lock ./poetry.lock
 COPY ./README.md ./README.md
 
 # Installs and caches dependencies
-RUN poetry install --no-root --extras=gojsonnet
+RUN poetry install --no-root --extras=gojsonnet --extras=reclass-rs
 
 COPY ./kapitan ./kapitan
 
