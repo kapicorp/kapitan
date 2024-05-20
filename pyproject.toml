@@ -73,6 +73,7 @@ docker = { version = ">=5,<8", optional = true }
 reclass = {git = "https://github.com/kapicorp/reclass"}
 reclass-rs = {version = "^0.4.0"}
 kadet = "^0.3.0"
+poetry = "^1.8.3"
 
 [tool.poetry.extras]
 gojsonnet = ["gojsonnet"]
