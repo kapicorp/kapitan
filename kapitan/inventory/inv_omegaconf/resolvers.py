@@ -254,7 +254,7 @@ def register_resolvers() -> None:
 
 def register_user_resolvers(user_resolver_file: str) -> None:
     """import user resolvers specified in resolvers_path"""
-    if os.path.exists(user_resolver_file):
+    if not os.path.exists(user_resolver_file):
         logger.debug(f"File {user_resolver_file} does not exist, ignoring")
         return
 
