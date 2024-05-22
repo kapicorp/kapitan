@@ -8,6 +8,7 @@ from __future__ import print_function
 
 import collections
 import json
+import functools
 import logging
 import magic
 import math
@@ -212,20 +213,17 @@ class PrettyDumper(yaml.SafeDumper):
     def increase_indent(self, flow=False, indentless=False):
         return super(PrettyDumper, self).increase_indent(flow, False)
 
+    @classmethod
+    def get_dumper_for_style(cls, style_selection="double-quotes"):
+        cls.add_representer(str, functools.partial(multiline_str_presenter, style_selection=style_selection))
+        return cls
 
-def multiline_str_presenter(dumper, data):
+def multiline_str_presenter(dumper, data, style_selection="double-quotes"):
     """
     Configures yaml for dumping multiline strings with given style.
     By default, strings are getting dumped with style='"'.
     Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
     """
-
-    if hasattr(cached.args, "multiline_string_style"):
-        style_selection = cached.args.multiline_string_style
-    elif hasattr(cached.args, "yaml_multiline_string_style"):
-        style_selection = cached.args.yaml_multiline_string_style
-    else:
-        style_selection = "double-quotes"
 
     supported_styles = {
         "literal": "|",
@@ -240,13 +238,12 @@ def multiline_str_presenter(dumper, data):
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
 
 
-PrettyDumper.add_representer(str, multiline_str_presenter)
-
-
 def null_presenter(dumper, data):
     """Configures yaml for omitting value from null-datatype"""
     # get parsed args from cached.py
-    flag_value = cached.args.yaml_dump_null_as_empty
+    flag_value = False
+    if hasattr(cached.args, "yaml_dump_null_as_empty"):
+        flag_value = cached.args.yaml_dump_null_as_empty
 
     if flag_value:
         return dumper.represent_scalar("tag:yaml.org,2002:null", "")
@@ -269,7 +266,6 @@ def flatten_dict(d, parent_key="", sep="."):
     return dict(items)
 
 
-@hashable_lru_cache
 def deep_get(dictionary, keys, previousKey=None):
     """Search recursively for 'keys' in 'dictionary' and return value, otherwise return None"""
     value = None

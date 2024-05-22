@@ -18,6 +18,7 @@ import toml
 from kapitan.errors import CompileError, KapitanError
 from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper
+from kapitan import cached
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +125,18 @@ class CompilingFile(object):
         indent = self.kwargs.get("indent", 2)
         reveal = self.kwargs.get("reveal", False)
         target_name = self.kwargs.get("target_name", None)
+
+        # TODO(ademaria): make it configurable per input type
+        style_selection = cached.inv[target_name]["parameters"].get("multiline_string_style", None)
+
+        if not style_selection: 
+            if hasattr(cached.args, "multiline_string_style"):
+                style_selection = cached.args.multiline_string_style
+            elif hasattr(cached.args, "yaml_multiline_string_style"):
+                style_selection = cached.args.yaml_multiline_string_style
+
+        dumper = PrettyDumper.get_dumper_for_style(style_selection)
+        
         if reveal:
             obj = self.revealer.reveal_obj(obj)
         else:
@@ -135,7 +148,7 @@ class CompilingFile(object):
                     obj,
                     stream=self.fp,
                     indent=indent,
-                    Dumper=PrettyDumper,
+                    Dumper=dumper,
                     default_flow_style=False,
                 )
             else:
@@ -143,7 +156,7 @@ class CompilingFile(object):
                     obj,
                     stream=self.fp,
                     indent=indent,
-                    Dumper=PrettyDumper,
+                    Dumper=dumper,
                     default_flow_style=False,
                 )
 

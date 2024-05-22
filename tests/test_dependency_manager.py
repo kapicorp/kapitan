@@ -134,33 +134,31 @@ class DependencyManagerTest(unittest.TestCase):
         output_path = tempfile.mkdtemp()
         save_dir = tempfile.mkdtemp()
         # use default parallelism of 4 for test
-        pool = multiprocessing.Pool(4)
-        target_objs = [
-            {
-                "dependencies": [
-                    {
-                        "type": "https",
-                        "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/nfs-client-provisioner-1.2.8.tgz",
-                        "output_path": "nfs-client-provisioner",
-                        "unpack": True,
-                    },
-                    {
-                        "type": "https",
-                        "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/prometheus-pushgateway-1.2.13.tgz",
-                        "output_path": "prometheus-pushgateway",
-                        "unpack": True,
-                    },
-                ]
-            }
-        ]
-        try:
-            fetch_dependencies(output_path, target_objs, save_dir, False, pool)
-            pool.close()
-        except Exception as e:
-            pool.terminate()
-            raise e
-        finally:
-            pool.join()
+        with multiprocessing.Pool(4) as pool:
+            target_objs = [
+                {
+                    "dependencies": [
+                        {
+                            "type": "https",
+                            "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/nfs-client-provisioner-1.2.8.tgz",
+                            "output_path": "nfs-client-provisioner",
+                            "unpack": True,
+                        },
+                        {
+                            "type": "https",
+                            "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/prometheus-pushgateway-1.2.13.tgz",
+                            "output_path": "prometheus-pushgateway",
+                            "unpack": True,
+                        },
+                    ]
+                }
+            ]
+            try:
+                fetch_dependencies(output_path, target_objs, save_dir, False, pool)
+                pool.close()
+            except Exception as e:
+                pool.terminate()
+                raise e
 
         for obj in target_objs[0]["dependencies"]:
             self.assertTrue(os.path.isdir(os.path.join(output_path, obj["output_path"])))

@@ -13,7 +13,7 @@ RUN apt-get update \
         git \
         default-jre
 
-ENV POETRY_VERSION=1.7.1
+ENV POETRY_VERSION=1.8.3
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:/usr/local/go/bin:${PATH}"
 RUN python -m venv $VIRTUAL_ENV \
