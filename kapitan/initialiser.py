@@ -9,7 +9,7 @@
 
 import logging
 import os
-from distutils.dir_util import copy_tree
+from kapitan.utils import copy_tree
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,6 @@ import logging
 import multiprocessing
 import os
 from collections import defaultdict, namedtuple
-from distutils.dir_util import copy_tree
 from functools import partial
 from mimetypes import MimeTypes
 from shutil import copyfile, rmtree
@@ -17,6 +16,7 @@ from git import Repo
 from kapitan.errors import GitSubdirNotFoundError, GitFetchingError, HelmFetchingError
 from kapitan.helm_cli import helm_cli
 from kapitan.utils import (
+    copy_tree,
     make_request,
     unpack_downloaded_file,
     safe_copy_tree,
@@ -129,7 +129,7 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
                     "{} {}: subdir {} not found in repo".format(item_type, source, sub_dir)
                 )
         if force:
-            copied = copy_tree(copy_src_path, output_path, verbose=0)
+            copied = copy_tree(copy_src_path, output_path)
         else:
             copied = safe_copy_tree(copy_src_path, output_path)
         if copied:
@@ -245,7 +245,7 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
             os.makedirs(parent_dir, exist_ok=True)
 
         if force:
-            copied = copy_tree(cached_repo_path, output_path, verbose=0)
+            copied = copy_tree(cached_repo_path, output_path)
         else:
             copied = safe_copy_tree(cached_repo_path, output_path)
 

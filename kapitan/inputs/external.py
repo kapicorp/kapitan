@@ -10,7 +10,7 @@ import re
 import logging
 import os
 import shutil
-from distutils.dir_util import copy_tree
+from kapitan.utils import copy_tree
 
 from kapitan.inputs.base import InputType
 
