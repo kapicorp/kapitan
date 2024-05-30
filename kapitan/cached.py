@@ -43,7 +43,7 @@ def from_dict(cache_dict):
     global inv, global_inv, inv_cache, gpg_obj, gkms_obj, awskms_obj, azkms_obj, dot_kapitan, ref_controller_obj, revealer_obj, inv_sources, args
 
     inv = cache_dict["inv"]
-    global_inv = Dict(inv.inventory)
+    global_inv = cache_dict["global_inv"]
     inv_cache = cache_dict["inv_cache"]
     inv_sources = cache_dict["inv_sources"]
     gpg_obj = cache_dict["gpg_obj"]

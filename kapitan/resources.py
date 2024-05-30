@@ -25,6 +25,7 @@ from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inventory import Inventory, ReclassInventory, AVAILABLE_BACKENDS
 from kapitan.utils import PrettyDumper, deep_get, flatten_dict, render_jinja2_file, sha256_string
+from kadet import Dict
 
 logger = logging.getLogger(__name__)
 
@@ -333,6 +334,7 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
     inventory_backend = backend(inventory_path=inventory_path, compose_target_name=compose_target_name, ignore_class_not_found=ignore_class_not_found)
 
     cached.inv = inventory_backend
+    cached.global_inv = Dict(inventory_backend.inventory)
     # migrate inventory to selected inventory backend
     if hasattr(cached.args, "migrate") and cached.args.migrate:
         inventory_backend.migrate()

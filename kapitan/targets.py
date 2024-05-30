@@ -31,7 +31,6 @@ from kapitan.resources import get_inventory
 
 logger = logging.getLogger(__name__)
 
-
 def compile_targets(
     inventory_path, search_paths, output_path, parallelism, desidered_targets, labels, ref_controller, **kwargs
 ):
@@ -73,7 +72,7 @@ def compile_targets(
         logger.debug(f"Parallel not set, defaulting to {parallelism} processes {os.cpu_count()} {len(targets)}")
     
     logger.info(f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)")
-
+    
     with multiprocessing.Pool(parallelism) as pool:
         try:
             fetching_start = time.time()
@@ -132,7 +131,6 @@ def compile_targets(
                 compile_path=temp_compile_path,
                 ref_controller=ref_controller,
                 inventory_path=inventory_path,
-                globals_cached=cached.as_dict(),
                 **kwargs,
             )
 
@@ -254,15 +252,12 @@ def search_targets(inventory, targets, labels):
     return targets_found
 
 
-def compile_target(target_obj, search_paths, compile_path, ref_controller, globals_cached=None, **kwargs):
+def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
-
-    if globals_cached:
-        cached.from_dict(globals_cached)
 
     use_go_jsonnet = kwargs.get("use_go_jsonnet", False)
     if use_go_jsonnet:

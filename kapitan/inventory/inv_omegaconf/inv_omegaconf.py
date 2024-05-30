@@ -62,6 +62,7 @@ class OmegaConfInventory(Inventory):
 
     def render_targets(self, targets: list[OmegaConfTarget] = None, ignore_class_not_found: bool = False) -> None:
         if not self.initialised:
+            
             manager = mp.Manager()
             shared_targets = manager.dict()
             with mp.Pool(min(len(targets), os.cpu_count())) as pool:
