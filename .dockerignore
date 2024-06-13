@@ -1,0 +1,42 @@
+# Python compiled files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Versioning
+.venv
+.Python
+.tox
+env
+venv
+
+# Dependcies
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Cache
+.cache
+.mypy_cache
+
+# Git
+.git
+.gitignore
+
+# Testing
+*.cover
+.coverage
+.coverage.*
+.pytest_cache
+coverage.xml
+nosetests.xml
+
+# Kapitan supporting directories
+docs
+examples
+overrides
+scripts
+tests
+
+# Rubbish
+*.log
