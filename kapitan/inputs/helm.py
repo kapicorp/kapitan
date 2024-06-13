@@ -144,6 +144,7 @@ def render_chart(
     args = ["template"]
 
     name = helm_params.pop("name", None)
+    chart_name = helm_params.pop("chart_name", None)
     output_file = helm_params.pop("output_file", None)
 
     if helm_flags is None:
@@ -208,9 +209,15 @@ def render_chart(
     if "name_template" not in helm_flags:
         args.append(name or "--generate-name")
 
-    # uses absolute path to make sure helm interprets it as a
-    # local dir and not a chart_name that it should download.
-    args.append(chart_dir)
+    # if chart_name is specified then the last argument to helm_cli is the
+    # name of the chart we want to use. Otherwise it's the chart_dir that
+    # was previously downloaded as an external dependency
+    if chart_name:
+        args.append(chart_name)
+    else:
+        # uses absolute path to make sure helm interprets it as a
+        # local dir and not a chart_name that it should download.
+        args.append(chart_dir)
 
     # If output_path is '-', output is a string with rendered chart
     if output_path == "-":
