@@ -10,7 +10,7 @@ from argparse import Namespace
 from kadet import Dict
 
 inv = {}
-global_inv = Dict({})
+global_inv = {}
 inv_cache = {}
 gpg_obj = None
 gkms_obj = None
@@ -27,7 +27,7 @@ def reset_cache():
     global inv, global_inv, inv_cache, gpg_obj, gkms_obj, awskms_obj, azkms_obj, dot_kapitan, ref_controller_obj, revealer_obj, inv_sources
 
     inv = {}
-    global_inv = Dict({})
+    global_inv = {}
     inv_cache = {}
     inv_sources = set()
     gpg_obj = None

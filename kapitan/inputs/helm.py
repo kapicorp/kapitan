@@ -263,8 +263,8 @@ class HelmChart(BaseModel):
 
     def load_chart(self):
         helm_values_file = None
-        if self.helm_values != {}:
-            helm_values_file = write_helm_values_file(self.helm_values)
+        if self.helm_values:
+            helm_values_file = write_helm_values_file(self.helm_values.to_dict() if isinstance(self.helm_values, Dict) else self.helm_values)
         output, error_message = render_chart(
             self.chart_dir, "-", self.helm_path, self.helm_params, helm_values_file, None
         )

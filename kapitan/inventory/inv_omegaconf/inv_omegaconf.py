@@ -128,7 +128,7 @@ class OmegaConfInventory(Inventory):
             return yaml.safe_load(f)
         
     def load_parameters_from_file(self, filename, parameters={}) -> Dict:
-        parameters = OmegaConf.create(parameters)
+        parameters = Dict(parameters)
         applications = []
         classes = []
         exports = Dict()
@@ -151,17 +151,15 @@ class OmegaConfInventory(Inventory):
                     continue
                 raise InventoryError(f"Class {class_name} not found")
             p, c, a, e = self.load_parameters_from_file(class_file)
-            if p:
-                parameters = OmegaConf.unsafe_merge(parameters, p, list_merge_mode=ListMergeMode.EXTEND_UNIQUE)
+            parameters.merge_update(p, box_merge_lists="unique")
             classes.extend(c)
             classes.append(class_name)
             applications.extend(a)
             exports.merge_update(e, box_merge_lists="unique")
         
         # finally merges the parameters from the current file
-        if _parameters:
-            parameters = OmegaConf.unsafe_merge(parameters, _parameters, list_merge_mode=ListMergeMode.EXTEND_UNIQUE)
         
+        parameters.merge_update(_parameters, box_merge_lists="unique")
         exports.merge_update(_exports, box_merge_lists="unique")
         applications.extend(_applications)
         return parameters, classes, applications, exports
@@ -170,10 +168,11 @@ class OmegaConfInventory(Inventory):
         full_target_path = os.path.join(self.targets_path, target.path)
         
         start = time.perf_counter()
-        parameters = OmegaConf.create(keys_to_strings(target.parameters))
+        parameters = keys_to_strings(target.parameters)
         p, c, a, e = self.load_parameters_from_file(full_target_path, parameters=parameters)
         load_parameters = time.perf_counter() - start
-        target.parameters = OmegaConf.to_container(p, resolve=True)
+        pre_interpolation = OmegaConf.create(p.to_dict())
+        target.parameters = OmegaConf.to_container(pre_interpolation, resolve=True)
         to_container = time.perf_counter() - load_parameters
         target.classes = c
         target.applications = a

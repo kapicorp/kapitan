@@ -334,7 +334,7 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
     inventory_backend = backend(inventory_path=inventory_path, compose_target_name=compose_target_name, ignore_class_not_found=ignore_class_not_found)
 
     cached.inv = inventory_backend
-    cached.global_inv = Dict(inventory_backend.inventory)
+    cached.global_inv = Dict(inventory_backend.inventory, frozen_box=True)
     # migrate inventory to selected inventory backend
     if hasattr(cached.args, "migrate") and cached.args.migrate:
         inventory_backend.migrate()

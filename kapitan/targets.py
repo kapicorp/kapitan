@@ -73,114 +73,118 @@ def compile_targets(
     
     logger.info(f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)")
     
-    with multiprocessing.Pool(parallelism) as pool:
-        try:
-            fetching_start = time.time()
-            # check if --fetch or --force-fetch is enabled
-            force_fetch = kwargs.get("force_fetch", False)
-            fetch = kwargs.get("fetch", False) or force_fetch
+    try:
+        with multiprocessing.Pool(parallelism, cached.from_dict, (cached.as_dict(),)) as pool:
+            try:
+                fetching_start = time.time()
+                # check if --fetch or --force-fetch is enabled
+                force_fetch = kwargs.get("force_fetch", False)
+                fetch = kwargs.get("fetch", False) or force_fetch
 
-            # deprecated --force flag
-            if kwargs.get("force", False):
-                logger.info(
-                    "DeprecationWarning: --force is deprecated. Use --force-fetch instead of --force --fetch"
+                # deprecated --force flag
+                if kwargs.get("force", False):
+                    logger.info(
+                        "DeprecationWarning: --force is deprecated. Use --force-fetch instead of --force --fetch"
+                    )
+                    force_fetch = True
+
+                if fetch:
+                    # skip classes that are not yet available
+                    target_objs = load_target_inventory(inventory, targets, ignore_class_not_found=True)
+                else:
+                    # ignore_class_not_found = False by default
+                    target_objs = load_target_inventory(inventory, targets)
+
+                # append "compiled" to output_path so we can safely overwrite it
+                compile_path = os.path.join(output_path, "compiled")
+
+                if not target_objs:
+                    raise CompileError("Error: no targets found")
+
+                # fetch dependencies
+                if fetch:
+                    fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
+                # fetch targets which have force_fetch: true
+                elif not kwargs.get("force_fetch", False):
+                    fetch_objs = []
+                    # iterate through targets
+                    for target in target_objs:
+                        try:
+                            # get value of "force_fetch" property
+                            dependencies = target["dependencies"]
+                            # dependencies is still a list
+                            for entry in dependencies:
+                                force_fetch = entry["force_fetch"]
+                                if force_fetch:
+                                    fetch_objs.append(target)
+                        except KeyError:
+                            # targets may have no "dependencies" or "force_fetch" key
+                            continue
+                    # fetch dependencies from targets with force_fetch set to true
+                    if fetch_objs:
+                        fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
+                        logger.info("Fetched dependencies (%.2fs)", time.time() - fetching_start)
+                
+                compile_start = time.time()
+                worker = partial(
+                    compile_target,
+                    search_paths=search_paths,
+                    compile_path=temp_compile_path,
+                    ref_controller=ref_controller,
+                    inventory_path=inventory_path,
+                    **kwargs,
                 )
-                force_fetch = True
 
-            if fetch:
-                # skip classes that are not yet available
-                target_objs = load_target_inventory(inventory, targets, ignore_class_not_found=True)
-            else:
-                # ignore_class_not_found = False by default
-                target_objs = load_target_inventory(inventory, targets)
+                # compile_target() returns None on success
+                # so p is only not None when raising an exception
+                [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
-            # append "compiled" to output_path so we can safely overwrite it
-            compile_path = os.path.join(output_path, "compiled")
+                os.makedirs(compile_path, exist_ok=True)
 
-            if not target_objs:
-                raise CompileError("Error: no targets found")
+                # if '-t' is set on compile or only a few changed, only override selected targets
+                if targets:
+                    for target in target_objs:
+                        path = target["target_full_path"]
+                        compile_path_target = os.path.join(compile_path, path)
+                        temp_path_target = os.path.join(temp_compile_path, path)
 
-            # fetch dependencies
-            if fetch:
-                fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
-            # fetch targets which have force_fetch: true
-            elif not kwargs.get("force_fetch", False):
-                fetch_objs = []
-                # iterate through targets
-                for target in target_objs:
-                    try:
-                        # get value of "force_fetch" property
-                        dependencies = target["dependencies"]
-                        # dependencies is still a list
-                        for entry in dependencies:
-                            force_fetch = entry["force_fetch"]
-                            if force_fetch:
-                                fetch_objs.append(target)
-                    except KeyError:
-                        # targets may have no "dependencies" or "force_fetch" key
-                        continue
-                # fetch dependencies from targets with force_fetch set to true
-                if fetch_objs:
-                    fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
-                    logger.info("Fetched dependencies (%.2fs)", time.time() - fetching_start)
-            
-            compile_start = time.time()
-            worker = partial(
-                compile_target,
-                search_paths=search_paths,
-                compile_path=temp_compile_path,
-                ref_controller=ref_controller,
-                inventory_path=inventory_path,
-                **kwargs,
-            )
+                        os.makedirs(compile_path_target, exist_ok=True)
 
-            # compile_target() returns None on success
-            # so p is only not None when raising an exception
-            [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+                        shutil.rmtree(compile_path_target)
+                        shutil.copytree(temp_path_target, compile_path_target)
+                        logger.debug("Copied %s into %s", temp_path_target, compile_path_target)
+                # otherwise override all targets
+                else:
+                    shutil.rmtree(compile_path)
+                    shutil.copytree(temp_compile_path, compile_path)
+                    logger.debug("Copied %s into %s", temp_compile_path, compile_path)
+                logger.info(f"Compiled {len(targets)} targets in (%.2fs)", time.time() - compile_start)
+            except ReclassException as e:
+                if isinstance(e, NotFoundError):
+                    logger.error("Inventory reclass error: inventory not found")
+                else:
+                    logger.error("Inventory reclass error: %s", e.message)
+                raise InventoryError(e.message)
+            except Exception as e:
+                # if compile worker fails, terminate immediately
+                pool.terminate()
+                logger.debug("Compile pool terminated")
+                # only print traceback for errors we don't know about
+                if not isinstance(e, KapitanError):
+                    logger.exception("\nUnknown (Non-Kapitan) error occurred:\n")
 
-            os.makedirs(compile_path, exist_ok=True)
+                logger.error("\n")
+                if kwargs.get("verbose"):
+                    logger.exception(e)
+                else:
+                    logger.error(e)
+                sys.exit(1)
 
-            # if '-t' is set on compile or only a few changed, only override selected targets
-            if targets:
-                for target in target_objs:
-                    path = target["target_full_path"]
-                    compile_path_target = os.path.join(compile_path, path)
-                    temp_path_target = os.path.join(temp_compile_path, path)
-
-                    os.makedirs(compile_path_target, exist_ok=True)
-
-                    shutil.rmtree(compile_path_target)
-                    shutil.copytree(temp_path_target, compile_path_target)
-                    logger.debug("Copied %s into %s", temp_path_target, compile_path_target)
-            # otherwise override all targets
-            else:
-                shutil.rmtree(compile_path)
-                shutil.copytree(temp_compile_path, compile_path)
-                logger.debug("Copied %s into %s", temp_compile_path, compile_path)
-            logger.info(f"Compiled {len(targets)} targets in (%.2fs)", time.time() - compile_start)
-        except ReclassException as e:
-            if isinstance(e, NotFoundError):
-                logger.error("Inventory reclass error: inventory not found")
-            else:
-                logger.error("Inventory reclass error: %s", e.message)
-            raise InventoryError(e.message)
-        except Exception as e:
-            # if compile worker fails, terminate immediately
-            pool.terminate()
-            logger.debug("Compile pool terminated")
-            # only print traceback for errors we don't know about
-            if not isinstance(e, KapitanError):
-                logger.exception("\nUnknown (Non-Kapitan) error occurred:\n")
-
-            logger.error("\n")
-            if kwargs.get("verbose"):
-                logger.exception(e)
-            else:
-                logger.error(e)
-            sys.exit(1)
-
-        shutil.rmtree(temp_path)
-        logger.debug("Removed %s", temp_path)
+            shutil.rmtree(temp_path)
+            logger.debug("Removed %s", temp_path)
+    except Exception as e:
+        logger.debug("Compile pool terminated")
+        raise CompileError(f"Error compiling targets: {e}")
 
 
 def load_target_inventory(inventory, requested_targets, ignore_class_not_found=False):

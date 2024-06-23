@@ -603,7 +603,7 @@ def main():
     """main function for command line usage"""
     
     try:
-        multiprocessing.set_start_method("fork")
+        multiprocessing.set_start_method("spawn")
     # main() is explicitly multiple times in tests
     # and will raise RuntimeError
     except RuntimeError:
