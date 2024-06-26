@@ -39,6 +39,14 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
             with open(g) as f:
                 self.assertTrue("?{plain:" not in f.read())
 
+    def test_compile_no_reveal(self):
+        # check if the --no-reveal flag takes precedence over --reveal when passed together
+        sys.argv = ["kapitan", "compile", "-t", "reveal-output", "--reveal", "--no-reveal"]
+        main()
+
+        with open("compiled/reveal-output/main.json") as f:
+            self.assertTrue("?{gpg:" in f.read())
+
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")
         reset_cache()
@@ -86,7 +94,7 @@ class FailCompileTestResourcesTestKadet(unittest.TestCase):
     def tearDown(self):
         os.chdir(os.getcwd() + "/../../")
         reset_cache()
-        
+
 class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
     def setUp(self):
         os.chdir(os.getcwd() + "/tests/test_resources/")
