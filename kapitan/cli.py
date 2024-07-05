@@ -251,7 +251,7 @@ def build_parser():
     compile_parser.add_argument(
         "--reveal",
         help="reveal refs (warning: this will potentially write sensitive data)",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=from_dot_kapitan("compile", "reveal", False),
     )
     compile_parser.add_argument(
@@ -662,8 +662,8 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    cached.args = args  
-    
+    cached.args = args
+
     if hasattr(args, "verbose") and args.verbose:
         logging_level = logging.DEBUG
     elif hasattr(args, "quiet") and args.quiet:

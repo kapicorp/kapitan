@@ -7,20 +7,19 @@
 from __future__ import print_function
 
 import collections
+import glob
 import json
 import logging
 import magic
 import math
 import os
 import re
+import shutil
 import stat
 import sys
 import tarfile
 import traceback
 from collections import Counter, defaultdict
-from distutils.dir_util import mkpath
-from distutils.errors import DistutilsFileError
-from distutils.file_util import _copy_file_contents
 from functools import lru_cache, wraps
 from hashlib import sha256
 from zipfile import ZipFile
@@ -560,19 +559,23 @@ def unpack_downloaded_file(file_path, output_path, content_type):
     return is_unpacked
 
 
+class SafeCopyError(Exception):
+    """Raised when a file or directory cannot be safely copied."""
+
+
 def safe_copy_file(src, dst):
     """Copy a file from 'src' to 'dst'.
 
-    Similar to distutils.file_util.copy_file except
+    Similar to shutil.copyfile except
     if the file exists in 'dst' it's not clobbered
     or overwritten.
 
-    returns a tupple (src, val)
+    returns a tuple (src, val)
     file not copied if val = 0 else 1
     """
 
     if not os.path.isfile(src):
-        raise DistutilsFileError("Can't copy {}: doesn't exist or is not a regular file".format(src))
+        raise SafeCopyError("Can't copy {}: doesn't exist or is not a regular file".format(src))
 
     if os.path.isdir(dst):
         dir = dst
@@ -583,7 +586,7 @@ def safe_copy_file(src, dst):
     if os.path.isfile(dst):
         logger.debug("Not updating %s (file already exists)", dst)
         return (dst, 0)
-    _copy_file_contents(src, dst)
+    shutil.copyfile(src, dst)
     logger.debug("Copied %s to %s", src, dir)
     return (dst, 1)
 
@@ -591,21 +594,23 @@ def safe_copy_file(src, dst):
 def safe_copy_tree(src, dst):
     """Recursively copies the 'src' directory tree to 'dst'
 
-    Both 'src' and 'dst' must be directories.
-    similar to distutil.dir_util.copy_tree except
-    it doesn't overwite an existing file and doesn't
-    copy any file starting with "."
+    Both 'src' and 'dst' must be directories. Similar to copy_tree except
+    it doesn't overwite an existing file and doesn't copy any file starting
+    with "."
 
     Returns a list of copied file paths.
     """
     if not os.path.isdir(src):
-        raise DistutilsFileError("Cannot copy tree {}: not a directory".format(src))
+        raise SafeCopyError("Cannot copy tree {}: not a directory".format(src))
     try:
         names = os.listdir(src)
     except OSError as e:
-        raise DistutilsFileError("Error listing files in {}: {}".format(src, e.strerror))
+        raise SafeCopyError("Error listing files in {}: {}".format(src, e.strerror))
 
-    mkpath(dst)
+    try:
+        os.makedirs(dst, exist_ok=True)
+    except FileExistsError:
+        pass
     outputs = []
 
     for name in names:
@@ -624,3 +629,14 @@ def safe_copy_tree(src, dst):
                 outputs.append(dst_name)
 
     return outputs
+
+
+def copy_tree(src, dst):
+    """Recursively copy a given directory from `src` to `dst`.
+
+    Returns a list of the copied files.
+    """
+    before = set(glob.iglob("*", recursive=True))
+    shutil.copytree(src, dst, dirs_exist_ok=True)
+    after = set(glob.iglob("*", recursive=True))
+    return list(after - before)
