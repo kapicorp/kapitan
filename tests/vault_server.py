@@ -37,7 +37,7 @@ class VaultServer:
 
     def setup_container(self):
         env = {
-            "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'
+            "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "disable_mlock" : "true" , "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'
         }
         vault_container = self.docker_client.containers.run(
             image="hashicorp/vault",
@@ -48,11 +48,13 @@ class VaultServer:
             auto_remove=True,
             command="server",
         )
+        
+        
 
         # make sure the container is up & running before testing
 
         while vault_container.status != "running":
-            sleep(2)
+            sleep(5)
             vault_container.reload()
 
         port = vault_container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0]["HostPort"]

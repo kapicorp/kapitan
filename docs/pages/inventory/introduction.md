@@ -1,5 +1,7 @@
 ## Overview
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/M81qU94FCLQ?si=SGlQG-gP2mmA1n9b" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
 The **Inventory** is a core component of Kapitan: this section aims to explain how it works and how to best take advantage of it.
 
 The **Inventory** is a hierarchical `YAML` based structure which you use to capture anything that you want to make available to **Kapitan**, so that it can be passed on to its templating engines.
@@ -14,6 +16,11 @@ By combining [**target**](#targets) and [**classes**](#classes), the **Inventory
 
 !!! info
     The **Kapitan** **Inventory** is based on an open source project called [reclass](https://github.com/kapicorp/reclass) and you can find the full documentation on our Github clone. However we discourage you to look directly at the reclass documentation before you learn more about **Kapitan**, because **Kapitan** uses a fork of reclass and greatly simplifies the reclass experience.
+
+!!! info
+    Kapitan allows users to switch the inventory backend to [reclass-rs](https://github.com/projectsyn/reclass-rs). You can switch the backend to reclass-rs by passing `--inventory-backend=reclass-rs` on the command line. Alternatively, you can define the backend in the [.kapitan config file](../commands/kapitan_dotfile.md).
+
+    See the [reclass-rs inventory backend](reclass-rs.md) documentation for more details.
 
 !!! note
     Kapitan enforces very little structure for the **Inventory**, so that you can adapt it to your specific needs: this might be overwhelming at the beginning: don’t worry, we will explain best practice and give guidelines soon.

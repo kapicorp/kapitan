@@ -138,6 +138,7 @@ class VaultSecret(Base64Ref):
                 response = client.secrets.kv.v2.read_secret_version(
                     path=self.path,
                     mount_point=self.mount,
+                    raise_on_deleted_version=False,
                 )
                 secrets = response["data"]["data"]
         except InvalidPath:
@@ -203,6 +204,7 @@ class VaultSecret(Base64Ref):
                 response = client.secrets.kv.v2.read_secret_version(
                     path=secret_path,
                     mount_point=mount,
+                    raise_on_deleted_version=False,
                 )
                 return_data = response["data"]["data"][secret_key]
             client.adapter.close()

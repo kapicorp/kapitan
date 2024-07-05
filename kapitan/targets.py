@@ -124,8 +124,9 @@ def compile_targets(
                 cached.inv_sources.update(new_sources)
                 new_sources = list(set(list_sources(target_objs)) - cached.inv_sources)
             # reset inventory cache and load target objs to check for missing classes
-            cached.reset_inv()
-            target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
+            if new_sources:
+                cached.reset_inv()
+                target_objs = load_target_inventory(inventory_path, updated_targets, ignore_class_notfound=False)
         # fetch dependencies
         if fetch:
             fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
@@ -361,29 +362,35 @@ def save_inv_cache(compile_path, targets):
                 yaml.dump(cached.inv_cache, stream=f, default_flow_style=False)
 
 
-def load_target_inventory(inventory_path, targets, ignore_class_notfound=False):
+def load_target_inventory(inventory_path, requested_targets, ignore_class_notfound=False):
     """returns a list of target objects from the inventory"""
     target_objs = []
-    inv = get_inventory(inventory_path)
+    inv = get_inventory(inventory_path, ignore_class_notfound)
 
     # if '-t' is set on compile, only loop through selected targets
-    if targets:
-        targets_list = targets
+    if requested_targets:
+        targets = inv.get_targets(requested_targets)
     else:
-        targets_list = inv.targets.keys()
+        targets = inv.targets
 
-    for target_name in targets_list:
+    for target_name, target in targets.items():
         try:
-            target_obj = inv.get_parameters(target_name, ignore_class_notfound).get("kapitan")
+            if not target.parameters:
+                if ignore_class_notfound:
+                    continue
+                else:
+                    raise InventoryError(f"InventoryError: {target_name}: parameters is empty")
+                
+            kapitan_target_configs = inv.get_parameters(target_name, ignore_class_notfound).get("kapitan")
             # check if parameters.kapitan is empty
-            if not target_obj:
+            if not kapitan_target_configs:
                 raise InventoryError(f"InventoryError: {target_name}: parameters.kapitan has no assignment")
-            target_obj["target_full_path"] = inv.targets[target_name].name
+            kapitan_target_configs["target_full_path"] = inv.targets[target_name].name.replace(".", "/")
             require_compile = not ignore_class_notfound
-            valid_target_obj(target_obj, require_compile)
-            validate_matching_target_name(target_name, target_obj, inventory_path)
+            valid_target_obj(kapitan_target_configs, require_compile)
+            validate_matching_target_name(target_name, kapitan_target_configs, inventory_path)
             logger.debug(f"load_target_inventory: found valid kapitan target {target_name}")
-            target_objs.append(target_obj)
+            target_objs.append(kapitan_target_configs)
         except KeyError:
             logger.debug(f"load_target_inventory: target {target_name} has no kapitan compile obj")
 
@@ -403,6 +410,7 @@ def search_targets(inventory_path, targets, labels):
         )
 
     targets_found = []
+    # It should come back already rendered
     inv = get_inventory(inventory_path)
 
     for target_name in inv.targets.keys():
@@ -445,6 +453,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
         input_type = comp_obj["input_type"]
         output_path = comp_obj["output_path"]
         input_params = comp_obj.setdefault("input_params", {})
+        continue_on_compile_error = comp_obj.get("continue_on_compile_error", False)
 
         if input_type == "jinja2":
             input_compiler = Jinja2(compile_path, search_paths, ref_controller, comp_obj)
@@ -470,7 +479,16 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
             raise CompileError(err_msg.format(input_type))
 
         input_compiler.make_compile_dirs(target_name, output_path, **kwargs)
-        input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
+        try:
+            input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
+        except Exception as e:
+            if continue_on_compile_error:
+                logger.error("Error compiling %s: %s", target_name, e)
+                continue
+            else:
+                import traceback
+                traceback.print_exception(type(e), e, e.__traceback__)
+                raise CompileError(f"Error compiling {target_name}: {e}")
 
     logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
 
@@ -559,6 +577,7 @@ def valid_target_obj(target_obj, require_compile=True):
                         "name": {"type": "string"},
                         "input_paths": {"type": "array"},
                         "input_type": {"type": "string"},
+                        "continue_on_compile_error": {"type": "boolean"},
                         "output_path": {"type": "string"},
                         "output_type": {"type": "string"},
                         "helm_values": {"type": "object"},

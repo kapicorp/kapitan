@@ -9,7 +9,9 @@ WORKDIR /kapitan
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         curl \
-        build-essential
+        build-essential \
+        git \
+        default-jre
 
 ENV POETRY_VERSION=1.7.1
 ENV VIRTUAL_ENV=/opt/venv
@@ -18,7 +20,7 @@ RUN python -m venv $VIRTUAL_ENV \
     && pip install --upgrade pip yq wheel poetry==$POETRY_VERSION
 
 # Install Go (for go-jsonnet)
-RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.20.8.linux-${TARGETARCH}.tar.gz \
+RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.21.7.linux-${TARGETARCH}.tar.gz \
     && tar -C /usr/local -xzf go.tar.gz \
     && rm go.tar.gz
 
@@ -35,7 +37,7 @@ COPY ./poetry.lock ./poetry.lock
 COPY ./README.md ./README.md
 
 # Installs and caches dependencies
-RUN poetry install --no-root --extras=gojsonnet
+RUN poetry install --no-root --extras=gojsonnet --extras=reclass-rs
 
 COPY ./kapitan ./kapitan
 

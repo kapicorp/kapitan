@@ -4,16 +4,18 @@ site_name: "Kapitan: Keep your ship together"
 site_url: "https://kapitan.dev"
 strict: true
 plugins:
+  - blog:
+      archive: false
+      blog_dir: pages/blog
+      post_url_date_format: dd/MM/yyyy
   - tags:
       tags_file: tags.md
   - search
-extra_css:
-  - stylesheets/custom.css
 theme:
   name: material
   custom_dir: overrides
-  logo: images/kapitan_logo.png
-  favicon: images/kapitan_logo.png
+  logo: images/logo.min.svg
+  favicon: images/logo.min.svg
   features:
     - announce.dismiss
     - content.code.annotate
@@ -62,37 +64,21 @@ extra:
       link: https://kubernetes.slack.com/archives/C981W2HD3
       name: "#kapitan slack channel"
   analytics:
-    provider: google
-    property: G-5E934SC0R8
-    feedback:
-      title: Was this page helpful?
-      ratings:
-        - icon: material/emoticon-happy-outline
-          name: This page was helpful
-          data: 1
-          note: >-
-            Thanks for your feedback!
-        - icon: material/emoticon-sad-outline
-          name: This page could be improved
-          data: 0
-          note: >-
-            Thanks for your feedback! Help us improve this page by
-            using our <a href="..." target="_blank" rel="noopener">feedback form</a>.
+    provider: custom
 use_directory_urls: true
 nav:
   - Home: README.md
+  - Trusted by: ADOPTERS.md
   - Getting started: getting_started.md
-      
-
   - Documentation:
-      - Overview: pages/kapitan_overview.md
+      - Core Concepts: pages/kapitan_overview.md
       - Inventory:
         - Introduction: pages/inventory/introduction.md
         - Targets: pages/inventory/targets.md
         - Classes: pages/inventory/classes.md
         - Parameters Interpolation: pages/inventory/parameters_interpolation.md
         - Advanced: pages/inventory/advanced.md
-
+        - reclass-rs Backend: pages/inventory/reclass-rs.md
       - Input Types:
           - Introduction: pages/input_types/introduction.md
           - Kadet: pages/input_types/kadet.md
@@ -113,15 +99,8 @@ nav:
           - searchvar: pages/commands/kapitan_searchvar.md
           - validate: pages/commands/kapitan_validate.md
           - kapitan dotfile: pages/commands/kapitan_dotfile.md
-  - Examples:
-      - Kubernetes: pages/examples/kubernetes.md
-      - Terraform: pages/examples/terraform.md
   - Blog:
-    - 2023:
-      - Kapitan Generators: pages/blog/2023-08-27.md
-      - New Kapitan release: pages/blog/2023-01-16.md
-    - 2022:
-      - 5 years of Kapitan: pages/blog/2022-12-04.md
+    - pages/blog/index.md
   - Support:
       - Ask for support: support.md
       - Related Projects: related.md
@@ -132,9 +111,13 @@ nav:
         - Documentation: pages/contribute/documentation.md
         - Kapitan Code: pages/contribute/code.md
         - Proposals: proposals.md
+  - Generators: https://generators.kapitan.dev
+  - Tesoro: https://github.com/kapicorp/tesoro
+  - Kapitan Reference: https://github.com/kapicorp/kapitan-reference
   - FAQ: FAQ.md
 
 markdown_extensions:
+  - md_in_html
   - admonition
   - pymdownx.tabbed:
       alternate_style: true

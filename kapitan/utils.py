@@ -7,25 +7,21 @@
 from __future__ import print_function
 
 import collections
+import glob
 import json
 import logging
 import magic
 import math
 import os
 import re
+import shutil
 import stat
 import sys
 import tarfile
 import traceback
 from collections import Counter, defaultdict
-from distutils.dir_util import mkpath
-from distutils.errors import DistutilsFileError
-from distutils.file_util import _copy_file_contents
 from functools import lru_cache, wraps
 from hashlib import sha256
-from pathlib import Path
-from shutil import copytree
-from typing import List
 from zipfile import ZipFile
 
 import jinja2
@@ -222,23 +218,22 @@ def multiline_str_presenter(dumper, data):
     By default, strings are getting dumped with style='"'.
     Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
     """
-    # get parsed args from cached.py
-    compile_args = cached.args.get("compile", None)
-    style = None
-    if compile_args:
-        style = compile_args.yaml_multiline_string_style
 
-    # check for inventory args too
-    inventory_args = cached.args.get("inventory", None)
-    if inventory_args:
-        style = inventory_args.multiline_string_style
-
-    if style == "literal":
-        style = "|"
-    elif style == "folded":
-        style = ">"
+    if hasattr(cached.args, "multiline_string_style"):
+        style_selection = cached.args.multiline_string_style
+    elif hasattr(cached.args, "yaml_multiline_string_style"):
+        style_selection = cached.args.yaml_multiline_string_style
     else:
-        style = '"'
+        style_selection = "double-quotes"
+
+    supported_styles = {
+        "literal": "|",
+        "folded": ">",
+        "double-quotes": '"'
+    }
+
+    style = supported_styles.get(style_selection)
+
     if data.count("\n") > 0:  # check for multiline string
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
@@ -250,10 +245,7 @@ PrettyDumper.add_representer(str, multiline_str_presenter)
 def null_presenter(dumper, data):
     """Configures yaml for omitting value from null-datatype"""
     # get parsed args from cached.py
-    compile_args = cached.args.get("compile", None)
-    flag_value = None
-    if compile_args:
-        flag_value = compile_args.yaml_dump_null_as_empty
+    flag_value = cached.args.yaml_dump_null_as_empty
 
     if flag_value:
         return dumper.represent_scalar("tag:yaml.org,2002:null", "")
@@ -567,19 +559,23 @@ def unpack_downloaded_file(file_path, output_path, content_type):
     return is_unpacked
 
 
+class SafeCopyError(Exception):
+    """Raised when a file or directory cannot be safely copied."""
+
+
 def safe_copy_file(src, dst):
     """Copy a file from 'src' to 'dst'.
 
-    Similar to distutils.file_util.copy_file except
+    Similar to shutil.copyfile except
     if the file exists in 'dst' it's not clobbered
     or overwritten.
 
-    returns a tupple (src, val)
+    returns a tuple (src, val)
     file not copied if val = 0 else 1
     """
 
     if not os.path.isfile(src):
-        raise DistutilsFileError("Can't copy {}: doesn't exist or is not a regular file".format(src))
+        raise SafeCopyError("Can't copy {}: doesn't exist or is not a regular file".format(src))
 
     if os.path.isdir(dst):
         dir = dst
@@ -590,7 +586,7 @@ def safe_copy_file(src, dst):
     if os.path.isfile(dst):
         logger.debug("Not updating %s (file already exists)", dst)
         return (dst, 0)
-    _copy_file_contents(src, dst)
+    shutil.copyfile(src, dst)
     logger.debug("Copied %s to %s", src, dir)
     return (dst, 1)
 
@@ -598,21 +594,23 @@ def safe_copy_file(src, dst):
 def safe_copy_tree(src, dst):
     """Recursively copies the 'src' directory tree to 'dst'
 
-    Both 'src' and 'dst' must be directories.
-    similar to distutil.dir_util.copy_tree except
-    it doesn't overwite an existing file and doesn't
-    copy any file starting with "."
+    Both 'src' and 'dst' must be directories. Similar to copy_tree except
+    it doesn't overwite an existing file and doesn't copy any file starting
+    with "."
 
     Returns a list of copied file paths.
     """
     if not os.path.isdir(src):
-        raise DistutilsFileError("Cannot copy tree {}: not a directory".format(src))
+        raise SafeCopyError("Cannot copy tree {}: not a directory".format(src))
     try:
         names = os.listdir(src)
     except OSError as e:
-        raise DistutilsFileError("Error listing files in {}: {}".format(src, e.strerror))
+        raise SafeCopyError("Error listing files in {}: {}".format(src, e.strerror))
 
-    mkpath(dst)
+    try:
+        os.makedirs(dst, exist_ok=True)
+    except FileExistsError:
+        pass
     outputs = []
 
     for name in names:
@@ -633,17 +631,12 @@ def safe_copy_tree(src, dst):
     return outputs
 
 
-def copy_tree(source: Path, destination: Path, dirs_exist_ok: bool = False) -> List[str]:
-    """Recursively copy a given directory from `source` to `destination` using shutil.copytree
-    and return list of copied files. When `dirs_exist_ok` is set, the `FileExistsError` is
-    ignored when destination directory exists.
-    Args:
-        source (str): Path to a source directory
-        destination (str): Path to a destination directory
-    Returns:
-        list[str]: List of copied files
+def copy_tree(src, dst):
+    """Recursively copy a given directory from `src` to `dst`.
+
+    Returns a list of the copied files.
     """
-    inventory_before = list(destination.rglob("*"))
-    copytree(source, destination, dirs_exist_ok=dirs_exist_ok)
-    inventory_after = list(destination.rglob("*"))
-    return [str(d) for d in inventory_after if d not in inventory_before]
+    before = set(glob.iglob("*", recursive=True))
+    shutil.copytree(src, dst, dirs_exist_ok=True)
+    after = set(glob.iglob("*", recursive=True))
+    return list(after - before)

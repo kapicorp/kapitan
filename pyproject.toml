@@ -25,31 +25,36 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 license = "Apache-2.0"
-version = "0.33.0"
+version = "0.33.1"
 packages = [
     { include = "kapitan" },
-    { include = "kapitan/reclass" },
 ]
 
 [tool.poetry.scripts]
 kapitan = 'kapitan.cli:main'
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.0"
+coverage = "^7.5.0"
+docker = "^7.0.0"
+pytest-md = "^0.2.0"
+pytest-emoji = "^0.2.0"
+
 [tool.poetry-version-plugin]
 source = "git-tag"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.10,<3.12"
 addict = "^2.4.0"
 azure-keyvault-keys = "^4.7.0"
 boto3 = "^1.18.17"
-cryptography = ">=3.4.7,<42.0.0"
+cryptography = ">=3.4.7,<43.0.0"
 gitpython = "^3.1.30"
 google-api-python-client = "^2.15.0"
 hvac = "1.2.1"
 jinja2 = "^3.0.1"
 jsonnet = "^0.20.0"
 jsonschema = "^4.17.3"
-kadet = "^0.2.2"
 python-gnupg = ">=0.4.7,<0.6.0"
 pyyaml = "^6.0"
 requests = "^2.28.2"
@@ -63,11 +68,15 @@ gitdb = "^4.0.10"
 packaging = "^23.0"
 typing-extensions = "^4.0.0"
 gojsonnet = { version = "^0.20.0", optional = true }
-docker = { version = ">=5,<7", optional = true }
+docker = { version = ">=5,<8", optional = true }
+reclass = {git = "https://github.com/kapicorp/reclass"}
+reclass-rs = {version = "^0.4.0"}
+kadet = "^0.3.0"
 
 [tool.poetry.extras]
 gojsonnet = ["gojsonnet"]
-test = ["docker"]
+test = ["docker", "reclass-rs"]
+reclass-rs = ["reclass-rs"]
 
 [tool.black]
 line-length = 110

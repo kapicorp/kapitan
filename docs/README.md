@@ -3,29 +3,29 @@
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/kapicorp?style=for-the-badge)
 ![GitHub Stars](https://img.shields.io/github/stars/kapicorp/kapitan?style=for-the-badge)
 
-**`Kapitan`** aims to be your *one-stop tool* to help you manage the ever growing complexity of your configurations.
+**Kapitan** aims to be your *one-stop configuration management solution* to help you manage the ever growing complexity of your configurations by enabling **Platform Engineering** and **GitOps** workflows. 
+
+It streamlines complex deployments across heterogeneous environments while providing a secure and adaptable framework for managing infrastructure configurations.  **Kapitan**'s inventory-driven model, powerful templating capabilities, and native secret management tools offer granular control, fostering consistency, reducing errors, and safeguarding sensitive data.
+
+Empower your team to make changes to your infrastructure whilst maintaining full control, with a GitOps approach and full transparency.
 
 * :fontawesome-brands-slack: Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
 * :fontawesome-brands-github: Help us grow: [give us a star](https://github.com/kapicorp/kapitan/stargazers) or even better [sponsor our project](pages/contribute/sponsor/)
 
-## Why do I need **Kapitan**? 
+## [Why do I need **Kapitan**?](pages/blog/posts/2022-12-04.md#why-do-i-need-kapitan) 
 
-> I use [`Helm`](https://helm.sh)/[`Kustomize`](https://kustomize.io/)/that-new-kid-on-the-block
+## [Video Tutorials to get started](https://www.youtube.com/@kapitandev)
 
-**Kapitan** allows you to bring all your configuration needs under one home, creating a uniform way to manage your configuration that no other tool provides. Seamlessly manage configurations for Kubernetes, Terraform and any other application. Integrate with Helm (and even Kustomize). Safely store your secrets using a range of Secret Backends
+!!! info "[Kapitan Youtube Channel](https://www.youtube.com/@kapitandev)"
 
-[Longer answer](pages/blog/2022-12-04.md#why-do-i-need-kapitan)
+    === "Inventory"
+        <iframe width="1024" height="576" src="https://www.youtube.com/embed/M81qU94FCLQ?si=SGlQG-gP2mmA1n9b" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-!!! info
-        We are working hard to update all our documentation. Please reach out if you notice something that needs improving or you have other questions or comments. 
+    === "References"
+        <iframe width="1024" height="576" src="https://www.youtube.com/embed/I3Ss66zhC50?si=lK4hMtCpxDiJEygH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-## Dazzle me with a demo
+    === "Helm and Generators integration"
+        <iframe width="1024" height="576" src="https://www.youtube.com/embed/clPkDuC2bY4?si=GQwMGNpXuucUTwri" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-![demo](images/kapitan-demo.gif)
-
-
-
-## Related projects
-
-* [Tesoro](https://github.com/kapicorp/tesoro) - Kubernetes Admission Controller for Kapitan Secrets
-* [Kapitan Reference](https://github.com/kapicorp/kapitan-reference) - our reference repository to get started with Kapitan
+    === "Rawkode: Introduction to Kapitan"
+        <iframe width="1024" height="576" src="https://www.youtube.com/embed/8QZvgJi0vII?si=iqLZXv9VvoJD4hTT" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>

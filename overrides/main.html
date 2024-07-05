@@ -1,11 +1,17 @@
 {% extends "base.html" %}
-
 {% block announce %}
-<p>New <strong>kapitan</strong> release <a title="v0.32.0" href="/pages/blog/2023-06-01/">v0.32.0</a> now available!</p>
+<p>New <strong>kapitan</strong> release <a title="v0.33.1" href="/pages/blog/2024-02-12/">v0.33.1</a> now available!</p>
+{% endblock %}
+{% block scripts %}
+  {{ super() }}
+   <!-- Google Tag Manager (noscript) -->
+   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WPN4JBMH"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
 {% endblock %}
 
-
  {% block content %}
+
 
   <!-- Edit button -->
   {% if page.edit_url %}
@@ -17,42 +23,5 @@
       {% include ".icons/material/pencil.svg" %}
   </a>
 {% endif %}
-
- {% if not "\x3ch1" in page.content %}
-    <h1>{{ page.title | d(config.site_name, true)}}</h1>
- {% endif %}
-
- <!-- Markdown content -->
- {% if page and page.meta and page.meta.author_gh_user %}
- <aside class="mdx-author">
-     <p>
-     <img src="https://avatars.githubusercontent.com/{{ page.meta.author_gh_user }}" alt="@{{ page.meta.author_gh_user }}">
-     </p>
-     <p>
-     <span>
-     <b>{{ page.meta.author }}</b> · <a href="https://github.com/{{ page.meta.author_gh_user }}">@{{ page.meta.author_gh_user }}</a>
-     </span>
-     <span>
-         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar2" viewBox="0 0 16 16">
-             <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>
-             <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4z"/>
-         </svg> {{ page.meta.publish_date }} ·
-         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
-             <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
-             <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-         </svg> {{ page.meta.read_time }} read
-     </span>
-     </p>
- </aside>
- {% endif %}
-    {{ page.content }}
-
-    <!-- Last update of source file -->
-    {% if page and page.meta %}
-        {% if page.meta.git_revision_date_localized or
-            page.meta.revision_date
-        %}
-            {% include "partials/source-file.html" %}
-        {% endif %}
-    {% endif %}
+{{ page.content }}
 {% endblock %}

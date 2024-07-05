@@ -16,7 +16,7 @@ test_docker:
 .PHONY: test_coverage
 test_coverage:
 	@echo ----- Testing code coverage -----
-	coverage run --source=kapitan --omit="*reclass*" -m unittest discover
+	coverage run --source=kapitan -m unittest discover
 	coverage report --fail-under=65 -m
 
 .PHONY: test_formatting

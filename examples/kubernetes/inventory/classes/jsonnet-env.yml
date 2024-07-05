@@ -1,0 +1,12 @@
+applications:
+  - a
+  - b
+  - c
+
+classes:
+  - common
+
+parameters:
+  a: aaaaa
+  b: bbbbb
+  c: ccccc
