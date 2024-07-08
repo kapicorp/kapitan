@@ -22,6 +22,7 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 license = "Apache-2.0"
 version = "0.33.1"
@@ -64,7 +65,7 @@ python-magic = "^0.4.27"
 azure-identity = "^1.12.0"
 certifi = "*"
 gitdb = "^4.0.10"
-packaging = "^23.0"
+packaging = ">=23,<25"
 typing-extensions = "^4.0.0"
 gojsonnet = { version = "^0.20.0", optional = true }
 docker = { version = ">=5,<8", optional = true }
