@@ -33,7 +33,7 @@ jobs:
           mkdir -p dist
           pex .[gojsonnet] -r requirements.txt --python-shebang='#!/usr/bin/env python3' --python=python3.7 --python=python3.8 --python=python3.9 -m kapitan -o dist/kapitan.linux-x86_64.pex
       - name: Add linux-x86_64 pex to assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: dist/kapitan.linux-x86_64.pex
