@@ -106,7 +106,7 @@ jobs:
 
       # Builds docker image and allow scoped caching
       - name: build Kapitan Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: False 
           platforms: ${{ matrix.platform }}
@@ -179,7 +179,7 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
         if: env.DOCKERHUB_USERNAME != null
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           platforms: ${{ matrix.platform }}
           push: true
