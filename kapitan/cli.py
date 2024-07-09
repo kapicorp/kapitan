@@ -94,7 +94,7 @@ def trigger_compile(args):
         jinja2_filters=args.jinja2_filters,
         verbose=args.verbose,
         use_go_jsonnet=args.use_go_jsonnet,
-        compose_target_name=args.compose_target_name
+        compose_target_name=args.compose_target_name,
     )
 
 
@@ -119,10 +119,13 @@ def build_parser():
     )
 
     inventory_backend_parser.add_argument(
-        "--compose-target-name", "--compose-target-name",
+        "--compose-target-name",
+        "--compose-target-name",
         help="Create same subfolder structure from inventory/targets inside compiled folder",
         action="store_true",
-        default=from_dot_kapitan("global", "compose-target-name", from_dot_kapitan("compile", "compose-node-name", False)),
+        default=from_dot_kapitan(
+            "global", "compose-target-name", from_dot_kapitan("compile", "compose-node-name", False)
+        ),
     )
 
     eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
@@ -395,6 +398,12 @@ def build_parser():
         default=from_dot_kapitan("inventory", "multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
+    inventory_parser.add_argument(
+        "--yaml-dump-null-as-empty",
+        default=from_dot_kapitan("inventory", "yaml-dump-null-as-empty", False),
+        action="store_true",
+        help="dumps all none-type entries as empty, default is dumping as 'null'",
+    )
 
     searchvar_parser = subparser.add_parser(
         "searchvar", aliases=["sv"], help="show all inventory files where var is declared"
@@ -601,7 +610,7 @@ def build_parser():
         "validate",
         aliases=["v"],
         help="validates the compile output against schemas as specified in inventory",
-        parents=[inventory_backend_parser]
+        parents=[inventory_backend_parser],
     )
     validate_parser.set_defaults(func=schema_validate_compiled, name="validate")
 
