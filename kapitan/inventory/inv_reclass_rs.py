@@ -27,7 +27,9 @@ class ReclassRsInventory(Inventory):
         )
         return reclass_rs.Reclass.from_config(config)
 
-    def render_targets(self, targets: list = None, ignore_class_notfound: bool = False):
+    def render_targets(
+        self, targets: list[InventoryTarget] | None = None, ignore_class_notfound: bool = False
+    ):
         try:
             r = self._make_reclass_rs(ignore_class_notfound)
             start = datetime.now()
