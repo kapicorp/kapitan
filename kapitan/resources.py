@@ -245,7 +245,9 @@ def search_imports(cwd, import_str, search_paths):
     return normalised_path, normalised_path_content.encode()
 
 
-def inventory(search_paths: list, target_name: str = None, inventory_path: str = "./inventory"):
+def inventory(
+    search_paths: list, target_name: str = None, inventory_path: str = "./inventory"
+) -> dict[str, dict]:
     """
     Reads inventory (set by inventory_path) in search_paths.
     set nodes_uri to change reclass nodes_uri the default value
@@ -278,7 +280,7 @@ def inventory(search_paths: list, target_name: str = None, inventory_path: str =
         target = inv.get_target(target_name)
         return target.model_dump()
 
-    return inv.inventory
+    return {k: v.model_dump() for k, v in inv.inventory.items()}
 
 
 def generate_inventory(args):
@@ -327,9 +329,13 @@ def get_inventory(inventory_path, ignore_class_notfound: bool = False) -> Invent
     compose_target_name = hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
     backend = AVAILABLE_BACKENDS.get(backend_id, AVAILABLE_BACKENDS.get("reclass"))
     inventory_backend: Inventory = None
-    
+
     logger.debug(f"Using {backend_id} as inventory backend")
-    inventory_backend = backend(inventory_path=inventory_path, compose_target_name=compose_target_name, ignore_class_notfound=ignore_class_notfound)
+    inventory_backend = backend(
+        inventory_path=inventory_path,
+        compose_target_name=compose_target_name,
+        ignore_class_notfound=ignore_class_notfound,
+    )
 
     cached.inv = inventory_backend
     # migrate inventory to selected inventory backend
