@@ -48,6 +48,12 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
         try:
             dependencies = target_obj["dependencies"]
             for item in dependencies:
+                if not item.get("condition", True):
+                    logger.warning(
+                        "Skipping dependency download for uri %s because condition is false", item["source"]
+                    )
+                    continue
+
                 dependency_type = item["type"]
                 source_uri = item["source"]
 
