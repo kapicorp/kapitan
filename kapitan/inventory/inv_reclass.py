@@ -16,8 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 class ReclassInventory(Inventory):
-    
-    def render_targets(self, targets: list[InventoryTarget] = None, ignore_class_notfound: bool = False) -> None:
+    def render_targets(
+        self, targets: list[InventoryTarget] | None = None, ignore_class_notfound: bool = False
+    ) -> None:
         """
         Runs a reclass inventory in inventory_path
         (same output as running ./reclass.py -b inv_base_uri/ --inventory)

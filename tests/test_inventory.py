@@ -27,9 +27,19 @@ class InventoryTargetTest(unittest.TestCase):
         inv = inventory(["examples/kubernetes"], "minikube-es")
         self.assertEqual(inv["parameters"]["cluster"]["name"], "minikube")
 
+    def test_inventory_target_type(self):
+        inv = inventory(["examples/kubernetes"], "minikube-es")
+        self.assertIsInstance(inv, dict)
+        self.assertIsInstance(inv["parameters"], dict)
+
     def test_inventory_all_targets(self):
         inv = inventory(["examples/kubernetes"], None)
         self.assertNotEqual(inv.get("minikube-es"), None)
+
+    def test_inventory_all_targets_type(self):
+        inv = inventory(["examples/kubernetes"], None)
+        self.assertIsInstance(inv, dict)
+        self.assertIsInstance(inv["minikube-es"], dict)
 
 
 class InventoryTargetTestReclassRs(InventoryTargetTest):
