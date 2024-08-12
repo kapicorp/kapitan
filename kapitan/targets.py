@@ -142,7 +142,7 @@ def compile_targets(
                 os.makedirs(compile_path, exist_ok=True)
 
                 # if '-t' is set on compile or only a few changed, only override selected targets
-                if targets:
+                if desidered_targets:
                     for target in target_objs:
                         path = target["target_full_path"]
                         compile_path_target = os.path.join(compile_path, path)
