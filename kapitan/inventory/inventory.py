@@ -20,7 +20,7 @@ class InventoryTarget(BaseModel):
     parameters: dict = dict()
     classes: list = list()
     applications: list = list()
-    exports: list = list()
+    exports: dict = dict()
 
 
 class Inventory(ABC):
