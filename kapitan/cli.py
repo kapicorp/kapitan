@@ -26,7 +26,7 @@ from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
 from kapitan.resources import generate_inventory, resource_callbacks, search_imports
-from kapitan.targets import compile_targets, schema_validate_compiled
+from kapitan.targets import compile_targets
 from kapitan.utils import check_version, from_dot_kapitan, searchvar
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
@@ -94,7 +94,7 @@ def trigger_compile(args):
         jinja2_filters=args.jinja2_filters,
         verbose=args.verbose,
         use_go_jsonnet=args.use_go_jsonnet,
-        compose_target_name=args.compose_target_name,
+        compose_target_name=args.compose_target_name
     )
 
 
@@ -119,13 +119,10 @@ def build_parser():
     )
 
     inventory_backend_parser.add_argument(
-        "--compose-target-name",
-        "--compose-target-name",
+        "--compose-target-name", "--compose-target-name",
         help="Create same subfolder structure from inventory/targets inside compiled folder",
         action="store_true",
-        default=from_dot_kapitan(
-            "global", "compose-target-name", from_dot_kapitan("compile", "compose-node-name", False)
-        ),
+        default=from_dot_kapitan("global", "compose-target-name", from_dot_kapitan("compile", "compose-node-name", False)),
     )
 
     eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
@@ -234,9 +231,9 @@ def build_parser():
         "--parallelism",
         "-p",
         type=int,
-        default=from_dot_kapitan("compile", "parallelism", 4),
+        default=from_dot_kapitan("compile", "parallelism", None),
         metavar="INT",
-        help="Number of concurrent compile processes, default is 4",
+        help="Number of concurrent compile processes, default is min(len(targets), os.cpu_count())",
     )
     compile_parser.add_argument(
         "--indent",
@@ -254,7 +251,7 @@ def build_parser():
     compile_parser.add_argument(
         "--reveal",
         help="reveal refs (warning: this will potentially write sensitive data)",
-        action=argparse.BooleanOptionalAction,
+        action="store_true",
         default=from_dot_kapitan("compile", "reveal", False),
     )
     compile_parser.add_argument(
@@ -397,12 +394,6 @@ def build_parser():
         action="store",
         default=from_dot_kapitan("inventory", "multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
-    )
-    inventory_parser.add_argument(
-        "--yaml-dump-null-as-empty",
-        default=from_dot_kapitan("inventory", "yaml-dump-null-as-empty", False),
-        action="store_true",
-        help="dumps all none-type entries as empty, default is dumping as 'null'",
     )
 
     searchvar_parser = subparser.add_parser(
@@ -605,53 +596,12 @@ def build_parser():
         help="set path, in which to generate the project skeleton,"
         'assumes directory already exists. default is "./"',
     )
-
-    validate_parser = subparser.add_parser(
-        "validate",
-        aliases=["v"],
-        help="validates the compile output against schemas as specified in inventory",
-        parents=[inventory_backend_parser],
-    )
-    validate_parser.set_defaults(func=schema_validate_compiled, name="validate")
-
-    validate_parser.add_argument(
-        "--compiled-path",
-        default=from_dot_kapitan("compile", "compiled-path", "./compiled"),
-        help='set compiled path, default is "./compiled',
-    )
-    validate_parser.add_argument(
-        "--inventory-path",
-        default=from_dot_kapitan("compile", "inventory-path", "./inventory"),
-        help='set inventory path, default is "./inventory"',
-    )
-    validate_parser.add_argument(
-        "--targets",
-        "-t",
-        help="targets to validate, default is all",
-        type=str,
-        nargs="+",
-        default=from_dot_kapitan("compile", "targets", []),
-        metavar="TARGET",
-    ),
-    validate_parser.add_argument(
-        "--schemas-path",
-        default=from_dot_kapitan("validate", "schemas-path", "./schemas"),
-        help='set schema cache path, default is "./schemas"',
-    )
-    validate_parser.add_argument(
-        "--parallelism",
-        "-p",
-        type=int,
-        default=from_dot_kapitan("validate", "parallelism", 4),
-        metavar="INT",
-        help="Number of concurrent validate processes, default is 4",
-    )
-
     return parser
 
 
 def main():
     """main function for command line usage"""
+    
     try:
         multiprocessing.set_start_method("spawn")
     # main() is explicitly multiple times in tests
@@ -671,8 +621,8 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    cached.args = args
-
+    cached.args = args  
+    
     if hasattr(args, "verbose") and args.verbose:
         logging_level = logging.DEBUG
     elif hasattr(args, "quiet") and args.quiet:

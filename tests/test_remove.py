@@ -16,7 +16,6 @@ import unittest
 from kapitan.cli import main
 from kapitan.inputs.copy import Copy
 from kapitan.inputs.remove import Remove
-from kapitan.utils import directory_hash
 
 search_path = ""
 ref_controller = ""
