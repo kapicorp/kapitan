@@ -226,6 +226,27 @@ class CompileKubernetesTestReclassRs(CompileKubernetesTest):
         pass
 
 
+class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
+    temp_dir = tempfile.mkdtemp()
+    
+    def setUp(self):
+        
+        shutil.copytree(self.inventory_path, self.temp_dir, dirs_exist_ok=True)
+        self.inventory_path = self.temp_dir
+        super().setUp()
+        self.extraArgv = ["--inventory-backend=omegaconf"]
+        from kapitan.inventory.inv_omegaconf import migrate
+        migrate.migrate(self.temp_dir)
+
+    @unittest.skip("Already tested")
+    def test_compile_not_enough_args(self):
+        pass
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+        super().tearDown()
+
+
 class CompileTerraformTest(unittest.TestCase):
     def setUp(self):
         os.chdir(TEST_TERRAFORM_PATH)

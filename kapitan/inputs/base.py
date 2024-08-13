@@ -127,7 +127,7 @@ class CompilingFile(object):
         target_name = self.kwargs.get("target_name", None)
 
         # TODO(ademaria): make it configurable per input type
-        style_selection = cached.inv[target_name].parameters.get("multiline_string_style", None)
+        style_selection = cached.inv[target_name]["parameters"].get("multiline_string_style", None)
 
         if not style_selection: 
             if hasattr(cached.args, "multiline_string_style"):
