@@ -246,7 +246,7 @@ def search_imports(cwd, import_str, search_paths):
 
 
 def inventory(
-    search_paths: list, target_name: str = None, inventory_path: str = "./inventory"
+    search_paths: list = [], target_name: str = None, inventory_path: str = "./inventory"
 ) -> dict[str, dict]:
     """
     Reads inventory (set by inventory_path) in search_paths.

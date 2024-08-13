@@ -7,45 +7,55 @@
 
 "inventory tests"
 
-import argparse
 import importlib
 import unittest
+import logging
+import tempfile
+import os
+import shutil
+logger = logging.getLogger(__name__)
 
-from kapitan import cached
 from kapitan.resources import inventory
 
+TEST_PWD = os.getcwd()
+TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")
 
-class InventoryTargetTest(unittest.TestCase):
-    def setUp(self):
-        # Configure `compile.inventory_path` and `inventory-backend`. This
-        # allows us to reuse the tests by inheriting from this test class.
 
-        cached.args.inventory_backend = "reclass"
-        cached.args.inventory_path = "inventory"
-
+class InventoryTargetTestBase(unittest.TestCase):
+    
+    def setUp(self) -> None:
+        from kapitan.cached import reset_cache, args
+        
+        reset_cache()
+        if not importlib.util.find_spec(self.backend_id):
+            self.skipTest(f"backend module {self.backend_id} not available")
+        args.inventory_backend = self.backend_id 
+        
     def test_inventory_target(self):
-        inv = inventory(["examples/kubernetes"], "minikube-es")
+        inv = inventory(inventory_path=self.inventory_path, target_name="minikube-es")
+        logger.error(inv)
         self.assertEqual(inv["parameters"]["cluster"]["name"], "minikube")
 
-    def test_inventory_target_type(self):
-        inv = inventory(["examples/kubernetes"], "minikube-es")
-        self.assertIsInstance(inv, dict)
-        self.assertIsInstance(inv["parameters"], dict)
-
     def test_inventory_all_targets(self):
-        inv = inventory(["examples/kubernetes"], None)
+        inv = inventory(inventory_path=self.inventory_path)
         self.assertNotEqual(inv.get("minikube-es"), None)
-
-    def test_inventory_all_targets_type(self):
-        inv = inventory(["examples/kubernetes"], None)
-        self.assertIsInstance(inv, dict)
-        self.assertIsInstance(inv["minikube-es"], dict)
+        self.assertEqual(len(inv), self.expected_targets_count)
 
 
-class InventoryTargetTestReclassRs(InventoryTargetTest):
+class InventoryTargetTestReclass(InventoryTargetTestBase):
     def setUp(self):
-        if not importlib.util.find_spec("reclass_rs"):
-            self.skipTest("reclass-rs not available")
-
+        self.backend_id = "reclass"
+        self.expected_targets_count = 10
+        self.inventory_path = "examples/kubernetes/inventory"
         super().setUp()
-        cached.args.inventory_backend = "reclass-rs"
+
+
+class InventoryTargetTestReclassRs(InventoryTargetTestBase):
+    def setUp(self):
+        self.backend_id = "reclass_rs"
+        self.expected_targets_count = 10
+        self.inventory_path = "examples/kubernetes/inventory"
+        super().setUp()
+
+
+del (InventoryTargetTestBase)  # remove InventoryTargetTestBase so that it doesn't run
