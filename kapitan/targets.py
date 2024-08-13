@@ -159,7 +159,7 @@ def compile_targets(
                 shutil.rmtree(compile_path)
                 shutil.copytree(temp_compile_path, compile_path)
                 logger.debug("Copied %s into %s", temp_compile_path, compile_path)
-            logger.info(f"Compiled {len(targets)} targets in (%.2fs)", time.time() - compile_start)
+            logger.info(f"Compiled {len(targets)} targets in %.2fs", time.time() - compile_start)
         except ReclassException as e:
             if isinstance(e, NotFoundError):
                 logger.error("Inventory reclass error: inventory not found")
