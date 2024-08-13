@@ -74,7 +74,7 @@ def compile_targets(
     logger.info(f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)")
     
     try:
-        with multiprocessing.Pool(parallelism, cached.from_dict, (cached.as_dict(),)) as pool:
+        with multiprocessing.Pool(parallelism) as pool:
             try:
                 fetching_start = time.time()
                 # check if --fetch or --force-fetch is enabled
@@ -132,6 +132,7 @@ def compile_targets(
                     compile_path=temp_compile_path,
                     ref_controller=ref_controller,
                     inventory_path=inventory_path,
+                    globals_cached=cached.as_dict(),
                     **kwargs,
                 )
 
@@ -256,12 +257,15 @@ def search_targets(inventory, targets, labels):
     return targets_found
 
 
-def compile_target(target_obj, search_paths, compile_path, ref_controller, **kwargs):
+def compile_target(target_obj, search_paths, compile_path, ref_controller, globals_cached, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
     compile_objs = target_obj["compile"]
     ext_vars = target_obj["vars"]
     target_name = ext_vars["target"]
+    
+    if globals_cached:
+        cached.from_dict(globals_cached)
 
     use_go_jsonnet = kwargs.get("use_go_jsonnet", False)
     if use_go_jsonnet:
