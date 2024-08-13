@@ -166,13 +166,13 @@ jobs:
             name=${{ vars.DOCKERHUB_REPOSITORY }}/kapitan
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
           flavor: |
-            suffix=-${{ matrix.platform }}
+            latest=auto
+            suffix=-${{ matrix.platform }},onlatest=true
 
       - name: Build and push by digest
         id: push-digest
