@@ -18,10 +18,8 @@ import yaml
 import toml
 import tempfile
 from kapitan.cli import main
-from kapitan.resources import get_inventory
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
-from kapitan.errors import InventoryError
 
 TEST_PWD = os.getcwd()
 TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")
@@ -159,8 +157,11 @@ class CompileKubernetesTest(unittest.TestCase):
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-c"] + self.extraArgv
         main()
-        compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
-        test_compiled_dir_hash = directory_hash(os.path.join(TEST_PWD, 'tests/test_kubernetes_compiled'))
+        compile_dir = os.path.join(os.getcwd(), "compiled") 
+        reference_dir = os.path.join(TEST_PWD, 'tests/test_kubernetes_compiled')
+        compiled_dir_hash = directory_hash(compile_dir)
+        test_compiled_dir_hash = directory_hash(reference_dir)
+        self.fail(os.popen(f"diff -r  {compile_dir} {reference_dir}").read())
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def test_compile_not_enough_args(self):
