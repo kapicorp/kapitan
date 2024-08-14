@@ -204,6 +204,8 @@ def load_target_inventory(inventory, requested_targets, ignore_class_not_found=F
                     raise InventoryError(f"InventoryError: {target_name}: parameters is empty")
                 
             kapitan_target_configs = target.parameters["kapitan"]
+            for comp_obj in kapitan_target_configs["compile"]:
+                comp_obj.setdefault("input_params", {})
             # check if parameters.kapitan is empty
             if not kapitan_target_configs:
                 raise InventoryError(f"InventoryError: {target_name}: parameters.kapitan has no assignment")

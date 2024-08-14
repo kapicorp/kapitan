@@ -156,8 +156,10 @@ class CompileKubernetesTest(unittest.TestCase):
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-c"] + self.extraArgv
         main()
-        compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
-        test_compiled_dir_hash = directory_hash(os.path.join(TEST_PWD, 'tests/test_kubernetes_compiled'))
+        compile_dir = os.path.join(os.getcwd(), "compiled") 
+        reference_dir = os.path.join(TEST_PWD, 'tests/test_kubernetes_compiled')
+        compiled_dir_hash = directory_hash(compile_dir)
+        test_compiled_dir_hash = directory_hash(reference_dir)
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def test_compile_not_enough_args(self):
