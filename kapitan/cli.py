@@ -101,6 +101,7 @@ def trigger_compile(args):
 def build_parser():
     parser = argparse.ArgumentParser(prog=PROJECT_NAME, description=DESCRIPTION)
     parser.add_argument("--version", action="version", version=VERSION)
+    parser.add_argument("--mp-method", action="store", default=from_dot_kapitan("global", "mp-method", "spawn"), help="set multiprocessing start method", choices=["spawn", "fork", "forkserver"])
     subparser = parser.add_subparsers(help="commands", dest="subparser_name")
 
     inventory_backend_parser = argparse.ArgumentParser(add_help=False)
@@ -601,16 +602,17 @@ def build_parser():
 
 def main():
     """main function for command line usage"""
-    try:
-        multiprocessing.set_start_method("spawn")
-    # main() is explicitly multiple times in tests
-    # and will raise RuntimeError
-    except RuntimeError:
-        pass
 
     parser = build_parser()
     args = parser.parse_args()
 
+    try:
+        multiprocessing.set_start_method(args.mp_method)
+    # main() is explicitly multiple times in tests
+    # and will raise RuntimeError
+    except RuntimeError:
+        pass
+    
     if getattr(args, "func", None) == generate_inventory and args.pattern and args.target_name == "":
         parser.error("--pattern requires --target_name")
 
