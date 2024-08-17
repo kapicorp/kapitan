@@ -592,10 +592,14 @@ def build_parser():
     init_parser.set_defaults(func=initialise_skeleton, name="init")
 
     init_parser.add_argument(
-        "--directory",
-        default=from_dot_kapitan("init", "directory", "."),
-        help="set path, in which to generate the project skeleton,"
-        'assumes directory already exists. default is "./"',
+        "--template_git_url",
+        default=from_dot_kapitan("init", "template_git_url ", "http://github.com/kapicorp/kapitan-reference"),
+        help="Cruft template_git_url, default is 'http://github.com/kapicorp/kapitan-reference'"
+    )
+    init_parser.add_argument(
+        "--checkout_ref",
+        default=from_dot_kapitan("init", "checkout_ref ", "cookiecutter"),
+        help="Cruft checkout_ref, default is 'cookiecutter'"
     )
     return parser
 

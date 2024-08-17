@@ -76,6 +76,7 @@ kadet = "^0.3.0"
 poetry = "^1.8.3"
 regex = "^2024.5.10"
 omegaconf = "^2.4.0.dev3"
+cruft = "^2.15.0"
 
 [tool.poetry.extras]
 gojsonnet = ["gojsonnet"]
