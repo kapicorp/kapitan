@@ -11,7 +11,7 @@ import os
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.resources import inventory
 from kapitan.utils import render_jinja2
-
+from kapitan import cached
 logger = logging.getLogger(__name__)
 
 
@@ -41,8 +41,9 @@ class Jinja2(InputType):
 
         # set ext_vars and inventory for jinja2 context
         context = ext_vars.copy()
-        context["inventory"] = inventory(self.search_paths, target_name)
-        context["inventory_global"] = inventory(self.search_paths, None)
+
+        context["inventory_global"] = cached.inv.inventory
+        context["inventory"] = cached.inv.inventory[target_name]
         context["input_params"] = input_params
 
         jinja2_filters = kwargs.get("jinja2_filters")

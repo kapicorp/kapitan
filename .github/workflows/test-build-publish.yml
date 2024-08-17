@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11']
+        python-version: ['3.10', '3.11', '3.12']
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@v4
@@ -106,7 +106,7 @@ jobs:
 
       # Builds docker image and allow scoped caching
       - name: build Kapitan Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: False 
           platforms: ${{ matrix.platform }}
@@ -166,20 +166,20 @@ jobs:
             name=${{ vars.DOCKERHUB_REPOSITORY }}/kapitan
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
           flavor: |
-            suffix=-${{ matrix.platform }}
+            latest=auto
+            suffix=-${{ matrix.platform }},onlatest=true
 
       - name: Build and push by digest
         id: push-digest
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
         if: env.DOCKERHUB_USERNAME != null
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           platforms: ${{ matrix.platform }}
           push: true

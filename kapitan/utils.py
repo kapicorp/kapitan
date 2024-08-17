@@ -8,19 +8,19 @@ from __future__ import print_function
 
 import collections
 import json
+import functools
 import logging
 import magic
 import math
 import os
 import re
 import stat
+import shutil
+import glob
 import sys
 import tarfile
 import traceback
 from collections import Counter, defaultdict
-from distutils.dir_util import mkpath
-from distutils.errors import DistutilsFileError
-from distutils.file_util import _copy_file_contents
 from functools import lru_cache, wraps
 from hashlib import sha256
 from zipfile import ZipFile
@@ -212,20 +212,17 @@ class PrettyDumper(yaml.SafeDumper):
     def increase_indent(self, flow=False, indentless=False):
         return super(PrettyDumper, self).increase_indent(flow, False)
 
+    @classmethod
+    def get_dumper_for_style(cls, style_selection="double-quotes"):
+        cls.add_representer(str, functools.partial(multiline_str_presenter, style_selection=style_selection))
+        return cls
 
-def multiline_str_presenter(dumper, data):
+def multiline_str_presenter(dumper, data, style_selection="double-quotes"):
     """
     Configures yaml for dumping multiline strings with given style.
     By default, strings are getting dumped with style='"'.
     Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
     """
-
-    if hasattr(cached.args, "multiline_string_style"):
-        style_selection = cached.args.multiline_string_style
-    elif hasattr(cached.args, "yaml_multiline_string_style"):
-        style_selection = cached.args.yaml_multiline_string_style
-    else:
-        style_selection = "double-quotes"
 
     supported_styles = {
         "literal": "|",
@@ -240,13 +237,12 @@ def multiline_str_presenter(dumper, data):
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
 
 
-PrettyDumper.add_representer(str, multiline_str_presenter)
-
-
 def null_presenter(dumper, data):
     """Configures yaml for omitting value from null-datatype"""
     # get parsed args from cached.py
-    flag_value = cached.args.yaml_dump_null_as_empty
+    flag_value = False
+    if hasattr(cached.args, "yaml_dump_null_as_empty"):
+        flag_value = cached.args.yaml_dump_null_as_empty
 
     if flag_value:
         return dumper.represent_scalar("tag:yaml.org,2002:null", "")
@@ -560,19 +556,23 @@ def unpack_downloaded_file(file_path, output_path, content_type):
     return is_unpacked
 
 
+class SafeCopyError(Exception):
+    """Raised when a file or directory cannot be safely copied."""
+
+
 def safe_copy_file(src, dst):
     """Copy a file from 'src' to 'dst'.
 
-    Similar to distutils.file_util.copy_file except
+    Similar to shutil.copyfile except
     if the file exists in 'dst' it's not clobbered
     or overwritten.
 
-    returns a tupple (src, val)
+    returns a tuple (src, val)
     file not copied if val = 0 else 1
     """
 
     if not os.path.isfile(src):
-        raise DistutilsFileError("Can't copy {}: doesn't exist or is not a regular file".format(src))
+        raise SafeCopyError("Can't copy {}: doesn't exist or is not a regular file".format(src))
 
     if os.path.isdir(dst):
         dir = dst
@@ -583,7 +583,7 @@ def safe_copy_file(src, dst):
     if os.path.isfile(dst):
         logger.debug("Not updating %s (file already exists)", dst)
         return (dst, 0)
-    _copy_file_contents(src, dst)
+    shutil.copyfile(src, dst)
     logger.debug("Copied %s to %s", src, dir)
     return (dst, 1)
 
@@ -591,21 +591,23 @@ def safe_copy_file(src, dst):
 def safe_copy_tree(src, dst):
     """Recursively copies the 'src' directory tree to 'dst'
 
-    Both 'src' and 'dst' must be directories.
-    similar to distutil.dir_util.copy_tree except
-    it doesn't overwite an existing file and doesn't
-    copy any file starting with "."
+    Both 'src' and 'dst' must be directories. Similar to copy_tree except
+    it doesn't overwite an existing file and doesn't copy any file starting
+    with "."
 
     Returns a list of copied file paths.
     """
     if not os.path.isdir(src):
-        raise DistutilsFileError("Cannot copy tree {}: not a directory".format(src))
+        raise SafeCopyError("Cannot copy tree {}: not a directory".format(src))
     try:
         names = os.listdir(src)
     except OSError as e:
-        raise DistutilsFileError("Error listing files in {}: {}".format(src, e.strerror))
+        raise SafeCopyError("Error listing files in {}: {}".format(src, e.strerror))
 
-    mkpath(dst)
+    try:
+        os.makedirs(dst, exist_ok=True)
+    except FileExistsError:
+        pass
     outputs = []
 
     for name in names:
@@ -624,3 +626,20 @@ def safe_copy_tree(src, dst):
                 outputs.append(dst_name)
 
     return outputs
+
+
+def copy_tree(src: str, dst: str) -> list:
+    """Recursively copy a given directory from `src` to `dst`.
+
+    Returns a list of the copied files.
+    """
+    if not os.path.isdir(src):
+        raise SafeCopyError(f"Cannot copy tree {src}: not a directory")
+    
+    if not os.path.isdir(dst):
+        raise SafeCopyError(f"Cannot copy tree {dst}: not a directory")
+
+    before = set(glob.iglob(f"{dst}/*", recursive=True))
+    shutil.copytree(src, dst, dirs_exist_ok=True)
+    after = set(glob.iglob(f"{dst}/*", recursive=True))
+    return list(after - before)
