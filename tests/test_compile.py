@@ -16,12 +16,9 @@ import glob
 import shutil
 import yaml
 import toml
-import tempfile
 from kapitan.cli import main
-from kapitan.resources import get_inventory
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
-from kapitan.errors import InventoryError
 
 TEST_PWD = os.getcwd()
 TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")

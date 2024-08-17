@@ -628,12 +628,18 @@ def safe_copy_tree(src, dst):
     return outputs
 
 
-def copy_tree(src, dst):
+def copy_tree(src: str, dst: str) -> list:
     """Recursively copy a given directory from `src` to `dst`.
 
     Returns a list of the copied files.
     """
-    before = set(glob.iglob("*", recursive=True))
+    if not os.path.isdir(src):
+        raise SafeCopyError(f"Cannot copy tree {src}: not a directory")
+    
+    if not os.path.isdir(dst):
+        raise SafeCopyError(f"Cannot copy tree {dst}: not a directory")
+
+    before = set(glob.iglob(f"{dst}/*", recursive=True))
     shutil.copytree(src, dst, dirs_exist_ok=True)
-    after = set(glob.iglob("*", recursive=True))
+    after = set(glob.iglob(f"{dst}/*", recursive=True))
     return list(after - before)
