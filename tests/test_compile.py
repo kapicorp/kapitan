@@ -161,7 +161,6 @@ class CompileKubernetesTest(unittest.TestCase):
         reference_dir = os.path.join(TEST_PWD, 'tests/test_kubernetes_compiled')
         compiled_dir_hash = directory_hash(compile_dir)
         test_compiled_dir_hash = directory_hash(reference_dir)
-        self.fail(os.popen(f"diff -r  {compile_dir} {reference_dir}").read())
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def test_compile_not_enough_args(self):
