@@ -601,7 +601,6 @@ def build_parser():
 
 def main():
     """main function for command line usage"""
-    
     try:
         multiprocessing.set_start_method("spawn")
     # main() is explicitly multiple times in tests

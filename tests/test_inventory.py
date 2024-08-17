@@ -59,4 +59,21 @@ class InventoryTargetTestReclassRs(InventoryTargetTestBase):
         super().setUp()
 
 
+class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
+    temp_dir = tempfile.mkdtemp()
+
+    def setUp(self) -> None:
+        shutil.copytree(TEST_KUBERNETES_INVENTORY, self.temp_dir, dirs_exist_ok=True)
+        self.backend_id = "omegaconf"
+        self.expected_targets_count = 10
+        from kapitan.inventory.inv_omegaconf import migrate
+        self.inventory_path = os.path.join(self.temp_dir, "inventory")
+        migrate.migrate(self.inventory_path)
+        super().setUp()
+    
+    def tearDown(self) -> None:
+        shutil.rmtree(self.temp_dir)
+        return super().tearDown()
+
+
 del (InventoryTargetTestBase)  # remove InventoryTargetTestBase so that it doesn't run

@@ -16,6 +16,7 @@ import glob
 import shutil
 import yaml
 import toml
+import tempfile
 from kapitan.cli import main
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
@@ -156,8 +157,10 @@ class CompileKubernetesTest(unittest.TestCase):
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-c"] + self.extraArgv
         main()
-        compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
-        test_compiled_dir_hash = directory_hash(os.path.join(TEST_PWD, 'tests/test_kubernetes_compiled'))
+        compile_dir = os.path.join(os.getcwd(), "compiled") 
+        reference_dir = os.path.join(TEST_PWD, 'tests/test_kubernetes_compiled')
+        compiled_dir_hash = directory_hash(compile_dir)
+        test_compiled_dir_hash = directory_hash(reference_dir)
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def test_compile_not_enough_args(self):
@@ -221,6 +224,27 @@ class CompileKubernetesTestReclassRs(CompileKubernetesTest):
     @unittest.skip("Already tested")
     def test_compile_not_enough_args(self):
         pass
+
+
+class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
+    temp_dir = tempfile.mkdtemp()
+    
+    def setUp(self):
+        
+        shutil.copytree(self.inventory_path, self.temp_dir, dirs_exist_ok=True)
+        self.inventory_path = self.temp_dir
+        super().setUp()
+        self.extraArgv = ["--inventory-backend=omegaconf"]
+        from kapitan.inventory.inv_omegaconf import migrate
+        migrate.migrate(self.temp_dir)
+
+    @unittest.skip("Already tested")
+    def test_compile_not_enough_args(self):
+        pass
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+        super().tearDown()
 
 
 class CompileTerraformTest(unittest.TestCase):

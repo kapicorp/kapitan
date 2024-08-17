@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 class ReclassRsInventory(Inventory):
-    def _make_reclass_rs(self, ignore_class_notfound: bool):
+    def _make_reclass_rs(self, ignore_class_not_found: bool):
         # Get Reclass config options with the same method that's used for `ReclassInventory`, but
         # disable the logic to normalise the `nodes_uri` and `classes_uri` options, since reclass-rs
         # expects those fields to be relative to the inventory path.
         config_dict = get_reclass_config(
-            self.inventory_path, ignore_class_notfound, self.compose_target_name, False
+            self.inventory_path, ignore_class_not_found, self.compose_target_name, False
         )
 
         # Turn on verbose config loading only if Kapitan loglevel is set to at least DEBUG.
@@ -27,11 +27,9 @@ class ReclassRsInventory(Inventory):
         )
         return reclass_rs.Reclass.from_config(config)
 
-    def render_targets(
-        self, targets: list[InventoryTarget] | None = None, ignore_class_notfound: bool = False
-    ):
+    def render_targets(self, targets: list = None, ignore_class_not_found: bool = False):
         try:
-            r = self._make_reclass_rs(ignore_class_notfound)
+            r = self._make_reclass_rs(ignore_class_not_found)
             start = datetime.now()
             inv = r.inventory()
             elapsed = datetime.now() - start

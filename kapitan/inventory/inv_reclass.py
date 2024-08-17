@@ -16,9 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 class ReclassInventory(Inventory):
-    def render_targets(
-        self, targets: list[InventoryTarget] | None = None, ignore_class_notfound: bool = False
-    ) -> None:
+    
+    def render_targets(self, targets: list[InventoryTarget] = None, ignore_class_not_found: bool = False) -> None:
         """
         Runs a reclass inventory in inventory_path
         (same output as running ./reclass.py -b inv_base_uri/ --inventory)
@@ -26,10 +25,10 @@ class ReclassInventory(Inventory):
         it will fall back to the default config.
         Returns a reclass style dictionary
 
-        Does not throw errors if a class is not found while ignore_class_notfound is specified
+        Does not throw errors if a class is not found while ignore_class_not_found is specified
         """
         reclass_config = get_reclass_config(
-            self.inventory_path, ignore_class_notfound, self.compose_target_name
+            self.inventory_path, ignore_class_not_found, self.compose_target_name
         )
 
         try:
@@ -63,7 +62,7 @@ class ReclassInventory(Inventory):
 
 def get_reclass_config(
     inventory_path: str,
-    ignore_class_notfound: bool = False,
+    ignore_class_not_found: bool = False,
     compose_target_name: bool = False,
     normalise_nodes_classes: bool = True,
 ) -> dict:
@@ -75,7 +74,7 @@ def get_reclass_config(
         "classes_uri": "classes",
         "compose_node_name": compose_target_name,
         "allow_none_override": True,
-        "ignore_class_notfound": ignore_class_notfound,
+        "ignore_class_notfound": ignore_class_not_found,  # reclass has it mispelled
     }
     try:
         from yaml import CSafeLoader as YamlLoader

@@ -245,9 +245,7 @@ def search_imports(cwd, import_str, search_paths):
     return normalised_path, normalised_path_content.encode()
 
 
-def inventory(
-    search_paths: list = [], target_name: str = None, inventory_path: str = "./inventory"
-) -> dict[str, dict]:
+def inventory(search_paths: list = [], target_name: str = None, inventory_path: str = "./inventory"):
     """
     Reads inventory (set by inventory_path) in search_paths.
     set nodes_uri to change reclass nodes_uri the default value
@@ -274,13 +272,14 @@ def inventory(
     if not inv_path_exists:
         raise InventoryError(f"Inventory not found in search paths: {search_paths}")
 
+    logger.debug(f"Using inventory found at {full_inv_path}")
     inv = get_inventory(full_inv_path)
 
     if target_name:
         target = inv.get_target(target_name)
         return target.model_dump()
 
-    return {k: v.model_dump() for k, v in inv.inventory.items()}
+    return inv.inventory
 
 
 def generate_inventory(args):
@@ -288,7 +287,7 @@ def generate_inventory(args):
         inv = get_inventory(args.inventory_path)
 
         if args.target_name:
-            inv = inv.get_parameters(args.target_name)
+            inv = inv.inventory[args.target_name]
             if args.pattern:
                 pattern = args.pattern.split(".")
                 inv = deep_get(inv, pattern)
@@ -306,7 +305,7 @@ def generate_inventory(args):
         sys.exit(1)
 
 
-def get_inventory(inventory_path, ignore_class_notfound: bool = False) -> Inventory:
+def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inventory:
     """
     generic inventory function that makes inventory backend pluggable
     default backend is reclass
@@ -329,15 +328,12 @@ def get_inventory(inventory_path, ignore_class_notfound: bool = False) -> Invent
     compose_target_name = hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
     backend = AVAILABLE_BACKENDS.get(backend_id, AVAILABLE_BACKENDS.get("reclass"))
     inventory_backend: Inventory = None
-
+    
     logger.debug(f"Using {backend_id} as inventory backend")
-    inventory_backend = backend(
-        inventory_path=inventory_path,
-        compose_target_name=compose_target_name,
-        ignore_class_notfound=ignore_class_notfound,
-    )
+    inventory_backend = backend(inventory_path=inventory_path, compose_target_name=compose_target_name, ignore_class_not_found=ignore_class_not_found)
 
     cached.inv = inventory_backend
+    cached.global_inv = cached.inv.inventory
     # migrate inventory to selected inventory backend
     if hasattr(cached.args, "migrate") and cached.args.migrate:
         inventory_backend.migrate()
