@@ -23,6 +23,7 @@ TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")
 
 class InventoryTargetTestBase(unittest.TestCase):
     
+    
     def setUp(self) -> None:
         from kapitan.cached import reset_cache, args
         
