@@ -39,7 +39,7 @@ jobs:
     if: success() || failure()  # Continue running if other jobs fail
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
       - uses: psf/black@main
   
   test:
