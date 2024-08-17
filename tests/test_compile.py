@@ -16,6 +16,7 @@ import glob
 import shutil
 import yaml
 import toml
+import tempfile
 from kapitan.cli import main
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
