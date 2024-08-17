@@ -1098,6 +1098,24 @@ PyYAML = ">=5.3.1"
 typeguard = ">=3.0.0"
 
 [[package]]
+name = "kapicorp-reclass"
+version = "2.0.0"
+description = "merge data by recursive descent down an ancestry hierarchy (forked extended version)"
+optional = false
+python-versions = "*"
+files = [
+    {file = "kapicorp_reclass-2.0.0-py3-none-any.whl", hash = "sha256:d215f2d1c17a1a8467c663e24c1d9849fd8cb688a74bb068b49c3cda6a5280df"},
+    {file = "kapicorp_reclass-2.0.0.tar.gz", hash = "sha256:be7714c80e925bcf285448641674bca610388924f4a7285d14840a4e8f022843"},
+]
+
+[package.dependencies]
+ddt = "*"
+enum34 = "*"
+pyparsing = "*"
+pyyaml = "*"
+six = "*"
+
+[[package]]
 name = "keyring"
 version = "24.3.1"
 description = "Store and access your passwords safely."
@@ -2073,28 +2091,6 @@ files = [
 full = ["numpy"]
 
 [[package]]
-name = "reclass"
-version = "1.6.0"
-description = "merge data by recursive descent down an ancestry hierarchy (forked extended version)"
-optional = false
-python-versions = "*"
-files = []
-develop = false
-
-[package.dependencies]
-ddt = "*"
-enum34 = "*"
-pyparsing = "*"
-pyyaml = "*"
-six = "*"
-
-[package.source]
-type = "git"
-url = "https://github.com/kapicorp/reclass"
-reference = "HEAD"
-resolved_reference = "856b34cb77811d665c6346883238d436ac5c4924"
-
-[[package]]
 name = "reclass-rs"
 version = "0.4.0"
 description = "Reclass defines a syntax and directory structure for recursively merging YAML data sources."
@@ -2736,4 +2732,4 @@ test = ["docker", "reclass-rs"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.12"
-content-hash = "6368ba1b5e330977587c3bc0fe338666a926e239f70df85f733ac86746c7c279"
+content-hash = "869b6ec15fafba2f17dffc4147b5c64707520367e09aa3ad8e9e19833d9f18db"
