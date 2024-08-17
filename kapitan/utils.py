@@ -633,7 +633,7 @@ def copy_tree(src, dst):
 
     Returns a list of the copied files.
     """
-    before = set(glob.iglob("*", recursive=True))
+    before = set(glob.iglob("{dst}/*", recursive=True))
     shutil.copytree(src, dst, dirs_exist_ok=True)
-    after = set(glob.iglob("*", recursive=True))
+    after = set(glob.iglob("{dst}/*", recursive=True))
     return list(after - before)
