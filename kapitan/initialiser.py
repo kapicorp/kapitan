@@ -8,7 +8,8 @@
 "initialiser module"
 
 import logging
-import cruft
+from copier import run_copy
+import glob
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +22,9 @@ def initialise_skeleton(args):
     """
     
     template_git_url = args.template_git_url
-    checkout_ref = args.checkout_ref
+    if set(glob.iglob("./*")):
+        logger.error("Directory is not empty. Please initialise in an empty directory.")
+        return
     
-    cruft.create(
-        template_git_url=template_git_url,
-        checkout=checkout_ref,
-    )
+    logger.info(f"Initialising skeleton from {template_git_url}")
+    run_copy(template_git_url, vcs_ref=args.checkout_ref, unsafe=True)
