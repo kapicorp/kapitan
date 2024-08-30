@@ -2717,10 +2717,9 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 
 [extras]
 gojsonnet = ["gojsonnet"]
-reclass-rs = ["reclass-rs"]
-test = ["docker", "reclass-rs"]
+test = ["docker"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.12"
-content-hash = "9b633a77abd182a48677c02195dd64c555517309279efba92b8a97648a887597"
+content-hash = "be351e8318b75d36247adaa078cc9ba85548e8d8e07748d62e969b60ad5365cb"

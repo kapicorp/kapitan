@@ -79,8 +79,7 @@ omegaconf = "^2.4.0.dev3"
 
 [tool.poetry.extras]
 gojsonnet = ["gojsonnet"]
-test = ["docker", "reclass-rs"]
-reclass-rs = ["reclass-rs"]
+test = ["docker"]
 
 [tool.black]
 line-length = 110
