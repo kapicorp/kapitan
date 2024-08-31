@@ -232,25 +232,27 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
     cached_repo_path = os.path.join(
         save_dir, path_hash, source.chart_name + "-" + (source.version or "latest")
     )
-    if force or not exists_in_cache(cached_repo_path):
-        fetch_helm_archive(source.helm_path, source.repo, source.chart_name, source.version, cached_repo_path)
-    else:
-        logger.debug("Using cached helm chart at %s", cached_repo_path)
 
     for dep in deps:
         output_path = dep["output_path"]
+        
+        if not os.path.exists(output_path) or force:
+            if not exists_in_cache(cached_repo_path):
+                fetch_helm_archive(source.helm_path, source.repo, source.chart_name, source.version, cached_repo_path)
+            else:
+                logger.debug("Using cached helm chart at %s", cached_repo_path)
 
-        parent_dir = os.path.dirname(output_path)
-        if parent_dir != "":
-            os.makedirs(parent_dir, exist_ok=True)
+            parent_dir = os.path.dirname(output_path)
+            if parent_dir != "":
+                os.makedirs(parent_dir, exist_ok=True)
 
-        if force:
-            copied = copy_tree(cached_repo_path, output_path)
-        else:
-            copied = safe_copy_tree(cached_repo_path, output_path)
+            if force:
+                copied = copy_tree(cached_repo_path, output_path)
+            else:
+                copied = safe_copy_tree(cached_repo_path, output_path)
 
-        if copied:
-            logger.info("Dependency %s: saved to %s", source.chart_name, output_path)
+            if copied:
+                logger.info("Dependency %s: saved to %s", source.chart_name, output_path)
 
 
 def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
