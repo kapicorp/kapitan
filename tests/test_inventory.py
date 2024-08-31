@@ -6,6 +6,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "inventory tests"
+from kapitan.resources import inventory
+from kapitan.inventory import InventoryBackends
 
 import importlib
 import unittest
@@ -15,7 +17,6 @@ import os
 import shutil
 logger = logging.getLogger(__name__)
 
-from kapitan.resources import inventory
 
 TEST_PWD = os.getcwd()
 TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")
@@ -28,8 +29,10 @@ class InventoryTargetTestBase(unittest.TestCase):
         from kapitan.cached import reset_cache, args
         
         reset_cache()
-        if not importlib.util.find_spec(self.backend_id):
-            self.skipTest(f"backend module {self.backend_id} not available")
+        # Fix inconsistency between reclass-rs (option name) and reclass_rs (module name)
+        backend_module_name = self.backend_id.replace("-", "_") 
+        if not importlib.util.find_spec(backend_module_name):
+            self.skipTest(f"backend module {backend_module_name} not available")
         args.inventory_backend = self.backend_id 
         
     def test_inventory_target(self):
@@ -45,7 +48,7 @@ class InventoryTargetTestBase(unittest.TestCase):
 
 class InventoryTargetTestReclass(InventoryTargetTestBase):
     def setUp(self):
-        self.backend_id = "reclass"
+        self.backend_id = InventoryBackends.RECLASS
         self.expected_targets_count = 10
         self.inventory_path = "examples/kubernetes/inventory"
         super().setUp()
@@ -53,7 +56,7 @@ class InventoryTargetTestReclass(InventoryTargetTestBase):
 
 class InventoryTargetTestReclassRs(InventoryTargetTestBase):
     def setUp(self):
-        self.backend_id = "reclass_rs"
+        self.backend_id = InventoryBackends.RECLASS_RS
         self.expected_targets_count = 10
         self.inventory_path = "examples/kubernetes/inventory"
         super().setUp()
@@ -64,7 +67,7 @@ class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
 
     def setUp(self) -> None:
         shutil.copytree(TEST_KUBERNETES_INVENTORY, self.temp_dir, dirs_exist_ok=True)
-        self.backend_id = "omegaconf"
+        self.backend_id = InventoryBackends.OMEGACONF
         self.expected_targets_count = 10
         from kapitan.inventory.inv_omegaconf import migrate
         self.inventory_path = os.path.join(self.temp_dir, "inventory")

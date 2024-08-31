@@ -45,7 +45,8 @@ pytest-emoji = "^0.2.0"
 source = "git-tag"
 
 [tool.poetry.dependencies]
-python = "^3.10,<3.12"
+python = "^3.10,<3.13"
+strenum = { version = "^0.4.15", python = "^3.10" }
 addict = "^2.4.0"
 azure-keyvault-keys = "^4.7.0"
 boto3 = "^1.18.17"

@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "inventory tests"
+from kapitan.inventory import get_inventory_backend
 
 import unittest
 import logging
@@ -18,13 +19,14 @@ logger = logging.getLogger(__name__)
 TEST_PWD = os.getcwd()
 TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")
 
-from kapitan.inventory.inv_omegaconf.inv_omegaconf import OmegaConfInventory as inventory_backend
+
 
 class InventoryTestOmegaConf(unittest.TestCase):
     temp_dir = tempfile.mkdtemp()
     
     def setUp(self) -> None:
         shutil.copytree(TEST_KUBERNETES_INVENTORY, self.temp_dir, dirs_exist_ok=True)
+        inventory_backend = get_inventory_backend("omegaconf")
         self.inventory_path = self.temp_dir
         self.extraArgv = ["--inventory-backend=omegaconf"]
         from kapitan.inventory.inv_omegaconf import migrate
