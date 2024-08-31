@@ -15,10 +15,8 @@ on:
     paths-ignore:
       - 'docs/**'
       - '.github/workflows/documentation.yml'
-      - 'requirements.docs.txt'
       - 'mkdocs.yml'
       - 'CNAME'
-      - 'Dockerfile.docs'
 
   release:
     types: [created]
@@ -27,10 +25,8 @@ on:
     paths-ignore:
       - 'docs/**'
       - '.github/workflows/documentation.yml'
-      - 'requirements.docs.txt'
       - 'mkdocs.yml'
       - 'CNAME'
-      - 'Dockerfile.docs'
 
 jobs:
   lint:

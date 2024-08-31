@@ -50,10 +50,8 @@ format_codestyle:
 
 .PHONY: local_serve_documentation
 local_serve_documentation:
-	docker build -f Dockerfile.docs --no-cache -t kapitan-docs .
-	docker run --rm -v $(PWD):/docs -p 8000:8000 kapitan-docs
+	poetry run mike serve
 
 .PHONY: mkdocs_gh_deploy
-mkdocs_gh_deploy: # to run locally assuming git ssh access
-	docker build -f Dockerfile.docs --no-cache -t kapitan-docs .
-	docker run --rm -it -v $(PWD):/src -v ~/.ssh:/root/.ssh -w /src kapitan-docs gh-deploy -f ./mkdocs.yml
+mkdocs_gh_deploy:
+	poetry run mike deploy --push dev master
