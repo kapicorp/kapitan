@@ -38,4 +38,6 @@ jobs:
         if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_COMMITTER_NAME: mike-mkdocs-bot
+          GIT_COMMITTER_EMAIL: admins@kapicorp
         run: mike deploy --push dev master
