@@ -5,15 +5,13 @@ import shutil
 import tempfile
 import unittest
 
-from kapitan.inventory import ReclassInventory
-from kapitan.inventory import ReclassRsInventory
+from kapitan.inventory import get_inventory_backend, InventoryBackends
 from kapitan.inventory.inventory import InventoryError
-from kapitan import setup_logging
 
 
 class ReclassComposeNodeNameTest(unittest.TestCase):
     def setUp(self):
-        self.inventory = ReclassInventory
+        self.inventory = get_inventory_backend(InventoryBackends.RECLASS)
 
     def test_compose_target_name(self):
         inventory_path = "examples/kubernetes/inventory"
@@ -70,4 +68,4 @@ class ReclassComposeNodeNameTest(unittest.TestCase):
 
 class ReclassRsComposeNodeNameTest(ReclassComposeNodeNameTest):
     def setUp(self):
-        self.inventory = ReclassRsInventory
+        self.inventory = get_inventory_backend(InventoryBackends.RECLASS_RS)

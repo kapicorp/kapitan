@@ -20,6 +20,7 @@ import tempfile
 from kapitan.cli import main
 from kapitan.utils import directory_hash
 from kapitan.cached import reset_cache
+from kapitan.inventory import InventoryBackends
 
 TEST_PWD = os.getcwd()
 TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")
@@ -219,7 +220,7 @@ class CompileKubernetesTest(unittest.TestCase):
 class CompileKubernetesTestReclassRs(CompileKubernetesTest):
     def setUp(self):
         super().setUp()
-        self.extraArgv = ["--inventory-backend=reclass-rs"]
+        self.extraArgv = [f"--inventory-backend={(InventoryBackends.RECLASS_RS)}"]
 
     @unittest.skip("Already tested")
     def test_compile_not_enough_args(self):

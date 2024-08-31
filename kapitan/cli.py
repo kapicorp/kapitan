@@ -21,7 +21,7 @@ import yaml
 from kapitan import cached, defaults, setup_logging
 from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import jsonnet_file
-from kapitan.inventory import AVAILABLE_BACKENDS
+from kapitan.inventory import AVAILABLE_BACKENDS, InventoryBackends
 from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
@@ -108,7 +108,7 @@ def build_parser():
     inventory_backend_parser.add_argument(
         "--inventory-backend",
         action="store",
-        default=from_dot_kapitan("inventory_backend", "inventory-backend", "reclass"),
+        default=from_dot_kapitan("inventory_backend", "inventory-backend", InventoryBackends.RECLASS),
         choices=AVAILABLE_BACKENDS.keys(),
         help="Select the inventory backend to use (default=reclass)",
     )
