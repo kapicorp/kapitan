@@ -51,6 +51,7 @@ theme:
 extra:
   version:
     provider: mike
+    alias: true
   consent:
     title: Cookie consent
     description: >-
