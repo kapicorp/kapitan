@@ -11,18 +11,21 @@ on:
 
 jobs:
   pex_build_publish:
-    if: false  # disable as this is not working with multiple python versions
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install poetry
         run: |- 
           pipx install poetry
-          pipx inject poetry poetry-plugin-export
+          pipx inject poetry poetry-plugin-export --force
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           cache: 'pip'
+          python-version: |
+            3.10
+            3.11
+            3.12
       - name: Install libraries dependencies
         run: |
           poetry export --without-hashes --format=requirements.txt > requirements.txt
@@ -44,6 +47,7 @@ jobs:
             --python=python3.12 \
             -m kapitan \
             -o dist/kapitan.linux-x86_64.pex
+          dist/kapitan.linux-x86_64.pex --help 
 
       - name: Add linux-x86_64 pex to assets
         uses: softprops/action-gh-release@v2
