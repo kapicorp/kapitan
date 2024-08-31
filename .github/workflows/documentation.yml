@@ -39,8 +39,8 @@ jobs:
       - name: Install libraries dependencies
         run: |
           poetry install --only docs --no-root
-          mike --version
-          mkdocs --version
+          poetry run mike --version
+          poetry run mkdocs --version
 
       - run: mkdocs build
       - name: Deploy docs
