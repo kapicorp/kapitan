@@ -15,7 +15,7 @@ Write articles on Kapitan and share your way of working. Inspire others, and rea
 
 Find something odd? Let us know or change it yourself: you can edit pages of this website on Github by clicking the pencil icon at the top right of this page!
 
-## Update documentation
+## Update documentation [![Build and deploy documentation](https://github.com/kapicorp/kapitan/actions/workflows/documentation.yml/badge.svg)](https://github.com/kapicorp/kapitan/actions/workflows/documentation.yml)
 
 We use [mkdocs](https://www.mkdocs.org/) to generate our gh-pages from `.md` files under docs/ folder.
 
@@ -31,4 +31,4 @@ Submit a PR for our master branch that updates the `.md` file(s). Test how the c
 
 ### Submit a PR
 
-Once the above PR has been merged, our CI will deploy your docs automatically. [![Build and deploy documentation](https://github.com/kapicorp/kapitan/actions/workflows/documentation.yml/badge.svg)](https://github.com/kapicorp/kapitan/actions/workflows/documentation.yml)
+Once the above PR has been merged, our CI will deploy your docs automatically. 
