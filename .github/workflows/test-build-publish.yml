@@ -14,7 +14,7 @@ on:
       - test/*
     paths-ignore:
       - 'docs/**'
-      - '.github/worklows/documentation.yml'
+      - '.github/workflows/documentation.yml'
       - 'requirements.docs.txt'
       - 'mkdocs.yml'
       - 'CNAME'
@@ -26,7 +26,7 @@ on:
   pull_request:
     paths-ignore:
       - 'docs/**'
-      - '.github/worklows/documentation.yml'
+      - '.github/workflows/documentation.yml'
       - 'requirements.docs.txt'
       - 'mkdocs.yml'
       - 'CNAME'

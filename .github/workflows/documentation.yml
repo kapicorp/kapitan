@@ -10,7 +10,7 @@ on:
   pull_request:
     paths:
       - 'docs/**'
-      - '.github/worklows/documentation.yml'
+      - '.github/workflows/documentation.yml'
       - 'requirements.docs.txt'
       - 'Dockerfile.docs'
       - 'mkdocs.yml'
@@ -20,7 +20,7 @@ on:
       - master
     paths:
       - 'docs/**'
-      - '.github/worklows/documentation.yml'
+      - '.github/workflows/documentation.yml'
       - 'requirements.docs.txt'
       - 'Dockerfile.docs'
       - 'mkdocs.yml'
