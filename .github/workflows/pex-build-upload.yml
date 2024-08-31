@@ -2,6 +2,7 @@
 name: PEX Build and Upload
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows:
       - Upload Python Package
@@ -14,12 +15,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - name: Install poetry
+        run: |- 
+          pipx install poetry
+          pipx inject poetry poetry-plugin-export
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.x
+          cache: 'pip'
+      - name: Install libraries dependencies
+        run: |
+          poetry export --without-hashes --format=requirements.txt > requirements.txt
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -31,7 +37,14 @@ jobs:
       - name: Build Pex
         run: |-
           mkdir -p dist
-          pex .[gojsonnet] -r requirements.txt --python-shebang='#!/usr/bin/env python3' --python=python3.7 --python=python3.8 --python=python3.9 -m kapitan -o dist/kapitan.linux-x86_64.pex
+          pex .[gojsonnet] -r requirements.txt \
+            --python-shebang='#!/usr/bin/env python3' \
+            --python=python3.11 \
+            --python=python3.10 \
+            --python=python3.12 \
+            -m kapitan \
+            -o dist/kapitan.linux-x86_64.pex
+
       - name: Add linux-x86_64 pex to assets
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
