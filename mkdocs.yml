@@ -1,7 +1,7 @@
 # dependencies:
 # pip install mkdocs mkdocs-material pymdown-extensions
 site_name: "Kapitan: Keep your ship together"
-site_url: "https://kapitan.dev"
+site_url: "https://kapitan.dev/"
 strict: true
 plugins:
   - blog:
@@ -49,6 +49,8 @@ theme:
         name: Switch to light mode
 
 extra:
+  version:
+    provider: mike
   consent:
     title: Cookie consent
     description: >-
