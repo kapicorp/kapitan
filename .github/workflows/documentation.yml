@@ -1,5 +1,5 @@
 ---
-name: Build and deploy documentation on merge to master
+name: Build and deploy kapitan.dev from docs
 
 concurrency:
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
@@ -38,12 +38,15 @@ jobs:
           cache: 'poetry'
       - name: Install libraries dependencies
         run: |
-          poetry install --only docs
-      - run: mkdocs build
+          poetry install --only docs --no-root
+          poetry run mike --version
+          poetry run mkdocs --version
+
+      - run: poetry run mkdocs build
       - name: Deploy docs
         if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_COMMITTER_NAME: mike-mkdocs-bot
           GIT_COMMITTER_EMAIL: admins@kapicorp
-        run: mike deploy --push dev master
+        run: poetry run mike deploy --push dev master
