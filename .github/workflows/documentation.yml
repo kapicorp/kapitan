@@ -36,8 +36,6 @@ jobs:
       - run: mkdocs build
       - name: Deploy docs
         if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
-        uses: mhausenblas/mkdocs-deploy-gh-pages@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CONFIG_FILE: ./mkdocs.yml
-          REQUIREMENTS: requirements.docs.txt
+        run: mike deploy --push dev master
