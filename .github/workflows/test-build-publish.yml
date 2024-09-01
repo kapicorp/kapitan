@@ -31,6 +31,7 @@ on:
 jobs:
   precommit:
     name: precommit checks
+    id: precommit
     runs-on: ubuntu-latest
     if: success() || failure()  # Continue running if other jobs fail
     steps:
@@ -120,7 +121,7 @@ jobs:
   publish:
     name: publish platform images
     # Only starts if everything else is successful
-    needs: [lint, test, build]
+    needs: [precommit, test, build]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     strategy:
