@@ -10,9 +10,12 @@ import importlib
 import logging
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 
+import kapitan.cached
+from kapitan.cli import build_parser
 from kapitan.inventory import InventoryBackends
 from kapitan.resources import inventory
 
@@ -24,16 +27,16 @@ TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")
 
 
 class InventoryTargetTestBase(unittest.TestCase):
-
     def setUp(self) -> None:
-        from kapitan.cached import args, reset_cache
+        sys.argv = ["kapitan", "compile"]
+        args = build_parser().parse_args()
 
-        reset_cache()
         # Fix inconsistency between reclass-rs (option name) and reclass_rs (module name)
         backend_module_name = self.backend_id.replace("-", "_")
         if not importlib.util.find_spec(backend_module_name):
             self.skipTest(f"backend module {backend_module_name} not available")
         args.inventory_backend = self.backend_id
+        kapitan.cached.args = args
 
     def test_inventory_target(self):
         inv = inventory(inventory_path=self.inventory_path, target_name="minikube-es")
