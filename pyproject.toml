@@ -33,6 +33,9 @@ packages = [
 [tool.poetry.scripts]
 kapitan = 'kapitan.cli:main'
 
+[tool.poetry.group.dev]
+optional = true
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.0"
 coverage = "^7.6.1"
@@ -47,7 +50,8 @@ flake8-pyproject = "^1.2.3"
 flake8-bugbear = "^24.8.19"
 
 
-
+[tool.poetry.group.docs]
+optional = true
 [tool.poetry.group.docs.dependencies]
 markdown-include = "^0.8.1"
 mkdocs-material = "^9.5.34"
