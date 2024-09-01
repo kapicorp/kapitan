@@ -430,6 +430,31 @@ files = [
 ]
 
 [[package]]
+name = "copier"
+version = "9.3.1"
+description = "A library for rendering project templates."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "copier-9.3.1-py3-none-any.whl", hash = "sha256:20d60383a3fb99054ea4d24a8f71c6f9219b40ac50db1d97d412583d739bce99"},
+    {file = "copier-9.3.1.tar.gz", hash = "sha256:e8515c082149f771268e8bc7fe400891d96e765797f5dac9fbae191f6427a24c"},
+]
+
+[package.dependencies]
+colorama = ">=0.4.6"
+dunamai = ">=1.7.0"
+funcy = ">=1.17"
+jinja2 = ">=3.1.4"
+jinja2-ansible-filters = ">=1.3.1"
+packaging = ">=23.0"
+pathspec = ">=0.9.0"
+plumbum = ">=1.6.9"
+pydantic = ">=2.4.2"
+pygments = ">=2.7.1"
+pyyaml = ">=5.3.1"
+questionary = ">=1.8.1"
+
+[[package]]
 name = "coverage"
 version = "7.6.1"
 description = "Code coverage measurement for Python"
@@ -610,6 +635,20 @@ ssh = ["paramiko (>=2.4.3)"]
 websockets = ["websocket-client (>=1.3.0)"]
 
 [[package]]
+name = "dunamai"
+version = "1.22.0"
+description = "Dynamic version generation"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "dunamai-1.22.0-py3-none-any.whl", hash = "sha256:eab3894b31e145bd028a74b13491c57db01986a7510482c9b5fff3b4e53d77b7"},
+    {file = "dunamai-1.22.0.tar.gz", hash = "sha256:375a0b21309336f0d8b6bbaea3e038c36f462318c68795166e31f9873fdad676"},
+]
+
+[package.dependencies]
+packaging = ">=20.9"
+
+[[package]]
 name = "enum34"
 version = "1.1.10"
 description = "Python 3.4 Enum backported to 3.3, 3.2, 3.1, 2.7, 2.6, 2.5, and 2.4"
@@ -701,6 +740,17 @@ TOMLi = {version = "*", markers = "python_version < \"3.11\""}
 
 [package.extras]
 dev = ["pyTest", "pyTest-cov"]
+
+[[package]]
+name = "funcy"
+version = "2.0"
+description = "A fancy and practical functional tools"
+optional = false
+python-versions = "*"
+files = [
+    {file = "funcy-2.0-py2.py3-none-any.whl", hash = "sha256:53df23c8bb1651b12f095df764bfb057935d49537a56de211b098f4c79614bb0"},
+    {file = "funcy-2.0.tar.gz", hash = "sha256:3963315d59d41c6f30c04bc910e10ab50a3ac4a225868bfa96feed133df075cb"},
+]
 
 [[package]]
 name = "ghp-import"
@@ -1006,6 +1056,24 @@ MarkupSafe = ">=2.0"
 
 [package.extras]
 i18n = ["Babel (>=2.7)"]
+
+[[package]]
+name = "jinja2-ansible-filters"
+version = "1.3.2"
+description = "A port of Ansible's jinja2 filters without requiring ansible core."
+optional = false
+python-versions = "*"
+files = [
+    {file = "jinja2-ansible-filters-1.3.2.tar.gz", hash = "sha256:07c10cf44d7073f4f01102ca12d9a2dc31b41d47e4c61ed92ef6a6d2669b356b"},
+    {file = "jinja2_ansible_filters-1.3.2-py3-none-any.whl", hash = "sha256:e1082f5564917649c76fed239117820610516ec10f87735d0338688800a55b34"},
+]
+
+[package.dependencies]
+Jinja2 = "*"
+PyYAML = "*"
+
+[package.extras]
+test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "jmespath"
@@ -1471,6 +1539,25 @@ dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
+name = "plumbum"
+version = "1.8.3"
+description = "Plumbum: shell combinators library"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "plumbum-1.8.3-py3-none-any.whl", hash = "sha256:8595d36dae2472587d6f59789c8d7b26250f45f6f6ed75ccb378de59ee7b9cf9"},
+    {file = "plumbum-1.8.3.tar.gz", hash = "sha256:6092c85ab970b7a7a9d5d85c75200bc93be82b33c9bdf640ffa87d2d7c8709f0"},
+]
+
+[package.dependencies]
+pywin32 = {version = "*", markers = "platform_system == \"Windows\" and platform_python_implementation != \"PyPy\""}
+
+[package.extras]
+dev = ["paramiko", "psutil", "pytest (>=6.0)", "pytest-cov", "pytest-mock", "pytest-timeout"]
+docs = ["sphinx (>=4.0.0)", "sphinx-rtd-theme (>=1.0.0)"]
+ssh = ["paramiko"]
+
+[[package]]
 name = "portalocker"
 version = "2.10.1"
 description = "Wraps the portalocker recipe for easy usage"
@@ -1506,6 +1593,20 @@ identify = ">=1.0.0"
 nodeenv = ">=0.11.1"
 pyyaml = ">=5.1"
 virtualenv = ">=20.10.0"
+
+[[package]]
+name = "prompt-toolkit"
+version = "3.0.36"
+description = "Library for building powerful interactive command lines in Python"
+optional = false
+python-versions = ">=3.6.2"
+files = [
+    {file = "prompt_toolkit-3.0.36-py3-none-any.whl", hash = "sha256:aa64ad242a462c5ff0363a7b9cfe696c20d55d9fc60c11fd8e632d064804d305"},
+    {file = "prompt_toolkit-3.0.36.tar.gz", hash = "sha256:3e163f254bef5a03b146397d7c1963bd3e2812f0964bb9a24e6ec761fd28db63"},
+]
+
+[package.dependencies]
+wcwidth = "*"
 
 [[package]]
 name = "proto-plus"
@@ -2025,6 +2126,20 @@ files = [
 
 [package.dependencies]
 pyyaml = "*"
+
+[[package]]
+name = "questionary"
+version = "2.0.1"
+description = "Python library to build pretty command line user prompts ⭐️"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "questionary-2.0.1-py3-none-any.whl", hash = "sha256:8ab9a01d0b91b68444dff7f6652c1e754105533f083cbe27597c8110ecc230a2"},
+    {file = "questionary-2.0.1.tar.gz", hash = "sha256:bcce898bf3dbb446ff62830c86c5c6fb9a22a54146f0f5597d3da43b10d8fc8b"},
+]
+
+[package.dependencies]
+prompt_toolkit = ">=2.0,<=3.0.36"
 
 [[package]]
 name = "reclass-rs"
@@ -2565,6 +2680,17 @@ files = [
 watchmedo = ["PyYAML (>=3.10)"]
 
 [[package]]
+name = "wcwidth"
+version = "0.2.13"
+description = "Measures the displayed width of unicode strings in a terminal"
+optional = false
+python-versions = "*"
+files = [
+    {file = "wcwidth-0.2.13-py2.py3-none-any.whl", hash = "sha256:3da69048e4540d84af32131829ff948f1e022c1c6bdb8d6102117aac784f6859"},
+    {file = "wcwidth-0.2.13.tar.gz", hash = "sha256:72ea0c06399eb286d978fdedb6923a9eb47e1c486ce63e9b4e64fc18303972b5"},
+]
+
+[[package]]
 name = "yamllint"
 version = "1.35.1"
 description = "A linter for YAML files."
@@ -2609,4 +2735,4 @@ reclass-rs = ["reclass-rs"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.13"
-content-hash = "150d4e578d6a4d21fe39d3872a7b2ac51e0bd02eb975dd14d32b2d371d52fffb"
+content-hash = "bd9bfefbe1cb3bf433c78196190067a7a9c92dad6021cf9afa66d6d989e5c892"
