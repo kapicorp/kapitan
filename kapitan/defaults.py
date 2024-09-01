@@ -18,3 +18,5 @@ FILE_PATH_FORMAT = "v{}-%s/{}.json" % SCHEMA_TYPE
 
 # default path from where user defined custom filters are read
 DEFAULT_JINJA2_FILTERS_PATH = os.path.join("lib", "jinja2_filters.py")
+COPIER_TEMPLATE_REPOSITORY = "https://github.com/kapicorp/kapitan-reference.git"
+COPIER_TEMPLATE_REF = "copier"
