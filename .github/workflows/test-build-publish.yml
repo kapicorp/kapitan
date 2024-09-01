@@ -180,7 +180,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{steps.meta.output.labels}}
+          labels: ${{steps.meta.outputs.labels}}
           cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
 

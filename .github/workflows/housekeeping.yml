@@ -14,6 +14,6 @@ jobs:
             Remove the stale label or comment if this issue is still relevant for you.
             If not, please close it yourself.
           days-before-issue-stale: 365
-          day-before-pr-stale: -1
+          days-before-pr-stale: -1
           days-before-close: -1
           days-before-pr-close: -1

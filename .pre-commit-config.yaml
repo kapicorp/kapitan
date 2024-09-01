@@ -17,10 +17,14 @@ repos:
       - id: debug-statements
       - id: end-of-file-fixer
       - id: check-merge-conflict
-  -   repo: https://github.com/python-poetry/poetry
-      rev: '1.8.0'
-      hooks:
+  - repo: https://github.com/python-poetry/poetry
+    rev: '1.8.0'
+    hooks:
       - id: poetry-check
       - id: poetry-lock
         entry: env PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry lock
       - id: poetry-install
+  - repo: https://github.com/rhysd/actionlint
+    rev: 'v1.7.1'
+    hooks:
+    - id: actionlint
