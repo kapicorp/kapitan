@@ -31,7 +31,6 @@ on:
 jobs:
   precommit:
     name: precommit checks
-    id: precommit
     runs-on: ubuntu-latest
     if: success() || failure()  # Continue running if other jobs fail
     steps:
