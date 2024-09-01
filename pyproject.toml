@@ -35,10 +35,16 @@ kapitan = 'kapitan.cli:main'
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.0"
-coverage = "^7.5.0"
+coverage = "^7.6.1"
 docker = "^7.0.0"
 pytest-md = "^0.2.0"
 pytest-emoji = "^0.2.0"
+black = "^24.8.0"
+pre-commit = "^3.8.0"
+isort = "^5.13.2"
+flake8 = "^7.1.1"
+flake8-pyproject = "^1.2.3"
+flake8-bugbear = "^24.8.19"
 
 
 
@@ -92,13 +98,14 @@ gojsonnet = ["gojsonnet"]
 test = ["docker", "reclass-rs"]
 reclass-rs = ["reclass-rs"]
 
+[tool.isort]
+profile = "black"
+
+[tool.flake8]
+max-line-length = 110
+extend-select = "B950"
+extend-ignore = "E203,E501,E701"
+
 [tool.black]
 line-length = 110
-target-version = ['py310']
-exclude = '''
-(
-  /(
-    | .*version.py
-  )
-)
-'''
+target-version = ['py311']

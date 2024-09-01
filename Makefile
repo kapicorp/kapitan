@@ -1,9 +1,26 @@
 all: clean package
 
+.PHONY: pre-requisites
+pre-requisites:
+	@echo ----- Installing pre-requisites -----
+	poetry install
+
+.PHONY: lint
+lint:
+	@echo ----- Running lint -----
+	poetry run flake8 kapitan
+	poetry run mypy kapitan
+	poetry run pylint kapitan
+
+.PHONY: install poetry with pipx
+install_poetry:
+	@echo ----- Installing poetry with pipx -----
+	pipx install poetry
+
 .PHONY: test
-test:
+test: pre-requisites lint test_python test_docker test_coverage test_formatting
 	@echo ----- Running python tests -----
-	python3 -m unittest discover
+	poetry run pytest
 
 .PHONY: test_docker
 test_docker:
@@ -16,13 +33,13 @@ test_docker:
 .PHONY: test_coverage
 test_coverage:
 	@echo ----- Testing code coverage -----
-	coverage run --source=kapitan -m unittest discover
-	coverage report --fail-under=65 -m
+	poetry run coverage run --source=kapitan -m pytest
+	poetry run coverage report --fail-under=65 -m
 
 .PHONY: test_formatting
 test_formatting:
 	@echo ----- Testing code formatting -----
-	black --check .
+	poetry run black --check .
 	@echo
 
 .PHONY: release
@@ -43,9 +60,7 @@ clean:
 
 .PHONY: format_codestyle
 format_codestyle:
-	which black || echo "Install black with pip3 install --user black"
-	# ignores line length and reclass
-	black .
+	poetry run black .
 	@echo
 
 .PHONY: local_serve_documentation
