@@ -54,6 +54,7 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
 class CompileTestResourcesTestKadet(unittest.TestCase):
     def setUp(self):
         os.chdir(TEST_RESOURCES_PATH)
+        reset_cache()
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "kadet-test"]
@@ -86,6 +87,7 @@ class CompileTestResourcesTestKadet(unittest.TestCase):
 class FailCompileTestResourcesTestKadet(unittest.TestCase):
     def setUp(self):
         os.chdir(TEST_RESOURCES_PATH)
+        reset_cache()
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "fail-compile"]
@@ -99,6 +101,7 @@ class FailCompileTestResourcesTestKadet(unittest.TestCase):
 class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
     def setUp(self):
         os.chdir(TEST_RESOURCES_PATH)
+        reset_cache()
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "jinja2-input-params"]
@@ -131,6 +134,7 @@ class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
 class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
     def setUp(self):
         os.chdir(TEST_RESOURCES_PATH)
+        reset_cache()
 
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "jinja2-postfix-strip"]
@@ -177,7 +181,7 @@ class CompileKubernetesTest(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
 
     def test_compile_specific_target(self):
-
+        reset_cache()
         sys.argv = ["kapitan", "compile", "-t", "minikube-mysql"] + self.extraArgv
         main()
         self.assertTrue(
@@ -188,6 +192,7 @@ class CompileKubernetesTest(unittest.TestCase):
         main()
 
     def test_compile_target_with_label(self):
+        reset_cache()
         sys.argv = ["kapitan", "compile", "-l", "type=kadet"] + self.extraArgv
         main()
         self.assertTrue(
@@ -235,7 +240,7 @@ class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
     temp_dir = tempfile.mkdtemp()
 
     def setUp(self):
-
+        reset_cache()
         shutil.copytree(self.inventory_path, self.temp_dir, dirs_exist_ok=True)
         self.inventory_path = self.temp_dir
         super().setUp()
