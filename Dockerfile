@@ -37,11 +37,13 @@ COPY ./poetry.lock ./poetry.lock
 COPY ./README.md ./README.md
 
 # Installs and caches dependencies
-RUN poetry install --no-root --extras=gojsonnet --extras=omegaconf --extras=reclass-rs
+ENV POETRY_VIRTUALENVS_CREATE=false
+RUN poetry install --no-root --extras=gojsonnet --extras=reclass-rs --extras=omegaconf
 
 COPY ./kapitan ./kapitan
 
-RUN poetry install --extras=gojsonnet --extras=omegaconf --extras=reclass-rs
+RUN pip install .[gojsonnet,omegaconf,reclass-rs]
+
 
 # Final image with virtualenv built in previous step
 FROM python:3.11-slim

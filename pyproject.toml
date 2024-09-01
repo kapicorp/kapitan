@@ -97,7 +97,6 @@ gitdb = "^4.0.10"
 packaging = ">=23,<25"
 typing-extensions = "^4.0.0"
 kadet = "^0.3.0"
-poetry = "^1.8.3"
 regex = "^2024.5.10"
 omegaconf = {version = "^2.4.0.dev3", optional = true}
 reclass-rs = {version = "^0.4.0", optional = true }
