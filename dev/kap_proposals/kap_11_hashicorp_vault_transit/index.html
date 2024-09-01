@@ -1870,7 +1870,7 @@ Parameters in the secret file are collected from the inventory of the target we 
 <span class="w">        </span><span class="nt">VAULT_SKIP_VERIFY</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
 <span class="w">        </span><span class="nt">auth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">token</span>
 <span class="w">        </span><span class="nt">mount</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">transit</span>
-<span class="w">        </span><span class="nt">crypto_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">new_key</span><span class="w">   </span>
+<span class="w">        </span><span class="nt">crypto_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">new_key</span>
 <span class="w">        </span><span class="nt">always_latest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
 </code></pre></div>
 <p>Environment variables that can be defined in kapitan inventory are <code>VAULT_ADDR</code>, <code>VAULT_NAMESPACE</code>, <code>VAULT_SKIP_VERIFY</code>, <code>VAULT_CLIENT_CERT</code>, <code>VAULT_CLIENT_KEY</code>, <code>VAULT_CAPATH</code> &amp; <code>VAULT_CACERT</code>.
@@ -1879,7 +1879,7 @@ Extra parameters that can be defined in inventory are:</p>
 <li><code>auth</code>: specify which authentication method to use like <code>token</code>,<code>userpass</code>,<code>ldap</code>,<code>github</code> &amp; <code>approle</code></li>
 <li><code>mount</code>: specify the mount point of key's path. e.g if path=<code>alpha-secret/foo/bar</code> then <code>mount: alpha-secret</code> (default <code>secret</code>)</li>
 <li><code>crypto_key</code>: Name of the <code>encryption key</code> defined in vault</li>
-<li><code>always_latest</code>: Always rewrap ciphertext to latest rotated <code>crypto_key</code> version<br />
+<li><code>always_latest</code>: Always rewrap ciphertext to latest rotated <code>crypto_key</code> version
 Environment variables <strong>should NOT</strong> be defined in inventory are <code>VAULT_TOKEN</code>,<code>VAULT_USERNAME</code>,<code>VAULT_PASSWORD</code>,<code>VAULT_ROLE_ID</code>,<code>VAULT_SECRET_ID</code>.
 This makes the secret_inside_kapitan file accessible throughout the inventory, where we can use the secret whenever necessary like <code>?{vaulttransit:${target_name}/secret_inside_kapitan}</code></li>
 </ul>

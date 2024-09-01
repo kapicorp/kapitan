@@ -1849,18 +1849,18 @@
 <span class="w">    </span><span class="nt">nginx</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:latest</span>
 </code></pre></div>
-<p>Usually when we want to talk about the <code>image</code> subkey, we normally use either of the following: </p>
+<p>Usually when we want to talk about the <code>image</code> subkey, we normally use either of the following:</p>
 <ul>
 <li><code>parameters.components.nginx.image</code></li>
 <li><code>components.nginx.image</code></li>
 </ul>
 <p>However, when used in parameter expansion, remember to:</p>
 <ul>
-<li>replace the <code>.</code> with <code>:</code> </li>
+<li>replace the <code>.</code> with <code>:</code></li>
 <li>omit the <code>parameters</code> initial key which is implied</li>
 <li>wrap it into the <code>${}</code> variable interpolation syntax</li>
 </ul>
-<p>The correct way to reference <code>parameters.nginx.image</code> then becomes <code>${components:nginx:image}</code>. </p>
+<p>The correct way to reference <code>parameters.nginx.image</code> then becomes <code>${components:nginx:image}</code>.</p>
 </div>
 <p>The <a href="#inventory"><strong>Inventory</strong></a> allows you to refer to other values defined elsewhere in the structure, using parameter interpolation.</p>
 <p>Given the example:</p>

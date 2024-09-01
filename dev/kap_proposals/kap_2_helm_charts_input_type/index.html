@@ -1821,13 +1821,13 @@
 <p>This will allow kapitan, during compilation, to overwrite the values in user-specified helm charts using its inventory by calling the Go &amp; Sprig template libraries. The helm charts can be specified via local path, and users may download the helm chart via <a href="../kap_1_external_dependencies/">external-dependency feature</a> (of http[s] type).</p>
 <p>Author: @yoshi-1224</p>
 <h2 id="specification">Specification</h2>
-<p>This feature basically follows the <code>helm template</code> command available.<br />
+<p>This feature basically follows the <code>helm template</code> command available.
 This will run after the fetching of the external dependencies takes place, such that users can simultaneously specify the fetch as well as the import of a helm chart dependency.</p>
 <h3 id="semantics">Semantics</h3>
 <div class="highlight"><pre><span></span><code><span class="nt">kapitan</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">compile</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">helm</span>
-<span class="w">      </span><span class="nt">input_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;path_to_chart_dir&gt;</span><span class="w"> </span>
+<span class="w">      </span><span class="nt">input_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;path_to_chart_dir&gt;</span>
 <span class="w">      </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;output_path&gt;</span>
 <span class="w">      </span><span class="nt">set-file</span><span class="p">:</span>
 <span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;optional_file_path&gt;</span>

@@ -1880,8 +1880,8 @@
 
 <p>The <strong>Inventory</strong> is a core component of Kapitan: this section aims to explain how it works and how to best take advantage of it.</p>
 <p>The <strong>Inventory</strong> is a hierarchical <code>YAML</code> based structure which you use to capture anything that you want to make available to <strong>Kapitan</strong>, so that it can be passed on to its templating engines.</p>
-<p>The first concept to learn about the <strong>Inventory</strong> is the <a href="#targets"><strong>target</strong></a>. A target is a file, found under the <a href="#targets"><code>inventory/targets</code></a> substructure, that tells Kapitan what you want to compile. It will usually map to something you want to do with <strong>Kapitan</strong>. </p>
-<p>For instance, you might want to define a <a href="#targets"><strong>target</strong></a> for each environment that you want to deploy using <strong>Kapitan</strong>. </p>
+<p>The first concept to learn about the <strong>Inventory</strong> is the <a href="#targets"><strong>target</strong></a>. A target is a file, found under the <a href="#targets"><code>inventory/targets</code></a> substructure, that tells Kapitan what you want to compile. It will usually map to something you want to do with <strong>Kapitan</strong>.</p>
+<p>For instance, you might want to define a <a href="#targets"><strong>target</strong></a> for each environment that you want to deploy using <strong>Kapitan</strong>.</p>
 <p>The <strong>Inventory</strong> lets you also define and reuse common configurations through YAML files that are referred to as <a href="#classes"><strong>classes</strong></a>: by listing classes into <a href="#targets"><strong>target</strong></a>, their content gets merged together and allows you to compose complex configurations without repetitions.</p>
 <p>By combining <a href="#targets"><strong>target</strong></a> and <a href="#classes"><strong>classes</strong></a>, the <strong>Inventory</strong> becomes the SSOT for your whole configuration, and learning how to use it will unleash the real power of <strong>Kapitan</strong>.</p>
 <div class="admonition info">
