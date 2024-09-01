@@ -3,7 +3,7 @@ all: clean package
 .PHONY: pre-requisites
 pre-requisites:
 	@echo ----- Installing pre-requisites -----
-	poetry install
+	poetry install --with dev --with docs --with test
 
 .PHONY: lint
 lint:
@@ -15,7 +15,7 @@ lint:
 .PHONY: install poetry with pipx
 install_poetry:
 	@echo ----- Installing poetry with pipx -----
-	pipx install poetry
+	which poetry || pipx install poetry
 
 .PHONY: test
 test: pre-requisites lint test_python test_docker test_coverage test_formatting
