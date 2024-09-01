@@ -40,7 +40,7 @@ jobs:
       - name: Build Pex
         run: |-
           mkdir -p dist
-          pex .[gojsonnet] -r requirements.txt \
+          pex '.[gojsonnet,omegaconf,reclass-rs]' -r requirements.txt \
             --python-shebang='#!/usr/bin/env python3' \
             --python=python3.11 \
             --python=python3.10 \
