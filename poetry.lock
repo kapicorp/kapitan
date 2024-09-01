@@ -571,6 +571,9 @@ files = [
     {file = "coverage-7.6.1.tar.gz", hash = "sha256:953510dfb7b12ab69d20135a0662397f077c59b1e6379a768e97c59d852ee51d"},
 ]
 
+[package.dependencies]
+tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.11.0a6\" and extra == \"toml\""}
+
 [package.extras]
 toml = ["tomli"]
 
@@ -1710,7 +1713,7 @@ files = [
 name = "omegaconf"
 version = "2.4.0.dev3"
 description = "A flexible configuration library"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "omegaconf-2.4.0.dev3-py3-none-any.whl", hash = "sha256:acffa42eab0d9cb09ccead6e80d1dfd20a625e21602353f267f3bc2cd131f7b2"},
@@ -2241,6 +2244,24 @@ tomli = {version = ">=1", markers = "python_version < \"3.11\""}
 dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "pytest-cov"
+version = "3.0.0"
+description = "Pytest plugin for measuring coverage."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pytest-cov-3.0.0.tar.gz", hash = "sha256:e7f0f5b1617d2210a2cabc266dfe2f4c75a8d32fb89eafb7ad9d06f6d076d470"},
+    {file = "pytest_cov-3.0.0-py3-none-any.whl", hash = "sha256:578d5d15ac4a25e5f961c938b85a05b09fdaae9deef3bb6de9a6e766622ca7a6"},
+]
+
+[package.dependencies]
+coverage = {version = ">=5.2.1", extras = ["toml"]}
+pytest = ">=4.6"
+
+[package.extras]
+testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
+
+[[package]]
 name = "pytest-emoji"
 version = "0.2.0"
 description = "A pytest plugin that adds emojis to your test result report"
@@ -2573,7 +2594,7 @@ full = ["numpy"]
 name = "reclass-rs"
 version = "0.4.0"
 description = "Reclass defines a syntax and directory structure for recursively merging YAML data sources."
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "reclass_rs-0.4.0-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:8f853eaf3b9af92c0eb9b3b25770ca35c3da7e411dfea6529651195b8d37c308"},
@@ -3281,10 +3302,10 @@ type = ["pytest-mypy"]
 
 [extras]
 gojsonnet = ["gojsonnet"]
+omegaconf = ["omegaconf"]
 reclass-rs = ["reclass-rs"]
-test = ["docker", "reclass-rs"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.13"
-content-hash = "06dd2cbc0cf9843e448e520853b6d34b9f2045cfd20d7022d8954c2671551f79"
+content-hash = "ab559e2a9268132b838a6dae60e4f68b54f3ad3533fa595ebeeed0a22eca2a9e"

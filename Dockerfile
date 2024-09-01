@@ -41,10 +41,6 @@ RUN poetry install --no-root --extras=gojsonnet --extras=reclass-rs
 
 COPY ./kapitan ./kapitan
 
-RUN pip install --editable .[test] \
-    && pip install .[gojsonnet]
-
-
 # Final image with virtualenv built in previous step
 FROM python:3.11-slim
 
