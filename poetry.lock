@@ -3287,4 +3287,4 @@ test = ["docker", "reclass-rs"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.13"
-content-hash = "1acb4ba3413508c874e0f4298b8fe0ebe5a29825e7af1d3d98e918f559985cf1"
+content-hash = "06dd2cbc0cf9843e448e520853b6d34b9f2045cfd20d7022d8954c2671551f79"
