@@ -10,3 +10,4 @@ parameters:
         - templates/onekey_component_plainref.jsonnet
         - templates/simple_component_plainref.jsonnet
         - templates/string_component_plainref.jsonnet
+

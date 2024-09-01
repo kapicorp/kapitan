@@ -1,12 +1,10 @@
-import glob
-import json
 import os
-import time
-
-import yaml
-
-from kapitan.inputs import kadet
+import json
 from kapitan.resources import jinja2_render_file, yaml_load
+from kapitan.inputs import kadet
+import glob
+import yaml
+import time
 
 inventory = kadet.inventory()
 

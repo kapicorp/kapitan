@@ -49,7 +49,7 @@ $ helm install stable/kube-state-metrics
 | `collectors.ingresses`                       | Enable the ingresses collector.                                                       | `true`                                     |
 | `collectors.jobs`                            | Enable the jobs collector.                                                            | `true`                                     |
 | `collectors.limitranges`                     | Enable the limitranges collector.                                                     | `true`                                     |
-| `collectors.mutatingwebhookconfigurations`   | Enable the mutatingwebhookconfigurations collector.                                   | `false`                                    |
+| `collectors.mutatingwebhookconfigurations`   | Enable the mutatingwebhookconfigurations collector.                                   | `false`                                    | 
 | `collectors.namespaces`                      | Enable the namespaces collector.                                                      | `true`                                     |
 | `collectors.nodes`                           | Enable the nodes collector.                                                           | `true`                                     |
 | `collectors.persistentvolumeclaims`          | Enable the persistentvolumeclaims collector.                                          | `true`                                     |

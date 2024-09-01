@@ -43,11 +43,11 @@ mixer:
       requests:
         cpu: 50m
         memory: 100Mi
-
+ 
   adapters:
     stdio:
       enabled: true
-
+ 
 grafana:
   enabled: true
 

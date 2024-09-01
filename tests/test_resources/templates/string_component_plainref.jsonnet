@@ -4,3 +4,4 @@ local inventory = kap.inventory();
 local p = inventory.parameters;
 
 'my plainref is: ' + p.my_plainref
+

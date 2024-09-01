@@ -1,3 +1,4 @@
+exclude: ^(examples/|tests/test_terraform_compiled/|tests/test_kubernetes_compiled/|tests/test_docker_compiled/|tests/test_resources/|tests/test_jsonnet/)
 repos:
   - repo: https://github.com/psf/black
     rev: 24.8.0

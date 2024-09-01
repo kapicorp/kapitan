@@ -59,3 +59,4 @@ parameters:
         input_paths:
           - components/*/main.jsonnet
         output_type: yml
+

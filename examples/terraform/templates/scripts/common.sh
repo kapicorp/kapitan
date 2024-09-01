@@ -44,3 +44,4 @@ if [ $DEBUG -ne 0 ]; then
 fi
 
 pushd $TF_DIR &> /dev/null
+

@@ -7,3 +7,4 @@ parameters:
       output_type: yml
       input_paths:
         - components/namespace/main.jsonnet
+
