@@ -12,6 +12,7 @@ class InventoryBackends(StrEnum):
     """
     Enumeration of available inventory backends.
     """
+
     RECLASS = "reclass"
     RECLASS_RS = "reclass-rs"
     OMEGACONF = "omegaconf"
@@ -23,6 +24,7 @@ def load_reclass_backend():
     Enable the reclass inventory backend.
     """
     from .inv_reclass import ReclassInventory
+
     return ReclassInventory
 
 
@@ -31,6 +33,7 @@ def load_reclass_rs_backend():
     Enable the reclass-rs inventory backend.
     """
     from .inv_reclass_rs import ReclassRsInventory
+
     return ReclassRsInventory
 
 
@@ -39,6 +42,7 @@ def load_omegaconf_backend():
     Enable the omegaconf inventory backend.
     """
     from .inv_omegaconf.inv_omegaconf import OmegaConfInventory
+
     return OmegaConfInventory
 
 

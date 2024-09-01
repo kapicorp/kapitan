@@ -14,10 +14,10 @@ parameters:
   dependencies:
    - type: git | http[s]
      output_path: <output_path>
-     source: <git/http[s]_url>    
+     source: <git/http[s]_url>
 ```
 
-The output path is the path to save the dependency into. For example, it could be `/components/external/manifest.jsonnet`. Then, the user can specify the fetched file as a `kapitan.compile` item along with the locally-created files.  
+The output path is the path to save the dependency into. For example, it could be `/components/external/manifest.jsonnet`. Then, the user can specify the fetched file as a `kapitan.compile` item along with the locally-created files.
 
 Git type may also include `ref` and `subdir` parameters as illustrated below:
 

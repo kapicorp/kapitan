@@ -1,6 +1,5 @@
 import logging
 import os
-
 from datetime import datetime
 
 import reclass
@@ -16,8 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class ReclassInventory(Inventory):
-    
-    def render_targets(self, targets: list[InventoryTarget] = None, ignore_class_not_found: bool = False) -> None:
+
+    def render_targets(
+        self, targets: list[InventoryTarget] = None, ignore_class_not_found: bool = False
+    ) -> None:
         """
         Runs a reclass inventory in inventory_path
         (same output as running ./reclass.py -b inv_base_uri/ --inventory)

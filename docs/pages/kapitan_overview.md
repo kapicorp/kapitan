@@ -2,7 +2,7 @@
 
 ## **Kapitan** at a glance
 
-**Kapitan** is a powerful configuration management tool designed to help engineers manage complex systems through code. It centralizes and simplifies the management of configurations with a structured approach that revolves around a few core concepts. 
+**Kapitan** is a powerful configuration management tool designed to help engineers manage complex systems through code. It centralizes and simplifies the management of configurations with a structured approach that revolves around a few core concepts.
 
 ??? note "**Kapitan** diagram"
     ```mermaid
@@ -31,12 +31,12 @@
         OTHER --> REFERENCES
         PLAIN --> REFERENCES
         OUTPUT --> TARGETN_OUTPUT
-        OUTPUT --> TARGET1_OUTPUT 
-        OUTPUT --> TARGET2_OUTPUT 
+        OUTPUT --> TARGET1_OUTPUT
+        OUTPUT --> TARGET2_OUTPUT
         REFERENCES --> KAPITAN
-        TARGET1_OUTPUT --> DOCUMENTATION 
+        TARGET1_OUTPUT --> DOCUMENTATION
         TARGET1_OUTPUT --> KUBERNETES
-        TARGET1_OUTPUT --> SCRIPTS 
+        TARGET1_OUTPUT --> SCRIPTS
         TARGET1_OUTPUT --> TERRAFORM
         CLASSES --> TARGET1
         CLASSES --> TARGET2
@@ -62,7 +62,7 @@
         KAPITAN(("<img src='/images/kapitan_logo.png'; width='80'/>")):::blue
         click EXTERNAL "/compile#external"
 
-        subgraph "Input Types" 
+        subgraph "Input Types"
             EXTERNAL["external"]
             GENERATORS["generators"]
             HELM["helm"]
@@ -82,7 +82,7 @@
             SCRIPTS["scripts"]
             TERRAFORM["terraform"]
         end
-        
+
         TARGET2_OUTPUT(["target 2"])
         TARGETN_OUTPUT(["target N"])
 
@@ -92,7 +92,7 @@ Let's explore these concepts in a way that's accessible to new users:
 
 ## [**Inventory**](/pages/inventory/introduction/)
 
-At the core of **Kapitan** lies the **Inventory**, a structured database of variables meticulously organized in YAML files. 
+At the core of **Kapitan** lies the **Inventory**, a structured database of variables meticulously organized in YAML files.
 This hierarchical setup serves as the single source of truth (SSOT) for your system's configurations, making it easier to manage and reference the essential components of your infrastructure. Whether you're dealing with Kubernetes configurations, Terraform resources, or even business logic, the Inventory allows you to define and store these elements efficiently. This central repository then feeds into **Kapitan**'s templating engines, enabling seamless reuse across various applications and services.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/M81qU94FCLQ?si=SGlQG-gP2mmA1n9b" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>

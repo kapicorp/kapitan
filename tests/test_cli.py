@@ -16,7 +16,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from kapitan.cli import main, build_parser
+from kapitan.cli import build_parser, main
 from kapitan.refs.secrets.vaultkv import VaultSecret
 from tests.vault_server import VaultServer
 

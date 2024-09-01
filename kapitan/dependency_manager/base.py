@@ -11,17 +11,17 @@ from functools import partial
 from mimetypes import MimeTypes
 from shutil import copyfile, rmtree
 
-from git import GitCommandError
-from git import Repo
-from kapitan.errors import GitSubdirNotFoundError, GitFetchingError, HelmFetchingError
+from git import GitCommandError, Repo
+
+from kapitan.errors import GitFetchingError, GitSubdirNotFoundError, HelmFetchingError
 from kapitan.helm_cli import helm_cli
 from kapitan.utils import (
     copy_tree,
     make_request,
-    unpack_downloaded_file,
-    safe_copy_tree,
-    safe_copy_file,
     normalise_join_path,
+    safe_copy_file,
+    safe_copy_tree,
+    unpack_downloaded_file,
 )
 
 logger = logging.getLogger(__name__)
@@ -235,10 +235,12 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
 
     for dep in deps:
         output_path = dep["output_path"]
-        
+
         if not os.path.exists(output_path) or force:
             if not exists_in_cache(cached_repo_path):
-                fetch_helm_archive(source.helm_path, source.repo, source.chart_name, source.version, cached_repo_path)
+                fetch_helm_archive(
+                    source.helm_path, source.repo, source.chart_name, source.version, cached_repo_path
+                )
             else:
                 logger.debug("Using cached helm chart at %s", cached_repo_path)
 

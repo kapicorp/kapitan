@@ -11,11 +11,17 @@ import os
 import tempfile
 import unittest
 
-import kapitan.cached as cached
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
+
+import kapitan.cached as cached
 from kapitan.refs.base import RefController, RefParams, Revealer
-from kapitan.refs.secrets.gpg import GPG_KWARGS, GPG_TARGET_FINGERPRINTS, GPGSecret, gpg_obj
+from kapitan.refs.secrets.gpg import (
+    GPG_KWARGS,
+    GPG_TARGET_FINGERPRINTS,
+    GPGSecret,
+    gpg_obj,
+)
 
 # set GNUPGHOME for test_cli
 GNUPGHOME = tempfile.mkdtemp()

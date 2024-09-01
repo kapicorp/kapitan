@@ -9,6 +9,7 @@
 
 import logging
 import os
+
 from kapitan.utils import copy_tree
 
 logger = logging.getLogger(__name__)

@@ -22,7 +22,7 @@ graph LR
   subgraph "fetch"
     F{"fetch?"}
     FETCH["fetch dependencies"]
-  end 
+  end
 
   subgraph "validate"
     V{"validate?"}
@@ -47,7 +47,7 @@ graph LR
   V ==> |no| FINISH
   VALIDATE --> FINISH
 
-  
+
 ```
 
 | Step          | Flag         | Description                                                              | Configuration                     |
@@ -70,8 +70,8 @@ Input types can be specified in the inventory under `kapitan.compile` in the fol
       kapitan:
         compile:
         - output_path: <output_path_in_target_dir>
-          input_type: jinja2 
-          input_params: # (1)! 
+          input_type: jinja2
+          input_params: # (1)!
           input_paths:
             - directory/
             - file
@@ -88,8 +88,8 @@ Input types can be specified in the inventory under `kapitan.compile` in the fol
       kapitan:
         compile:
         - output_path: <output_path_in_target_dir>
-          input_type: jsonnet 
-          prune: false # (1)! 
+          input_type: jsonnet
+          prune: false # (1)!
           input_paths:
             - directory/
             - file
@@ -105,8 +105,8 @@ Input types can be specified in the inventory under `kapitan.compile` in the fol
       kapitan:
         compile:
         - output_path: <output_path_in_target_dir>
-          input_type: kadet 
-          prune: false # (1)! 
+          input_type: kadet
+          prune: false # (1)!
           input_paths:
             - directory/
             - file
@@ -124,8 +124,8 @@ Input types can be specified in the inventory under `kapitan.compile` in the fol
       kapitan:
         compile:
         - output_path: <output_path_in_target_dir>
-          input_type: helm 
-          prune: false # (1)! 
+          input_type: helm
+          prune: false # (1)!
           input_paths:
             - directory/
             - file
@@ -141,8 +141,8 @@ Input types can be specified in the inventory under `kapitan.compile` in the fol
       kapitan:
         compile:
         - output_path: <output_path_in_target_dir>
-          input_type: copy 
-          prune: false # (1)! 
+          input_type: copy
+          prune: false # (1)!
           input_paths:
             - directory/
             - file

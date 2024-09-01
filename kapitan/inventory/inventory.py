@@ -5,13 +5,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import functools
 import logging
 import os
 from abc import ABC, abstractmethod
-import functools
-from pydantic import BaseModel, Field
-from kapitan.errors import KapitanError
 from typing import Dict
+
+from pydantic import BaseModel, Field
+
+from kapitan.errors import KapitanError
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,19 +28,26 @@ class InventoryTarget(BaseModel):
 
 
 class Inventory(ABC):
-    def __init__(self, inventory_path: str = "inventory", compose_target_name: bool = False, ignore_class_not_found=False, initialise=True, target_class=InventoryTarget):
+    def __init__(
+        self,
+        inventory_path: str = "inventory",
+        compose_target_name: bool = False,
+        ignore_class_not_found=False,
+        initialise=True,
+        target_class=InventoryTarget,
+    ):
         self.inventory_path = inventory_path
         self.compose_target_name = compose_target_name
-        self.targets_path = os.path.join(self.inventory_path, 'targets')
-        self.classes_path = os.path.join(self.inventory_path, 'classes')
+        self.targets_path = os.path.join(self.inventory_path, "targets")
+        self.classes_path = os.path.join(self.inventory_path, "classes")
         self.initialised: bool = False
         self.targets: dict[str, target_class] = {}
         self.ignore_class_not_found = ignore_class_not_found
         self.target_class = target_class
-        
+
         if initialise:
             self.__initialise(ignore_class_not_found=ignore_class_not_found)
-        
+
     @functools.cached_property
     def inventory(self) -> dict:
         """
@@ -62,7 +72,7 @@ class Inventory(ABC):
                         name = name.replace(os.sep, ".")
                     else:
                         name, ext = os.path.splitext(file)
-                        
+
                     if ext not in (".yml", ".yaml"):
                         logger.debug(f"ignoring {file}: targets have to be .yml or .yaml files.")
                         continue
@@ -74,9 +84,9 @@ class Inventory(ABC):
                             f"Conflicting targets {target.name}: {target.path} and {self.targets[target.name].path}. "
                             f"Consider using '--compose-target-name'."
                         )
-                    
+
                     self.targets[target.name] = target
-                    
+
             self.render_targets(self.targets, ignore_class_not_found=ignore_class_not_found)
             self.initialised = True
         return self.initialised
@@ -91,12 +101,16 @@ class Inventory(ABC):
         """
         helper function to get rendered InventoryTarget objects for multiple targets
         """
-        
+
         if target_names:
-            return {target_name: self.targets[target_name] for target_name in target_names if target_name in self.targets}
+            return {
+                target_name: self.targets[target_name]
+                for target_name in target_names
+                if target_name in self.targets
+            }
         else:
             return self.targets
-            
+
     def get_parameters(self, target_names: str | list[str], ignore_class_not_found: bool = False) -> dict:
         """
         helper function to get rendered parameters for single target or multiple targets
@@ -105,10 +119,14 @@ class Inventory(ABC):
             target = self.get_target(target_names, ignore_class_not_found)
             return target.parameters
 
-        return {name: {"parameters": Dict(target.parameters)} for name, target in self.get_targets(target_names)}
+        return {
+            name: {"parameters": Dict(target.parameters)} for name, target in self.get_targets(target_names)
+        }
 
     @abstractmethod
-    def render_targets(self, targets: list[InventoryTarget] = None, ignore_class_not_found: bool = False) -> None:
+    def render_targets(
+        self, targets: list[InventoryTarget] = None, ignore_class_not_found: bool = False
+    ) -> None:
         """
         create the inventory depending on which backend gets used
         """

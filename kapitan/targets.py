@@ -51,7 +51,10 @@ def compile_targets(
     inventory = get_inventory(inventory_path)
     discovered_targets = inventory.targets.keys()
 
-    logger.info(f"Rendered inventory (%.2fs): discovered {len(discovered_targets)} targets.", time.time() - rendering_start)
+    logger.info(
+        f"Rendered inventory (%.2fs): discovered {len(discovered_targets)} targets.",
+        time.time() - rendering_start,
+    )
 
     if discovered_targets == 0:
         raise CompileError("No inventory targets discovered at path: {inventory_path}")
@@ -60,19 +63,22 @@ def compile_targets(
 
     try:
         targets = search_targets(inventory, targets, labels)
-            
+
     except CompileError as e:
         raise CompileError(f"Error searching targets: {e}")
 
     if len(targets) == 0:
         raise CompileError(f"No matching targets found in inventory: {labels if labels else desired_targets}")
 
-    
     if parallelism is None:
         parallelism = min(len(targets), os.cpu_count())
-        logger.debug(f"Parallel not set, defaulting to {parallelism} processes {os.cpu_count()} {len(targets)}")
-    
-    logger.info(f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)")
+        logger.debug(
+            f"Parallel not set, defaulting to {parallelism} processes {os.cpu_count()} {len(targets)}"
+        )
+
+    logger.info(
+        f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)"
+    )
 
     with multiprocessing.Pool(parallelism) as pool:
         try:
@@ -124,7 +130,7 @@ def compile_targets(
                 if fetch_objs:
                     fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
                     logger.info("Fetched dependencies (%.2fs)", time.time() - fetching_start)
-            
+
             compile_start = time.time()
             worker = partial(
                 compile_target,
@@ -202,7 +208,7 @@ def load_target_inventory(inventory, requested_targets, ignore_class_not_found=F
                     continue
                 else:
                     raise InventoryError(f"InventoryError: {target_name}: parameters is empty")
-                
+
             kapitan_target_configs = target.parameters["kapitan"]
             for comp_obj in kapitan_target_configs["compile"]:
                 comp_obj.setdefault("input_params", {})
@@ -242,7 +248,9 @@ def search_targets(inventory, targets, labels):
                     matched_all_labels = True
                     continue
             except KeyError:
-                logger.debug(f"search_targets: label {label}={value} didn't match target {target.name} {target_labels}")
+                logger.debug(
+                    f"search_targets: label {label}={value} didn't match target {target.name} {target_labels}"
+                )
 
             matched_all_labels = False
             break
@@ -266,7 +274,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
     # Only populates the cache if the subprocess doesn't have it
     if globals_cached and not cached.inv:
         cached.from_dict(globals_cached)
-    
+
     use_go_jsonnet = kwargs.get("use_go_jsonnet", False)
     if use_go_jsonnet:
         logger.debug("Using go-jsonnet over jsonnet")
@@ -309,6 +317,7 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
                 continue
             else:
                 import traceback
+
                 traceback.print_exception(type(e), e, e.__traceback__)
                 raise CompileError(f"Error compiling {target_name}: {e}")
 

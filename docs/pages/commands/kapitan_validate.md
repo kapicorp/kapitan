@@ -13,8 +13,8 @@ Validates the schema of compiled output. Validate options are specified in the i
         kapitan validate
         ```
 
-        ??? example "click to expand output" 
-            ```shell  
+        ??? example "click to expand output"
+            ```shell
             created schema-cache-path at ./schemas
             Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_secret.yml
             Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_service_jsonnet.yml
@@ -26,7 +26,7 @@ Validates the schema of compiled output. Validate options are specified in the i
         kapitan compile --validate
         ```
 
-        ??? example "click to expand output" 
+        ??? example "click to expand output"
             ```shell
             Rendered inventory (0.27s)
             Compiled labels (0.23s)
@@ -47,7 +47,7 @@ Validates the schema of compiled output. Validate options are specified in the i
     You can leverage the `.kapitan` dotfile to make sure validate runs every time you run compile.
 
 
-    
+
     !!! example ""
         !!! quote "example `.kapitan`"
             ```yaml
@@ -56,13 +56,13 @@ Validates the schema of compiled output. Validate options are specified in the i
             compile:
               validate: true
             ```
-  
+
         The `validate` command will now be implied for every compile run
         ```shell
         kapitan compile
         ```
 
-        ??? example "click to expand output" 
+        ??? example "click to expand output"
             ```shell
             Rendered inventory (0.27s)
             Compiled labels (0.23s)
@@ -90,10 +90,10 @@ Validates the schema of compiled output. Validate options are specified in the i
 
 !!! info
 
-    **Kapitan** will automatically download the schemas for Kubernetes Manifests directly from <https://kubernetesjsonschema.dev> 
-    
+    **Kapitan** will automatically download the schemas for Kubernetes Manifests directly from <https://kubernetesjsonschema.dev>
+
     By default, the schemas are cached into `./schemas/`, which can be modified with the `--schemas-path` option.
-    
+
     !!! tip "override permanently `schema-path`"
           Remember to use the `.kapitan` dotfile configuration to override permanently the `schema-path` location.
 

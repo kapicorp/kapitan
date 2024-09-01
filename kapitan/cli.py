@@ -94,14 +94,20 @@ def trigger_compile(args):
         jinja2_filters=args.jinja2_filters,
         verbose=args.verbose,
         use_go_jsonnet=args.use_go_jsonnet,
-        compose_target_name=args.compose_target_name
+        compose_target_name=args.compose_target_name,
     )
 
 
 def build_parser():
     parser = argparse.ArgumentParser(prog=PROJECT_NAME, description=DESCRIPTION)
     parser.add_argument("--version", action="version", version=VERSION)
-    parser.add_argument("--mp-method", action="store", default=from_dot_kapitan("global", "mp-method", "spawn"), help="set multiprocessing start method", choices=["spawn", "fork", "forkserver"])
+    parser.add_argument(
+        "--mp-method",
+        action="store",
+        default=from_dot_kapitan("global", "mp-method", "spawn"),
+        help="set multiprocessing start method",
+        choices=["spawn", "fork", "forkserver"],
+    )
     subparser = parser.add_subparsers(help="commands", dest="subparser_name")
 
     inventory_backend_parser = argparse.ArgumentParser(add_help=False)
@@ -120,10 +126,13 @@ def build_parser():
     )
 
     inventory_backend_parser.add_argument(
-        "--compose-target-name", "--compose-target-name",
+        "--compose-target-name",
+        "--compose-target-name",
         help="Create same subfolder structure from inventory/targets inside compiled folder",
         action="store_true",
-        default=from_dot_kapitan("global", "compose-target-name", from_dot_kapitan("compile", "compose-node-name", False)),
+        default=from_dot_kapitan(
+            "global", "compose-target-name", from_dot_kapitan("compile", "compose-node-name", False)
+        ),
     )
 
     eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
@@ -612,7 +621,7 @@ def main():
     # and will raise RuntimeError
     except RuntimeError:
         pass
-    
+
     if getattr(args, "func", None) == generate_inventory and args.pattern and args.target_name == "":
         parser.error("--pattern requires --target_name")
 
@@ -622,8 +631,8 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    cached.args = args  
-    
+    cached.args = args
+
     if hasattr(args, "verbose") and args.verbose:
         logging_level = logging.DEBUG
     elif hasattr(args, "quiet") and args.quiet:

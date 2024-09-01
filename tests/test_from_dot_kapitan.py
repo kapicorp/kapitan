@@ -2,11 +2,12 @@ import os
 import shutil
 import tempfile
 import unittest
+
 import yaml
 
-from kapitan.utils import from_dot_kapitan
 from kapitan.cached import reset_cache
 from kapitan.inventory import InventoryBackends
+from kapitan.utils import from_dot_kapitan
 
 
 class FromDotKapitanTest(unittest.TestCase):
@@ -26,13 +27,19 @@ class FromDotKapitanTest(unittest.TestCase):
 
     def test_no_option(self):
         self._setup_dot_kapitan(
-            {"global": {"inventory-backend": str(InventoryBackends.RECLASS)}, "compile": {"inventory-path": "./path/to/inv"}}
+            {
+                "global": {"inventory-backend": str(InventoryBackends.RECLASS)},
+                "compile": {"inventory-path": "./path/to/inv"},
+            }
         )
         assert from_dot_kapitan("inventory", "inventory-path", "./some/fallback") == "./some/fallback"
 
     def test_cmd_option(self):
         self._setup_dot_kapitan(
-            {"global": {"inventory-backend": str(InventoryBackends.RECLASS)}, "compile": {"inventory-path": "./path/to/inv"}}
+            {
+                "global": {"inventory-backend": str(InventoryBackends.RECLASS)},
+                "compile": {"inventory-path": "./path/to/inv"},
+            }
         )
         assert from_dot_kapitan("compile", "inventory-path", "./some/fallback") == "./path/to/inv"
 

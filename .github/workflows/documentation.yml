@@ -12,7 +12,7 @@ on:
       - 'docs/**'
       - '.github/workflows/documentation.yml'
       - 'mkdocs.yml'
-      - 'CNAME' 
+      - 'CNAME'
   push:
     branches:
       - master

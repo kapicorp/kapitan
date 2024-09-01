@@ -3,7 +3,7 @@
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/kapicorp?style=for-the-badge)
 ![GitHub Stars](https://img.shields.io/github/stars/kapicorp/kapitan?style=for-the-badge)
 
-**Kapitan** aims to be your *one-stop configuration management solution* to help you manage the ever growing complexity of your configurations by enabling **Platform Engineering** and **GitOps** workflows. 
+**Kapitan** aims to be your *one-stop configuration management solution* to help you manage the ever growing complexity of your configurations by enabling **Platform Engineering** and **GitOps** workflows.
 
 It streamlines complex deployments across heterogeneous environments while providing a secure and adaptable framework for managing infrastructure configurations.  **Kapitan**'s inventory-driven model, powerful templating capabilities, and native secret management tools offer granular control, fostering consistency, reducing errors, and safeguarding sensitive data.
 
@@ -12,7 +12,7 @@ Empower your team to make changes to your infrastructure whilst maintaining full
 * :fontawesome-brands-slack: Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
 * :fontawesome-brands-github: Help us grow: [give us a star](https://github.com/kapicorp/kapitan/stargazers) or even better [sponsor our project](pages/contribute/sponsor/)
 
-## [Why do I need **Kapitan**?](pages/blog/posts/2022-12-04.md#why-do-i-need-kapitan) 
+## [Why do I need **Kapitan**?](pages/blog/posts/2022-12-04.md#why-do-i-need-kapitan)
 
 ## [Video Tutorials to get started](https://www.youtube.com/@kapitandev)
 
