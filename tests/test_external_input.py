@@ -7,15 +7,16 @@
 
 "external input tests"
 import os
+import random
+import stat
+import string
+import subprocess
 import sys
 import tempfile
 import unittest
-import string
-import random
-import stat
-import subprocess
 
 import yaml
+
 from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.inputs.external import External

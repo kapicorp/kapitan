@@ -1,13 +1,13 @@
 import logging
 import os
-import reclass_rs
-
 from datetime import datetime
+
+import reclass_rs
 
 from kapitan.errors import InventoryError
 
-from .inventory import Inventory, InventoryTarget
 from .inv_reclass import get_reclass_config
+from .inventory import Inventory, InventoryTarget
 
 logger = logging.getLogger(__name__)
 

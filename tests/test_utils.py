@@ -7,13 +7,13 @@
 
 "utils tests"
 
-import unittest
-import os
-import tempfile
 import glob
+import os
 import shutil
+import tempfile
+import unittest
 
-from kapitan.utils import copy_tree, directory_hash, SafeCopyError
+from kapitan.utils import SafeCopyError, copy_tree, directory_hash
 
 TEST_PWD = os.getcwd()
 TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")
@@ -27,8 +27,7 @@ class CopyTreeTest(unittest.TestCase):
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
-        
-        
+
     def test_copy_dir(self):
         original = set(glob.iglob(f"{TEST_KUBERNETES_PATH}/*", recursive=True))
         copied = copy_tree(TEST_KUBERNETES_PATH, self.temp_dir)
@@ -38,11 +37,9 @@ class CopyTreeTest(unittest.TestCase):
         copied_hash = directory_hash(self.temp_dir)
         self.assertEqual(copied_hash, original_hash)
 
-
     def test_validate_copy_dir(self):
         with self.assertRaises(SafeCopyError):
             copy_tree("non_existent_dir", self.temp_dir)
-            
+
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
-        

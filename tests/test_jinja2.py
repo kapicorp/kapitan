@@ -8,15 +8,16 @@
 "jinja2 tests"
 import argparse
 import base64
-import unittest
 import tempfile
 import time
-from kapitan.utils import render_jinja2_file
-from kapitan.resources import inventory
+import unittest
+
+from kapitan import cached
 from kapitan.inputs.jinja2_filters import base64_encode
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
-from kapitan import cached
+from kapitan.resources import inventory
+from kapitan.utils import render_jinja2_file
 
 
 class Jinja2FiltersTest(unittest.TestCase):

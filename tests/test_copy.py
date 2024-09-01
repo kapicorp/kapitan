@@ -8,6 +8,7 @@
 "copy tests"
 import filecmp
 import hashlib
+import logging
 import os
 import shutil
 import sys
@@ -16,7 +17,6 @@ import unittest
 from kapitan.cli import main
 from kapitan.inputs.copy import Copy
 from kapitan.utils import directory_hash
-import logging
 
 logger = logging.getLogger(__name__)
 

@@ -6,15 +6,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "inventory tests"
-from kapitan.resources import inventory
-from kapitan.inventory import InventoryBackends
-
 import importlib
-import unittest
 import logging
-import tempfile
 import os
 import shutil
+import tempfile
+import unittest
+
+from kapitan.inventory import InventoryBackends
+from kapitan.resources import inventory
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,18 +24,17 @@ TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")
 
 
 class InventoryTargetTestBase(unittest.TestCase):
-    
-    
+
     def setUp(self) -> None:
-        from kapitan.cached import reset_cache, args
-        
+        from kapitan.cached import args, reset_cache
+
         reset_cache()
         # Fix inconsistency between reclass-rs (option name) and reclass_rs (module name)
-        backend_module_name = self.backend_id.replace("-", "_") 
+        backend_module_name = self.backend_id.replace("-", "_")
         if not importlib.util.find_spec(backend_module_name):
             self.skipTest(f"backend module {backend_module_name} not available")
-        args.inventory_backend = self.backend_id 
-        
+        args.inventory_backend = self.backend_id
+
     def test_inventory_target(self):
         inv = inventory(inventory_path=self.inventory_path, target_name="minikube-es")
         logger.error(inv)
@@ -70,13 +70,14 @@ class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
         self.backend_id = InventoryBackends.OMEGACONF
         self.expected_targets_count = 10
         from kapitan.inventory.inv_omegaconf import migrate
+
         self.inventory_path = os.path.join(self.temp_dir, "inventory")
         migrate.migrate(self.inventory_path)
         super().setUp()
-    
+
     def tearDown(self) -> None:
         shutil.rmtree(self.temp_dir)
         return super().tearDown()
 
 
-del (InventoryTargetTestBase)  # remove InventoryTargetTestBase so that it doesn't run
+del InventoryTargetTestBase  # remove InventoryTargetTestBase so that it doesn't run

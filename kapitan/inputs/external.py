@@ -5,14 +5,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import subprocess
-import re
 import logging
 import os
+import re
 import shutil
-from kapitan.utils import copy_tree
+import subprocess
 
 from kapitan.inputs.base import InputType
+from kapitan.utils import copy_tree
 
 logger = logging.getLogger(__name__)
 

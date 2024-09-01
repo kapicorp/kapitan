@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import unittest
 
-from kapitan.inventory import get_inventory_backend, InventoryBackends
+from kapitan.inventory import InventoryBackends, get_inventory_backend
 from kapitan.inventory.inventory import InventoryError
 
 
@@ -15,16 +15,16 @@ class ReclassComposeNodeNameTest(unittest.TestCase):
 
     def test_compose_target_name(self):
         inventory_path = "examples/kubernetes/inventory"
-        targets_path = os.path.join(inventory_path, "targets") 
+        targets_path = os.path.join(inventory_path, "targets")
         example_target_names = []
-        
+
         for root, dirs, files in os.walk(targets_path):
             for file in files:
                 # split file extension and check if yml/yaml
                 path = os.path.relpath(os.path.join(root, file), targets_path)
                 name = os.path.splitext(path)[0].replace(os.sep, ".")
                 example_target_names.append(name)
-        
+
         temp_inventory_dir = tempfile.mkdtemp()
         shutil.copytree(inventory_path, temp_inventory_dir, dirs_exist_ok=True)
 

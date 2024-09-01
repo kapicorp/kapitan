@@ -12,17 +12,17 @@ import tempfile
 import unittest
 from shutil import rmtree
 
-from kapitan.errors import HelmFetchingError
 from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.dependency_manager.base import (
-    fetch_git_source,
-    fetch_http_source,
-    fetch_git_dependency,
-    fetch_helm_chart,
-    fetch_dependencies,
     HelmSource,
+    fetch_dependencies,
+    fetch_git_dependency,
+    fetch_git_source,
+    fetch_helm_chart,
+    fetch_http_source,
 )
+from kapitan.errors import HelmFetchingError
 
 
 class DependencyManagerTest(unittest.TestCase):
@@ -78,7 +78,6 @@ class DependencyManagerTest(unittest.TestCase):
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
         rmtree(temp_dir)
         rmtree(output_dir)
-
 
     def test_fetch_helm_chart(self):
         """

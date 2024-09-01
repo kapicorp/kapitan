@@ -8,11 +8,12 @@
 import copy
 import logging
 import os
-import yaml
 import sys
 from typing import Any
 
-from omegaconf import Container, Node, OmegaConf, ListMergeMode
+import yaml
+from omegaconf import Container, ListMergeMode, Node, OmegaConf
+
 logger = logging.getLogger(__name__)
 
 
@@ -241,7 +242,6 @@ def register_resolvers() -> None:
     OmegaConf.register_new_resolver("not", condition_not, replace=replace)
     OmegaConf.register_new_resolver("equal", condition_equal, replace=replace)
 
-    
     # user defined resolvers
     user_resolver_file = os.path.join(os.getcwd(), "system/omegaconf/resolvers/resolvers.py")
 

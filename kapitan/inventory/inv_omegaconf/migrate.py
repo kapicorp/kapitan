@@ -54,7 +54,14 @@ def migrate_str(content: str):
     # migrate meta data name
     updated_content = regex.sub(
         r"(?<!\\)\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
-        lambda match: "${" + match.group(1).replace(":", ".",).replace("_reclass_", "_kapitan_") + "}",
+        lambda match: "${"
+        + match.group(1)
+        .replace(
+            ":",
+            ".",
+        )
+        .replace("_reclass_", "_kapitan_")
+        + "}",
         content,
     )
 
@@ -74,6 +81,6 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: ./migrate.py <inventory-path>")
         sys.exit(1)
-    
+
     print(f"Migrating all .yml/.yaml files in {sys.argv[1]}")
     migrate(sys.argv[1])

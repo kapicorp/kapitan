@@ -7,16 +7,15 @@
 from __future__ import print_function
 
 import collections
-import json
 import functools
+import glob
+import json
 import logging
-import magic
 import math
 import os
 import re
-import stat
 import shutil
-import glob
+import stat
 import sys
 import tarfile
 import traceback
@@ -26,12 +25,16 @@ from hashlib import sha256
 from zipfile import ZipFile
 
 import jinja2
+import magic
 import requests
 import yaml
 
 from kapitan import cached, defaults
 from kapitan.errors import CompileError
-from kapitan.inputs.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
+from kapitan.inputs.jinja2_filters import (
+    load_jinja2_filters,
+    load_jinja2_filters_from_file,
+)
 from kapitan.version import VERSION
 
 logger = logging.getLogger(__name__)
@@ -217,6 +220,7 @@ class PrettyDumper(yaml.SafeDumper):
         cls.add_representer(str, functools.partial(multiline_str_presenter, style_selection=style_selection))
         return cls
 
+
 def multiline_str_presenter(dumper, data, style_selection="double-quotes"):
     """
     Configures yaml for dumping multiline strings with given style.
@@ -224,11 +228,7 @@ def multiline_str_presenter(dumper, data, style_selection="double-quotes"):
     Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
     """
 
-    supported_styles = {
-        "literal": "|",
-        "folded": ">",
-        "double-quotes": '"'
-    }
+    supported_styles = {"literal": "|", "folded": ">", "double-quotes": '"'}
 
     style = supported_styles.get(style_selection)
 
@@ -635,7 +635,7 @@ def copy_tree(src: str, dst: str) -> list:
     """
     if not os.path.isdir(src):
         raise SafeCopyError(f"Cannot copy tree {src}: not a directory")
-    
+
     if not os.path.isdir(dst):
         raise SafeCopyError(f"Cannot copy tree {dst}: not a directory")
 

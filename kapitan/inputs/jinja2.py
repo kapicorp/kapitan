@@ -8,10 +8,11 @@
 import logging
 import os
 
+from kapitan import cached
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.resources import inventory
 from kapitan.utils import render_jinja2
-from kapitan import cached
+
 logger = logging.getLogger(__name__)
 
 

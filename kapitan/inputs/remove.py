@@ -8,9 +8,9 @@
 import logging
 import os
 import shutil
-from kapitan.utils import copy_tree
 
 from kapitan.inputs.base import InputType
+from kapitan.utils import copy_tree
 
 logger = logging.getLogger(__name__)
 

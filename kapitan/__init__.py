@@ -5,9 +5,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import logging
 import os
 import sys
-import logging
 
 
 def setup_logging(name=None, level=logging.INFO, force=False):

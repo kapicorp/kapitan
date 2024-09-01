@@ -10,16 +10,17 @@ import inspect
 import logging
 import os
 import sys
-from importlib.util import module_from_spec, spec_from_file_location
 import time
+from functools import lru_cache
+from importlib.util import module_from_spec, spec_from_file_location
+
 import kadet
 from kadet import BaseModel, BaseObj, Dict
 
+from kapitan import cached
 from kapitan.errors import CompileError
-from functools import lru_cache
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.utils import prune_empty
-from kapitan import cached
 
 # Set external kadet exception to kapitan.error.CompileError
 kadet.ABORT_EXCEPTION_TYPE = CompileError
@@ -64,6 +65,7 @@ def module_from_path(path, check_name=None):
         )
 
     return mod, spec
+
 
 def load_from_search_paths(module_name):
     """

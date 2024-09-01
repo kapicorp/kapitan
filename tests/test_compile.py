@@ -7,20 +7,22 @@
 
 "compile tests"
 
-import unittest
-import os
-import sys
-import io
 import contextlib
 import glob
+import io
+import os
 import shutil
-import yaml
-import toml
+import sys
 import tempfile
-from kapitan.cli import main
-from kapitan.utils import directory_hash
+import unittest
+
+import toml
+import yaml
+
 from kapitan.cached import reset_cache
+from kapitan.cli import main
 from kapitan.inventory import InventoryBackends
+from kapitan.utils import directory_hash
 
 TEST_PWD = os.getcwd()
 TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")
@@ -80,6 +82,7 @@ class CompileTestResourcesTestKadet(unittest.TestCase):
         os.chdir(TEST_PWD)
         reset_cache()
 
+
 class FailCompileTestResourcesTestKadet(unittest.TestCase):
     def setUp(self):
         os.chdir(TEST_RESOURCES_PATH)
@@ -91,7 +94,8 @@ class FailCompileTestResourcesTestKadet(unittest.TestCase):
     def tearDown(self):
         os.chdir(TEST_PWD)
         reset_cache()
-        
+
+
 class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
     def setUp(self):
         os.chdir(TEST_RESOURCES_PATH)
@@ -158,8 +162,8 @@ class CompileKubernetesTest(unittest.TestCase):
     def test_compile(self):
         sys.argv = ["kapitan", "compile", "-c"] + self.extraArgv
         main()
-        compile_dir = os.path.join(os.getcwd(), "compiled") 
-        reference_dir = os.path.join(TEST_PWD, 'tests/test_kubernetes_compiled')
+        compile_dir = os.path.join(os.getcwd(), "compiled")
+        reference_dir = os.path.join(TEST_PWD, "tests/test_kubernetes_compiled")
         compiled_dir_hash = directory_hash(compile_dir)
         test_compiled_dir_hash = directory_hash(reference_dir)
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
@@ -173,7 +177,7 @@ class CompileKubernetesTest(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
 
     def test_compile_specific_target(self):
-        
+
         sys.argv = ["kapitan", "compile", "-t", "minikube-mysql"] + self.extraArgv
         main()
         self.assertTrue(
@@ -229,14 +233,15 @@ class CompileKubernetesTestReclassRs(CompileKubernetesTest):
 
 class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
     temp_dir = tempfile.mkdtemp()
-    
+
     def setUp(self):
-        
+
         shutil.copytree(self.inventory_path, self.temp_dir, dirs_exist_ok=True)
         self.inventory_path = self.temp_dir
         super().setUp()
         self.extraArgv = ["--inventory-backend=omegaconf"]
         from kapitan.inventory.inv_omegaconf import migrate
+
         migrate.migrate(self.temp_dir)
 
     @unittest.skip("Already tested")
