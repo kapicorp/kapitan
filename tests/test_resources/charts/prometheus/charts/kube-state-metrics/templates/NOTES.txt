@@ -7,4 +7,3 @@ In your case, {{ template "kube-state-metrics.fullname" . }}.{{ template "kube-s
 
 They are served either as plaintext or protobuf depending on the Accept header.
 They are designed to be consumed either by Prometheus itself or by a scraper that is compatible with scraping a Prometheus client endpoint.
-

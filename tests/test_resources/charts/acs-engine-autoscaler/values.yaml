@@ -23,4 +23,3 @@ acsenginecluster:
   ignorepools:
   # Optional parameter denominating number of nodes to spare in a pool after scaling
   spareagents:
-

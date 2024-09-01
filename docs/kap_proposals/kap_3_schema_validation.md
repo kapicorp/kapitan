@@ -13,7 +13,7 @@ The following inventory will validate the structure of Kubernetes Service manife
 parameters:
   kapitan:
     validate:
-       - output_type: kubernetes.service 
+       - output_type: kubernetes.service
          version: 1.6.6
          output_path: relative/path/in/target
 ```

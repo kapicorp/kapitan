@@ -62,7 +62,7 @@ We usually store script templates under the `templates/scripts` directory.
           --8<-- "kubernetes/compiled/minikube-nginx-jsonnet/nginx-deploy.sh"
           ```
 
-          1. The script is now a "canned script" and ready to be used for this specif target. 
+          1. The script is now a "canned script" and ready to be used for this specif target.
           2. You can see that the namespace has been replaced with the target's one.
 
 
@@ -115,64 +115,62 @@ Templates will be provided at runtime with 3 variables:
 We support the following custom filters for use in Jinja2 templates:
 
 === "Encoding"
-    === "`sha256`"  
-        !!! example "SHA256 hashing of text" 
+    === "`sha256`"
+        !!! example "SHA256 hashing of text"
             `{{ text | sha256 }}`
 
-    === "`yaml`"  
-        !!! example "Dump text as YAML" 
+    === "`yaml`"
+        !!! example "Dump text as YAML"
             `{{ text | yaml }}`
 
-    === "`toml`"  
-        !!! example "Dump text as TOML" 
+    === "`toml`"
+        !!! example "Dump text as TOML"
             `{{ text | toml }}`
 
-    === "`b64encode`"  
-        !!! example "base64 encode text" 
+    === "`b64encode`"
+        !!! example "base64 encode text"
             `{{ text | b64encode }}`
 
-    === "`b64decode`"  
-        !!! example "base64 decode text" 
+    === "`b64decode`"
+        !!! example "base64 decode text"
             `{{ text | b64decode }}`
 
 === "Time"
-    === "`to_datetime`"  
+    === "`to_datetime`"
         !!! example "return datetime object for string"
             `{{ "2019-03-07 13:37:00" | to_datetime }}`
-    === "`strftime`"  
+    === "`strftime`"
         !!! example "return current date string for format"
             `{{ "%a, %d %b %Y %H:%M" | strftime }}`
 
 === "Regexp"
-    === "`regex_replace`"  
+    === "`regex_replace`"
         !!! example "perform a `re.sub` returning a string"
             `{{ hello world | regex_replace(pattern="world", replacement="kapitan")}}`
-    === "`regex_escape`"  
+    === "`regex_escape`"
         !!! example "escape all regular expressions special characters from string"
             `{{ "+s[a-z].*" | regex_escape}}`
-    === "`regex_search`"  
+    === "`regex_search`"
         !!! example "perform `re.search` and return the list of matches or a backref"
             `{{  hello world | regex_search("world.*")}}`
-    === "`regex_findall`"  
+    === "`regex_findall`"
         !!! example "perform `re.findall` and return the list of matches as array"
-            `{{ hello world | regex_findall("world.*")}}`      
-=== "`fileglob`"  
-    !!! example "return list of matched regular files for glob" 
+            `{{ hello world | regex_findall("world.*")}}`
+=== "`fileglob`"
+    !!! example "return list of matched regular files for glob"
         `{{ ./path/file* | fileglob }}`
-=== "`bool`"  
-    !!! example "return the bool for value" 
+=== "`bool`"
+    !!! example "return the bool for value"
         `{{ yes | bool }}`
-=== "`ternary`"  
-    !!! example "`value ? true_val : false_val`" 
+=== "`ternary`"
+    !!! example "`value ? true_val : false_val`"
         `{{ condition | ternary("yes", "no")}}`
-=== "`shuffle`"  
-    !!! example "randomly shuffle elements of a list" 
+=== "`shuffle`"
+    !!! example "randomly shuffle elements of a list"
         `{{ [1, 2, 3, 4, 5] | shuffle }}`
-=== "`reveal_maybe`"  
-    !!! example "reveal `ref/secret` tag only if `compile --reveal` flag is set" 
+=== "`reveal_maybe`"
+    !!! example "reveal `ref/secret` tag only if `compile --reveal` flag is set"
         `{{ "?{base64:my_ref}" | reveal_maybe}}`
 
 !!! tip
     You can also provide path to your custom filter modules in CLI. By default, you can put your filters in `lib/jinja2_filters.py` and they will automatically get loaded.
-
-

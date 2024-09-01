@@ -9,7 +9,7 @@ This file documents all notable changes to [ingress-nginx](https://github.com/ku
 * #7652 - Updated Helm chart to use the fullname for the electionID if not specified. by @FutureMatt in https://github.com/kubernetes/ingress-nginx/pull/9133
 * Rename controller-wehbooks-networkpolicy.yaml. by @Gacko in https://github.com/kubernetes/ingress-nginx/pull/9123
 
-### 4.3.0 
+### 4.3.0
 - Support for Kubernetes v.1.25.0 was added and support for endpoint slices
 - Support for Kubernetes v1.20.0 and v1.21.0 was removed
 - [8890](https://github.com/kubernetes/ingress-nginx/pull/8890) migrate to endpointslices

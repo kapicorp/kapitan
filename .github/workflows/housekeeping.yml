@@ -11,7 +11,7 @@ jobs:
         with:
           stale-issue-message: |
             This issue is stale because it has been open for 1 year with no activity.
-            Remove the stale label or comment if this issue is still relevant for you. 
+            Remove the stale label or comment if this issue is still relevant for you.
             If not, please close it yourself.
           days-before-issue-stale: 365
           day-before-pr-stale: -1

@@ -1,6 +1,6 @@
 # :kapitan-logo: External dependencies
 
-**Kapitan** has the functionality to fetch external dependencies from remote locations. 
+**Kapitan** has the functionality to fetch external dependencies from remote locations.
 
 Supported dependencies types are:
 
@@ -23,23 +23,23 @@ You can use the `fetch` option to explicitly fetch the dependencies:
     kapitan compile --fetch
     ```
 
-=== "dotfile" 
+=== "dotfile"
 
     !!! code "`.kapitan`"
         to make it default, then simply use `kapitan compile`
 
-        ```yaml 
+        ```yaml
         ...
         compile:
-          fetch: true 
+          fetch: true
         ```
 
-    
+
 This will download the dependencies and store them at their respective `output_path`.
 
 ### Overwrite local changes
 
-When fetching a dependency, **Kapitan** will refuse to overwrite existing files to preserve your local modifications. 
+When fetching a dependency, **Kapitan** will refuse to overwrite existing files to preserve your local modifications.
 
 Use the `force-fetch` option to force overwrite your local files in the `output_path`.
 
@@ -50,15 +50,15 @@ Use the `force-fetch` option to force overwrite your local files in the `output_
     kapitan compile --force-fetch
     ```
 
-=== "dotfile" 
+=== "dotfile"
 
     !!! code "`.kapitan`"
         to make it default, then simply use `kapitan compile`
 
-        ```yaml 
+        ```yaml
         ...
         compile:
-          force-fetch: true 
+          force-fetch: true
         ```
 
 ### Caching
@@ -87,7 +87,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
           submodules: true/false (optional) # mkdocs (4)!
     ```
 
-    1. Git types can fetch external `git` repositories through either HTTP/HTTPS or SSH URLs. 
+    1. Git types can fetch external `git` repositories through either HTTP/HTTPS or SSH URLs.
     2. Optional supports for cloning just a sub-directory
     3. Optional support for accessing them in specific commits and branches (refs).
     4. Optional support to disable fetching the submodules of a repo.
@@ -130,7 +130,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
         - type: http | https # mkdocs (2)!
           output_path: path/to/file # mkdocs (1)!
           source: http[s]://<url> # mkdocs (2)!
-          unpack: True | False # mkdocs (3)! 
+          unpack: True | False # mkdocs (3)!
     ```
 
     1. `output_path` must fully specify the file name. For example:
@@ -214,4 +214,3 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
               namespace: monitoring
               name: prometheus
     ```
-

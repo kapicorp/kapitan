@@ -15,8 +15,6 @@ from kapitan.lint import start_lint
 logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
 logger = logging.getLogger(__name__)
 
-"""Helper class for creating args"""
-
 
 class Object(object):
     pass

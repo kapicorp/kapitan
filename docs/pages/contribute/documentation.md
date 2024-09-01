@@ -31,4 +31,4 @@ Submit a PR for our master branch that updates the `.md` file(s). Test how the c
 
 ### Submit a PR
 
-Once the above PR has been merged, our CI will deploy your docs automatically. 
+Once the above PR has been merged, our CI will deploy your docs automatically.

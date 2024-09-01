@@ -133,4 +133,3 @@ If `validation.valid` is not true, it will then fail compilation and display `va
 
     Compile error: failed to compile target: minikube-mysql
     ```
-

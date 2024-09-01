@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install poetry
-        run: |- 
+        run: |-
           pipx install poetry
           pipx inject poetry poetry-plugin-export --force
       - name: Set up Python
@@ -47,7 +47,7 @@ jobs:
             --python=python3.12 \
             -m kapitan \
             -o dist/kapitan.linux-x86_64.pex
-          dist/kapitan.linux-x86_64.pex --help 
+          dist/kapitan.linux-x86_64.pex --help
 
       - name: Add linux-x86_64 pex to assets
         uses: softprops/action-gh-release@v2

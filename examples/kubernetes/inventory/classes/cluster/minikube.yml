@@ -7,7 +7,7 @@ parameters:
   minikube:
     memory: 4096
     cpus: 4
-    version: v0.31.0 
+    version: v0.31.0
 
   cluster:
     type: minikube
