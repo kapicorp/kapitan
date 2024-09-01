@@ -37,7 +37,7 @@ COPY ./poetry.lock ./poetry.lock
 COPY ./README.md ./README.md
 
 # Installs and caches dependencies
-RUN poetry install --no-root --extras=gojsonnet --extras=reclass-rs
+RUN poetry install --no-root --extras=gojsonnet --extras=omegaconf --extras=reclass-rs
 
 COPY ./kapitan ./kapitan
 

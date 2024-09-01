@@ -60,7 +60,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install libraries dependencies
         run: |
-          poetry install --with test --no-root
+          poetry install --with test --no-root --extras=gojsonnet --extras=omegaconf --extras=reclass-rs
       - name: Install testing dependencies (Helm)
         run: |
           sudo apt-get -qq update
