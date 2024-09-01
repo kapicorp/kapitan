@@ -41,6 +41,8 @@ RUN poetry install --no-root --extras=gojsonnet --extras=omegaconf --extras=recl
 
 COPY ./kapitan ./kapitan
 
+RUN poetry install --extras=gojsonnet --extras=omegaconf --extras=reclass-rs
+
 # Final image with virtualenv built in previous step
 FROM python:3.11-slim
 
