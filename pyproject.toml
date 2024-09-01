@@ -42,7 +42,7 @@ pytest = "^8.2.0"
 coverage = "^7.6.1"
 pytest-md = "^0.2.0"
 pytest-emoji = "^0.2.0"
-pytest-cov = "^3.0.0"
+pytest-cov = ">=3,<6"
 docker = "^7.0.0"
 
 [tool.poetry.group.dev]
