@@ -628,10 +628,27 @@ def safe_copy_tree(src, dst):
     return outputs
 
 
-def copy_tree(src: str, dst: str) -> list:
+def force_copy_file(src: str, dst: str, *args, **kwargs):
+    """Copy file from `src` to `dst`, forcibly replacing `dst` if it's a file, but preserving the
+    source file's metadata.
+
+    This is suitable to use as `copy_function` in `shutil.copytree()` if the behavior of distutils'
+    `copy_tree` should be mimicked as closely as possible.
+    """
+    if os.path.isfile(dst):
+        os.unlink(dst)
+    shutil.copy2(src, dst, *args, **kwargs)
+
+
+def copy_tree(src: str, dst: str, clobber_files=False) -> list:
     """Recursively copy a given directory from `src` to `dst`.
 
     If `dst` or a parent of `dst` doesn't exist, the missing directories are created.
+
+    If `clobber_files` is set to true, existing files in the destination directory are completely
+    clobbered. This is necessary to allow use of this function when copying a Git repo into a
+    destination directory which may already contain an old copy of the repo. Files that are
+    overwritten this way won't be listed in the return value.
 
     Returns a list of the copied files.
     """
@@ -643,6 +660,11 @@ def copy_tree(src: str, dst: str) -> list:
 
     # this will generate an empty set if `dst` doesn't exist
     before = set(glob.iglob(f"{dst}/*", recursive=True))
-    shutil.copytree(src, dst, dirs_exist_ok=True)
+    if clobber_files:
+        # use `force_copy_file` to more closely mimic distutils' `copy_tree` behavior
+        copy_function = force_copy_file
+    else:
+        copy_function = shutil.copy2
+    shutil.copytree(src, dst, dirs_exist_ok=True, copy_function=copy_function)
     after = set(glob.iglob(f"{dst}/*", recursive=True))
     return list(after - before)
