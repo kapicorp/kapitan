@@ -1,6 +1,0 @@
-classes:
-  - common
-  - my_component
-
-parameters:
-  target_name: my_target
