@@ -129,7 +129,9 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
                     "{} {}: subdir {} not found in repo".format(item_type, source, sub_dir)
                 )
         if force:
-            copied = copy_tree(copy_src_path, output_path)
+            # We need `clobber_files=True` here, since we otherwise can't overwrite read-only Git
+            # index and pack files if the destination already contains a copy of the Git repo.
+            copied = copy_tree(copy_src_path, output_path, clobber_files=True)
         else:
             copied = safe_copy_tree(copy_src_path, output_path)
         if copied:
