@@ -55,8 +55,8 @@ class OmegaConfTarget(InventoryTarget):
                 "parts": self.name.split("."),
             }
         }
-        self.parameters["_kapitan_"] = metadata
-        self.parameters["_reclass_"] = metadata
+        self.parameters._kapitan_ = metadata
+        self.parameters._reclass_ = metadata
 
 
 class OmegaConfInventory(Inventory):

@@ -11,17 +11,19 @@ import os
 from abc import ABC, abstractmethod
 from typing import Dict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from kapitan.errors import KapitanError
+from kapitan.inventory.model import KapitanInventoryParameters
 
 logger = logging.getLogger(__name__)
 
 
 class InventoryTarget(BaseModel):
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
     name: str = Field(exclude=True)
     path: str = Field(exclude=True)
-    parameters: Dict = {}
+    parameters: KapitanInventoryParameters = KapitanInventoryParameters()
     classes: list = list()
     applications: list = list()
     exports: Dict = {}

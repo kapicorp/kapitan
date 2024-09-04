@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import sys
+from enum import StrEnum
 from functools import partial
 
 import jsonschema
@@ -300,7 +301,10 @@ def generate_inventory(args):
                 inv = deep_get(inv, pattern)
         else:
             inv = inv.inventory
-
+        yaml.SafeDumper.add_multi_representer(
+            StrEnum,
+            yaml.representer.SafeRepresenter.represent_str,
+        )
         if args.flat:
             inv = flatten_dict(inv)
             yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False, indent=args.indent)
