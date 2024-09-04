@@ -41,5 +41,21 @@ class CopyTreeTest(unittest.TestCase):
         with self.assertRaises(SafeCopyError):
             copy_tree("non_existent_dir", self.temp_dir)
 
+        dst = os.path.join(self.temp_dir, "test")
+        with open(dst, "w", encoding="utf-8") as f:
+            f.write("Hello\n")
+        with self.assertRaises(SafeCopyError):
+            copy_tree(TEST_KUBERNETES_PATH, dst)
+
+    def test_copy_dir_missing_dst(self):
+        dst = os.path.join(self.temp_dir, "subdir")
+        original = set(glob.iglob(f"{TEST_KUBERNETES_PATH}/*", recursive=True))
+        copied = copy_tree(TEST_KUBERNETES_PATH, dst)
+        self.assertEqual(len(copied), len(original))
+
+        original_hash = directory_hash(TEST_KUBERNETES_PATH)
+        copied_hash = directory_hash(dst)
+        self.assertEqual(copied_hash, original_hash)
+
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
