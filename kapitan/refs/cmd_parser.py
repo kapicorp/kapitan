@@ -324,8 +324,8 @@ def secret_update(args, ref_controller):
         ]
         if args.target_name:
             inv = get_inventory(args.inventory_path)
-            kap_inv_params = inv.get_parameters(args.target_name)["kapitan"]
-            if "secrets" not in kap_inv_params:
+            kap_inv_params = inv.get_parameters(args.target_name).kapitan
+            if not kap_inv_params.secrets:
                 raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
             try:
@@ -467,45 +467,20 @@ def secret_update_validate(args, ref_controller):
     ret_code = 0
 
     for target_name, token_paths in target_token_paths.items():
-        kap_inv_params = inv.get_parameters(target_name)["kapitan"]
-        if "secrets" not in kap_inv_params:
+        secrets = inv.get_parameters(target_name).kapitan.secrets
+        if not secrets:
             raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
-
-        try:
-            recipients = kap_inv_params["secrets"]["gpg"]["recipients"]
-        except KeyError:
-            recipients = None
-        try:
-            gkey = kap_inv_params["secrets"]["gkms"]["key"]
-        except KeyError:
-            gkey = None
-        try:
-            awskey = kap_inv_params["secrets"]["awskms"]["key"]
-        except KeyError:
-            awskey = None
-        try:
-            vaultkv = kap_inv_params["secrets"]["vaultkv"]["auth"]
-        except KeyError:
-            vaultkv = None
-        try:
-            # Referenced Auth
-            vkey = kap_inv_params["secrets"]["vaulttransit"]["key"]
-        except KeyError:
-            vkey = None
-        try:
-            azkey = kap_inv_params["secrets"]["azkms"]["key"]
-        except KeyError:
-            azkey = None
 
         for token_path in token_paths:
             if token_path.startswith("?{gpg:"):
-                if not recipients:
+                if not secrets.gpg:
                     logger.debug(
                         "secret_update_validate: target: %s has no inventory gpg recipients, skipping %s",
                         target_name,
                         token_path,
                     )
                     continue
+                recipients = secrets.gpg.recipients
                 secret_obj = ref_controller[token_path]
                 target_fingerprints = set(lookup_fingerprints(recipients))
                 secret_fingerprints = set(lookup_fingerprints(secret_obj.recipients))
@@ -532,24 +507,25 @@ def secret_update_validate(args, ref_controller):
                         ref_controller[token_path] = secret_obj
 
             elif token_path.startswith("?{gkms:"):
-                if not gkey:
+                if not secrets.gkms:
                     logger.debug(
                         "secret_update_validate: target: %s has no inventory gkms key, skipping %s",
                         target_name,
                         token_path,
                     )
                     continue
+                key = secrets.gkms.key
                 secret_obj = ref_controller[token_path]
-                if gkey != secret_obj.key:
+                if secrets.gpg.key != key:
                     if args.validate_targets:
                         logger.info("%s key mismatch", token_path)
                         ret_code = 1
                     else:
-                        secret_obj.update_key(gkey)
+                        secret_obj.update_key(key)
                         ref_controller[token_path] = secret_obj
 
             elif token_path.startswith("?{vaulttransit:"):
-                if not vkey:
+                if not secrets.vaulttransit:
                     logger.debug(
                         "secret_update_validate: target: %s has no inventory vaulttransit key, skipping %s",
                         target_name,
@@ -557,33 +533,35 @@ def secret_update_validate(args, ref_controller):
                     )
                     continue
                 secret_obj = ref_controller[token_path]
-                if vkey != secret_obj.vault_params["key"]:
+                key = secrets.vaulttransit.key
+                if key != secret_obj.vault_params["key"]:
                     if args.validate_targets:
                         logger.info("%s key mismatch", token_path)
                         ret_code = 1
                     else:
-                        secret_obj.update_key(vkey)
+                        secret_obj.update_key(key)
                         ref_controller[token_path] = secret_obj
 
             elif token_path.startswith("?{awskms:"):
-                if not awskey:
+                if not secrets.awskms:
                     logger.debug(
                         "secret_update_validate: target: %s has no inventory awskms key, skipping %s",
                         target_name,
                         token_path,
                     )
                     continue
+                key = secrets.awskms.key
                 secret_obj = ref_controller[token_path]
-                if awskey != secret_obj.key:
+                if key != secret_obj.key:
                     if args.validate_targets:
                         logger.info("%s key mismatch", token_path)
                         ret_code = 1
                     else:
-                        secret_obj.update_key(awskey)
+                        secret_obj.update_key(key)
                         ref_controller[token_path] = secret_obj
 
             elif token_path.startswith("?{azkms:"):
-                if not azkey:
+                if not secrets.azkey:
                     logger.debug(
                         "secret_update_validate: target: %s has no inventory azkms key, skipping %s",
                         target_name,
@@ -591,12 +569,13 @@ def secret_update_validate(args, ref_controller):
                     )
                     continue
                 secret_obj = ref_controller[token_path]
-                if azkey != secret_obj.key:
+                key = secrets.azkms.key
+                if key != secret_obj.key:
                     if args.validate_targets:
                         logger.info("%s key mismatch", token_path)
                         ret_code = 1
                     else:
-                        secret_obj.update_key(azkey)
+                        secret_obj.update_key(key)
                         ref_controller[token_path] = secret_obj
 
             else:

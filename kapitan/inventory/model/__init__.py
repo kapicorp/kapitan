@@ -4,6 +4,54 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class KapitanSecretsTypes(StrEnum):
+    GPG = auto()
+    VAULTKV = auto()
+    VAULTTRANSIT = auto()
+    AWKMS = auto()
+    GKMS = auto()
+
+
+class KapitanSecretsGPGConfig(BaseModel):
+    recipients: List[dict[str, str]] = []
+
+
+class KapitanSecretsVaultKVConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    auth: str
+
+
+class KapitanSecretsVaultTransitConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str
+    auth: str
+
+
+class KapitanSecretsAWKMSConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str
+
+
+class KapitanSecretsGKMSConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str
+
+
+class KapitanSecretsAZKMSConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    key: str
+
+
+class KapitanSecretsConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    gpg: Optional[KapitanSecretsGPGConfig] = None
+    awskms: Optional[KapitanSecretsAWKMSConfig] = None
+    vaultkv: Optional[KapitanSecretsVaultKVConfig] = None
+    gkms: Optional[KapitanSecretsGKMSConfig] = None
+    vaulttransit: Optional[KapitanSecretsVaultTransitConfig] = None
+    azkms: Optional[KapitanSecretsAZKMSConfig] = None
+
+
 class InputType(StrEnum):
     JSONNET = auto()
     JINJA2 = auto()
@@ -131,7 +179,7 @@ class KapitanInventorySettings(BaseModel):
         | KapitanDependendencyGitConfig
     ] = []
     target_full_path: str = ""
-    secrets: dict = {}
+    secrets: Optional[KapitanSecretsConfig] = None
     validate_: list[dict] = Field(alias="validate", default=[])
 
 
@@ -143,7 +191,7 @@ class KapitanMetadataName(BaseModel):
 
 
 class KapitanInventoryMetadata(BaseModel):
-    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+    model_config = ConfigDict(extra="allow", validate_assignment=True)
     name: Optional[KapitanMetadataName] = None
 
 
