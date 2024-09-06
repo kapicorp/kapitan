@@ -1,7 +1,7 @@
 from enum import StrEnum, auto
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class InputType(StrEnum):
@@ -22,31 +22,44 @@ class OutputType(StrEnum):
     TOML = auto()
 
 
+class KapitanDependencyTypes(StrEnum):
+    HELM = auto()
+    HTTP = auto()
+    HTTPS = auto()
+    GIT = auto()
+
+
 class KapitanCompileBaseConfig(BaseModel):
-    model_config = ConfigDict(extra="forbid")
     output_path: str
     input_paths: List[str]
     input_type: InputType
     output_type: OutputType = OutputType.YAML
     ignore_missing: bool = False
-    prune: bool = False
+    prune: bool = True
+    continue_on_compile_error: bool = False
 
 
 class KapitanCompileExternalConfig(KapitanCompileBaseConfig):
-    model_config = ConfigDict(extra="forbid")
     env_vars: dict[str, str] = {}
     input_type: InputType = InputType.EXTERNAL
-
-
-class KapitanCompileJinja2Config(KapitanCompileBaseConfig):
-    model_config = ConfigDict(extra="forbid")
-    input_type: InputType = InputType.JINJA2
-    output_type: OutputType = OutputType.PLAIN
     input_params: dict = {}
 
 
+class KapitanCompileCopy(KapitanCompileBaseConfig):
+    input_type: InputType = InputType.COPY
+    ignore_missing: bool = False
+
+
+class KapitanCompileJinja2Config(KapitanCompileBaseConfig):
+    input_type: InputType = InputType.JINJA2
+    output_type: OutputType = OutputType.PLAIN
+    input_params: dict = {}
+    ignore_missing: bool = True
+    suffix_remove: bool = False
+    suffix_stripped: str = ".j2"
+
+
 class KapitanCompileHelmConfig(KapitanCompileBaseConfig):
-    model_config = ConfigDict(extra="forbid")
     input_type: InputType = InputType.HELM
     output_type: OutputType = OutputType.YAML
     input_params: dict = {}
@@ -55,21 +68,52 @@ class KapitanCompileHelmConfig(KapitanCompileBaseConfig):
 
 
 class KapitanCompileJsonnetConfig(KapitanCompileBaseConfig):
-    model_config = ConfigDict(extra="forbid")
     input_type: InputType = InputType.JSONNET
     output_type: OutputType = OutputType.JSON
     input_params: dict = {}
 
 
 class KapitanCompileKadetConfig(KapitanCompileBaseConfig):
-    model_config = ConfigDict(extra="forbid")
     input_type: InputType = InputType.KADET
     output_type: OutputType = OutputType.YAML
     input_params: dict = {}
 
 
+class KapitanEssentialVars(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    target: str = "sss"
+
+
+class KapitanDependencyBaseConfig(BaseModel):
+    type: KapitanDependencyTypes
+    source: str
+    output_path: str
+
+
+class KapitanDependendencyHelmConfig(KapitanDependencyBaseConfig):
+    type: KapitanDependencyTypes = KapitanDependencyTypes.HELM
+    version: str
+    chart_name: str
+    helm_path: Optional[str] = None
+
+
+class KapitanDependendencyGitConfig(KapitanDependencyBaseConfig):
+    type: KapitanDependencyTypes = KapitanDependencyTypes.GIT
+    ref: Optional[str] = "master"
+    subdir: Optional[str] = None
+    submodules: Optional[bool] = False
+
+
+class KapitanDependendencyHttpConfig(KapitanDependencyBaseConfig):
+    type: KapitanDependencyTypes = KapitanDependencyTypes.HTTP
+    unpack: bool = False
+
+
+class KapitanDependendencyHttpsConfig(KapitanDependendencyHttpConfig):
+    type: KapitanDependencyTypes = KapitanDependencyTypes.HTTPS
+
+
 class KapitanInventorySettings(BaseModel):
-    model_config = ConfigDict(extra="forbid")
 
     compile: List[
         KapitanCompileJinja2Config
@@ -78,15 +122,34 @@ class KapitanInventorySettings(BaseModel):
         | KapitanCompileJsonnetConfig
         | KapitanCompileHelmConfig
     ] = []
-    vars: dict[str, str] = {}
+    vars: KapitanEssentialVars = KapitanEssentialVars()
     labels: dict[str, str] = {}
-    dependencies: List[dict] = []
-    target_full_path: str
+    dependencies: List[
+        KapitanDependendencyHelmConfig
+        | KapitanDependendencyHttpConfig
+        | KapitanDependendencyHttpsConfig
+        | KapitanDependendencyGitConfig
+    ] = []
+    target_full_path: str = ""
+    secrets: dict = {}
+    validate_: list[dict] = Field(alias="validate", default=[])
+
+
+class KapitanMetadataName(BaseModel):
+    short: str
+    full: str
+    path: str
+    parts: List[str]
+
+
+class KapitanInventoryMetadata(BaseModel):
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+    name: Optional[KapitanMetadataName] = None
 
 
 class KapitanInventoryParameters(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-    kapitan: Optional[KapitanInventorySettings] = None
-    _kapitan_: dict = {}
-    _reclass_: dict = {}
+    kapitan: Optional[KapitanInventorySettings] = KapitanInventorySettings()
+    kapitan_metadata: Optional[KapitanInventoryMetadata] = Field(alias="_kapitan_", default=None)
+    reclass_metadata: Optional[KapitanInventoryMetadata] = Field(alias="_reclass_", default=None)

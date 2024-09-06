@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 class Jinja2(InputType):
     def __init__(self, compile_path, search_paths, ref_controller, args):
         super().__init__("jinja2", compile_path, search_paths, ref_controller)
-        self.strip_postfix = args.get("suffix_remove", False)
-        self.stripped_postfix = args.get("suffix_stripped", ".j2")
-        self.input_params = args.get("input_params", {})
+        self.strip_postfix = args.suffix_remove
+        self.stripped_postfix = args.suffix_stripped
+        self.input_params = args.input_params
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """
@@ -41,7 +41,7 @@ class Jinja2(InputType):
         input_params.setdefault("compile_path", compile_path)
 
         # set ext_vars and inventory for jinja2 context
-        context = ext_vars.copy()
+        context = ext_vars.model_dump()
 
         context["inventory_global"] = cached.inv.inventory
         context["inventory"] = cached.inv.inventory[target_name]

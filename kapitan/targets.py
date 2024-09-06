@@ -117,7 +117,7 @@ def compile_targets(
                 for target in target_objs:
                     try:
                         # get value of "force_fetch" property
-                        dependencies = target["dependencies"]
+                        dependencies = target.dependencies
                         # dependencies is still a list
                         for entry in dependencies:
                             force_fetch = entry["force_fetch"]
@@ -151,7 +151,7 @@ def compile_targets(
             # if '-t' is set on compile or only a few changed, only override selected targets
             if len(target_objs) < len(discovered_targets):
                 for target in target_objs:
-                    path = target["target_full_path"]
+                    path = target.target_full_path
                     compile_path_target = os.path.join(compile_path, path)
                     temp_path_target = os.path.join(temp_compile_path, path)
 
@@ -238,7 +238,7 @@ def search_targets(inventory, targets, labels):
     # It should come back already rendered
 
     for target in inventory.targets.values():
-        target_labels = target.parameters["kapitan"].get("labels", {})
+        target_labels = target.parameters.kapitan.labels
         matched_all_labels = False
         for label, value in labels_dict.items():
             try:
@@ -265,9 +265,9 @@ def search_targets(inventory, targets, labels):
 def compile_target(target_obj, search_paths, compile_path, ref_controller, globals_cached=None, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
-    compile_objs = target_obj["compile"]
-    ext_vars = target_obj["vars"]
-    target_name = ext_vars["target"]
+    compile_objs = target_obj.compile
+    ext_vars = target_obj.vars
+    target_name = ext_vars.target
 
     # Only populates the cache if the subprocess doesn't have it
     if globals_cached and not cached.inv:
@@ -278,10 +278,10 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
         logger.debug("Using go-jsonnet over jsonnet")
 
     for comp_obj in compile_objs:
-        input_type = comp_obj["input_type"]
-        output_path = comp_obj["output_path"]
-        input_params = comp_obj.setdefault("input_params", {})
-        continue_on_compile_error = comp_obj.get("continue_on_compile_error", False)
+        input_type = comp_obj.input_type
+        output_path = comp_obj.output_path
+        input_params = comp_obj.input_params
+        continue_on_compile_error = comp_obj.continue_on_compile_error
 
         if input_type == "jinja2":
             input_compiler = Jinja2(compile_path, search_paths, ref_controller, comp_obj)
@@ -292,16 +292,16 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
         elif input_type == "helm":
             input_compiler = Helm(compile_path, search_paths, ref_controller, comp_obj)
         elif input_type == "copy":
-            ignore_missing = comp_obj.get("ignore_missing", False)
+            ignore_missing = comp_obj.ignore_missing
             input_compiler = Copy(compile_path, search_paths, ref_controller, ignore_missing)
         elif input_type == "remove":
             input_compiler = Remove(compile_path, search_paths, ref_controller)
         elif input_type == "external":
             input_compiler = External(compile_path, search_paths, ref_controller)
             if "args" in comp_obj:
-                input_compiler.set_args(comp_obj["args"])
+                input_compiler.set_args(comp_obj.args)
             if "env_vars" in comp_obj:
-                input_compiler.set_env_vars(comp_obj["env_vars"])
+                input_compiler.set_env_vars(comp_obj.env_vars)
         else:
             err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
             raise CompileError(err_msg.format(input_type))
@@ -319,4 +319,4 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
                 traceback.print_exception(type(e), e, e.__traceback__)
                 raise CompileError(f"Error compiling {target_name}: {e}")
 
-    logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
+    logger.info("Compiled %s (%.2fs)", target_obj.target_full_path, time.time() - start)

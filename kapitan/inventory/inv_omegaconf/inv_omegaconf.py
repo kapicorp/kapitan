@@ -17,6 +17,8 @@ from kadet import Dict
 from omegaconf import DictConfig, ListMergeMode, OmegaConf
 from pydantic import ConfigDict
 
+from kapitan.inventory.model import KapitanInventoryMetadata, KapitanInventoryParameters
+
 from ..inventory import Inventory, InventoryError, InventoryTarget
 from .migrate import migrate
 from .resolvers import register_resolvers, register_user_resolvers
@@ -47,16 +49,15 @@ class OmegaConfTarget(InventoryTarget):
         self.__add_metadata()
 
     def __add_metadata(self):
-        metadata = {
-            "name": {
-                "short": self.name.split(".")[-1],
-                "full": self.name,
-                "path": os.path.splitext(self.path)[0],
-                "parts": self.name.split("."),
-            }
+        name_metadata = {
+            "short": self.name.split(".")[-1],
+            "full": self.name,
+            "path": os.path.splitext(self.path)[0],
+            "parts": self.name.split("."),
         }
-        self.parameters._kapitan_ = metadata
-        self.parameters._reclass_ = metadata
+        kapitan_metadata = KapitanInventoryMetadata(name=name_metadata)
+
+        self.parameters = KapitanInventoryParameters(_kapitan_=kapitan_metadata, _reclass_=kapitan_metadata)
 
 
 class OmegaConfInventory(Inventory):
@@ -181,7 +182,7 @@ class OmegaConfInventory(Inventory):
         full_target_path = os.path.join(self.targets_path, target.path)
 
         start = time.perf_counter()
-        parameters = OmegaConf.create(keys_to_strings(target.parameters))
+        parameters = OmegaConf.create(keys_to_strings(target.parameters.model_dump(by_alias=True)))
         p, c, a, e = self.load_parameters_from_file(full_target_path, parameters=parameters)
         load_parameters = time.perf_counter() - start
         target.parameters = OmegaConf.to_container(p, resolve=True)

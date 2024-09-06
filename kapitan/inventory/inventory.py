@@ -56,7 +56,7 @@ class Inventory(ABC):
         get all targets from inventory
         """
 
-        return {target.name: target.model_dump() for target in self.targets.values()}
+        return {target.name: target.model_dump(by_alias=True) for target in self.targets.values()}
 
     def __initialise(self, ignore_class_not_found) -> bool:
         """
