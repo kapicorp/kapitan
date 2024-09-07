@@ -15,6 +15,7 @@ from git import GitCommandError, Repo
 
 from kapitan.errors import GitFetchingError, GitSubdirNotFoundError, HelmFetchingError
 from kapitan.helm_cli import helm_cli
+from kapitan.inventory.model import KapitanDependencyTypes
 from kapitan.utils import (
     copy_tree,
     make_request,
@@ -64,11 +65,11 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
                 else:
                     deps_output_paths[source_uri].add(full_output_path)
 
-                if dependency_type == "git":
+                if dependency_type == KapitanDependencyTypes.GIT:
                     git_deps[source_uri].append(item)
-                elif dependency_type in ("http", "https"):
+                elif dependency_type in (KapitanDependencyTypes.HTTP, KapitanDependencyTypes.HTTPS):
                     http_deps[source_uri].append(item)
-                elif dependency_type == "helm":
+                elif dependency_type == KapitanDependencyTypes.HELM:
                     version = item.version
                     helm_deps[HelmSource(source_uri, item.chart_name, version, item.helm_path)].append(item)
                 else:
