@@ -61,10 +61,10 @@ class InventoryTestOmegaConf(unittest.TestCase):
         # Loads the target using the inventory
         inventory.load_target(target)
 
-        self.assertDictEqual(target_kapitan_metadata["_kapitan_"], target.parameters["_kapitan_"])
-        self.assertEqual(target.parameters["_kapitan_"]["name"]["short"], "minikube")
-        self.assertEqual(target.parameters["target_name"], "minikube-es")
-        self.assertEqual(target.parameters["kubectl"]["insecure_skip_tls_verify"], False)
+        self.assertDictEqual(target_kapitan_metadata["_kapitan_"], target.parameters._kapitan_)
+        self.assertEqual(target.parameters._kapitan_.name.short, "minikube")
+        self.assertEqual(target.parameters.target_name, "minikube-es")
+        self.assertEqual(target.parameters.kubectl.insecure_skip_tls_verify, False)
 
     def tearDown(self) -> None:
         shutil.rmtree(self.temp_dir)

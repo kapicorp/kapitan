@@ -23,6 +23,12 @@ from kapitan.dependency_manager.base import (
     fetch_http_source,
 )
 from kapitan.errors import HelmFetchingError
+from kapitan.inventory.model import (
+    KapitanDependencyGitConfig,
+    KapitanDependencyHelmConfig,
+    KapitanDependencyHttpsConfig,
+    KapitanInventorySettings,
+)
 
 
 class DependencyManagerTest(unittest.TestCase):
@@ -68,11 +74,15 @@ class DependencyManagerTest(unittest.TestCase):
         output_dir = tempfile.mkdtemp()
         source = "https://github.com/kapicorp/kapitan.git"
         dep = [
-            {
-                "output_path": os.path.join(output_dir, "subdir"),
-                "ref": "master",
-                "subdir": "tests",
-            }
+            KapitanDependencyGitConfig(
+                **{
+                    "type": "git",
+                    "source": source,
+                    "output_path": os.path.join(output_dir, "subdir"),
+                    "ref": "master",
+                    "subdir": "tests",
+                }
+            )
         ]
         fetch_git_dependency((source, dep), temp_dir, force=False)
         self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
@@ -90,12 +100,14 @@ class DependencyManagerTest(unittest.TestCase):
         version = "11.3.0"
         repo = "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/"
         dep = [
-            {
-                "output_path": output_chart_dir,
-                "version": version,
-                "chart_name": chart_name,
-                "source": repo,
-            }
+            KapitanDependencyHelmConfig(
+                **{
+                    "output_path": output_chart_dir,
+                    "version": version,
+                    "chart_name": chart_name,
+                    "source": repo,
+                }
+            )
         ]
         fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
         self.assertTrue(os.path.isdir(output_chart_dir))
@@ -115,12 +127,14 @@ class DependencyManagerTest(unittest.TestCase):
         version = "10.7.0"
         repo = "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/"
         dep = [
-            {
-                "output_path": output_chart_dir,
-                "version": version,
-                "chart_name": chart_name,
-                "source": repo,
-            }
+            KapitanDependencyHelmConfig(
+                **{
+                    "output_path": output_chart_dir,
+                    "version": version,
+                    "chart_name": chart_name,
+                    "source": repo,
+                }
+            )
         ]
         with self.assertRaises(HelmFetchingError):
             fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
@@ -134,24 +148,23 @@ class DependencyManagerTest(unittest.TestCase):
         save_dir = tempfile.mkdtemp()
         # use default parallelism of 4 for test
         with multiprocessing.Pool(4) as pool:
-            target_objs = [
+            dependencies = [
                 {
-                    "dependencies": [
-                        {
-                            "type": "https",
-                            "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/nfs-client-provisioner-1.2.8.tgz",
-                            "output_path": "nfs-client-provisioner",
-                            "unpack": True,
-                        },
-                        {
-                            "type": "https",
-                            "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/prometheus-pushgateway-1.2.13.tgz",
-                            "output_path": "prometheus-pushgateway",
-                            "unpack": True,
-                        },
-                    ]
-                }
+                    "type": "https",
+                    "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/nfs-client-provisioner-1.2.8.tgz",
+                    "output_path": "nfs-client-provisioner",
+                    "unpack": True,
+                },
+                {
+                    "type": "https",
+                    "source": "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/prometheus-pushgateway-1.2.13.tgz",
+                    "output_path": "prometheus-pushgateway",
+                    "unpack": True,
+                },
             ]
+
+            inventory = KapitanInventorySettings(dependencies=dependencies)
+            target_objs = [inventory]
             try:
                 fetch_dependencies(output_path, target_objs, save_dir, False, pool)
                 pool.close()
@@ -159,9 +172,9 @@ class DependencyManagerTest(unittest.TestCase):
                 pool.terminate()
                 raise e
 
-        for obj in target_objs[0]["dependencies"]:
-            self.assertTrue(os.path.isdir(os.path.join(output_path, obj["output_path"])))
-            self.assertTrue(os.path.isdir(os.path.join(save_dir, obj["output_path"])))
+        for obj in target_objs[0].dependencies:
+            self.assertTrue(os.path.isdir(os.path.join(output_path, obj.output_path)))
+            self.assertTrue(os.path.isdir(os.path.join(save_dir, obj.output_path)))
         rmtree(output_path)
         rmtree(save_dir)
 

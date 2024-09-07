@@ -27,6 +27,7 @@ from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
 from kapitan.inputs.remove import Remove
+from kapitan.inventory.model import InputTypes
 from kapitan.resources import get_inventory
 
 logger = logging.getLogger(__name__)
@@ -283,25 +284,23 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
         input_params = comp_obj.input_params
         continue_on_compile_error = comp_obj.continue_on_compile_error
 
-        if input_type == "jinja2":
+        if input_type == input_type.JINJA2:
             input_compiler = Jinja2(compile_path, search_paths, ref_controller, comp_obj)
-        elif input_type == "jsonnet":
+        elif input_type == input_type.JSONNET:
             input_compiler = Jsonnet(compile_path, search_paths, ref_controller, use_go=use_go_jsonnet)
-        elif input_type == "kadet":
+        elif input_type == input_type.KADET:
             input_compiler = Kadet(compile_path, search_paths, ref_controller, input_params=input_params)
-        elif input_type == "helm":
+        elif input_type == input_type.HELM:
             input_compiler = Helm(compile_path, search_paths, ref_controller, comp_obj)
-        elif input_type == "copy":
+        elif input_type == input_type.COPY:
             ignore_missing = comp_obj.ignore_missing
             input_compiler = Copy(compile_path, search_paths, ref_controller, ignore_missing)
-        elif input_type == "remove":
+        elif input_type == input_type.REMOVE:
             input_compiler = Remove(compile_path, search_paths, ref_controller)
-        elif input_type == "external":
+        elif input_type == input_type.EXTERNAL:
             input_compiler = External(compile_path, search_paths, ref_controller)
-            if "args" in comp_obj:
-                input_compiler.set_args(comp_obj.args)
-            if "env_vars" in comp_obj:
-                input_compiler.set_env_vars(comp_obj.env_vars)
+            input_compiler.set_args(comp_obj.args)
+            input_compiler.set_env_vars(comp_obj.env_vars)
         else:
             err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
             raise CompileError(err_msg.format(input_type))

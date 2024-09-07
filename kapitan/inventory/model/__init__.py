@@ -1,5 +1,5 @@
 from enum import StrEnum, auto
-from typing import List, Optional
+from typing import Annotated, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -52,7 +52,7 @@ class KapitanSecretsConfig(BaseModel):
     azkms: Optional[KapitanSecretsAZKMSConfig] = None
 
 
-class InputType(StrEnum):
+class InputTypes(StrEnum):
     JSONNET = auto()
     JINJA2 = auto()
     HELM = auto()
@@ -71,60 +71,73 @@ class OutputType(StrEnum):
 
 
 class KapitanDependencyTypes(StrEnum):
-    HELM = auto()
-    HTTP = auto()
-    HTTPS = auto()
-    GIT = auto()
+    HELM = "helm"
+    HTTP = "http"
+    HTTPS = "https"
+    GIT = "git"
 
 
 class KapitanCompileBaseConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: Optional[str] = None
+    input_type: InputTypes
     output_path: str
-    input_paths: List[str]
-    input_type: InputType
+    input_params: dict = {}
+    continue_on_compile_error: bool = False
+
     output_type: OutputType = OutputType.YAML
     ignore_missing: bool = False
     prune: bool = True
-    continue_on_compile_error: bool = False
 
 
 class KapitanCompileExternalConfig(KapitanCompileBaseConfig):
+    input_type: Literal[InputTypes.EXTERNAL] = InputTypes.EXTERNAL
     env_vars: dict[str, str] = {}
-    input_type: InputType = InputType.EXTERNAL
-    input_params: dict = {}
+    args: List[str] = []
+    input_paths: List[str]
 
 
 class KapitanCompileCopy(KapitanCompileBaseConfig):
-    input_type: InputType = InputType.COPY
+    input_type: Literal[InputTypes.COPY] = InputTypes.COPY
+    input_paths: List[str]
     ignore_missing: bool = False
 
 
 class KapitanCompileJinja2Config(KapitanCompileBaseConfig):
-    input_type: InputType = InputType.JINJA2
-    output_type: OutputType = OutputType.PLAIN
-    input_params: dict = {}
-    ignore_missing: bool = True
-    suffix_remove: bool = False
-    suffix_stripped: str = ".j2"
+    input_type: Literal[InputTypes.JINJA2] = InputTypes.JINJA2
+    input_paths: List[str]
+    output_type: Optional[OutputType] = OutputType.PLAIN
+    ignore_missing: Optional[bool] = True
+    suffix_remove: Optional[bool] = False
+    suffix_stripped: Optional[str] = ".j2"
 
 
 class KapitanCompileHelmConfig(KapitanCompileBaseConfig):
-    input_type: InputType = InputType.HELM
-    output_type: OutputType = OutputType.YAML
-    input_params: dict = {}
-    helm_values: dict = {}
+    input_type: Literal[InputTypes.HELM] = InputTypes.HELM
     helm_params: dict = {}
+    helm_values: Optional[dict] = {}
+    helm_values_files: Optional[List[str]] = []
+    helm_path: Optional[str] = None
+    input_paths: List[str]
 
 
 class KapitanCompileJsonnetConfig(KapitanCompileBaseConfig):
-    input_type: InputType = InputType.JSONNET
+    input_type: Literal[InputTypes.JSONNET] = InputTypes.JSONNET
     output_type: OutputType = OutputType.JSON
-    input_params: dict = {}
+    input_paths: List[str]
+    input_value: Optional[dict] = None
 
 
 class KapitanCompileKadetConfig(KapitanCompileBaseConfig):
-    input_type: InputType = InputType.KADET
+    input_type: Literal[InputTypes.KADET] = InputTypes.KADET
     output_type: OutputType = OutputType.YAML
-    input_params: dict = {}
+    input_paths: List[str]
+    input_value: Optional[dict] = None
+
+
+class KapitanCompileRemoveConfig(KapitanCompileBaseConfig):
+    input_type: Literal[InputTypes.REMOVE]
+    input_paths: List[str]
 
 
 class KapitanEssentialVars(BaseModel):
@@ -138,46 +151,48 @@ class KapitanDependencyBaseConfig(BaseModel):
     output_path: str
 
 
-class KapitanDependendencyHelmConfig(KapitanDependencyBaseConfig):
-    type: KapitanDependencyTypes = KapitanDependencyTypes.HELM
-    version: str
+class KapitanDependencyHelmConfig(KapitanDependencyBaseConfig):
+    type: Literal[KapitanDependencyTypes.HELM] = KapitanDependencyTypes.HELM
     chart_name: str
+    version: Optional[str] = None
     helm_path: Optional[str] = None
 
 
-class KapitanDependendencyGitConfig(KapitanDependencyBaseConfig):
-    type: KapitanDependencyTypes = KapitanDependencyTypes.GIT
+class KapitanDependencyGitConfig(KapitanDependencyBaseConfig):
+    type: Literal[KapitanDependencyTypes.GIT] = KapitanDependencyTypes.GIT
     ref: Optional[str] = "master"
     subdir: Optional[str] = None
     submodules: Optional[bool] = False
 
 
-class KapitanDependendencyHttpConfig(KapitanDependencyBaseConfig):
-    type: KapitanDependencyTypes = KapitanDependencyTypes.HTTP
+class KapitanDependencyHttpsConfig(KapitanDependencyBaseConfig):
+    type: Literal[KapitanDependencyTypes.HTTPS, KapitanDependencyTypes.HTTP]
     unpack: bool = False
 
 
-class KapitanDependendencyHttpsConfig(KapitanDependendencyHttpConfig):
-    type: KapitanDependencyTypes = KapitanDependencyTypes.HTTPS
+CompileInputTypeConfig = Annotated[
+    Union[
+        KapitanCompileJinja2Config,
+        KapitanCompileExternalConfig,
+        KapitanCompileCopy,
+        KapitanCompileKadetConfig,
+        KapitanCompileJsonnetConfig,
+        KapitanCompileHelmConfig,
+        KapitanCompileRemoveConfig,
+    ],
+    Field(discriminator="input_type"),
+]
+
+DependencyTypeConfig = Union[
+    KapitanDependencyHelmConfig, KapitanDependencyHttpsConfig, KapitanDependencyGitConfig
+]
 
 
 class KapitanInventorySettings(BaseModel):
-
-    compile: List[
-        KapitanCompileJinja2Config
-        | KapitanCompileExternalConfig
-        | KapitanCompileKadetConfig
-        | KapitanCompileJsonnetConfig
-        | KapitanCompileHelmConfig
-    ] = []
+    compile: List[CompileInputTypeConfig] = []
     vars: KapitanEssentialVars = KapitanEssentialVars()
     labels: dict[str, str] = {}
-    dependencies: List[
-        KapitanDependendencyHelmConfig
-        | KapitanDependendencyHttpConfig
-        | KapitanDependendencyHttpsConfig
-        | KapitanDependendencyGitConfig
-    ] = []
+    dependencies: List[DependencyTypeConfig] = []
     target_full_path: str = ""
     secrets: Optional[KapitanSecretsConfig] = None
     validate_: list[dict] = Field(alias="validate", default=[])

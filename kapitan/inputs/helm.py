@@ -33,9 +33,9 @@ class Helm(InputType):
     def __init__(self, compile_path, search_paths, ref_controller, args):
         super().__init__("helm", compile_path, search_paths, ref_controller)
 
-        self.helm_values_files = args.get("helm_values_files")
-        self.helm_params = args.get("helm_params") or {}
-        self.helm_path = args.get("helm_path")
+        self.helm_values_files = args.helm_values_files
+        self.helm_params = args.helm_params
+        self.helm_path = args.helm_path
         self.file_path = None
 
         self.helm_values_file = None
