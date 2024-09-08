@@ -1,7 +1,9 @@
-from enum import StrEnum, auto
+from enum import auto
 from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from kapitan.utils import StrEnum
 
 
 class KapitanDependencyTypes(StrEnum):

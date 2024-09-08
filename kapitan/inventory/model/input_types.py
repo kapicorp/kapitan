@@ -1,7 +1,8 @@
-from enum import StrEnum, auto
 from typing import Annotated, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from kapitan.utils import StrEnum, auto
 
 
 class InputTypes(StrEnum):

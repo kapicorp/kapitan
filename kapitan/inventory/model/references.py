@@ -1,4 +1,3 @@
-from enum import StrEnum, auto
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict

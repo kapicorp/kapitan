@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from enum import StrEnum, auto
+from kapitan.utils import StrEnum, auto
 
 
 class KapitanReferencesTypes(StrEnum):

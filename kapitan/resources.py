@@ -15,7 +15,6 @@ import json
 import logging
 import os
 import sys
-from enum import StrEnum
 from functools import partial
 
 import jsonschema
@@ -28,6 +27,8 @@ from kapitan.inputs.kadet import Dict
 from kapitan.inventory import Inventory, get_inventory_backend
 from kapitan.utils import (
     PrettyDumper,
+    StrEnum,
+    auto,
     deep_get,
     flatten_dict,
     render_jinja2_file,

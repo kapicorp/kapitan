@@ -1,12 +1,8 @@
-from .inventory import Inventory
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from strenum import StrEnum
-
-
 from typing import Type
+
+from kapitan.utils import StrEnum
+
+from .inventory import Inventory
 
 
 class InventoryBackends(StrEnum):
