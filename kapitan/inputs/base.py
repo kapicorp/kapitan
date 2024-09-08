@@ -66,6 +66,7 @@ class InputType(object):
         output_path = comp_obj.output_path
         output_type = comp_obj.output_type
         prune_output = comp_obj.prune
+        ext_vars_dict = ext_vars.model_dump(by_alias=True)
 
         logger.debug("Compiling %s", input_path)
         try:
@@ -76,7 +77,7 @@ class InputType(object):
             self.compile_file(
                 input_path,
                 _compile_path,
-                ext_vars,
+                ext_vars_dict,
                 output=output_type,
                 target_name=target_name,
                 prune_output=prune_output,

@@ -54,17 +54,20 @@ class InventoryTestOmegaConf(unittest.TestCase):
 
         # Manually create a new Target
         target = inventory.target_class(name=target_name, path="minikube-es.yml")
-
+        logger.error(f"Loading target {target_name} from {target.path}")
+        logger.error(target.parameters)
         # Adds target to Inventory
         inventory.targets.update({target_name: target})
 
         # Loads the target using the inventory
         inventory.load_target(target)
 
-        self.assertDictEqual(target_kapitan_metadata["_kapitan_"], target.parameters._kapitan_)
-        self.assertEqual(target.parameters._kapitan_.name.short, "minikube")
+        # Check if the target is loaded correctly
+        metadata = target.parameters.model_dump(by_alias=True)["_kapitan_"]
+        self.assertDictEqual(target_kapitan_metadata["_kapitan_"], metadata)
+        self.assertEqual(metadata["name"]["short"], "minikube")
         self.assertEqual(target.parameters.target_name, "minikube-es")
-        self.assertEqual(target.parameters.kubectl.insecure_skip_tls_verify, False)
+        self.assertEqual(target.parameters.kubectl["insecure_skip_tls_verify"], False)
 
     def tearDown(self) -> None:
         shutil.rmtree(self.temp_dir)

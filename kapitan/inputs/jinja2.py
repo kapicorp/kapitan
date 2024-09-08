@@ -23,7 +23,7 @@ class Jinja2(InputType):
         self.stripped_postfix = args.suffix_stripped
         self.input_params = args.input_params
 
-    def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
+    def compile_file(self, file_path, compile_path, ext_vars={}, **kwargs):
         """
         Write items in path as jinja2 rendered files to compile_path.
         path can be either a file or directory.
@@ -41,10 +41,10 @@ class Jinja2(InputType):
         input_params.setdefault("compile_path", compile_path)
 
         # set ext_vars and inventory for jinja2 context
-        context = ext_vars.model_dump()
+        context = ext_vars.copy()
 
-        context["inventory_global"] = cached.inv.inventory
-        context["inventory"] = cached.inv.inventory[target_name]
+        context["inventory_global"] = cached.global_inv
+        context["inventory"] = cached.global_inv[target_name]
         context["input_params"] = input_params
 
         jinja2_filters = kwargs.get("jinja2_filters")

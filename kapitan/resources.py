@@ -285,7 +285,7 @@ def inventory(search_paths: list = [], target_name: str = None, inventory_path: 
 
     if target_name:
         target = inv.get_target(target_name)
-        return target.model_dump()
+        return target.model_dump(by_alias=True)
 
     return inv.inventory
 

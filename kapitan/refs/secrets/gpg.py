@@ -78,12 +78,12 @@ class GPGSecret(Base64Ref):
 
             target_inv = cached.inv.get_parameters(target_name)
 
-            if "secrets" not in target_inv["kapitan"]:
+            if not target_inv.kapitan.secrets:
                 raise KapitanError(
                     f"parameters.kapitan.secrets not defined in inventory of target {target_name}"
                 )
 
-            recipients = target_inv["kapitan"]["secrets"]["gpg"]["recipients"]
+            recipients = target_inv.kapitan.secrets.gpg.recipients
 
             return cls(data, recipients, **ref_params.kwargs)
         except KeyError:

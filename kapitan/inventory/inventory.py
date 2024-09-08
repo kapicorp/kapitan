@@ -26,7 +26,7 @@ class InventoryTarget(BaseModel):
     parameters: KapitanInventoryParameters = KapitanInventoryParameters()
     classes: list = list()
     applications: list = list()
-    exports: Dict = {}
+    exports: dict = {}
 
 
 class Inventory(ABC):

@@ -17,6 +17,7 @@ from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.inputs.helm import Helm, HelmChart
 from kapitan.inputs.kadet import BaseObj
+from kapitan.inventory.model import KapitanCompileHelmConfig
 
 
 class HelmInputTest(unittest.TestCase):
@@ -26,10 +27,12 @@ class HelmInputTest(unittest.TestCase):
     def test_render_chart(self):
         temp_dir = tempfile.mkdtemp()
         chart_path = "charts/acs-engine-autoscaler"
-        helm = Helm(None, None, None, {})
-        _, error_message = helm.render_chart(
-            chart_path, temp_dir, None, {"name": "acs-engine-autoscaler"}, None, None
+        helm_params = {"name": "acs-engine-autoscaler"}
+        helm_config = KapitanCompileHelmConfig(
+            input_paths=[chart_path], helm_params=helm_params, output_path=temp_dir
         )
+        helm = Helm(None, None, None, helm_config)
+        _, error_message = helm.render_chart(chart_path, temp_dir, None, helm_params, None, None)
         self.assertFalse(error_message)
         self.assertTrue(
             os.path.isfile(os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "secrets.yaml"))
@@ -38,11 +41,15 @@ class HelmInputTest(unittest.TestCase):
             os.path.isfile(os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "deployment.yaml"))
         )
 
-    def test_error_invalid_char_dir(self):
+    def test_error_invalid_chart_dir(self):
         chart_path = "./non-existent"
         temp_dir = tempfile.mkdtemp()
-        helm = Helm(None, None, None, {})
-        _, error_message = helm.render_chart(chart_path, temp_dir, None, {"name": "mychart"}, None, None)
+        helm_params = {"name": "mychart"}
+        helm_config = KapitanCompileHelmConfig(
+            input_paths=[chart_path], output_path=temp_dir, helm_params=helm_params
+        )
+        helm = Helm(None, None, None, helm_config)
+        _, error_message = helm.render_chart(chart_path, temp_dir, None, helm_params, None, None)
         self.assertTrue("path" in error_message and "not found" in error_message)
 
     def test_compile_chart(self):

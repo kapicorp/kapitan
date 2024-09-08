@@ -119,6 +119,7 @@ class KapitanCompileHelmConfig(KapitanCompileBaseConfig):
     helm_values_files: Optional[List[str]] = []
     helm_path: Optional[str] = None
     input_paths: List[str]
+    kube_version: Optional[str] = None
 
 
 class KapitanCompileJsonnetConfig(KapitanCompileBaseConfig):
@@ -126,6 +127,7 @@ class KapitanCompileJsonnetConfig(KapitanCompileBaseConfig):
     output_type: OutputType = OutputType.JSON
     input_paths: List[str]
     input_value: Optional[dict] = None
+    prune: bool = False
 
 
 class KapitanCompileKadetConfig(KapitanCompileBaseConfig):
@@ -156,6 +158,7 @@ class KapitanDependencyHelmConfig(KapitanDependencyBaseConfig):
     chart_name: str
     version: Optional[str] = None
     helm_path: Optional[str] = None
+    force_fetch: Optional[bool] = False
 
 
 class KapitanDependencyGitConfig(KapitanDependencyBaseConfig):

@@ -15,6 +15,7 @@ from kapitan.errors import CompileError, HelmTemplateError
 from kapitan.helm_cli import helm_cli
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.inputs.kadet import BaseModel, BaseObj, Dict
+from kapitan.inventory.model import KapitanCompileHelmConfig
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ HELM_DEFAULT_FLAGS = {"--include-crds": True, "--skip-tests": True}
 
 
 class Helm(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller, args):
+    def __init__(self, compile_path, search_paths, ref_controller, args: KapitanCompileHelmConfig):
         super().__init__("helm", compile_path, search_paths, ref_controller)
 
         self.helm_values_files = args.helm_values_files
@@ -39,13 +40,10 @@ class Helm(InputType):
         self.file_path = None
 
         self.helm_values_file = None
-        if "helm_values" in args:
-            self.helm_values_file = write_helm_values_file(args["helm_values"])
+        if args.helm_values:
+            self.helm_values_file = write_helm_values_file(args.helm_values)
 
-        self.kube_version = None
-        if "kube_version" in args:
-            logger.warning("passing kube_version is deprecated. Use api_versions helm flag instead.")
-            self.kube_version = args["kube_version"]
+        self.kube_version = args.kube_version
 
     def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
         """

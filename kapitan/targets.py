@@ -116,17 +116,11 @@ def compile_targets(
                 fetch_objs = []
                 # iterate through targets
                 for target in target_objs:
-                    try:
-                        # get value of "force_fetch" property
-                        dependencies = target.dependencies
-                        # dependencies is still a list
-                        for entry in dependencies:
-                            force_fetch = entry["force_fetch"]
-                            if force_fetch:
-                                fetch_objs.append(target)
-                    except KeyError:
-                        # targets may have no "dependencies" or "force_fetch" key
-                        continue
+                    for entry in target.dependencies:
+                        force_fetch = entry.force_fetch
+                        if entry.force_fetch:
+                            fetch_objs.append(target)
+
                 # fetch dependencies from targets with force_fetch set to true
                 if fetch_objs:
                     fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
@@ -186,10 +180,11 @@ def compile_targets(
                 logger.exception(e)
             else:
                 logger.error(e)
-            sys.exit(1)
+            raise CompileError(f"Error compiling targets: {e}")
 
-        shutil.rmtree(temp_path)
-        logger.debug("Removed %s", temp_path)
+        finally:
+            shutil.rmtree(temp_path)
+            logger.debug("Removed %s", temp_path)
 
 
 def load_target_inventory(inventory, requested_targets, ignore_class_not_found=False):

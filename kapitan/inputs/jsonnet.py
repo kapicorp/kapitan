@@ -10,7 +10,6 @@ import logging
 import os
 import sys
 
-from kapitan import cached
 from kapitan.errors import CompileError
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.resources import resource_callbacks, search_imports
@@ -81,6 +80,7 @@ class Jsonnet(InputType):
             return search_imports(cwd, imp, self.search_paths)
 
         json_output = None
+
         if self.use_go:
             json_output = go_jsonnet_file(
                 file_path,
