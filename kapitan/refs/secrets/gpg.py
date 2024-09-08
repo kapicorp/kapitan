@@ -13,6 +13,7 @@ import gnupg
 
 from kapitan import cached
 from kapitan.errors import KapitanError
+from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
@@ -58,7 +59,7 @@ class GPGSecret(Base64Ref):
             self.data = data
             self.recipients = [{"fingerprint": f} for f in fingerprints]  # TODO move to .load() method
         super().__init__(self.data, **kwargs)
-        self.type_name = "gpg"
+        self.type_name = KapitanReferencesTypes.GPG
 
     @classmethod
     def from_params(cls, data, ref_params):
@@ -161,7 +162,7 @@ class GPGBackend(Base64RefBackend):
     def __init__(self, path, ref_type=GPGSecret, **ref_kwargs):
         "init GPGBackend ref backend type"
         super().__init__(path, ref_type, **ref_kwargs)
-        self.type_name = "gpg"
+        self.type_name = KapitanReferencesTypes.GPG
 
 
 def lookup_fingerprints(recipients):

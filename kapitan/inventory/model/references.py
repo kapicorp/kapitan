@@ -4,14 +4,6 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
 
-class KapitanReferencesTypes(StrEnum):
-    GPG = auto()
-    VAULTKV = auto()
-    VAULTTRANSIT = auto()
-    AWKMS = auto()
-    GKMS = auto()
-
-
 class KapitanReferenceBaseConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

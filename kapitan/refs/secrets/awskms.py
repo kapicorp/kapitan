@@ -11,6 +11,7 @@ import boto3
 
 from kapitan import cached
 from kapitan.errors import KapitanError
+from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
@@ -42,7 +43,7 @@ class AWSKMSSecret(Base64Ref):
             self.data = data
             self.key = key
         super().__init__(self.data, **kwargs)
-        self.type_name = "awskms"
+        self.type_name = KapitanReferencesTypes.AWSKMS
 
     @classmethod
     def from_params(cls, data, ref_params):

@@ -24,6 +24,7 @@ from kapitan.errors import (
     RefFromFuncError,
     RefHashMismatchError,
 )
+from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.functions import eval_func, get_func_lookup
 from kapitan.utils import PrettyDumper, list_all_paths
 
@@ -45,7 +46,7 @@ class PlainRef(object):
         """
         writes plain data
         """
-        self.type_name = "plain"
+        self.type_name = KapitanReferencesTypes.PLAIN
         self.encoding = kwargs.get("encoding", "original")
         self.embedded_subvar_path = kwargs.get("embedded_subvar_path", None)
         self.data = data
@@ -462,43 +463,43 @@ class RefController(object):
             return self.backends[type_name]
         except KeyError:
             ref_kwargs = {"embed_refs": self.embed_refs}
-            if type_name == "plain":
+            if type_name == KapitanReferencesTypes.PLAIN:
                 from kapitan.refs.base import PlainRefBackend
 
                 # XXX embed_refs in plain backend does nothing
                 self.register_backend(PlainRefBackend(self.path, **ref_kwargs))
 
-            elif type_name == "env":
+            elif type_name == KapitanReferencesTypes.ENV:
                 from kapitan.refs.env import EnvRefBackend
 
                 # embed_refs in env backend also does nothing
                 self.register_backend(EnvRefBackend(self.path, **ref_kwargs))
 
-            elif type_name == "base64":
+            elif type_name == KapitanReferencesTypes.BASE64:
                 from kapitan.refs.base64 import Base64RefBackend
 
                 self.register_backend(Base64RefBackend(self.path, **ref_kwargs))
-            elif type_name == "gpg":
+            elif type_name == KapitanReferencesTypes.GPG:
                 from kapitan.refs.secrets.gpg import GPGBackend
 
                 self.register_backend(GPGBackend(self.path, **ref_kwargs))
-            elif type_name == "gkms":
+            elif type_name == KapitanReferencesTypes.GKMS:
                 from kapitan.refs.secrets.gkms import GoogleKMSBackend
 
                 self.register_backend(GoogleKMSBackend(self.path, **ref_kwargs))
-            elif type_name == "awskms":
+            elif type_name == KapitanReferencesTypes.AWSKMS:
                 from kapitan.refs.secrets.awskms import AWSKMSBackend
 
                 self.register_backend(AWSKMSBackend(self.path, **ref_kwargs))
-            elif type_name == "vaultkv":
+            elif type_name == KapitanReferencesTypes.VAULTKV:
                 from kapitan.refs.secrets.vaultkv import VaultBackend
 
                 self.register_backend(VaultBackend(self.path, **ref_kwargs))
-            elif type_name == "vaulttransit":
+            elif type_name == KapitanReferencesTypes.VAULTTRANSIT:
                 from kapitan.refs.secrets.vaulttransit import VaultBackend
 
                 self.register_backend(VaultBackend(self.path, **ref_kwargs))
-            elif type_name == "azkms":
+            elif type_name == KapitanReferencesTypes.AZKMS:
                 from kapitan.refs.secrets.azkms import AzureKMSBackend
 
                 self.register_backend(AzureKMSBackend(self.path, **ref_kwargs))

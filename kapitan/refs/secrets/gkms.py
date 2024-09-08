@@ -13,6 +13,7 @@ import googleapiclient.discovery as gcloud
 
 from kapitan import cached
 from kapitan.errors import KapitanError
+from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
@@ -53,7 +54,7 @@ class GoogleKMSSecret(Base64Ref):
             self.data = data
             self.key = key
         super().__init__(self.data, **kwargs)
-        self.type_name = "gkms"
+        self.type_name = KapitanReferencesTypes.GKMS
 
     @classmethod
     def from_params(cls, data, ref_params):
@@ -165,4 +166,4 @@ class GoogleKMSBackend(Base64RefBackend):
     def __init__(self, path, ref_type=GoogleKMSSecret, **ref_kwargs):
         "init GoogleKMSBackend ref backend type"
         super().__init__(path, ref_type, **ref_kwargs)
-        self.type_name = "gkms"
+        self.type_name = KapitanReferencesTypes.GKMS

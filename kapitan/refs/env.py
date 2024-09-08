@@ -5,11 +5,9 @@
 
 "environment refs module"
 
-import base64
-import hashlib
 import os
 
-from kapitan.refs.base import PlainRef, PlainRefBackend
+from kapitan.refs.base import KapitanReferencesTypes, PlainRef, PlainRefBackend
 
 DEFAULT_ENV_REF_VAR_PREFIX = "KAPITAN_VAR_"
 
@@ -21,7 +19,7 @@ class EnvRef(PlainRef):
         environment vars prefix during the reveal phase.
         """
         super().__init__(data, kwargs=kwargs)
-        self.type_name = "env"
+        self.type_name = KapitanReferencesTypes.ENV
 
     def reveal(self):
         """
@@ -43,4 +41,4 @@ class EnvRefBackend(PlainRefBackend):
     def __init__(self, path, ref_type=EnvRef, **ref_kwargs):
         "Get and create EnvRefs"
         super().__init__(path, ref_type, ref_kwargs=ref_kwargs)
-        self.type_name = "env"
+        self.type_name = KapitanReferencesTypes.ENV

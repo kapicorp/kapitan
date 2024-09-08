@@ -12,7 +12,7 @@ import logging
 
 import yaml
 
-from kapitan.refs.base import PlainRef, PlainRefBackend
+from kapitan.refs.base import KapitanReferencesTypes, PlainRef, PlainRefBackend
 
 try:
     from yaml import CSafeLoader as YamlLoader
@@ -29,7 +29,7 @@ class Base64Ref(PlainRef):
         set from_base64 to load already base64 encoded data
         """
         super().__init__(data, **kwargs)
-        self.type_name = "base64"
+        self.type_name = KapitanReferencesTypes.BASE64
         self.encoding = kwargs.get("encoding", "original")
         self.embed_refs = kwargs.get("embed_refs", False)
 
@@ -91,4 +91,4 @@ class Base64Ref(PlainRef):
 class Base64RefBackend(PlainRefBackend):
     def __init__(self, path, ref_type=Base64Ref, **ref_kwargs):
         super().__init__(path, ref_type, **ref_kwargs)
-        self.type_name = "base64"
+        self.type_name = KapitanReferencesTypes.BASE64
