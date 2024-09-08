@@ -9,8 +9,8 @@ import unittest
 
 from kapitan import cached
 from kapitan.cli import main
-from kapitan.refs.base import RefController, RefParams, Revealer
-from kapitan.refs.secrets.azkms import AzureKMSError, AzureKMSSecret
+from kapitan.refs.base import RefController, Revealer
+from kapitan.refs.secrets.azkms import AzureKMSSecret
 
 REFS_HOME = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_HOME)

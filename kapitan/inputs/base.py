@@ -36,17 +36,17 @@ class InputType(object):
         and run compile_input_path() for each resolved input_path.
         kwargs are passed into compile_input_path()
         """
-        input_type = comp_obj["input_type"]
+        input_type = comp_obj.input_type
         assert input_type == self.type_name
 
         # expand any globbed paths, taking into account provided search paths
         input_paths = []
-        for input_path in comp_obj["input_paths"]:
+        for input_path in comp_obj.input_paths:
             globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
             inputs = list(itertools.chain.from_iterable(globbed_paths))
             # remove duplicate inputs
             inputs = set(inputs)
-            ignore_missing = comp_obj.get("ignore_missing", False)
+            ignore_missing = comp_obj.ignore_missing
             if len(inputs) == 0 and not ignore_missing:
                 raise CompileError(
                     "Compile error: {} for target: {} not found in "
@@ -62,10 +62,11 @@ class InputType(object):
         Compile validated input_path in comp_obj
         kwargs are passed into compile_file()
         """
-        target_name = ext_vars["target"]
-        output_path = comp_obj["output_path"]
-        output_type = comp_obj.get("output_type", self.default_output_type())
-        prune_output = comp_obj.get("prune", kwargs.get("prune", False))
+        target_name = ext_vars.target
+        output_path = comp_obj.output_path
+        output_type = comp_obj.output_type
+        prune_output = comp_obj.prune
+        ext_vars_dict = ext_vars.model_dump(by_alias=True)
 
         logger.debug("Compiling %s", input_path)
         try:
@@ -76,7 +77,7 @@ class InputType(object):
             self.compile_file(
                 input_path,
                 _compile_path,
-                ext_vars,
+                ext_vars_dict,
                 output=output_type,
                 target_name=target_name,
                 prune_output=prune_output,

@@ -11,6 +11,7 @@ import logging
 from hvac.exceptions import Forbidden, InvalidPath
 
 from kapitan import cached
+from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan.refs.vault_resources import VaultClient, VaultError
@@ -40,7 +41,7 @@ class VaultSecret(Base64Ref):
             self.data = data
 
         super().__init__(self.data, **kwargs)
-        self.type_name = "vaultkv"
+        self.type_name = KapitanReferencesTypes.VAULTKV
 
     @classmethod
     def from_params(cls, data, ref_params):
@@ -244,4 +245,4 @@ class VaultBackend(Base64RefBackend):
     def __init__(self, path, ref_type=VaultSecret, **ref_kwargs):
         "init VaultBackend ref backend type"
         super().__init__(path, ref_type, **ref_kwargs)
-        self.type_name = "vaultkv"
+        self.type_name = KapitanReferencesTypes.VAULTKV

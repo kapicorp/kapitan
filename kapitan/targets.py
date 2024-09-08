@@ -10,7 +10,6 @@ import logging
 import multiprocessing
 import os
 import shutil
-import sys
 import tempfile
 import time
 from functools import partial
@@ -115,17 +114,11 @@ def compile_targets(
                 fetch_objs = []
                 # iterate through targets
                 for target in target_objs:
-                    try:
-                        # get value of "force_fetch" property
-                        dependencies = target["dependencies"]
-                        # dependencies is still a list
-                        for entry in dependencies:
-                            force_fetch = entry["force_fetch"]
-                            if force_fetch:
-                                fetch_objs.append(target)
-                    except KeyError:
-                        # targets may have no "dependencies" or "force_fetch" key
-                        continue
+                    for entry in target.dependencies:
+                        force_fetch = entry.force_fetch
+                        if entry.force_fetch:
+                            fetch_objs.append(target)
+
                 # fetch dependencies from targets with force_fetch set to true
                 if fetch_objs:
                     fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
@@ -151,7 +144,7 @@ def compile_targets(
             # if '-t' is set on compile or only a few changed, only override selected targets
             if len(target_objs) < len(discovered_targets):
                 for target in target_objs:
-                    path = target["target_full_path"]
+                    path = target.target_full_path
                     compile_path_target = os.path.join(compile_path, path)
                     temp_path_target = os.path.join(temp_compile_path, path)
 
@@ -185,10 +178,11 @@ def compile_targets(
                 logger.exception(e)
             else:
                 logger.error(e)
-            sys.exit(1)
+            raise CompileError(f"Error compiling targets: {e}")
 
-        shutil.rmtree(temp_path)
-        logger.debug("Removed %s", temp_path)
+        finally:
+            shutil.rmtree(temp_path)
+            logger.debug("Removed %s", temp_path)
 
 
 def load_target_inventory(inventory, requested_targets, ignore_class_not_found=False):
@@ -209,13 +203,11 @@ def load_target_inventory(inventory, requested_targets, ignore_class_not_found=F
                 else:
                     raise InventoryError(f"InventoryError: {target_name}: parameters is empty")
 
-            kapitan_target_configs = target.parameters["kapitan"]
-            for comp_obj in kapitan_target_configs["compile"]:
-                comp_obj.setdefault("input_params", {})
+            kapitan_target_configs = target.parameters.kapitan
             # check if parameters.kapitan is empty
             if not kapitan_target_configs:
                 raise InventoryError(f"InventoryError: {target_name}: parameters.kapitan has no assignment")
-            kapitan_target_configs["target_full_path"] = inventory.targets[target_name].name.replace(".", "/")
+            kapitan_target_configs.target_full_path = inventory.targets[target_name].name.replace(".", "/")
             logger.debug(f"load_target_inventory: found valid kapitan target {target_name}")
             target_objs.append(kapitan_target_configs)
         except KeyError:
@@ -240,7 +232,7 @@ def search_targets(inventory, targets, labels):
     # It should come back already rendered
 
     for target in inventory.targets.values():
-        target_labels = target.parameters["kapitan"].get("labels", {})
+        target_labels = target.parameters.kapitan.labels
         matched_all_labels = False
         for label, value in labels_dict.items():
             try:
@@ -267,9 +259,9 @@ def search_targets(inventory, targets, labels):
 def compile_target(target_obj, search_paths, compile_path, ref_controller, globals_cached=None, **kwargs):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
-    compile_objs = target_obj["compile"]
-    ext_vars = target_obj["vars"]
-    target_name = ext_vars["target"]
+    compile_objs = target_obj.compile
+    ext_vars = target_obj.vars
+    target_name = ext_vars.target
 
     # Only populates the cache if the subprocess doesn't have it
     if globals_cached and not cached.inv:
@@ -280,30 +272,28 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
         logger.debug("Using go-jsonnet over jsonnet")
 
     for comp_obj in compile_objs:
-        input_type = comp_obj["input_type"]
-        output_path = comp_obj["output_path"]
-        input_params = comp_obj.setdefault("input_params", {})
-        continue_on_compile_error = comp_obj.get("continue_on_compile_error", False)
+        input_type = comp_obj.input_type
+        output_path = comp_obj.output_path
+        input_params = comp_obj.input_params
+        continue_on_compile_error = comp_obj.continue_on_compile_error
 
-        if input_type == "jinja2":
+        if input_type == input_type.JINJA2:
             input_compiler = Jinja2(compile_path, search_paths, ref_controller, comp_obj)
-        elif input_type == "jsonnet":
+        elif input_type == input_type.JSONNET:
             input_compiler = Jsonnet(compile_path, search_paths, ref_controller, use_go=use_go_jsonnet)
-        elif input_type == "kadet":
+        elif input_type == input_type.KADET:
             input_compiler = Kadet(compile_path, search_paths, ref_controller, input_params=input_params)
-        elif input_type == "helm":
+        elif input_type == input_type.HELM:
             input_compiler = Helm(compile_path, search_paths, ref_controller, comp_obj)
-        elif input_type == "copy":
-            ignore_missing = comp_obj.get("ignore_missing", False)
+        elif input_type == input_type.COPY:
+            ignore_missing = comp_obj.ignore_missing
             input_compiler = Copy(compile_path, search_paths, ref_controller, ignore_missing)
-        elif input_type == "remove":
+        elif input_type == input_type.REMOVE:
             input_compiler = Remove(compile_path, search_paths, ref_controller)
-        elif input_type == "external":
+        elif input_type == input_type.EXTERNAL:
             input_compiler = External(compile_path, search_paths, ref_controller)
-            if "args" in comp_obj:
-                input_compiler.set_args(comp_obj["args"])
-            if "env_vars" in comp_obj:
-                input_compiler.set_env_vars(comp_obj["env_vars"])
+            input_compiler.set_args(comp_obj.args)
+            input_compiler.set_env_vars(comp_obj.env_vars)
         else:
             err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
             raise CompileError(err_msg.format(input_type))
@@ -321,4 +311,4 @@ def compile_target(target_obj, search_paths, compile_path, ref_controller, globa
                 traceback.print_exception(type(e), e, e.__traceback__)
                 raise CompileError(f"Error compiling {target_name}: {e}")
 
-    logger.info("Compiled %s (%.2fs)", target_obj["target_full_path"], time.time() - start)
+    logger.info("Compiled %s (%.2fs)", target_obj.target_full_path, time.time() - start)

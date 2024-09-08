@@ -11,20 +11,22 @@ import os
 from abc import ABC, abstractmethod
 from typing import Dict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from kapitan.errors import KapitanError
+from kapitan.inventory.model import KapitanInventoryParameters
 
 logger = logging.getLogger(__name__)
 
 
 class InventoryTarget(BaseModel):
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
     name: str = Field(exclude=True)
     path: str = Field(exclude=True)
-    parameters: Dict = {}
+    parameters: KapitanInventoryParameters = KapitanInventoryParameters()
     classes: list = list()
     applications: list = list()
-    exports: Dict = {}
+    exports: dict = {}
 
 
 class Inventory(ABC):
@@ -54,7 +56,7 @@ class Inventory(ABC):
         get all targets from inventory
         """
 
-        return {target.name: target.model_dump() for target in self.targets.values()}
+        return {target.name: target.model_dump(by_alias=True) for target in self.targets.values()}
 
     def __initialise(self, ignore_class_not_found) -> bool:
         """
@@ -136,7 +138,6 @@ class Inventory(ABC):
         """
         migrate the inventory, e.g. change interpolation syntax to new syntax
         """
-        pass
 
     def __getitem__(self, key):
         return self.inventory[key]
@@ -145,16 +146,10 @@ class Inventory(ABC):
 class InventoryError(KapitanError):
     """inventory error"""
 
-    pass
-
 
 class InventoryValidationError(InventoryError):
     """inventory validation error"""
 
-    pass
-
 
 class InvalidTargetError(InventoryError):
     """inventory validation error"""
-
-    pass

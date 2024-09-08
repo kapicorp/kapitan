@@ -20,8 +20,6 @@ logger = logging.getLogger(__name__)
 class VaultServerError(KapitanError):
     """Generic vaultserver errors"""
 
-    pass
-
 
 class VaultServer:
     """Opens a vault server in a container"""

@@ -41,6 +41,11 @@ logger = logging.getLogger(__name__)
 
 
 try:
+    from enum import StrEnum
+except ImportError:
+    from strenum import StrEnum
+
+try:
     from yaml import CSafeLoader as YamlLoader
 except ImportError:
     from yaml import SafeLoader as YamlLoader

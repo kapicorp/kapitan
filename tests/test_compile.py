@@ -10,6 +10,7 @@
 import contextlib
 import glob
 import io
+import logging
 import os
 import shutil
 import sys
@@ -23,6 +24,8 @@ from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.inventory import InventoryBackends
 from kapitan.utils import directory_hash
+
+logger = logging.getLogger(__name__)
 
 TEST_PWD = os.getcwd()
 TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")
@@ -209,6 +212,7 @@ class CompileKubernetesTest(unittest.TestCase):
         self.assertTrue(os.path.exists("compiled/jsonnet-env/jsonnet-env/env.yml"))
         with open("compiled/jsonnet-env/jsonnet-env/env.yml", "r", encoding="utf-8") as f:
             env = dict(yaml.safe_load(f))
+            logger.error(env)
             self.assertEqual(set(env.keys()), {"applications", "parameters", "classes", "exports"})
             self.assertEqual(env["applications"], ["a", "b", "c"])
             self.assertEqual(env["classes"], ["common", "jsonnet-env"])

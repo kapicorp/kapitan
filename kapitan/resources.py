@@ -8,7 +8,6 @@
 "kapitan resources"
 
 import base64
-import dataclasses
 import gzip
 import io
 import json
@@ -27,6 +26,7 @@ from kapitan.inputs.kadet import Dict
 from kapitan.inventory import Inventory, get_inventory_backend
 from kapitan.utils import (
     PrettyDumper,
+    StrEnum,
     deep_get,
     flatten_dict,
     render_jinja2_file,
@@ -36,6 +36,11 @@ from kapitan.utils import (
 logger = logging.getLogger(__name__)
 
 JSONNET_CACHE = {}
+
+yaml.SafeDumper.add_multi_representer(
+    StrEnum,
+    yaml.representer.SafeRepresenter.represent_str,
+)
 
 
 def resource_callbacks(search_paths):
@@ -284,7 +289,7 @@ def inventory(search_paths: list = [], target_name: str = None, inventory_path: 
 
     if target_name:
         target = inv.get_target(target_name)
-        return target.model_dump()
+        return target.model_dump(by_alias=True)
 
     return inv.inventory
 

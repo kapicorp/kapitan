@@ -2,7 +2,6 @@
 
 import base64
 import logging
-import os
 from urllib.parse import urlparse
 
 from azure.identity import DefaultAzureCredential
@@ -11,6 +10,7 @@ from azure.keyvault.keys.crypto import CryptographyClient, EncryptionAlgorithm
 
 from kapitan import cached
 from kapitan.errors import KapitanError
+from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
@@ -21,8 +21,6 @@ class AzureKMSError(KapitanError):
     """
     Generic Azure Key Vault error
     """
-
-    pass
 
 
 def azkms_obj(key_id):
@@ -66,7 +64,7 @@ class AzureKMSSecret(Base64Ref):
             self.data = data
             self.key = key
         super().__init__(self.data, **kwargs)
-        self.type_name = "azkms"
+        self.type_name = KapitanReferencesTypes.AZKMS
 
     @classmethod
     def from_params(cls, data, ref_params):
@@ -172,4 +170,4 @@ class AzureKMSBackend(Base64RefBackend):
     def __init__(self, path, ref_type=AzureKMSSecret, **ref_kwargs):
         "init AzureKMSBackend ref backend type"
         super().__init__(path, ref_type, **ref_kwargs)
-        self.type_name = "azkms"
+        self.type_name = KapitanReferencesTypes.AZKMS
