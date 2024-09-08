@@ -38,6 +38,11 @@ logger = logging.getLogger(__name__)
 
 JSONNET_CACHE = {}
 
+yaml.SafeDumper.add_multi_representer(
+    StrEnum,
+    yaml.representer.SafeRepresenter.represent_str,
+)
+
 
 def resource_callbacks(search_paths):
     """
@@ -301,10 +306,7 @@ def generate_inventory(args):
                 inv = deep_get(inv, pattern)
         else:
             inv = inv.inventory
-        yaml.SafeDumper.add_multi_representer(
-            StrEnum,
-            yaml.representer.SafeRepresenter.represent_str,
-        )
+
         if args.flat:
             inv = flatten_dict(inv)
             yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False, indent=args.indent)

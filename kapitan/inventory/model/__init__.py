@@ -79,15 +79,22 @@ class KapitanDependencyTypes(StrEnum):
 
 class KapitanCompileBaseConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    name: Optional[str] = None
+    name: Optional[str] = Field(default=None)
     input_type: InputTypes
     output_path: str
     input_params: dict = {}
-    continue_on_compile_error: bool = False
+    continue_on_compile_error: Optional[bool] = False
 
     output_type: OutputType = OutputType.YAML
-    ignore_missing: bool = False
-    prune: bool = True
+    ignore_missing: Optional[bool] = False
+    prune: Optional[bool] = True
+
+
+class KapitanCompileJsonnetConfig(KapitanCompileBaseConfig):
+    input_type: Literal[InputTypes.JSONNET] = InputTypes.JSONNET
+    output_type: OutputType = OutputType.JSON
+    input_paths: List[str]
+    prune: bool = False
 
 
 class KapitanCompileExternalConfig(KapitanCompileBaseConfig):
@@ -120,14 +127,6 @@ class KapitanCompileHelmConfig(KapitanCompileBaseConfig):
     helm_path: Optional[str] = None
     input_paths: List[str]
     kube_version: Optional[str] = None
-
-
-class KapitanCompileJsonnetConfig(KapitanCompileBaseConfig):
-    input_type: Literal[InputTypes.JSONNET] = InputTypes.JSONNET
-    output_type: OutputType = OutputType.JSON
-    input_paths: List[str]
-    input_value: Optional[dict] = None
-    prune: bool = False
 
 
 class KapitanCompileKadetConfig(KapitanCompileBaseConfig):

@@ -5,6 +5,7 @@ try:
 except ImportError:
     from strenum import StrEnum
 
+
 from typing import Type
 
 
