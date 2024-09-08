@@ -49,7 +49,7 @@ def ref_write(args, ref_controller):
         for line in sys.stdin:
             data += line
     else:
-        mime_type = mimetypes.guess_type(file_name)
+        mimetypes.guess_type(file_name)
         modifier = "rb" if is_binary else "r"
         with open(file_name, modifier) as fp:
             try:

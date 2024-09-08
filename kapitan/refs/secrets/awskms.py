@@ -19,8 +19,6 @@ from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 class AWSKMSError(KapitanError):
     """Generic AWS KMS errors"""
 
-    pass
-
 
 def awskms_obj():
     if not cached.awskms_obj:

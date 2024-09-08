@@ -8,7 +8,6 @@
 "kapitan resources"
 
 import base64
-import dataclasses
 import gzip
 import io
 import json

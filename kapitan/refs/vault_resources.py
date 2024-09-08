@@ -18,8 +18,6 @@ logger = logging.getLogger(__name__)
 class VaultError(KapitanError):
     """Generic vault errors"""
 
-    pass
-
 
 class VaultClient(hvac.Client):
     """client connects to vault server and authenticates itself"""

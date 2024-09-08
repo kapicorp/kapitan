@@ -26,8 +26,6 @@ warnings.filterwarnings("ignore", "Your application has authenticated using end 
 class GoogleKMSError(KapitanError):
     """Generic Google KMS errors"""
 
-    pass
-
 
 def gkms_obj():
     if not cached.gkms_obj:

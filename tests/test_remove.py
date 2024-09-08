@@ -6,8 +6,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "remove tests"
-import filecmp
-import hashlib
 import os
 import shutil
 import sys

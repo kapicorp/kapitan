@@ -138,7 +138,6 @@ class Inventory(ABC):
         """
         migrate the inventory, e.g. change interpolation syntax to new syntax
         """
-        pass
 
     def __getitem__(self, key):
         return self.inventory[key]
@@ -147,16 +146,10 @@ class Inventory(ABC):
 class InventoryError(KapitanError):
     """inventory error"""
 
-    pass
-
 
 class InventoryValidationError(InventoryError):
     """inventory validation error"""
 
-    pass
-
 
 class InvalidTargetError(InventoryError):
     """inventory validation error"""
-
-    pass

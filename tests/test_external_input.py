@@ -8,7 +8,6 @@
 "external input tests"
 import os
 import random
-import stat
 import string
 import subprocess
 import sys

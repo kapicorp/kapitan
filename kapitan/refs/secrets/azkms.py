@@ -2,7 +2,6 @@
 
 import base64
 import logging
-import os
 from urllib.parse import urlparse
 
 from azure.identity import DefaultAzureCredential
@@ -22,8 +21,6 @@ class AzureKMSError(KapitanError):
     """
     Generic Azure Key Vault error
     """
-
-    pass
 
 
 def azkms_obj(key_id):

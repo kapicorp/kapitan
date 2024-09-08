@@ -32,8 +32,6 @@ GPG_TARGET_FINGERPRINTS = {}
 class GPGError(Exception):
     """Generic GPG errors"""
 
-    pass
-
 
 def gpg_obj(*args, **kwargs):
     if not cached.gpg_obj:
