@@ -17,7 +17,7 @@ from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.inputs.helm import Helm, HelmChart
 from kapitan.inputs.kadet import BaseObj
-from kapitan.inventory.model import KapitanCompileHelmConfig
+from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
 
 
 class HelmInputTest(unittest.TestCase):
@@ -28,7 +28,7 @@ class HelmInputTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
         chart_path = "charts/acs-engine-autoscaler"
         helm_params = {"name": "acs-engine-autoscaler"}
-        helm_config = KapitanCompileHelmConfig(
+        helm_config = KapitanInputTypeHelmConfig(
             input_paths=[chart_path], helm_params=helm_params, output_path=temp_dir
         )
         helm = Helm(None, None, None, helm_config)
@@ -45,7 +45,7 @@ class HelmInputTest(unittest.TestCase):
         chart_path = "./non-existent"
         temp_dir = tempfile.mkdtemp()
         helm_params = {"name": "mychart"}
-        helm_config = KapitanCompileHelmConfig(
+        helm_config = KapitanInputTypeHelmConfig(
             input_paths=[chart_path], output_path=temp_dir, helm_params=helm_params
         )
         helm = Helm(None, None, None, helm_config)

@@ -15,7 +15,7 @@ from git import GitCommandError, Repo
 
 from kapitan.errors import GitFetchingError, GitSubdirNotFoundError, HelmFetchingError
 from kapitan.helm_cli import helm_cli
-from kapitan.inventory.model import KapitanDependencyTypes
+from kapitan.inventory.model.dependencies import KapitanDependencyTypes
 from kapitan.utils import (
     copy_tree,
     make_request,

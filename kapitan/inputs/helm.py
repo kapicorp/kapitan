@@ -15,7 +15,7 @@ from kapitan.errors import CompileError, HelmTemplateError
 from kapitan.helm_cli import helm_cli
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.inputs.kadet import BaseModel, BaseObj, Dict
-from kapitan.inventory.model import KapitanCompileHelmConfig
+from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ HELM_DEFAULT_FLAGS = {"--include-crds": True, "--skip-tests": True}
 
 
 class Helm(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller, args: KapitanCompileHelmConfig):
+    def __init__(self, compile_path, search_paths, ref_controller, args: KapitanInputTypeHelmConfig):
         super().__init__("helm", compile_path, search_paths, ref_controller)
 
         self.helm_values_files = args.helm_values_files

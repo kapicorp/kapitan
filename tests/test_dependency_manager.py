@@ -23,11 +23,10 @@ from kapitan.dependency_manager.base import (
     fetch_http_source,
 )
 from kapitan.errors import HelmFetchingError
-from kapitan.inventory.model import (
+from kapitan.inventory.model import KapitanInventorySettings
+from kapitan.inventory.model.dependencies import (
     KapitanDependencyGitConfig,
     KapitanDependencyHelmConfig,
-    KapitanDependencyHttpsConfig,
-    KapitanInventorySettings,
 )
 
 

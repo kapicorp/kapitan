@@ -27,7 +27,6 @@ from kapitan.inputs.jinja2 import Jinja2
 from kapitan.inputs.jsonnet import Jsonnet
 from kapitan.inputs.kadet import Kadet
 from kapitan.inputs.remove import Remove
-from kapitan.inventory.model import InputTypes
 from kapitan.resources import get_inventory
 
 logger = logging.getLogger(__name__)

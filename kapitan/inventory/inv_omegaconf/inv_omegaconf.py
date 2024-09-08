@@ -14,14 +14,13 @@ from functools import singledispatch
 import yaml
 from cachetools import LRUCache, cached
 from kadet import Dict
-from omegaconf import DictConfig, ListMergeMode, OmegaConf
-from pydantic import ConfigDict
+from omegaconf import ListMergeMode, OmegaConf
 
 from kapitan.inventory.model import KapitanInventoryMetadata, KapitanInventoryParameters
 
 from ..inventory import Inventory, InventoryError, InventoryTarget
 from .migrate import migrate
-from .resolvers import register_resolvers, register_user_resolvers
+from .resolvers import register_resolvers
 
 logger = logging.getLogger(__name__)
 
