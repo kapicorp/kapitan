@@ -27,7 +27,6 @@ from kapitan.inventory import Inventory, get_inventory_backend
 from kapitan.utils import (
     PrettyDumper,
     StrEnum,
-    auto,
     deep_get,
     flatten_dict,
     render_jinja2_file,

@@ -1,16 +1,15 @@
-from enum import auto
 from typing import Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 from kapitan.utils import StrEnum
 
 
 class KapitanDependencyTypes(StrEnum):
-    HELM = auto()
-    HTTP = auto()
-    HTTPS = auto()
-    GIT = auto()
+    HELM = "helm"
+    HTTP = "http"
+    HTTPS = "https"
+    GIT = "git"
 
 
 class KapitanDependencyBaseConfig(BaseModel):

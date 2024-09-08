@@ -2,16 +2,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from kapitan.utils import StrEnum, auto
+from kapitan.utils import StrEnum
 
 
 class KapitanReferencesTypes(StrEnum):
-    GPG = auto()
-    VAULTKV = auto()
-    VAULTTRANSIT = auto()
-    AWSKMS = auto()
-    GKMS = auto()
-    AZKMS = auto()
-    BASE64 = auto()
-    PLAIN = auto()
-    ENV = auto()
+    GPG = "gpg"
+    VAULTKV = "vaultkv"
+    VAULTTRANSIT = "vaulttransit"
+    AWSKMS = "awskms"
+    GKMS = "gkms"
+    AZKMS = "azkms"
+    BASE64 = "base64"
+    PLAIN = "plain"
+    ENV = "env"

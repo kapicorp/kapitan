@@ -2,25 +2,25 @@ from typing import Annotated, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from kapitan.utils import StrEnum, auto
+from kapitan.utils import StrEnum
 
 
 class InputTypes(StrEnum):
-    JSONNET = auto()
-    JINJA2 = auto()
-    HELM = auto()
-    KADET = auto()
-    COPY = auto()
-    REMOVE = auto()
-    EXTERNAL = auto()
+    JSONNET = "jsonnet"
+    JINJA2 = "jinja2"
+    HELM = "helm"
+    KADET = "kadet"
+    COPY = "copy"
+    REMOVE = "remove"
+    EXTERNAL = "external"
 
 
 class OutputType(StrEnum):
-    JSON = auto()
-    YAML = auto()
-    YML = auto()
-    PLAIN = auto()
-    TOML = auto()
+    JSON = "json"
+    YAML = "yaml"
+    YML = "yml"
+    PLAIN = "plain"
+    TOML = "toml"
 
 
 class KapitanInputTypeBaseConfig(BaseModel):

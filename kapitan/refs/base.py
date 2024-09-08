@@ -463,6 +463,11 @@ class RefController(object):
             return self.backends[type_name]
         except KeyError:
             ref_kwargs = {"embed_refs": self.embed_refs}
+            logger.error(
+                "RefController: registering backend for type %s for %s",
+                type_name,
+                KapitanReferencesTypes.PLAIN,
+            )
             if type_name == KapitanReferencesTypes.PLAIN:
                 from kapitan.refs.base import PlainRefBackend
 
