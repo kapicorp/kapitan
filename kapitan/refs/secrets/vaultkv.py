@@ -11,6 +11,10 @@ import logging
 from hvac.exceptions import Forbidden, InvalidPath
 
 from kapitan import cached
+from kapitan.inventory.model.references import (
+    KapitanReferenceVaultKVConfig,
+    VaultEngineTypes,
+)
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
@@ -24,12 +28,23 @@ class VaultSecret(Base64Ref):
     Hashicorp Vault support for KV Secret Engine
     """
 
-    def __init__(self, data, vault_params, encrypt=True, encode_base64=False, **kwargs):
+    def __init__(
+        self,
+        data,
+        vault_params: KapitanReferenceVaultKVConfig,
+        encrypt: bool = True,
+        encode_base64=False,
+        **kwargs,
+    ):
         """
         Set vault parameter and encoding of data
         data will be passed as bytes
         """
+
         self.vault_params = vault_params
+
+        if isinstance(vault_params, dict):
+            self.vault_params = KapitanReferenceVaultKVConfig(**vault_params)
 
         if encrypt:
             # not really encryption --> storing key/value in vault
@@ -64,7 +79,7 @@ class VaultSecret(Base64Ref):
             target_inv = cached.inv.get_parameters(target_name)
 
             try:
-                vault_params = target_inv["kapitan"]["secrets"]["vaultkv"]
+                vault_params = target_inv.kapitan.secrets.vaultkv
                 ref_params.kwargs["vault_params"] = vault_params
             except KeyError:
                 raise RefError("Could not create VaultSecret: vaultkv parameters missing")
@@ -82,7 +97,7 @@ class VaultSecret(Base64Ref):
         # set mount
         mount = token_attrs[2]
         if not mount:
-            mount = vault_params.get("mount", "secret")  # secret is default mount point
+            mount = vault_params.mount
         ref_params.kwargs["mount_in_vault"] = mount
 
         # set path in vault
@@ -129,7 +144,7 @@ class VaultSecret(Base64Ref):
 
         # fetch current secrets from vault
         try:
-            if self.vault_params.get("engine") == "kv":
+            if self.vault_params.engine == VaultEngineTypes.KV:
                 response = client.secrets.kv.v1.read_secret(
                     path=self.path,
                     mount_point=self.mount,
@@ -143,7 +158,8 @@ class VaultSecret(Base64Ref):
                 )
                 secrets = response["data"]["data"]
         except InvalidPath:
-            pass  # comes up if vault is empty in specified path
+            # path doesn't exist, will create new secret
+            pass
 
         # append new secret
         secrets[self.key] = data.decode()
@@ -189,13 +205,13 @@ class VaultSecret(Base64Ref):
                     data.decode()
                 )
             )
-        mount = self.vault_params.get("mount", "secret")
+        mount = self.vault_params.mount
         secret_path = data_attrs[0]
         secret_key = data_attrs[1]
 
         return_data = ""
         try:
-            if self.vault_params.get("engine") == "kv":
+            if self.vault_params.engine == VaultEngineTypes.KV:
                 response = client.secrets.kv.v1.read_secret(
                     path=secret_path,
                     mount_point=mount,
@@ -237,8 +253,11 @@ class VaultSecret(Base64Ref):
             "data": self.data,
             "encoding": self.encoding,
             "type": self.type_name,
-            "vault_params": self.vault_params,
+            "vault_params": self.vault_params.model_dump(),
         }
+
+    def __str__(self):
+        return "{}".format(self.dump())
 
 
 class VaultBackend(Base64RefBackend):

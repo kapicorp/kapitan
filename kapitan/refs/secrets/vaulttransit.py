@@ -13,6 +13,7 @@ from sys import exit
 from hvac.exceptions import Forbidden, InvalidPath
 
 from kapitan import cached
+from kapitan.inventory.model.references import KapitanReferenceVaultTransitConfig
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
@@ -26,14 +27,23 @@ class VaultTransit(Base64Ref):
     Hashicorp Vault support for Transit Secret Engine
     """
 
-    def __init__(self, data, vault_params, encrypt=True, encode_base64=False, **kwargs):
+    def __init__(
+        self,
+        data,
+        vault_params: KapitanReferenceVaultTransitConfig,
+        encrypt=True,
+        encode_base64=False,
+        **kwargs,
+    ):
         """
         Set vault parameter and encoding of data
         """
+        if isinstance(vault_params, dict):
+            vault_params = KapitanReferenceVaultTransitConfig(**vault_params)
         self.vault_params = vault_params
 
         if encrypt:
-            self._encrypt(data, self.vault_params.get("crypto_key"), True)
+            self._encrypt(data, self.vault_params.crypto_key, True)
         else:
             self.data = data
 
@@ -53,7 +63,7 @@ class VaultTransit(Base64Ref):
 
             target_inv = cached.inv.get_parameters(target_name)
 
-            ref_params.kwargs["vault_params"] = target_inv["kapitan"]["secrets"]["vaulttransit"]
+            ref_params.kwargs["vault_params"] = target_inv.kapitan.secrets.vaulttransit
 
             return cls(data, **ref_params.kwargs)
         except KeyError:
@@ -80,7 +90,7 @@ class VaultTransit(Base64Ref):
         re-encrypts data with new key, respects original encoding
         returns True if key is different and secret is updated, False otherwise
         """
-        if key == self.vault_params.get("crypto_key"):
+        if key == self.vault_params.crypto_key:
             return False
 
         data_dec = self.reveal()
@@ -118,13 +128,13 @@ class VaultTransit(Base64Ref):
             # Request encryption by vault
             response = client.secrets.transit.encrypt_data(
                 name=key,
-                mount_point=self.vault_params.get("mount", "transit"),
+                mount_point=self.vault_params.mount,
                 plaintext=base64.b64encode(_data).decode("ascii"),
             )
             ciphertext = response["data"]["ciphertext"]
 
             self.data = ciphertext.encode()
-            self.vault_params["crypto_key"] = key
+            self.vault_params.crypto_key = key
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
@@ -142,8 +152,8 @@ class VaultTransit(Base64Ref):
         :returns: secret in plain text
         """
         client = VaultClient(self.vault_params)
-        always_latest = self.vault_params.get("always_latest", True)
-        key = self.vault_params.get("crypto_key")
+        always_latest = self.vault_params.always_latest
+        key = self.vault_params.crypto_key
         if key is None:
             raise RefError("Cannot access vault params")
 
@@ -151,14 +161,14 @@ class VaultTransit(Base64Ref):
             if always_latest:
                 encrypt_data_response = client.secrets.transit.rewrap_data(
                     name=key,
-                    mount_point=self.vault_params.get("mount", "transit"),
+                    mount_point=self.vault_params.mount,
                     ciphertext=data.decode(),
                 )
                 data = encrypt_data_response["data"]["ciphertext"].encode()
 
             response = client.secrets.transit.decrypt_data(
                 name=key,
-                mount_point=self.vault_params.get("mount", "transit"),
+                mount_point=self.vault_params.mount,
                 ciphertext=data.decode(),
             )
             plaintext = base64.b64decode(response["data"]["plaintext"])
@@ -182,7 +192,7 @@ class VaultTransit(Base64Ref):
             "data": self.data,
             "encoding": self.encoding,
             "type": self.type_name,
-            "vault_params": self.vault_params,
+            "vault_params": self.vault_params.model_dump(),
         }
 
 

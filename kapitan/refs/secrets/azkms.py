@@ -79,7 +79,7 @@ class AzureKMSSecret(Base64Ref):
 
             target_inv = cached.inv.get_parameters(target_name)
 
-            key = target_inv["kapitan"]["secrets"]["azkms"]["key"]
+            key = target_inv.kapitan.secrets.azkms.key
             return cls(data, key, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create AzureKMSSecret: target_name missing")
