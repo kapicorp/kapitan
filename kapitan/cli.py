@@ -261,7 +261,7 @@ def build_parser():
     compile_parser.add_argument(
         "--reveal",
         help="reveal refs (warning: this will potentially write sensitive data)",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=from_dot_kapitan("compile", "reveal", False),
     )
     compile_parser.add_argument(
