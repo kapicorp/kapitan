@@ -39,6 +39,14 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
         reset_cache()
         os.chdir(TEST_RESOURCES_PATH)
 
+    def test_compile_no_reveal(self):
+        # check if the --no-reveal flag takes precedence over --reveal when passed together
+        sys.argv = ["kapitan", "compile", "-t", "reveal-output", "--reveal", "--no-reveal"]
+        main()
+
+        with open("compiled/reveal-output/main.json") as f:
+            self.assertTrue("?{gpg:" in f.read())
+
     def test_single_target_compile(self):
         sys.argv = ["kapitan", "compile", "-t", "test-objects"]
         main()
