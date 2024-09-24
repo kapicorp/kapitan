@@ -79,7 +79,7 @@ class VaultServer:
         # Initialize vault, unseal, mount secret engine & add auth
         logger.info(f"Initialising vault on {self.vault_url}")
         vault_client = hvac.Client(url=self.vault_url)
-        init = vault_client.sys.initialize(secret_threshold=3, secret_shares=5)
+        init = vault_client.sys.initialize()
         vault_client.sys.submit_unseal_keys(init["keys"])
         self.root_token = init["root_token"]
         vault_status = vault_client.sys.read_health_status(method="GET")

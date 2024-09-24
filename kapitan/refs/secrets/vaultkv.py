@@ -97,7 +97,7 @@ class VaultSecret(Base64Ref):
         # set mount
         mount = token_attrs[2]
         if not mount:
-            mount = vault_params.get("mount", "secret")  # secret is default mount point
+            mount = vault_params.mount
         ref_params.kwargs["mount_in_vault"] = mount
 
         # set path in vault
@@ -158,7 +158,8 @@ class VaultSecret(Base64Ref):
                 )
                 secrets = response["data"]["data"]
         except InvalidPath:
-            pass  # comes up if vault is empty in specified path
+            # path doesn't exist, will create new secret
+            pass
 
         # append new secret
         secrets[self.key] = data.decode()
@@ -254,6 +255,9 @@ class VaultSecret(Base64Ref):
             "type": self.type_name,
             "vault_params": self.vault_params.model_dump(),
         }
+
+    def __str__(self):
+        return "{}".format(self.dump())
 
 
 class VaultBackend(Base64RefBackend):

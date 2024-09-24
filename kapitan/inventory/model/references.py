@@ -44,7 +44,7 @@ class KapitanReferenceVaultCommon(KapitanReferenceVaultEnv):
 
 
 class KapitanReferenceVaultKVConfig(KapitanReferenceVaultCommon):
-    engine: Literal[VaultEngineTypes.KV, VaultEngineTypes.KV_V2] = VaultEngineTypes.KV
+    engine: Literal[VaultEngineTypes.KV, VaultEngineTypes.KV_V2] = VaultEngineTypes.KV_V2
     mount: Optional[str] = "secret"
 
 

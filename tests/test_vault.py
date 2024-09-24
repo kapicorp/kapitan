@@ -44,7 +44,7 @@ class VaultSecretTest(unittest.TestCase):
         Authenticate using token
         """
         parameters = {"auth": "token"}
-        env = dict(**parameters, **self.server.parameters)
+        env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
 
         test_client = VaultClient(env)
         self.assertTrue(test_client.is_authenticated(), msg="Authentication with token failed")
@@ -55,7 +55,7 @@ class VaultSecretTest(unittest.TestCase):
         Authenticate using userpass
         """
         parameters = {"auth": "userpass"}
-        env = dict(**parameters, **self.server.parameters)
+        env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         test_client = VaultClient(env)
         self.assertTrue(test_client.is_authenticated(), msg="Authentication with userpass failed")
         test_client.adapter.close()
@@ -75,7 +75,7 @@ class VaultSecretTest(unittest.TestCase):
         test vaultkv tag with parameters
         """
         parameters = {"auth": "token", "mount": "secret"}
-        env = dict(**parameters, **self.server.parameters)
+        env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         secret = "bar"
 
         tag = "?{vaultkv:secret/harleyquinn:secret:testpath:foo}"
