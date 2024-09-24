@@ -87,10 +87,8 @@ class VaultTransitTest(unittest.TestCase):
         env = dict(**parameters, **self.server.parameters)
         file_data = "foo:some_random_value"
         vault_transit_obj = VaultTransit(file_data, env)
-        logger.error(f"vault_transit_obj.data: {vault_transit_obj.data}")
 
         data = base64.b64decode(vault_transit_obj.data.encode())
-        logger.error(f"data: {data}")
 
         self.assertTrue(vault_transit_obj.update_key("hvac_updated_key"), "message")
         updated_ciphertext = base64.b64decode(vault_transit_obj.data)
