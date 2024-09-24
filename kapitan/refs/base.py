@@ -26,12 +26,17 @@ from kapitan.errors import (
 )
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.functions import eval_func, get_func_lookup
-from kapitan.utils import PrettyDumper, list_all_paths
+from kapitan.utils import PrettyDumper, StrEnum, list_all_paths
 
 try:
     from yaml import CSafeLoader as YamlLoader
 except ImportError:
     from yaml import SafeLoader as YamlLoader
+
+yaml.SafeDumper.add_multi_representer(
+    StrEnum,
+    yaml.representer.SafeRepresenter.represent_str,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -455,7 +460,7 @@ class RefController(object):
     def register_backend(self, backend):
         "register backend type"
         assert isinstance(backend, PlainRefBackend)
-        self.backends[backend.type_name] = backend
+        self.backends[str(backend.type_name)] = backend
 
     def _get_backend(self, type_name):
         "imports and registers backend according to type_name"
@@ -463,11 +468,6 @@ class RefController(object):
             return self.backends[type_name]
         except KeyError:
             ref_kwargs = {"embed_refs": self.embed_refs}
-            logger.error(
-                "RefController: registering backend for type %s for %s",
-                type_name,
-                KapitanReferencesTypes.PLAIN,
-            )
             if type_name == KapitanReferencesTypes.PLAIN:
                 from kapitan.refs.base import PlainRefBackend
 

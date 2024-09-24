@@ -58,7 +58,7 @@ class AWSKMSSecret(Base64Ref):
             if target_inv is None:
                 raise ValueError("target_inv not set")
 
-            key = target_inv["kapitan"]["secrets"]["awskms"]["key"]
+            key = target_inv.kapitan.secrets.awskms.key
             return cls(data, key, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create AWSKMSSecret: target_name missing")

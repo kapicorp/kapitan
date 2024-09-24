@@ -67,7 +67,7 @@ class GoogleKMSSecret(Base64Ref):
 
             target_inv = cached.inv.get_parameters(target_name)
 
-            key = target_inv["kapitan"]["secrets"]["gkms"]["key"]
+            key = target_inv.kapitan.secrets.gkms.key
             return cls(data, key, **ref_params.kwargs)
         except KeyError:
             raise RefError("Could not create GoogleKMSSecret: target_name missing")

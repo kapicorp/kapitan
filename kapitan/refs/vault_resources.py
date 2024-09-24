@@ -11,6 +11,7 @@ import os
 import hvac
 
 from kapitan.errors import KapitanError
+from kapitan.inventory.model.references import KapitanReferenceVaultCommon
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,11 @@ class VaultError(KapitanError):
 class VaultClient(hvac.Client):
     """client connects to vault server and authenticates itself"""
 
-    def __init__(self, vault_parameters):
-        self.vault_parameters = vault_parameters
-        self.env = get_env(vault_parameters)
+    def __init__(self, vault_params: KapitanReferenceVaultCommon):
+        if isinstance(vault_params, dict):
+            vault_params = KapitanReferenceVaultCommon(**vault_params)
+        self.vault_params = vault_params
+        self.env = get_env(vault_params)
 
         super().__init__(**{k: v for k, v in self.env.items() if k != "auth"})
 
@@ -34,7 +37,7 @@ class VaultClient(hvac.Client):
         """
         get token either from environment or from file
         """
-        auth_type = self.vault_parameters["auth"]
+        auth_type = self.vault_params.auth
         token = ""
 
         if auth_type in ["token", "github"]:
@@ -59,7 +62,7 @@ class VaultClient(hvac.Client):
 
     def authenticate(self):
         # DIFFERENT LOGIN METHOD BASED ON AUTHENTICATION TYPE
-        auth_type = self.vault_parameters["auth"]
+        auth_type = self.vault_params.auth
         self.get_auth_token()
         username = os.getenv("VAULT_USERNAME")
         password = os.getenv("VAULT_PASSWORD")
@@ -84,7 +87,7 @@ class VaultClient(hvac.Client):
             )
 
 
-def get_env(parameter):
+def get_env(vault_params: KapitanReferenceVaultCommon):
     """
     The following variables need to be exported to the environment or defined in inventory.
         * VAULT_ADDR: url for vault
@@ -108,18 +111,20 @@ def get_env(parameter):
         :param namespace: Optional Vault Namespace.
         :type namespace: str
     """
-    client_parameters = {}
-    client_parameters["url"] = parameter.get("VAULT_ADDR", os.getenv("VAULT_ADDR", default=""))
-    client_parameters["namespace"] = parameter.get(
-        "VAULT_NAMESPACE", os.getenv("VAULT_NAMESPACE", default="")
-    )
-    # VERIFY VAULT SERVER TLS CERTIFICATE
-    skip_verify = str(parameter.get("VAULT_SKIP_VERIFY", os.getenv("VAULT_SKIP_VERIFY", default="")))
+    if isinstance(vault_params, dict):
+        vault_params = KapitanReferenceVaultCommon(**vault_params)
 
-    if skip_verify.lower() == "false":
-        cert = parameter.get("VAULT_CACERT", os.getenv("VAULT_CACERT", default=""))
+    client_parameters = {}
+    client_parameters["url"] = vault_params.addr
+    client_parameters["namespace"] = vault_params.namespace
+
+    # VERIFY VAULT SERVER TLS CERTIFICATE
+    skip_verify = vault_params.skip_verify
+
+    if not skip_verify:
+        cert = vault_params.cacert
         if not cert:
-            cert_path = parameter.get("VAULT_CAPATH", os.getenv("VAULT_CAPATH", default=""))
+            cert_path = vault_params.capath
             if not cert_path:
                 raise VaultError("Neither VAULT_CACERT nor VAULT_CAPATH specified")
             client_parameters["verify"] = cert_path
@@ -129,8 +134,8 @@ def get_env(parameter):
         client_parameters["verify"] = False
 
     # CLIENT CERTIFICATE FOR TLS AUTHENTICATION
-    client_key = parameter.get("VAULT_CLIENT_KEY", os.getenv("VAULT_CLIENT_KEY", default=""))
-    client_cert = parameter.get("VAULT_CLIENT_CERT", os.getenv("VAULT_CLIENT_CERT", default=""))
+    client_key = vault_params.client_key
+    client_cert = vault_params.client_cert
     if client_key != "" and client_cert != "":
         client_parameters["cert"] = (client_cert, client_key)
     return client_parameters

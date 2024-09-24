@@ -7,15 +7,18 @@
 
 "vault secrets tests"
 
+import logging
 import os
 import shutil
 import tempfile
 import unittest
 
+from kapitan.inventory.model.references import KapitanReferenceVaultKVConfig
 from kapitan.refs.base import RefController, RefParams, Revealer
 from kapitan.refs.secrets.vaultkv import VaultClient, VaultError, VaultSecret
 from tests.vault_server import VaultServer
 
+logger = logging.getLogger(__name__)
 # Create temporary folder
 REFS_PATH = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_PATH)
@@ -42,6 +45,7 @@ class VaultSecretTest(unittest.TestCase):
         """
         parameters = {"auth": "token"}
         env = dict(**parameters, **self.server.parameters)
+
         test_client = VaultClient(env)
         self.assertTrue(test_client.is_authenticated(), msg="Authentication with token failed")
         test_client.adapter.close()
@@ -61,7 +65,7 @@ class VaultSecretTest(unittest.TestCase):
         Authenticate using approle
         """
         parameters = {"auth": "approle"}
-        env = dict(**parameters, **self.server.parameters)
+        env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         test_client = VaultClient(env)
         self.assertTrue(test_client.is_authenticated(), msg="Authentication with approle failed")
         test_client.adapter.close()
@@ -76,7 +80,11 @@ class VaultSecretTest(unittest.TestCase):
 
         tag = "?{vaultkv:secret/harleyquinn:secret:testpath:foo}"
         REF_CONTROLLER[tag] = VaultSecret(
-            secret.encode(), env, mount_in_vault="secret", path_in_vault="testpath", key_in_vault="foo"
+            secret.encode(),
+            vault_params=env,
+            mount_in_vault="secret",
+            path_in_vault="testpath",
+            key_in_vault="foo",
         )
 
         # confirming ref file exists
@@ -98,7 +106,7 @@ class VaultSecretTest(unittest.TestCase):
         """
         # hardcode secret into vault
         parameters = {"auth": "token"}
-        env = dict(**parameters, **self.server.parameters)
+        env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         tag = "?{vaultkv:secret/batman}"
         secret = {"some_key": "something_secret"}
         client = VaultClient(env)
@@ -109,7 +117,7 @@ class VaultSecretTest(unittest.TestCase):
         client.adapter.close()
         file_data = "foo:some_key".encode()
         # encrypt false, because we want just reveal
-        REF_CONTROLLER[tag] = VaultSecret(file_data, env, encrypt=False)
+        REF_CONTROLLER[tag] = VaultSecret(file_data, vault_params=env, encrypt=False)
 
         # confirming secret file exists
         self.assertTrue(
@@ -129,10 +137,10 @@ class VaultSecretTest(unittest.TestCase):
         """
         tag = "?{vaultkv:secret/joker}"
         parameters = {"auth": "token"}
-        env = dict(**parameters, **self.server.parameters)
+        env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         file_data = "some_not_existing_path:some_key".encode()
         # encrypt false, because we want just reveal
-        REF_CONTROLLER[tag] = VaultSecret(file_data, env, encrypt=False)
+        REF_CONTROLLER[tag] = VaultSecret(file_data, vault_params=env, encrypt=False)
 
         # confirming secret file exists
         self.assertTrue(
@@ -150,11 +158,11 @@ class VaultSecretTest(unittest.TestCase):
         """
         tag = "?{vaultkv:secret/joker}"
         parameters = {"auth": "token"}
-        env = dict(**parameters, **self.server.parameters)
+        env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         # path foo exists from tests before
         file_data = "foo:some_not_existing_key".encode()
         # encrypt false, because we want just reveal
-        REF_CONTROLLER[tag] = VaultSecret(file_data, env, encrypt=False)
+        REF_CONTROLLER[tag] = VaultSecret(file_data, vault_params=env, encrypt=False)
 
         # confirming secret file exists
         self.assertTrue(
@@ -171,7 +179,7 @@ class VaultSecretTest(unittest.TestCase):
         Write secret via token, check if ref file exists
         """
         parameters = {"auth": "token", "mount": "secret"}
-        env = dict(**parameters, **self.server.parameters)
+        env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         params = RefParams()
         params.kwargs = {"vault_params": env}
 
@@ -197,7 +205,7 @@ class VaultSecretTest(unittest.TestCase):
         Write secret via token, check if ref file exists
         """
         parameters = {"auth": "token", "mount": "secret"}
-        env = dict(**parameters, **self.server.parameters)
+        env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         params = RefParams()
         params.kwargs = {"vault_params": env}
 
@@ -223,7 +231,7 @@ class VaultSecretTest(unittest.TestCase):
         Write multiple secrets in one path and check if key gets overwritten
         """
         parameters = {"auth": "token", "mount": "secret"}
-        env = dict(**parameters, **self.server.parameters)
+        env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         params = RefParams()
         params.kwargs = {"vault_params": env}
 

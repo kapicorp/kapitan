@@ -56,7 +56,7 @@ class VaultServer:
         port = vault_container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0]["HostPort"]
         host_ip = vault_container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0]["HostIp"]
         self.vault_url = f"http://{host_ip}:{port}"
-        self.parameters["VAULT_ADDR"] = self.vault_url
+        self.parameters["addr"] = self.vault_url
         logger.info(vault_container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0])
         logger.info(f"Vault container is up and running on url {self.vault_url}")
         return vault_container
@@ -79,7 +79,7 @@ class VaultServer:
         # Initialize vault, unseal, mount secret engine & add auth
         logger.info(f"Initialising vault on {self.vault_url}")
         vault_client = hvac.Client(url=self.vault_url)
-        init = vault_client.sys.initialize()
+        init = vault_client.sys.initialize(secret_threshold=3, secret_shares=5)
         vault_client.sys.submit_unseal_keys(init["keys"])
         self.root_token = init["root_token"]
         vault_status = vault_client.sys.read_health_status(method="GET")
