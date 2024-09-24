@@ -43,7 +43,7 @@ class VaultTransit(Base64Ref):
         self.vault_params = vault_params
 
         if encrypt:
-            self._encrypt(data, self.vault_params.crypto_key, encode_base64)
+            self._encrypt(data, self.vault_params.crypto_key, True)
         else:
             self.data = data
 
