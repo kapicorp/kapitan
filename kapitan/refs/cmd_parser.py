@@ -80,7 +80,9 @@ def ref_write(args, ref_controller):
 
     type_name, token_path = token_name.split(":")
 
-    if type_name not in KapitanReferencesTypes:
+    try:
+        type_name = KapitanReferencesTypes(type_name)
+    except ValueError:
         raise KapitanError(
             f"Invalid token type: {type_name}. Try using gpg/gkms/awskms/azkms/vaultkv/vaulttransit/base64/plain/env"
         )

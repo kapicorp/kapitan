@@ -38,7 +38,6 @@ class KapitanInputTypeBaseConfig(BaseModel):
 
 class KapitanInputTypeJsonnetConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.JSONNET] = InputTypes.JSONNET
-    output_type: OutputType = OutputType.JSON
     input_paths: List[str]
     prune: bool = False
 
