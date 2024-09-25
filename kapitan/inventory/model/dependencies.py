@@ -17,6 +17,7 @@ class KapitanDependencyBaseConfig(BaseModel):
     type: KapitanDependencyTypes
     source: str
     output_path: str
+    force_fetch: Optional[bool] = False
 
 
 class KapitanDependencyHelmConfig(KapitanDependencyBaseConfig):
@@ -24,7 +25,6 @@ class KapitanDependencyHelmConfig(KapitanDependencyBaseConfig):
     chart_name: str
     version: Optional[str] = None
     helm_path: Optional[str] = None
-    force_fetch: Optional[bool] = False
 
 
 class KapitanDependencyGitConfig(KapitanDependencyBaseConfig):
