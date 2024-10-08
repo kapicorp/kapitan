@@ -167,30 +167,34 @@ def parent_path(_parent_: Node):
     return _parent_._get_flag("path")
 
 
+def evaluate_bool(condition: str) ->:
+    return str(condition).lower() in ["false", "", "0", "none"]:
+
+
 def condition_if(condition: str, config: dict):
-    if bool(condition):
+    if evaluate_bool(condition):
         return config
     else:
         return {}
 
 
 def condition_if_else(condition: str, config_if: dict, config_else: dict):
-    if bool(condition):
+    if evaluate_bool(condition):
         return config_if
     else:
         return config_else
 
 
 def condition_not(condition: str):
-    return not bool(condition)
+    return not evaluate_bool(condition)
 
 
 def condition_and(*conditions: str):
-    return all(conditions)
+    return all(map(evaluate_bool, conditions))
 
 
 def condition_or(*conditions: str):
-    return any(conditions)
+    return all(map(evaluate_bool, conditions))
 
 
 def condition_equal(*configs):
