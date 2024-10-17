@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../images/logo.min.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.41">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.0253249f.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -2746,29 +2746,33 @@ parameters:
 </code></pre>
 <p>Leave <code>mount</code> empty to use the specified mount from vault params from the inventory (see below). Same applies to the <code>path/in/vault</code> where the ref path in kapitan gets taken as default value.</p>
 <p>Parameters in the secret file are collected from the inventory of the target we gave from CLI <code>-t &lt;target_name&gt;</code>. If target isn't provided then kapitan will identify the variables from the environment when revealing secret.</p>
-<p>Environment variables that can be defined in kapitan inventory are <code>VAULT_ADDR</code>, <code>VAULT_NAMESPACE</code>, <code>VAULT_SKIP_VERIFY</code>, <code>VAULT_CLIENT_CERT</code>, <code>VAULT_CLIENT_KEY</code>, <code>VAULT_CAPATH</code> &amp; <code>VAULT_CACERT</code>.
-Extra parameters that can be defined in inventory are:</p>
+<p>The environment variables which can also be defined in kapitan inventory are <code>VAULT_ADDR</code>, <code>VAULT_NAMESPACE</code>, <code>VAULT_SKIP_VERIFY</code>, <code>VAULT_CLIENT_CERT</code>, <code>VAULT_CLIENT_KEY</code>, <code>VAULT_CAPATH</code> &amp; <code>VAULT_CACERT</code>.
+Note that providing these variables through the inventory in envvar style is deprecated.
+Users should update their inventory to set these values in keys without the <code>VAULT_</code> prefix and in all lowercase.
+For example <code>VAULT_ADDR: https://127.0.0.1:8200</code> should be given as <code>addr: https://127.0.0.1:8200</code> in the inventory.
+Please note that configuring one of these values in both <code>kapitan.secrets.vaultkv</code> in the inventory and in the environment will cause a validation error.</p>
+<p>Extra parameters that can be defined in inventory are:</p>
 <ul>
 <li><code>auth</code>: specify which authentication method to use like <code>token</code>,<code>userpass</code>,<code>ldap</code>,<code>github</code> &amp; <code>approle</code></li>
 <li><code>mount</code>: specify the mount point of key's path. e.g if path=<code>alpha-secret/foo/bar</code> then <code>mount: alpha-secret</code> (default <code>secret</code>)</li>
-<li>
-<p><code>engine</code>: secret engine used, either <code>kv-v2</code> or <code>kv</code> (default <code>kv-v2</code>)
-Environment variables cannot be defined in inventory are <code>VAULT_TOKEN</code>,<code>VAULT_USERNAME</code>,<code>VAULT_PASSWORD</code>,<code>VAULT_ROLE_ID</code>,<code>VAULT_SECRET_ID</code>.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">secrets</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">vaultkv</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">auth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">userpass</span>
-<span class="w">        </span><span class="nt">engine</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kv-v2</span>
-<span class="w">        </span><span class="nt">mount</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">team-alpha-secret</span>
-<span class="w">        </span><span class="nt">VAULT_ADDR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://127.0.0.1:8200</span>
-<span class="w">        </span><span class="nt">VAULT_NAMESPACE</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CICD-alpha</span>
-<span class="w">        </span><span class="nt">VAULT_SKIP_VERIFY</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<span class="w">        </span><span class="nt">VAULT_CLIENT_KEY</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/key</span>
-<span class="w">        </span><span class="nt">VAULT_CLIENT_CERT</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/cert</span>
-</code></pre></div>
-</li>
+<li><code>engine</code>: secret engine used, either <code>kv-v2</code> or <code>kv</code> (default <code>kv-v2</code>)</li>
 </ul>
+<p>The environment variables which cannot be defined in inventory are <code>VAULT_TOKEN</code>,<code>VAULT_USERNAME</code>,<code>VAULT_PASSWORD</code>,<code>VAULT_ROLE_ID</code>,<code>VAULT_SECRET_ID</code>.</p>
+<pre><code>  ```yaml
+  parameters:
+    kapitan:
+      secrets:
+        vaultkv:
+          auth: userpass
+          engine: kv-v2
+          mount: team-alpha-secret
+          addr: http://127.0.0.1:8200
+          namespace: CICD-alpha
+          skip_verify: false
+          client_key: /path/to/key
+          client_cert: /path/to/cert
+  ```
+</code></pre>
 <h3 id="vaulttransit"><code>vaulttransit</code></h3>
 <p>Considering a key-value pair like <code>my_key</code>:<code>my_secret</code> in the path <code>secret/foo/bar</code> in a transit secret engine on the vault server, to use this as a secret use:</p>
 <pre><code>```shell
@@ -2992,11 +2996,11 @@ kapitan refs --reveal --tag "?{azkms:path/to/secret_inside_kapitan}"
       </div>
       <script>var consent=__md_get("__consent");if(consent)for(var input of document.forms.consent.elements)input.name&&(input.checked=consent[input.name]||!1);else"file:"!==location.protocol&&setTimeout((function(){document.querySelector("[data-md-component=consent]").hidden=!1}),250);var form=document.forms.consent;for(var action of["submit","reset"])form.addEventListener(action,(function(e){if(e.preventDefault(),"reset"===e.type)for(var n of document.forms.consent.elements)n.name&&(n.checked=!1);__md_set("__consent",Object.fromEntries(Array.from(new FormData(form).keys()).map((function(e){return[e,!0]})))),location.hash="",location.reload()}))</script>
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["announce.dismiss", "content.code.annotate", "content.tabs.link", "navigation.instant", "navigation.indexes", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.follow", "toc.integrate"], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["announce.dismiss", "content.code.annotate", "content.tabs.link", "navigation.instant", "navigation.indexes", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.follow", "toc.integrate"], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
     
     
   
-      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      <script src="../assets/javascripts/bundle.83f73b43.min.js"></script>
       
     
    <!-- Google Tag Manager (noscript) -->
