@@ -659,13 +659,19 @@ Leave `mount` empty to use the specified mount from vault params from the invent
 
 Parameters in the secret file are collected from the inventory of the target we gave from CLI `-t <target_name>`. If target isn't provided then kapitan will identify the variables from the environment when revealing secret.
 
-Environment variables that can be defined in kapitan inventory are `VAULT_ADDR`, `VAULT_NAMESPACE`, `VAULT_SKIP_VERIFY`, `VAULT_CLIENT_CERT`, `VAULT_CLIENT_KEY`, `VAULT_CAPATH` & `VAULT_CACERT`.
+The environment variables which can also be defined in kapitan inventory are `VAULT_ADDR`, `VAULT_NAMESPACE`, `VAULT_SKIP_VERIFY`, `VAULT_CLIENT_CERT`, `VAULT_CLIENT_KEY`, `VAULT_CAPATH` & `VAULT_CACERT`.
+Note that providing these variables through the inventory in envvar style is deprecated.
+Users should update their inventory to set these values in keys without the `VAULT_` prefix and in all lowercase.
+For example `VAULT_ADDR: https://127.0.0.1:8200` should be given as `addr: https://127.0.0.1:8200` in the inventory.
+Please note that configuring one of these values in both `kapitan.secrets.vaultkv` in the inventory and in the environment will cause a validation error.
+
 Extra parameters that can be defined in inventory are:
 
 - `auth`: specify which authentication method to use like `token`,`userpass`,`ldap`,`github` & `approle`
 - `mount`: specify the mount point of key's path. e.g if path=`alpha-secret/foo/bar` then `mount: alpha-secret` (default `secret`)
 - `engine`: secret engine used, either `kv-v2` or `kv` (default `kv-v2`)
-Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,`VAULT_SECRET_ID`.
+
+The environment variables which cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_USERNAME`,`VAULT_PASSWORD`,`VAULT_ROLE_ID`,`VAULT_SECRET_ID`.
 
       ```yaml
       parameters:
@@ -675,11 +681,11 @@ Environment variables cannot be defined in inventory are `VAULT_TOKEN`,`VAULT_US
               auth: userpass
               engine: kv-v2
               mount: team-alpha-secret
-              VAULT_ADDR: http://127.0.0.1:8200
-              VAULT_NAMESPACE: CICD-alpha
-              VAULT_SKIP_VERIFY: false
-              VAULT_CLIENT_KEY: /path/to/key
-              VAULT_CLIENT_CERT: /path/to/cert
+              addr: http://127.0.0.1:8200
+              namespace: CICD-alpha
+              skip_verify: false
+              client_key: /path/to/key
+              client_cert: /path/to/cert
       ```
 
 ### `vaulttransit`
