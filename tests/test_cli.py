@@ -733,7 +733,8 @@ class CliFuncsTest(unittest.TestCase):
 
         # set stdout as string
         stdout = io.StringIO()
-        with contextlib.redirect_stdout(stdout), set_env(VAULT_ADDR=self.server.vault_url):
+        # don't set VAULT_ADDR in the environment here, since that would cause a validation error.
+        with contextlib.redirect_stdout(stdout):
             main()
         self.assertEqual("revealing: {value}".format(value=test_secret_content), stdout.getvalue())
 

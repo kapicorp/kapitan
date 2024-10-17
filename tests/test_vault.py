@@ -7,6 +7,7 @@
 
 "vault secrets tests"
 
+import copy
 import logging
 import os
 import shutil
@@ -45,6 +46,34 @@ class VaultSecretTest(unittest.TestCase):
         """
         parameters = {"auth": "token"}
         env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
+
+        test_client = VaultClient(env)
+        self.assertTrue(test_client.is_authenticated(), msg="Authentication with token failed")
+        test_client.adapter.close()
+
+    def test_token_authentication_envvar(self):
+        """
+        Authenticate using token (test loading config from environment)
+        """
+        parameters = {"auth": "token"}
+        server_params = copy.deepcopy(self.server.parameters)
+        os.environ["VAULT_ADDR"] = server_params["addr"]
+        del server_params["addr"]
+        env = KapitanReferenceVaultKVConfig(**parameters, **server_params)
+        del os.environ["VAULT_ADDR"]
+
+        test_client = VaultClient(env)
+        self.assertTrue(test_client.is_authenticated(), msg="Authentication with token failed")
+        test_client.adapter.close()
+
+    def test_token_authentication_legacy_config(self):
+        """
+        Authenticate using token (test legacy envvar style inventory config)
+        """
+        server_params = copy.deepcopy(self.server.parameters)
+        parameters = {"auth": "token", "VAULT_ADDR": server_params["addr"]}
+        del server_params["addr"]
+        env = KapitanReferenceVaultKVConfig(**parameters, **server_params)
 
         test_client = VaultClient(env)
         self.assertTrue(test_client.is_authenticated(), msg="Authentication with token failed")

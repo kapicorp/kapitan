@@ -1,7 +1,7 @@
 from typing import List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic_settings import BaseSettings
 
 from kapitan.utils import StrEnum
 
@@ -14,17 +14,23 @@ class KapitanReferenceGPGConfig(KapitanReferenceBaseConfig):
     recipients: List[dict[str, str]] = []
 
 
+# Must be pydantic_settings.BaseSettings so that environment variables are actually used to
+# populate the object. Any of the validation alias choices can be used as environment variable
+# names.
+# Note that this will break if both alias choices are set for a field (either through envvar or
+# initializer).
 class KapitanReferenceVaultEnv(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_prefix="VAULT_",
+    addr: Optional[str] = Field(None, validation_alias=AliasChoices("addr", "VAULT_ADDR"))
+    skip_verify: Optional[bool] = Field(
+        True, validation_alias=AliasChoices("skip_verify", "VAULT_SKIP_VERIFY")
     )
-    addr: Optional[str] = None
-    skip_verify: Optional[bool] = True
-    client_key: Optional[str] = None
-    client_cert: Optional[str] = None
-    cacert: Optional[str] = None
-    capath: Optional[str] = None
-    namespace: Optional[str] = None
+    client_key: Optional[str] = Field(None, validation_alias=AliasChoices("client_key", "VAULT_CLIENT_KEY"))
+    client_cert: Optional[str] = Field(
+        None, validation_alias=AliasChoices("client_cert", "VAULT_CLIENT_CERT")
+    )
+    cacert: Optional[str] = Field(None, validation_alias=AliasChoices("cacert", "VAULT_CACERT"))
+    capath: Optional[str] = Field(None, validation_alias=AliasChoices("capath", "VAULT_CAPATH"))
+    namespace: Optional[str] = Field(None, validation_alias=AliasChoices("namespace", "VAULT_NAMESPACE"))
 
 
 class VaultEngineTypes(StrEnum):
