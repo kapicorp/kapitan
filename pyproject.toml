@@ -50,7 +50,7 @@ optional = true
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.8.0"
-pre-commit = "^3.8.0"
+pre-commit = ">=3.8,<5.0"
 isort = "^5.13.2"
 flake8 = "^7.1.1"
 flake8-pyproject = "^1.2.3"
