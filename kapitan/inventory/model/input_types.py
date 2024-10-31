@@ -39,7 +39,7 @@ class KapitanInputTypeBaseConfig(BaseModel):
 class KapitanInputTypeJsonnetConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.JSONNET] = InputTypes.JSONNET
     input_paths: List[str]
-    prune: bool = False
+    prune: Optional[bool] = False
 
 
 class KapitanInputTypeExternalConfig(KapitanInputTypeBaseConfig):
@@ -79,6 +79,7 @@ class KapitanInputTypeKadetConfig(KapitanInputTypeBaseConfig):
     output_type: OutputType = OutputType.YAML
     input_paths: List[str]
     input_value: Optional[dict] = None
+    prune: Optional[bool] = False
 
 
 class KapitanInputTypeRemoveConfig(KapitanInputTypeBaseConfig):
