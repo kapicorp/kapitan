@@ -39,8 +39,8 @@ The example inventory renders to a total of 25MB of YAML.
 $ time kapitan inventory -v --inventory-backend=reclass > inv.yml
 [ ... some output omitted ... ]
 kapitan.resources DEBUG    Using reclass as inventory backend
-kapitan.inventory.inv_reclass DEBUG    Inventory reclass: No config file found. Using reclass inventory config defaults
-kapitan.inventory.inv_reclass DEBUG    Inventory rendering with reclass took 0:01:06.037057
+kapitan.inventory.backends.reclass DEBUG    Inventory reclass: No config file found. Using reclass inventory config defaults
+kapitan.inventory.backends.reclass DEBUG    Inventory rendering with reclass took 0:01:06.037057
 
 real    1m23.840s
 user    1m23.520s
@@ -56,11 +56,11 @@ The rest of the runtime (roughly 18 seconds) is spent in writing the resulting 2
 $ time kapitan inventory -v --inventory-backend=reclass-rs > inv-rs.yml
 [ ... some output omitted ... ]
 kapitan.resources DEBUG    Using reclass-rs as inventory backend
-kapitan.inventory.inv_reclass DEBUG    Inventory reclass: No config file found. Using reclass inventory config defaults
+kapitan.inventory.backends.reclass DEBUG    Inventory reclass: No config file found. Using reclass inventory config defaults
 reclass-config.yml entry 'storage_type=yaml_fs' not implemented yet, ignoring...
 reclass-config.yml entry 'inventory_base_uri=./inventory' not implemented yet, ignoring...
 reclass-config.yml entry 'allow_none_override=true' not implemented yet, ignoring...
-kapitan.inventory.inv_reclass_rs DEBUG    Inventory rendering with reclass-rs took 0:00:01.717107
+kapitan.inventory.backends.reclass_rs DEBUG    Inventory rendering with reclass-rs took 0:00:01.717107
 
 real    0m19.921s
 user    0m35.586s

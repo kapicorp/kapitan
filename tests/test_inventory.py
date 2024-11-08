@@ -72,10 +72,10 @@ class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
         shutil.copytree(TEST_KUBERNETES_INVENTORY, self.temp_dir, dirs_exist_ok=True)
         self.backend_id = InventoryBackends.OMEGACONF
         self.expected_targets_count = 10
-        from kapitan.inventory.inv_omegaconf import migrate
+        from kapitan.inventory.backends.omegaconf import migrate
 
         self.inventory_path = os.path.join(self.temp_dir, "inventory")
-        migrate.migrate(self.inventory_path)
+        migrate(self.inventory_path)
         super().setUp()
 
     def tearDown(self) -> None:

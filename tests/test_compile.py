@@ -257,9 +257,9 @@ class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
         self.inventory_path = self.temp_dir
         super().setUp()
         self.extraArgv = ["--inventory-backend=omegaconf"]
-        from kapitan.inventory.inv_omegaconf import migrate
+        from kapitan.inventory.backends.omegaconf import migrate
 
-        migrate.migrate(self.temp_dir)
+        migrate(self.temp_dir)
 
     @unittest.skip("Already tested")
     def test_compile_not_enough_args(self):

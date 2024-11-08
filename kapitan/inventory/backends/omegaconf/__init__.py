@@ -16,9 +16,9 @@ from cachetools import LRUCache, cached
 from kadet import Dict
 from omegaconf import ListMergeMode, OmegaConf
 
+from kapitan.inventory import Inventory, InventoryError, InventoryTarget
 from kapitan.inventory.model import KapitanInventoryMetadata, KapitanInventoryParameters
 
-from ..inventory import Inventory, InventoryError, InventoryTarget
 from .migrate import migrate
 from .resolvers import register_resolvers
 
