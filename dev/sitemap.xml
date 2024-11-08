@@ -2,222 +2,222 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://kapitan.dev/dev/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/ADOPTERS/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/FAQ/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/getting_started/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/proposals/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/references/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/related/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/support/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_0_kadet/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_10_azure_key_vault/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_11_hashicorp_vault_transit/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_1_external_dependencies/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_2_helm_charts_input_type/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_3_schema_validation/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_4_standalone_executable/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_5_ref_types_redesign/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_6_hashicorp_vault/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_7_remote_inventory/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_8_google_secret_management/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_8_modularize_kapitan/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/kap_proposals/kap_9_bring_your_own_helm/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/external_dependencies/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/kapitan_overview/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/remote_repositories/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/blog/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/blog/04/12/2022/kapitan-logo-5-years-of-kapitan/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/blog/04/12/2022/kapitan-logo-new-kapitan-release--v0310/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/blog/04/12/2022/kapitan-logo-new-kapitan-release--v0320/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/blog/27/08/2023/kapitan-logo-deploying-keda-with-kapitan/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/blog/12/02/2024/kapitan-logo-new-kapitan-release--v0331/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/commands/kapitan_compile/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/commands/kapitan_dotfile/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/commands/kapitan_inventory/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/commands/kapitan_lint/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/commands/kapitan_searchvar/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/commands/kapitan_validate/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/contribute/code/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/contribute/documentation/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/contribute/sponsor/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/contribute/talk/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/input_types/copy/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/input_types/external/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/input_types/helm/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/input_types/introduction/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/input_types/jinja/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/input_types/jsonnet/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/input_types/kadet/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/input_types/remove/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/inventory/advanced/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/inventory/classes/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/inventory/introduction/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/inventory/parameters_interpolation/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/inventory/reclass-rs/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/inventory/targets/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/tags/</loc>
-         <lastmod>2024-10-31</lastmod>
+         <lastmod>2024-11-08</lastmod>
     </url>
 </urlset>

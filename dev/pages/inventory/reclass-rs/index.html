@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../images/logo.min.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.43">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.44">
     
     
       
@@ -1938,8 +1938,8 @@ The example inventory renders to a total of 25MB of YAML.</p>
 <div class="highlight"><pre><span></span><code>$ time kapitan inventory -v --inventory-backend=reclass &gt; inv.yml
 [ ... some output omitted ... ]
 kapitan.resources DEBUG    Using reclass as inventory backend
-kapitan.inventory.inv_reclass DEBUG    Inventory reclass: No config file found. Using reclass inventory config defaults
-kapitan.inventory.inv_reclass DEBUG    Inventory rendering with reclass took 0:01:06.037057
+kapitan.inventory.backends.reclass DEBUG    Inventory reclass: No config file found. Using reclass inventory config defaults
+kapitan.inventory.backends.reclass DEBUG    Inventory rendering with reclass took 0:01:06.037057
 
 real    1m23.840s
 user    1m23.520s
@@ -1951,11 +1951,11 @@ The rest of the runtime (roughly 18 seconds) is spent in writing the resulting 2
 <div class="highlight"><pre><span></span><code>$ time kapitan inventory -v --inventory-backend=reclass-rs &gt; inv-rs.yml
 [ ... some output omitted ... ]
 kapitan.resources DEBUG    Using reclass-rs as inventory backend
-kapitan.inventory.inv_reclass DEBUG    Inventory reclass: No config file found. Using reclass inventory config defaults
+kapitan.inventory.backends.reclass DEBUG    Inventory reclass: No config file found. Using reclass inventory config defaults
 reclass-config.yml entry &#39;storage_type=yaml_fs&#39; not implemented yet, ignoring...
 reclass-config.yml entry &#39;inventory_base_uri=./inventory&#39; not implemented yet, ignoring...
 reclass-config.yml entry &#39;allow_none_override=true&#39; not implemented yet, ignoring...
-kapitan.inventory.inv_reclass_rs DEBUG    Inventory rendering with reclass-rs took 0:00:01.717107
+kapitan.inventory.backends.reclass_rs DEBUG    Inventory rendering with reclass-rs took 0:00:01.717107
 
 real    0m19.921s
 user    0m35.586s
