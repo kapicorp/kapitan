@@ -1,6 +1,6 @@
-from typing import Literal, Optional, Union
+from typing import Annotated, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from kapitan.utils import StrEnum
 
@@ -39,6 +39,7 @@ class KapitanDependencyHttpsConfig(KapitanDependencyBaseConfig):
     unpack: bool = False
 
 
-DependencyTypeConfig = Union[
-    KapitanDependencyHelmConfig, KapitanDependencyHttpsConfig, KapitanDependencyGitConfig
+DependencyTypeConfig = Annotated[
+    Union[KapitanDependencyHelmConfig, KapitanDependencyHttpsConfig, KapitanDependencyGitConfig],
+    Field(discriminator="type"),
 ]
