@@ -28,10 +28,10 @@ class InventoryTestOmegaConf(unittest.TestCase):
         inventory_backend = get_inventory_backend("omegaconf")
         self.inventory_path = self.temp_dir
         self.extraArgv = ["--inventory-backend=omegaconf"]
-        from kapitan.inventory.inv_omegaconf import migrate
+        from kapitan.inventory.backends.omegaconf import migrate
 
         inventory_path = os.path.join(self.temp_dir, "inventory")
-        migrate.migrate(inventory_path)
+        migrate(inventory_path)
         self.inventory_backend = inventory_backend(inventory_path=inventory_path, initialise=False)
 
     def test_load_and_resolve_single_target(self):

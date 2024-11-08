@@ -4,9 +4,8 @@ from datetime import datetime
 import reclass_rs
 
 from kapitan.errors import InventoryError
-
-from .inv_reclass import get_reclass_config
-from .inventory import Inventory, InventoryTarget
+from kapitan.inventory import Inventory
+from kapitan.inventory.backends.reclass import get_reclass_config
 
 logger = logging.getLogger(__name__)
 
