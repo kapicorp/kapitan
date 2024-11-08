@@ -341,11 +341,16 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
     backend = get_inventory_backend(backend_id)
 
     logger.debug(f"Using {backend.__name__} as inventory backend")
-    inventory_backend = backend(
-        inventory_path=inventory_path,
-        compose_target_name=compose_target_name,
-        ignore_class_not_found=ignore_class_not_found,
-    )
+
+    try:
+        inventory_backend = backend(
+            inventory_path=inventory_path,
+            compose_target_name=compose_target_name,
+            ignore_class_not_found=ignore_class_not_found,
+        )
+    except InventoryError as e:
+        logger.fatal(e)
+        raise
 
     cached.inv = inventory_backend
     cached.global_inv = cached.inv.inventory

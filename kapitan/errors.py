@@ -18,6 +18,14 @@ class InventoryError(KapitanError):
     """inventory error"""
 
 
+class InventoryValidationError(InventoryError):
+    """inventory validation error"""
+
+
+class InvalidTargetError(InventoryError):
+    """inventory validation error"""
+
+
 class SecretError(KapitanError):
     """secrets error"""
 
