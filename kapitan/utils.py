@@ -20,7 +20,8 @@ import sys
 import tarfile
 import traceback
 from collections import Counter, defaultdict
-from functools import lru_cache, wraps
+from datetime import time
+from functools import lru_cache
 from hashlib import sha256
 from zipfile import ZipFile
 
@@ -55,38 +56,6 @@ def fatal_error(message):
     "Logs error message, sys.exit(1)"
     logger.error(message)
     sys.exit(1)
-
-
-def hashable_lru_cache(func):
-    """Usable instead of lru_cache for functions using unhashable objects"""
-
-    cache = lru_cache(maxsize=256)
-
-    def deserialise(value):
-        try:
-            return json.loads(value)
-        except Exception:
-            logger.debug("hashable_lru_cache: %s not serialiseable, using generic lru_cache instead", value)
-            return value
-
-    def func_with_serialized_params(*args, **kwargs):
-        _args = tuple([deserialise(arg) for arg in args])
-        _kwargs = {k: deserialise(v) for k, v in kwargs.items()}
-        return func(*_args, **_kwargs)
-
-    cached_function = cache(func_with_serialized_params)
-
-    @wraps(func)
-    def lru_decorator(*args, **kwargs):
-        _args = tuple([json.dumps(arg, sort_keys=True) if type(arg) in (list, dict) else arg for arg in args])
-        _kwargs = {
-            k: json.dumps(v, sort_keys=True) if type(v) in (list, dict) else v for k, v in kwargs.items()
-        }
-        return cached_function(*_args, **_kwargs)
-
-    lru_decorator.cache_info = cached_function.cache_info
-    lru_decorator.cache_clear = cached_function.cache_clear
-    return lru_decorator
 
 
 class termcolor:
@@ -270,7 +239,6 @@ def flatten_dict(d, parent_key="", sep="."):
     return dict(items)
 
 
-@hashable_lru_cache
 def deep_get(dictionary, keys, previousKey=None):
     """Search recursively for 'keys' in 'dictionary' and return value, otherwise return None"""
     value = None
