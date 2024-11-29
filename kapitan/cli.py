@@ -74,27 +74,10 @@ def trigger_compile(args):
     cached.revealer_obj = Revealer(ref_controller)
 
     compile_targets(
-        args.inventory_path,
-        search_paths,
-        args.output_path,
-        args.parallelism,
-        args.targets,
-        args.labels,
-        ref_controller,
-        prune=args.prune,
-        indent=args.indent,
-        reveal=args.reveal,
-        cache=args.cache,
-        cache_paths=args.cache_paths,
-        fetch=args.fetch,
-        force_fetch=args.force_fetch,
-        force=args.force,  # deprecated
-        validate=args.validate,
-        schemas_path=args.schemas_path,
-        jinja2_filters=args.jinja2_filters,
-        verbose=args.verbose,
-        use_go_jsonnet=args.use_go_jsonnet,
-        compose_target_name=args.compose_target_name,
+        inventory_path=args.inventory_path,
+        search_paths=search_paths,
+        ref_controller=ref_controller,
+        args=args,
     )
 
 

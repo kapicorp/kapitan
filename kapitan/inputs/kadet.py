@@ -19,6 +19,7 @@ from kadet import BaseModel, BaseObj, Dict
 from kapitan import cached
 from kapitan.errors import CompileError
 from kapitan.inputs.base import CompiledFile, InputType
+from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
 from kapitan.utils import prune_empty
 
 # Set external kadet exception to kapitan.error.CompileError
@@ -83,11 +84,11 @@ def load_from_search_paths(module_name):
 
 
 class Kadet(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller, input_params={}):
-        super().__init__("kadet", compile_path, search_paths, ref_controller)
-        self.input_params = input_params
+    def __init__(self, config: KapitanInputTypeKadetConfig, *args, **kwargs):
+        super().__init__(config, *args, **kwargs)
+        self.input_params = config.input_params
 
-    def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
+    def compile_file(self, file_path, compile_path):
         """
         Write file_path (kadet evaluated) items as files to compile_path.
         ext_vars is not used in Kadet
@@ -98,11 +99,12 @@ class Kadet(InputType):
             target_name: default None, set to current target being compiled
             indent: default 2
         """
-        output = kwargs.get("output", "yaml")
-        prune_output = kwargs.get("prune_output", False)
-        reveal = kwargs.get("reveal", False)
-        target_name = kwargs.get("target_name", None)
-        indent = kwargs.get("indent", 2)
+
+        output = self.config.output_type
+        prune_output = self.config.prune
+        reveal = self.args.reveal
+        target_name = self.target_name
+        indent = self.args.indent
 
         current_target.set(target_name)
         search_paths.set(self.search_paths)
@@ -192,9 +194,6 @@ class Kadet(InputType):
                 raise ValueError(
                     f"Output type defined in inventory for {file_path} is neither 'json', 'yaml', 'toml' nor 'plain'"
                 )
-
-    def default_output_type(self):
-        return "yaml"
 
 
 def _to_dict(obj):

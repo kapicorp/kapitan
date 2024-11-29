@@ -10,17 +10,18 @@ import os
 import shutil
 
 from kapitan.inputs.base import InputType
+from kapitan.inventory.model.input_types import KapitanInputTypeCopyConfig
 from kapitan.utils import copy_tree
 
 logger = logging.getLogger(__name__)
 
 
 class Copy(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller, ignore_missing=False):
-        self.ignore_missing = ignore_missing
-        super().__init__("copy", compile_path, search_paths, ref_controller)
+    def __init__(self, config: KapitanInputTypeCopyConfig, *args, **kwargs):
+        super().__init__(config, *args, **kwargs)
+        self.ignore_missing = config.ignore_missing
 
-    def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
+    def compile_file(self, file_path, compile_path):
         """
         Write items in path as plain rendered files to compile_path.
         path can be either a file or directory.
@@ -40,11 +41,7 @@ class Copy(InputType):
                 else:
                     compile_path = os.path.abspath(compile_path)  # Resolve relative paths
                     copy_tree(file_path, compile_path)
-            elif ignore_missing == False:
+            elif not ignore_missing:
                 raise OSError(f"Path {file_path} does not exist and `ignore_missing` is {ignore_missing}")
         except OSError as e:
             logger.exception("Input dir not copied. Error: %s", e)
-
-    def default_output_type(self):
-        # no output_type options for copy
-        return None

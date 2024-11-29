@@ -11,16 +11,16 @@ import re
 import subprocess
 
 from kapitan.inputs.base import InputType
+from kapitan.inventory.model.input_types import KapitanInputTypeExternalConfig
 
 logger = logging.getLogger(__name__)
 
 
 class External(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller):
-        super().__init__("external", compile_path, search_paths, ref_controller)
+    def __init__(self, config: KapitanInputTypeExternalConfig, *args, **kwargs):
+        super().__init__(config, *args, **kwargs)
         self.env_vars = {}
-        self.args = []
-        self.target_name = None
+        self.command_args = []
 
     def set_env_vars(self, env_vars):
         # Propagate HOME and PATH environment variables to external tool
@@ -37,9 +37,9 @@ class External(InputType):
         self.env_vars = env_vars
 
     def set_args(self, args):
-        self.args = args
+        self.command_args = args
 
-    def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
+    def compile_file(self, file_path, compile_path):
         """
         Execute external with specific arguments and env vars.
         If external exits with non zero error code, error is thrown
@@ -50,7 +50,7 @@ class External(InputType):
             external_path = file_path
 
             args = [external_path]
-            args.extend(self.args)
+            args.extend(self.command_args)
             args = " ".join(args)
 
             # compile_path (str): Path to current target compiled directory
@@ -80,7 +80,3 @@ class External(InputType):
 
         except OSError as e:
             logger.exception("External failed to run. Error: %s", e)
-
-    def default_output_type(self):
-        # no output_type options for external
-        return None

@@ -10,20 +10,20 @@ import os
 
 from kapitan import cached
 from kapitan.inputs.base import CompiledFile, InputType
-from kapitan.resources import inventory
+from kapitan.inventory.model.input_types import KapitanInputTypeJinja2Config
 from kapitan.utils import render_jinja2
 
 logger = logging.getLogger(__name__)
 
 
 class Jinja2(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller, args):
-        super().__init__("jinja2", compile_path, search_paths, ref_controller)
-        self.strip_postfix = args.suffix_remove
-        self.stripped_postfix = args.suffix_stripped
-        self.input_params = args.input_params
+    def __init__(self, config: KapitanInputTypeJinja2Config, *args, **kwargs):
+        super().__init__(config, *args, **kwargs)
+        self.strip_postfix = config.suffix_remove
+        self.stripped_postfix = config.suffix_stripped
+        self.input_params = config.input_params
 
-    def compile_file(self, file_path, compile_path, ext_vars={}, **kwargs):
+    def compile_file(self, file_path, compile_path):
         """
         Write items in path as jinja2 rendered files to compile_path.
         path can be either a file or directory.
@@ -31,8 +31,8 @@ class Jinja2(InputType):
             reveal: default False, set to reveal refs on compile
             target_name: default None, set to current target being compiled
         """
-        reveal = kwargs.get("reveal", False)
-        target_name = kwargs.get("target_name", None)
+        reveal = self.args.reveal
+        target_name = self.target_name
 
         input_params = self.input_params
         # set compile_path allowing jsonnet to have context on where files
@@ -41,13 +41,13 @@ class Jinja2(InputType):
         input_params.setdefault("compile_path", compile_path)
 
         # set ext_vars and inventory for jinja2 context
-        context = ext_vars.copy()
+        context = {}
 
         context["inventory_global"] = cached.global_inv
         context["inventory"] = cached.global_inv[target_name]
         context["input_params"] = input_params
 
-        jinja2_filters = kwargs.get("jinja2_filters")
+        jinja2_filters = self.args.jinja2_filters
 
         for item_key, item_value in render_jinja2(
             file_path, context, jinja2_filters=jinja2_filters, search_paths=self.search_paths
@@ -62,7 +62,3 @@ class Jinja2(InputType):
                 mode = item_value["mode"]
                 os.chmod(full_item_path, mode)
                 logger.debug("Wrote %s with mode %.4o", full_item_path, mode)
-
-    def default_output_type(self):
-        # no output_type options for jinja2
-        return None

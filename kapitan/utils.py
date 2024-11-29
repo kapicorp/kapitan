@@ -32,10 +32,7 @@ import yaml
 
 from kapitan import cached, defaults
 from kapitan.errors import CompileError
-from kapitan.inputs.jinja2_filters import (
-    load_jinja2_filters,
-    load_jinja2_filters_from_file,
-)
+from kapitan.jinja2_filters import load_jinja2_filters, load_jinja2_filters_from_file
 from kapitan.version import VERSION
 
 logger = logging.getLogger(__name__)

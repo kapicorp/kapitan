@@ -13,7 +13,7 @@ import time
 import unittest
 
 from kapitan import cached
-from kapitan.inputs.jinja2_filters import base64_encode
+from kapitan.jinja2_filters import base64_encode
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.resources import inventory

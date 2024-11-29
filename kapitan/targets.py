@@ -19,21 +19,13 @@ from reclass.errors import NotFoundError, ReclassException
 from kapitan import cached
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
-from kapitan.inputs.copy import Copy
-from kapitan.inputs.external import External
-from kapitan.inputs.helm import Helm
-from kapitan.inputs.jinja2 import Jinja2
-from kapitan.inputs.jsonnet import Jsonnet
-from kapitan.inputs.kadet import Kadet
-from kapitan.inputs.remove import Remove
+from kapitan.inputs import get_compiler
 from kapitan.resources import get_inventory
 
 logger = logging.getLogger(__name__)
 
 
-def compile_targets(
-    inventory_path, search_paths, output_path, parallelism, desired_targets, labels, ref_controller, **kwargs
-):
+def compile_targets(inventory_path, search_paths, ref_controller, args):
     """
     Searches and loads target files, and runs compile_target() on a
     multiprocessing pool with parallel number of processes.
@@ -58,7 +50,8 @@ def compile_targets(
     if discovered_targets == 0:
         raise CompileError("No inventory targets discovered at path: {inventory_path}")
 
-    targets = desired_targets if len(desired_targets) > 0 else discovered_targets
+    targets = args.targets or discovered_targets
+    labels = args.labels
 
     try:
         targets = search_targets(inventory, targets, labels)
@@ -67,13 +60,9 @@ def compile_targets(
         raise CompileError(f"Error searching targets: {e}")
 
     if len(targets) == 0:
-        raise CompileError(f"No matching targets found in inventory: {labels if labels else desired_targets}")
+        raise CompileError(f"No matching targets found in inventory: {labels if labels else args.targets}")
 
-    if parallelism is None:
-        parallelism = min(len(targets), os.cpu_count())
-        logger.debug(
-            f"Parallel not set, defaulting to {parallelism} processes {os.cpu_count()} {len(targets)}"
-        )
+    parallelism = args.parallelism or min(len(targets), os.cpu_count())
 
     logger.info(
         f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)"
@@ -83,11 +72,11 @@ def compile_targets(
         try:
             fetching_start = time.time()
             # check if --fetch or --force-fetch is enabled
-            force_fetch = kwargs.get("force_fetch", False)
-            fetch = kwargs.get("fetch", False) or force_fetch
+            force_fetch = args.force_fetch
+            fetch = args.fetch or force_fetch
 
             # deprecated --force flag
-            if kwargs.get("force", False):
+            if args.force:
                 logger.info(
                     "DeprecationWarning: --force is deprecated. Use --force-fetch instead of --force --fetch"
                 )
@@ -101,6 +90,7 @@ def compile_targets(
                 target_objs = load_target_inventory(inventory, targets)
 
             # append "compiled" to output_path so we can safely overwrite it
+            output_path = args.output_path
             compile_path = os.path.join(output_path, "compiled")
 
             if not target_objs:
@@ -110,7 +100,7 @@ def compile_targets(
             if fetch:
                 fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
             # fetch targets which have force_fetch: true
-            elif not kwargs.get("force_fetch", False):
+            elif not force_fetch:
                 fetch_objs = []
                 # iterate through targets
                 for target in target_objs:
@@ -130,9 +120,8 @@ def compile_targets(
                 search_paths=search_paths,
                 compile_path=temp_compile_path,
                 ref_controller=ref_controller,
-                inventory_path=inventory_path,
                 globals_cached=cached.as_dict(),
-                **kwargs,
+                args=args,
             )
 
             # compile_target() returns None on success
@@ -174,7 +163,7 @@ def compile_targets(
                 logger.exception("\nUnknown (Non-Kapitan) error occurred:\n")
 
             logger.error("\n")
-            if kwargs.get("verbose"):
+            if args.verbose:
                 logger.exception(e)
             else:
                 logger.error(e)
@@ -251,64 +240,42 @@ def search_targets(inventory, targets, labels):
             targets_found.append(target.name)
 
     if len(targets_found) == 0:
-        raise CompileError("No targets found with labels: {labels}")
+        raise CompileError(f"No targets found with labels: {labels}")
 
     return targets_found
 
 
-def compile_target(target_obj, search_paths, compile_path, ref_controller, globals_cached=None, **kwargs):
+def compile_target(target_config, search_paths, compile_path, ref_controller, args, globals_cached=None):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
-    compile_objs = target_obj.compile
-    ext_vars = target_obj.vars
-    target_name = ext_vars.target
+    compile_configs = target_config.compile
+    target_name = target_config.vars.target
 
     # Only populates the cache if the subprocess doesn't have it
     if globals_cached and not cached.inv:
         cached.from_dict(globals_cached)
 
-    use_go_jsonnet = kwargs.get("use_go_jsonnet", False)
-    if use_go_jsonnet:
-        logger.debug("Using go-jsonnet over jsonnet")
-
-    for comp_obj in compile_objs:
-        input_type = comp_obj.input_type
-        output_path = comp_obj.output_path
-        input_params = comp_obj.input_params
-        continue_on_compile_error = comp_obj.continue_on_compile_error
-
-        if input_type == input_type.JINJA2:
-            input_compiler = Jinja2(compile_path, search_paths, ref_controller, comp_obj)
-        elif input_type == input_type.JSONNET:
-            input_compiler = Jsonnet(compile_path, search_paths, ref_controller, use_go=use_go_jsonnet)
-        elif input_type == input_type.KADET:
-            input_compiler = Kadet(compile_path, search_paths, ref_controller, input_params=input_params)
-        elif input_type == input_type.HELM:
-            input_compiler = Helm(compile_path, search_paths, ref_controller, comp_obj)
-        elif input_type == input_type.COPY:
-            ignore_missing = comp_obj.ignore_missing
-            input_compiler = Copy(compile_path, search_paths, ref_controller, ignore_missing)
-        elif input_type == input_type.REMOVE:
-            input_compiler = Remove(compile_path, search_paths, ref_controller)
-        elif input_type == input_type.EXTERNAL:
-            input_compiler = External(compile_path, search_paths, ref_controller)
-            input_compiler.set_args(comp_obj.args)
-            input_compiler.set_env_vars(comp_obj.env_vars)
-        else:
-            err_msg = 'Invalid input_type: "{}". Supported input_types: jsonnet, jinja2, kadet, helm, copy, remove, external'
-            raise CompileError(err_msg.format(input_type))
-
-        input_compiler.make_compile_dirs(target_name, output_path, **kwargs)
+    for compile_config in compile_configs:
         try:
-            input_compiler.compile_obj(comp_obj, ext_vars, **kwargs)
+            input_compiler = get_compiler(
+                compile_config, compile_path, search_paths, ref_controller, target_name, args
+            )
+            input_compiler.make_compile_dirs()
+            input_compiler.compile_obj()
+        except AttributeError as e:
+            import traceback
+
+            traceback.print_exception(type(e), e, e.__traceback__)
+            raise CompileError(f'Invalid input_type: "{compile_config.input_type}" {e}') from e
+
         except Exception as e:
-            if continue_on_compile_error:
+            if compile_config.continue_on_compile_error:
                 logger.error("Error compiling %s: %s", target_name, e)
                 continue
             else:
                 import traceback
 
                 traceback.print_exception(type(e), e, e.__traceback__)
-                raise CompileError(f"Error compiling {target_name}: {e}")
+                raise CompileError(f"Error compiling {target_name}: {e}") from e
 
-    logger.info("Compiled %s (%.2fs)", target_obj.target_full_path, time.time() - start)
+    logger.info("Compiled %s (%.2fs)", target_config.target_full_path, time.time() - start)

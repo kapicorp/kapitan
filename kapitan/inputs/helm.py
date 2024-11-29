@@ -14,7 +14,7 @@ import yaml
 from kapitan.errors import CompileError, HelmTemplateError
 from kapitan.helm_cli import helm_cli
 from kapitan.inputs.base import CompiledFile, InputType
-from kapitan.inputs.kadet import BaseModel, BaseObj, Dict
+from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
 
 logger = logging.getLogger(__name__)
@@ -31,21 +31,21 @@ HELM_DEFAULT_FLAGS = {"--include-crds": True, "--skip-tests": True}
 
 
 class Helm(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller, args: KapitanInputTypeHelmConfig):
-        super().__init__("helm", compile_path, search_paths, ref_controller)
+    def __init__(self, config: KapitanInputTypeHelmConfig, *args, **kwargs):
+        super().__init__(config, *args, **kwargs)
 
-        self.helm_values_files = args.helm_values_files
-        self.helm_params = args.helm_params
-        self.helm_path = args.helm_path
+        self.helm_values_files = config.helm_values_files
+        self.helm_params = config.helm_params
+        self.helm_path = config.helm_path
         self.file_path = None
 
         self.helm_values_file = None
-        if args.helm_values:
-            self.helm_values_file = write_helm_values_file(args.helm_values)
+        if config.helm_values:
+            self.helm_values_file = write_helm_values_file(config.helm_values)
 
-        self.kube_version = args.kube_version
+        self.kube_version = config.kube_version
 
-    def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
+    def compile_file(self, file_path, compile_path):
         """
         Render templates in file_path/templates and write to compile_path.
         file_path must be a directory containing helm chart.
@@ -53,9 +53,9 @@ class Helm(InputType):
             reveal: default False, set to reveal refs on compile
             target_name: default None, set to current target being compiled
         """
-        reveal = kwargs.get("reveal", False)
-        target_name = kwargs.get("target_name", None)
-        indent = kwargs.get("indent", 2)
+        reveal = self.args.reveal
+        target_name = self.target_name
+        indent = self.args.indent
 
         if self.file_path is not None:
             raise CompileError(
@@ -103,9 +103,6 @@ class Helm(InputType):
         self.helm_values_file = None  # reset this
         self.helm_params = {}
         self.helm_values_files = []
-
-    def default_output_type(self):
-        return None
 
     def render_chart(
         self, chart_dir, output_path, helm_path, helm_params, helm_values_file, helm_values_files

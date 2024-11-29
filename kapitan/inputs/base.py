@@ -17,6 +17,7 @@ import yaml
 
 from kapitan import cached
 from kapitan.errors import CompileError, KapitanError
+from kapitan.inventory.model import CompileInputTypeConfig
 from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper
 
@@ -24,18 +25,25 @@ logger = logging.getLogger(__name__)
 
 
 class InputType(object):
-    def __init__(self, type_name, compile_path, search_paths, ref_controller):
-        self.type_name = type_name
+    def __init__(
+        self, config: CompileInputTypeConfig, compile_path, search_paths, ref_controller, target_name, args
+    ):
+        self.type_name = config.input_type
         self.compile_path = compile_path
         self.search_paths = search_paths
         self.ref_controller = ref_controller
+        self.target_name = target_name
+        self.args = args
+        self.config = config
 
-    def compile_obj(self, comp_obj, ext_vars, **kwargs):
+    def compile_obj(self):
         """
         Expand globbed input paths, taking into account provided search paths
         and run compile_input_path() for each resolved input_path.
         kwargs are passed into compile_input_path()
         """
+
+        comp_obj = self.config
         input_type = comp_obj.input_type
         assert input_type == self.type_name
 
@@ -55,52 +63,41 @@ class InputType(object):
             input_paths.extend(inputs)
 
         for input_path in input_paths:
-            self.compile_input_path(input_path, comp_obj, ext_vars, **kwargs)
+            self.compile_input_path(input_path)
 
-    def compile_input_path(self, input_path, comp_obj, ext_vars, **kwargs):
+    def compile_input_path(self, input_path):
         """
         Compile validated input_path in comp_obj
         kwargs are passed into compile_file()
         """
-        target_name = ext_vars.target
+        target_name = self.target_name
+        comp_obj = self.config
         output_path = comp_obj.output_path
-        output_type = comp_obj.output_type
-        prune_output = comp_obj.prune
-        ext_vars_dict = ext_vars.model_dump(by_alias=True)
 
         logger.debug("Compiling %s", input_path)
         try:
-            if kwargs.get("compose_target_name", False):
+            if self.args.compose_target_name:
                 _compile_path = os.path.join(self.compile_path, target_name.replace(".", "/"), output_path)
             else:
                 _compile_path = os.path.join(self.compile_path, target_name, output_path)
             self.compile_file(
                 input_path,
                 _compile_path,
-                ext_vars_dict,
-                output=output_type,
-                target_name=target_name,
-                prune_output=prune_output,
-                **kwargs,
             )
 
         except KapitanError as e:
             raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
 
-    def make_compile_dirs(self, target_name, output_path, **kwargs):
+    def make_compile_dirs(self):
         """make compile dirs, skips if dirs exist"""
-        _compile_path = os.path.join(self.compile_path, target_name, output_path)
-        if kwargs.get("compose_target_name", False):
+        _compile_path = os.path.join(self.compile_path, self.target_name, self.config.output_path)
+        if self.args.compose_target_name:
             _compile_path = _compile_path.replace(".", "/")
 
         os.makedirs(_compile_path, exist_ok=True)
 
-    def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
+    def compile_file(self):
         """implements compilation for file_path to compile_path with ext_vars"""
-        return NotImplementedError
-
-    def default_output_type(self):
-        "returns default output_type value"
         return NotImplementedError
 
 
