@@ -27,6 +27,10 @@ TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")
 
 
 class InventoryTargetTestBase(unittest.TestCase):
+    backend_id = None
+    inventory_path = None
+    expected_targets_count = None
+
     def setUp(self) -> None:
         sys.argv = ["kapitan", "compile"]
         args = build_parser().parse_args()

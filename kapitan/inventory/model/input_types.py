@@ -78,7 +78,8 @@ class KapitanInputTypeKadetConfig(KapitanInputTypeBaseConfig):
 
 
 class KapitanInputTypeRemoveConfig(KapitanInputTypeBaseConfig):
-    input_type: Literal[InputTypes.REMOVE]
+    input_type: Literal[InputTypes.REMOVE] = InputTypes.REMOVE
+    output_path: Optional[str] = None
 
 
 CompileInputTypeConfig = Annotated[
