@@ -16,20 +16,18 @@ logger = logging.getLogger(__name__)
 
 
 class Remove(InputType):
-    def __init__(self, config: KapitanInputTypeCopyConfig, *args, **kwargs):
-        super().__init__(config, *args, **kwargs)
 
-    def compile_file(self, file_path, compile_path):
+    def compile_file(self, config: KapitanInputTypeCopyConfig, input_path, compile_path):
         """
         Write items in path as plain rendered files to compile_path.
         path can be either a file or directory.
         """
 
         try:
-            logger.debug("Removing %s", file_path)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
+            logger.debug("Removing %s", input_path)
+            if os.path.isfile(input_path):
+                os.remove(input_path)
             else:
-                shutil.rmtree(file_path)
+                shutil.rmtree(input_path)
         except OSError as e:
             logger.exception("Input dir not removed. Error: %s", e)

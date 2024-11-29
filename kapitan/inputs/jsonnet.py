@@ -79,11 +79,7 @@ def go_jsonnet_file(file_path, **kwargs):
 class Jsonnet(InputType):
     """Jsonnet input type"""
 
-    def __init__(self, config: KapitanInputTypeJsonnetConfig, *args, **kwargs):
-        super().__init__(config, *args, **kwargs)
-        self.use_go = self.args.use_go_jsonnet
-
-    def compile_file(self, file_path, compile_path):
+    def compile_file(self, config: KapitanInputTypeJsonnetConfig, input_path, compile_path):
         """Compiles a Jsonnet file and writes the output to the compile directory.
 
         Args:
@@ -95,22 +91,23 @@ class Jsonnet(InputType):
             ValueError: If the specified output type is invalid.
         """
 
+        use_go = self.args.use_go_jsonnet
         ext_vars = {"target": self.target_name}
 
         def _search_imports(cwd, imp):
             return search_imports(cwd, imp, self.search_paths)
 
         try:
-            if self.use_go:
+            if use_go:
                 json_output = go_jsonnet_file(
-                    file_path,
+                    input_path,
                     import_callback=_search_imports,
                     native_callbacks=resource_callbacks(self.search_paths),
                     ext_vars=ext_vars,
                 )
             else:
                 json_output = jsonnet_file(
-                    file_path,
+                    input_path,
                     import_callback=_search_imports,
                     native_callbacks=resource_callbacks(self.search_paths),
                     ext_vars=ext_vars,
@@ -119,22 +116,22 @@ class Jsonnet(InputType):
             output_obj = json.loads(json_output)
 
         except (ImportError, CompileError) as e:
-            raise CompileError(f"Jsonnet Error compiling {file_path}: {e}") from e
+            raise CompileError(f"Jsonnet Error compiling {input_path}: {e}") from e
 
-        output = self.config.output_type
-        prune_output = self.config.prune
+        output = config.output_type
+        prune_output = config.prune
         reveal = self.args.reveal
         target_name = self.target_name
         indent = self.args.indent
 
         if prune_output:
             output_obj = prune_empty(output_obj)
-            logger.debug("Pruned output for: %s", file_path)
+            logger.debug("Pruned output for: %s", input_path)
 
         # If output_obj is not a dictionary, wrap it in a dictionary
         # using the input filename (without extension) as the key.
         if not isinstance(output_obj, dict):
-            filename = os.path.splitext(os.path.basename(file_path))[0]
+            filename = os.path.splitext(os.path.basename(input_path))[0]
             output_obj = {filename: output_obj}
 
         # Write each item in output_obj to a separate file.

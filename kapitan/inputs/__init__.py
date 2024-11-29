@@ -4,7 +4,6 @@
 
 from typing import Type
 
-from kapitan.inventory.model import CompileInputTypeConfig
 from kapitan.inventory.model.input_types import InputTypes
 
 from .base import InputType
@@ -29,8 +28,8 @@ AVAILABLE_INPUT_TYPES: dict[str, Type[InputType]] = {
 }
 
 
-def get_compiler(config: CompileInputTypeConfig, *args, **kwargs) -> Type[InputType]:
+def get_compiler(input_type: InputType) -> Type[InputType]:
     """
     Get the `Inventory` subclass associated with the given `backend_name`.
     """
-    return AVAILABLE_INPUT_TYPES.get(config.input_type)(config, *args, **kwargs)
+    return AVAILABLE_INPUT_TYPES.get(input_type)

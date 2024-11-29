@@ -84,11 +84,8 @@ def load_from_search_paths(module_name):
 
 
 class Kadet(InputType):
-    def __init__(self, config: KapitanInputTypeKadetConfig, *args, **kwargs):
-        super().__init__(config, *args, **kwargs)
-        self.input_params = config.input_params
 
-    def compile_file(self, file_path, compile_path):
+    def compile_file(self, config: KapitanInputTypeKadetConfig, input_path, compile_path):
         """
         Write file_path (kadet evaluated) items as files to compile_path.
         ext_vars is not used in Kadet
@@ -100,8 +97,9 @@ class Kadet(InputType):
             indent: default 2
         """
 
-        output = self.config.output_type
-        prune_output = self.config.prune
+        input_params = config.input_params
+        output = config.output_type
+        prune_output = config.prune
         reveal = self.args.reveal
         target_name = self.target_name
         indent = self.args.indent
@@ -109,13 +107,12 @@ class Kadet(InputType):
         current_target.set(target_name)
         search_paths.set(self.search_paths)
 
-        input_params = self.input_params
         # set compile_path allowing kadet functions to have context on where files
         # are being compiled on the current kapitan run
         # we only do this if user didn't pass its own value
         input_params.setdefault("compile_path", compile_path)
 
-        kadet_module, spec = module_from_path(file_path)
+        kadet_module, spec = module_from_path(input_path)
         sys.modules[spec.name] = kadet_module
         spec.loader.exec_module(kadet_module)
         logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
@@ -126,15 +123,17 @@ class Kadet(InputType):
         if len(kadet_arg_spec.args) > 1:
             raise ValueError(f"Kadet {spec.name} main parameters not equal to 1 or 0")
 
+        output_obj = None
         try:
             if len(kadet_arg_spec.args) == 1:
                 output_obj = kadet_module.main(input_params)
             elif len(kadet_arg_spec.args) == 0:
                 output_obj = kadet_module.main()
-        except Exception:
+
+        except Exception as exc:
             # Log traceback and exception as is
             logger.exception("")
-            raise CompileError(f"Could not load Kadet module: {spec.name[16:]}")
+            raise CompileError(f"Could not load Kadet module: {spec.name[16:]}") from exc
 
         output_obj = _to_dict(output_obj)
         if prune_output:
@@ -147,9 +146,9 @@ class Kadet(InputType):
         for item_key, item_value in output_obj.items():
             # write each item to disk
             if output == "json":
-                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
+                input_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
                 with CompiledFile(
-                    file_path,
+                    input_path,
                     self.ref_controller,
                     mode="w",
                     reveal=reveal,
@@ -158,9 +157,9 @@ class Kadet(InputType):
                 ) as fp:
                     fp.write_json(item_value)
             elif output in ["yml", "yaml"]:
-                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
+                input_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
                 with CompiledFile(
-                    file_path,
+                    input_path,
                     self.ref_controller,
                     mode="w",
                     reveal=reveal,
@@ -169,9 +168,9 @@ class Kadet(InputType):
                 ) as fp:
                     fp.write_yaml(item_value)
             elif output == "plain":
-                file_path = os.path.join(compile_path, "%s" % item_key)
+                input_path = os.path.join(compile_path, "%s" % item_key)
                 with CompiledFile(
-                    file_path,
+                    input_path,
                     self.ref_controller,
                     mode="w",
                     reveal=reveal,
@@ -180,9 +179,9 @@ class Kadet(InputType):
                 ) as fp:
                     fp.write(item_value)
             elif output == "toml":
-                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
+                input_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
                 with CompiledFile(
-                    file_path,
+                    input_path,
                     self.ref_controller,
                     mode="w",
                     reveal=reveal,
@@ -192,7 +191,7 @@ class Kadet(InputType):
                     fp.write_toml(item_value)
             else:
                 raise ValueError(
-                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml', 'toml' nor 'plain'"
+                    f"Output type defined in inventory for {input_path} is neither 'json', 'yaml', 'toml' nor 'plain'"
                 )
 
 

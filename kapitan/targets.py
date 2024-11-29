@@ -257,11 +257,11 @@ def compile_target(target_config, search_paths, compile_path, ref_controller, ar
 
     for compile_config in compile_configs:
         try:
-            input_compiler = get_compiler(
-                compile_config, compile_path, search_paths, ref_controller, target_name, args
+            input_type = compile_config.input_type
+            input_compiler = get_compiler(input_type)(
+                compile_path, search_paths, ref_controller, target_name, args
             )
-            input_compiler.make_compile_dirs()
-            input_compiler.compile_obj()
+            input_compiler.compile_obj(compile_config)
         except AttributeError as e:
             import traceback
 

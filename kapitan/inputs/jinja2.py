@@ -17,13 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 class Jinja2(InputType):
-    def __init__(self, config: KapitanInputTypeJinja2Config, *args, **kwargs):
-        super().__init__(config, *args, **kwargs)
-        self.strip_postfix = config.suffix_remove
-        self.stripped_postfix = config.suffix_stripped
-        self.input_params = config.input_params
 
-    def compile_file(self, file_path, compile_path):
+    def compile_file(self, config: KapitanInputTypeJinja2Config, input_path, compile_path):
         """
         Write items in path as jinja2 rendered files to compile_path.
         path can be either a file or directory.
@@ -31,10 +26,13 @@ class Jinja2(InputType):
             reveal: default False, set to reveal refs on compile
             target_name: default None, set to current target being compiled
         """
+        strip_postfix = config.suffix_remove
+        stripped_postfix = config.suffix_stripped
+        input_params = config.input_params
+
         reveal = self.args.reveal
         target_name = self.target_name
 
-        input_params = self.input_params
         # set compile_path allowing jsonnet to have context on where files
         # are being compiled on the current kapitan run
         # we only do this if user didn't pass its own value
@@ -50,10 +48,10 @@ class Jinja2(InputType):
         jinja2_filters = self.args.jinja2_filters
 
         for item_key, item_value in render_jinja2(
-            file_path, context, jinja2_filters=jinja2_filters, search_paths=self.search_paths
+            input_path, context, jinja2_filters=jinja2_filters, search_paths=self.search_paths
         ).items():
-            if self.strip_postfix and item_key.endswith(self.stripped_postfix):
-                item_key = item_key.rstrip(self.stripped_postfix)
+            if strip_postfix and item_key.endswith(stripped_postfix):
+                item_key = item_key.rstrip(stripped_postfix)
             full_item_path = os.path.join(compile_path, item_key)
             with CompiledFile(
                 full_item_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name
