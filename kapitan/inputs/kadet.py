@@ -19,7 +19,7 @@ from kadet import BaseModel, BaseObj, Dict
 from kapitan import cached
 from kapitan.errors import CompileError
 from kapitan.inputs.base import CompiledFile, InputType
-from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
+from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig, OutputType
 from kapitan.utils import prune_empty
 
 # Set external kadet exception to kapitan.error.CompileError
@@ -100,7 +100,7 @@ class Kadet(InputType):
         """
 
         input_params = config.input_params
-        output = config.output_type
+
         prune_output = config.prune
         reveal = self.args.reveal
         target_name = self.target_name
@@ -146,11 +146,29 @@ class Kadet(InputType):
             return None
 
         for item_key, item_value in output_obj.items():
-            file_ext = output
-            if output in ["yml", "yaml"]:
-                file_ext = output
-            elif output == "plain":
-                file_ext = ""  # no extension for plain text
+            output_type = config.output_type
+            file_ext = output_type
+
+            if output_type == OutputType.AUTO:
+                _, detected_type = os.path.splitext(item_key)
+                if detected_type:
+                    # Remove . from the beginning of the extension
+                    detected_type = detected_type[1:]
+
+                if detected_type in [OutputType.TOML, OutputType.JSON, OutputType.YAML, OutputType.YML]:
+                    output_type = detected_type
+                    file_ext = None
+                elif detected_type == "tf":  # TODO(ademaria) Handle it better.
+                    output_type = OutputType.JSON
+                    file_ext = output_type
+                else:
+                    # Extension is not handled, so trating it as YAML
+                    logger.debug(f"could not detect extension for {item_key}, defaulting to YAML")
+                    output_type = OutputType.YML
+                    file_ext = output_type  # no extension for plain text
+
+            if output_type == OutputType.PLAIN:
+                file_ext = None  # no extension for plain text
 
             file_name = f"{item_key}.{file_ext}" if file_ext else item_key
             file_path = os.path.join(compile_path, file_name)
@@ -167,17 +185,17 @@ class Kadet(InputType):
                 target_name=target_name,
                 indent=indent,
             ) as fp:
-                if output == "json":
+                if output_type == OutputType.JSON:
                     fp.write_json(item_value)
-                elif output in ["yml", "yaml"]:
+                elif output_type in [OutputType.YAML, OutputType.YML]:
                     fp.write_yaml(item_value)
-                elif output == "plain":
+                elif output_type == OutputType.PLAIN:
                     fp.write(item_value)
-                elif output == "toml":
+                elif output_type == OutputType.TOML:
                     fp.write_toml(item_value)
                 else:
                     raise ValueError(
-                        f"Output type defined in inventory for {input_path} is neither 'json', 'yaml', 'toml' nor 'plain'"
+                        f"Output type defined in inventory for {input_path} not supported: {output_type}: {OutputType}"
                     )
 
 

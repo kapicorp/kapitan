@@ -117,7 +117,7 @@ class InputType(object):
 
 
 class CompilingFile(object):
-    def __init__(self, context, fp, ref_controller, **kwargs):
+    def __init__(self, fp, ref_controller, **kwargs):
         self.fp = fp
         self.ref_controller = ref_controller
         self.kwargs = kwargs
@@ -221,7 +221,7 @@ class CompiledFile(object):
         os.makedirs(os.path.dirname(self.name), exist_ok=True)
 
         self.fp = open(self.name, mode)
-        return CompilingFile(self, self.fp, self.ref_controller, **self.kwargs)
+        return CompilingFile(self.fp, self.ref_controller, **self.kwargs)
 
     def __exit__(self, *args):
         self.fp.close()

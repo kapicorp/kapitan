@@ -11,7 +11,10 @@ import os
 
 from kapitan.errors import CompileError
 from kapitan.inputs.base import CompiledFile, InputType
-from kapitan.inventory.model.input_types import KapitanInputTypeJsonnetConfig
+from kapitan.inventory.model.input_types import (
+    KapitanInputTypeJsonnetConfig,
+    OutputType,
+)
 from kapitan.resources import resource_callbacks, search_imports
 from kapitan.utils import prune_empty
 
@@ -143,9 +146,7 @@ class Jsonnet(InputType):
         # Write each item in output_obj to a separate file.
         for item_key, item_value in output_obj.items():
             file_ext = output
-            if output in ["yml", "yaml"]:
-                file_ext = output
-            elif output == "plain":
+            if output == OutputType.PLAIN:
                 file_ext = ""  # no extension for plain text
 
             file_name = f"{item_key}.{file_ext}" if file_ext else item_key
@@ -159,13 +160,15 @@ class Jsonnet(InputType):
                 target_name=target_name,
                 indent=indent,
             ) as fp:
-                if output == "json":
+                if output == OutputType.JSON:
                     fp.write_json(item_value)
-                elif output in ["yml", "yaml"]:
+                elif output in [OutputType.YAML, OutputType.YML]:
                     fp.write_yaml(item_value)
-                elif output == "toml":
-                    fp.write_toml(item_value)
-                elif output == "plain":
+                elif output == OutputType.PLAIN:
                     fp.write(item_value)
+                elif output == OutputType.TOML:
+                    fp.write_toml(item_value)
                 else:
-                    raise ValueError(f"Invalid output type: {output}")
+                    raise ValueError(
+                        f"Output type defined in inventory for {input_path} not supported: {output}: {OutputType}"
+                    )
