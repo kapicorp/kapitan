@@ -44,6 +44,8 @@ class Jinja2(InputType):
         context["inventory_global"] = cached.global_inv
         context["inventory"] = cached.global_inv[target_name]
         context["input_params"] = input_params
+        vars = cached.global_inv[target_name]["parameters"]["kapitan"]["vars"]
+        context.update(vars)
 
         jinja2_filters = self.args.jinja2_filters
 

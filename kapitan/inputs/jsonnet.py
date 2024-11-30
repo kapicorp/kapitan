@@ -138,7 +138,7 @@ class Jsonnet(InputType):
         for item_key, item_value in output_obj.items():
             file_ext = output
             if output in ["yml", "yaml"]:
-                file_ext = "yaml"  # normalize extension
+                file_ext = output
             elif output == "plain":
                 file_ext = ""  # no extension for plain text
 

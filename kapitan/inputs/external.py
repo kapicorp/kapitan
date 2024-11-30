@@ -49,6 +49,9 @@ class External(InputType):
             # file_path (str): Path to executable script or binary
             external_path = input_path
 
+            self.set_args(config.args)
+            self.set_env_vars(config.env_vars)
+
             args = [external_path]
             args.extend(self.command_args)
             args = " ".join(args)
@@ -57,7 +60,7 @@ class External(InputType):
             compiled_target_pattern = re.compile(r"(\${compiled_target_dir})")
             args = compiled_target_pattern.sub(compile_path, args)
             # substitute `${compiled_target_dir}` in provided environment variables
-            env_vars = {k: compiled_target_pattern.sub(compile_path, v) for (k, v) in self.env_vars.items()}
+            env_vars = {k: compiled_target_pattern.sub(compile_path, v) for (k, v) in config.env_vars.items()}
 
             logger.debug("Executing external input with command '%s' and env vars '%s'.", args, env_vars)
 

@@ -31,8 +31,10 @@ class HelmInputTest(unittest.TestCase):
         helm_config = KapitanInputTypeHelmConfig(
             input_paths=[chart_path], helm_params=helm_params, output_path=temp_dir
         )
-        helm = Helm(None, None, None, helm_config)
-        _, error_message = helm.render_chart(chart_path, temp_dir, None, helm_params, None, None)
+        helm = Helm(None, None, None, None, None)
+        _, error_message = helm.render_chart(
+            chart_path, temp_dir, helm_config.helm_path, helm_config.helm_params, None, None
+        )
         self.assertFalse(error_message)
         self.assertTrue(
             os.path.isfile(os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "secrets.yaml"))
@@ -48,8 +50,10 @@ class HelmInputTest(unittest.TestCase):
         helm_config = KapitanInputTypeHelmConfig(
             input_paths=[chart_path], output_path=temp_dir, helm_params=helm_params
         )
-        helm = Helm(None, None, None, helm_config)
-        _, error_message = helm.render_chart(chart_path, temp_dir, None, helm_params, None, None)
+        helm = Helm(None, None, None, None, None)
+        _, error_message = helm.render_chart(
+            chart_path, temp_dir, helm_config.helm_path, helm_config.helm_params, None, None
+        )
         self.assertTrue("path" in error_message and "not found" in error_message)
 
     def test_compile_chart(self):

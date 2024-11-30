@@ -91,6 +91,9 @@ class Helm(InputType):
                         fp.write_yaml(yml_obj)
                         logger.debug("Wrote file %s to %s", full_file_name, item_path)
 
+    def render_chart(self, *args, **kwargs):
+        return render_chart(*args, **kwargs)
+
 
 def render_chart(
     chart_dir,

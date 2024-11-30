@@ -19,6 +19,7 @@ import yaml
 from kapitan.cached import reset_cache
 from kapitan.cli import main
 from kapitan.inputs.external import External
+from kapitan.inventory.model.input_types import KapitanInputTypeExternalConfig
 
 
 class ExternalInputTest(unittest.TestCase):
@@ -59,16 +60,19 @@ class ExternalInputTest(unittest.TestCase):
 
         search_paths = [external_script_file_path]
         ref_controller = None
-
-        external_compiler = External(compile_path, search_paths, ref_controller)
+        external_compiler = External(compile_path, search_paths, ref_controller, "test", None)
 
         letters = string.ascii_lowercase
         name = "".join(random.choice(letters) for i in range(8))
-        external_compiler.set_args([name, "\${compiled_target_dir}"])
-        external_compiler.set_env_vars({"NAME": name})
+        config = KapitanInputTypeExternalConfig(
+            input_paths=[external_script_file_path],
+            output_path=compile_path,
+            env_vars={"NAME": name},
+            args=[name, "\${compiled_target_dir}"],
+        )
 
         with self.assertRaises(ValueError) as e:
-            external_compiler.compile_file(external_script_file_path, compile_path, None)
+            external_compiler.compile_file(config, external_script_file_path, compile_path)
 
         self.assertTrue("Executing external input with command" in e.exception.args[0])
         self.assertTrue("failed" in e.exception.args[0])
@@ -76,7 +80,7 @@ class ExternalInputTest(unittest.TestCase):
 
         # make file executable so there's no failure
         subprocess.check_call(["chmod", "+x", external_script_file_path])
-        external_compiler.compile_file(external_script_file_path, compile_path, None)
+        external_compiler.compile_file(config, external_script_file_path, compile_path)
 
         generated_file = os.path.join(compile_path, name)
         with open(generated_file, "r") as f:
