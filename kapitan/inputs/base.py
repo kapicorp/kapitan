@@ -5,6 +5,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import abc
 import glob
 import itertools
 import json
@@ -17,6 +18,7 @@ import yaml
 
 from kapitan import cached
 from kapitan.errors import CompileError, KapitanError
+from kapitan.inventory.model.input_types import CompileInputTypeConfig
 from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper
 
@@ -24,23 +26,36 @@ logger = logging.getLogger(__name__)
 
 
 class InputType(object):
-    def __init__(self, type_name, compile_path, search_paths, ref_controller):
-        self.type_name = type_name
+    """
+    Abstract base class for input types.
+
+    Provides methods for compiling input files.  Subclasses should implement
+    the `compile_file` method to handle specific input formats.
+
+    """
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, compile_path, search_paths, ref_controller, target_name, args):
         self.compile_path = compile_path
         self.search_paths = search_paths
         self.ref_controller = ref_controller
+        self.target_name = target_name
+        self.args = args
 
-    def compile_obj(self, comp_obj, ext_vars, **kwargs):
+    def compile_obj(self, comp_obj: CompileInputTypeConfig):
+        """Expand globbed input paths and compile each resolved input path.
+
+        Args:
+            comp_obj: CompileInputTypeConfig object containing input paths and other compilation options.
+
+        Raises:
+            CompileError: If an input path is not found and ignore_missing is False.
+
         """
-        Expand globbed input paths, taking into account provided search paths
-        and run compile_input_path() for each resolved input_path.
-        kwargs are passed into compile_input_path()
-        """
-        input_type = comp_obj.input_type
-        assert input_type == self.type_name
 
         # expand any globbed paths, taking into account provided search paths
-        input_paths = []
+        expanded_input_paths = []
         for input_path in comp_obj.input_paths:
             globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
             inputs = list(itertools.chain.from_iterable(globbed_paths))
@@ -50,57 +65,54 @@ class InputType(object):
             if len(inputs) == 0 and not ignore_missing:
                 raise CompileError(
                     "Compile error: {} for target: {} not found in "
-                    "search_paths: {}".format(input_path, ext_vars["target"], self.search_paths)
+                    "search_paths: {}".format(input_path, self.target_name, self.search_paths)
                 )
-            input_paths.extend(inputs)
+            expanded_input_paths.extend(inputs)
 
-        for input_path in input_paths:
-            self.compile_input_path(input_path, comp_obj, ext_vars, **kwargs)
+        for expanded_path in expanded_input_paths:
+            self.compile_input_path(comp_obj, expanded_path)
 
-    def compile_input_path(self, input_path, comp_obj, ext_vars, **kwargs):
+    def compile_input_path(self, comp_obj: CompileInputTypeConfig, input_path: str):
+        """Compile a single input path.
+
+        Args:
+            comp_obj: CompileInputTypeConfig object.
+            input_path: Path to the input file.
+
+        Raises:
+            CompileError: If compilation fails.
+
         """
-        Compile validated input_path in comp_obj
-        kwargs are passed into compile_file()
-        """
-        target_name = ext_vars.target
+        target_name = self.target_name
         output_path = comp_obj.output_path
-        output_type = comp_obj.output_type
-        prune_output = comp_obj.prune
-        ext_vars_dict = ext_vars.model_dump(by_alias=True)
 
         logger.debug("Compiling %s", input_path)
         try:
-            if kwargs.get("compose_target_name", False):
-                _compile_path = os.path.join(self.compile_path, target_name.replace(".", "/"), output_path)
-            else:
-                _compile_path = os.path.join(self.compile_path, target_name, output_path)
+            target_compile_path = os.path.join(self.compile_path, target_name.replace(".", "/"), output_path)
+            os.makedirs(target_compile_path, exist_ok=True)
+
             self.compile_file(
+                comp_obj,
                 input_path,
-                _compile_path,
-                ext_vars_dict,
-                output=output_type,
-                target_name=target_name,
-                prune_output=prune_output,
-                **kwargs,
+                target_compile_path,
             )
 
         except KapitanError as e:
             raise CompileError("{}\nCompile error: failed to compile target: {}".format(e, target_name))
 
-    def make_compile_dirs(self, target_name, output_path, **kwargs):
-        """make compile dirs, skips if dirs exist"""
-        _compile_path = os.path.join(self.compile_path, target_name, output_path)
-        if kwargs.get("compose_target_name", False):
-            _compile_path = _compile_path.replace(".", "/")
+    @abc.abstractmethod
+    def compile_file(self, config: CompileInputTypeConfig, input_path: str, compile_path: str):
+        """Compile a single input file.
 
-        os.makedirs(_compile_path, exist_ok=True)
+        Args:
+            config: CompileInputTypeConfig object.
+            input_path: Path to the input file.
+            compile_path: Path to the output directory.
 
-    def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
-        """implements compilation for file_path to compile_path with ext_vars"""
-        return NotImplementedError
+        Raises:
+            NotImplementedError: This is an abstract method.
 
-    def default_output_type(self):
-        "returns default output_type value"
+        """
         return NotImplementedError
 
 

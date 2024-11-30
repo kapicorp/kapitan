@@ -27,6 +27,7 @@ class KapitanInputTypeBaseConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: Optional[str] = Field(default=None)
     input_type: InputTypes
+    input_paths: List[str]
     output_path: str
     input_params: dict = {}
     continue_on_compile_error: Optional[bool] = False
@@ -38,7 +39,6 @@ class KapitanInputTypeBaseConfig(BaseModel):
 
 class KapitanInputTypeJsonnetConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.JSONNET] = InputTypes.JSONNET
-    input_paths: List[str]
     prune: Optional[bool] = False
 
 
@@ -46,18 +46,15 @@ class KapitanInputTypeExternalConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.EXTERNAL] = InputTypes.EXTERNAL
     env_vars: dict[str, str] = {}
     args: List[str] = []
-    input_paths: List[str]
 
 
 class KapitanInputTypeCopyConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.COPY] = InputTypes.COPY
-    input_paths: List[str]
     ignore_missing: bool = False
 
 
 class KapitanInputTypeJinja2Config(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.JINJA2] = InputTypes.JINJA2
-    input_paths: List[str]
     output_type: Optional[OutputType] = OutputType.PLAIN
     ignore_missing: Optional[bool] = True
     suffix_remove: Optional[bool] = False
@@ -70,21 +67,19 @@ class KapitanInputTypeHelmConfig(KapitanInputTypeBaseConfig):
     helm_values: Optional[dict] = {}
     helm_values_files: Optional[List[str]] = []
     helm_path: Optional[str] = None
-    input_paths: List[str]
     kube_version: Optional[str] = None
 
 
 class KapitanInputTypeKadetConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.KADET] = InputTypes.KADET
     output_type: OutputType = OutputType.YAML
-    input_paths: List[str]
     input_value: Optional[dict] = None
     prune: Optional[bool] = False
 
 
 class KapitanInputTypeRemoveConfig(KapitanInputTypeBaseConfig):
-    input_type: Literal[InputTypes.REMOVE]
-    input_paths: List[str]
+    input_type: Literal[InputTypes.REMOVE] = InputTypes.REMOVE
+    output_path: Optional[str] = None
 
 
 CompileInputTypeConfig = Annotated[

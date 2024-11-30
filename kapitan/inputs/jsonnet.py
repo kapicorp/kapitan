@@ -8,10 +8,10 @@
 import json
 import logging
 import os
-import sys
 
 from kapitan.errors import CompileError
 from kapitan.inputs.base import CompiledFile, InputType
+from kapitan.inventory.model.input_types import KapitanInputTypeJsonnetConfig
 from kapitan.resources import resource_callbacks, search_imports
 from kapitan.utils import prune_empty
 
@@ -19,152 +19,153 @@ logger = logging.getLogger(__name__)
 
 
 def jsonnet_file(file_path, **kwargs):
-    """
-    Evaluate file_path jsonnet file.
-    kwargs are documented in http://jsonnet.org/implementation/bindings.html
+    """Evaluates a Jsonnet file using the Python _jsonnet library.
+
+    Args:
+        file_path: Path to the Jsonnet file.
+        **kwargs: Keyword arguments passed to the _jsonnet.evaluate_file function.
+                  See http://jsonnet.org/implementation/bindings.html for details.
+
+    Returns:
+        str: The evaluated Jsonnet output as a string.
+
+    Raises:
+        ImportError: If the _jsonnet module is not installed.
+        CompileError: If there is an error during Jsonnet evaluation.
     """
     try:
-        if "_jsonnet" not in sys.modules:
-            import _jsonnet
-        return sys.modules["_jsonnet"].evaluate_file(file_path, **kwargs)
+        import _jsonnet  # Import here to avoid dependency issues if Jsonnet is not used
+
+        return _jsonnet.evaluate_file(file_path, **kwargs)
     except ImportError:
-        logger.info(
-            "Note: Jsonnet is not installed or running on an unsupported architecture."
-            " See https://kapitan.dev/compile/#jsonnet"
+        raise ImportError(
+            "Jsonnet is not installed or running on an unsupported architecture. "
+            "See https://kapitan.dev/compile/#jsonnet for installation instructions."
         )
     except Exception as e:
-        raise CompileError(f"Jsonnet error: failed to compile {file_path}:\n {e}")
+        raise CompileError(f"Jsonnet error: failed to compile {file_path}:\n {e}") from e
 
 
 def go_jsonnet_file(file_path, **kwargs):
-    """
-    Evaluate file_path jsonnet file using gojsonnet.
-    kwargs are documented in http://jsonnet.org/implementation/bindings.html
+    """Evaluates a Jsonnet file using the go-jsonnet library.
+
+    Args:
+        file_path: Path to the Jsonnet file.
+        **kwargs: Keyword arguments passed to the _gojsonnet.evaluate_file function.
+                  See http://jsonnet.org/implementation/bindings.html for details.
+
+    Returns:
+        str: The evaluated Jsonnet output as a string.
+
+    Raises:
+        ImportError: If the _gojsonnet module is not installed.
+        CompileError: If there is an error during Jsonnet evaluation.
+
     """
     try:
-        if "_gojsonnet" not in sys.modules:
-            import _gojsonnet
-        return sys.modules["_gojsonnet"].evaluate_file(file_path, **kwargs)
+        import _gojsonnet
+
+        return _gojsonnet.evaluate_file(file_path, **kwargs)
     except ImportError:
-        logger.info(
-            "Note: Go-jsonnet is not installed or running on an unsupported architecture."
-            " See https://kapitan.dev/compile/#jsonnet"
+        raise ImportError(
+            "go-jsonnet is not installed or running on an unsupported architecture. "
+            "See https://kapitan.dev/compile/#jsonnet for installation instructions."
         )
+
     except Exception as e:
-        raise CompileError(f"Jsonnet error: failed to compile {file_path}:\n {e}")
+        raise CompileError(f"Jsonnet error: failed to compile {file_path}:\n {e}") from e
 
 
 class Jsonnet(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller, use_go=False):
-        super().__init__(
-            "jsonnet",
-            compile_path,
-            search_paths,
-            ref_controller,
-        )
-        self.use_go = use_go
+    """Jsonnet input type"""
 
-    def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
+    def compile_file(self, config: KapitanInputTypeJsonnetConfig, input_path: str, compile_path: str):
+        """Compiles a Jsonnet file and writes the output to the compile directory.
+
+        Args:
+            config: KapitanInputTypeJsonnetConfig object containing compilation options.
+            input_path: Path to the Jsonnet file to compile.
+            compile_path: Path to the directory where compiled output will be written.
+
+        Raises:
+            CompileError: If there is an error compiling or writing the output.
+            ValueError: If the specified output type is invalid.
+
+        The function evaluates the Jsonnet file, handles different output formats (json, yaml, toml, plain),
+        prunes empty values if requested, and writes the results to individual files in the compile directory.
         """
-        Write file_path (jsonnet evaluated) items as files to compile_path.
-        ext_vars will be passed as parameters to jsonnet_file()
-        kwargs:
-            output: default 'yaml', accepts 'json'
-            prune_output: default False, accepts True
-            reveal: default False, set to reveal refs on compile
-            target_name: default None, set to current target being compiled
-            indent: default 2
-        """
+
+        use_go = self.args.use_go_jsonnet
+        ext_vars = {"target": self.target_name}
 
         def _search_imports(cwd, imp):
             return search_imports(cwd, imp, self.search_paths)
 
-        json_output = None
+        try:
+            if use_go:
+                json_output = go_jsonnet_file(
+                    input_path,
+                    import_callback=_search_imports,
+                    native_callbacks=resource_callbacks(self.search_paths),
+                    ext_vars=ext_vars,
+                )
+            else:
+                json_output = jsonnet_file(
+                    input_path,
+                    import_callback=_search_imports,
+                    native_callbacks=resource_callbacks(self.search_paths),
+                    ext_vars=ext_vars,
+                )
 
-        if self.use_go:
-            json_output = go_jsonnet_file(
-                file_path,
-                import_callback=_search_imports,
-                native_callbacks=resource_callbacks(self.search_paths),
-                ext_vars=ext_vars,
-            )
-        else:
-            json_output = jsonnet_file(
-                file_path,
-                import_callback=_search_imports,
-                native_callbacks=resource_callbacks(self.search_paths),
-                ext_vars=ext_vars,
-            )
-        output_obj = json.loads(json_output)
+            output_obj = json.loads(json_output)
 
-        output = kwargs.get("output", "yaml")
-        prune_output = kwargs.get("prune_output", False)
-        reveal = kwargs.get("reveal", False)
-        target_name = kwargs.get("target_name", None)
-        indent = kwargs.get("indent", 2)
+        except (ImportError, CompileError) as e:
+            raise CompileError(f"Jsonnet Error compiling {input_path}: {e}") from e
+
+        output = config.output_type
+        prune_output = config.prune
+        reveal = self.args.reveal
+        target_name = self.target_name
+        indent = self.args.indent
 
         if prune_output:
             output_obj = prune_empty(output_obj)
-            logger.debug("Pruned output for: %s", file_path)
+            logger.debug("Pruned output for: %s", input_path)
 
+        # If output_obj is not a dictionary, wrap it in a dictionary using the input filename
+        # (without extension) as the key. This ensures that even single-item outputs are handled correctly.
         if not isinstance(output_obj, dict):
-            tmp_output_obj = output_obj
-            # assume that the output filename is the
-            # same as the input jsonnet filename
-            filename = os.path.splitext(os.path.basename(file_path))[0]
-            output_obj = {}
-            output_obj[filename] = tmp_output_obj
+            filename = os.path.splitext(os.path.basename(input_path))[0]
+            # Using filename as key ensures that single-item outputs are handled correctly.
+            # Prevents issues when a single item is returned and needs to be written to a file.
+            output_obj = {filename: output_obj}
 
+        # Write each item in output_obj to a separate file.
         for item_key, item_value in output_obj.items():
-            # write each item to disk
-            if output == "json":
-                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
-                with CompiledFile(
-                    file_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
-                    fp.write_json(item_value)
-            elif output in ["yml", "yaml"]:
-                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
-                with CompiledFile(
-                    file_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
-                    fp.write_yaml(item_value)
+            file_ext = output
+            if output in ["yml", "yaml"]:
+                file_ext = output
             elif output == "plain":
-                file_path = os.path.join(compile_path, "%s" % item_key)
-                with CompiledFile(
-                    file_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
-                    fp.write(item_value)
-            elif output == "toml":
-                file_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
-                with CompiledFile(
-                    file_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
-                    fp.write_toml(item_value)
-            else:
-                raise ValueError(
-                    f"Output type defined in inventory for {file_path} is neither 'json', 'yaml', 'toml' nor 'plain'"
-                )
+                file_ext = ""  # no extension for plain text
 
-    def default_output_type(self):
-        return "yaml"
+            file_name = f"{item_key}.{file_ext}" if file_ext else item_key
+            file_path = os.path.join(compile_path, file_name)
+
+            with CompiledFile(
+                file_path,
+                self.ref_controller,
+                mode="w",
+                reveal=reveal,
+                target_name=target_name,
+                indent=indent,
+            ) as fp:
+                if output == "json":
+                    fp.write_json(item_value)
+                elif output in ["yml", "yaml"]:
+                    fp.write_yaml(item_value)
+                elif output == "toml":
+                    fp.write_toml(item_value)
+                elif output == "plain":
+                    fp.write(item_value)
+                else:
+                    raise ValueError(f"Invalid output type: {output}")

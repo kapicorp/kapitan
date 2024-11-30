@@ -13,11 +13,10 @@ import time
 import unittest
 
 from kapitan import cached
-from kapitan.inputs.jinja2_filters import base64_encode
+from kapitan.jinja2_filters import base64_encode, render_jinja2_file
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.resources import inventory
-from kapitan.utils import render_jinja2_file
 
 
 class Jinja2FiltersTest(unittest.TestCase):

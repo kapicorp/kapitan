@@ -22,16 +22,9 @@ import yaml
 import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
-from kapitan.inputs.kadet import Dict
 from kapitan.inventory import Inventory, get_inventory_backend
-from kapitan.utils import (
-    PrettyDumper,
-    StrEnum,
-    deep_get,
-    flatten_dict,
-    render_jinja2_file,
-    sha256_string,
-)
+from kapitan.jinja2_filters import render_jinja2_file
+from kapitan.utils import PrettyDumper, StrEnum, deep_get, flatten_dict, sha256_string
 
 logger = logging.getLogger(__name__)
 
@@ -354,12 +347,6 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
 
     cached.inv = inventory_backend
     cached.global_inv = cached.inv.inventory
-
-    # if we use forked processes, we need to load the inventory for kadet once
-    # and pass it to the children, to avoid re-reading the inventory for each child
-    # TODO(adenaria): Improve to only do it for kadet
-    if hasattr(cached.args, "mp_method") and cached.args.mp_method != "spawn":
-        cached.inventory_global_kadet = Dict(cached.global_inv)
 
     # migrate inventory to selected inventory backend
     if hasattr(cached.args, "migrate") and cached.args.migrate:
