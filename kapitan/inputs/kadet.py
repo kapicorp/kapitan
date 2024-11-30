@@ -144,55 +144,35 @@ class Kadet(InputType):
             return None
 
         for item_key, item_value in output_obj.items():
-            # write each item to disk
-            if output == "json":
-                input_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
-                with CompiledFile(
-                    input_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
-                    fp.write_json(item_value)
-            elif output in ["yml", "yaml"]:
-                input_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
-                with CompiledFile(
-                    input_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
-                    fp.write_yaml(item_value)
+            file_ext = output
+            if output in ["yml", "yaml"]:
+                file_ext = output
             elif output == "plain":
-                input_path = os.path.join(compile_path, "%s" % item_key)
-                with CompiledFile(
-                    input_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
+                file_ext = ""  # no extension for plain text
+
+            file_name = f"{item_key}.{file_ext}" if file_ext else item_key
+            file_path = os.path.join(compile_path, file_name)
+
+            with CompiledFile(
+                file_path,
+                self.ref_controller,
+                mode="w",
+                reveal=reveal,
+                target_name=target_name,
+                indent=indent,
+            ) as fp:
+                if output == "json":
+                    fp.write_json(item_value)
+                elif output in ["yml", "yaml"]:
+                    fp.write_yaml(item_value)
+                elif output == "plain":
                     fp.write(item_value)
-            elif output == "toml":
-                input_path = os.path.join(compile_path, "%s.%s" % (item_key, output))
-                with CompiledFile(
-                    input_path,
-                    self.ref_controller,
-                    mode="w",
-                    reveal=reveal,
-                    target_name=target_name,
-                    indent=indent,
-                ) as fp:
+                elif output == "toml":
                     fp.write_toml(item_value)
-            else:
-                raise ValueError(
-                    f"Output type defined in inventory for {input_path} is neither 'json', 'yaml', 'toml' nor 'plain'"
-                )
+                else:
+                    raise ValueError(
+                        f"Output type defined in inventory for {input_path} is neither 'json', 'yaml', 'toml' nor 'plain'"
+                    )
 
 
 def _to_dict(obj):
