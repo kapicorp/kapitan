@@ -18,9 +18,15 @@ logger = logging.getLogger(__name__)
 class Remove(InputType):
 
     def compile_file(self, config: KapitanInputTypeCopyConfig, input_path, compile_path):
-        """
-        Write items in path as plain rendered files to compile_path.
-        path can be either a file or directory.
+        """Remove a file or directory.
+
+        Args:
+            config (KapitanInputTypeCopyConfig): input type configuration
+            input_path (str): path to file or directory to remove
+            compile_path (str): not used in this input type
+
+        Raises:
+            OSError: if the file or directory cannot be removed
         """
 
         try:

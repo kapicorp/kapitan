@@ -20,11 +20,18 @@ class Jinja2(InputType):
 
     def compile_file(self, config: KapitanInputTypeJinja2Config, input_path, compile_path):
         """
-        Write items in path as jinja2 rendered files to compile_path.
-        path can be either a file or directory.
-        kwargs:
-            reveal: default False, set to reveal refs on compile
-            target_name: default None, set to current target being compiled
+        Compile Jinja2 templates.
+
+        Write items in ``input_path`` as Jinja2 rendered files to ``compile_path``.
+        ``input_path`` can be either a file or directory.  The rendered files will be written
+        to ``compile_path``.
+
+        Args:
+            config (KapitanInputTypeJinja2Config): Jinja2 input configuration.
+            input_path (str): Path to the input Jinja2 template file or directory.
+            compile_path (str): Path to write the compiled files.
+
+        See ``kapitan.inputs.base.InputType`` for details on ``reveal`` and ``target_name``.
         """
         strip_postfix = config.suffix_remove
         stripped_postfix = config.suffix_stripped
@@ -34,8 +41,8 @@ class Jinja2(InputType):
         target_name = self.target_name
 
         # set compile_path allowing jsonnet to have context on where files
-        # are being compiled on the current kapitan run
-        # we only do this if user didn't pass its own value
+        # are being compiled during the current Kapitan run.  This is only done if the user
+        # did not provide their own value.
         input_params.setdefault("compile_path", compile_path)
 
         # set ext_vars and inventory for jinja2 context

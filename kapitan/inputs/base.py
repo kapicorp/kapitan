@@ -26,6 +26,14 @@ logger = logging.getLogger(__name__)
 
 
 class InputType(object):
+    """
+    Abstract base class for input types.
+
+    Provides methods for compiling input files.  Subclasses should implement
+    the `compile_file` method to handle specific input formats.
+
+    """
+
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, compile_path, search_paths, ref_controller, target_name, args):
@@ -36,10 +44,14 @@ class InputType(object):
         self.args = args
 
     def compile_obj(self, comp_obj: CompileInputTypeConfig):
-        """
-        Expand globbed input paths, taking into account provided search paths
-        and run compile_input_path() for each resolved input_path.
-        kwargs are passed into compile_input_path()
+        """Expand globbed input paths and compile each resolved input path.
+
+        Args:
+            comp_obj: CompileInputTypeConfig object containing input paths and other compilation options.
+
+        Raises:
+            CompileError: If an input path is not found and ignore_missing is False.
+
         """
 
         # expand any globbed paths, taking into account provided search paths
@@ -61,9 +73,15 @@ class InputType(object):
             self.compile_input_path(comp_obj, expanded_path)
 
     def compile_input_path(self, comp_obj: CompileInputTypeConfig, input_path: str):
-        """
-        Compile validated input_path in comp_obj
-        kwargs are passed into compile_file()
+        """Compile a single input path.
+
+        Args:
+            comp_obj: CompileInputTypeConfig object.
+            input_path: Path to the input file.
+
+        Raises:
+            CompileError: If compilation fails.
+
         """
         target_name = self.target_name
         output_path = comp_obj.output_path
@@ -84,7 +102,17 @@ class InputType(object):
 
     @abc.abstractmethod
     def compile_file(self, config: CompileInputTypeConfig, input_path: str, compile_path: str):
-        """implements compilation for file_path to compile_path with ext_vars"""
+        """Compile a single input file.
+
+        Args:
+            config: CompileInputTypeConfig object.
+            input_path: Path to the input file.
+            compile_path: Path to the output directory.
+
+        Raises:
+            NotImplementedError: This is an abstract method.
+
+        """
         return NotImplementedError
 
 

@@ -87,14 +87,16 @@ class Kadet(InputType):
 
     def compile_file(self, config: KapitanInputTypeKadetConfig, input_path, compile_path):
         """
-        Write file_path (kadet evaluated) items as files to compile_path.
-        ext_vars is not used in Kadet
+        Compile a kadet input file.
+
+        Write the kadet evaluated items as files to compile_path.  External variables are not used in Kadet.
+
         kwargs:
-            output: default 'yaml', accepts 'json'
-            prune_output: default False
-            reveal: default False, set to reveal refs on compile
-            target_name: default None, set to current target being compiled
-            indent: default 2
+            output (str): default 'yaml', accepts 'json', 'toml', 'plain'
+            prune_output (bool): default False, prune empty dictionaries and lists from output
+            reveal (bool): default False, set to True to reveal refs on compile
+            target_name (str): default None, set to the current target being compiled
+            indent (int): default 2, indentation level for yaml/json output
         """
 
         input_params = config.input_params
@@ -154,9 +156,13 @@ class Kadet(InputType):
             file_path = os.path.join(compile_path, file_name)
 
             with CompiledFile(
+                # file_path: path to the output file
                 file_path,
+                # ref_controller: reference controller to resolve refs
                 self.ref_controller,
+                # mode: file open mode, 'w' for write
                 mode="w",
+                # reveal: reveal refs in output
                 reveal=reveal,
                 target_name=target_name,
                 indent=indent,

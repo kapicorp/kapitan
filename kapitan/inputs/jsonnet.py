@@ -79,16 +79,20 @@ def go_jsonnet_file(file_path, **kwargs):
 class Jsonnet(InputType):
     """Jsonnet input type"""
 
-    def compile_file(self, config: KapitanInputTypeJsonnetConfig, input_path, compile_path):
+    def compile_file(self, config: KapitanInputTypeJsonnetConfig, input_path: str, compile_path: str):
         """Compiles a Jsonnet file and writes the output to the compile directory.
 
         Args:
-            file_path (str): Path to the Jsonnet file.
-            compile_path (str): Path to the compile directory.
+            config: KapitanInputTypeJsonnetConfig object containing compilation options.
+            input_path: Path to the Jsonnet file to compile.
+            compile_path: Path to the directory where compiled output will be written.
 
         Raises:
             CompileError: If there is an error compiling or writing the output.
             ValueError: If the specified output type is invalid.
+
+        The function evaluates the Jsonnet file, handles different output formats (json, yaml, toml, plain),
+        prunes empty values if requested, and writes the results to individual files in the compile directory.
         """
 
         use_go = self.args.use_go_jsonnet
@@ -128,10 +132,12 @@ class Jsonnet(InputType):
             output_obj = prune_empty(output_obj)
             logger.debug("Pruned output for: %s", input_path)
 
-        # If output_obj is not a dictionary, wrap it in a dictionary
-        # using the input filename (without extension) as the key.
+        # If output_obj is not a dictionary, wrap it in a dictionary using the input filename
+        # (without extension) as the key. This ensures that even single-item outputs are handled correctly.
         if not isinstance(output_obj, dict):
             filename = os.path.splitext(os.path.basename(input_path))[0]
+            # Using filename as key ensures that single-item outputs are handled correctly.
+            # Prevents issues when a single item is returned and needs to be written to a file.
             output_obj = {filename: output_obj}
 
         # Write each item in output_obj to a separate file.
