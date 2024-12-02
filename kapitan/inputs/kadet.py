@@ -18,9 +18,8 @@ from kadet import BaseModel, BaseObj, Dict
 
 from kapitan import cached
 from kapitan.errors import CompileError
-from kapitan.inputs.base import CompiledFile, InputType
-from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig, OutputType
-from kapitan.utils import prune_empty
+from kapitan.inputs.base import InputType
+from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
 
 # Set external kadet exception to kapitan.error.CompileError
 kadet.ABORT_EXCEPTION_TYPE = CompileError
@@ -100,12 +99,7 @@ class Kadet(InputType):
         """
 
         input_params = config.input_params
-
-        prune_output = config.prune
-        reveal = self.args.reveal
         target_name = self.target_name
-        indent = self.args.indent
-
         current_target.set(target_name)
         search_paths.set(self.search_paths)
 
@@ -138,65 +132,14 @@ class Kadet(InputType):
             raise CompileError(f"Could not load Kadet module: {spec.name[16:]}") from exc
 
         output_obj = _to_dict(output_obj)
-        if prune_output:
-            output_obj = prune_empty(output_obj)
 
         # Return None if output_obj has no output
         if not output_obj:
             return None
 
         for item_key, item_value in output_obj.items():
-            output_type = config.output_type
-            file_ext = output_type
-
-            if output_type == OutputType.AUTO:
-                _, detected_type = os.path.splitext(item_key)
-                if detected_type:
-                    # Remove . from the beginning of the extension
-                    detected_type = detected_type[1:]
-
-                if detected_type in [OutputType.TOML, OutputType.JSON, OutputType.YAML, OutputType.YML]:
-                    output_type = detected_type
-                    file_ext = None
-                elif detected_type == "tf":  # TODO(ademaria) Handle it better.
-                    output_type = OutputType.JSON
-                    file_ext = output_type
-                else:
-                    # Extension is not handled, so trating it as YAML
-                    logger.debug(f"could not detect extension for {item_key}, defaulting to YAML")
-                    output_type = OutputType.YML
-                    file_ext = output_type  # no extension for plain text
-
-            if output_type == OutputType.PLAIN:
-                file_ext = None  # no extension for plain text
-
-            file_name = f"{item_key}.{file_ext}" if file_ext else item_key
-            file_path = os.path.join(compile_path, file_name)
-
-            with CompiledFile(
-                # file_path: path to the output file
-                file_path,
-                # ref_controller: reference controller to resolve refs
-                self.ref_controller,
-                # mode: file open mode, 'w' for write
-                mode="w",
-                # reveal: reveal refs in output
-                reveal=reveal,
-                target_name=target_name,
-                indent=indent,
-            ) as fp:
-                if output_type == OutputType.JSON:
-                    fp.write_json(item_value)
-                elif output_type in [OutputType.YAML, OutputType.YML]:
-                    fp.write_yaml(item_value)
-                elif output_type == OutputType.PLAIN:
-                    fp.write(item_value)
-                elif output_type == OutputType.TOML:
-                    fp.write_toml(item_value)
-                else:
-                    raise ValueError(
-                        f"Output type defined in inventory for {input_path} not supported: {output_type}: {OutputType}"
-                    )
+            file_path = os.path.join(compile_path, item_key)
+            self.to_file(config, file_path, item_value)
 
 
 def _to_dict(obj):
