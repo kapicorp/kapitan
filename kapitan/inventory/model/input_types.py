@@ -64,6 +64,8 @@ class KapitanInputTypeJinja2Config(KapitanInputTypeBaseConfig):
 
 class KapitanInputTypeHelmConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.HELM] = InputTypes.HELM
+    output_type: OutputType = OutputType.AUTO
+    prune: Optional[bool] = False
     helm_params: dict = {}
     helm_values: Optional[dict] = {}
     helm_values_files: Optional[List[str]] = []

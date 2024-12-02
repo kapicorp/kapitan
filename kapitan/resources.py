@@ -23,8 +23,14 @@ import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inventory import Inventory, get_inventory_backend
-from kapitan.jinja2_filters import render_jinja2_file
-from kapitan.utils import PrettyDumper, StrEnum, deep_get, flatten_dict, sha256_string
+from kapitan.utils import (
+    PrettyDumper,
+    StrEnum,
+    deep_get,
+    flatten_dict,
+    render_jinja2_file,
+    sha256_string,
+)
 
 logger = logging.getLogger(__name__)
 

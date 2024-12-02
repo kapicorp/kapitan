@@ -11,7 +11,7 @@ import os
 from kapitan import cached
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeJinja2Config
-from kapitan.jinja2_filters import render_jinja2
+from kapitan.utils import render_jinja2
 
 logger = logging.getLogger(__name__)
 
