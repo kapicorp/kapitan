@@ -21,6 +21,7 @@ class OutputType(StrEnum):
     YML = "yml"
     PLAIN = "plain"
     TOML = "toml"
+    AUTO = "auto"
 
 
 class KapitanInputTypeBaseConfig(BaseModel):

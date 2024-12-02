@@ -20,7 +20,7 @@ import yaml
 
 from kapitan import cached, defaults, setup_logging
 from kapitan.initialiser import initialise_skeleton
-from kapitan.inputs.jsonnet import jsonnet_file
+from kapitan.inputs.jsonnet import select_jsonnet_runtime
 from kapitan.inventory import AVAILABLE_BACKENDS, InventoryBackends
 from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
@@ -49,7 +49,7 @@ def trigger_eval(args):
     def _search_imports(cwd, imp):
         return search_imports(cwd, imp, search_paths)
 
-    json_output = jsonnet_file(
+    json_output = select_jsonnet_runtime(
         file_path,
         import_callback=_search_imports,
         native_callbacks=resource_callbacks(search_paths),

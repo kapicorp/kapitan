@@ -18,9 +18,8 @@ from kadet import BaseModel, BaseObj, Dict
 
 from kapitan import cached
 from kapitan.errors import CompileError
-from kapitan.inputs.base import CompiledFile, InputType
+from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
-from kapitan.utils import prune_empty
 
 # Set external kadet exception to kapitan.error.CompileError
 kadet.ABORT_EXCEPTION_TYPE = CompileError
@@ -100,12 +99,7 @@ class Kadet(InputType):
         """
 
         input_params = config.input_params
-        output = config.output_type
-        prune_output = config.prune
-        reveal = self.args.reveal
         target_name = self.target_name
-        indent = self.args.indent
-
         current_target.set(target_name)
         search_paths.set(self.search_paths)
 
@@ -138,47 +132,14 @@ class Kadet(InputType):
             raise CompileError(f"Could not load Kadet module: {spec.name[16:]}") from exc
 
         output_obj = _to_dict(output_obj)
-        if prune_output:
-            output_obj = prune_empty(output_obj)
 
         # Return None if output_obj has no output
         if not output_obj:
             return None
 
         for item_key, item_value in output_obj.items():
-            file_ext = output
-            if output in ["yml", "yaml"]:
-                file_ext = output
-            elif output == "plain":
-                file_ext = ""  # no extension for plain text
-
-            file_name = f"{item_key}.{file_ext}" if file_ext else item_key
-            file_path = os.path.join(compile_path, file_name)
-
-            with CompiledFile(
-                # file_path: path to the output file
-                file_path,
-                # ref_controller: reference controller to resolve refs
-                self.ref_controller,
-                # mode: file open mode, 'w' for write
-                mode="w",
-                # reveal: reveal refs in output
-                reveal=reveal,
-                target_name=target_name,
-                indent=indent,
-            ) as fp:
-                if output == "json":
-                    fp.write_json(item_value)
-                elif output in ["yml", "yaml"]:
-                    fp.write_yaml(item_value)
-                elif output == "plain":
-                    fp.write(item_value)
-                elif output == "toml":
-                    fp.write_toml(item_value)
-                else:
-                    raise ValueError(
-                        f"Output type defined in inventory for {input_path} is neither 'json', 'yaml', 'toml' nor 'plain'"
-                    )
+            file_path = os.path.join(compile_path, item_key)
+            self.to_file(config, file_path, item_value)
 
 
 def _to_dict(obj):
