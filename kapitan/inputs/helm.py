@@ -56,10 +56,6 @@ class Helm(InputType):
         if config.kube_version:
             helm_flags["--api-versions"] = config.kube_version
 
-        reveal = self.args.reveal
-        target_name = self.target_name
-        indent = self.args.indent
-
         temp_dir = tempfile.mkdtemp()
         # save the template output to temp dir first
         _, error_message = render_chart(
@@ -82,21 +78,11 @@ class Helm(InputType):
                 rel_file_name = os.path.join(rel_dir, file)
                 full_file_name = os.path.join(current_dir, file)
                 # Open each file and write its content to the compilation path
-                with open(full_file_name, "r") as f:
-                    item_path = os.path.join(compile_path, rel_file_name)
-                    os.makedirs(os.path.dirname(item_path), exist_ok=True)
-                    with CompiledFile(
-                        item_path,
-                        self.ref_controller,
-                        mode="w",
-                        reveal=reveal,
-                        target_name=target_name,
-                        indent=indent,
-                    ) as fp:
-                        yml_obj = list(yaml.safe_load_all(f))
-                        # Write YAML objects to the compiled file
-                        fp.write_yaml(yml_obj)
-                        logger.debug("Wrote file %s to %s", full_file_name, item_path)
+                with open(full_file_name, "r", encoding="utf-8") as f:
+                    file_path = os.path.join(compile_path, rel_file_name)
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    item_value = list(yaml.safe_load_all(f))
+                    self.to_file(config, file_path, item_value)
 
     def render_chart(self, *args, **kwargs):
         return render_chart(*args, **kwargs)
