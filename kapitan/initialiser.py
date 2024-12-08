@@ -13,6 +13,8 @@ import os
 
 from copier import run_copy
 
+from kapitan.errors import KapitanError
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,8 +31,7 @@ def initialise_skeleton(args):
     directory = os.path.abspath(args.directory)
 
     if set(glob.iglob(os.path.join(directory, "./*"))):
-        logger.error(f"Directory {directory} is not empty. Please initialise in an empty directory.")
-        return
+        raise KapitanError(f"Directory {directory} is not empty. Please initialise in an empty directory.")
 
     logger.info(f"Initialising skeleton from {template_git_url}@{checkout_ref} in {directory}")
     run_copy(template_git_url, vcs_ref=args.checkout_ref, unsafe=True, dst_path=directory)
