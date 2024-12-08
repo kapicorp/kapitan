@@ -11,11 +11,15 @@ import glob
 import logging
 import os
 import re
+import stat
+import sys
 import time
+import traceback
 import types
 from importlib import util
 from random import Random, shuffle
 
+import jinja2
 import toml
 import yaml
 from six import string_types
@@ -24,6 +28,14 @@ from kapitan import cached, defaults, utils
 from kapitan.errors import CompileError
 
 logger = logging.getLogger(__name__)
+
+
+def _jinja_error_info(trace_data):
+    """Extract jinja2 templating related frames from traceback data"""
+    try:
+        return [x for x in trace_data if x[2] in ("top-level template code", "template", "<module>")][-1]
+    except IndexError:
+        pass
 
 
 def load_jinja2_filters(env):

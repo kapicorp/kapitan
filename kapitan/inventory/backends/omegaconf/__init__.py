@@ -16,9 +16,10 @@ from cachetools import LRUCache, cached
 from kadet import Dict
 from omegaconf import ListMergeMode, OmegaConf
 
+from kapitan.errors import InventoryError
+from kapitan.inventory import Inventory, InventoryTarget
 from kapitan.inventory.model import KapitanInventoryMetadata, KapitanInventoryParameters
 
-from ..inventory import Inventory, InventoryError, InventoryTarget
 from .migrate import migrate
 from .resolvers import register_resolvers
 
@@ -28,6 +29,10 @@ logger = logging.getLogger(__name__)
 @singledispatch
 def keys_to_strings(ob):
     return ob
+
+
+class OmegaConfRenderingError(InventoryError):
+    pass
 
 
 @keys_to_strings.register
@@ -74,6 +79,9 @@ class OmegaConfInventory(Inventory):
                     self.inventory_worker, [(self, target, shared_targets) for target in targets.values()]
                 )
                 r.wait()
+
+                if not r.successful():
+                    raise OmegaConfRenderingError("Error while loading the OmegaConf inventory")
 
             for target in shared_targets.values():
                 self.targets[target.name] = target

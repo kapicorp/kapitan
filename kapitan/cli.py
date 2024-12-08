@@ -20,7 +20,7 @@ import yaml
 
 from kapitan import cached, defaults, setup_logging
 from kapitan.initialiser import initialise_skeleton
-from kapitan.inputs.jsonnet import jsonnet_file
+from kapitan.inputs.jsonnet import select_jsonnet_runtime
 from kapitan.inventory import AVAILABLE_BACKENDS, InventoryBackends
 from kapitan.lint import start_lint
 from kapitan.refs.base import RefController, Revealer
@@ -49,7 +49,7 @@ def trigger_eval(args):
     def _search_imports(cwd, imp):
         return search_imports(cwd, imp, search_paths)
 
-    json_output = jsonnet_file(
+    json_output = select_jsonnet_runtime(
         file_path,
         import_callback=_search_imports,
         native_callbacks=resource_callbacks(search_paths),
@@ -74,27 +74,10 @@ def trigger_compile(args):
     cached.revealer_obj = Revealer(ref_controller)
 
     compile_targets(
-        args.inventory_path,
-        search_paths,
-        args.output_path,
-        args.parallelism,
-        args.targets,
-        args.labels,
-        ref_controller,
-        prune=args.prune,
-        indent=args.indent,
-        reveal=args.reveal,
-        cache=args.cache,
-        cache_paths=args.cache_paths,
-        fetch=args.fetch,
-        force_fetch=args.force_fetch,
-        force=args.force,  # deprecated
-        validate=args.validate,
-        schemas_path=args.schemas_path,
-        jinja2_filters=args.jinja2_filters,
-        verbose=args.verbose,
-        use_go_jsonnet=args.use_go_jsonnet,
-        compose_target_name=args.compose_target_name,
+        inventory_path=args.inventory_path,
+        search_paths=search_paths,
+        ref_controller=ref_controller,
+        args=args,
     )
 
 

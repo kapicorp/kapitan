@@ -13,7 +13,7 @@ from typing import Dict
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from kapitan.errors import KapitanError
+from kapitan.errors import InventoryError
 from kapitan.inventory.model import KapitanInventoryParameters
 
 logger = logging.getLogger(__name__)
@@ -141,15 +141,3 @@ class Inventory(ABC):
 
     def __getitem__(self, key):
         return self.inventory[key]
-
-
-class InventoryError(KapitanError):
-    """inventory error"""
-
-
-class InventoryValidationError(InventoryError):
-    """inventory validation error"""
-
-
-class InvalidTargetError(InventoryError):
-    """inventory validation error"""

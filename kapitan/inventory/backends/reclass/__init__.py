@@ -8,8 +8,7 @@ import yaml
 from reclass.errors import NotFoundError, ReclassException
 
 from kapitan.errors import InventoryError
-
-from .inventory import Inventory, InventoryTarget
+from kapitan.inventory import Inventory, InventoryTarget
 
 logger = logging.getLogger(__name__)
 

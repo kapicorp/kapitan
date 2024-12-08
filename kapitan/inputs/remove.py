@@ -10,30 +10,30 @@ import os
 import shutil
 
 from kapitan.inputs.base import InputType
-from kapitan.utils import copy_tree
+from kapitan.inventory.model.input_types import KapitanInputTypeCopyConfig
 
 logger = logging.getLogger(__name__)
 
 
 class Remove(InputType):
-    def __init__(self, compile_path, search_paths, ref_controller):
-        super().__init__("remove", compile_path, search_paths, ref_controller)
 
-    def compile_file(self, file_path, compile_path, ext_vars, **kwargs):
-        """
-        Write items in path as plain rendered files to compile_path.
-        path can be either a file or directory.
+    def compile_file(self, config: KapitanInputTypeCopyConfig, input_path, compile_path):
+        """Remove a file or directory.
+
+        Args:
+            config (KapitanInputTypeCopyConfig): input type configuration
+            input_path (str): path to file or directory to remove
+            compile_path (str): not used in this input type
+
+        Raises:
+            OSError: if the file or directory cannot be removed
         """
 
         try:
-            logger.debug("Removing %s", file_path)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
+            logger.debug("Removing %s", input_path)
+            if os.path.isfile(input_path):
+                os.remove(input_path)
             else:
-                shutil.rmtree(file_path)
+                shutil.rmtree(input_path)
         except OSError as e:
             logger.exception("Input dir not removed. Error: %s", e)
-
-    def default_output_type(self):
-        # no output_type options for remove
-        return None

@@ -7,6 +7,7 @@ If you're using **Kapitan** in your organization, please let us know by adding t
 -   [![Airfund](adopters_logos/airfund.png){: style="height:100px"}](https://airfund.io)
 -   [![Isomorphic Labs](adopters_logos/isomorphiclabs.png){: style="height:100px"}](https://www.isomorphiclabs.com)
 -   [![Morgan Stanley](adopters_logos/morganstanley.png){: style="height:100px"}](https://www.morganstanley.com/)
+-   [![Marshall Wace](adopters_logos/mw.png){: style="height:100px"}](https://www.mwam.com/)
 -   [![neXenio GmbH](adopters_logos/nexenio.png){: style="height:100px"}](https://www.nexenio.com)
 -   [![noon](adopters_logos/noon.png){: style="height:100px"}](https://www.noon.com/)
 -   [![Phaidra](adopters_logos/phaidra.png){: style="height:100px"}](https://phaidra.ai)
