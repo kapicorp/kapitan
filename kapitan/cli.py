@@ -585,9 +585,20 @@ def build_parser():
 
     init_parser.add_argument(
         "--directory",
-        default=from_dot_kapitan("init", "directory", "."),
+        default="./",
         help="set path, in which to generate the project skeleton,"
         'assumes directory already exists. default is "./"',
+    )
+
+    init_parser.add_argument(
+        "--template_git_url",
+        default=from_dot_kapitan("init", "template_git_url ", defaults.COPIER_TEMPLATE_REPOSITORY),
+        help=f"Cruft template_git_url, default is {defaults.COPIER_TEMPLATE_REPOSITORY}",
+    )
+    init_parser.add_argument(
+        "--checkout_ref",
+        default=from_dot_kapitan("init", "checkout_ref ", defaults.COPIER_TEMPLATE_REF),
+        help=f"Cruft checkout_ref, default is {defaults.COPIER_TEMPLATE_REF}",
     )
     return parser
 
