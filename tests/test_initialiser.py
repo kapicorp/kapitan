@@ -45,7 +45,7 @@ class InitialiserTest(unittest.TestCase):
         with open(dummy_file, "w") as f:
             f.write("This is a dummy file")
 
-        with self.assertRaises(KapitanError) as cm:
+        with self.assertRaises(KapitanError):
             initialise_skeleton(self._create_args(self.tmpdir))
 
             mocked_run_copy.assert_not_called()  # Make sure run_copy was not called
