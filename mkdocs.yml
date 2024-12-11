@@ -73,15 +73,17 @@ nav:
   - Home: README.md
   - Trusted by: ADOPTERS.md
   - Getting started: getting_started.md
+  - Core Concepts: pages/core_concepts.md
   - Documentation:
-      - Core Concepts: pages/kapitan_overview.md
       - Inventory:
         - Introduction: pages/inventory/introduction.md
         - Targets: pages/inventory/targets.md
         - Classes: pages/inventory/classes.md
         - Parameters Interpolation: pages/inventory/parameters_interpolation.md
         - Advanced: pages/inventory/advanced.md
-        - reclass-rs Backend: pages/inventory/reclass-rs.md
+        - Backends:
+          - Introduction: pages/inventory/backends.md
+          - reclass-rs: pages/inventory/reclass-rs.md
       - Input Types:
           - Introduction: pages/input_types/introduction.md
           - Kadet: pages/input_types/kadet.md

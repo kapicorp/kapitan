@@ -1,43 +1,73 @@
-## Overview
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/M81qU94FCLQ?si=SGlQG-gP2mmA1n9b" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+# :kapitan-logo: **What is the inventory?**
 
 The **Inventory** is a core component of Kapitan: this section aims to explain how it works and how to best take advantage of it.
 
 The **Inventory** is a hierarchical `YAML` based structure which you use to capture anything that you want to make available to **Kapitan**, so that it can be passed on to its templating engines.
 
-The first concept to learn about the **Inventory** is the [**target**](#targets). A target is a file, found under the [`inventory/targets`](#targets) substructure, that tells Kapitan what you want to compile. It will usually map to something you want to do with **Kapitan**.
-
-For instance, you might want to define a [**target**](#targets) for each environment that you want to deploy using **Kapitan**.
-
-The **Inventory** lets you also define and reuse common configurations through YAML files that are referred to as [**classes**](#classes): by listing classes into [**target**](#targets), their content gets merged together and allows you to compose complex configurations without repetitions.
-
-By combining [**target**](#targets) and [**classes**](#classes), the **Inventory** becomes the SSOT for your whole configuration, and learning how to use it will unleash the real power of **Kapitan**.
-
-!!! info
-    The **Kapitan** **Inventory** is based on an open source project called [reclass](https://github.com/kapicorp/reclass) and you can find the full documentation on our Github clone. However we discourage you to look directly at the reclass documentation before you learn more about **Kapitan**, because **Kapitan** uses a fork of reclass and greatly simplifies the reclass experience.
-
-!!! info
-    Kapitan allows users to switch the inventory backend to [reclass-rs](https://github.com/projectsyn/reclass-rs). You can switch the backend to reclass-rs by passing `--inventory-backend=reclass-rs` on the command line. Alternatively, you can define the backend in the [.kapitan config file](../commands/kapitan_dotfile.md).
-
-    See the [reclass-rs inventory backend](reclass-rs.md) documentation for more details.
-
-!!! note
-    Kapitan enforces very little structure for the **Inventory**, so that you can adapt it to your specific needs: this might be overwhelming at the beginning: don’t worry, we will explain best practice and give guidelines soon.
-
-By default, Kapitan will search for its **Inventory** under [`inventory/classes`](#classes) and [`inventory/targets`](#targets).
-
 ```
 inventory/
-├── classes
-│   ├── applications
-│   ├── components
-│   ├── features
-│   ├── kapitan
-│   ├── projects
-│   └── terraform
-└── targets
-    ├── examples
-    ├── kapicorp
-    └── terraform
+├── classes/
+│   ├── common/
+│   │   └── base.yml        # Foundational configurations
+│   ├── components/
+│   │   └── web/            # Component-specific settings
+│   └── environments/
+│       └── production.yml  # Environment-specific configurations
+└── targets/
+    └── production/
+        └── web.yml         # Specific deployment configurations
 ```
+
+The **Kapitan** inventory is divided between [**targets**](#targets) and [**classes**](#classes).
+
+Both classes and targets are yaml file with the same structure
+
+```yaml
+classes:
+  - common
+  - my.other.class
+
+parameters:
+  key: value
+  key2:
+    subkey: value
+```
+
+## [**Classes**](#classes)
+
+[**Classes**](#classes) are found by default under the [`inventory/classes`](#classes) directory and define common settings and data that you define once and can be included in other files. This promotes consistency and reduces duplication.
+
+Classes are identified with a name that maps to the directory structure they are nested under.
+In this example, the `kapicorp.common` class represented by the file `classes/kapicorp/common.yml`
+
+```
+# classes/kapicorp/common.yml
+classes:
+  - common
+
+parameters:
+  namespace: ${target_name}
+  base_docker_repository: quay.io/kapicorp
+  base_domain: kapicorp.com
+```
+
+## [**Targets**](#targets)
+
+[**Targets**](#targets) are found by default under the [`inventory/targets`](#targets) directory and represent the different environments or components you want to manage. Each target is a YAML file that defines a set of configurations.
+
+For example, you might have targets for **`production`**, **`staging`**, and **`development`** environments.
+
+```
+# targets/production.yml
+classes:
+  - kapicorp.common
+  - components.web
+  - environments.production
+
+parameters:
+  target_name: web
+```
+
+
+
+By combining [**target**](#targets) and [**classes**](#classes), the **Inventory** becomes the SSOT for your whole configuration, and learning how to use it will unleash the real power of **Kapitan**.

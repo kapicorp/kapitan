@@ -93,23 +93,36 @@ Let's explore these concepts in a way that's accessible to new users:
 ## [**Inventory**](/pages/inventory/introduction/)
 
 At the core of **Kapitan** lies the **Inventory**, a structured database of variables meticulously organized in YAML files.
-This hierarchical setup serves as the single source of truth (SSOT) for your system's configurations, making it easier to manage and reference the essential components of your infrastructure. Whether you're dealing with Kubernetes configurations, Terraform resources, or even business logic, the Inventory allows you to define and store these elements efficiently. This central repository then feeds into **Kapitan**'s templating engines, enabling seamless reuse across various applications and services.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/M81qU94FCLQ?si=SGlQG-gP2mmA1n9b" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+This hierarchical setup serves as the single source of truth (SSOT) for your system's configurations, making it easier to manage and reference the essential components of your infrastructure.
+
+Whether you're dealing with Kubernetes configurations, Terraform resources, or even business logic, the Inventory allows you to define and store these elements efficiently. This central repository then feeds into **Kapitan**'s templating engines, enabling seamless reuse across various applications and services.
+
 
 ## [**Input Types**](/pages/input_types/introduction/)
 
-**Kapitan** takes the information stored in the Inventory and brings it to life through its templating engines upon compilation. This process transforms static data into dynamic configurations, capable of generating a wide array of outputs like Kubernetes manifests, Terraform plans, documentation, and scripts. It's about making your configurations work for you, tailored to the specific needs of your projects.
+**Kapitan** takes the information stored in the Inventory and brings it to life through its templating engines upon compilation. Some of the supported input types are: **Python**, **Jinja2**, **Jsonnet**, **Helm**, and we're adding more soon.
+
+This process transforms static data into dynamic configurations, capable of generating a wide array of outputs like Kubernetes manifests, Terraform plans, documentation, and scripts.
+
+It's about making your configurations work for you, tailored to the specific needs of your projects.
 
 See [**Input Types**](/pages/input_types/introduction/) for more
 
+
 ### [**Generators**](https://generators.kapitan.dev)
 
-[**Generators**](https://generators.kapitan.dev) offer a straightforward entry point into using **Kapitan**, requiring minimal to no coding experience. These are essentially pre-made templates that allow you to generate common configuration files, such as Kubernetes manifests, directly from your Inventory data. **Kapitan** provides a wealth of resources, including the [**Kapitan Reference**](https://github.com/kapicorp/kapitan-reference) GitHub repository and various blog posts, to help users get up and running with generators.
+[**Generators**](https://generators.kapitan.dev) offer a straightforward entry point into using **Kapitan**, requiring minimal to no coding experience.
+
+These are essentially pre-made templates that allow you to generate common configuration files, such as Kubernetes manifests, directly from your Inventory data.
+
+**Kapitan** provides a wealth of resources, including the [**Kapitan Reference**](https://github.com/kapicorp/kapitan-reference) GitHub repository and various blog posts, to help users get up and running with generators.
 
 ### [**Kadet**](https://github.com/kapicorp/kapitan-reference)
 
-For those looking to leverage the full power of **Kapitan**, [**Kadet**](https://github.com/kapicorp/kapitan-reference) introduces a method to define and reuse complex configurations through Python. This internal library facilitates the creation of JSON and YAML manifests programmatically, offering a higher degree of customization and reuse. [**Kadet**](https://github.com/kapicorp/kapitan-reference) empowers users to craft intricate configurations with the simplicity and flexibility of Python.
+For those looking to leverage the full power of **Kapitan**, [**Kadet**](https://github.com/kapicorp/kapitan-reference) introduces a method to define and reuse complex configurations through Python.
+
+This internal library facilitates the creation of JSON and YAML manifests programmatically, offering a higher degree of customization and reuse. [**Kadet**](https://github.com/kapicorp/kapitan-reference) empowers users to craft intricate configurations with the simplicity and flexibility of Python.
 
 ## [**References**](/references)
 
