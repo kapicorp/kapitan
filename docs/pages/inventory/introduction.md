@@ -33,8 +33,6 @@ parameters:
     subkey: value
 ```
 
-## [**Classes**](#classes)
-
 [**Classes**](#classes) are found by default under the [`inventory/classes`](#classes) directory and define common settings and data that you define once and can be included in other files. This promotes consistency and reduces duplication.
 
 Classes are identified with a name that maps to the directory structure they are nested under.
@@ -50,8 +48,6 @@ parameters:
   base_docker_repository: quay.io/kapicorp
   base_domain: kapicorp.com
 ```
-
-## [**Targets**](#targets)
 
 [**Targets**](#targets) are found by default under the [`inventory/targets`](#targets) directory and represent the different environments or components you want to manage. Each target is a YAML file that defines a set of configurations.
 
