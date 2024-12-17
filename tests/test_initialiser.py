@@ -5,46 +5,63 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"init tests"
+"initialiser module tests"
 
 import logging
 import os
-import sys
+import shutil
 import tempfile
 import unittest
+from unittest.mock import patch
 
-from kapitan.cached import reset_cache
-from kapitan.cli import main
+from kapitan.errors import KapitanError
+from kapitan.initialiser import initialise_skeleton
 
-logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 
-class InitTest(unittest.TestCase):
-    def test_init(self):
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            sys.argv = ["kapitan", "init", "--directory", tmp_dir]
-            main()
+class InitialiserTest(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.template_url = "https://github.com/kapicorp/kapitan-reference"
+        self.checkout_ref = "master"
 
-            template_dir = os.path.join(os.getcwd(), "kapitan", "inputs", "templates")
+    def test_initialise_skeleton_success(self):
+        """
+        Verify that initialise_skeleton succeeds when target directory is empty
+        """
+        initialise_skeleton(self._create_args(self.tmpdir))
 
-            diff_files = []
+        # Assert that the directory is no longer empty (indicating successful initialisation)
+        self.assertTrue(len(os.listdir(self.tmpdir)) > 0, "Target directory is still empty")
 
-            for root, dirs, files in os.walk(tmp_dir):
-                diff_files += files
+    @patch("kapitan.initialiser.run_copy")
+    def test_initialise_skeleton_non_empty_dir(self, mocked_run_copy):
+        """
+        Verify that initialise_skeleton logs an error when target directory is not empty
+        """
+        # Create a dummy file in the temporary directory, simulating a non-empty directory
+        dummy_file = os.path.join(self.tmpdir, "dummy.txt")
+        with open(dummy_file, "w") as f:
+            f.write("This is a dummy file")
 
-            for root, dirs, files in os.walk(template_dir):
-                for f in files:
-                    if f in diff_files:
-                        diff_files.remove(f)
+        with self.assertRaises(KapitanError):
+            initialise_skeleton(self._create_args(self.tmpdir))
 
-            self.assertEqual(len(diff_files), 0)
+            mocked_run_copy.assert_not_called()  # Make sure run_copy was not called
 
-            # check that generated directory compiles
-            prevdir = os.getcwd()
-            os.chdir(tmp_dir)
-            sys.argv = ["kapitan", "compile"]
-            main()
+    def tearDown(self):
+        # Clean up the temporary directory after each test
+        shutil.rmtree(self.tmpdir)
 
-            os.chdir(prevdir)
-            reset_cache()
+    def _create_args(self, target_dir):
+        """Helper function to create Namespace object for testing"""
+        return type(
+            "args",
+            (object,),
+            {
+                "template_git_url": self.template_url,
+                "checkout_ref": self.checkout_ref,
+                "directory": target_dir,
+            },
+        )
