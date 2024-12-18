@@ -1,8 +1,11 @@
+import logging
 from typing import Annotated, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from kapitan.utils import StrEnum
+
+logger = logging.getLogger(__name__)
 
 
 class InputTypes(StrEnum):
@@ -71,6 +74,13 @@ class KapitanInputTypeHelmConfig(KapitanInputTypeBaseConfig):
     helm_values_files: Optional[List[str]] = []
     helm_path: Optional[str] = None
     kube_version: Optional[str] = None
+
+    @field_validator("output_type")
+    @classmethod
+    def type_must_be_auto(cls, _: OutputType) -> OutputType:
+        """Helm output type must be auto."""
+        logger.debug("field `output_type` for helm input type must be set to 'auto': enforcing.")
+        return OutputType.AUTO
 
 
 class KapitanInputTypeKadetConfig(KapitanInputTypeBaseConfig):

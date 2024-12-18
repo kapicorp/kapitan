@@ -13,7 +13,7 @@ import yaml
 
 from kapitan.errors import HelmTemplateError
 from kapitan.helm_cli import helm_cli
-from kapitan.inputs.base import CompiledFile, InputType
+from kapitan.inputs.base import InputType
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
 
