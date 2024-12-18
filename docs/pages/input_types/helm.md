@@ -57,7 +57,7 @@ See the [helm doc](https://helm.sh/docs/helm/helm_template/) for further detail.
 
 #### Example
 
-Let's use [nginx-ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress) helm chart as the input. Using [kapitan dependency manager](/external_dependencies.md), this chart can be fetched via a URL as listed in <https://helm.nginx.com/stable/index.yaml>.
+Let's use [nginx-ingress](https://github.com/helm/charts/tree/master/stable/nginx-ingress) helm chart as the input. Using [kapitan dependency manager](../external_dependencies.md), this chart can be fetched via a URL as listed in <https://helm.nginx.com/stable/index.yaml>.
 
 *On a side note, `https://helm.nginx.com/stable/` is the chart repository URL which you would `helm repo add`, and this repository should contain `index.yaml` that lists out all the available charts and their URLs. By locating this `index.yaml` file, you can locate all the charts available in the repository.*
 
@@ -120,5 +120,5 @@ This requires Go 1.14.
 
 #### Helm subcharts
 
-There is an [external dependency manager](/external_dependencies.md) of type `helm` which enables you to specify helm
+There is an [external dependency manager](../external_dependencies.md) of type `helm` which enables you to specify helm
 charts to download, including subcharts.

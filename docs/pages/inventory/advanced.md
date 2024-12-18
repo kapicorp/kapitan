@@ -31,7 +31,7 @@ For instance you could define the following:
         ...
         ```
 
-    You can now selectively compile targets for customer `acme` using the following (see see [**Labels**](/website/commands/kapitan_compile/#using-labels) for more details )
+    You can now selectively compile targets for customer `acme` using the following (see see [**Labels**](../commands/kapitan_compile.md#using-labels) for more details )
 
     !!! example ""
 

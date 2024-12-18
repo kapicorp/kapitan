@@ -18,7 +18,7 @@ inventory/
         └── web.yml         # Specific deployment configurations
 ```
 
-The **Kapitan** inventory is divided between [**targets**](#targets) and [**classes**](#classes).
+The **Kapitan** inventory is divided between [**targets**](targets.md) and [**classes**](classes.md).
 
 Both classes and targets are yaml file with the same structure
 
@@ -33,7 +33,7 @@ parameters:
     subkey: value
 ```
 
-[**Classes**](#classes) are found by default under the [`inventory/classes`](#classes) directory and define common settings and data that you define once and can be included in other files. This promotes consistency and reduces duplication.
+[**Classes**](classes.md) are found by default under the [`inventory/classes`](classes.md) directory and define common settings and data that you define once and can be included in other files. This promotes consistency and reduces duplication.
 
 Classes are identified with a name that maps to the directory structure they are nested under.
 In this example, the `kapicorp.common` class represented by the file `classes/kapicorp/common.yml`
@@ -49,7 +49,7 @@ parameters:
   base_domain: kapicorp.com
 ```
 
-[**Targets**](#targets) are found by default under the [`inventory/targets`](#targets) directory and represent the different environments or components you want to manage. Each target is a YAML file that defines a set of configurations.
+[**Targets**](targets.md) are found by default under the [`inventory/targets`](targets.md) directory and represent the different environments or components you want to manage. Each target is a YAML file that defines a set of configurations.
 
 For example, you might have targets for **`production`**, **`staging`**, and **`development`** environments.
 
@@ -65,5 +65,4 @@ parameters:
 ```
 
 
-
-By combining [**target**](#targets) and [**classes**](#classes), the **Inventory** becomes the SSOT for your whole configuration, and learning how to use it will unleash the real power of **Kapitan**.
+By combining [**target**](targets.md) and [**classes**](classes.md), the **Inventory** becomes the SSOT for your whole configuration, and learning how to use it will unleash the real power of **Kapitan**.

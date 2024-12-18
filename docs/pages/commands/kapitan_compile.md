@@ -70,7 +70,7 @@ Compiles one or more targets selected matching **labels** with  `--labels` or `-
           customer: acme
     ```
 
-    see [**Labels**](/inventory/#target-labels) for more details
+    see [**Labels**](../inventory/advanced.md#target-labels) for more details
 
 ```shell
 $ kapitan compile -l customer=acme
@@ -80,7 +80,7 @@ Compiled acme-pipelines (0.10s)
 
 ## Fetch on compile
 
-Use the `--fetch` flag to fetch [**Remote Inventories**](/inventory/#remote-inventories) and the [**External Dependencies**](/external_dependencies/).
+Use the `--fetch` flag to fetch [**External Dependencies**](../external_dependencies.md).
 
 ```shell
 kapitan compile --fetch
