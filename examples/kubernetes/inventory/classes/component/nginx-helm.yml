@@ -14,6 +14,7 @@ parameters:
     compile:
       - output_path: .
         input_type: helm
+        output_type: yaml # this tests that helm switches to auto output type
         input_paths:
           - charts/nginx-ingress
         helm_values:
