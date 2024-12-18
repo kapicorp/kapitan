@@ -24,7 +24,7 @@
 
     The correct way to reference `parameters.nginx.image` then becomes `${components:nginx:image}`.
 
-The [**Inventory**](#inventory) allows you to refer to other values defined elsewhere in the structure, using parameter interpolation.
+The [**Inventory**](introduction.md) allows you to refer to other values defined elsewhere in the structure, using parameter interpolation.
 
 Given the example:
 

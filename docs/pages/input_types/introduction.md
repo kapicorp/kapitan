@@ -1,6 +1,6 @@
 # Introduction
 
-**Note:** make sure to read up on [inventory](/inventory.md) before moving on.
+**Note:** make sure to read up on [inventory](../inventory/introduction.md) before moving on.
 
 ## Phases of the compile command
 

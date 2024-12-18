@@ -1,137 +1,158 @@
-# :kapitan-logo: **Kapitan Overview**
+# :kapitan-logo: **Kapitan Core Concepts**
 
-## **Kapitan** at a glance
+**Kapitan** essentially allows you to organise your data with the **`inventory`**, and uses it to configure and run multiple [**`Input Types`**](input_types/introduction.md) which generate files.
 
-**Kapitan** is a powerful configuration management tool designed to help engineers manage complex systems through code. It centralizes and simplifies the management of configurations with a structured approach that revolves around a few core concepts.
+> So you can essentially *compose* your configuration using your favourite tools.
 
-??? note "**Kapitan** diagram"
-    ```mermaid
-    %%{ init: { securityLevel: 'loose'} }%%
+```mermaid
     graph LR
-        classDef pink fill:#f9f,stroke:#333,stroke-width:4px,color:#000,font-weight: bold;
-        classDef blue fill:#00FFFF,stroke:#333,stroke-width:4px,color:#000,font-weight: bold;
-        TARGET1 --> KAPITAN
-        TARGET2 --> KAPITAN
-        TARGETN --> KAPITAN
-        KAPITAN --> EXTERNAL
-        KAPITAN --> GENERATORS
-        KAPITAN --> HELM
-        KAPITAN --> JINJA
-        KAPITAN --> JSONNET
-        KAPITAN --> KADET
-        EXTERNAL --> OUTPUT
-        GENERATORS --> OUTPUT
-        JINJA --> OUTPUT
-        JSONNET --> OUTPUT
-        KADET --> OUTPUT
-        HELM --> OUTPUT
-        GKMS --> REFERENCES
-        AWSKMS --> REFERENCES
-        VAULT --> REFERENCES
-        OTHER --> REFERENCES
-        PLAIN --> REFERENCES
-        OUTPUT --> TARGETN_OUTPUT
-        OUTPUT --> TARGET1_OUTPUT
-        OUTPUT --> TARGET2_OUTPUT
-        REFERENCES --> KAPITAN
-        TARGET1_OUTPUT --> DOCUMENTATION
-        TARGET1_OUTPUT --> KUBERNETES
-        TARGET1_OUTPUT --> SCRIPTS
-        TARGET1_OUTPUT --> TERRAFORM
-        CLASSES --> TARGET1
-        CLASSES --> TARGET2
-        CLASSES --> TARGETN
+        TARGETS ==  **kapitan compile** ==> INPUT_TYPES
+        INPUT_TYPES --> TARGETS_OUTPUT
+        TARGETS_OUTPUT --> GENERATED_FILES
 
-        subgraph "Inventory"
-            CLASSES[classes]
-            TARGET1(["target 1"]):::pink
-            TARGET2(["target 2"])
-            TARGETN(["target N"])
+
+        INPUT_TYPES("Input types")
+
+        subgraph "inventory"
+            direction LR
+            CLASSES("classes") --> TARGETS
+            TARGETS(["`targets/production.yml`"])
         end
-
-        subgraph "references"
-            direction TB
-            GKMS["GCP KMS"]
-            AWSKMS["AWS KMS"]
-            VAULT["Hashicorp Vault"]
-            OTHER["others"]
-            PLAIN["plain"]
-            REFERENCES["references"]
+        subgraph "compiled output"
+            TARGETS_OUTPUT([production/])
+            GENERATED_FILES("manifests")
         end
+```
 
-        KAPITAN(("<img src='/images/kapitan_logo.png'; width='80'/>")):::blue
-        click EXTERNAL "/compile#external"
+**Kapitan** supports multiple [**`Input Types`**](input_types/introduction.md), and the support keeps growing.
 
-        subgraph "Input Types"
-            EXTERNAL["external"]
-            GENERATORS["generators"]
-            HELM["helm"]
-            JINJA["jinja"]
-            JSONNET["jsonnet"]
-            KADET["kadet"]
-        end
+* [**Helm Charts**](input_types/helm.md)
+* [**jsonnet**](input_types/jsonnet.md)
+* [**Python**](input_types/kadet.md)
+* [**Jinja2**](input_types/jinja.md)
 
-        OUTPUT{{"compiled output"}}:::blue
+## [**Targets**](inventory/targets.md)
+**Kapitan** organises your configuration through [**targets**](inventory/targets.md).
 
+A simple target is typically made of a `classes` and a `parameters` sections, and it looks like this:
 
+```yaml
+# inventory/targets/production.yaml
+classes:
+  - common
+  - acme.applications.super
 
-        subgraph " "
-            TARGET1_OUTPUT([target1]):::pink
-            DOCUMENTATION["docs"]
-            KUBERNETES["manifests"]
-            SCRIPTS["scripts"]
-            TERRAFORM["terraform"]
-        end
+parameters:
+    description: My Super Application
+```
 
-        TARGET2_OUTPUT(["target 2"])
-        TARGETN_OUTPUT(["target N"])
+## **Compiling targets**
 
-    ```
+You can tell **Kapitan** to **compile** all your targets by running the following command in a valid kapitan repository root:
 
-Let's explore these concepts in a way that's accessible to new users:
+```
+$ kapitan compile
+Rendered inventory (0.06s): discovered 200 targets.
+Compiling 200/200 targets using 64 concurrent processes: (64 CPU detected)
+...
+Compiled production (0.68s)
+...
+Compiled 200 targets in 20s
+```
 
-## [**Inventory**](/pages/inventory/introduction/)
+Alternatively, you can select just the target you want to compile, using the `-t` or `--target` flag:
 
-At the core of **Kapitan** lies the **Inventory**, a structured database of variables meticulously organized in YAML files.
+```
+$ kapitan compile -t production
+Rendered inventory (0.06s): discovered 200 targets.
+Compiling 1/200 targets using 1 concurrent processes: (64 CPU detected)
+Compiled production (0.68s)
+Compiled 1 targets in 0.73s
+```
 
-This hierarchical setup serves as the single source of truth (SSOT) for your system's configurations, making it easier to manage and reference the essential components of your infrastructure.
+## **Targets outputs**
 
-Whether you're dealing with Kubernetes configurations, Terraform resources, or even business logic, the Inventory allows you to define and store these elements efficiently. This central repository then feeds into **Kapitan**'s templating engines, enabling seamless reuse across various applications and services.
+The output of a target compilation gets copied under the *`compiled`* folder, with the same structure as the original target.
 
+<div class="grid">
 
-## [**Input Types**](/pages/input_types/introduction/)
+```tree result="shell"
+inventory/
+    targets/
+        production.yml    #  --->
+```
 
-**Kapitan** takes the information stored in the Inventory and brings it to life through its templating engines upon compilation. Some of the supported input types are: **Python**, **Jinja2**, **Jsonnet**, **Helm**, and we're adding more soon.
+```tree result="shell"
+compiled/
+    ...
+    production/           # compiled output
+        README.md
+        scripts/
+        manifests/
+        terraform/
+        ...
+```
+</div>
 
-This process transforms static data into dynamic configurations, capable of generating a wide array of outputs like Kubernetes manifests, Terraform plans, documentation, and scripts.
+The files or directories being created depends on what is defined inside the targets, and will change based on the configuration you define in the **Kapitan** target.
 
-It's about making your configurations work for you, tailored to the specific needs of your projects.
+## **Organising targets**
 
-See [**Input Types**](/pages/input_types/introduction/) for more
+You can organise targets in a directory structure, and **Kapitan** will mimic the structure in the *`compiled`* folder
 
+!!! note "How targets are named"
 
-### [**Generators**](https://generators.kapitan.dev)
+    Kapitan identifies targets by a name that is automatically constructed based on the directory structure under the **`inventory/targets`** folder.
 
-[**Generators**](https://generators.kapitan.dev) offer a straightforward entry point into using **Kapitan**, requiring minimal to no coding experience.
+    **`teams/devops/grafana.yml`** becomes **`teams.devops.grafana`**
 
-These are essentially pre-made templates that allow you to generate common configuration files, such as Kubernetes manifests, directly from your Inventory data.
+<div class="grid">
 
-**Kapitan** provides a wealth of resources, including the [**Kapitan Reference**](https://github.com/kapicorp/kapitan-reference) GitHub repository and various blog posts, to help users get up and running with generators.
+```tree result="shell"
+inventory/
+    targets/
+        teams/
+            devops/
+                grafana.yml # teams.devops.grafana
+```
 
-### [**Kadet**](https://github.com/kapicorp/kapitan-reference)
+```tree result="shell"
+compiled/
+    teams/
+        ...
+        devops/
+            grafana/    # teams.devops.grafana
+                scripts/
+                manifests/
+                terraform/
+```
+</div>
 
-For those looking to leverage the full power of **Kapitan**, [**Kadet**](https://github.com/kapicorp/kapitan-reference) introduces a method to define and reuse complex configurations through Python.
+## [**Classes**](inventory/classes.md)
 
-This internal library facilitates the creation of JSON and YAML manifests programmatically, offering a higher degree of customization and reuse. [**Kadet**](https://github.com/kapicorp/kapitan-reference) empowers users to craft intricate configurations with the simplicity and flexibility of Python.
+**Kapitan** allows you to organise your shared inventory data using [**classes**](inventory/classes.md), which are found in the *`inventory/classes`* folder.
 
-## [**References**](/references)
+```tree result="shell"
+inventory/
+    classes/
+        common.yml              # common
+        teams/
+            project1/
+                config.yml      # teams.project1.config
+            project2/
+                config.yml      # teams.project2.config
+                kubernetes.yml  # teams.project2.kubernetes
+```
 
-**Kapitan** [**References**](/references) provide a secure way to store passwords, settings, and other essential data within your project. Think of them as special code placeholders.
+The structure of a class is very similar to target files. Classes can refer to other classes.
 
-* **Flexibility**: Update a password once, and Kapitan updates it everywhere automatically.
-* **Organization**: References tidy up your project, especially when you're juggling multiple settings or environments (dev, staging, production).
-**Security**: Protect sensitive information like passwords with encryption
+```yaml
+# inventory/classes/common.yaml
+classes:
+    - kapitan.common
 
-!!! tip
-
-    Use [Tesoro](https://github.com/kapicorp/tesoro), our **Kubernetes Admission Controller**, to complete your integration with Kubernetes for secure secret decryption on-the-fly.
+parameters:
+    organization: ACME
+    headquarters: London
+    timezone: Europe/London
+```

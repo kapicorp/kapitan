@@ -572,7 +572,7 @@ for more convenience.
 
 ## Embedded refs
 
-Please refer to the [CLI reference](/pages/commands/kapitan_compile/#embed-references)
+Please refer to the [CLI reference](pages/commands/kapitan_compile.md#embed-references) for more details.
 
 ## YAML SubVars References
 

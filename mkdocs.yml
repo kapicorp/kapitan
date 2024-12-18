@@ -11,6 +11,8 @@ plugins:
   - tags:
       tags_file: tags.md
   - search
+  - markdown-exec
+
 theme:
   name: material
   custom_dir: overrides
@@ -73,8 +75,8 @@ nav:
   - Home: README.md
   - Trusted by: ADOPTERS.md
   - Getting started: getting_started.md
-  - Core Concepts: pages/core_concepts.md
   - Documentation:
+      - Core Concepts: pages/core_concepts.md
       - Inventory:
         - Introduction: pages/inventory/introduction.md
         - Targets: pages/inventory/targets.md
@@ -115,7 +117,6 @@ nav:
       - Active contributions:
         - Documentation: pages/contribute/documentation.md
         - Kapitan Code: pages/contribute/code.md
-        - Proposals: proposals.md
   - Generators: https://generators.kapitan.dev
   - Tesoro: https://github.com/kapicorp/tesoro
   - Kapitan Reference: https://github.com/kapicorp/kapitan-reference
@@ -149,7 +150,6 @@ markdown_extensions:
   - pymdownx.magiclink
   - pymdownx.mark
   - pymdownx.smartsymbols
-  - pymdownx.superfences
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.tilde
