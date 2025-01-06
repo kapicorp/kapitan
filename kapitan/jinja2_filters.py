@@ -8,7 +8,6 @@
 import base64
 import datetime
 import glob
-import logging
 import os
 import re
 import stat
@@ -26,6 +25,7 @@ from six import string_types
 
 from kapitan import cached, defaults, utils
 from kapitan.errors import CompileError
+from kapitan.logging import logging
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,6 @@
 "hashicorp vault kv secrets module"
 
 import base64
-import logging
 
 from hvac.exceptions import Forbidden, InvalidPath
 
@@ -15,6 +14,7 @@ from kapitan.inventory.model.references import (
     KapitanReferenceVaultKVConfig,
     VaultEngineTypes,
 )
+from kapitan.logging import logging
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend

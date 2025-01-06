@@ -11,18 +11,20 @@ from __future__ import print_function
 
 import argparse
 import json
-import logging
 import multiprocessing
 import os
 import sys
 
 import yaml
+from rich.console import Console
 
-from kapitan import cached, defaults, setup_logging
+from kapitan import cached, defaults
+from kapitan.errors import KapitanError
 from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import select_jsonnet_runtime
 from kapitan.inventory import AVAILABLE_BACKENDS, InventoryBackends
 from kapitan.lint import start_lint
+from kapitan.logging import logging, setup_logging
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
 from kapitan.resources import generate_inventory, resource_callbacks, search_imports
@@ -639,3 +641,16 @@ def main():
     args.func(args)
 
     return 0
+
+
+def console():
+    console = Console()
+    try:
+        main()
+    except Exception:
+        console.print_exception()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    console()

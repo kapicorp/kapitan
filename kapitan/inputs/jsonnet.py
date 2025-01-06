@@ -6,12 +6,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
-import logging
 import os
 
 from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeJsonnetConfig
+from kapitan.logging import logging
 from kapitan.resources import resource_callbacks, search_imports
 
 logger = logging.getLogger(__name__)

@@ -6,13 +6,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import copy
-import logging
 import os
 import sys
 from typing import Any
 
 import yaml
 from omegaconf import Container, ListMergeMode, Node, OmegaConf
+
+from kapitan.logging import logging
 
 logger = logging.getLogger(__name__)
 

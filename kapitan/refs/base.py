@@ -9,7 +9,6 @@ import base64
 import errno
 import hashlib
 import json
-import logging
 import os
 import re
 import sys
@@ -24,6 +23,7 @@ from kapitan.errors import (
     RefFromFuncError,
     RefHashMismatchError,
 )
+from kapitan.logging import logging
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.functions import eval_func, get_func_lookup
 from kapitan.utils import PrettyDumper, StrEnum, list_all_paths

@@ -5,7 +5,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import logging
 import os
 import tempfile
 
@@ -16,6 +15,7 @@ from kapitan.helm_cli import helm_cli
 from kapitan.inputs.base import InputType
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
+from kapitan.logging import logging
 
 logger = logging.getLogger(__name__)
 

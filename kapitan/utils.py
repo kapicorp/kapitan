@@ -10,7 +10,6 @@ import collections
 import functools
 import glob
 import json
-import logging
 import math
 import os
 import re
@@ -35,6 +34,7 @@ from kapitan.jinja2_filters import (
     load_jinja2_filters,
     load_jinja2_filters_from_file,
 )
+from kapitan.logging import logging
 from kapitan.version import VERSION
 
 logger = logging.getLogger(__name__)

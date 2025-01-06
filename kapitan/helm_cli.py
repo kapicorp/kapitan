@@ -1,7 +1,8 @@
-import logging
 import os
 import subprocess
 from subprocess import DEVNULL, PIPE
+
+from kapitan.logging import logging
 
 logger = logging.getLogger(__name__)
 

@@ -8,10 +8,10 @@
 import base64
 import errno
 import json
-import logging
 
 import yaml
 
+from kapitan.logging import logging
 from kapitan.refs.base import KapitanReferencesTypes, PlainRef, PlainRefBackend
 
 try:

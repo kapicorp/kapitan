@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import base64
-import logging
 import mimetypes
 import os
 import re
@@ -13,6 +12,7 @@ from kapitan.inventory.model.references import (
     KapitanReferenceVaultKVConfig,
     KapitanReferenceVaultTransitConfig,
 )
+from kapitan.logging import logging
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref

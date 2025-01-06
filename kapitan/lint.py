@@ -7,7 +7,6 @@
 
 "lint module"
 
-import logging
 import os
 import sys
 from pprint import pformat
@@ -16,6 +15,7 @@ from yamllint import linter
 from yamllint.config import YamlLintConfig
 
 from kapitan.errors import KapitanError
+from kapitan.logging import logging
 from kapitan.utils import list_all_paths
 
 logger = logging.getLogger(__name__)

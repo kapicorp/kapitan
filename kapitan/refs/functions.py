@@ -7,7 +7,6 @@
 
 import base64
 import hashlib
-import logging
 import secrets  # python secrets module
 import string
 
@@ -16,6 +15,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
 
 from kapitan.errors import RefError
+from kapitan.logging import logging
 
 logger = logging.getLogger(__name__)
 

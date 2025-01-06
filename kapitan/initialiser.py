@@ -8,12 +8,12 @@
 "initialiser module"
 
 import glob
-import logging
 import os
 
 from copier import run_copy
 
 from kapitan.errors import KapitanError
+from kapitan.logging import logging
 from kapitan.version import VERSION as kapitan_version
 
 logger = logging.getLogger(__name__)

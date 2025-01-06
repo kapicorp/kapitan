@@ -9,7 +9,6 @@ import abc
 import glob
 import itertools
 import json
-import logging
 import os
 from collections.abc import Mapping
 
@@ -19,6 +18,7 @@ import yaml
 from kapitan import cached
 from kapitan.errors import CompileError, KapitanError
 from kapitan.inventory.model.input_types import CompileInputTypeConfig, OutputType
+from kapitan.logging import logging
 from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper, prune_empty
 
@@ -156,20 +156,14 @@ class InputType(object):
 
         logger.debug("Compiling %s", input_path)
 
-        try:
-            target_compile_path = os.path.join(self.compile_path, target_name.replace(".", "/"), output_path)
-            os.makedirs(target_compile_path, exist_ok=True)
+        target_compile_path = os.path.join(self.compile_path, target_name.replace(".", "/"), output_path)
+        os.makedirs(target_compile_path, exist_ok=True)
 
-            self.compile_file(
-                comp_obj,
-                input_path,
-                target_compile_path,
-            )
-
-        except KapitanError as e:
-            raise CompileError(
-                "{}\nCompile error: failed to compile target: {}".format(e, target_name)
-            ) from e
+        self.compile_file(
+            comp_obj,
+            input_path,
+            target_compile_path,
+        )
 
     @abc.abstractmethod
     def compile_file(self, config: CompileInputTypeConfig, input_path: str, compile_path: str):
