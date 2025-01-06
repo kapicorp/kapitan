@@ -5,7 +5,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import logging
 import multiprocessing as mp
 import os
 import time
@@ -19,6 +18,7 @@ from omegaconf import ListMergeMode, OmegaConf
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory, InventoryTarget
 from kapitan.inventory.model import KapitanInventoryMetadata, KapitanInventoryParameters
+from kapitan.logging import logging
 
 from .migrate import migrate
 from .resolvers import register_resolvers

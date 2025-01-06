@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 
 import reclass_rs
@@ -6,6 +5,7 @@ import reclass_rs
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory
 from kapitan.inventory.backends.reclass import get_reclass_config
+from kapitan.logging import logging
 
 logger = logging.getLogger(__name__)
 

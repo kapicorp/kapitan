@@ -7,7 +7,6 @@
 
 import contextvars
 import inspect
-import logging
 import os
 import sys
 from functools import lru_cache
@@ -20,6 +19,7 @@ from kapitan import cached
 from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
+from kapitan.logging import logging
 
 # Set external kadet exception to kapitan.error.CompileError
 kadet.ABORT_EXCEPTION_TYPE = CompileError
@@ -110,7 +110,10 @@ class Kadet(InputType):
 
         kadet_module, spec = module_from_path(input_path)
         sys.modules[spec.name] = kadet_module
-        spec.loader.exec_module(kadet_module)
+        try:
+            spec.loader.exec_module(kadet_module)
+        except Exception as e:
+            raise CompileError(f"{spec.name} - {e}")
         logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
 
         kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
@@ -128,7 +131,6 @@ class Kadet(InputType):
 
         except Exception as exc:
             # Log traceback and exception as is
-            logger.exception("")
             raise CompileError(f"Could not load Kadet module: {spec.name[16:]}") from exc
 
         output_obj = _to_dict(output_obj)

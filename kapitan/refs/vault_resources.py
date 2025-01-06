@@ -5,13 +5,13 @@
 
 "hashicorp vault resource functions"
 
-import logging
 import os
 
 import hvac
 
 from kapitan.errors import KapitanError
 from kapitan.inventory.model.references import KapitanReferenceVaultCommon
+from kapitan.logging import logging
 
 logger = logging.getLogger(__name__)
 

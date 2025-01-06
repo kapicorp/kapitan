@@ -5,12 +5,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import logging
 import os
 import shutil
 
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeCopyConfig
+from kapitan.logging import logging
 
 logger = logging.getLogger(__name__)
 

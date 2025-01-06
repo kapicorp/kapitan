@@ -1,7 +1,6 @@
 "azkms secret module"
 
 import base64
-import logging
 from urllib.parse import urlparse
 
 from azure.identity import DefaultAzureCredential
@@ -10,6 +9,7 @@ from azure.keyvault.keys.crypto import CryptographyClient, EncryptionAlgorithm
 
 from kapitan import cached
 from kapitan.errors import KapitanError
+from kapitan.logging import logging
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend

@@ -6,7 +6,6 @@
 "hashicorp vault transit secrets module"
 
 import base64
-import logging
 from binascii import Error as b_error
 from sys import exit
 
@@ -14,6 +13,7 @@ from hvac.exceptions import Forbidden, InvalidPath
 
 from kapitan import cached
 from kapitan.inventory.model.references import KapitanReferenceVaultTransitConfig
+from kapitan.logging import logging
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend

@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import hashlib
-import logging
 import multiprocessing
 import os
 from collections import defaultdict, namedtuple
@@ -16,6 +15,7 @@ from git import GitCommandError, Repo
 from kapitan.errors import GitFetchingError, GitSubdirNotFoundError, HelmFetchingError
 from kapitan.helm_cli import helm_cli
 from kapitan.inventory.model.dependencies import KapitanDependencyTypes
+from kapitan.logging import logging
 from kapitan.utils import (
     copy_tree,
     make_request,

@@ -5,7 +5,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import logging
 import os
 import re
 import subprocess
@@ -13,6 +12,7 @@ from typing import Dict, List
 
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeExternalConfig
+from kapitan.logging import logging
 
 logger = logging.getLogger(__name__)
 

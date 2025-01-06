@@ -11,7 +11,6 @@ import base64
 import gzip
 import io
 import json
-import logging
 import os
 import sys
 from functools import partial
@@ -23,6 +22,7 @@ import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inventory import Inventory, get_inventory_backend
+from kapitan.logging import logging
 from kapitan.utils import (
     PrettyDumper,
     StrEnum,

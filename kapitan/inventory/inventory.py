@@ -6,7 +6,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import functools
-import logging
 import os
 from abc import ABC, abstractmethod
 from typing import Dict
@@ -15,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from kapitan.errors import InventoryError
 from kapitan.inventory.model import KapitanInventoryParameters
+from kapitan.logging import logging
 
 logger = logging.getLogger(__name__)
 

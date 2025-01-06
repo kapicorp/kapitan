@@ -1,4 +1,3 @@
-import logging
 import os
 from datetime import datetime
 
@@ -9,6 +8,7 @@ from reclass.errors import NotFoundError, ReclassException
 
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory, InventoryTarget
+from kapitan.logging import logging
 
 logger = logging.getLogger(__name__)
 
