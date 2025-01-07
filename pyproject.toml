@@ -25,7 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 license = "Apache-2.0"
-version = "0.34.3"
+version = "0.34.4"
 packages = [
     { include = "kapitan" },
 ]
@@ -107,6 +107,7 @@ pydantic = "^2.8.2"
 pydantic-settings = "^2.4.0"
 python-box = "^7.2.0"
 copier = "^9.3.1"
+jsonpath-ng = "^1.7.0"
 
 [tool.poetry.extras]
 gojsonnet = ["gojsonnet"]
@@ -124,3 +125,7 @@ extend-ignore = "E203,E501,E701"
 [tool.black]
 line-length = 110
 target-version = ['py311']
+
+[tool.poetry_bumpversion.file."kapitan/version.py"]
+search = 'VERSION = "{current_version}"'
+replace = 'VERSION = "{new_version}"'

@@ -8,7 +8,7 @@
 """Project description variables."""
 
 PROJECT_NAME = "kapitan"
-VERSION = "0.34.3"
+VERSION = "0.34.4"
 DESCRIPTION = "Generic templated configuration management for Kubernetes, Terraform and other things"
 AUTHOR = "Ricardo Amaro"
 AUTHOR_EMAIL = "ramaro@kapicorp.com"
