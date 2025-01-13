@@ -56,7 +56,7 @@ def load_jinja2_filters(env):
     env.filters["reveal_maybe"] = reveal_maybe
     env.filters["ternary"] = ternary
     env.filters["shuffle"] = randomize_list
-
+    env.filters["merge_strategic"] = merge_strategic
 
 def load_module_from_path(env, path):
     """
@@ -221,3 +221,29 @@ def randomize_list(mylist, seed=None):
     except Exception:
         pass
     return mylist
+
+def merge_strategic(data):
+    """
+    Recursively traverse the input data structure.
+    - If encountering a list of dicts each with a 'name' key, merge them by name.
+    - Process nested dictionaries and lists recursively.
+    """
+    if not isinstance(data, (list, dict)):
+        return data
+
+    if isinstance(data, list):
+        processed_list = [merge_strategic(item) for item in data]
+
+        if all(isinstance(item, dict) and 'name' in item for item in processed_list):
+            merged = {}
+            for item in processed_list:
+                key = item['name']
+                if key not in merged:
+                    merged[key] = {}
+                merged[key].update(item)
+            return list(merged.values())
+        else:
+            return processed_list
+
+    if isinstance(data, dict):
+        return {key: merge_strategic(value) for key, value in data.items()}
