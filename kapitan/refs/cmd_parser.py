@@ -108,7 +108,7 @@ def ref_write(args, ref_controller):
 
     elif type_name == KapitanReferencesTypes.GKMS:
         key = args.key
-        
+
         if reference_backend_configs.gkms:
             key = args.key or reference_backend_configs.gkms.key
 
@@ -116,7 +116,7 @@ def ref_write(args, ref_controller):
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target"
             )
-        
+
         logger.debug(f"Using gkms key {key}")
 
         secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
