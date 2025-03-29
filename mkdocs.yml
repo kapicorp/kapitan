@@ -8,8 +8,6 @@ plugins:
       archive: false
       blog_dir: pages/blog
       post_url_date_format: dd/MM/yyyy
-  - tags:
-      tags_file: tags.md
   - search
   - markdown-exec
 
