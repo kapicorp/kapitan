@@ -16,15 +16,15 @@ function clearOutput(element) {
 }
 
 async function evaluatePython(pyodide, editor, output, session) {
-    pyodide.setStdout({ batched: (string) => { writeOutput(output, string); } });
+    pyodide.setStdout({ batched: (string) => { writeOutput(output, new Option(string).innerHTML); } });
     let result, code = editor.getValue();
     clearOutput(output);
     try {
         result = await pyodide.runPythonAsync(code, { globals: getSession(session, pyodide) });
     } catch (error) {
-        writeOutput(output, error);
+        writeOutput(output, new Option(error.toString()).innerHTML);
     }
-    if (result) writeOutput(output, result);
+    if (result) writeOutput(output, new Option(result).innerHTML);
     hljs.highlightElement(output);
 }
 
@@ -91,11 +91,19 @@ async function setupPyodide(idPrefix, install = null, themeLight = 'tomorrow', t
     writeOutput(output, "Initializing...");
     let pyodide = await pyodidePromise;
     if (install && install.length) {
-        micropip = pyodide.pyimport("micropip");
-        for (const package of install)
-            await micropip.install(package);
+        try {
+            micropip = pyodide.pyimport("micropip");
+            for (const package of install)
+                await micropip.install(package);
+            clearOutput(output);
+        } catch (error) {
+            clearOutput(output);
+            writeOutput(output, `Could not install one or more packages: ${install.join(", ")}\n`);
+            writeOutput(output, new Option(error.toString()).innerHTML);
+        }
+    } else {
+        clearOutput(output);
     }
-    clearOutput(output);
     run.onclick = () => evaluatePython(pyodide, editor, output, session);
     clear.onclick = () => clearOutput(output);
     output.parentElement.parentElement.addEventListener("keydown", (event) => {

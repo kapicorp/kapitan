@@ -48,3 +48,8 @@ html[data-theme="dark"] {
     cursor: pointer;
     text-align: right;
 }
+
+/* For themes other than Material. */
+.pyodide .twemoji svg {
+    width: 1rem;
+}
