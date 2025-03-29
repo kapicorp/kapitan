@@ -107,47 +107,48 @@ def ref_write(args, ref_controller):
         ref_controller[tag] = secret_obj
 
     elif type_name == KapitanReferencesTypes.GKMS:
-        key = None
+        key = args.key
         
         if reference_backend_configs.gkms:
             key = args.key or reference_backend_configs.gkms.key
-            logger.debug(f"Using gkms key {key}")
 
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target"
             )
+        
+        logger.debug(f"Using gkms key {key}")
 
         secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
         ref_controller[tag] = secret_obj
 
     elif type_name == KapitanReferencesTypes.AWSKMS:
-        key = None
+        key = args.key
 
         if reference_backend_configs.awskms:
             key = args.key or reference_backend_configs.awskms.key
-            logger.debug(f"Using awskms key {key}")
 
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.awskms.key and use --target"
             )
 
+        logger.debug(f"Using awskms key {key}")
         secret_obj = AWSKMSSecret(data, key, encode_base64=args.base64)
         ref_controller[tag] = secret_obj
 
     elif type_name == KapitanReferencesTypes.AZKMS:
-        key = None
+        key = args.key
 
         if reference_backend_configs.azkms:
             key = args.key or reference_backend_configs.azkms.key
-            logger.debug(f"Using azkms key {key}")
 
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.azkms.key and use --target"
             )
 
+        logger.debug(f"Using azkms key {key}")
         secret_obj = AzureKMSSecret(data, key, encode_base64=args.base64)
         ref_controller[tag] = secret_obj
 
