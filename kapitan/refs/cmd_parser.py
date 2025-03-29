@@ -76,7 +76,7 @@ def ref_write(args, ref_controller):
 
         try:
             reference_backend_configs = inv.get_parameters(args.target_name).kapitan.secrets
-        except:
+        except (KeyError, AttributeError):
             raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
     type_name, token_path = token_name.split(":")
