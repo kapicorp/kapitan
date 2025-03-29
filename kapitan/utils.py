@@ -23,8 +23,8 @@ from functools import lru_cache
 from hashlib import sha256
 from zipfile import ZipFile
 
-import jinja2
 import filetype
+import jinja2
 import requests
 import yaml
 
@@ -417,12 +417,12 @@ def make_request(source):
 def unpack_downloaded_file(file_path, output_path, content_type):
     """unpacks files of various MIME type and stores it to the output_path"""
     is_unpacked = False
-    
+
     if content_type == None or content_type == "application/octet-stream":
         kind = filetype.guess(file_path)
         if kind and kind.mime == "application/zip":
             content_type = "application/zip"
-    
+
     if content_type == "application/x-tar":
         tar = tarfile.open(file_path)
         tar.extractall(path=output_path)
