@@ -1,4 +1,5 @@
 "random utils"
+
 # Copyright 2019 The Kapitan Authors
 # SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
 #
