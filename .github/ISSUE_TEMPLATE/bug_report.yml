@@ -74,11 +74,12 @@ body:
   - type: dropdown
     id: python-version
     attributes:
-      label: Version (kapitan)
+      label: Version (Python)
       description: |
         Which version of python are you using? Kapitan officially supports only version 3.10 and 3.11
         If you are using an older version of python, please check if the bug still exists with a newer (supported) version.
       options:
+        - "3.12"
         - "3.11"
         - "3.10"
         - I use kapitan directly (pip, docker)
