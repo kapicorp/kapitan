@@ -24,7 +24,7 @@ from hashlib import sha256
 from zipfile import ZipFile
 
 import jinja2
-import magic
+import filetype
 import requests
 import yaml
 
@@ -416,11 +416,13 @@ def make_request(source):
 
 def unpack_downloaded_file(file_path, output_path, content_type):
     """unpacks files of various MIME type and stores it to the output_path"""
-
+    is_unpacked = False
+    
     if content_type == None or content_type == "application/octet-stream":
-        if re.search(r"^Zip archive data.*", magic.from_file(file_path)):
+        kind = filetype.guess(file_path)
+        if kind and kind.mime == "application/zip":
             content_type = "application/zip"
-
+    
     if content_type == "application/x-tar":
         tar = tarfile.open(file_path)
         tar.extractall(path=output_path)
@@ -445,10 +447,10 @@ def unpack_downloaded_file(file_path, output_path, content_type):
             is_unpacked = True
         else:
             extension = re.findall(r"\..*$", file_path)[0]
-            logger.debug("File extension %s not suported", extension)
+            logger.debug("File extension %s not supported", extension)
             is_unpacked = False
     else:
-        logger.debug("Content type %s not suported", content_type)
+        logger.debug("Content type %s not supported", content_type)
         is_unpacked = False
     return is_unpacked
 

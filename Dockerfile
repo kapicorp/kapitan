@@ -59,7 +59,6 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         git \
         ssh-client \
-        libmagic1 \
         gnupg \
         ca-certificates \
     && apt-get clean \
