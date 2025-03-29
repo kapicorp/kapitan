@@ -74,8 +74,9 @@ def ref_write(args, ref_controller):
     if args.target_name:
         inv = get_inventory(args.inventory_path)
 
-        if not inv.get_parameters(args.target_name).kapitan.secrets:
+        try:
             reference_backend_configs = inv.get_parameters(args.target_name).kapitan.secrets
+        except:
             raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
     type_name, token_path = token_name.split(":")
@@ -106,10 +107,11 @@ def ref_write(args, ref_controller):
         ref_controller[tag] = secret_obj
 
     elif type_name == KapitanReferencesTypes.GKMS:
-        key = args.key
-
+        key = None
+        
         if reference_backend_configs.gkms:
-            key = reference_backend_configs.gkms.key
+            key = args.key or reference_backend_configs.gkms.key
+            logger.debug(f"Using gkms key {key}")
 
         if not key:
             raise KapitanError(
@@ -120,10 +122,11 @@ def ref_write(args, ref_controller):
         ref_controller[tag] = secret_obj
 
     elif type_name == KapitanReferencesTypes.AWSKMS:
-        key = args.key
+        key = None
 
         if reference_backend_configs.awskms:
-            key = reference_backend_configs.awskms.key
+            key = args.key or reference_backend_configs.awskms.key
+            logger.debug(f"Using awskms key {key}")
 
         if not key:
             raise KapitanError(
@@ -134,10 +137,11 @@ def ref_write(args, ref_controller):
         ref_controller[tag] = secret_obj
 
     elif type_name == KapitanReferencesTypes.AZKMS:
-        key = args.key
+        key = None
 
         if reference_backend_configs.azkms:
-            key = reference_backend_configs.azkms.key
+            key = args.key or reference_backend_configs.azkms.key
+            logger.debug(f"Using azkms key {key}")
 
         if not key:
             raise KapitanError(
