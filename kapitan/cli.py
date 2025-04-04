@@ -72,13 +72,15 @@ def trigger_compile(args):
     # cache controller for use in reveal_maybe jinja2 filter
     cached.ref_controller_obj = ref_controller
     cached.revealer_obj = Revealer(ref_controller)
-
-    compile_targets(
-        inventory_path=args.inventory_path,
-        search_paths=search_paths,
-        ref_controller=ref_controller,
-        args=args,
-    )
+    try:
+        compile_targets(
+            inventory_path=args.inventory_path,
+            search_paths=search_paths,
+            ref_controller=ref_controller,
+            args=args,
+        )
+    except:
+        sys.exit(1)
 
 
 def build_parser():

@@ -127,8 +127,6 @@ class Kadet(InputType):
                 output_obj = kadet_module.main()
 
         except Exception as exc:
-            # Log traceback and exception as is
-            logger.exception("")
             raise CompileError(f"Could not load Kadet module: {spec.name[16:]}") from exc
 
         output_obj = _to_dict(output_obj)
