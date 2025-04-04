@@ -311,9 +311,7 @@ def generate_inventory(args):
         else:
             yaml.dump(inv, sys.stdout, Dumper=PrettyDumper, default_flow_style=False, indent=args.indent)
     except Exception as e:
-        if not isinstance(e, KapitanError):
-            logger.exception("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        sys.exit(1)
+        raise
 
 
 def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inventory:
@@ -340,7 +338,6 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
     backend = get_inventory_backend(backend_id)
 
     logger.debug(f"Using {backend.__name__} as inventory backend")
-
     try:
         inventory_backend = backend(
             inventory_path=inventory_path,
@@ -348,8 +345,7 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
             ignore_class_not_found=ignore_class_not_found,
         )
     except InventoryError as e:
-        logger.fatal(e)
-        raise
+        sys.exit(1)
 
     cached.inv = inventory_backend
     cached.global_inv = cached.inv.inventory
