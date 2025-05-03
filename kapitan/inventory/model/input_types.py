@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, List, Literal, Optional, Union, Dict, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -16,6 +16,7 @@ class InputTypes(StrEnum):
     COPY = "copy"
     REMOVE = "remove"
     EXTERNAL = "external"
+    KUSTOMIZE = "kustomize"
 
 
 class OutputType(StrEnum):
@@ -95,6 +96,16 @@ class KapitanInputTypeRemoveConfig(KapitanInputTypeBaseConfig):
     output_path: Optional[str] = None
 
 
+class KapitanInputTypeKustomizeConfig(KapitanInputTypeBaseConfig):
+    input_type: Literal[InputTypes.KUSTOMIZE] = InputTypes.KUSTOMIZE
+    output_type: OutputType = OutputType.YAML
+    namespace: Optional[str] = None
+    prune: Optional[bool] = False
+    patches: Optional[Dict[str, Any]] = {}
+    patches_strategic: Optional[Dict[str, Any]] = {}
+    patches_json: Optional[Dict[str, Any]] = {}
+
+
 CompileInputTypeConfig = Annotated[
     Union[
         KapitanInputTypeJinja2Config,
@@ -104,6 +115,7 @@ CompileInputTypeConfig = Annotated[
         KapitanInputTypeJsonnetConfig,
         KapitanInputTypeHelmConfig,
         KapitanInputTypeRemoveConfig,
+        KapitanInputTypeKustomizeConfig,
     ],
     Field(discriminator="input_type"),
 ]

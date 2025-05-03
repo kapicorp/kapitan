@@ -72,3 +72,7 @@ class RequestUnsuccessfulError(KapitanError):
 
 class KubernetesManifestValidationError(KapitanError):
     """kubernetes manifest schema validation error"""
+
+
+class KustomizeTemplateError(KapitanError):
+    """Raised when kustomize template fails."""

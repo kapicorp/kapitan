@@ -5,20 +5,28 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+"""Helm templating tool implementation for Kapitan.
+
+This module provides a Helm implementation for the Kapitan templating system.
+It allows rendering Helm charts and integrating them into Kapitan's compilation process.
+"""
+
 import logging
 import os
 import tempfile
+from typing import Dict, Any, Optional, Tuple
 
 import yaml
 
 from kapitan.errors import HelmTemplateError
 from kapitan.helm_cli import helm_cli
-from kapitan.inputs.base import InputType
+from kapitan.inputs.templating import TemplatingTool, TemplatingToolRegistry
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
 
 logger = logging.getLogger(__name__)
 
+# Set of Helm flags that are not allowed to be used
 HELM_DENIED_FLAGS = {
     "dry-run",
     "generate-name",
@@ -27,38 +35,120 @@ HELM_DENIED_FLAGS = {
     "show-only",
 }
 
+# Default flags to be used with Helm
 HELM_DEFAULT_FLAGS = {"--include-crds": True, "--skip-tests": True}
 
+def write_helm_values_file(helm_values: Dict[str, Any]) -> str:
+    """Dump helm values into a temporary YAML file.
 
-class Helm(InputType):
-    def compile_file(self, config: KapitanInputTypeHelmConfig, input_path, compile_path):
-        """Render templates in input_path/templates and write to compile_path.
-        input_path must be a directory containing a helm chart.
+    This function creates a temporary YAML file containing the Helm values
+    that will be used during chart rendering.
 
-        kwargs:
-            reveal: default False, set to reveal refs on compile
-            target_name: default None, set to current target being compiled
+    Args:
+        helm_values: A dictionary containing helm values to be written
+
+    Returns:
+        str: The path to the temporary YAML file
+
+    Example:
+        values = {
+            'replicas': 3,
+            'image': {
+                'repository': 'nginx',
+                'tag': 'latest'
+            }
+        }
+        values_file = write_helm_values_file(values)
+    """
+    _, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
+    with open(helm_values_file, "w") as fp:
+        yaml.safe_dump(helm_values, fp)
+
+    return helm_values_file
+
+class Helm(TemplatingTool):
+    """Helm templating tool implementation.
+
+    This class implements the TemplatingTool interface for Helm.
+    It handles rendering of Helm charts using the helm CLI.
+
+    Configuration options:
+        helm_path: Path to the helm binary (default: 'helm')
+        helm_values: Dictionary of values to pass to the chart
+        helm_values_files: List of paths to values files
+        helm_params: Dictionary of additional helm parameters
+        kube_version: Kubernetes version for API validation
+
+    Example:
+        # In your inventory file
+        kapitan:
+          compile:
+            - output_path: manifests
+              input_type: helm
+              input_paths:
+                - charts/my-chart
+              helm_values:
+                replicas: 3
+                image:
+                  repository: nginx
+                  tag: latest
+              helm_params:
+                name: my-release
+                namespace: default
+    """
+
+    def __init__(self, compile_path: str, search_paths: list, ref_controller, target_name: str, args):
+        """Initialize the Helm templating tool.
+
+        Args:
+            compile_path: Base path for compiled output
+            search_paths: List of paths to search for input files
+            ref_controller: Reference controller for handling refs
+            target_name: Name of the target being compiled
+            args: Additional arguments passed to the tool
+        """
+        super().__init__(compile_path, search_paths, ref_controller, target_name, args)
+        self.helm_path = args.helm_path if hasattr(args, 'helm_path') else 'helm'
+
+    def render(self, config: KapitanInputTypeHelmConfig, input_path: str, output_path: str) -> str:
+        """Render Helm templates using the helm CLI.
+
+        This method:
+        1. Prepares Helm values and parameters
+        2. Creates a temporary directory for output
+        3. Renders the chart using helm template
+        4. Returns the path to the rendered output
+
+        Args:
+            config: Configuration object containing Helm-specific settings
+            input_path: Path to the Helm chart
+            output_path: Path where rendered output should be written
+
+        Returns:
+            str: Path to the rendered output
 
         Raises:
-            HelmTemplateError: if helm template fails
-
+            HelmTemplateError: If helm template fails
         """
         helm_values_files = config.helm_values_files
         helm_params = config.helm_params
         helm_path = config.helm_path
 
+        # Create temporary values file if values are provided
         helm_values_file = None
         if config.helm_values:
             helm_values_file = write_helm_values_file(config.helm_values)
 
+        # Prepare Helm flags
         helm_flags = dict(HELM_DEFAULT_FLAGS)
-        # add to flags if set
         if config.kube_version:
             helm_flags["--api-versions"] = config.kube_version
 
+        # Create temporary directory for output
         temp_dir = tempfile.mkdtemp()
-        # save the template output to temp dir first
-        _, error_message = render_chart(
+        
+        # Render the chart
+        _, error_message = self.render_chart(
             chart_dir=input_path,
             output_path=temp_dir,
             helm_path=helm_path,
@@ -67,186 +157,326 @@ class Helm(InputType):
             helm_values_files=helm_values_files,
             helm_flags=helm_flags,
         )
+        
         if error_message:
             raise HelmTemplateError(error_message)
-        # Iterate over all files in the temporary directory
 
-        walk_root_files = os.walk(temp_dir)
-        for current_dir, _, files in walk_root_files:
-            for file in files:  # go through all the template files
-                rel_dir = os.path.relpath(current_dir, temp_dir)
-                rel_file_name = os.path.join(rel_dir, file)
-                full_file_name = os.path.join(current_dir, file)
-                # Open each file and write its content to the compilation path
-                with open(full_file_name, "r", encoding="utf-8") as f:
-                    file_path = os.path.join(compile_path, rel_file_name)
-                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                    item_value = list(yaml.safe_load_all(f))
-                    self.to_file(config, file_path, item_value)
+        return temp_dir
 
-    def render_chart(self, *args, **kwargs):
-        return render_chart(*args, **kwargs)
+    def render_chart(
+        self,
+        chart_dir: str,
+        output_path: str,
+        helm_path: str,
+        helm_params: Dict[str, Any],
+        helm_values_file: Optional[str],
+        helm_values_files: Optional[list],
+        helm_flags: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[str, Optional[str]]:
+        """Render a Helm chart using the helm CLI.
 
+        This is a helper method that handles the actual helm template command execution.
+        It validates parameters, builds the command, and executes it.
 
-def render_chart(
-    chart_dir,
-    output_path,
-    helm_path,
-    helm_params,
-    helm_values_file,
-    helm_values_files,
-    helm_flags=None,
-):
-    """
-    Renders helm chart located at chart_dir.
+        Args:
+            chart_dir: Path to the Helm chart directory
+            output_path: Path to write rendered chart
+            helm_path: Path to the helm binary
+            helm_params: Dictionary of Helm parameters
+            helm_values_file: Path to a values file
+            helm_values_files: List of paths to values files
+            helm_flags: Dictionary of additional Helm flags
 
-    Args:
-        output_path: path to write rendered chart. If '-', returns rendered chart as string.
+        Returns:
+            Tuple[str, Optional[str]]: (output, error_message)
 
-    Returns:
-        tuple: (output, error_message)
-    """
-    args = ["template"]
+        Raises:
+            ValueError: If invalid parameters are provided
+        """
+        args = ["template"]
+        helm_flags = helm_flags or HELM_DEFAULT_FLAGS
 
-    name = helm_params.pop("name", None)
-    output_file = helm_params.pop("output_file", None)
+        # Extract special parameters
+        name = helm_params.pop("name", None)
+        output_file = helm_params.pop("output_file", None)
 
-    if helm_flags is None:
-        helm_flags = HELM_DEFAULT_FLAGS
+        # Validate and process parameters
+        self._validate_helm_params(helm_params)
+        self._process_helm_params(helm_params, helm_flags)
 
-    # Validate and process helm parameters
-    for param, value in helm_params.items():
-        if len(param) == 1:
-            raise ValueError(f"invalid helm flag: '{param}'. helm_params supports only long flag names")
+        # Handle release name
+        self._handle_release_name(name, helm_flags)
 
-        if "-" in param:
-            raise ValueError(f"helm flag names must use '_' and not '-': {param}")
+        # Build the command
+        self._build_helm_command(
+            args,
+            helm_flags,
+            helm_values_file,
+            helm_values_files,
+            output_path,
+            output_file,
+            name,
+            chart_dir,
+        )
 
-        param = param.replace("_", "-")
+        # Execute the command
+        return self._execute_helm_command(helm_path, args, output_path, output_file, helm_flags)
 
-        if param in ("set", "set-file", "set-string"):
-            raise ValueError(
-                f"helm '{param}' flag is not supported. Use 'helm_values' to specify template values"
-            )
+    def _validate_helm_params(self, helm_params: Dict[str, Any]) -> None:
+        """Validate Helm parameters.
 
-        if param == "values":
-            raise ValueError(
-                f"helm '{param}' flag is not supported. Use 'helm_values_files' to specify template values files"
-            )
+        Args:
+            helm_params: Dictionary of Helm parameters
 
-        if param in HELM_DENIED_FLAGS:
-            raise ValueError(f"helm flag '{param}' is not supported.")
+        Raises:
+            ValueError: If parameters are invalid
+        """
+        for param, value in helm_params.items():
+            if len(param) == 1:
+                raise ValueError(f"invalid helm flag: '{param}'. helm_params supports only long flag names")
 
-        # Set helm flags
-        helm_flags[f"--{param}"] = value
+            if "-" in param:
+                raise ValueError(f"helm flag names must use '_' and not '-': {param}")
 
-    # 'release_name' used to be the "helm template" [NAME] parameter.
-    # For backward compatibility, assume it is the '--release-name' flag only if its value is a bool.
-    release_name = helm_flags.get("--release-name")
-    if release_name is not None and not isinstance(release_name, bool):
-        logger.warning("using 'release_name' to specify the output name is deprecated. Use 'name' instead")
-        del helm_flags["--release-name"]
-        # name is used in place of release_name if both are specified
-        name = name or release_name
+            if param in ("set", "set-file", "set-string"):
+                raise ValueError(
+                    f"helm '{param}' flag is not supported. Use 'helm_values' to specify template values"
+                )
 
-    # Add flags to args list
-    for flag, value in helm_flags.items():
-        # boolean flag should be passed when present, and omitted when not specified
-        if isinstance(value, bool):
-            if value:
+            if param == "values":
+                raise ValueError(
+                    f"helm '{param}' flag is not supported. Use 'helm_values_files' to specify template values files"
+                )
+
+            if param in HELM_DENIED_FLAGS:
+                raise ValueError(f"helm flag '{param}' is not supported.")
+
+    def _process_helm_params(self, helm_params: Dict[str, Any], helm_flags: Dict[str, Any]) -> None:
+        """Process Helm parameters into flags.
+
+        Args:
+            helm_params: Dictionary of Helm parameters
+            helm_flags: Dictionary to store processed flags
+        """
+        for param, value in helm_params.items():
+            param = param.replace("_", "-")
+            helm_flags[f"--{param}"] = value
+
+    def _handle_release_name(self, name: Optional[str], helm_flags: Dict[str, Any]) -> None:
+        """Handle release name parameter.
+
+        Args:
+            name: Release name
+            helm_flags: Dictionary of Helm flags
+        """
+        release_name = helm_flags.get("--release-name")
+        if release_name is not None and not isinstance(release_name, bool):
+            logger.warning("using 'release_name' to specify the output name is deprecated. Use 'name' instead")
+            del helm_flags["--release-name"]
+            name = name or release_name
+
+    def _build_helm_command(
+        self,
+        args: list,
+        helm_flags: Dict[str, Any],
+        helm_values_file: Optional[str],
+        helm_values_files: Optional[list],
+        output_path: str,
+        output_file: Optional[str],
+        name: Optional[str],
+        chart_dir: str,
+    ) -> None:
+        """Build the Helm command.
+
+        Args:
+            args: List to store command arguments
+            helm_flags: Dictionary of Helm flags
+            helm_values_file: Path to a values file
+            helm_values_files: List of paths to values files
+            output_path: Path to write output
+            output_file: Specific output file
+            name: Release name
+            chart_dir: Path to chart directory
+        """
+        # Add flags
+        for flag, value in helm_flags.items():
+            if isinstance(value, bool):
+                if value:
+                    args.append(flag)
+            else:
                 args.append(flag)
+                args.append(str(value))
+
+        # Add values files
+        if helm_values_file:
+            args.extend(["--values", helm_values_file])
+        if helm_values_files:
+            for file_name in helm_values_files:
+                args.extend(["--values", file_name])
+
+        # Set output directory
+        if not output_file and output_path not in (None, "-"):
+            args.extend(["--output-dir", output_path])
+
+        # Add name or generate-name
+        if "name_template" not in helm_flags:
+            args.append(name or "--generate-name")
+
+        # Add chart directory
+        args.append(chart_dir)
+
+    def _execute_helm_command(
+        self,
+        helm_path: str,
+        args: list,
+        output_path: str,
+        output_file: Optional[str],
+        helm_flags: Dict[str, Any],
+    ) -> Tuple[str, Optional[str]]:
+        """Execute the Helm command.
+
+        Args:
+            helm_path: Path to helm binary
+            args: Command arguments
+            output_path: Path to write output
+            output_file: Specific output file
+            helm_flags: Dictionary of Helm flags
+
+        Returns:
+            Tuple[str, Optional[str]]: (output, error_message)
+        """
+        if output_path == "-":
+            _, helm_output = tempfile.mkstemp(".helm_output.yml", text=True)
+            with open(helm_output, "w+") as f:
+                error_message = helm_cli(helm_path, args, stdout=f)
+                f.seek(0)
+                return (f.read(), error_message)
+
+        if output_file:
+            with open(os.path.join(output_path, output_file), "wb") as f:
+                error_message = helm_cli(helm_path, args, stdout=f)
+                return ("", error_message)
         else:
-            args.append(flag)
-            args.append(str(value))
-
-    # Add values files to args list
-    if helm_values_file:
-        args.append("--values")
-        args.append(helm_values_file)
-
-    if helm_values_files:
-        for file_name in helm_values_files:
-            args.append("--values")
-            args.append(file_name)
-
-    # Set output directory
-    if not output_file and output_path not in (None, "-"):
-        args.append("--output-dir")
-        args.append(output_path)
-
-    if "name_template" not in helm_flags:
-        args.append(name or "--generate-name")
-
-    # Add chart directory to args list
-    # uses absolute path to make sure helm interprets it as a
-    # local dir and not a chart_name that it should download.
-    args.append(chart_dir)
-
-    # If output_path is '-', output is a string with rendered chart
-    if output_path == "-":
-        _, helm_output = tempfile.mkstemp(".helm_output.yml", text=True)
-        with open(helm_output, "w+") as f:
-            error_message = helm_cli(helm_path, args, stdout=f)
-            f.seek(0)
-            return (f.read(), error_message)
-
-    if output_file:
-        with open(os.path.join(output_path, output_file), "wb") as f:
-            # can't be verbose when capturing stdout
-            error_message = helm_cli(helm_path, args, stdout=f)
+            error_message = helm_cli(helm_path, args, verbose="--debug" in helm_flags)
             return ("", error_message)
-    else:
-        error_message = helm_cli(helm_path, args, verbose="--debug" in helm_flags)
-        return ("", error_message)
 
+    def compile_file(self, config: KapitanInputTypeHelmConfig, input_path: str, compile_path: str) -> None:
+        """Compile a Helm chart.
 
-def write_helm_values_file(helm_values: dict):
-    """Dump helm values into a temporary YAML file.
+        This method overrides the default compile_file implementation to handle
+        Helm-specific output processing. It:
+        1. Renders the chart
+        2. Processes each output file
+        3. Writes the processed files to the compile path
 
-    Args:
-        helm_values: A dictionary containing helm values.
+        Args:
+            config: Configuration object containing Helm-specific settings
+            input_path: Path to the Helm chart
+            compile_path: Path to the output directory
 
-    Returns:
-        str: The path to the temporary YAML file.
-    """
-    _, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
-    with open(helm_values_file, "w") as fp:
-        yaml.safe_dump(helm_values, fp)
-
-    return helm_values_file
-
+        Raises:
+            HelmTemplateError: If compilation fails
+        """
+        try:
+            output_path = self.render(config, input_path, compile_path)
+            
+            # Process each rendered file
+            for current_dir, _, files in os.walk(output_path):
+                for file in files:
+                    rel_dir = os.path.relpath(current_dir, output_path)
+                    rel_file_name = os.path.join(rel_dir, file)
+                    full_file_name = os.path.join(current_dir, file)
+                    
+                    # Read and process each file
+                    with open(full_file_name, "r", encoding="utf-8") as f:
+                        file_path = os.path.join(compile_path, rel_file_name)
+                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                        item_value = list(yaml.safe_load_all(f))
+                        self.to_file(config, file_path, item_value)
+        except Exception as e:
+            logger.error(f"Error rendering Helm templates: {str(e)}")
+            raise
 
 class HelmChart(BaseModel):
-    """
-    Represents a Helm chart. Renders the chart and stores the rendered objects in self.root.
+    """Represents a Helm chart for programmatic use.
 
-    Args:
-        chart_dir: Path to the Helm chart directory.
+    This class provides a programmatic interface to Helm charts, allowing them
+    to be rendered and manipulated in Python code. It stores the rendered objects
+    in self.root for further processing.
 
-    Raises:
-        HelmTemplateError: if helm template fails
+    Example:
+        chart = HelmChart(
+            chart_dir="charts/my-chart",
+            helm_values={"replicas": 3},
+            helm_params={"name": "my-release"}
+        )
+        chart.new()  # Renders the chart
+        print(chart.root)  # Access rendered objects
     """
 
     chart_dir: str
-    helm_params: dict = {}
-    helm_values: dict = {}
-    helm_path: str = None
+    helm_params: Dict[str, Any] = {}
+    helm_values: Dict[str, Any] = {}
+    helm_path: Optional[str] = None
 
-    # Load and process the Helm chart
-    def new(self):
+    def new(self) -> None:
+        """Render the chart and store objects in self.root.
+
+        This method:
+        1. Loads the chart using load_chart()
+        2. Processes each object
+        3. Stores them in self.root with unique keys
+
+        The keys are constructed as: {name}-{kind} where both are lowercase
+        and special characters are replaced with hyphens.
+        """
         for obj in self.load_chart():
-            self.root[f"{obj['metadata']['name'].lower()}-{obj['kind'].lower().replace(':','-')}"] = (
-                BaseObj.from_dict(obj)
-            )
+            if obj:
+                self.root[f"{obj['metadata']['name'].lower()}-{obj['kind'].lower().replace(':','-')}"] = (
+                    BaseObj.from_dict(obj)
+                )
 
-    def load_chart(self):
-        helm_values_file = None
-        if self.helm_values != {}:
-            helm_values_file = write_helm_values_file(self.helm_values)
-        output, error_message = render_chart(
-            self.chart_dir, "-", self.helm_path, self.helm_params, helm_values_file, None
+    def load_chart(self) -> list:
+        """Load and render the Helm chart.
+
+        Returns:
+            list: List of rendered Kubernetes objects
+
+        Raises:
+            HelmTemplateError: If chart rendering fails
+        """
+        # Create a Helm instance to handle the rendering
+        helm = Helm(
+            compile_path="",  # Not needed for our use case
+            search_paths=[],  # Not needed for our use case
+            ref_controller=None,  # Not needed for our use case
+            target_name="",  # Not needed for our use case
+            args=None  # Not needed for our use case
         )
+        
+        # Create temporary values file if values are provided
+        helm_values_file = None
+        if self.helm_values:
+            helm_values_file = write_helm_values_file(self.helm_values)
+
+        # Prepare Helm flags
+        helm_flags = dict(HELM_DEFAULT_FLAGS)
+        
+        # Render the chart
+        output, error_message = helm.render_chart(
+            chart_dir=self.chart_dir,
+            output_path="-",  # Output to stdout
+            helm_path=self.helm_path or "helm",
+            helm_params=self.helm_params,
+            helm_values_file=helm_values_file,
+            helm_values_files=None,
+            helm_flags=helm_flags,
+        )
+        
         if error_message:
             raise HelmTemplateError(error_message)
 
-        return yaml.safe_load_all(output)
+        return list(yaml.safe_load_all(output))
+
+# Register the Helm tool
+TemplatingToolRegistry.register(Helm)

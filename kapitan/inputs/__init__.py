@@ -7,6 +7,7 @@ import importlib
 from typing import Type
 
 from kapitan.inventory.model.input_types import InputTypes
+from kapitan.inputs.kustomize import Kustomize
 
 from .base import InputType
 
@@ -23,6 +24,7 @@ def get_compiler(input_type: InputType) -> Type[InputType]:
         InputTypes.COPY: "copy",
         InputTypes.EXTERNAL: "external",
         InputTypes.REMOVE: "remove",
+        InputTypes.KUSTOMIZE: "kustomize",
     }
 
     module_name = module_map.get(input_type)
@@ -34,3 +36,14 @@ def get_compiler(input_type: InputType) -> Type[InputType]:
             raise ImportError(f"Could not import module or class for {input_type}: {e}") from e
     else:
         return None  # Or raise an appropriate error for unknown input_type
+
+def register_input_types():
+    """Register all input types."""
+    InputTypeRegistry.register(Jsonnet)
+    InputTypeRegistry.register(Jinja2)
+    InputTypeRegistry.register(Helm)
+    InputTypeRegistry.register(Kadet)
+    InputTypeRegistry.register(Copy)
+    InputTypeRegistry.register(Remove)
+    InputTypeRegistry.register(External)
+    InputTypeRegistry.register(Kustomize)
