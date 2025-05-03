@@ -5,10 +5,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""Kustomize templating tool implementation for Kapitan.
+"""Kustomize implementation for Kapitan.
 
-This module provides a Kustomize implementation for the Kapitan templating system.
-It allows rendering Kustomize overlays and integrating them into Kapitan's compilation process.
+This module provides a Kustomize implementation for rendering overlays.
 """
 
 import logging
@@ -27,7 +26,7 @@ from kapitan.inventory.model.input_types import KapitanInputTypeKustomizeConfig
 logger = logging.getLogger(__name__)
 
 class Kustomize(InputType):
-    """Kustomize templating tool implementation.
+    """Kustomize implementation.
 
     This class implements the InputType interface for Kustomize.
     It handles rendering of Kustomize overlays using the kustomize CLI.
@@ -41,7 +40,7 @@ class Kustomize(InputType):
     """
 
     def __init__(self, compile_path: str, search_paths: list, ref_controller, target_name: str, args):
-        """Initialize the Kustomize templating tool.
+        """Initialize the Kustomize implementation.
 
         Args:
             compile_path: Base path for compiled output
@@ -104,24 +103,11 @@ class Kustomize(InputType):
                 for name, patch in config.patches.items():
                     patch_file = os.path.join(temp_dir, f"{name}.yaml")
                     with open(patch_file, "w") as f:
-                        yaml.dump(patch, f, default_flow_style=False)
+                        yaml.dump(patch["patch"], f, default_flow_style=False)
                     kustomization["patches"].append({
                         "path": os.path.basename(patch_file),
-                        "target": {
-                            "kind": patch.get("kind"),
-                            "name": patch.get("metadata", {}).get("name")
-                        }
+                        "target": patch["target"]
                     })
-            if config.patches_strategic:
-                # Convert strategic merge patches to regular patches
-                for name, patch in config.patches_strategic.items():
-                    if "metadata" not in patch:
-                        patch["metadata"] = {}
-                    if "namespace" not in patch["metadata"]:
-                        patch["metadata"]["namespace"] = config.namespace
-                kustomization["patches"] = self._create_patch_files(temp_dir, config.patches_strategic, "patch")
-            if config.patches_json:
-                kustomization["patchesJson6902"] = self._create_json_patches(config.patches_json)
 
             # Write the kustomization file
             with open(kustomization_path, "w") as f:
@@ -155,41 +141,4 @@ class Kustomize(InputType):
                             yaml.dump(doc, out, default_flow_style=False)
 
         except Exception as e:
-            raise KustomizeTemplateError(f"Failed to compile Kustomize overlay: {str(e)}")
-
-    def _create_patch_files(self, temp_dir: str, patches: Dict[str, Any], patch_type: str) -> List[str]:
-        """Create patch files from the provided patches.
-
-        Args:
-            temp_dir: Directory to create patch files in
-            patches: Dictionary of patches to create
-            patch_type: Type of patch (patch or strategic)
-
-        Returns:
-            List[str]: List of paths to created patch files
-        """
-        patch_files = []
-        for name, patch in patches.items():
-            patch_file = os.path.join(temp_dir, f"{name}-{patch_type}.yaml")
-            with open(patch_file, "w") as f:
-                yaml.dump(patch, f, default_flow_style=False)
-            patch_files.append(patch_file)
-        return patch_files
-
-    def _create_json_patches(self, patches: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Create JSON 6902 patches from the provided patches.
-
-        Args:
-            patches: Dictionary of JSON patches to create
-
-        Returns:
-            List[Dict[str, Any]]: List of JSON patch objects
-        """
-        json_patches = []
-        for target, patch in patches.items():
-            json_patch = {
-                "target": target,
-                "patch": patch
-            }
-            json_patches.append(json_patch)
-        return json_patches 
+            raise KustomizeTemplateError(f"Failed to compile Kustomize overlay: {str(e)}") 

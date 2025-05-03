@@ -14,13 +14,14 @@ It allows rendering Helm charts and integrating them into Kapitan's compilation 
 import logging
 import os
 import tempfile
+import shutil
 from typing import Dict, Any, Optional, Tuple
 
 import yaml
 
 from kapitan.errors import HelmTemplateError
 from kapitan.helm_cli import helm_cli
-from kapitan.inputs.templating import TemplatingTool, TemplatingToolRegistry
+from kapitan.inputs.base import InputType
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
 
@@ -49,16 +50,6 @@ def write_helm_values_file(helm_values: Dict[str, Any]) -> str:
 
     Returns:
         str: The path to the temporary YAML file
-
-    Example:
-        values = {
-            'replicas': 3,
-            'image': {
-                'repository': 'nginx',
-                'tag': 'latest'
-            }
-        }
-        values_file = write_helm_values_file(values)
     """
     _, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
     with open(helm_values_file, "w") as fp:
@@ -66,10 +57,10 @@ def write_helm_values_file(helm_values: Dict[str, Any]) -> str:
 
     return helm_values_file
 
-class Helm(TemplatingTool):
+class Helm(InputType):
     """Helm templating tool implementation.
 
-    This class implements the TemplatingTool interface for Helm.
+    This class implements the InputType interface for Helm.
     It handles rendering of Helm charts using the helm CLI.
 
     Configuration options:
@@ -78,23 +69,6 @@ class Helm(TemplatingTool):
         helm_values_files: List of paths to values files
         helm_params: Dictionary of additional helm parameters
         kube_version: Kubernetes version for API validation
-
-    Example:
-        # In your inventory file
-        kapitan:
-          compile:
-            - output_path: manifests
-              input_type: helm
-              input_paths:
-                - charts/my-chart
-              helm_values:
-                replicas: 3
-                image:
-                  repository: nginx
-                  tag: latest
-              helm_params:
-                name: my-release
-                namespace: default
     """
 
     def __init__(self, compile_path: str, search_paths: list, ref_controller, target_name: str, args):
@@ -110,22 +84,19 @@ class Helm(TemplatingTool):
         super().__init__(compile_path, search_paths, ref_controller, target_name, args)
         self.helm_path = args.helm_path if hasattr(args, 'helm_path') else 'helm'
 
-    def render(self, config: KapitanInputTypeHelmConfig, input_path: str, output_path: str) -> str:
-        """Render Helm templates using the helm CLI.
+    def compile_file(self, config: KapitanInputTypeHelmConfig, input_path: str, compile_path: str) -> None:
+        """Compile a Helm chart.
 
         This method:
         1. Prepares Helm values and parameters
         2. Creates a temporary directory for output
         3. Renders the chart using helm template
-        4. Returns the path to the rendered output
+        4. Writes the output to the compile path
 
         Args:
             config: Configuration object containing Helm-specific settings
             input_path: Path to the Helm chart
-            output_path: Path where rendered output should be written
-
-        Returns:
-            str: Path to the rendered output
+            compile_path: Path where rendered output should be written
 
         Raises:
             HelmTemplateError: If helm template fails
@@ -161,7 +132,14 @@ class Helm(TemplatingTool):
         if error_message:
             raise HelmTemplateError(error_message)
 
-        return temp_dir
+        # Copy rendered files to compile path
+        for root, _, files in os.walk(temp_dir):
+            for file in files:
+                src_path = os.path.join(root, file)
+                rel_path = os.path.relpath(src_path, temp_dir)
+                dst_path = os.path.join(compile_path, rel_path)
+                os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+                shutil.copy2(src_path, dst_path)
 
     def render_chart(
         self,
@@ -360,43 +338,6 @@ class Helm(TemplatingTool):
             error_message = helm_cli(helm_path, args, verbose="--debug" in helm_flags)
             return ("", error_message)
 
-    def compile_file(self, config: KapitanInputTypeHelmConfig, input_path: str, compile_path: str) -> None:
-        """Compile a Helm chart.
-
-        This method overrides the default compile_file implementation to handle
-        Helm-specific output processing. It:
-        1. Renders the chart
-        2. Processes each output file
-        3. Writes the processed files to the compile path
-
-        Args:
-            config: Configuration object containing Helm-specific settings
-            input_path: Path to the Helm chart
-            compile_path: Path to the output directory
-
-        Raises:
-            HelmTemplateError: If compilation fails
-        """
-        try:
-            output_path = self.render(config, input_path, compile_path)
-            
-            # Process each rendered file
-            for current_dir, _, files in os.walk(output_path):
-                for file in files:
-                    rel_dir = os.path.relpath(current_dir, output_path)
-                    rel_file_name = os.path.join(rel_dir, file)
-                    full_file_name = os.path.join(current_dir, file)
-                    
-                    # Read and process each file
-                    with open(full_file_name, "r", encoding="utf-8") as f:
-                        file_path = os.path.join(compile_path, rel_file_name)
-                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                        item_value = list(yaml.safe_load_all(f))
-                        self.to_file(config, file_path, item_value)
-        except Exception as e:
-            logger.error(f"Error rendering Helm templates: {str(e)}")
-            raise
-
 class HelmChart(BaseModel):
     """Represents a Helm chart for programmatic use.
 
@@ -477,6 +418,3 @@ class HelmChart(BaseModel):
             raise HelmTemplateError(error_message)
 
         return list(yaml.safe_load_all(output))
-
-# Register the Helm tool
-TemplatingToolRegistry.register(Helm)
