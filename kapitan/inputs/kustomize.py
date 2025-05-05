@@ -15,7 +15,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import Dict, Any, Optional, Tuple, List
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -24,6 +24,7 @@ from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeKustomizeConfig
 
 logger = logging.getLogger(__name__)
+
 
 class Kustomize(InputType):
     """Kustomize implementation.
@@ -50,9 +51,11 @@ class Kustomize(InputType):
             args: Additional arguments passed to the tool
         """
         super().__init__(compile_path, search_paths, ref_controller, target_name, args)
-        self.kustomize_path = args.kustomize_path if hasattr(args, 'kustomize_path') else 'kustomize'
+        self.kustomize_path = args.kustomize_path if hasattr(args, "kustomize_path") else "kustomize"
 
-    def compile_file(self, config: KapitanInputTypeKustomizeConfig, input_path: str, compile_path: str) -> None:
+    def compile_file(
+        self, config: KapitanInputTypeKustomizeConfig, input_path: str, compile_path: str
+    ) -> None:
         """Compile a Kustomize overlay.
 
         This method:
@@ -77,7 +80,9 @@ class Kustomize(InputType):
             # Get the absolute path to the input directory
             abs_input_path = os.path.abspath(input_path)
             if not os.path.isdir(abs_input_path):
-                raise KustomizeTemplateError(f"Input path {input_path} must be a directory containing a kustomization.yaml file")
+                raise KustomizeTemplateError(
+                    f"Input path {input_path} must be a directory containing a kustomization.yaml file"
+                )
 
             # Copy the input directory to the temporary directory
             input_dir_name = os.path.basename(abs_input_path)
@@ -104,10 +109,9 @@ class Kustomize(InputType):
                     patch_file = os.path.join(temp_dir, f"{name}.yaml")
                     with open(patch_file, "w") as f:
                         yaml.dump(patch["patch"], f, default_flow_style=False)
-                    kustomization["patches"].append({
-                        "path": os.path.basename(patch_file),
-                        "target": patch["target"]
-                    })
+                    kustomization["patches"].append(
+                        {"path": os.path.basename(patch_file), "target": patch["target"]}
+                    )
 
             # Write the kustomization file
             with open(kustomization_path, "w") as f:
@@ -134,11 +138,11 @@ class Kustomize(InputType):
                         kind = doc.get("kind", "").lower()
                         name = doc.get("metadata", {}).get("name", "").lower()
                         filename = f"{name}-{kind}.yaml" if name and kind else "output.yaml"
-                        
+
                         # Write the document to the output file
                         output_path = os.path.join(compile_path, filename)
                         with open(output_path, "w") as out:
                             yaml.dump(doc, out, default_flow_style=False)
 
         except Exception as e:
-            raise KustomizeTemplateError(f"Failed to compile Kustomize overlay: {str(e)}") 
+            raise KustomizeTemplateError(f"Failed to compile Kustomize overlay: {str(e)}")

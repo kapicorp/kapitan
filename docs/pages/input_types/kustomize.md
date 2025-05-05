@@ -223,4 +223,4 @@ To debug Kustomize issues:
 
 - [Kustomize Documentation](https://kustomize.io/)
 - [Kubernetes Documentation](https://kubernetes.io/docs/home/)
-- [Kapitan Input Types](../input_types/introduction.md) 
+- [Kapitan Input Types](../input_types/introduction.md)

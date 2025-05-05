@@ -13,9 +13,9 @@ It allows rendering Helm charts and integrating them into Kapitan's compilation 
 
 import logging
 import os
-import tempfile
 import shutil
-from typing import Dict, Any, Optional, Tuple
+import tempfile
+from typing import Any, Dict, Optional, Tuple
 
 import yaml
 
@@ -39,6 +39,7 @@ HELM_DENIED_FLAGS = {
 # Default flags to be used with Helm
 HELM_DEFAULT_FLAGS = {"--include-crds": True, "--skip-tests": True}
 
+
 def write_helm_values_file(helm_values: Dict[str, Any]) -> str:
     """Dump helm values into a temporary YAML file.
 
@@ -56,6 +57,7 @@ def write_helm_values_file(helm_values: Dict[str, Any]) -> str:
         yaml.safe_dump(helm_values, fp)
 
     return helm_values_file
+
 
 class Helm(InputType):
     """Helm templating tool implementation.
@@ -82,7 +84,7 @@ class Helm(InputType):
             args: Additional arguments passed to the tool
         """
         super().__init__(compile_path, search_paths, ref_controller, target_name, args)
-        self.helm_path = args.helm_path if hasattr(args, 'helm_path') else 'helm'
+        self.helm_path = args.helm_path if hasattr(args, "helm_path") else "helm"
 
     def compile_file(self, config: KapitanInputTypeHelmConfig, input_path: str, compile_path: str) -> None:
         """Compile a Helm chart.
@@ -117,7 +119,7 @@ class Helm(InputType):
 
         # Create temporary directory for output
         temp_dir = tempfile.mkdtemp()
-        
+
         # Render the chart
         _, error_message = self.render_chart(
             chart_dir=input_path,
@@ -128,7 +130,7 @@ class Helm(InputType):
             helm_values_files=helm_values_files,
             helm_flags=helm_flags,
         )
-        
+
         if error_message:
             raise HelmTemplateError(error_message)
 
@@ -249,7 +251,9 @@ class Helm(InputType):
         """
         release_name = helm_flags.get("--release-name")
         if release_name is not None and not isinstance(release_name, bool):
-            logger.warning("using 'release_name' to specify the output name is deprecated. Use 'name' instead")
+            logger.warning(
+                "using 'release_name' to specify the output name is deprecated. Use 'name' instead"
+            )
             del helm_flags["--release-name"]
             name = name or release_name
 
@@ -338,6 +342,7 @@ class Helm(InputType):
             error_message = helm_cli(helm_path, args, verbose="--debug" in helm_flags)
             return ("", error_message)
 
+
 class HelmChart(BaseModel):
     """Represents a Helm chart for programmatic use.
 
@@ -392,9 +397,9 @@ class HelmChart(BaseModel):
             search_paths=[],  # Not needed for our use case
             ref_controller=None,  # Not needed for our use case
             target_name="",  # Not needed for our use case
-            args=None  # Not needed for our use case
+            args=None,  # Not needed for our use case
         )
-        
+
         # Create temporary values file if values are provided
         helm_values_file = None
         if self.helm_values:
@@ -402,7 +407,7 @@ class HelmChart(BaseModel):
 
         # Prepare Helm flags
         helm_flags = dict(HELM_DEFAULT_FLAGS)
-        
+
         # Render the chart
         output, error_message = helm.render_chart(
             chart_dir=self.chart_dir,
@@ -413,7 +418,7 @@ class HelmChart(BaseModel):
             helm_values_files=None,
             helm_flags=helm_flags,
         )
-        
+
         if error_message:
             raise HelmTemplateError(error_message)
 

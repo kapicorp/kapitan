@@ -6,8 +6,8 @@ import functools  # Import functools for caching
 import importlib
 from typing import Type
 
-from kapitan.inventory.model.input_types import InputTypes
 from kapitan.inputs.kustomize import Kustomize
+from kapitan.inventory.model.input_types import InputTypes
 
 from .base import InputType
 

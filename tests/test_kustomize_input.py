@@ -11,12 +11,13 @@ import os
 import shutil
 import tempfile
 import unittest
-from typing import Dict, Any
+from typing import Any, Dict
 
 import yaml
 
 from kapitan.inputs.kustomize import Kustomize
 from kapitan.inventory.model.input_types import KapitanInputTypeKustomizeConfig
+
 
 class KustomizeInputTest(unittest.TestCase):
     """Test cases for Kustomize input type."""
@@ -304,5 +305,6 @@ class KustomizeInputTest(unittest.TestCase):
         finally:
             shutil.rmtree(temp_dir)
 
+
 if __name__ == "__main__":
-    unittest.main() 
+    unittest.main()
