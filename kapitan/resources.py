@@ -21,7 +21,7 @@ import yaml
 
 import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
-from kapitan.errors import CompileError, InventoryError, KapitanError
+from kapitan.errors import CompileError, InventoryError
 from kapitan.inventory import Inventory, get_inventory_backend
 from kapitan.utils import (
     PrettyDumper,
@@ -50,7 +50,10 @@ def resource_callbacks(search_paths):
     """
 
     return {
-        "jinja2_render_file": (("name", "ctx"), partial(jinja2_render_file, search_paths)),
+        "jinja2_render_file": (
+            ("name", "ctx"),
+            partial(jinja2_render_file, search_paths),
+        ),
         "inventory": (("target", "inv_path"), partial(inventory, search_paths)),
         "file_read": (("name",), partial(read_file, search_paths)),
         "file_exists": (("name",), partial(file_exists, search_paths)),
@@ -246,7 +249,13 @@ def search_imports(cwd, import_str, search_paths):
     # with a non existent import
     normalised_path = os.path.normpath(full_import_path)
 
-    logger.debug("cwd:%s import_str:%s basename:%s -> norm:%s", cwd, import_str, basename, normalised_path)
+    logger.debug(
+        "cwd:%s import_str:%s basename:%s -> norm:%s",
+        cwd,
+        import_str,
+        basename,
+        normalised_path,
+    )
 
     normalised_path_content = ""
     with open(normalised_path) as f:
@@ -256,7 +265,11 @@ def search_imports(cwd, import_str, search_paths):
     return normalised_path, normalised_path_content.encode()
 
 
-def inventory(search_paths: list = [], target_name: str = None, inventory_path: str = "./inventory"):
+def inventory(
+    search_paths: list = [],
+    target_name: str = None,
+    inventory_path: str = "./inventory",
+):
     """
     Reads inventory (set by inventory_path) in search_paths.
     set nodes_uri to change reclass nodes_uri the default value
@@ -307,9 +320,21 @@ def generate_inventory(args):
 
         if args.flat:
             inv = flatten_dict(inv)
-            yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False, indent=args.indent)
+            yaml.dump(
+                inv,
+                sys.stdout,
+                width=10000,
+                default_flow_style=False,
+                indent=args.indent,
+            )
         else:
-            yaml.dump(inv, sys.stdout, Dumper=PrettyDumper, default_flow_style=False, indent=args.indent)
+            yaml.dump(
+                inv,
+                sys.stdout,
+                Dumper=PrettyDumper,
+                default_flow_style=False,
+                indent=args.indent,
+            )
     except Exception as e:
         raise
 
@@ -324,7 +349,9 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
     if cached.inv and cached.inv.targets:
         return cached.inv
 
-    compose_target_name = hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
+    compose_target_name = (
+        hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
+    )
     if hasattr(cached.args, "compose_node_name") and cached.args.compose_node_name:
         logger.warning(
             "inventory flag '--compose-node-name' is deprecated and scheduled to be dropped with the next release. "
@@ -334,7 +361,9 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
 
     # select inventory backend
     backend_id = hasattr(cached.args, "inventory_backend") and cached.args.inventory_backend
-    compose_target_name = hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
+    compose_target_name = (
+        hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
+    )
     backend = get_inventory_backend(backend_id)
 
     logger.debug(f"Using {backend.__name__} as inventory backend")
