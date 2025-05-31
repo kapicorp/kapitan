@@ -12,10 +12,10 @@ in pkgs.mkShell {
     pkgs.ripgrep
     pkgs.uv
 
-    pkgs.python310
-    pkgs.python310.pkgs.pip
-    pkgs.python310.pkgs.setuptools
-    pkgs.python310.pkgs.cffi
+    pkgs.python312
+    pkgs.python312.pkgs.pip
+    pkgs.python312.pkgs.setuptools
+    pkgs.python312.pkgs.cffi
   ];
   shellHook = ''
     # Tells pip to put packages into $PIP_PREFIX instead of the usual locations.
