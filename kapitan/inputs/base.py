@@ -58,18 +58,15 @@ class InputType(object):
         # expand any globbed paths, taking into account provided search paths
         expanded_input_paths = []
         for input_path in comp_obj.input_paths:
-            globbed_paths = [
-                glob.glob(os.path.join(path, input_path)) for path in self.search_paths
-            ]
+            globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
             inputs = list(itertools.chain.from_iterable(globbed_paths))
             # remove duplicate inputs
             inputs = set(inputs)
             ignore_missing = comp_obj.ignore_missing
             if len(inputs) == 0 and not ignore_missing:
                 raise CompileError(
-                    "Compile error: {} for target: {} not found in " "search_paths: {}".format(
-                        input_path, self.target_name, self.search_paths
-                    )
+                    "Compile error: {} for target: {} not found in "
+                    "search_paths: {}".format(input_path, self.target_name, self.search_paths)
                 )
             expanded_input_paths.extend(inputs)
 
@@ -169,9 +166,7 @@ class InputType(object):
         logger.debug("Compiling %s", input_path)
 
         try:
-            target_compile_path = os.path.join(
-                self.compile_path, target_name.replace(".", "/"), output_path
-            )
+            target_compile_path = os.path.join(self.compile_path, target_name.replace(".", "/"), output_path)
             os.makedirs(target_compile_path, exist_ok=True)
 
             self.compile_file(
@@ -202,6 +197,9 @@ class InputType(object):
     @abc.abstractmethod
     def inputs_hash(self, *inputs, **kwargs):
         return NotImplementedError
+
+    def cacheable(self) -> bool:
+        return False
 
 
 class CompilingFile(object):
