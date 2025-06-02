@@ -205,6 +205,9 @@ class InputType:
     def inputs_hash(self, *inputs, **kwargs):
         return NotImplementedError
 
+    def cacheable(self) -> bool:
+        return False
+
 
 class CompilingFile:
     """

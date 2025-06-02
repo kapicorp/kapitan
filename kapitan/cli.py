@@ -268,7 +268,6 @@ def build_parser():
         action="store_true",
         default=from_dot_kapitan("compile", "embed-refs", False),
     )
-
     compile_parser.add_argument(
         "--inventory-path",
         default=from_dot_kapitan("compile", "inventory-path", "./inventory"),
@@ -283,18 +282,9 @@ def build_parser():
     compile_parser.add_argument(
         "--cache",
         "-c",
-        help="enable compilation caching to .kapitan_cache\
-        and dependency caching to .dependency_cache, default is False",
+        help="enable compilation caching to $XDG_CACHE_HOME/kapitan, default is False",
         action="store_true",
         default=from_dot_kapitan("compile", "cache", False),
-    )
-    compile_parser.add_argument(
-        "--cache-paths",
-        type=str,
-        nargs="+",
-        default=from_dot_kapitan("compile", "cache-paths", []),
-        metavar="PATH",
-        help="cache additional paths to .kapitan_cache, default is []",
     )
     compile_parser.add_argument(
         "--ignore-version-check",
@@ -517,9 +507,12 @@ def build_parser():
         "-f",
         help='read file or directory, set "-" for stdin',
         metavar="FILENAME",
+<<<<<<< HEAD
     )
     refs_parser.add_argument(
         "--target-name", "-t", help="grab recipients from target name"
+=======
+>>>>>>> c2a32354 (refactor into cache lib)
     )
     refs_parser.add_argument(
         "--inventory-path",
