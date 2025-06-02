@@ -185,10 +185,13 @@ class Kadet(InputType):
 
     def cacheable(self):
         if cached.args.cache:
-            self.cache = InputCache("kadet")
-            return self.cache
+            try:
+                return self.cache
+            except AttributeError:
+                self.cache = InputCache("kadet")
+                return self.cache
         else:
-            return None
+            return False
 
 
 def _to_dict(obj):
