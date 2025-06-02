@@ -6,7 +6,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import contextvars
-import hashlib
 import inspect
 import json
 import logging
@@ -22,6 +21,7 @@ from kadet import BaseModel, BaseObj, Dict
 from kapitan import cached
 from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType
+from kapitan.inputs.cache import InputCache
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
 
 # Set external kadet exception to kapitan.error.CompileError
@@ -109,25 +109,13 @@ class Kadet(InputType):
         target_name = self.target_name
         current_target.set(target_name)
         search_paths.set(self.search_paths)
-
-        print("=config", config)
-        print("=input_path", input_path)
-        print("=target", current_target.get())
-
-        hashed_inputs = self.inputs_hash(inventory_frozen(), input_params, Path(input_path))
-        print("=inputs_hash", hashed_inputs.hexdigest())
-
-        cached_path = Path(PurePath("/tmp/", hashed_inputs.hexdigest()))
-        print("=cached_path", cached_path)
-
         output_obj = None
-        # if cache file path exists for input hashes, load from disk
-        if cached_path.exists():
-            with open(cached_path, "rb") as fp:
-                output_obj = json.load(fp)
-                print(">> ", cached_path, "exists, loading.")
+
+        if cache_obj := self.cacheable():
+            inputs_hash = self.inputs_hash(inventory_frozen(), input_params, Path(input_path))
+            output_obj = cache_obj.get(inputs_hash)
         # else, compile
-        else:
+        if output_obj is None:
             # set compile_path allowing kadet functions to have context on where files
             # are being compiled on the current kapitan run
             # we only do this if user didn't pass its own value
@@ -155,13 +143,8 @@ class Kadet(InputType):
 
             output_obj = _to_dict(output_obj)
 
-        output_obj_dump = json.dumps(output_obj, sort_keys=True).encode("utf-8")
-
-        if not cached_path.exists():
-            # if file doesnt exist, write cache
-            with open(cached_path, "wb") as fp:
-                fp.write(output_obj_dump)
-                print(">> Wrote", cached_path)
+            if cache_obj := self.cacheable():
+                cache_obj.set(inputs_hash, output_obj)
 
         # Return None if output_obj has no output
         if not output_obj:
@@ -176,7 +159,7 @@ class Kadet(InputType):
         # Can we hash refs? Or do we need to hash all refs? Or do can we infer ref as dependencies?
 
         # this should be hidden away in a subsystem to ensure hash function is standard accross inputs
-        h = hashlib.blake2s()
+        h = InputCache.hash_object()
         for i in inputs:
             if isinstance(i, (dict, list)):
                 h.update(json.dumps(i, sort_keys=True).encode("utf-8"))
@@ -195,11 +178,17 @@ class Kadet(InputType):
                             for f in files:
                                 # TODO there must be a better way to avoid pycache...
                                 if not str(root).endswith("__pycache__"):
-                                    print("files", root, f)
                                     walk_and_hash(PurePath.joinpath(root, f))
 
                 walk_and_hash(i)
-        return h
+        return h.hexdigest()
+
+    def cacheable(self):
+        if cached.args.cache:
+            self.cache = InputCache("kadet")
+            return self.cache
+        else:
+            return None
 
 
 def _to_dict(obj):
