@@ -349,9 +349,7 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
     if cached.inv and cached.inv.targets:
         return cached.inv
 
-    compose_target_name = (
-        hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
-    )
+    compose_target_name = hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
     if hasattr(cached.args, "compose_node_name") and cached.args.compose_node_name:
         logger.warning(
             "inventory flag '--compose-node-name' is deprecated and scheduled to be dropped with the next release. "
@@ -361,9 +359,7 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
 
     # select inventory backend
     backend_id = hasattr(cached.args, "inventory_backend") and cached.args.inventory_backend
-    compose_target_name = (
-        hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
-    )
+    compose_target_name = hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
     backend = get_inventory_backend(backend_id)
 
     logger.debug(f"Using {backend.__name__} as inventory backend")
