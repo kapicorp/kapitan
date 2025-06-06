@@ -50,6 +50,16 @@ def inventory_frozen():
     return kadet.Box(data=inventory().dump(), frozen_box=True)
 
 
+@lru_cache(maxsize=None)
+def inventory_digest(target_name):
+    # XXX target_name parameter is only used for the LRU cache
+    h = InputCache.hash_object()
+    h.update(
+        json.dumps(inventory_frozen(), sort_keys=True, default=str).encode("utf-8")
+    )
+    return h.digest()
+
+
 def module_from_path(path, check_name=None):
     """
     loads python module in path
@@ -125,14 +135,17 @@ class Kadet(InputType):
         cached_path = Path(PurePath("/tmp/", hashed_inputs.hexdigest()))
         print("=cached_path", cached_path)
 
+        inputs_hash = None
         output_obj = None
 
         if cache_obj := self.cacheable():
             inputs_hash = self.inputs_hash(
-                inventory_frozen(), input_params, Path(input_path)
+                inventory_digest(target_name),
+                target_name,
+                Path(input_path),
             )
             output_obj = cache_obj.get(inputs_hash)
-        # else, compile
+
         if output_obj is None:
             # set compile_path allowing kadet functions to have context on where files
             # are being compiled on the current kapitan run
@@ -177,42 +190,88 @@ class Kadet(InputType):
 
     def inputs_hash(self, *inputs, **kwargs):
         # Hash all inputs to kadet component.
-        # Can we hash refs? Or do we need to hash all refs? Or do can we infer ref as dependencies?
 
-        # this should be hidden away in a subsystem to ensure hash function is standard accross inputs
-        h = InputCache.hash_object()
+        h_dicts = InputCache.hash_object()
+        h_lists = InputCache.hash_object()
+        h_strs = InputCache.hash_object()
+        h_ints = InputCache.hash_object()
+        h_bytes = InputCache.hash_object()
+        h_paths = InputCache.hash_object()
+        h_final = InputCache.hash_object()
         for i in inputs:
-            if isinstance(i, (dict, list)):
-                h.update(json.dumps(i, sort_keys=True).encode("utf-8"))
-            if isinstance(i, str):
-                h.update(i)
-            if isinstance(i, int):
-                h.update(bytes(int))
-            if isinstance(i, Path):
-                # walk and update hash
-                def walk_and_hash(path: Path):
-                    if path.is_file():
-                        h.update(open(path, "rb").read())
+            if isinstance(i, dict):
+                h_dicts.update(
+                    json.dumps(i, sort_keys=True, default=str).encode("utf-8")
+                )
+            elif isinstance(i, list):
+                h_lists.update(
+                    json.dumps(i, sort_keys=True, default=str).encode("utf-8")
+                )
+            elif isinstance(i, str):
+                h_strs.update(i.encode("utf-8"))
+            elif isinstance(i, int):
+                h_ints.update(bytes(i))
+            elif isinstance(i, bytes):
+                h_bytes.update(i)
+            elif isinstance(i, Path):
+                walk_and_hash(i, self.cacheable(), h_paths)
 
-                    if path.is_dir():
-                        for root, dirs, files in path.walk(follow_symlinks=True):
-                            for f in files:
-                                # TODO there must be a better way to avoid pycache...
-                                if not str(root).endswith("__pycache__"):
-                                    walk_and_hash(PurePath.joinpath(root, f))
+        h_final.update(
+            h_dicts.digest()
+            + h_lists.digest()
+            + h_strs.digest()
+            + h_ints.digest()
+            + h_bytes.digest()
+            + h_paths.digest()
+        )
 
-                walk_and_hash(i)
-        return h.hexdigest()
+        return h_final.hexdigest()
 
     def cacheable(self):
         if cached.args.cache:
-            try:
-                return self.cache
-            except AttributeError:
-                self.cache = InputCache("kadet")
-                return self.cache
+            if cached.kapitan_input_kadet is None:
+                cached.kapitan_input_kadet = InputCache("kadet")
+
+            return cached.kapitan_input_kadet
         else:
             return False
+
+
+def walk_and_hash(path: Path, input_cache: InputCache, path_hash):
+    # if path is in kv, use that instead
+    if cached_hash_digest := get_path_hash_from_input_kv(path, input_cache):
+        path_hash.update(cached_hash_digest)
+        logger.debug(
+            "KV Memory hit for path: %s, digest: %s", path, path_hash.hexdigest()
+        )
+        return
+
+    if path.is_file():
+        with open(path, "rb") as fp:
+            file_hash = InputCache.hash_file_digest(fp)
+            set_path_hash_input_kv(path, file_hash.digest(), input_cache)
+            path_hash.update(file_hash.digest())
+
+    if path.is_dir():
+        for root, dirs, files in path.walk(follow_symlinks=True):
+            # TODO there must be a better way to avoid pycache...
+            if str(root).endswith("__pycache__"):
+                continue
+            for f in sorted(files):
+                walk_and_hash(PurePath.joinpath(root, f), input_cache, path_hash)
+
+        set_path_hash_input_kv(path, path_hash.digest(), input_cache)
+
+
+def get_path_hash_from_input_kv(path: Path, input_cache: InputCache):
+    try:
+        return input_cache.kv_cache[str(path)]
+    except KeyError:
+        return None
+
+
+def set_path_hash_input_kv(path: Path, h_file, input_cache: InputCache):
+    input_cache.kv_cache[str(path)] = h_file
 
 
 def _to_dict(obj):
