@@ -99,7 +99,9 @@ def build_parser():
     inventory_backend_parser.add_argument(
         "--inventory-backend",
         action="store",
-        default=from_dot_kapitan("inventory_backend", "inventory-backend", InventoryBackends.RECLASS),
+        default=from_dot_kapitan(
+            "inventory_backend", "inventory-backend", InventoryBackends.RECLASS
+        ),
         choices=AVAILABLE_BACKENDS.keys(),
         help="Select the inventory backend to use (default=reclass)",
     )
@@ -172,7 +174,9 @@ def build_parser():
         "--jinja2-filters",
         "-J2F",
         type=str,
-        default=from_dot_kapitan("compile", "jinja2-filters", defaults.DEFAULT_JINJA2_FILTERS_PATH),
+        default=from_dot_kapitan(
+            "compile", "jinja2-filters", defaults.DEFAULT_JINJA2_FILTERS_PATH
+        ),
         metavar="FPATH",
         help="load custom jinja2 filters from any file, default is to put\
                                 them inside lib/jinja2_filters.py",
@@ -422,7 +426,9 @@ def build_parser():
         default=from_dot_kapitan("searchvar", "pretty-print", False),
     )
 
-    secrets_parser = subparser.add_parser("secrets", aliases=["s"], help="(DEPRECATED) please use refs")
+    secrets_parser = subparser.add_parser(
+        "secrets", aliases=["s"], help="(DEPRECATED) please use refs"
+    )
     secrets_parser.set_defaults(func=print_deprecated_secrets_msg, name="secrets")
 
     refs_parser = subparser.add_parser(
@@ -631,7 +637,11 @@ def main():
     except RuntimeError:
         pass
 
-    if getattr(args, "func", None) == generate_inventory and args.pattern and args.target_name == "":
+    if (
+        getattr(args, "func", None) == generate_inventory
+        and args.pattern
+        and args.target_name == ""
+    ):
         parser.error("--pattern requires --target_name")
 
     logger.debug("Running with args: %s", args)
