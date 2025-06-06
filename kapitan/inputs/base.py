@@ -58,9 +58,7 @@ class InputType(object):
         # expand any globbed paths, taking into account provided search paths
         expanded_input_paths = []
         for input_path in comp_obj.input_paths:
-            globbed_paths = [
-                glob.glob(os.path.join(path, input_path)) for path in self.search_paths
-            ]
+            globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
             inputs = list(itertools.chain.from_iterable(globbed_paths))
             # remove duplicate inputs
             inputs = set(inputs)
@@ -169,9 +167,7 @@ class InputType(object):
         logger.debug("Compiling %s", input_path)
 
         try:
-            target_compile_path = os.path.join(
-                self.compile_path, target_name.replace(".", "/"), output_path
-            )
+            target_compile_path = os.path.join(self.compile_path, target_name.replace(".", "/"), output_path)
             os.makedirs(target_compile_path, exist_ok=True)
 
             self.compile_file(
