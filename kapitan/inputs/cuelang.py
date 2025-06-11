@@ -1,4 +1,3 @@
-
 import logging
 import os
 import shutil
@@ -29,12 +28,9 @@ class Cuelang(InputType):
             args: Additional arguments passed to the tool
         """
         super().__init__(compile_path, search_paths, ref_controller, target_name, args)
-        self.cue_path = args.cue_path if hasattr(
-            args, "cue_path") else "cue"
+        self.cue_path = args.cue_path if hasattr(args, "cue_path") else "cue"
 
-    def compile_file(
-        self, config: KapitanInputTypeCuelangConfig, input_path: str, compile_path: str
-    ) -> None:
+    def compile_file(self, config: KapitanInputTypeCuelangConfig, input_path: str, compile_path: str) -> None:
         temp_dir = tempfile.mkdtemp()
         abs_input_path = os.path.abspath(input_path)
 
@@ -54,7 +50,7 @@ class Cuelang(InputType):
         cmd = [
             self.cue_path,
             "export",
-            ".", # can't get it to work compiling from an absolute path
+            ".",  # can't get it to work compiling from an absolute path
             # temp_input_dir,
             "-l",
             "input:",
@@ -64,8 +60,7 @@ class Cuelang(InputType):
         ]
 
         with open("output.yaml", "w") as f:
-            result = subprocess.run(
-                cmd, stdout=f, stderr=subprocess.PIPE, text=True, cwd=temp_input_dir)
+            result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, text=True, cwd=temp_input_dir)
             if result.returncode != 0:
                 err = f"Failed to run CUE export: {result.stderr}"
                 raise KustomizeTemplateError(err)

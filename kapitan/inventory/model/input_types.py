@@ -106,6 +106,7 @@ class KapitanInputTypeKustomizeConfig(KapitanInputTypeBaseConfig):
     patches_strategic: Optional[Dict[str, Any]] = {}
     patches_json: Optional[Dict[str, Any]] = {}
 
+
 class KapitanInputTypeCuelangConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.CUELANG] = InputTypes.CUELANG
     output_type: OutputType = OutputType.YAML
