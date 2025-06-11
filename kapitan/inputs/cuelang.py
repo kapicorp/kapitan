@@ -3,7 +3,6 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -39,35 +38,28 @@ class Cuelang(InputType):
         temp_input_dir = os.path.join(temp_dir, input_dir_name)
         shutil.copytree(abs_input_path, temp_input_dir)
 
-        cwd = os.getcwd()
-
-        # os.chdir(temp_input_dir)
-
+        # Write the input data to file
         input_file_path = os.path.join(temp_input_dir, "input.yaml")
         with open(input_file_path, "w") as f:
             yaml.dump(config.input, f)
 
+        #  Prepare the command to run CUE export
         cmd = [
             self.cue_path,
             "export",
-            ".",  # can't get it to work compiling from an absolute path
-            # temp_input_dir,
-            "-l",
-            "input:",
-            "input.yaml",
-            "--out",
-            "yaml",
+            ".",
         ]
+        # if specified where to inject the input, add it to the command
+        if config.input_fill_path:
+            cmd += ["-l", config.input_fill_path]
+        cmd += ["input.yaml", "--out", "yaml"]
+        # if specified where the output is yielded, add it to the command
+        if config.output_yield_path:
+            cmd += ["--expression", config.output_yield_path]
 
-        with open("output.yaml", "w") as f:
+        output_file = os.path.join(compile_path, "output.yaml")  # TODO: make this configurable
+        with open(output_file, "w") as f:
             result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, text=True, cwd=temp_input_dir)
             if result.returncode != 0:
                 err = f"Failed to run CUE export: {result.stderr}"
                 raise KustomizeTemplateError(err)
-
-        # os.chdir(cwd)
-        output_file = os.path.join(compile_path, "output.yaml")
-
-        with open(output_file, "w") as out_f:
-            with open("output.yaml", "r") as in_f:
-                out_f.write(in_f.read())
