@@ -17,6 +17,7 @@ class InputTypes(StrEnum):
     REMOVE = "remove"
     EXTERNAL = "external"
     KUSTOMIZE = "kustomize"
+    CUELANG = "cuelang"
 
 
 class OutputType(StrEnum):
@@ -105,6 +106,12 @@ class KapitanInputTypeKustomizeConfig(KapitanInputTypeBaseConfig):
     patches_strategic: Optional[Dict[str, Any]] = {}
     patches_json: Optional[Dict[str, Any]] = {}
 
+class KapitanInputTypeCuelangConfig(KapitanInputTypeBaseConfig):
+    input_type: Literal[InputTypes.CUELANG] = InputTypes.CUELANG
+    output_type: OutputType = OutputType.YAML
+    yield_field: Optional[str] = None
+    input: Optional[Dict[str, Any]] = None
+
 
 CompileInputTypeConfig = Annotated[
     Union[
@@ -116,6 +123,7 @@ CompileInputTypeConfig = Annotated[
         KapitanInputTypeHelmConfig,
         KapitanInputTypeRemoveConfig,
         KapitanInputTypeKustomizeConfig,
+        KapitanInputTypeCuelangConfig,
     ],
     Field(discriminator="input_type"),
 ]
