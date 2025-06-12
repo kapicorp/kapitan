@@ -24,6 +24,7 @@ def get_compiler(input_type: InputType) -> Type[InputType]:
         InputTypes.EXTERNAL: "external",
         InputTypes.REMOVE: "remove",
         InputTypes.KUSTOMIZE: "kustomize",
+        InputTypes.CUELANG: "cuelang",
     }
 
     module_name = module_map.get(input_type)

@@ -76,3 +76,7 @@ class KubernetesManifestValidationError(KapitanError):
 
 class KustomizeTemplateError(KapitanError):
     """Raised when kustomize template fails."""
+
+
+class CuelangTemplateError(KapitanError):
+    """Raised when cuelang template fails."""
