@@ -38,12 +38,12 @@ class CuelangInputTest(unittest.TestCase):
         temp_dir = tempfile.mkdtemp()
 
         try:
-            shutil.copytree("tests/inputs/cuelang/test_input", temp_dir)
+            shutil.copytree("tests/test_cue/module1", temp_dir, dirs_exist_ok=True)
 
             config = KapitanInputTypeCuelangConfig(
                 input_paths=[temp_dir],
                 output_path=self.compile_path,
-                input_fill_path="input",
+                input_fill_path="input:",
                 input={
                     "numerator": 10,
                     "denominator": 2,
