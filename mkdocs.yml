@@ -90,6 +90,7 @@ nav:
           - Jinja: pages/input_types/jinja.md
           - Helm: pages/input_types/helm.md
           - Kustomize: pages/input_types/kustomize.md
+          - Cuelang: pages/input_types/cuelang.md
           - Jsonnet: pages/input_types/jsonnet.md
           - External: pages/input_types/external.md
           - Copy: pages/input_types/copy.md
