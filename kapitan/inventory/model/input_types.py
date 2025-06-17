@@ -118,6 +118,7 @@ class KapitanInputTypeCuelangConfig(KapitanInputTypeBaseConfig):
     # optional CUE path (e.g. metadata.name) that we want to yield in the output.
     # By default, the whole output is yielded
     output_yield_path: Optional[str] = None
+    output_filename: Optional[str] = "output.yaml"
 
 
 CompileInputTypeConfig = Annotated[

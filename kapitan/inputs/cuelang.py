@@ -17,7 +17,7 @@ class Cuelang(InputType):
     """CUE-Lang implementation."""
 
     def __init__(self, compile_path: str, search_paths: list, ref_controller, target_name: str, args):
-        """Initialize the Kustomize implementation.
+        """Initialize the CUE-Lang implementation.
 
         Args:
             compile_path: Base path for compiled output
@@ -57,7 +57,8 @@ class Cuelang(InputType):
         if config.output_yield_path:
             cmd += ["--expression", config.output_yield_path]
 
-        output_file = os.path.join(compile_path, "output.yaml")  # TODO: make this configurable
+        output_filename = config.output_filename if config.output_filename else "output.yaml"
+        output_file = os.path.join(compile_path, output_filename)
         with open(output_file, "w") as f:
             result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, text=True, cwd=temp_input_dir)
             if result.returncode != 0:
