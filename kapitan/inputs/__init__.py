@@ -23,6 +23,7 @@ def get_compiler(input_type: InputType) -> Type[InputType]:
         InputTypes.COPY: "copy",
         InputTypes.EXTERNAL: "external",
         InputTypes.REMOVE: "remove",
+        InputTypes.KUSTOMIZE: "kustomize",
     }
 
     module_name = module_map.get(input_type)
