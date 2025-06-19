@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "cached module"
+
 from argparse import Namespace
 
 inv = {}
@@ -21,10 +22,22 @@ ref_controller_obj = None
 revealer_obj = None
 args = Namespace()  # args won't need resetting
 inv_sources = set()
+kapitan_input_kadet = None
 
 
 def reset_cache():
-    global inv, global_inv, inv_cache, gpg_obj, gkms_obj, awskms_obj, azkms_obj, dot_kapitan, ref_controller_obj, revealer_obj, inv_sources
+    global \
+        inv, \
+        global_inv, \
+        inv_cache, \
+        gpg_obj, \
+        gkms_obj, \
+        awskms_obj, \
+        azkms_obj, \
+        dot_kapitan, \
+        ref_controller_obj, \
+        revealer_obj, \
+        inv_sources
 
     inv = {}
     global_inv = {}
@@ -40,7 +53,19 @@ def reset_cache():
 
 
 def from_dict(cache_dict):
-    global inv, global_inv, inv_cache, gpg_obj, gkms_obj, awskms_obj, azkms_obj, dot_kapitan, ref_controller_obj, revealer_obj, inv_sources, args
+    global \
+        inv, \
+        global_inv, \
+        inv_cache, \
+        gpg_obj, \
+        gkms_obj, \
+        awskms_obj, \
+        azkms_obj, \
+        dot_kapitan, \
+        ref_controller_obj, \
+        revealer_obj, \
+        inv_sources, \
+        args
 
     inv = cache_dict["inv"]
     global_inv = cache_dict["global_inv"]
