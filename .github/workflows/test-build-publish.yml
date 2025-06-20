@@ -66,6 +66,13 @@ jobs:
           sudo apt-get -qq update
           sudo apt-get install -y gnupg2 git curl
           curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - name: Install testing dependencies (CUE)
+        run: |
+          sudo apt install xz-utils
+          CUE_VERSION=$(curl -s "https://api.github.com/repos/cue-lang/cue/releases/latest" | jq -r '.tag_name')
+          ARCH=$(uname -m)
+          curl -L "https://github.com/cue-lang/cue/releases/latest/download/cue_${CUE_VERSION}_linux_${ARCH}.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/cue /usr/local/bin/cue
       - name: Run pytest
         uses: pavelzw/pytest-action@v2
         with:
