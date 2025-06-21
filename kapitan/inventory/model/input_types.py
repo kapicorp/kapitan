@@ -17,6 +17,7 @@ class InputTypes(StrEnum):
     REMOVE = "remove"
     EXTERNAL = "external"
     KUSTOMIZE = "kustomize"
+    CUELANG = "cuelang"
 
 
 class OutputType(StrEnum):
@@ -106,6 +107,20 @@ class KapitanInputTypeKustomizeConfig(KapitanInputTypeBaseConfig):
     patches_json: Optional[Dict[str, Any]] = {}
 
 
+class KapitanInputTypeCuelangConfig(KapitanInputTypeBaseConfig):
+    input_type: Literal[InputTypes.CUELANG] = InputTypes.CUELANG
+    output_type: OutputType = OutputType.YAML
+    # optional value to pass to the CUE input
+    input: Optional[Dict[str, Any]] = None
+    # optional CUE path in which the input is injected. By default, the input
+    # is injected at the root.
+    input_fill_path: Optional[str] = None
+    # optional CUE path (e.g. metadata.name) that we want to yield in the output.
+    # By default, the whole output is yielded
+    output_yield_path: Optional[str] = None
+    output_filename: Optional[str] = "output.yaml"
+
+
 CompileInputTypeConfig = Annotated[
     Union[
         KapitanInputTypeJinja2Config,
@@ -116,6 +131,7 @@ CompileInputTypeConfig = Annotated[
         KapitanInputTypeHelmConfig,
         KapitanInputTypeRemoveConfig,
         KapitanInputTypeKustomizeConfig,
+        KapitanInputTypeCuelangConfig,
     ],
     Field(discriminator="input_type"),
 ]
