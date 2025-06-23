@@ -88,6 +88,7 @@ nav:
           - Introduction: pages/input_types/introduction.md
           - Kadet: pages/input_types/kadet.md
           - Jinja: pages/input_types/jinja.md
+          - CueLang: pages/input_types/cuelang.md
           - Helm: pages/input_types/helm.md
           - Kustomize: pages/input_types/kustomize.md
           - Cuelang: pages/input_types/cuelang.md
