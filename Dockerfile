@@ -44,6 +44,8 @@ COPY ./kapitan ./kapitan
 
 RUN pip install .[gojsonnet,omegaconf,reclass-rs]
 
+FROM golang:1 AS go-builder
+RUN GOBIN=$(pwd)/ go install cuelang.org/go/cmd/cue@latest
 
 # Final image with virtualenv built in previous step
 FROM python:3.11-slim
@@ -65,6 +67,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --no-log-init --user-group kapitan
 
+COPY --from=go-builder /go/cue /usr/bin/cue
 COPY --from=python-builder /opt/venv /opt/venv
 
 USER kapitan
