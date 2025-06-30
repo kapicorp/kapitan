@@ -100,13 +100,22 @@ class InputType(object):
                 # Remove . from the beginning of the extension
                 detected_type = detected_type[1:]
 
-            if detected_type in [OutputType.TOML, OutputType.JSON, OutputType.YAML, OutputType.YML]:
+            if detected_type in [
+                OutputType.TOML,
+                OutputType.JSON,
+                OutputType.YAML,
+                OutputType.YML,
+            ]:
                 output_type = detected_type
                 file_ext = None
             else:
                 # Extension is not handled, falling back to input type default
                 output_type = self.output_type_default
-                logger.debug("Could not detect extension for %s, defaulting to %s", file_path, output_type)
+                logger.debug(
+                    "Could not detect extension for %s, defaulting to %s",
+                    file_path,
+                    output_type,
+                )
                 file_ext = output_type  # no extension for plain text
 
         if output_type == OutputType.PLAIN:
@@ -184,6 +193,13 @@ class InputType(object):
             compile_path: Path to the output directory.
         """
         return NotImplementedError
+
+    @abc.abstractmethod
+    def inputs_hash(self, *inputs, **kwargs):
+        return NotImplementedError
+
+    def cacheable(self) -> bool:
+        return False
 
 
 class CompilingFile(object):
