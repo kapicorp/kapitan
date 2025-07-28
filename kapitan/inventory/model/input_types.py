@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -16,6 +16,8 @@ class InputTypes(StrEnum):
     COPY = "copy"
     REMOVE = "remove"
     EXTERNAL = "external"
+    KUSTOMIZE = "kustomize"
+    CUELANG = "cuelang"
 
 
 class OutputType(StrEnum):
@@ -95,6 +97,30 @@ class KapitanInputTypeRemoveConfig(KapitanInputTypeBaseConfig):
     output_path: Optional[str] = None
 
 
+class KapitanInputTypeKustomizeConfig(KapitanInputTypeBaseConfig):
+    input_type: Literal[InputTypes.KUSTOMIZE] = InputTypes.KUSTOMIZE
+    output_type: OutputType = OutputType.YAML
+    namespace: Optional[str] = None
+    prune: Optional[bool] = False
+    patches: Optional[Dict[str, Any]] = {}
+    patches_strategic: Optional[Dict[str, Any]] = {}
+    patches_json: Optional[Dict[str, Any]] = {}
+
+
+class KapitanInputTypeCuelangConfig(KapitanInputTypeBaseConfig):
+    input_type: Literal[InputTypes.CUELANG] = InputTypes.CUELANG
+    output_type: OutputType = OutputType.YAML
+    # optional value to pass to the CUE input
+    input: Optional[Dict[str, Any]] = None
+    # optional CUE path in which the input is injected. By default, the input
+    # is injected at the root.
+    input_fill_path: Optional[str] = None
+    # optional CUE path (e.g. metadata.name) that we want to yield in the output.
+    # By default, the whole output is yielded
+    output_yield_path: Optional[str] = None
+    output_filename: Optional[str] = "output.yaml"
+
+
 CompileInputTypeConfig = Annotated[
     Union[
         KapitanInputTypeJinja2Config,
@@ -104,6 +130,8 @@ CompileInputTypeConfig = Annotated[
         KapitanInputTypeJsonnetConfig,
         KapitanInputTypeHelmConfig,
         KapitanInputTypeRemoveConfig,
+        KapitanInputTypeKustomizeConfig,
+        KapitanInputTypeCuelangConfig,
     ],
     Field(discriminator="input_type"),
 ]

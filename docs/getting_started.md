@@ -109,7 +109,7 @@ Compiled echo-server (0.14s)
 === "Mac"
 
     ```shell
-    brew install python3 libyaml libmagic
+    brew install python3 libyaml
     ```
 
 #### Install Kapitan using pip

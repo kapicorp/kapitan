@@ -8,8 +8,6 @@ plugins:
       archive: false
       blog_dir: pages/blog
       post_url_date_format: dd/MM/yyyy
-  - tags:
-      tags_file: tags.md
   - search
   - markdown-exec
 
@@ -90,7 +88,10 @@ nav:
           - Introduction: pages/input_types/introduction.md
           - Kadet: pages/input_types/kadet.md
           - Jinja: pages/input_types/jinja.md
+          - CueLang: pages/input_types/cuelang.md
           - Helm: pages/input_types/helm.md
+          - Kustomize: pages/input_types/kustomize.md
+          - Cuelang: pages/input_types/cuelang.md
           - Jsonnet: pages/input_types/jsonnet.md
           - External: pages/input_types/external.md
           - Copy: pages/input_types/copy.md

@@ -20,7 +20,7 @@ RUN python -m venv $VIRTUAL_ENV \
     && pip install --upgrade pip yq wheel poetry==$POETRY_VERSION
 
 # Install Go (for go-jsonnet)
-RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.23.2.linux-${TARGETARCH}.tar.gz \
+RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.24.2.linux-${TARGETARCH}.tar.gz \
     && tar -C /usr/local -xzf go.tar.gz \
     && rm go.tar.gz
 
@@ -44,6 +44,8 @@ COPY ./kapitan ./kapitan
 
 RUN pip install .[gojsonnet,omegaconf,reclass-rs]
 
+FROM golang:1 AS go-builder
+RUN GOBIN=$(pwd)/ go install cuelang.org/go/cmd/cue@latest
 
 # Final image with virtualenv built in previous step
 FROM python:3.11-slim
@@ -59,13 +61,13 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         git \
         ssh-client \
-        libmagic1 \
         gnupg \
         ca-certificates \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --no-log-init --user-group kapitan
 
+COPY --from=go-builder /go/cue /usr/bin/cue
 COPY --from=python-builder /opt/venv /opt/venv
 
 USER kapitan

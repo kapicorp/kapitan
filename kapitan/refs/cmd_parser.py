@@ -74,8 +74,9 @@ def ref_write(args, ref_controller):
     if args.target_name:
         inv = get_inventory(args.inventory_path)
 
-        if not inv.get_parameters(args.target_name).kapitan.secrets:
+        try:
             reference_backend_configs = inv.get_parameters(args.target_name).kapitan.secrets
+        except (KeyError, AttributeError):
             raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
 
     type_name, token_path = token_name.split(":")
@@ -109,12 +110,14 @@ def ref_write(args, ref_controller):
         key = args.key
 
         if reference_backend_configs.gkms:
-            key = reference_backend_configs.gkms.key
+            key = args.key or reference_backend_configs.gkms.key
 
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.gkms.key and use --target"
             )
+
+        logger.debug(f"Using gkms key {key}")
 
         secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
         ref_controller[tag] = secret_obj
@@ -123,13 +126,14 @@ def ref_write(args, ref_controller):
         key = args.key
 
         if reference_backend_configs.awskms:
-            key = reference_backend_configs.awskms.key
+            key = args.key or reference_backend_configs.awskms.key
 
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.awskms.key and use --target"
             )
 
+        logger.debug(f"Using awskms key {key}")
         secret_obj = AWSKMSSecret(data, key, encode_base64=args.base64)
         ref_controller[tag] = secret_obj
 
@@ -137,13 +141,14 @@ def ref_write(args, ref_controller):
         key = args.key
 
         if reference_backend_configs.azkms:
-            key = reference_backend_configs.azkms.key
+            key = args.key or reference_backend_configs.azkms.key
 
         if not key:
             raise KapitanError(
                 "No KMS key specified. Use --key or specify it in parameters.kapitan.secrets.azkms.key and use --target"
             )
 
+        logger.debug(f"Using azkms key {key}")
         secret_obj = AzureKMSSecret(data, key, encode_base64=args.base64)
         ref_controller[tag] = secret_obj
 
