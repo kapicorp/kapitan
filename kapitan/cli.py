@@ -265,7 +265,6 @@ def build_parser():
         "--inventory-pool-cache",
         help="enable passing inventory object cache to process pool,\
         setting to False might speed up compilation for large inventories, default is True",
-        action="inventory_pool_cache",
         default=from_dot_kapitan("compile", "inventory-pool-cache", True),
     )
     compile_parser.add_argument(
