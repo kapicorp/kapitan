@@ -120,7 +120,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                 search_paths=search_paths,
                 compile_path=temp_compile_path,
                 ref_controller=ref_controller,
-                globals_cached=cached.as_dict(),
+                globals_cached=cached.as_dict() if args.inventory_pool_cache else None,
                 args=args,
             )
 
