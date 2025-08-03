@@ -171,6 +171,10 @@ We support the following custom filters for use in Jinja2 templates:
 === "`reveal_maybe`"
     !!! example "reveal `ref/secret` tag only if `compile --reveal` flag is set"
         `{{ "?{base64:my_ref}" | reveal_maybe}}`
+=== "Struct"
+    === "`merge_strategic`"
+    !!! example "traverse object(s) and merge lists based on common `name`"
+        `{{ data | merge_strategic | yaml | trim | indent(6)}}`
 
 !!! tip
     You can also provide path to your custom filter modules in CLI. By default, you can put your filters in `lib/jinja2_filters.py` and they will automatically get loaded.
