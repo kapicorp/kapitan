@@ -58,6 +58,7 @@ def load_jinja2_filters(env):
     env.filters["shuffle"] = randomize_list
     env.filters["merge_strategic"] = merge_strategic
 
+
 def load_module_from_path(env, path):
     """
     Loads a python module from provided path and adds it to jinja2 environment
@@ -222,6 +223,7 @@ def randomize_list(mylist, seed=None):
         pass
     return mylist
 
+
 def merge_strategic(data):
     """
     Recursively traverse the input data structure.
@@ -234,10 +236,10 @@ def merge_strategic(data):
     if isinstance(data, list):
         processed_list = [merge_strategic(item) for item in data]
 
-        if all(isinstance(item, dict) and 'name' in item for item in processed_list):
+        if all(isinstance(item, dict) and "name" in item for item in processed_list):
             merged = {}
             for item in processed_list:
-                key = item['name']
+                key = item["name"]
                 if key not in merged:
                     merged[key] = {}
                 merged[key].update(item)
