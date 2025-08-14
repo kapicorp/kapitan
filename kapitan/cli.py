@@ -116,7 +116,9 @@ def build_parser():
         help="Create same subfolder structure from inventory/targets inside compiled folder",
         action="store_true",
         default=from_dot_kapitan(
-            "global", "compose-target-name", from_dot_kapitan("compile", "compose-node-name", False)
+            "global",
+            "compose-target-name",
+            from_dot_kapitan("compile", "compose-node-name", False),
         ),
     )
 
@@ -150,7 +152,10 @@ def build_parser():
     )
 
     compile_parser = subparser.add_parser(
-        "compile", aliases=["c"], help="compile targets", parents=[inventory_backend_parser]
+        "compile",
+        aliases=["c"],
+        help="compile targets",
+        parents=[inventory_backend_parser],
     )
     compile_parser.set_defaults(func=trigger_compile, name="compile")
 
@@ -255,7 +260,6 @@ def build_parser():
         action="store_true",
         default=from_dot_kapitan("compile", "embed-refs", False),
     )
-
     compile_parser.add_argument(
         "--inventory-path",
         default=from_dot_kapitan("compile", "inventory-path", "./inventory"),
@@ -270,18 +274,9 @@ def build_parser():
     compile_parser.add_argument(
         "--cache",
         "-c",
-        help="enable compilation caching to .kapitan_cache\
-        and dependency caching to .dependency_cache, default is False",
+        help="enable compilation caching to $XDG_CACHE_HOME/kapitan, default is False",
         action="store_true",
         default=from_dot_kapitan("compile", "cache", False),
-    )
-    compile_parser.add_argument(
-        "--cache-paths",
-        type=str,
-        nargs="+",
-        default=from_dot_kapitan("compile", "cache-paths", []),
-        metavar="PATH",
-        help="cache additional paths to .kapitan_cache, default is []",
     )
     compile_parser.add_argument(
         "--ignore-version-check",
@@ -342,7 +337,10 @@ def build_parser():
     )
 
     inventory_parser = subparser.add_parser(
-        "inventory", aliases=["i"], help="show inventory", parents=[inventory_backend_parser]
+        "inventory",
+        aliases=["i"],
+        help="show inventory",
+        parents=[inventory_backend_parser],
     )
     inventory_parser.set_defaults(func=generate_inventory, name="inventory")
 
@@ -398,7 +396,9 @@ def build_parser():
     )
 
     searchvar_parser = subparser.add_parser(
-        "searchvar", aliases=["sv"], help="show all inventory files where var is declared"
+        "searchvar",
+        aliases=["sv"],
+        help="show all inventory files where var is declared",
     )
     searchvar_parser.set_defaults(func=searchvar, name="searchvar")
 
@@ -480,13 +480,21 @@ def build_parser():
         default=from_dot_kapitan("refs", "reveal", False),
     )
     refs_parser.add_argument(
-        "--tag", help='specify ref tag to reveal, e.g. "?{gkms:my/ref:123456}" ', metavar="REFTAG"
+        "--tag",
+        help='specify ref tag to reveal, e.g. "?{gkms:my/ref:123456}" ',
+        metavar="REFTAG",
     )
     refs_parser.add_argument(
-        "--ref-file", "-rf", help='read ref file, set "-" for stdin', metavar="REFFILENAME"
+        "--ref-file",
+        "-rf",
+        help='read ref file, set "-" for stdin',
+        metavar="REFFILENAME",
     )
     refs_parser.add_argument(
-        "--file", "-f", help='read file or directory, set "-" for stdin', metavar="FILENAME"
+        "--file",
+        "-f",
+        help='read file or directory, set "-" for stdin',
+        metavar="FILENAME",
     )
     refs_parser.add_argument("--target-name", "-t", help="grab recipients from target name")
     refs_parser.add_argument(
@@ -504,7 +512,11 @@ def build_parser():
         metavar="RECIPIENT",
     )
     refs_parser.add_argument(
-        "--key", "-K", help="set KMS key", default=from_dot_kapitan("refs", "key", ""), metavar="KEY"
+        "--key",
+        "-K",
+        help="set KMS key",
+        default=from_dot_kapitan("refs", "key", ""),
+        metavar="KEY",
     )
     refs_parser.add_argument(
         "--vault-auth",
@@ -587,7 +599,8 @@ def build_parser():
     )
 
     init_parser = subparser.add_parser(
-        "init", help="initialize a directory with the recommended kapitan project skeleton."
+        "init",
+        help="initialize a directory with the recommended kapitan project skeleton.",
     )
     init_parser.set_defaults(func=initialise_skeleton, name="init")
 
