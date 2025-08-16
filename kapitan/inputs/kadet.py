@@ -10,7 +10,7 @@ import inspect
 import logging
 import os
 import sys
-from functools import lru_cache
+from functools import cache
 from importlib.util import module_from_spec, spec_from_file_location
 
 import kadet
@@ -21,6 +21,7 @@ from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
 
+
 # Set external kadet exception to kapitan.error.CompileError
 kadet.ABORT_EXCEPTION_TYPE = CompileError
 
@@ -29,7 +30,7 @@ search_paths = contextvars.ContextVar("current search_paths in thread")
 current_target = contextvars.ContextVar("current target in thread")
 
 
-@lru_cache(maxsize=None)
+@cache
 def inventory_global(lazy=False):
     # At hoc inventory for kadet
     if not cached.inventory_global_kadet:
@@ -49,18 +50,18 @@ def module_from_path(path, check_name=None):
     """
 
     if not os.path.isdir(path):
-        raise FileNotFoundError("path: {} must be an existing directory".format(path))
+        raise FileNotFoundError(f"path: {path} must be an existing directory")
 
     module_name = os.path.basename(os.path.normpath(path))
     init_path = os.path.join(path, "__init__.py")
-    spec = spec_from_file_location("kadet_component_{}".format(module_name), init_path)
+    spec = spec_from_file_location(f"kadet_component_{module_name}", init_path)
     mod = module_from_spec(spec)
 
     if spec is None:
-        raise ModuleNotFoundError("Could not load module in path {}".format(path))
+        raise ModuleNotFoundError(f"Could not load module in path {path}")
     if check_name is not None and check_name != module_name:
         raise ModuleNotFoundError(
-            "Module name {} does not match check_name {}".format(module_name, check_name)
+            f"Module name {module_name} does not match check_name {check_name}"
         )
 
     return mod, spec
@@ -79,12 +80,13 @@ def load_from_search_paths(module_name):
             return mod
         except (ModuleNotFoundError, FileNotFoundError):
             pass
-    raise ModuleNotFoundError("Could not load module name {}".format(module_name))
+    raise ModuleNotFoundError(f"Could not load module name {module_name}")
 
 
 class Kadet(InputType):
-
-    def compile_file(self, config: KapitanInputTypeKadetConfig, input_path, compile_path):
+    def compile_file(
+        self, config: KapitanInputTypeKadetConfig, input_path, compile_path
+    ):
         """
         Compile a kadet input file.
 
@@ -127,13 +129,15 @@ class Kadet(InputType):
                 output_obj = kadet_module.main()
 
         except Exception as exc:
-            raise CompileError(f"Could not load Kadet module: {spec.name[16:]}") from exc
+            raise CompileError(
+                f"Could not load Kadet module: {spec.name[16:]}"
+            ) from exc
 
         output_obj = _to_dict(output_obj)
 
         # Return None if output_obj has no output
         if not output_obj:
-            return None
+            return
 
         for item_key, item_value in output_obj.items():
             file_path = os.path.join(compile_path, item_key)
@@ -150,11 +154,11 @@ def _to_dict(obj):
             obj.root[k] = _to_dict(v)
         # BaseObj needs to return to_dict()
         return obj.root.to_dict()
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         obj = [_to_dict(item) for item in obj]
         # list has no .to_dict, return itself
         return obj
-    elif isinstance(obj, dict):
+    if isinstance(obj, dict):
         for k, v in obj.items():
             obj[k] = _to_dict(v)
         # dict has no .to_dict, return itself

@@ -11,6 +11,7 @@ from kapitan.refs.secrets.vaulttransit import VaultTransit
 from kapitan.refs.vault_resources import VaultClient
 from tests.vault_server import VaultTransitServer
 
+
 logger = logging.getLogger(__name__)
 
 # Create temporary folder

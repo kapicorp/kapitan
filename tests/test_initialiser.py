@@ -17,6 +17,7 @@ from unittest.mock import patch
 from kapitan.errors import KapitanError
 from kapitan.initialiser import initialise_skeleton
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +34,9 @@ class InitialiserTest(unittest.TestCase):
         initialise_skeleton(self._create_args(self.tmpdir))
 
         # Assert that the directory is no longer empty (indicating successful initialisation)
-        self.assertTrue(len(os.listdir(self.tmpdir)) > 0, "Target directory is still empty")
+        self.assertTrue(
+            len(os.listdir(self.tmpdir)) > 0, "Target directory is still empty"
+        )
 
     @patch("kapitan.initialiser.run_copy")
     def test_initialise_skeleton_non_empty_dir(self, mocked_run_copy):

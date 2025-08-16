@@ -12,12 +12,14 @@ import shutil
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeCopyConfig
 
+
 logger = logging.getLogger(__name__)
 
 
 class Remove(InputType):
-
-    def compile_file(self, config: KapitanInputTypeCopyConfig, input_path, compile_path):
+    def compile_file(
+        self, config: KapitanInputTypeCopyConfig, input_path, compile_path
+    ):
         """Remove a file or directory.
 
         Args:

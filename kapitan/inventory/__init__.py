@@ -56,4 +56,6 @@ def get_inventory_backend(backend_name: str) -> Type[Inventory]:
     """
     Get the `Inventory` subclass associated with the given `backend_name`.
     """
-    return AVAILABLE_BACKENDS.get(backend_name, AVAILABLE_BACKENDS[InventoryBackends.DEFAULT])()
+    return AVAILABLE_BACKENDS.get(
+        backend_name, AVAILABLE_BACKENDS[InventoryBackends.DEFAULT]
+    )()

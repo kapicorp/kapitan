@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "inventory tests"
+
 import importlib
 import logging
 import os
@@ -18,6 +19,7 @@ import kapitan.cached
 from kapitan.cli import build_parser
 from kapitan.inventory import InventoryBackends
 from kapitan.resources import inventory
+
 
 logger = logging.getLogger(__name__)
 

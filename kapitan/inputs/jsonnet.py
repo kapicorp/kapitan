@@ -14,6 +14,7 @@ from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeJsonnetConfig
 from kapitan.resources import resource_callbacks, search_imports
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,10 +40,9 @@ def select_jsonnet_runtime(use_go):
             import _gojsonnet
 
             return _gojsonnet
-        else:
-            import _jsonnet
+        import _jsonnet
 
-            return _jsonnet
+        return _jsonnet
 
     except ImportError as exc:
         raise ImportError(
@@ -54,7 +54,9 @@ def select_jsonnet_runtime(use_go):
 class Jsonnet(InputType):
     """Jsonnet input type."""
 
-    def compile_file(self, config: KapitanInputTypeJsonnetConfig, input_path: str, compile_path: str):
+    def compile_file(
+        self, config: KapitanInputTypeJsonnetConfig, input_path: str, compile_path: str
+    ):
         """Compiles a Jsonnet file and writes the output to the compile directory.
 
         Args:

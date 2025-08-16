@@ -15,7 +15,9 @@ def migrate(inventory_path: str = "inventory"):
         elif os.path.isfile(inventory_path):
             migrate_file(inventory_path)
     else:
-        print(f"Error while migrating: inventory path at {inventory_path} does not exist")
+        print(
+            f"Error while migrating: inventory path at {inventory_path} does not exist"
+        )
 
 
 def migrate_dir(path: str):
@@ -36,7 +38,7 @@ def migrate_dir(path: str):
 
 
 def migrate_file(file: str):
-    with open(file, "r") as fp:
+    with open(file) as fp:
         content = fp.read()
 
     updated_content = migrate_str(content)
@@ -70,7 +72,9 @@ def migrate_str(content: str):
     invalid = any(c in updated_content for c in excluded_chars)
     updated_content = regex.sub(
         r"\\\${([^\${}]*+(?:(?R)[^\${}]*)*+)}",
-        lambda match: ("${escape:" if not invalid else "\\\\\\${") + match.group(1) + "}",
+        lambda match: ("${escape:" if not invalid else "\\\\\\${")
+        + match.group(1)
+        + "}",
         updated_content,
     )
 

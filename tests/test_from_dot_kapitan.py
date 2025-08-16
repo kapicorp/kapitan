@@ -22,7 +22,10 @@ class FromDotKapitanTest(unittest.TestCase):
         os.chdir(self.work_dir.name)
 
     def test_no_file(self):
-        assert from_dot_kapitan("compile", "inventory-path", "./some/fallback") == "./some/fallback"
+        assert (
+            from_dot_kapitan("compile", "inventory-path", "./some/fallback")
+            == "./some/fallback"
+        )
 
     def test_no_option(self):
         self._setup_dot_kapitan(
@@ -31,7 +34,10 @@ class FromDotKapitanTest(unittest.TestCase):
                 "compile": {"inventory-path": "./path/to/inv"},
             }
         )
-        assert from_dot_kapitan("inventory", "inventory-path", "./some/fallback") == "./some/fallback"
+        assert (
+            from_dot_kapitan("inventory", "inventory-path", "./some/fallback")
+            == "./some/fallback"
+        )
 
     def test_cmd_option(self):
         self._setup_dot_kapitan(
@@ -40,19 +46,34 @@ class FromDotKapitanTest(unittest.TestCase):
                 "compile": {"inventory-path": "./path/to/inv"},
             }
         )
-        assert from_dot_kapitan("compile", "inventory-path", "./some/fallback") == "./path/to/inv"
+        assert (
+            from_dot_kapitan("compile", "inventory-path", "./some/fallback")
+            == "./path/to/inv"
+        )
 
     def test_global_option(self):
         self._setup_dot_kapitan(
-            {"global": {"inventory-path": "./some/path"}, "compile": {"inventory-path": "./path/to/inv"}}
+            {
+                "global": {"inventory-path": "./some/path"},
+                "compile": {"inventory-path": "./path/to/inv"},
+            }
         )
-        assert from_dot_kapitan("inventory", "inventory-path", "./some/fallback") == "./some/path"
+        assert (
+            from_dot_kapitan("inventory", "inventory-path", "./some/fallback")
+            == "./some/path"
+        )
 
     def test_command_over_global_option(self):
         self._setup_dot_kapitan(
-            {"global": {"inventory-path": "./some/path"}, "compile": {"inventory-path": "./path/to/inv"}}
+            {
+                "global": {"inventory-path": "./some/path"},
+                "compile": {"inventory-path": "./path/to/inv"},
+            }
         )
-        assert from_dot_kapitan("compile", "inventory-path", "./some/fallback") == "./path/to/inv"
+        assert (
+            from_dot_kapitan("compile", "inventory-path", "./some/fallback")
+            == "./path/to/inv"
+        )
 
     def tearDown(self):
         self.work_dir.cleanup()

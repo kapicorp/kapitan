@@ -217,6 +217,13 @@ pyupgrade.keep-runtime-typing = true
     "ARG",     # Unused arguments in tests
     "FBT",     # Boolean arguments in tests
     "SLF001",  # Private member access in tests
+    "PT027",   # Use of unittest-style assertions - migration from unittest
+    "SIM117",  # Multiple with statements - clearer in tests
+    "B007",    # Loop control variable not used - common in os.walk
+    "C414",    # Unnecessary list() call - sometimes clearer
+    "C418",    # Unnecessary dict literal - style preference
+    "F841",    # Local variable assigned but never used - test validation
+    "E712",    # Comparison to False - sometimes clearer in tests
 ]
 
 # Ignore import violations in __init__ files

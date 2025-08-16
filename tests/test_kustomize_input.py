@@ -11,7 +11,6 @@ import os
 import shutil
 import tempfile
 import unittest
-from typing import Any, Dict
 
 import yaml
 
@@ -119,10 +118,12 @@ class KustomizeInputTest(unittest.TestCase):
             self.kustomize.compile_file(config, temp_dir, self.compile_path)
 
             # Verify the output
-            output_file = os.path.join(self.compile_path, "test-deployment-deployment.yaml")
+            output_file = os.path.join(
+                self.compile_path, "test-deployment-deployment.yaml"
+            )
             self.assertTrue(os.path.exists(output_file))
 
-            with open(output_file, "r") as f:
+            with open(output_file) as f:
                 output = yaml.safe_load(f)
                 self.assertEqual(
                     output["spec"]["template"]["spec"]["containers"][0]["image"],
@@ -178,10 +179,12 @@ class KustomizeInputTest(unittest.TestCase):
             self.kustomize.compile_file(config, temp_dir, self.compile_path)
 
             # Verify the output
-            output_file = os.path.join(self.compile_path, "test-deployment-deployment.yaml")
+            output_file = os.path.join(
+                self.compile_path, "test-deployment-deployment.yaml"
+            )
             self.assertTrue(os.path.exists(output_file))
 
-            with open(output_file, "r") as f:
+            with open(output_file) as f:
                 output = yaml.safe_load(f)
                 self.assertEqual(
                     output["metadata"]["namespace"],
@@ -291,11 +294,13 @@ class KustomizeInputTest(unittest.TestCase):
             self.kustomize.compile_file(config, temp_dir, self.compile_path)
 
             # Verify the output
-            output_file = os.path.join(self.compile_path, "test-deployment-deployment.yaml")
+            output_file = os.path.join(
+                self.compile_path, "test-deployment-deployment.yaml"
+            )
             self.assertTrue(os.path.exists(output_file))
 
             # Verify that the patch was not applied (image should still be nginx:latest)
-            with open(output_file, "r") as f:
+            with open(output_file) as f:
                 output = yaml.safe_load(f)
                 self.assertEqual(
                     output["spec"]["template"]["spec"]["containers"][0]["image"],

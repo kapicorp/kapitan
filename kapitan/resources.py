@@ -19,9 +19,9 @@ from functools import partial
 import jsonschema
 import yaml
 
-import kapitan.cached as cached
 from kapitan import __file__ as kapitan_install_path
-from kapitan.errors import CompileError, InventoryError, KapitanError
+from kapitan import cached
+from kapitan.errors import CompileError, InventoryError
 from kapitan.inventory import Inventory, get_inventory_backend
 from kapitan.utils import (
     PrettyDumper,
@@ -31,6 +31,7 @@ from kapitan.utils import (
     render_jinja2_file,
     sha256_string,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,10 @@ def resource_callbacks(search_paths):
     """
 
     return {
-        "jinja2_render_file": (("name", "ctx"), partial(jinja2_render_file, search_paths)),
+        "jinja2_render_file": (
+            ("name", "ctx"),
+            partial(jinja2_render_file, search_paths),
+        ),
         "inventory": (("target", "inv_path"), partial(inventory, search_paths)),
         "file_read": (("name",), partial(read_file, search_paths)),
         "file_exists": (("name",), partial(file_exists, search_paths)),
@@ -76,7 +80,9 @@ def jsonschema_validate(obj, schema_obj):
     _obj = json.loads(obj)
     _schema_obj = json.loads(schema_obj)
     try:
-        jsonschema.validate(_obj, _schema_obj, format_checker=jsonschema.FormatChecker())
+        jsonschema.validate(
+            _obj, _schema_obj, format_checker=jsonschema.FormatChecker()
+        )
         return {"valid": True, "reason": ""}
     except jsonschema.ValidationError as e:
         return {"valid": False, "reason": "" + str(e)}
@@ -122,9 +128,9 @@ def jinja2_render_file(search_paths, name, ctx):
             try:
                 return render_jinja2_file(_full_path, ctx, search_paths=search_paths)
             except Exception as e:
-                raise CompileError("Jsonnet jinja2 failed to render {}: {}".format(_full_path, e))
+                raise CompileError(f"Jsonnet jinja2 failed to render {_full_path}: {e}")
 
-    raise IOError("jinja2 failed to render, could not find file: {}".format(_full_path))
+    raise OSError(f"jinja2 failed to render, could not find file: {_full_path}")
 
 
 def yaml_load(search_paths, name):
@@ -132,15 +138,17 @@ def yaml_load(search_paths, name):
     for path in search_paths:
         _full_path = os.path.join(path, name)
         logger.debug("yaml_load trying file %s", _full_path)
-        if os.path.exists(_full_path) and (name.endswith(".yml") or name.endswith(".yaml")):
+        if os.path.exists(_full_path) and (
+            name.endswith(".yml") or name.endswith(".yaml")
+        ):
             logger.debug("yaml_load found file at %s", _full_path)
             try:
                 with open(_full_path) as f:
                     return json.dumps(yaml.safe_load(f.read()))
             except Exception as e:
-                raise CompileError("Parse yaml failed to parse {}: {}".format(_full_path, e))
+                raise CompileError(f"Parse yaml failed to parse {_full_path}: {e}")
 
-    raise IOError("could not find any input yaml file: {}".format(_full_path))
+    raise OSError(f"could not find any input yaml file: {_full_path}")
 
 
 def yaml_load_stream(search_paths, name):
@@ -148,16 +156,18 @@ def yaml_load_stream(search_paths, name):
     for path in search_paths:
         _full_path = os.path.join(path, name)
         logger.debug("yaml_load_stream trying file %s", _full_path)
-        if os.path.exists(_full_path) and (name.endswith(".yml") or name.endswith(".yaml")):
+        if os.path.exists(_full_path) and (
+            name.endswith(".yml") or name.endswith(".yaml")
+        ):
             logger.debug("yaml_load_stream found file at %s", _full_path)
             try:
                 with open(_full_path) as f:
                     _obj = yaml.load_all(f.read(), Loader=yaml.SafeLoader)
                     return json.dumps(list(_obj))
             except Exception as e:
-                raise CompileError("Parse yaml failed to parse {}: {}".format(_full_path, e))
+                raise CompileError(f"Parse yaml failed to parse {_full_path}: {e}")
 
-    raise IOError("could not find any input yaml file: {}".format(_full_path))
+    raise OSError(f"could not find any input yaml file: {_full_path}")
 
 
 def read_file(search_paths, name):
@@ -167,10 +177,10 @@ def read_file(search_paths, name):
         logger.debug("read_file trying file %s", full_path)
         if os.path.exists(full_path):
             logger.debug("read_file found file at %s", full_path)
-            with io.open(full_path, newline="") as f:
+            with open(full_path, newline="") as f:
                 return f.read()
 
-    raise IOError("Could not find file {}".format(name))
+    raise OSError(f"Could not find file {name}")
 
 
 def file_exists(search_paths, name):
@@ -193,8 +203,12 @@ def dir_files_list(search_paths, name):
         full_path = os.path.join(path, name)
         logger.debug("dir_files_list trying directory %s", full_path)
         if os.path.exists(full_path):
-            return [f for f in os.listdir(full_path) if os.path.isfile(os.path.join(full_path, f))]
-    raise IOError("Could not find folder {}".format(name))
+            return [
+                f
+                for f in os.listdir(full_path)
+                if os.path.isfile(os.path.join(full_path, f))
+            ]
+    raise OSError(f"Could not find folder {name}")
 
 
 def dir_files_read(search_paths, name):
@@ -204,7 +218,9 @@ def dir_files_read(search_paths, name):
         full_path = os.path.join(path, name)
         logger.debug("dir_files_list trying directory %s", full_path)
         if os.path.exists(full_path):
-            return {f: read_file([full_path], f) for f in dir_files_list([full_path], "")}
+            return {
+                f: read_file([full_path], f) for f in dir_files_list([full_path], "")
+            }
 
 
 def search_imports(cwd, import_str, search_paths):
@@ -231,7 +247,9 @@ def search_imports(cwd, import_str, search_paths):
         # if found, set as full_import_path
         if os.path.exists(_full_import_path):
             full_import_path = _full_import_path
-            logger.debug("import_str: %s found in search_path: %s", import_str, install_path)
+            logger.debug(
+                "import_str: %s found in search_path: %s", import_str, install_path
+            )
         else:
             # if import_str not found, search in search_paths
             for path in search_paths:
@@ -239,14 +257,22 @@ def search_imports(cwd, import_str, search_paths):
                 # if found, set as full_import_path
                 if os.path.exists(_full_import_path):
                     full_import_path = _full_import_path
-                    logger.debug("import_str: %s found in search_path: %s", import_str, path)
+                    logger.debug(
+                        "import_str: %s found in search_path: %s", import_str, path
+                    )
                     break
 
     # if the above search did not find anything, let jsonnet error
     # with a non existent import
     normalised_path = os.path.normpath(full_import_path)
 
-    logger.debug("cwd:%s import_str:%s basename:%s -> norm:%s", cwd, import_str, basename, normalised_path)
+    logger.debug(
+        "cwd:%s import_str:%s basename:%s -> norm:%s",
+        cwd,
+        import_str,
+        basename,
+        normalised_path,
+    )
 
     normalised_path_content = ""
     with open(normalised_path) as f:
@@ -256,7 +282,11 @@ def search_imports(cwd, import_str, search_paths):
     return normalised_path, normalised_path_content.encode()
 
 
-def inventory(search_paths: list = [], target_name: str = None, inventory_path: str = "./inventory"):
+def inventory(
+    search_paths: list = [],
+    target_name: str = None,
+    inventory_path: str = "./inventory",
+):
     """
     Reads inventory (set by inventory_path) in search_paths.
     set nodes_uri to change reclass nodes_uri the default value
@@ -307,10 +337,22 @@ def generate_inventory(args):
 
         if args.flat:
             inv = flatten_dict(inv)
-            yaml.dump(inv, sys.stdout, width=10000, default_flow_style=False, indent=args.indent)
+            yaml.dump(
+                inv,
+                sys.stdout,
+                width=10000,
+                default_flow_style=False,
+                indent=args.indent,
+            )
         else:
-            yaml.dump(inv, sys.stdout, Dumper=PrettyDumper, default_flow_style=False, indent=args.indent)
-    except Exception as e:
+            yaml.dump(
+                inv,
+                sys.stdout,
+                Dumper=PrettyDumper,
+                default_flow_style=False,
+                indent=args.indent,
+            )
+    except Exception:
         raise
 
 
@@ -324,7 +366,9 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
     if cached.inv and cached.inv.targets:
         return cached.inv
 
-    compose_target_name = hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
+    compose_target_name = (
+        hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
+    )
     if hasattr(cached.args, "compose_node_name") and cached.args.compose_node_name:
         logger.warning(
             "inventory flag '--compose-node-name' is deprecated and scheduled to be dropped with the next release. "
@@ -333,8 +377,12 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
         compose_target_name = True
 
     # select inventory backend
-    backend_id = hasattr(cached.args, "inventory_backend") and cached.args.inventory_backend
-    compose_target_name = hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
+    backend_id = (
+        hasattr(cached.args, "inventory_backend") and cached.args.inventory_backend
+    )
+    compose_target_name = (
+        hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
+    )
     backend = get_inventory_backend(backend_id)
 
     logger.debug(f"Using {backend.__name__} as inventory backend")
@@ -344,7 +392,7 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
             compose_target_name=compose_target_name,
             ignore_class_not_found=ignore_class_not_found,
         )
-    except InventoryError as e:
+    except InventoryError:
         sys.exit(1)
 
     cached.inv = inventory_backend

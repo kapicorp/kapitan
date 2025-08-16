@@ -20,6 +20,7 @@ from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan.refs.vault_resources import VaultClient, VaultError
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -82,7 +83,9 @@ class VaultSecret(Base64Ref):
                 vault_params = target_inv.kapitan.secrets.vaultkv
                 ref_params.kwargs["vault_params"] = vault_params
             except KeyError:
-                raise RefError("Could not create VaultSecret: vaultkv parameters missing")
+                raise RefError(
+                    "Could not create VaultSecret: vaultkv parameters missing"
+                )
 
         # set mount, path and key as ref params, read from token
         token = ref_params.kwargs.get("token")
@@ -173,7 +176,7 @@ class VaultSecret(Base64Ref):
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
-                + "make sure the token is authorised to access '{}' on Vault".format(self.path)
+                f"make sure the token is authorised to access '{self.path}' on Vault"
             )
 
         # set the data to path:key
@@ -201,9 +204,7 @@ class VaultSecret(Base64Ref):
         data_attrs = data.decode().split(":")
         if len(data_attrs) != 2:
             raise RefError(
-                "Invalid vault secret: secret should be stored as 'path/in/vault:key', not '{}'".format(
-                    data.decode()
-                )
+                f"Invalid vault secret: secret should be stored as 'path/in/vault:key', not '{data.decode()}'"
             )
         mount = self.vault_params.mount
         secret_path = data_attrs[0]
@@ -228,17 +229,17 @@ class VaultSecret(Base64Ref):
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
-                + "make sure the token is authorised to access '{}' on Vault".format(secret_path)
+                f"make sure the token is authorised to access '{secret_path}' on Vault"
             )
         except InvalidPath:
-            raise VaultError("path '{}' does not exist on Vault".format(secret_path))
+            raise VaultError(f"path '{secret_path}' does not exist on Vault")
         except KeyError:
-            raise VaultError("key '{}' does not exist on Vault".format(secret_key))
+            raise VaultError(f"key '{secret_key}' does not exist on Vault")
         finally:
             client.adapter.close()
 
         if return_data == "":
-            raise VaultError("'{}' doesn't exist on '{}'".format(secret_key, secret_path))
+            raise VaultError(f"'{secret_key}' doesn't exist on '{secret_path}'")
 
         if self.encoding == "base64":
             return_data = base64.b64decode(return_data, validate=True).decode()
@@ -257,7 +258,7 @@ class VaultSecret(Base64Ref):
         }
 
     def __str__(self):
-        return "{}".format(self.dump())
+        return f"{self.dump()}"
 
 
 class VaultBackend(Base64RefBackend):
