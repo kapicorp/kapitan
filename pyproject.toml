@@ -157,6 +157,7 @@ source = ["kapitan"]
 branch = true
 parallel = true
 data_file = ".coverage"
+concurrency = ["multiprocessing", "thread"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
