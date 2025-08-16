@@ -58,7 +58,8 @@ If you prefer to set up components individually:
     ```bash
     make install_external_tools
     # This installs:
-    # - kustomize (Kubernetes manifest management)
+    # - Helm (Kubernetes package manager)
+    # - Kustomize (Kubernetes manifest management)
     # - CUE (data validation and configuration)
     ```
 
@@ -84,7 +85,7 @@ Run `make help` or simply `make` to see all available commands:
 - `make setup` - Complete development environment setup (recommended for first-time setup)
 - `make install` - Install Python dependencies
 - `make install_poetry` - Install Poetry package manager
-- `make install_external_tools` - Install kustomize and CUE
+- `make install_external_tools` - Install Helm, Kustomize, and CUE
 - `make install_pre_commit` - Configure git pre-commit hooks
 
 **Development Commands:**
