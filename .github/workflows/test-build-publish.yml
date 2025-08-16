@@ -112,21 +112,15 @@ jobs:
             -n auto \
             --cov=kapitan \
             --cov-branch \
-            --cov-report= \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            --cov-report=json:coverage.json \
+            --cov-report=html:htmlcov \
             --junit-xml=junit.xml \
             --json-report \
             --json-report-file=test-results.json \
             --durations=20 \
             -v
-
-          # Combine coverage data from parallel runs
-          poetry run coverage combine
-
-          # Generate reports
-          poetry run coverage xml -o coverage.xml
-          poetry run coverage json -o coverage.json
-          poetry run coverage html -d htmlcov
-          poetry run coverage report --show-missing
 
       - name: Generate coverage report summary
         if: always()
