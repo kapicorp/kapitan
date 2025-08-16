@@ -130,14 +130,21 @@ test_coverage:
 	poetry run coverage run --source=kapitan -m pytest
 	poetry run coverage report --fail-under=65 -m
 
-# Build and test Docker image
+# Build Docker image
+.PHONY: build_docker
+build_docker:
+	@echo "===== Building Docker Image ====="
+	docker pull kapicorp/kapitan:latest || true
+	docker build . --cache-from kapicorp/kapitan:latest -t kapitan
+	@echo "Docker image built successfully"
+
+# Test Docker image
 .PHONY: test_docker
-test_docker:
+test_docker: build_docker
 	@echo "===== Testing Docker Image ====="
-	docker build . --no-cache -t kapitan
-	@echo "----- Testing Docker image functionality -----"
-	docker run -ti --rm kapitan --help
-	docker run -ti --rm kapitan lint
+	docker run --rm kapitan --help
+	docker run --rm kapitan lint
+	@echo "Docker tests passed"
 
 # Run all tests (comprehensive test suite)
 .PHONY: test
@@ -221,6 +228,8 @@ help:
 	@echo "  make test_python        - Run Python unit tests"
 	@echo "  make test               - Run comprehensive test suite"
 	@echo "  make test_coverage      - Run tests with coverage report"
+	@echo "  make build_docker       - Build Docker image"
+	@echo "  make test_docker        - Build and test Docker image"
 	@echo ""
 	@echo "Documentation:"
 	@echo "  make docs_serve         - Serve documentation locally"
