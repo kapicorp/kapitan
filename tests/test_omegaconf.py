@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "inventory tests"
+
 import logging
 import os
 import shutil
@@ -13,6 +14,7 @@ import tempfile
 import unittest
 
 from kapitan.inventory import get_inventory_backend
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,9 @@ class InventoryTestOmegaConf(unittest.TestCase):
 
         inventory_path = os.path.join(self.temp_dir, "inventory")
         migrate(inventory_path)
-        self.inventory_backend = inventory_backend(inventory_path=inventory_path, initialise=False)
+        self.inventory_backend = inventory_backend(
+            inventory_path=inventory_path, initialise=False
+        )
 
     def test_load_and_resolve_single_target(self):
         target_name = "minikube"

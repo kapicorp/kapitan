@@ -17,6 +17,7 @@ from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -55,7 +56,9 @@ class GPGSecret(Base64Ref):
                 kwargs["encoding"] = "base64"
         else:
             self.data = data
-            self.recipients = [{"fingerprint": f} for f in fingerprints]  # TODO move to .load() method
+            self.recipients = [
+                {"fingerprint": f} for f in fingerprints
+            ]  # TODO move to .load() method
         super().__init__(self.data, **kwargs)
         self.type_name = KapitanReferencesTypes.GPG
 
@@ -68,7 +71,9 @@ class GPGSecret(Base64Ref):
         try:
             # XXX only used for testing
             if GPG_TARGET_FINGERPRINTS:
-                _fingerprints = [{"fingerprint": v} for _, v in GPG_TARGET_FINGERPRINTS.items()]
+                _fingerprints = [
+                    {"fingerprint": v} for _, v in GPG_TARGET_FINGERPRINTS.items()
+                ]
                 return cls(data, _fingerprints, **ref_params.kwargs)
 
             target_name = ref_params.kwargs["target_name"]
@@ -129,7 +134,9 @@ class GPGSecret(Base64Ref):
         if encode_base64:
             _data = base64.b64encode(data.encode())
             self.encoding = "base64"
-        enc = gpg_obj().encrypt(_data, fingerprints, sign=True, armor=False, **GPG_KWARGS)
+        enc = gpg_obj().encrypt(
+            _data, fingerprints, sign=True, armor=False, **GPG_KWARGS
+        )
         if enc.ok:
             self.data = enc.data
             self.recipients = [{"fingerprint": f} for f in fingerprints]
@@ -141,8 +148,7 @@ class GPGSecret(Base64Ref):
         dec = gpg_obj().decrypt(data, **GPG_KWARGS)
         if dec.ok:
             return dec.data.decode()
-        else:
-            raise GPGError(dec.status)
+        raise GPGError(dec.status)
 
     def dump(self):
         """
@@ -197,12 +203,11 @@ def fingerprint_non_expired(recipient_name):
             # if 'expires' key is set and time is in the future, return
             if (not key["expires"]) or (time.time() < int(key["expires"])):
                 return key["fingerprint"]
-            else:
-                logger.debug(
-                    "Key for recipient: %s with fingerprint: %s has expired, skipping",
-                    recipient_name,
-                    key["fingerprint"],
-                )
+            logger.debug(
+                "Key for recipient: %s with fingerprint: %s has expired, skipping",
+                recipient_name,
+                key["fingerprint"],
+            )
         raise GPGError(f"Could not find valid key for recipient: {recipient_name}")
     except IndexError as iexp:
         raise iexp

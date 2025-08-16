@@ -19,6 +19,7 @@ from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.env import DEFAULT_ENV_REF_VAR_PREFIX, EnvRef
 from kapitan.utils import get_entropy
 
+
 REFS_HOME = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_HOME)
 REVEALER = Revealer(REF_CONTROLLER)
@@ -66,7 +67,9 @@ class Base64RefsTest(unittest.TestCase):
         tag = "?{env:my/ref1_env}"
         REF_CONTROLLER[tag] = EnvRef(b"ref 1 env data")
         ref_obj = REF_CONTROLLER[tag]
-        os.environ["{}{}".format(DEFAULT_ENV_REF_VAR_PREFIX, "ref1_env")] = "ref 1 env data from EV"
+        os.environ["{}{}".format(DEFAULT_ENV_REF_VAR_PREFIX, "ref1_env")] = (
+            "ref 1 env data from EV"
+        )
         revealed = ref_obj.reveal()
         self.assertEqual(revealed, "ref 1 env data from EV")
 
@@ -133,7 +136,9 @@ class Base64RefsTest(unittest.TestCase):
     def test_base64_ref_embedded_reveal_encoding_base64(self):
         "check ref embedded reveal() encoding metadata is persisted"
         tag = "?{base64:my/ref3}"
-        REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(base64.b64encode(b"ref 3 data"), encoding="base64")
+        REF_CONTROLLER_EMBEDDED[tag] = Base64Ref(
+            base64.b64encode(b"ref 3 data"), encoding="base64"
+        )
         ref_obj = REF_CONTROLLER_EMBEDDED[tag]
         revealed = ref_obj.reveal()
         self.assertEqual(revealed, base64.b64encode(b"ref 3 data").decode())
@@ -211,7 +216,7 @@ class Base64RefsTest(unittest.TestCase):
     def test_base64_ref_revealer_reveal_raw_data_tag(self):
         "check Revealer reveals raw data"
         tag = "?{base64:my/ref2}"
-        data = "data with {}, period.".format(tag)
+        data = f"data with {tag}, period."
         revealed_data = REVEALER.reveal_raw(data)
         self.assertEqual(revealed_data, "data with ref 2 data, period.")
 
@@ -219,7 +224,7 @@ class Base64RefsTest(unittest.TestCase):
         "check Revealer reveals raw data with compiled tag (with hash)"
         tag = "?{base64:my/ref2}"
         tag_compiled = REF_CONTROLLER[tag].compile()
-        data = "data with {}, period.".format(tag_compiled)
+        data = f"data with {tag_compiled}, period."
         revealed_data = REVEALER.reveal_raw(data)
         self.assertEqual(revealed_data, "data with ref 2 data, period.")
 
@@ -230,7 +235,7 @@ class Base64RefsTest(unittest.TestCase):
         """
         tag_compiled_hash_mismatch = "?{base64:my/ref2:deadbeef}"
         with self.assertRaises(RefHashMismatchError):
-            data = "data with {}, period.".format(tag_compiled_hash_mismatch)
+            data = f"data with {tag_compiled_hash_mismatch}, period."
             REVEALER.reveal_raw(data)
 
     def test_compile_subvars(self):
@@ -256,8 +261,12 @@ class Base64RefsTest(unittest.TestCase):
         subvar_tag_var2 = "?{base64:ref/subvars@var2}"
         subvar_tag_var3 = "?{base64:ref/subvars@var3.var4}"
         REF_CONTROLLER_EMBEDDED[subvar_tag] = Base64Ref(b"I am not yaml, just testing")
-        REF_CONTROLLER_EMBEDDED[subvar_tag_var1] = Base64Ref(b"I am not yaml, just testing")
-        REF_CONTROLLER_EMBEDDED[subvar_tag_var2] = Base64Ref(b"I am not yaml, just testing")
+        REF_CONTROLLER_EMBEDDED[subvar_tag_var1] = Base64Ref(
+            b"I am not yaml, just testing"
+        )
+        REF_CONTROLLER_EMBEDDED[subvar_tag_var2] = Base64Ref(
+            b"I am not yaml, just testing"
+        )
         ref_obj1 = REF_CONTROLLER_EMBEDDED[subvar_tag_var1]
         ref_obj2 = REF_CONTROLLER_EMBEDDED[subvar_tag_var2]
         ref_obj3 = REF_CONTROLLER_EMBEDDED[subvar_tag_var3]
@@ -285,8 +294,12 @@ class Base64RefsTest(unittest.TestCase):
         subvar_tag_var1 = "?{base64:ref/subvars@var1}"
         subvar_tag_var2 = "?{base64:ref/subvars@var2}"
         REF_CONTROLLER_EMBEDDED[subvar_tag] = Base64Ref(b"I am not yaml, just testing")
-        REF_CONTROLLER_EMBEDDED[subvar_tag_var1] = Base64Ref(b"I am not yaml, just testing")
-        REF_CONTROLLER_EMBEDDED[subvar_tag_var2] = Base64Ref(b"I am not yaml, just testing")
+        REF_CONTROLLER_EMBEDDED[subvar_tag_var1] = Base64Ref(
+            b"I am not yaml, just testing"
+        )
+        REF_CONTROLLER_EMBEDDED[subvar_tag_var2] = Base64Ref(
+            b"I am not yaml, just testing"
+        )
         ref_obj1 = REF_CONTROLLER_EMBEDDED[subvar_tag_var1]
         ref_obj2 = REF_CONTROLLER_EMBEDDED[subvar_tag_var2]
         self.assertNotEqual(ref_obj1.compile(), ref_obj2.compile())
@@ -303,7 +316,7 @@ class Base64RefsTest(unittest.TestCase):
 
         with self.assertRaises(RefError):
             tag_subvar = "?{base64:ref/subvars_error@var3.var4}"
-            data = "message here: {}".format(tag_subvar)
+            data = f"message here: {tag_subvar}"
             REVEALER.reveal_raw(data)
 
     def test_reveal_subvars(self):
@@ -319,18 +332,18 @@ class Base64RefsTest(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "ref/subvars")))
 
         tag_subvar = "?{base64:ref/subvars@var1.var2}"
-        data = "message here: {}".format(tag_subvar)
+        data = f"message here: {tag_subvar}"
         revealed_data = REVEALER.reveal_raw(data)
         self.assertEqual("message here: hello", revealed_data)
 
         tag_subvar = "?{base64:ref/subvars@var3.var4}"
-        data = "message here: {}".format(tag_subvar)
+        data = f"message here: {tag_subvar}"
         revealed_data = REVEALER.reveal_raw(data)
         self.assertEqual("message here: world", revealed_data)
 
         with self.assertRaises(RefError):
             tag_subvar = "?{base64:ref/subvars@var3.varDoesntExist}"
-            data = "message here: {}".format(tag_subvar)
+            data = f"message here: {tag_subvar}"
             revealed_data = REVEALER.reveal_raw(data)
 
     def test_reveal_embedded_subvars(self):
@@ -356,16 +369,16 @@ class Base64RefsTest(unittest.TestCase):
         ref_var2 = REF_CONTROLLER_EMBEDDED[tag_var2]
         ref_var_doesnt_exist = REF_CONTROLLER_EMBEDDED[tag_var_doesnt_exist]
 
-        data = "message here: {}".format(ref_var1.compile())
+        data = f"message here: {ref_var1.compile()}"
         revealed_data = REVEALER_EMBEDDED.reveal_raw(data)
         self.assertEqual("message here: hello", revealed_data)
 
-        data = "message here: {}".format(ref_var2.compile())
+        data = f"message here: {ref_var2.compile()}"
         revealed_data = REVEALER_EMBEDDED.reveal_raw(data)
         self.assertEqual("message here: world", revealed_data)
 
         with self.assertRaises(RefError):
-            data = "message here: {}".format(ref_var_doesnt_exist.compile())
+            data = f"message here: {ref_var_doesnt_exist.compile()}"
             revealed_data = REVEALER_EMBEDDED.reveal_raw(data)
 
     def test_ref_function_randomstr(self):
@@ -379,7 +392,9 @@ class Base64RefsTest(unittest.TestCase):
         with open(file_with_tags, "w") as fp:
             fp.write("?{base64:ref/randomstr}")
         revealed = REVEALER.reveal_raw_file(file_with_tags)
-        self.assertEqual(len(revealed), 43)  # default length of token_urlsafe() string is 43
+        self.assertEqual(
+            len(revealed), 43
+        )  # default length of token_urlsafe() string is 43
         self.assertTrue(get_entropy(revealed) > 4)
 
         # Test with parameter nbytes=16, correlating with string length 16
@@ -401,7 +416,9 @@ class Base64RefsTest(unittest.TestCase):
             fp.write("?{base64:ref/base64}")
         revealed = REVEALER.reveal_raw_file(file_with_tags)
         # If the following succeeds, we guarantee that ref is base64-encoded
-        self.assertEqual(base64.b64encode(base64.b64decode(revealed)).decode("UTF-8"), revealed)
+        self.assertEqual(
+            base64.b64encode(base64.b64decode(revealed)).decode("UTF-8"), revealed
+        )
 
     def test_ref_function_sha256(self):
         "write randomstr to ref and sha256, confirm ref file exists, reveal and check"
@@ -433,7 +450,9 @@ class Base64RefsTest(unittest.TestCase):
         with open(file_with_tags, "w") as fp:
             fp.write("?{plain:ref/loweralphanum}")
         revealed = REVEALER.reveal_raw_file(file_with_tags)
-        self.assertEqual(len(revealed), 8)  # default length of loweralphanum string is 8
+        self.assertEqual(
+            len(revealed), 8
+        )  # default length of loweralphanum string is 8
 
         # Test with parameter chars=16, correlating with string length 16
         tag = "?{plain:ref/loweralphanum||loweralphanum:16}"
@@ -453,7 +472,9 @@ class Base64RefsTest(unittest.TestCase):
         with open(file_with_tags, "w") as fp:
             fp.write("?{plain:ref/upperalphanum}")
         revealed = REVEALER.reveal_raw_file(file_with_tags)
-        self.assertEqual(len(revealed), 8)  # default length of upperalphanum string is 8
+        self.assertEqual(
+            len(revealed), 8
+        )  # default length of upperalphanum string is 8
 
         # Test with parameter nchars=16, correlating with string length 16
         tag = "?{plain:ref/upperalphanum||random:upperalphanum:16}"

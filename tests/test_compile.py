@@ -25,6 +25,7 @@ from kapitan.cli import main
 from kapitan.inventory import InventoryBackends
 from kapitan.utils import directory_hash
 
+
 logger = logging.getLogger(__name__)
 
 TEST_PWD = os.getcwd()
@@ -41,7 +42,14 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
 
     def test_compile_no_reveal(self):
         # check if the --no-reveal flag takes precedence over --reveal when passed together
-        sys.argv = ["kapitan", "compile", "-t", "reveal-output", "--reveal", "--no-reveal"]
+        sys.argv = [
+            "kapitan",
+            "compile",
+            "-t",
+            "reveal-output",
+            "--reveal",
+            "--no-reveal",
+        ]
         main()
 
         with open("compiled/reveal-output/main.json") as f:
@@ -74,7 +82,7 @@ class CompileTestResourcesTestKadet(unittest.TestCase):
     def test_compile_with_input_params(self):
         # input_params propagate through and written out to file
         for g in glob.glob("compiled/kadet-test/test-1/*.yaml"):
-            with open(g, "r") as fp:
+            with open(g) as fp:
                 manifest = yaml.safe_load(fp.read())
                 namespace = manifest["metadata"]["namespace"]
                 team_name = manifest["metadata"]["labels"]["team_name"]
@@ -83,7 +91,7 @@ class CompileTestResourcesTestKadet(unittest.TestCase):
         # same kadet function was called with new params should have
         # different results
         for g in glob.glob("compiled/kadet-test/test-2/*.yaml"):
-            with open(g, "r") as fp:
+            with open(g) as fp:
                 manifest = yaml.safe_load(fp.read())
                 namespace = manifest["metadata"]["namespace"]
                 team_name = manifest["metadata"]["labels"]["team_name"]
@@ -121,7 +129,7 @@ class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
     def test_compile_with_input_params(self):
         # input_params propagate through and written out to file
         for g in glob.glob("compiled/jinja2-input-params/test-1/*.yml"):
-            with open(g, "r") as fp:
+            with open(g) as fp:
                 manifest = yaml.safe_load(fp.read())
                 namespace = manifest["metadata"]["namespace"]
                 name = manifest["metadata"]["name"]
@@ -130,7 +138,7 @@ class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
         # same jinja2 function was called with new params should have
         # different results
         for g in glob.glob("compiled/jinja2-input-params/test-2/*.yaml"):
-            with open(g, "r") as fp:
+            with open(g) as fp:
                 manifest = yaml.safe_load(fp.read())
                 namespace = manifest["metadata"]["namespace"]
                 name = manifest["metadata"]["name"]
@@ -152,13 +160,19 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
         main()
 
     def test_compile_postfix_strip_disabled(self):
-        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/unstripped"), ["stub.txt.j2"])
+        self.assertListEqual(
+            os.listdir("compiled/jinja2-postfix-strip/unstripped"), ["stub.txt.j2"]
+        )
 
     def test_compile_postfix_strip_overridden(self):
-        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/stripped-overridden"), ["stub"])
+        self.assertListEqual(
+            os.listdir("compiled/jinja2-postfix-strip/stripped-overridden"), ["stub"]
+        )
 
     def test_compile_postfix_strip_enabled(self):
-        self.assertListEqual(os.listdir("compiled/jinja2-postfix-strip/stripped"), ["stub.txt"])
+        self.assertListEqual(
+            os.listdir("compiled/jinja2-postfix-strip/stripped"), ["stub.txt"]
+        )
 
     def tearDown(self):
         os.chdir(TEST_PWD)
@@ -196,7 +210,8 @@ class CompileKubernetesTest(unittest.TestCase):
         sys.argv = ["kapitan", "compile", "-t", "minikube-mysql"] + self.extraArgv
         main()
         self.assertTrue(
-            os.path.exists("compiled/minikube-mysql") and not os.path.exists("compiled/minikube-es")
+            os.path.exists("compiled/minikube-mysql")
+            and not os.path.exists("compiled/minikube-es")
         )
         # Reset compiled dir
         sys.argv = ["kapitan", "compile"] + self.extraArgv
@@ -218,10 +233,12 @@ class CompileKubernetesTest(unittest.TestCase):
         sys.argv = ["kapitan", "compile", "-t", "jsonnet-env"] + self.extraArgv
         main()
         self.assertTrue(os.path.exists("compiled/jsonnet-env/jsonnet-env/env.yml"))
-        with open("compiled/jsonnet-env/jsonnet-env/env.yml", "r", encoding="utf-8") as f:
+        with open("compiled/jsonnet-env/jsonnet-env/env.yml", encoding="utf-8") as f:
             env = dict(yaml.safe_load(f))
             logger.error(env)
-            self.assertEqual(set(env.keys()), {"applications", "parameters", "classes", "exports"})
+            self.assertEqual(
+                set(env.keys()), {"applications", "parameters", "classes", "exports"}
+            )
             self.assertEqual(env["applications"], ["a", "b", "c"])
             self.assertEqual(env["classes"], ["common", "jsonnet-env"])
             self.assertTrue("a" in env["parameters"])
@@ -278,7 +295,9 @@ class CompileTerraformTest(unittest.TestCase):
         sys.argv = ["kapitan", "compile"]
         main()
         compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
-        test_compiled_dir_hash = directory_hash(os.getcwd() + "/../../tests/test_terraform_compiled")
+        test_compiled_dir_hash = directory_hash(
+            os.getcwd() + "/../../tests/test_terraform_compiled"
+        )
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def tearDown(self):
@@ -294,7 +313,9 @@ class PlainOutputTest(unittest.TestCase):
         sys.argv = ["kapitan", "compile"]
         main()
         compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
-        test_compiled_dir_hash = directory_hash(os.getcwd() + "/../../tests/test_docker_compiled")
+        test_compiled_dir_hash = directory_hash(
+            os.getcwd() + "/../../tests/test_docker_compiled"
+        )
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def tearDown(self):
@@ -310,13 +331,17 @@ class TomlOutputTest(unittest.TestCase):
         main()
 
     def setUp(self):
-        target_file_path = os.path.join(os.getcwd(), "inventory/targets/toml-output.yml")
+        target_file_path = os.path.join(
+            os.getcwd(), "inventory/targets/toml-output.yml"
+        )
         with open(target_file_path) as target_file:
             target = yaml.safe_load(target_file)
         self.input_parameter = target["parameters"]["input"]
 
     def test_jsonnet_output(self):
-        output_file_path = os.path.join(os.getcwd(), "compiled/toml-output/jsonnet-output/nested.toml")
+        output_file_path = os.path.join(
+            os.getcwd(), "compiled/toml-output/jsonnet-output/nested.toml"
+        )
         expected = self.input_parameter["nested"]
 
         with open(output_file_path) as output_file:
@@ -325,7 +350,9 @@ class TomlOutputTest(unittest.TestCase):
         self.assertDictEqual(output, expected)
 
     def test_kadet_output(self):
-        output_file_path = os.path.join(os.getcwd(), "compiled/toml-output/kadet-output/nested.toml")
+        output_file_path = os.path.join(
+            os.getcwd(), "compiled/toml-output/kadet-output/nested.toml"
+        )
         expected = self.input_parameter["nested"]
 
         with open(output_file_path) as output_file:

@@ -28,6 +28,7 @@ from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.functions import eval_func, get_func_lookup
 from kapitan.utils import PrettyDumper, StrEnum, list_all_paths
 
+
 try:
     from yaml import CSafeLoader as YamlLoader
 except ImportError:
@@ -46,14 +47,14 @@ REF_TOKEN_TAG_PATTERN = r"(\?{(\w+:[\w\-\.\@\=\/\:]+)(\|(?:(?:\|\w+)(?::\S*)*)+)
 REF_TOKEN_SUBVAR_PATTERN = r"(@[\w\.\-\_]+)"
 
 
-class PlainRef(object):
+class PlainRef:
     def __init__(self, data, **kwargs):
         """
         writes plain data
         """
         self.type_name = KapitanReferencesTypes.PLAIN
         self.encoding = kwargs.get("encoding", "original")
-        self.embedded_subvar_path = kwargs.get("embedded_subvar_path", None)
+        self.embedded_subvar_path = kwargs.get("embedded_subvar_path")
         self.data = data
 
     def reveal(self):
@@ -71,26 +72,39 @@ class PlainRef(object):
     def compile(self):
         # plain is not using the reveal function, and so we want to look for subvars here
         if self.embedded_subvar_path:
-            data = base64.b64decode(self.data).decode("utf-8") if self.encoding == "base64" else self.data
+            data = (
+                base64.b64decode(self.data).decode("utf-8")
+                if self.encoding == "base64"
+                else self.data
+            )
             yaml_data = yaml.load(data, Loader=YamlLoader)
             if not isinstance(yaml_data, dict):
                 raise RefError(
                     "PlainRef: revealed secret is not in embedded yaml, "
-                    "cannot access sub-variable at {}".format(self.embedded_subvar_path)
+                    f"cannot access sub-variable at {self.embedded_subvar_path}"
                 )
             try:
-                logger.debug('PlainRef: embedded sub-variable path "%s"', self.embedded_subvar_path)
-                value = self._get_value_in_yaml_path(yaml_data, self.embedded_subvar_path)
-                return base64.b64encode(value.encode("utf-8")) if self.encoding == "base64" else value
+                logger.debug(
+                    'PlainRef: embedded sub-variable path "%s"',
+                    self.embedded_subvar_path,
+                )
+                value = self._get_value_in_yaml_path(
+                    yaml_data, self.embedded_subvar_path
+                )
+                return (
+                    base64.b64encode(value.encode("utf-8"))
+                    if self.encoding == "base64"
+                    else value
+                )
             except KeyError:
                 raise RefError(
-                    "PlainRef: cannot access sub-variable key {}".format(self.embedded_subvar_path)
+                    f"PlainRef: cannot access sub-variable key {self.embedded_subvar_path}"
                 )
         else:
             return self.data
 
     def __str__(self):
-        return "{}".format(self.__dict__)
+        return f"{self.__dict__}"
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -100,11 +114,13 @@ class PlainRef(object):
         try:
             with open(ref_full_path) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
-                _kwargs = {key: value for key, value in obj.items() if key not in ("data",)}
+                _kwargs = {
+                    key: value for key, value in obj.items() if key not in ("data",)
+                }
                 kwargs.update(_kwargs)
                 return cls(obj["data"], **kwargs)
 
-        except IOError as ex:
+        except OSError as ex:
             if ex.errno == errno.ENOENT:
                 return None
 
@@ -118,7 +134,7 @@ class PlainRef(object):
         encoding = ref_params.kwargs.get("encoding", "original")
         if encoding == "original":
             return cls(data.encode(), **ref_params.kwargs)
-        elif encoding == "base64":
+        if encoding == "base64":
             # data already bytes encoded
             return cls(data, **ref_params.kwargs)
 
@@ -133,14 +149,14 @@ class PlainRef(object):
         }
 
 
-class RefParams(object):
+class RefParams:
     def __init__(self, *args, **kwargs):
         "pack params for new Refs from functions"
         self.args = args
         self.kwargs = kwargs
 
 
-class PlainRefBackend(object):
+class PlainRefBackend:
     def __init__(self, path, ref_type=PlainRef, **ref_kwargs):
         "Get and create PlainRefs"
         self.path = path
@@ -156,9 +172,9 @@ class PlainRefBackend(object):
 
         if ref is not None:
             ref.path = ref_path
-            ref_path_data = "{}{}".format(ref_file_path, ref.data)
+            ref_path_data = f"{ref_file_path}{ref.data}"
             ref.hash = hashlib.sha256(ref_path_data.encode()).hexdigest()
-            ref.token = "{}:{}:{}".format(ref.type_name, ref.path, ref.hash[:8])
+            ref.token = f"{ref.type_name}:{ref.path}:{ref.hash[:8]}"
 
             # if subvar is set, save path in 'embedded_subvar_path' key
             subvar = ref_path.split("@")
@@ -197,7 +213,7 @@ class PlainRefBackend(object):
                 pass
 
 
-class Revealer(object):
+class Revealer:
     def __init__(self, ref_controller):
         "reveal files and objects"
         self.ref_controller = ref_controller
@@ -208,7 +224,7 @@ class Revealer(object):
         if os.path.isfile(path):
             content, content_type = self._reveal_file(path)
             return [RevealedObj(content, content_type)]
-        elif os.path.isdir(path):
+        if os.path.isdir(path):
             content_yaml, content_json, content_raw = self._reveal_dir(path)
             revealed_objs = []
             if content_yaml != "":
@@ -218,8 +234,7 @@ class Revealer(object):
             elif content_raw != "":
                 revealed_objs.append(RevealedObj(content_raw, "raw"))
             return revealed_objs
-        else:
-            raise FileNotFoundError(path)
+        raise FileNotFoundError(path)
 
     def _reveal_file(self, filename):
         """
@@ -291,18 +306,20 @@ class Revealer(object):
                 if not isinstance(revealed_yaml, dict):
                     raise RefError(
                         "Revealer: revealed secret is not in embedded yaml, "
-                        "cannot access sub-variable at {}".format(ref.embedded_subvar_path)
+                        f"cannot access sub-variable at {ref.embedded_subvar_path}"
                     )
                 try:
                     logger.debug(
-                        'Revealer: embedded sub-variable path "%s"' "matched in tag %s",
+                        'Revealer: embedded sub-variable path "%s"matched in tag %s',
                         ref.embedded_subvar_path,
                         tag,
                     )
-                    return self._get_value_in_yaml_path(revealed_yaml, ref.embedded_subvar_path)
+                    return self._get_value_in_yaml_path(
+                        revealed_yaml, ref.embedded_subvar_path
+                    )
                 except KeyError:
                     raise RefError(
-                        "Revealer: cannot access {} sub-variable key {}".format(tag, ref.embedded_subvar_path)
+                        f"Revealer: cannot access {tag} sub-variable key {ref.embedded_subvar_path}"
                     )
 
             # else this is just a ref
@@ -315,27 +332,41 @@ class Revealer(object):
             subvar_path = m.groups()
             # strip away the @
             subvar_path = subvar_path[0][1:]
-            logger.debug('Revealer: sub-variable path "%s" matched in tag %s', subvar_path, tag)
+            logger.debug(
+                'Revealer: sub-variable path "%s" matched in tag %s', subvar_path, tag
+            )
             tag_without_yaml_path = re.sub(REF_TOKEN_SUBVAR_PATTERN, "", tag)
             plaintext = self._reveal_tag_without_subvar(tag_without_yaml_path)
             ref = self.ref_controller[tag_without_yaml_path]
-            plaintext = base64.b64decode(plaintext).decode("utf-8") if ref.encoding == "base64" else plaintext
+            plaintext = (
+                base64.b64decode(plaintext).decode("utf-8")
+                if ref.encoding == "base64"
+                else plaintext
+            )
             revealed_yaml = yaml.load(plaintext, Loader=YamlLoader)
             if not isinstance(revealed_yaml, dict):
                 raise RefError(
                     "Revealer: revealed secret is not in yaml, "
-                    "cannot access {} sub-variable at {}".format(subvar_path, tag)
+                    f"cannot access {subvar_path} sub-variable at {tag}"
                 )
             try:
                 value = self._get_value_in_yaml_path(revealed_yaml, subvar_path)
-                return base64.b64encode(value.encode("utf-8")) if ref.encoding == "base64" else value
+                return (
+                    base64.b64encode(value.encode("utf-8"))
+                    if ref.encoding == "base64"
+                    else value
+                )
             except KeyError:
-                raise RefError("Revealer: cannot access {} sub-variable key {}".format(tag, subvar_path))
+                raise RefError(
+                    f"Revealer: cannot access {tag} sub-variable key {subvar_path}"
+                )
 
     @lru_cache(maxsize=256)
     def _reveal_tag_without_subvar(self, tag_without_subvar):
         ref = self.ref_controller[tag_without_subvar]
-        logger.debug("Revealer: revealing tag %s for the first time", tag_without_subvar)
+        logger.debug(
+            "Revealer: revealing tag %s for the first time", tag_without_subvar
+        )
         return ref.reveal()
 
     def _get_value_in_yaml_path(self, d, yaml_path):
@@ -364,7 +395,7 @@ class Revealer(object):
                 return ref.compile()
             # if refs don't exist:
             except KeyError:
-                raise RefError("Could not find ref backend for tag: {}".format(tag))
+                raise RefError(f"Could not find ref backend for tag: {tag}")
 
         return compile_replace_match
 
@@ -432,7 +463,7 @@ class Revealer(object):
         return obj
 
 
-class RevealedObj(object):
+class RevealedObj:
     "Content and content type object type"
 
     def __init__(self, content, content_type):
@@ -440,7 +471,7 @@ class RevealedObj(object):
         self.content_type = content_type
 
 
-class RefController(object):
+class RefController:
     @contextmanager
     def detailedException(self, ref_key):
         try:
@@ -524,11 +555,10 @@ class RefController(object):
         if match:
             tag, token, func_str = match.groups()
             return tag, token, func_str
-        else:
-            raise RefError(
-                "{}: is not a valid tag".format(tag),
-                "\ntry something like: ?{ref:path/to/secret||function:param1:param2}",
-            )
+        raise RefError(
+            f"{tag}: is not a valid tag",
+            "\ntry something like: ?{ref:path/to/secret||function:param1:param2}",
+        )
 
     def token_type(self, token):
         "returns ref type for token"
@@ -566,7 +596,7 @@ class RefController(object):
 
     def ref_from_ref_file(self, ref_file_path):
         "returns ref from a ref file_path"
-        with open(ref_file_path, "r") as ref_file:
+        with open(ref_file_path) as ref_file:
             ref_file_obj = yaml.safe_load(ref_file)
 
             type_name = ref_file_obj.pop("type")
@@ -577,7 +607,9 @@ class RefController(object):
             # create new ref with deserialised data and remaining keys as kwargs
             # note that encrypt=False is only for secret ref types, non secret refs (e.g. base64) will ignore
             # from_base64 is True  because data is being loaded from a ref file where it is always base64
-            ref = backend.ref_type(data, encrypt=False, from_base64=True, **ref_file_obj)
+            ref = backend.ref_type(
+                data, encrypt=False, from_base64=True, **ref_file_obj
+            )
         return ref
 
     def _get_from_token(self, token):
@@ -591,39 +623,33 @@ class RefController(object):
             return backend[path]
 
         # "type_name:path/to/ref:n0c0ffee"
-        elif len(attrs) == 3:
+        if len(attrs) == 3:
             type_name = attrs[0]
             path = attrs[1]
             hash = attrs[2]
 
             if hash == "embedded":
                 return self.ref_from_embedded(type_name, path)
-            else:
-                backend = self._get_backend(type_name)
-                ref = backend[path]
-                if ref.hash[:8] == hash:
-                    return ref
-                else:
-                    raise RefHashMismatchError(
-                        "{}: token hash does not match with stored reference hash: {}".format(
-                            token, ref.token
-                        )
-                    )
+            backend = self._get_backend(type_name)
+            ref = backend[path]
+            if ref.hash[:8] == hash:
+                return ref
+            raise RefHashMismatchError(
+                f"{token}: token hash does not match with stored reference hash: {ref.token}"
+            )
 
         # "type_name:path/to/ref:vault_mount:path/in/vault:key"
-        elif len(attrs) == 5:
+        if len(attrs) == 5:
             type_name = attrs[0]
             path_to_ref = attrs[1]
             key = attrs[4]
 
             if key is None:
                 raise RefError(f"{token} is not a valid token (key in vault is needed)")
-            else:
-                backend = self._get_backend(type_name)
-                ref = backend[path_to_ref]
-                return ref
-        else:
-            return None
+            backend = self._get_backend(type_name)
+            ref = backend[path_to_ref]
+            return ref
+        return None
 
     def _set_to_token(self, token, ref_obj):
         attrs = token.split(":")
@@ -659,12 +685,12 @@ class RefController(object):
                     eval_func(func_name, ctx, *func_params)
                 except KeyError:
                     raise RefError(
-                        "{}: unknown ref function used. Choose one of: {}".format(
-                            func_name, [key for key in get_func_lookup()]
-                        )
+                        f"{func_name}: unknown ref function used. Choose one of: {[key for key in get_func_lookup()]}"
                     )
                 except TypeError:
-                    raise RefError("{}: too many arguments for function {}".format(func_params, func_name))
+                    raise RefError(
+                        f"{func_params}: too many arguments for function {func_name}"
+                    )
 
         return ctx
 
@@ -681,7 +707,9 @@ class RefController(object):
                     return ref
             else:
                 if re.search(REF_TOKEN_SUBVAR_PATTERN, token) is not None:
-                    raise RefError("Ref: references with sub-variables must be created manually")
+                    raise RefError(
+                        "Ref: references with sub-variables must be created manually"
+                    )
                 # if there is a function, try grabbing token
                 try:
                     ref = self._get_from_token(token)
@@ -704,7 +732,7 @@ class RefController(object):
             if func_str is None and isinstance(value, self.token_type(token)):
                 return self._set_to_token(token, value)
             # if function is set, ensure value is RefParams instance
-            elif func_str is not None and isinstance(value, RefParams):
+            if func_str is not None and isinstance(value, RefParams):
                 # run _eval_func_str, create ref_obj and run _set_to_token()
                 ctx = FunctionContext(None)
                 ctx.encode_base64 = False
@@ -728,7 +756,7 @@ class RefController(object):
                 return self._set_to_token(token, ref_obj)
 
 
-class FunctionContext(object):
+class FunctionContext:
     def __init__(self, data):
         "Carry context across function evaluation"
         self.data = data

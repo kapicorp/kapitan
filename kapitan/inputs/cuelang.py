@@ -10,13 +10,21 @@ from kapitan.errors import KustomizeTemplateError
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeCuelangConfig
 
+
 logger = logging.getLogger(__name__)
 
 
 class Cuelang(InputType):
     """CUE-Lang implementation."""
 
-    def __init__(self, compile_path: str, search_paths: list, ref_controller, target_name: str, args):
+    def __init__(
+        self,
+        compile_path: str,
+        search_paths: list,
+        ref_controller,
+        target_name: str,
+        args,
+    ):
         """Initialize the CUE-Lang implementation.
 
         Args:
@@ -29,7 +37,9 @@ class Cuelang(InputType):
         super().__init__(compile_path, search_paths, ref_controller, target_name, args)
         self.cue_path = args.cue_path if hasattr(args, "cue_path") else "cue"
 
-    def compile_file(self, config: KapitanInputTypeCuelangConfig, input_path: str, compile_path: str) -> None:
+    def compile_file(
+        self, config: KapitanInputTypeCuelangConfig, input_path: str, compile_path: str
+    ) -> None:
         temp_dir = tempfile.mkdtemp()
         abs_input_path = os.path.abspath(input_path)
 
@@ -57,10 +67,19 @@ class Cuelang(InputType):
         if config.output_yield_path:
             cmd += ["--expression", config.output_yield_path]
 
-        output_filename = config.output_filename if config.output_filename else "output.yaml"
+        output_filename = (
+            config.output_filename if config.output_filename else "output.yaml"
+        )
         output_file = os.path.join(compile_path, output_filename)
         with open(output_file, "w") as f:
-            result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, text=True, cwd=temp_input_dir)
+            result = subprocess.run(
+                cmd,
+                stdout=f,
+                stderr=subprocess.PIPE,
+                text=True,
+                cwd=temp_input_dir,
+                check=False,
+            )
             if result.returncode != 0:
                 err = f"Failed to run CUE export: {result.stderr}"
                 raise KustomizeTemplateError(err)

@@ -1,0 +1,121 @@
+---
+name: Development Environment Setup Test
+run-name: Testing development setup for ${{ github.actor }} on branch ${{ github.ref_name }}
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths:
+      - 'Makefile'
+      - '.github/workflows/makefile-test.yml'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - 'ruff.toml'
+      - '.pre-commit-config.yaml'
+  
+  pull_request:
+    paths:
+      - 'Makefile'
+      - '.github/workflows/makefile-test.yml'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - 'ruff.toml'
+      - '.pre-commit-config.yaml'
+
+jobs:
+  test-setup-commands:
+    name: Test Setup Commands
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Test make install_poetry
+        run: |
+          make install_poetry
+          poetry --version
+
+      - name: Test make install
+        run: |
+          make install
+          poetry run python -c "import kapitan; print('Kapitan imported successfully')"
+
+      - name: Test make install_external_tools
+        run: |
+          make install_external_tools
+          helm version --short
+          kustomize version
+          cue version
+
+      - name: Test make install_pre_commit
+        run: |
+          make install_pre_commit
+          test -f .git/hooks/pre-commit || (echo "Pre-commit hook not installed" && exit 1)
+
+      - name: Test make setup (full setup)
+        run: |
+          # Remove .git/hooks to test fresh setup
+          rm -f .git/hooks/pre-commit
+          make setup
+          poetry --version
+          kustomize version
+          cue version
+          test -f .git/hooks/pre-commit || (echo "Pre-commit hook not installed" && exit 1)
+
+  test-utility-commands:
+    name: Test Utility Commands
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install dependencies
+        run: poetry install --with dev --with test --with docs --extras "gojsonnet reclass-rs omegaconf"
+
+      - name: Test make clean
+        run: |
+          # Create some artifacts to clean
+          mkdir -p dist build kapitan.egg-info __pycache__ .pytest_cache .ruff_cache
+          make clean
+          # Verify directories were cleaned
+          test ! -d dist || (echo "dist not cleaned" && exit 1)
+          test ! -d build || (echo "build not cleaned" && exit 1)
+          test ! -d kapitan.egg-info || (echo "egg-info not cleaned" && exit 1)
+          echo "Clean command worked"
+
+      - name: Test make help
+        run: |
+          make help | grep -q "Kapitan Development Makefile" || (echo "Help output incorrect" && exit 1)
+          make help | grep -q "make setup" || (echo "Setup command not in help" && exit 1)
+          make help | grep -q "make lint" || (echo "Lint command not in help" && exit 1)
+          make help | grep -q "make test" || (echo "Test command not in help" && exit 1)
+          echo "Help command works correctly"
+
+      - name: Test default make target
+        run: |
+          # Running just 'make' should show help
+          make | grep -q "Kapitan Development Makefile" || (echo "Default target not showing help" && exit 1)
+          echo "Default make target shows help"

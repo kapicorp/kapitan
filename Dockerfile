@@ -24,11 +24,6 @@ RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.24.2.linux-${TARGETARCH}.tar.g
     && tar -C /usr/local -xzf go.tar.gz \
     && rm go.tar.gz
 
-# Install Helm
-RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 \
-    && chmod 700 get_helm.sh \
-    && HELM_INSTALL_DIR=/opt/venv/bin ./get_helm.sh --no-sudo \
-    && rm get_helm.sh
 
 
 COPY ./MANIFEST.in ./MANIFEST.in
@@ -56,16 +51,29 @@ ENV SEARCHPATH="/src"
 VOLUME ${SEARCHPATH}
 WORKDIR ${SEARCHPATH}
 
-# Install runtime dependencies and run as a non-root user for good measure
+# Install runtime dependencies
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         git \
         ssh-client \
         gnupg \
         ca-certificates \
+        curl \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && useradd --create-home --no-log-init --user-group kapitan
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Helm repository
+RUN curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
+
+# Install Helm
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y helm \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd --create-home --no-log-init --user-group kapitan
 
 COPY --from=go-builder /go/cue /usr/bin/cue
 COPY --from=python-builder /opt/venv /opt/venv

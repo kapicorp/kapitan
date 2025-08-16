@@ -11,15 +11,11 @@ import glob
 import logging
 import os
 import re
-import stat
-import sys
 import time
-import traceback
 import types
 from importlib import util
 from random import Random, shuffle
 
-import jinja2
 import toml
 import yaml
 from six import string_types
@@ -27,13 +23,18 @@ from six import string_types
 from kapitan import cached, defaults, utils
 from kapitan.errors import CompileError
 
+
 logger = logging.getLogger(__name__)
 
 
 def _jinja_error_info(trace_data):
     """Extract jinja2 templating related frames from traceback data"""
     try:
-        return [x for x in trace_data if x[2] in ("top-level template code", "template", "<module>")][-1]
+        return [
+            x
+            for x in trace_data
+            if x[2] in ("top-level template code", "template", "<module>")
+        ][-1]
     except IndexError:
         pass
 
@@ -74,7 +75,7 @@ def load_module_from_path(env, path):
                 logger.debug("custom filter loaded from %s", path)
                 env.filters[function] = getattr(custom_filter_module, function)
     except Exception as e:
-        raise IOError("jinja2 failed to render, could not load filter at {}: {}".format(path, e))
+        raise OSError(f"jinja2 failed to render, could not load filter at {path}: {e}")
         logger.debug("failed to find custom filter from path %s", path)
 
 
@@ -95,8 +96,7 @@ def reveal_maybe(ref_tag):
     "Will reveal ref_tag if valid and --reveal flag is used"
     if cached.args.reveal:
         return cached.revealer_obj.reveal_raw(ref_tag)
-    else:
-        return ref_tag
+    return ref_tag
 
 
 def base64_encode(string):
@@ -142,14 +142,14 @@ def strftime(string_format, second=None):
         try:
             second = int(second)
         except Exception:
-            raise CompileError("Invalid value for epoch value ({})".format(second))
+            raise CompileError(f"Invalid value for epoch value ({second})")
     return time.strftime(string_format, time.localtime(second))
 
 
 def regex_replace(value="", pattern="", replacement="", ignorecase=False):
     """Perform a `re.sub` returning a string"""
     if ignorecase:
-        flags = re.I
+        flags = re.IGNORECASE
     else:
         flags = 0
     _re = re.compile(pattern, flags=flags)
@@ -176,28 +176,27 @@ def regex_search(value, regex, *args, **kwargs):
 
     flags = 0
     if kwargs.get("ignorecase"):
-        flags |= re.I
+        flags |= re.IGNORECASE
     if kwargs.get("multiline"):
-        flags |= re.M
+        flags |= re.MULTILINE
 
     match = re.search(regex, value, flags)
     if match:
         if not groups:
             return match.group()
-        else:
-            items = list()
-            for item in groups:
-                items.append(match.group(item))
-            return items
+        items = list()
+        for item in groups:
+            items.append(match.group(item))
+        return items
 
 
 def regex_findall(value, regex, multiline=False, ignorecase=False):
     """Perform re.findall and return the list of matches"""
     flags = 0
     if ignorecase:
-        flags |= re.I
+        flags |= re.IGNORECASE
     if multiline:
-        flags |= re.M
+        flags |= re.MULTILINE
     return re.findall(regex, value, flags)
 
 
@@ -205,10 +204,9 @@ def ternary(value, true_val, false_val, none_val=None):
     """value ? true_val : false_val"""
     if value is None and none_val is not None:
         return none_val
-    elif bool(value):
+    if bool(value):
         return true_val
-    else:
-        return false_val
+    return false_val
 
 
 def randomize_list(mylist, seed=None):
@@ -244,8 +242,7 @@ def merge_strategic(data):
                     merged[key] = {}
                 merged[key].update(item)
             return list(merged.values())
-        else:
-            return processed_list
+        return processed_list
 
     if isinstance(data, dict):
         return {key: merge_strategic(value) for key, value in data.items()}

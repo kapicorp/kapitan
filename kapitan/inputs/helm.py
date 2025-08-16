@@ -17,6 +17,7 @@ from kapitan.inputs.base import InputType
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
 
+
 logger = logging.getLogger(__name__)
 
 HELM_DENIED_FLAGS = {
@@ -31,7 +32,9 @@ HELM_DEFAULT_FLAGS = {"--include-crds": True, "--skip-tests": True}
 
 
 class Helm(InputType):
-    def compile_file(self, config: KapitanInputTypeHelmConfig, input_path, compile_path):
+    def compile_file(
+        self, config: KapitanInputTypeHelmConfig, input_path, compile_path
+    ):
         """Render templates in input_path/templates and write to compile_path.
         input_path must be a directory containing a helm chart.
 
@@ -78,7 +81,7 @@ class Helm(InputType):
                 rel_file_name = os.path.join(rel_dir, file)
                 full_file_name = os.path.join(current_dir, file)
                 # Open each file and write its content to the compilation path
-                with open(full_file_name, "r", encoding="utf-8") as f:
+                with open(full_file_name, encoding="utf-8") as f:
                     file_path = os.path.join(compile_path, rel_file_name)
                     os.makedirs(os.path.dirname(file_path), exist_ok=True)
                     item_value = list(yaml.safe_load_all(f))
@@ -117,7 +120,9 @@ def render_chart(
     # Validate and process helm parameters
     for param, value in helm_params.items():
         if len(param) == 1:
-            raise ValueError(f"invalid helm flag: '{param}'. helm_params supports only long flag names")
+            raise ValueError(
+                f"invalid helm flag: '{param}'. helm_params supports only long flag names"
+            )
 
         if "-" in param:
             raise ValueError(f"helm flag names must use '_' and not '-': {param}")
@@ -144,7 +149,9 @@ def render_chart(
     # For backward compatibility, assume it is the '--release-name' flag only if its value is a bool.
     release_name = helm_flags.get("--release-name")
     if release_name is not None and not isinstance(release_name, bool):
-        logger.warning("using 'release_name' to specify the output name is deprecated. Use 'name' instead")
+        logger.warning(
+            "using 'release_name' to specify the output name is deprecated. Use 'name' instead"
+        )
         del helm_flags["--release-name"]
         # name is used in place of release_name if both are specified
         name = name or release_name
@@ -235,16 +242,21 @@ class HelmChart(BaseModel):
     # Load and process the Helm chart
     def new(self):
         for obj in self.load_chart():
-            self.root[f"{obj['metadata']['name'].lower()}-{obj['kind'].lower().replace(':','-')}"] = (
-                BaseObj.from_dict(obj)
-            )
+            self.root[
+                f"{obj['metadata']['name'].lower()}-{obj['kind'].lower().replace(':', '-')}"
+            ] = BaseObj.from_dict(obj)
 
     def load_chart(self):
         helm_values_file = None
         if self.helm_values != {}:
             helm_values_file = write_helm_values_file(self.helm_values)
         output, error_message = render_chart(
-            self.chart_dir, "-", self.helm_path, self.helm_params, helm_values_file, None
+            self.chart_dir,
+            "-",
+            self.helm_path,
+            self.helm_params,
+            helm_values_file,
+            None,
         )
         if error_message:
             raise HelmTemplateError(error_message)

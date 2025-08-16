@@ -14,6 +14,7 @@ import hvac
 
 from kapitan.errors import KapitanError
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,8 +54,12 @@ class VaultServer:
             sleep(5)
             vault_container.reload()
 
-        port = vault_container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0]["HostPort"]
-        host_ip = vault_container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0]["HostIp"]
+        port = vault_container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0][
+            "HostPort"
+        ]
+        host_ip = vault_container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0][
+            "HostIp"
+        ]
         self.vault_url = f"http://{host_ip}:{port}"
         self.parameters["addr"] = self.vault_url
         logger.info(vault_container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0])
@@ -112,15 +117,17 @@ class VaultServer:
         )
         self.vault_client.sys.enable_auth_method("approle")
         self.vault_client.auth.approle.create_or_update_approle("test_role")
-        os.environ["VAULT_ROLE_ID"] = self.vault_client.auth.approle.read_role_id("test_role")["data"][
-            "role_id"
-        ]
-        os.environ["VAULT_SECRET_ID"] = self.vault_client.auth.approle.generate_secret_id("test_role")[
-            "data"
-        ]["secret_id"]
-        os.environ["VAULT_TOKEN"] = self.vault_client.auth.token.create(policies=[policy], ttl="1h")["auth"][
-            "client_token"
-        ]
+        os.environ["VAULT_ROLE_ID"] = self.vault_client.auth.approle.read_role_id(
+            "test_role"
+        )["data"]["role_id"]
+        os.environ["VAULT_SECRET_ID"] = (
+            self.vault_client.auth.approle.generate_secret_id(
+                "test_role"
+            )["data"]["secret_id"]
+        )
+        os.environ["VAULT_TOKEN"] = self.vault_client.auth.token.create(
+            policies=[policy], ttl="1h"
+        )["auth"]["client_token"]
 
     def close_container(self):
         logger.info(f"Closing vault container {self.vault_url}")
@@ -133,7 +140,9 @@ class VaultServer:
 class VaultTransitServer(VaultServer):
     def set_backend_path(self):
         self.vault_client = hvac.Client(url=self.vault_url, token=self.root_token)
-        self.vault_client.sys.enable_secrets_engine(backend_type="transit", path="transit")
+        self.vault_client.sys.enable_secrets_engine(
+            backend_type="transit", path="transit"
+        )
 
     def get_policy(self):
         test_policy = """

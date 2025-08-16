@@ -11,7 +11,7 @@ from kapitan.inventory.model.input_types import InputTypes
 from .base import InputType
 
 
-@functools.lru_cache(maxsize=None)  # Use lru_cache for caching
+@functools.cache  # Use lru_cache for caching
 def get_compiler(input_type: InputType) -> Type[InputType]:
     """Dynamically imports and returns the compiler class based on input_type."""
 
@@ -31,8 +31,12 @@ def get_compiler(input_type: InputType) -> Type[InputType]:
     if module_name:
         try:
             module = importlib.import_module(f".{module_name}", package=__name__)
-            return getattr(module, module_name.capitalize())  # Capitalize to get class name
+            return getattr(
+                module, module_name.capitalize()
+            )  # Capitalize to get class name
         except (ImportError, AttributeError) as e:
-            raise ImportError(f"Could not import module or class for {input_type}: {e}") from e
+            raise ImportError(
+                f"Could not import module or class for {input_type}: {e}"
+            ) from e
     else:
         return None  # Or raise an appropriate error for unknown input_type

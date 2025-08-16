@@ -14,14 +14,15 @@ from functools import singledispatch
 import yaml
 from cachetools import LRUCache, cached
 from kadet import Dict
-from omegaconf import ListMergeMode, OmegaConf
 
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory, InventoryTarget
 from kapitan.inventory.model import KapitanInventoryMetadata, KapitanInventoryParameters
+from omegaconf import ListMergeMode, OmegaConf
 
 from .migrate import migrate
 from .resolvers import register_resolvers
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,9 @@ class OmegaConfTarget(InventoryTarget):
         }
         kapitan_metadata = KapitanInventoryMetadata(name=name_metadata)
 
-        self.parameters = KapitanInventoryParameters(_kapitan_=kapitan_metadata, _reclass_=kapitan_metadata)
+        self.parameters = KapitanInventoryParameters(
+            _kapitan_=kapitan_metadata, _reclass_=kapitan_metadata
+        )
 
 
 class OmegaConfInventory(Inventory):
@@ -69,19 +72,24 @@ class OmegaConfInventory(Inventory):
         super().__init__(*args, **kwargs, target_class=OmegaConfTarget)
 
     def render_targets(
-        self, targets: list[OmegaConfTarget] = None, ignore_class_not_found: bool = False
+        self,
+        targets: list[OmegaConfTarget] = None,
+        ignore_class_not_found: bool = False,
     ) -> None:
         if not self.initialised:
             manager = mp.Manager()
             shared_targets = manager.dict()
             with mp.Pool(min(len(targets), os.cpu_count())) as pool:
                 r = pool.map_async(
-                    self.inventory_worker, [(self, target, shared_targets) for target in targets.values()]
+                    self.inventory_worker,
+                    [(self, target, shared_targets) for target in targets.values()],
                 )
                 r.wait()
 
                 if not r.successful():
-                    raise OmegaConfRenderingError("Error while loading the OmegaConf inventory")
+                    raise OmegaConfRenderingError(
+                        "Error while loading the OmegaConf inventory"
+                    )
 
             for target in shared_targets.values():
                 self.targets[target.name] = target
@@ -100,7 +108,10 @@ class OmegaConfInventory(Inventory):
 
     @cached(cache=LRUCache(maxsize=1024))
     def resolve_class_file_path(
-        self, class_name: str, class_parent_dir: str = None, class_parent_name: str = None
+        self,
+        class_name: str,
+        class_parent_dir: str = None,
+        class_parent_name: str = None,
     ):
         class_file = None
 
@@ -124,7 +135,9 @@ class OmegaConfInventory(Inventory):
             # case .components.kapicorp  points to <class_parent_dir>/kapicorp.yml
             os.path.join(class_path_base, *class_name.split(".")[2:]) + extension,
             # case components.kapicorp points to components/kapicorp/init.yml
-            os.path.join(class_path_base, *class_name.split(".")[2:], "init" + extension),
+            os.path.join(
+                class_path_base, *class_name.split(".")[2:], "init" + extension
+            ),
         ]
 
         for case in cases:
@@ -137,7 +150,7 @@ class OmegaConfInventory(Inventory):
 
     @cached(cache=LRUCache(maxsize=1024))
     def load_file(self, filename):
-        with open(filename, "r") as f:
+        with open(filename) as f:
             return yaml.safe_load(f)
 
     def load_parameters_from_file(self, filename, parameters={}) -> Dict:
@@ -155,11 +168,14 @@ class OmegaConfInventory(Inventory):
 
         # first processes all classes
         for class_name in _classes:
-
-            class_parent_dir = os.path.dirname(filename.removeprefix(self.classes_path).removeprefix("/"))
+            class_parent_dir = os.path.dirname(
+                filename.removeprefix(self.classes_path).removeprefix("/")
+            )
             class_parent_name = os.path.basename(filename)
             class_file = self.resolve_class_file_path(
-                class_name, class_parent_dir=class_parent_dir, class_parent_name=class_parent_name
+                class_name,
+                class_parent_dir=class_parent_dir,
+                class_parent_name=class_parent_name,
             )
             if not class_file:
                 if self.ignore_class_not_found:
@@ -189,8 +205,12 @@ class OmegaConfInventory(Inventory):
         full_target_path = os.path.join(self.targets_path, target.path)
 
         start = time.perf_counter()
-        parameters = OmegaConf.create(keys_to_strings(target.parameters.model_dump(by_alias=True)))
-        p, c, a, e = self.load_parameters_from_file(full_target_path, parameters=parameters)
+        parameters = OmegaConf.create(
+            keys_to_strings(target.parameters.model_dump(by_alias=True))
+        )
+        p, c, a, e = self.load_parameters_from_file(
+            full_target_path, parameters=parameters
+        )
         load_parameters = time.perf_counter() - start
         target.parameters = OmegaConf.to_container(p, resolve=True)
         to_container = time.perf_counter() - load_parameters

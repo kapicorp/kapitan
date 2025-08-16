@@ -49,10 +49,16 @@ class DependencyManagerTest(unittest.TestCase):
         ]
 
         for source, path_hash in http_sources:
-            fetch_http_source(source, os.path.join(temp_dir, path_hash), item_type="Dependency")
+            fetch_http_source(
+                source, os.path.join(temp_dir, path_hash), item_type="Dependency"
+            )
 
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "1c3a08e6" + "jsonnet.jsonnet")))
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "aff45ec8" + "__init__.py")))
+        self.assertTrue(
+            os.path.isfile(os.path.join(temp_dir, "1c3a08e6" + "jsonnet.jsonnet"))
+        )
+        self.assertTrue(
+            os.path.isfile(os.path.join(temp_dir, "aff45ec8" + "__init__.py"))
+        )
         rmtree(temp_dir)
 
     def test_fetch_git_sources(self):
@@ -74,13 +80,11 @@ class DependencyManagerTest(unittest.TestCase):
         source = "https://github.com/kapicorp/kapitan.git"
         dep = [
             KapitanDependencyGitConfig(
-                **{
-                    "type": "git",
-                    "source": source,
-                    "output_path": os.path.join(output_dir, "subdir"),
-                    "ref": "master",
-                    "subdir": "tests",
-                }
+                type="git",
+                source=source,
+                output_path=os.path.join(output_dir, "subdir"),
+                ref="master",
+                subdir="tests",
             )
         ]
         fetch_git_dependency((source, dep), temp_dir, force=False)
@@ -100,18 +104,22 @@ class DependencyManagerTest(unittest.TestCase):
         repo = "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/"
         dep = [
             KapitanDependencyHelmConfig(
-                **{
-                    "output_path": output_chart_dir,
-                    "version": version,
-                    "chart_name": chart_name,
-                    "source": repo,
-                }
+                output_path=output_chart_dir,
+                version=version,
+                chart_name=chart_name,
+                source=repo,
             )
         ]
-        fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
+        fetch_helm_chart(
+            (HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False
+        )
         self.assertTrue(os.path.isdir(output_chart_dir))
         self.assertTrue(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
-        self.assertTrue(os.path.isdir(os.path.join(output_chart_dir, "charts", "kube-state-metrics")))
+        self.assertTrue(
+            os.path.isdir(
+                os.path.join(output_chart_dir, "charts", "kube-state-metrics")
+            )
+        )
         rmtree(temp_dir)
         rmtree(output_dir)
 
@@ -127,16 +135,18 @@ class DependencyManagerTest(unittest.TestCase):
         repo = "https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/"
         dep = [
             KapitanDependencyHelmConfig(
-                **{
-                    "output_path": output_chart_dir,
-                    "version": version,
-                    "chart_name": chart_name,
-                    "source": repo,
-                }
+                output_path=output_chart_dir,
+                version=version,
+                chart_name=chart_name,
+                source=repo,
             )
         ]
         with self.assertRaises(HelmFetchingError):
-            fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
+            fetch_helm_chart(
+                (HelmSource(repo, chart_name, version, None), dep),
+                temp_dir,
+                force=False,
+            )
         self.assertFalse(os.path.isdir(output_chart_dir))
         self.assertFalse(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
         rmtree(temp_dir)
@@ -193,8 +203,12 @@ class DependencyManagerTest(unittest.TestCase):
         ]
         main()
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))
-        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler")))
-        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "kapitan-repository")))
+        self.assertTrue(
+            os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler"))
+        )
+        self.assertTrue(
+            os.path.isdir(os.path.join(temp, "components", "kapitan-repository"))
+        )
         self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
         self.assertTrue(os.path.isdir(os.path.join(temp, "charts", "prometheus")))
         rmtree(temp)

@@ -14,6 +14,7 @@ from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,7 +42,9 @@ def azkms_obj(key_id):
         if logger.getEffectiveLevel() > logging.DEBUG:
             logging.getLogger("azure").setLevel(logging.ERROR)
         credential = DefaultAzureCredential()
-        key_client = KeyClient(vault_url=f"https://{key_vault_uri}", credential=credential)
+        key_client = KeyClient(
+            vault_url=f"https://{key_vault_uri}", credential=credential
+        )
         key = key_client.get_key(key_name, key_version)
         cached.azkms_obj = CryptographyClient(key, credential)
 
@@ -124,17 +127,18 @@ class AzureKMSSecret(Base64Ref):
         if encode_base64:
             _data = base64.b64encode(data.encode())
             self.encoding = "base64"
-        else:
-            # To guarantee _data is bytes
-            if isinstance(data, str):
-                _data = data.encode()
+        # To guarantee _data is bytes
+        elif isinstance(data, str):
+            _data = data.encode()
         try:
             ciphertext = ""
             # Mocking encrypted response for tests
             if key == "mock":
                 ciphertext = base64.b64encode(_data)
             else:
-                request = azkms_obj(key).encrypt(EncryptionAlgorithm.rsa_oaep_256, _data)
+                request = azkms_obj(key).encrypt(
+                    EncryptionAlgorithm.rsa_oaep_256, _data
+                )
                 ciphertext = request.ciphertext
 
             self.data = ciphertext
@@ -149,7 +153,7 @@ class AzureKMSSecret(Base64Ref):
             plaintext = ""
             # Mocking decrypted response for tests
             if self.key == "mock":
-                plaintext = "mock".encode()
+                plaintext = b"mock"
             else:
                 request = azkms_obj(key).decrypt(EncryptionAlgorithm.rsa_oaep_256, data)
                 plaintext = request.plaintext
@@ -163,7 +167,12 @@ class AzureKMSSecret(Base64Ref):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding, "key": self.key, "type": self.type_name}
+        return {
+            "data": self.data,
+            "encoding": self.encoding,
+            "key": self.key,
+            "type": self.type_name,
+        }
 
 
 class AzureKMSBackend(Base64RefBackend):

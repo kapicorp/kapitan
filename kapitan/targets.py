@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "kapitan targets"
+
 import logging
 import multiprocessing
 import os
@@ -21,6 +22,7 @@ from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs import get_compiler
 from kapitan.resources import get_inventory
+
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +62,9 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         raise CompileError(f"Error searching targets: {e}")
 
     if len(targets) == 0:
-        raise CompileError(f"No matching targets found in inventory: {labels if labels else args.targets}")
+        raise CompileError(
+            f"No matching targets found in inventory: {labels if labels else args.targets}"
+        )
 
     parallelism = args.parallelism or min(len(targets), os.cpu_count())
 
@@ -84,7 +88,9 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
 
             if fetch:
                 # skip classes that are not yet available
-                target_objs = load_target_inventory(inventory, targets, ignore_class_not_found=True)
+                target_objs = load_target_inventory(
+                    inventory, targets, ignore_class_not_found=True
+                )
             else:
                 # ignore_class_not_found = False by default
                 target_objs = load_target_inventory(inventory, targets)
@@ -98,7 +104,9 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
 
             # fetch dependencies
             if fetch:
-                fetch_dependencies(output_path, target_objs, dep_cache_dir, force_fetch, pool)
+                fetch_dependencies(
+                    output_path, target_objs, dep_cache_dir, force_fetch, pool
+                )
             # fetch targets which have force_fetch: true
             elif not force_fetch:
                 fetch_objs = []
@@ -111,8 +119,12 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
 
                 # fetch dependencies from targets with force_fetch set to true
                 if fetch_objs:
-                    fetch_dependencies(output_path, fetch_objs, dep_cache_dir, True, pool)
-                    logger.info("Fetched dependencies (%.2fs)", time.time() - fetching_start)
+                    fetch_dependencies(
+                        output_path, fetch_objs, dep_cache_dir, True, pool
+                    )
+                    logger.info(
+                        "Fetched dependencies (%.2fs)", time.time() - fetching_start
+                    )
 
             compile_start = time.time()
             worker = partial(
@@ -141,13 +153,17 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
 
                     shutil.rmtree(compile_path_target)
                     shutil.copytree(temp_path_target, compile_path_target)
-                    logger.debug("Copied %s into %s", temp_path_target, compile_path_target)
+                    logger.debug(
+                        "Copied %s into %s", temp_path_target, compile_path_target
+                    )
             # otherwise override all targets
             else:
                 shutil.rmtree(compile_path)
                 shutil.copytree(temp_compile_path, compile_path)
                 logger.debug("Copied %s into %s", temp_compile_path, compile_path)
-            logger.info(f"Compiled {len(targets)} targets in %.2fs", time.time() - compile_start)
+            logger.info(
+                f"Compiled {len(targets)} targets in %.2fs", time.time() - compile_start
+            )
         except ReclassException as e:
             if isinstance(e, NotFoundError):
                 logger.error("Inventory reclass error: inventory not found")
@@ -189,18 +205,27 @@ def load_target_inventory(inventory, requested_targets, ignore_class_not_found=F
             if not target.parameters:
                 if ignore_class_not_found:
                     continue
-                else:
-                    raise InventoryError(f"InventoryError: {target_name}: parameters is empty")
+                raise InventoryError(
+                    f"InventoryError: {target_name}: parameters is empty"
+                )
 
             kapitan_target_configs = target.parameters.kapitan
             # check if parameters.kapitan is empty
             if not kapitan_target_configs:
-                raise InventoryError(f"InventoryError: {target_name}: parameters.kapitan has no assignment")
-            kapitan_target_configs.target_full_path = inventory.targets[target_name].name.replace(".", "/")
-            logger.debug(f"load_target_inventory: found valid kapitan target {target_name}")
+                raise InventoryError(
+                    f"InventoryError: {target_name}: parameters.kapitan has no assignment"
+                )
+            kapitan_target_configs.target_full_path = inventory.targets[
+                target_name
+            ].name.replace(".", "/")
+            logger.debug(
+                f"load_target_inventory: found valid kapitan target {target_name}"
+            )
             target_objs.append(kapitan_target_configs)
         except KeyError:
-            logger.debug(f"load_target_inventory: target {target_name} has no kapitan compile obj")
+            logger.debug(
+                f"load_target_inventory: target {target_name} has no kapitan compile obj"
+            )
 
     return target_objs
 
@@ -245,7 +270,9 @@ def search_targets(inventory, targets, labels):
     return targets_found
 
 
-def compile_target(target_config, search_paths, compile_path, ref_controller, args, globals_cached=None):
+def compile_target(
+    target_config, search_paths, compile_path, ref_controller, args, globals_cached=None
+):
     """Compiles target_obj and writes to compile_path"""
     start = time.time()
     compile_configs = target_config.compile
@@ -266,16 +293,19 @@ def compile_target(target_config, search_paths, compile_path, ref_controller, ar
             import traceback
 
             traceback.print_exception(type(e), e, e.__traceback__)
-            raise CompileError(f'Invalid input_type: "{compile_config.input_type}" {e}') from e
+            raise CompileError(
+                f'Invalid input_type: "{compile_config.input_type}" {e}'
+            ) from e
 
         except Exception as e:
             if compile_config.continue_on_compile_error:
                 logger.error("Error compiling %s: %s", target_name, e)
                 continue
-            else:
-                import traceback
+            import traceback
 
-                traceback.print_exception(type(e), e, e.__traceback__)
-                raise CompileError(f"Error compiling {target_name}: {e}") from e
+            traceback.print_exception(type(e), e, e.__traceback__)
+            raise CompileError(f"Error compiling {target_name}: {e}") from e
 
-    logger.info("Compiled %s (%.2fs)", target_config.target_full_path, time.time() - start)
+    logger.info(
+        "Compiled %s (%.2fs)", target_config.target_full_path, time.time() - start
+    )

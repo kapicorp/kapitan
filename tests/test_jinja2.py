@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "jinja2 tests"
+
 import argparse
 import base64
 import tempfile
@@ -23,7 +24,7 @@ from kapitan.utils import render_jinja2_file
 class Jinja2FiltersTest(unittest.TestCase):
     def test_sha256(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|sha256 }}".encode("UTF-8"))
+            f.write(b"{{ text|sha256 }}")
             f.seek(0)
             context = {"text": "this and that"}
             output = "e863c1ac42619a2b429a08775a6acd89ff4c2c6b8dae12e3461a5fa63b2f92f5"
@@ -31,7 +32,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_base64_encode(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|b64encode }}".encode("UTF-8"))
+            f.write(b"{{ text|b64encode }}")
             f.seek(0)
             context = {"text": "this and that"}
             output = "dGhpcyBhbmQgdGhhdA=="
@@ -39,7 +40,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_base64_decode(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|b64decode }}".encode("UTF-8"))
+            f.write(b"{{ text|b64decode }}")
             f.seek(0)
             context = {"text": "dGhpcyBhbmQgdGhhdA=="}
             output = "this and that"
@@ -47,7 +48,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_toml(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|toml }}".encode("UTF-8"))
+            f.write(b"{{ text|toml }}")
             f.seek(0)
             context = {"text": {"foo": ["this", "that"]}}
             output = 'foo = [ "this", "that",]\n'
@@ -55,7 +56,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_yaml(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|yaml }}".encode("UTF-8"))
+            f.write(b"{{ text|yaml }}")
             f.seek(0)
             context = {"text": ["this", "that"]}
             output = "- this\n- that\n"
@@ -63,7 +64,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_fileglob(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|fileglob }}".encode("UTF-8"))
+            f.write(b"{{ text|fileglob }}")
             f.seek(0)
             context = {"text": "./tests/*jinja2.py"}
             output = "['./tests/test_jinja2.py']"
@@ -71,7 +72,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_bool(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|bool }}".encode("UTF-8"))
+            f.write(b"{{ text|bool }}")
             f.seek(0)
             context = {"text": "yes"}
             output = "True"
@@ -79,7 +80,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_to_datetime(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|to_datetime }}".encode("UTF-8"))
+            f.write(b"{{ text|to_datetime }}")
             f.seek(0)
             context = {"text": "2019-03-07 13:37:00"}
             output = "2019-03-07 13:37:00"
@@ -87,7 +88,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_strftime(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|strftime }}".encode("UTF-8"))
+            f.write(b"{{ text|strftime }}")
             f.seek(0)
             format = "%a, %d %b %Y %H:%M"
             context = {"text": format}
@@ -96,7 +97,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_regex_replace(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|regex_replace(pattern='world', replacement='kapitan') }}".encode("UTF-8"))
+            f.write(b"{{ text|regex_replace(pattern='world', replacement='kapitan') }}")
             f.seek(0)
             context = {"text": "hello world"}
             output = "hello kapitan"
@@ -104,7 +105,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_regex_escape(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|regex_escape }}".encode("UTF-8"))
+            f.write(b"{{ text|regex_escape }}")
             f.seek(0)
             context = {"text": "+s[a-z].*"}
             output = "\\+s\\[a\\-z\\]\\.\\*"
@@ -112,7 +113,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_regex_search(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|regex_search('world.*') }}".encode("UTF-8"))
+            f.write(b"{{ text|regex_search('world.*') }}")
             f.seek(0)
             context = {"text": "hello world"}
             output = "world"
@@ -120,7 +121,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_regex_findall(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|regex_findall('world.*') }}".encode("UTF-8"))
+            f.write(b"{{ text|regex_findall('world.*') }}")
             f.seek(0)
             context = {"text": "hello world"}
             output = "['world']"
@@ -128,7 +129,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_ternary(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|ternary('yes', 'no') }}".encode("UTF-8"))
+            f.write(b"{{ text|ternary('yes', 'no') }}")
             f.seek(0)
             context = {"text": "kapitan == kapitan"}
             output = "yes"
@@ -136,7 +137,7 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_shuffle(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ text|shuffle }}".encode("UTF-8"))
+            f.write(b"{{ text|shuffle }}")
             f.seek(0)
             array = [1, 2, 3, 4, 5]
             context = {"text": array}
@@ -147,7 +148,7 @@ class Jinja2FiltersTest(unittest.TestCase):
         creates ?{base64:some_value} and runs reveal_maybe|b64encode jinja2 filters
         """
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ my_ref_tag_var|reveal_maybe|b64encode }}".encode("UTF-8"))
+            f.write(b"{{ my_ref_tag_var|reveal_maybe|b64encode }}")
             f.seek(0)
 
             # reveal_maybe uses cached, so inject namespace
@@ -167,7 +168,7 @@ class Jinja2FiltersTest(unittest.TestCase):
         creates ?{base64:some_value} and runs reveal_maybe jinja2 filters without --reveal flag
         """
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ my_ref_tag_var|reveal_maybe }}".encode("UTF-8"))
+            f.write(b"{{ my_ref_tag_var|reveal_maybe }}")
             f.seek(0)
 
             # reveal_maybe uses cached, so inject namespace
@@ -179,14 +180,16 @@ class Jinja2FiltersTest(unittest.TestCase):
             ref_value = b"sitar_rock!"
             cached.ref_controller_obj[ref_tag] = Base64Ref(ref_value)
             context = {"my_ref_tag_var": ref_tag}
-            self.assertEqual(render_jinja2_file(f.name, context), "?{base64:some_value}")
+            self.assertEqual(
+                render_jinja2_file(f.name, context), "?{base64:some_value}"
+            )
 
     def test_reveal_maybe_no_tag(self):
         """
         runs reveal_maybe jinja2 filter on data without ref tags
         """
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ my_var|reveal_maybe }}".encode("UTF-8"))
+            f.write(b"{{ my_var|reveal_maybe }}")
             f.seek(0)
 
             # reveal_maybe uses cached, so inject namespace
@@ -202,10 +205,12 @@ class Jinja2FiltersTest(unittest.TestCase):
 class Jinja2ContextVars(unittest.TestCase):
     def test_inventory_context(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ inventory.parameters.cluster.name }}".encode("UTF-8"))
+            f.write(b"{{ inventory.parameters.cluster.name }}")
             cluster_name = "minikube"
             target_name = "minikube-es"
-            inv = inventory(["examples/kubernetes"], target_name, inventory_path="inventory/")
+            inv = inventory(
+                ["examples/kubernetes"], target_name, inventory_path="inventory/"
+            )
             context = {"inventory": inv}
             f.seek(0)
             self.assertEqual(render_jinja2_file(f.name, context), cluster_name)
@@ -214,11 +219,13 @@ class Jinja2ContextVars(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as f:
             target_name = "minikube-es"
             f.write(
-                '{{ inventory_global["%s"].parameters.cluster.name }}'.encode("UTF-8")
+                b'{{ inventory_global["%s"].parameters.cluster.name }}'
                 % target_name.encode("UTF-8")
             )
             cluster_name = "minikube"
-            inv_global = inventory(["examples/kubernetes"], None, inventory_path="inventory/")
+            inv_global = inventory(
+                ["examples/kubernetes"], None, inventory_path="inventory/"
+            )
             context = {"inventory_global": inv_global}
             f.seek(0)
             self.assertEqual(render_jinja2_file(f.name, context), cluster_name)
@@ -227,10 +234,12 @@ class Jinja2ContextVars(unittest.TestCase):
 class Jinja2ExternalFilterTest(unittest.TestCase):
     def test_custom_filter_jinja2(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.write("{{ inventory.parameters.cluster.name | custom_jinja2_filter }}".encode("UTF-8"))
+            f.write(b"{{ inventory.parameters.cluster.name | custom_jinja2_filter }}")
             cluster_name = "minikube"
             target_name = "minikube-es"
-            inv = inventory(["examples/kubernetes"], target_name, inventory_path="inventory/")
+            inv = inventory(
+                ["examples/kubernetes"], target_name, inventory_path="inventory/"
+            )
             context = {"inventory": inv}
             f.seek(0)
             actual_output = render_jinja2_file(

@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "copy tests"
+
 import filecmp
 import hashlib
 import logging
@@ -18,6 +19,7 @@ from kapitan.cli import main
 from kapitan.inputs.copy import Copy
 from kapitan.inventory.model.input_types import KapitanInputTypeCopyConfig
 from kapitan.utils import directory_hash
+
 
 logger = logging.getLogger(__name__)
 
@@ -62,11 +64,15 @@ class CopyTest(unittest.TestCase):
         except FileNotFoundError:
             pass
 
-        self.copy_compiler = Copy(compile_path, search_path, ref_controller, "test", None)
+        self.copy_compiler = Copy(
+            compile_path, search_path, ref_controller, "test", None
+        )
 
     def test_copy_file_folder(self):
         test_dirs_bootstrap_helper()
-        config = KapitanInputTypeCopyConfig(input_paths=[test_file_path], output_path=compile_path)
+        config = KapitanInputTypeCopyConfig(
+            input_paths=[test_file_path], output_path=compile_path
+        )
         self.copy_compiler.compile_file(config, test_file_path, compile_path)
         self.test_file_hash = hashlib.sha1(test_file_content.encode()).digest()
         with open(test_file_compiled_path) as f:
@@ -75,7 +81,9 @@ class CopyTest(unittest.TestCase):
 
     def test_copy_folder_folder(self):
         test_dirs_bootstrap_helper()
-        config = KapitanInputTypeCopyConfig(input_paths=[file_path], output_path=compile_path)
+        config = KapitanInputTypeCopyConfig(
+            input_paths=[file_path], output_path=compile_path
+        )
         self.copy_compiler.compile_file(config, file_path, compile_path)
         file_path_hash = directory_hash(file_path)
         compile_path_hash = directory_hash(compile_path)
@@ -95,11 +103,15 @@ class CopyMissingFileTest(unittest.TestCase):
         except FileNotFoundError:
             pass
 
-        self.copy_compiler = Copy(compile_path, search_path, ref_controller, "test", None)
+        self.copy_compiler = Copy(
+            compile_path, search_path, ref_controller, "test", None
+        )
 
     def test_copy_missing_path_folder(self):
         test_dirs_bootstrap_helper()
-        config = KapitanInputTypeCopyConfig(input_paths=[test_file_path], output_path=compile_path)
+        config = KapitanInputTypeCopyConfig(
+            input_paths=[test_file_path], output_path=compile_path
+        )
         self.copy_compiler.compile_file(config, test_file_missing_path, compile_path)
 
     def tearDown(self):

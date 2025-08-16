@@ -19,6 +19,7 @@ from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 from kapitan.refs.vault_resources import VaultClient, VaultError
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -67,7 +68,9 @@ class VaultTransit(Base64Ref):
 
             return cls(data, **ref_params.kwargs)
         except KeyError:
-            raise RefError("Could not create VaultSecret: vaulttransit parameters missing")
+            raise RefError(
+                "Could not create VaultSecret: vaulttransit parameters missing"
+            )
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -97,7 +100,9 @@ class VaultTransit(Base64Ref):
 
         encode_base64 = self.encoding == "base64"
         if encode_base64:
-            logger.info('Content is already base64 encoded "?(vaulttransit:...|base64)" has no effect.')
+            logger.info(
+                'Content is already base64 encoded "?(vaulttransit:...|base64)" has no effect.'
+            )
             data_dec = base64.b64decode(data_dec).decode()
         self._encrypt(data_dec, key, encode_base64)
         self.data = base64.b64encode(self.data).decode()
@@ -115,10 +120,9 @@ class VaultTransit(Base64Ref):
         if not encode_base64:
             _data = base64.b64encode(data.encode())
             self.encoding = "base64"
-        else:
-            # To guarantee _data is bytes
-            if isinstance(data, str):
-                _data = data.encode()
+        # To guarantee _data is bytes
+        elif isinstance(data, str):
+            _data = data.encode()
 
         client = VaultClient(self.vault_params)
         # token will comprise of two parts path_in_vault:key
@@ -138,10 +142,10 @@ class VaultTransit(Base64Ref):
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
-                + "make sure the token is authorised to access {path} on Vault".format(path=data[0])
+                f"make sure the token is authorised to access {data[0]} on Vault"
             )
         except InvalidPath:
-            raise VaultError("{path} does not exist on Vault secret".format(path=data[0]))
+            raise VaultError(f"{data[0]} does not exist on Vault secret")
         finally:
             client.adapter.close()
 
@@ -177,10 +181,10 @@ class VaultTransit(Base64Ref):
         except Forbidden:
             raise VaultError(
                 "Permission Denied. "
-                + "make sure the token is authorised to access {path} on Vault".format(path=data[0])
+                f"make sure the token is authorised to access {data[0]} on Vault"
             )
         except InvalidPath:
-            raise VaultError("{path} does not exist on Vault secret".format(path=data[0]))
+            raise VaultError(f"{data[0]} does not exist on Vault secret")
         finally:
             client.adapter.close()
 

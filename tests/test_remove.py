@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 "remove tests"
+
 import os
 import shutil
 import sys
@@ -18,6 +19,7 @@ from kapitan.inventory.model.input_types import (
     KapitanInputTypeCopyConfig,
     KapitanInputTypeRemoveConfig,
 )
+
 
 search_path = ""
 ref_controller = ""
@@ -60,28 +62,40 @@ class RemoveTest(unittest.TestCase):
             pass
 
         self.copy_compiler = Copy(compile_path, search_path, ref_controller, None, None)
-        self.remove_compiler = Remove(compile_path, search_path, ref_controller, None, None)
+        self.remove_compiler = Remove(
+            compile_path, search_path, ref_controller, None, None
+        )
 
     def test_remove_file_folder(self):
         test_dirs_bootstrap_helper()
 
-        copy_config = KapitanInputTypeCopyConfig(input_paths=[file_path], output_path="")
+        copy_config = KapitanInputTypeCopyConfig(
+            input_paths=[file_path], output_path=""
+        )
         self.copy_compiler.compile_file(copy_config, test_file_path, compile_path)
 
         self.assertTrue(os.path.exists(test_file_compiled_path))
 
-        remove_config = KapitanInputTypeRemoveConfig(input_paths=[test_file_compiled_path])
-        self.remove_compiler.compile_file(remove_config, test_file_compiled_path, compile_path)
+        remove_config = KapitanInputTypeRemoveConfig(
+            input_paths=[test_file_compiled_path]
+        )
+        self.remove_compiler.compile_file(
+            remove_config, test_file_compiled_path, compile_path
+        )
         self.assertFalse(os.path.exists(test_file_compiled_path))
 
     def test_remove_folder_folder(self):
         test_dirs_bootstrap_helper()
 
-        copy_config = KapitanInputTypeCopyConfig(input_paths=[file_path], output_path="")
+        copy_config = KapitanInputTypeCopyConfig(
+            input_paths=[file_path], output_path=""
+        )
         self.copy_compiler.compile_file(copy_config, test_file_path, compile_path)
 
         self.assertTrue(os.path.exists(compile_path))
-        remove_config = KapitanInputTypeRemoveConfig(input_paths=[test_file_compiled_path])
+        remove_config = KapitanInputTypeRemoveConfig(
+            input_paths=[test_file_compiled_path]
+        )
         self.remove_compiler.compile_file(remove_config, compile_path, compile_path)
         self.assertFalse(os.path.exists(compile_path))
 

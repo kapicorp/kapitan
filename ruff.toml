@@ -1,0 +1,286 @@
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "examples",
+    "tests/test_terraform_compiled",
+    "tests/test_kubernetes_compiled",
+    "tests/test_docker_compiled",
+    "tests/test_resources",
+    "tests/test_jsonnet",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.9
+target-version = "py39"
+
+# Allow unsafe fixes when using --fix
+unsafe-fixes = false
+
+[lint]
+# Enable comprehensive rule sets for best practices
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "UP",     # pyupgrade - automatically upgrade syntax for newer Python versions
+    "B",      # flake8-bugbear - find likely bugs and design problems
+    "SIM",    # flake8-simplify - suggest code simplifications
+    "I",      # isort - import sorting
+    "C4",     # flake8-comprehensions - write better list/set/dict comprehensions
+    "DTZ",    # flake8-datetimez - enforce timezone-aware datetime
+    "T10",    # flake8-debugger - check for debugger imports
+    "DJ",     # flake8-django - Django specific checks
+    "EM",     # flake8-errmsg - better error messages
+    "EXE",    # flake8-executable - check executable permissions
+    "FA",     # flake8-future-annotations - enforce modern annotations
+    "ISC",    # flake8-implicit-str-concat - check implicit string concatenation
+    "ICN",    # flake8-import-conventions - enforce import conventions
+    "G",      # flake8-logging-format - logging format strings
+    "INP",    # flake8-no-pep420 - require __init__.py
+    "PIE",    # flake8-pie - misc lints
+    "T20",    # flake8-print - no print statements
+    "PYI",    # flake8-pyi - type stub files
+    "PT",     # flake8-pytest-style - pytest conventions
+    "Q",      # flake8-quotes - quotes consistency
+    "RSE",    # flake8-raise - raise statement checks
+    "RET",    # flake8-return - check return statements
+    "SLF",    # flake8-self - private member access
+    "SLOT",   # flake8-slots - require __slots__
+    "TID",    # flake8-tidy-imports - tidy imports
+    "TCH",    # flake8-type-checking - type checking imports
+    "INT",    # flake8-gettext - gettext checks
+    "ARG",    # flake8-unused-arguments - unused arguments
+    "TD",     # flake8-todos - TODO comments format
+    "FIX",    # flake8-fixme - no FIXME, XXX, HACK comments
+    "ERA",    # eradicate - commented-out code
+    "PD",     # pandas-vet - pandas best practices
+    "PGH",    # pygrep-hooks - misc hooks
+    "PL",     # Pylint - comprehensive Python linter
+    "TRY",    # tryceratops - exception handling
+    "FLY",    # flynt - string formatting
+    "NPY",    # NumPy-specific rules
+    "AIR",    # Airflow best practices
+    "PERF",   # Perflint - performance linting
+    "FURB",   # refurb - modernize Python code
+    "LOG",    # flake8-logging - logging best practices
+    "RUF",    # Ruff-specific rules
+]
+
+# Ignore specific rules that might be too strict or conflict
+ignore = [
+    "E501",    # Line too long - handled by formatter
+    "E203",    # Whitespace before ':' - conflicts with Black
+    "D",       # pydocstyle - documentation (can be strict)
+    "ANN",     # flake8-annotations - type annotations (optional)
+    "COM",     # flake8-commas - trailing commas (handled by formatter)
+    "N",       # pep8-naming - naming conventions (can be project-specific)
+    "S",       # flake8-bandit - security (may have false positives)
+    "BLE",     # flake8-blind-except - blind exceptions (sometimes needed)
+    "FBT",     # flake8-boolean-trap - boolean arguments
+    "A",       # flake8-builtins - builtin shadowing (sometimes necessary)
+    "C90",     # mccabe complexity (can be too strict)
+    "T20",     # Remove print check - may be needed for CLI tools
+    "TD002",   # Missing author in TODO
+    "TD003",   # Missing issue link in TODO
+    "FIX002",  # Allow TODO comments
+    "ERA001",  # Allow commented-out code (sometimes useful during development)
+    "PLR0913", # Too many arguments - can be necessary
+    "PLR2004", # Magic value comparison - sometimes clearer
+    "TRY003",  # Long exception messages - can be helpful
+    "EM101",   # Raw string in exception - simpler for small projects
+    "EM102",   # f-string in exception - modern and readable
+    "ISC001",  # Implicit string concatenation - conflicts with formatter
+    "PD901",   # df variable name - common and clear
+    "PERF203", # try-except in loop - sometimes necessary
+    "SIM108",  # Use ternary operator - not always clearer
+    "RET504",  # Unnecessary assignment - sometimes aids readability
+    "UP007",   # Use X | Y for Union - keep Optional for clarity
+    "B008",    # Function call in default argument - needed for some patterns
+    "G004",    # Logging statement uses f-string - f-strings in logging are acceptable for readability
+    "PTH",     # flake8-use-pathlib - existing codebase uses os.path extensively
+    "EXE001",  # Shebang is present but file is not executable - not always needed
+    "PT012",   # pytest.raises() should contain a single simple statement - can be clearer with multiple statements
+    
+    # Code modernization (can be done gradually)
+    "UP006",   # Use native types instead of typing module (Dict -> dict, Type -> type) - needs Python 3.9+ for some features
+    "UP008",   # Use super() without arguments - stylistic preference
+    "UP022",   # Replace stdout/stderr with capture_output - not always equivalent
+    "UP031",   # Use format specifiers instead of % formatting - large refactor needed
+    
+    # Exception handling patterns
+    "TRY400",  # Use logging.exception instead of logging.error - not always appropriate
+    "TRY201",  # Verbose raise - explicit can be clearer
+    "RET503",  # Missing explicit return - implicit None is Pythonic
+    
+    # Code style preferences
+    "PIE810",  # Use single startswith/endswith - multiple can be clearer
+    "C408",    # Unnecessary collection call - dict() can be clearer than {}
+    "C406",    # Unnecessary literal dict - dict() vs {}
+    "C416",    # Unnecessary comprehension - list() can be clearer
+    "C403",    # Unnecessary list comprehension for set - intermediate list can be clearer
+    "C417",    # Unnecessary map - comprehension can be more readable
+    "C419",    # Unnecessary comprehension in call - can be clearer
+    "RUF005",  # Collection literal concatenation - [x] + list can be clearer
+    "RUF013",  # Implicit Optional - PEP 484 allows implicit Optional
+    "SIM103",  # Needless bool - explicit can be clearer
+    "SIM118",  # Use `in` instead of `in dict.keys()` - explicit can be clearer
+    "B006",    # Mutable default argument - sometimes intentional with proper handling
+    "FA102",   # Missing from __future__ import annotations - not always needed
+    
+    # HIGH PRIORITY TO FIX (currently ignored for migration):
+    "B904",    # [HIGH] raise-without-from-inside-except - Important for debugging (59 violations)
+    "E722",    # [HIGH] bare-except - Can hide bugs, should specify exception types (3 violations)
+    "DTZ005",  # [HIGH] call-datetime-now-without-tzinfo - Can cause timezone bugs (4 violations)
+    "DTZ007",  # [HIGH] call-datetime-strptime-without-zone - Timezone issues (1 violation)
+    
+    # MEDIUM PRIORITY (should fix when refactoring):
+    "SIM115",  # [MEDIUM] open-file-with-context-handler - Resource leak risk (2 violations)
+    "B017",    # [MEDIUM] assert-raises-exception - Test assertion issue (1 violation)
+    "TRY002",  # [MEDIUM] raise-vanilla-class - Should use specific exceptions (6 violations)
+    "TRY300",  # [MEDIUM] try-consider-else - Could improve error handling (4 violations)
+    "TRY301",  # [MEDIUM] raise-within-try - Should raise in except block (4 violations)
+    "PT011",   # [MEDIUM] pytest-raises-too-broad - Too broad exception in tests (3 violations)
+    
+    # LOW PRIORITY (style/convention - can ignore):
+    "PLW0603", # [LOW] global-statement - Sometimes necessary for module state (24 violations)
+    "PLC0415", # [LOW] import-outside-top-level - Performance optimization pattern (22 violations)
+    "TD001",   # [LOW] invalid-todo-tag - XXX is a valid marker (7 violations)
+    "TD004",   # [LOW] missing-todo-colon - TODO formatting (14 violations)
+    "FIX003",  # [LOW] line-contains-xxx - XXX comments are valid markers (7 violations)
+    "TRY401",  # [LOW] verbose-log-message - Detailed logs can be helpful (11 violations)
+    "ARG002",  # [LOW] unused-method-argument - Required for interfaces/overrides (10 violations)
+    "SLF001",  # [LOW] private-member-access - Sometimes necessary (10 violations)
+    "PLR0912", # [LOW] too-many-branches - Complexity metric (6 violations)
+    "PLR0915", # [LOW] too-many-statements - Complexity metric (6 violations)
+    "PLW2901", # [LOW] redefined-loop-name - Not always problematic (6 violations)
+    "PT009",   # [LOW] pytest-unittest-assertion - Migration from unittest (6 violations)
+    "RUF012",  # [LOW] mutable-class-default - Can be intentional (5 violations)
+    "TRY203",  # [LOW] useless-try-except - May have side effects (3 violations)
+    "UP035",   # [LOW] deprecated-import - Compatibility reasons (3 violations)
+    "ARG001",  # [LOW] unused-function-argument - Interface compliance (2 violations)
+    "RUF040",  # [LOW] invalid-assert-message-literal-argument - Style preference (2 violations)
+    "SIM102",  # [LOW] collapsible-if - Sometimes clearer separate (2 violations)
+    "B019",    # [LOW] cached-instance-method - May be intentional (1 violation)
+    "B027",    # [LOW] empty-method-without-abstract-decorator - Stub methods (1 violation)
+    "PERF401", # [LOW] manual-list-comprehension - Readability over performance (1 violation)
+    "PERF403", # [LOW] manual-dict-comprehension - Readability over performance (1 violation)
+    "PLR0911", # [LOW] too-many-return-statements - Complexity metric (1 violation)
+    "PYI024",  # [LOW] collections-named-tuple - Typing preference (1 violation)
+    "RUF003",  # [LOW] ambiguous-unicode-character-comment - In comments only (1 violation)
+    "SIM105",  # [LOW] suppressible-exception - Explicit is better (1 violation)
+    "SIM117",  # [LOW] multiple-with-statements - Python 3.8 compatibility (1 violation)
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Minimum Python version for UP rules
+pyupgrade.keep-runtime-typing = true
+
+[lint.per-file-ignores]
+# Ignore specific rules in test files
+"tests/**/*.py" = [
+    "S101",    # Use of assert
+    "PLR2004", # Magic values in tests are fine
+    "ARG",     # Unused arguments in tests
+    "FBT",     # Boolean arguments in tests
+    "SLF001",  # Private member access in tests
+    "PT027",   # Use of unittest-style assertions - migration from unittest
+    "SIM117",  # Multiple with statements - clearer in tests
+    "B007",    # Loop control variable not used - common in os.walk
+    "C414",    # Unnecessary list() call - sometimes clearer
+    "C418",    # Unnecessary dict literal - style preference
+    "F841",    # Local variable assigned but never used - test validation
+    "E712",    # Comparison to False - sometimes clearer in tests
+]
+
+# Ignore import violations in __init__ files
+"**/__init__.py" = [
+    "F401",    # Unused imports in __init__ files
+    "F403",    # Star imports in __init__ files
+]
+
+# Scripts may use print and have different standards
+"scripts/**/*.py" = [
+    "T20",     # Print statements allowed in scripts
+    "INP001",  # No __init__.py required for scripts
+]
+
+[lint.isort]
+# Configure import sorting to match Black
+force-single-line = false
+lines-after-imports = 2
+known-first-party = ["kapitan"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[lint.flake8-quotes]
+# Prefer double quotes
+inline-quotes = "double"
+multiline-quotes = "double"
+docstring-quotes = "double"
+
+[lint.pylint]
+# Set reasonable limits
+max-args = 7
+max-branches = 12
+max-returns = 6
+max-statements = 50
+
+[lint.flake8-tidy-imports]
+# Ban certain imports
+banned-module-level-imports = []
+
+[lint.mccabe]
+# Maximum cyclomatic complexity
+max-complexity = 15
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Format docstrings
+docstring-code-format = true
+
+# Format code in docstrings
+docstring-code-line-length = "dynamic"

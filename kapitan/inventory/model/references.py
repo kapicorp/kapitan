@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings
@@ -20,17 +20,27 @@ class KapitanReferenceGPGConfig(KapitanReferenceBaseConfig):
 # Note that this will break if both alias choices are set for a field (either through envvar or
 # initializer).
 class KapitanReferenceVaultEnv(BaseSettings):
-    addr: Optional[str] = Field(None, validation_alias=AliasChoices("addr", "VAULT_ADDR"))
+    addr: Optional[str] = Field(
+        None, validation_alias=AliasChoices("addr", "VAULT_ADDR")
+    )
     skip_verify: Optional[bool] = Field(
         True, validation_alias=AliasChoices("skip_verify", "VAULT_SKIP_VERIFY")
     )
-    client_key: Optional[str] = Field(None, validation_alias=AliasChoices("client_key", "VAULT_CLIENT_KEY"))
+    client_key: Optional[str] = Field(
+        None, validation_alias=AliasChoices("client_key", "VAULT_CLIENT_KEY")
+    )
     client_cert: Optional[str] = Field(
         None, validation_alias=AliasChoices("client_cert", "VAULT_CLIENT_CERT")
     )
-    cacert: Optional[str] = Field(None, validation_alias=AliasChoices("cacert", "VAULT_CACERT"))
-    capath: Optional[str] = Field(None, validation_alias=AliasChoices("capath", "VAULT_CAPATH"))
-    namespace: Optional[str] = Field(None, validation_alias=AliasChoices("namespace", "VAULT_NAMESPACE"))
+    cacert: Optional[str] = Field(
+        None, validation_alias=AliasChoices("cacert", "VAULT_CACERT")
+    )
+    capath: Optional[str] = Field(
+        None, validation_alias=AliasChoices("capath", "VAULT_CAPATH")
+    )
+    namespace: Optional[str] = Field(
+        None, validation_alias=AliasChoices("namespace", "VAULT_NAMESPACE")
+    )
 
 
 class VaultEngineTypes(StrEnum):
@@ -50,7 +60,9 @@ class KapitanReferenceVaultCommon(KapitanReferenceVaultEnv):
 
 
 class KapitanReferenceVaultKVConfig(KapitanReferenceVaultCommon):
-    engine: Literal[VaultEngineTypes.KV, VaultEngineTypes.KV_V2] = VaultEngineTypes.KV_V2
+    engine: Literal[VaultEngineTypes.KV, VaultEngineTypes.KV_V2] = (
+        VaultEngineTypes.KV_V2
+    )
     mount: Optional[str] = "secret"
 
 
