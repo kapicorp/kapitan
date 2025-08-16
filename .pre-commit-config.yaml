@@ -1,20 +1,16 @@
 exclude: ^(examples/|tests/test_terraform_compiled/|tests/test_kubernetes_compiled/|tests/test_docker_compiled/|tests/test_resources/|tests/test_jsonnet/)
 repos:
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
     hooks:
-    - id: black
-  - repo: https://github.com/PyCQA/isort
-    rev: 6.0.1
-    hooks:
-      - id: isort
-        args: [--profile, black]
+      # Run the linter
+      - id: ruff
+        args: [--fix]
+      # Run the formatter
+      - id: ruff-format
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: check-docstring-first
-      - id: debug-statements
       - id: end-of-file-fixer
       - id: check-merge-conflict
   - repo: https://github.com/rhysd/actionlint
