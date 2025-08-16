@@ -207,7 +207,7 @@ jobs:
 
   coverage-comment:
     name: Post Coverage Comment
-    if: github.event_name == 'pull_request'
+    if: always() && github.event_name == 'pull_request'
     needs: [test]
     runs-on: ubuntu-latest
     permissions:
@@ -218,8 +218,21 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: test-results-3.12
+        continue-on-error: true
+
+      - name: Check if coverage data exists
+        id: check-coverage
+        run: |
+          if [ -f coverage.xml ]; then
+            echo "has-coverage=true" >> "$GITHUB_OUTPUT"
+            echo "Coverage data found"
+          else
+            echo "has-coverage=false" >> "$GITHUB_OUTPUT"
+            echo "No coverage data found - test may have failed"
+          fi
 
       - name: Coverage Comment
+        if: steps.check-coverage.outputs.has-coverage == 'true'
         uses: py-cov-action/python-coverage-comment-action@v3
         with:
           GITHUB_TOKEN: ${{ github.token }}
@@ -228,6 +241,18 @@ jobs:
           ANNOTATE_MISSING_LINES: true
           ANNOTATION_TYPE: warning
           VERBOSE: true
+
+      - name: Post failure notice
+        if: steps.check-coverage.outputs.has-coverage != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ **Coverage Report Unavailable**\n\nNo coverage data was generated. This usually means the tests failed or were interrupted.\n\nPlease check the test results in the Actions tab.'
+            })
 
   build:
     name: build ${{ matrix.platform }} image
