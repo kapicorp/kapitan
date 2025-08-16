@@ -96,23 +96,20 @@ poetry run pytest tests/ -n auto --cov=kapitan --cov-branch
 rm -f .coverage* coverage.xml coverage.json
 
 # Run tests with parallel execution and coverage
+# Note: Direct report generation is more reliable with pytest-xdist
 poetry run pytest tests/ \
   -n auto \
   --cov=kapitan \
   --cov-branch \
-  --cov-report= \
+  --cov-report=term-missing \
+  --cov-report=xml:coverage.xml \
+  --cov-report=json:coverage.json \
+  --cov-report=html:htmlcov \
   --junit-xml=junit.xml \
   --json-report \
   --json-report-file=test-results.json \
   --durations=20 \
   -v
-
-# Combine and generate reports
-poetry run coverage combine
-poetry run coverage xml -o coverage.xml
-poetry run coverage json -o coverage.json
-poetry run coverage html -d htmlcov
-poetry run coverage report --show-missing
 ```
 
 ## Configuration Files

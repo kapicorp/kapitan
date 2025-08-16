@@ -33,8 +33,15 @@ test_docker:
 .PHONY: test_coverage
 test_coverage:
 	@echo ----- Testing code coverage -----
-	poetry run coverage run --source=kapitan -m pytest
-	poetry run coverage report --fail-under=65 -m
+	poetry run pytest tests/ \
+		-n auto \
+		--cov=kapitan \
+		--cov-branch \
+		--cov-report=term-missing \
+		--cov-report=xml:coverage.xml \
+		--cov-report=json:coverage.json \
+		--cov-report=html:htmlcov \
+		--cov-fail-under=65
 
 .PHONY: test_formatting
 test_formatting:

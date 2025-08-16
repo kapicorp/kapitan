@@ -213,6 +213,7 @@ jobs:
     permissions:
       pull-requests: write
       contents: write
+      issues: write
 
     steps:
       - name: Checkout code
@@ -236,25 +237,71 @@ jobs:
             echo "No coverage data found - test may have failed"
           fi
 
-      - name: Setup Python for coverage comment
-        if: steps.check-coverage.outputs.has-coverage == 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install coverage tool
-        if: steps.check-coverage.outputs.has-coverage == 'true'
-        run: pip install coverage[toml]
-
       - name: Coverage Comment
         if: steps.check-coverage.outputs.has-coverage == 'true'
-        uses: py-cov-action/python-coverage-comment-action@v3
+        uses: actions/github-script@v7
         with:
-          GITHUB_TOKEN: ${{ github.token }}
-          MINIMUM_GREEN: 80
-          MINIMUM_ORANGE: 60
-          ANNOTATE_MISSING_LINES: true
-          ANNOTATION_TYPE: warning
+          script: |
+            const fs = require('fs');
+
+            // Read coverage data
+            const coverageJson = JSON.parse(fs.readFileSync('coverage.json', 'utf8'));
+            const totalCoverage = coverageJson.totals.percent_covered.toFixed(2);
+
+            // Determine badge color
+            let badgeColor = 'red';
+            if (totalCoverage >= 80) badgeColor = 'green';
+            else if (totalCoverage >= 60) badgeColor = 'yellow';
+
+            // Create comment body
+            const commentBody = `## Coverage Report
+
+            **Total Coverage:** ${totalCoverage}%
+
+            ![Coverage](https://img.shields.io/badge/coverage-${totalCoverage}%25-${badgeColor})
+
+            <details>
+            <summary>Coverage Summary</summary>
+
+            | Metric | Value |
+            |--------|-------|
+            | Statements | ${coverageJson.totals.num_statements} |
+            | Missing | ${coverageJson.totals.missing_lines} |
+            | Coverage | ${totalCoverage}% |
+            | Branches | ${coverageJson.totals.num_branches || 'N/A'} |
+            | Partial Branches | ${coverageJson.totals.num_partial_branches || 'N/A'} |
+
+            </details>
+
+            _Coverage data from Python 3.12 tests_`;
+
+            // Post or update comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('## Coverage Report')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
 
       - name: Post failure notice
         if: steps.check-coverage.outputs.has-coverage != 'true'
