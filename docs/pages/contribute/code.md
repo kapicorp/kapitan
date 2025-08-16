@@ -101,6 +101,8 @@ Run `make help` or simply `make` to see all available commands:
 - `make test_quick` - Run quick tests without Docker
 - `make test_python` - Run only Python unit tests
 - `make test_coverage` - Run tests with coverage reporting
+- `make build_docker` - Build Docker image
+- `make test_docker` - Build and test Docker image
 
 **Documentation Commands:**
 - `make docs_serve` - Serve documentation locally at http://localhost:8000
