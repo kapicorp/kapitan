@@ -72,18 +72,29 @@ jobs:
             sudo tar xz -C /usr/local/bin cue
       - name: Run pytest with coverage and parallel execution
         run: |
+          # Clean any existing coverage data
+          rm -f .coverage* coverage.xml coverage.json
+
+          # Run tests with parallel execution and coverage
           poetry run pytest tests/ \
             -n auto \
             --cov=kapitan \
-            --cov-report=xml:coverage.xml \
-            --cov-report=html:htmlcov \
-            --cov-report=term-missing \
-            --cov-report=json:coverage.json \
+            --cov-branch \
+            --cov-report= \
             --junit-xml=junit.xml \
             --json-report \
             --json-report-file=test-results.json \
             --durations=20 \
             -v
+
+          # Combine coverage data from parallel runs
+          poetry run coverage combine
+
+          # Generate reports
+          poetry run coverage xml -o coverage.xml
+          poetry run coverage json -o coverage.json
+          poetry run coverage html -d htmlcov
+          poetry run coverage report --show-missing
 
       - name: Generate coverage report summary
         if: always()

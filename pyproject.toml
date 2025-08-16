@@ -156,6 +156,7 @@ markers = [
 source = ["kapitan"]
 branch = true
 parallel = true
+data_file = ".coverage"
 omit = [
     "*/tests/*",
     "*/test_*.py",
