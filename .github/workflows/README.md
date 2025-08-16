@@ -6,49 +6,49 @@ This directory contains GitHub Actions workflows for the Kapitan project.
 
 ### 1. Test, Build and Publish (`test-build-publish.yml`)
 Main CI/CD workflow that:
-- Runs pre-commit checks
-- Executes tests on Python 3.10, 3.11, and 3.12
-- Generates test coverage reports
+- Runs pre-commit checks with cached environments
+- Executes tests on Python 3.10, 3.11, and 3.12 **in parallel** using pytest-xdist
+- Generates comprehensive test coverage reports (XML, JSON, HTML)
+- Provides detailed test metrics and performance analysis
+- Posts coverage comments on pull requests
 - Builds Docker images for linux/amd64 and linux/arm64
 - Publishes Docker images to DockerHub (on master/main branch)
 - Uploads coverage to Codecov
 
-### 2. Test Coverage and Analysis (`test-coverage.yml`)
-Enhanced testing workflow with detailed coverage analysis:
-- **Coverage Reports**: XML, JSON, and HTML formats
-- **Test Metrics**:
-  - Pass/fail statistics
-  - Test duration tracking
-  - Slowest tests identification
-- **Parallel Testing**: Validates tests can run concurrently
-- **PR Comments**: Automatic coverage comments on pull requests
-- **Job Summaries**: Detailed summaries in GitHub UI
+**Key Features:**
+- ✅ Parallel test execution with `-n auto` for faster CI
+- ✅ Cached dependencies (Poetry, Helm, CUE, pre-commit)
+- ✅ Coverage tracking with branch coverage enabled
+- ✅ Test performance metrics and slowest test identification
+- ✅ GitHub Actions summaries with coverage badges
 
-### 3. Documentation (`documentation.yml`)
+### 2. Documentation (`documentation.yml`)
 Builds and publishes documentation to GitHub Pages.
 
-### 4. Python Package Publishing (`python-pip-publish.yml`)
+### 3. Python Package Publishing (`python-pip-publish.yml`)
 Publishes Python packages to PyPI on release.
 
-### 5. PEX Build and Upload (`pex-build-upload.yml`)
+### 4. PEX Build and Upload (`pex-build-upload.yml`)
 Builds standalone PEX executables for distribution.
 
-### 6. Housekeeping (`housekeeping.yml`)
+### 5. Housekeeping (`housekeeping.yml`)
 Automated maintenance tasks like dependency updates.
 
 ## Test Coverage
 
-The project uses multiple coverage tracking mechanisms:
+The project uses comprehensive coverage tracking integrated into the main workflow:
 
 ### Coverage Providers
 - **Codecov**: Primary coverage tracking with PR comments
 - **GitHub Actions Artifacts**: Coverage reports stored as artifacts
-- **Job Summaries**: Coverage displayed in GitHub Actions UI
+- **Job Summaries**: Coverage displayed in GitHub Actions UI with badges
+- **PR Comments**: Automatic coverage analysis via py-cov-action
 
 ### Coverage Metrics
 - **Overall Coverage**: Target 70% for the project
 - **Patch Coverage**: Target 80% for new/modified code
 - **Branch Coverage**: Enabled for comprehensive testing
+- **Parallel Coverage**: Properly configured for pytest-xdist with `COVERAGE_CORE=sysmon`
 
 ### Coverage Reports
 - `coverage.xml`: Machine-readable XML format
@@ -81,21 +81,38 @@ poetry run pytest tests/
 poetry run pytest tests/ --cov=kapitan --cov-report=html --cov-report=term
 ```
 
-### Parallel Execution
+### Parallel Execution (Recommended)
 ```bash
+# Use all available CPU cores
 poetry run pytest tests/ -n auto
+
+# With coverage in parallel
+poetry run pytest tests/ -n auto --cov=kapitan --cov-branch
 ```
 
-### Generate Reports
+### Generate All Reports (CI-style)
 ```bash
-# Generate all report types
+# Clean previous coverage data
+rm -f .coverage* coverage.xml coverage.json
+
+# Run tests with parallel execution and coverage
 poetry run pytest tests/ \
+  -n auto \
   --cov=kapitan \
-  --cov-report=xml \
-  --cov-report=html \
-  --cov-report=json \
+  --cov-branch \
+  --cov-report= \
   --junit-xml=junit.xml \
-  --durations=20
+  --json-report \
+  --json-report-file=test-results.json \
+  --durations=20 \
+  -v
+
+# Combine and generate reports
+poetry run coverage combine
+poetry run coverage xml -o coverage.xml
+poetry run coverage json -o coverage.json
+poetry run coverage html -d htmlcov
+poetry run coverage report --show-missing
 ```
 
 ## Configuration Files
@@ -119,7 +136,6 @@ Add these badges to your README:
 ```markdown
 [![codecov](https://codecov.io/gh/kapicorp/kapitan/branch/master/graph/badge.svg)](https://codecov.io/gh/kapicorp/kapitan)
 [![Tests](https://github.com/kapicorp/kapitan/actions/workflows/test-build-publish.yml/badge.svg)](https://github.com/kapicorp/kapitan/actions/workflows/test-build-publish.yml)
-[![Coverage](https://github.com/kapicorp/kapitan/actions/workflows/test-coverage.yml/badge.svg)](https://github.com/kapicorp/kapitan/actions/workflows/test-coverage.yml)
 ```
 
 ## Environment Variables
@@ -138,13 +154,27 @@ Add these badges to your README:
 1. Check if `CODECOV_TOKEN` is set in repository secrets
 2. Verify coverage files are generated correctly
 3. Check Codecov webhook status
+4. Ensure `COVERAGE_CORE=sysmon` is set for parallel tests
 
 ### Tests Failing in CI but Passing Locally
-1. Check for missing system dependencies
+1. Check for missing system dependencies (Helm, CUE)
 2. Verify test isolation (no shared state)
 3. Check for race conditions in parallel tests
+4. Ensure paths are relative, not absolute (e.g., GPG key paths)
+
+### Parallel Test Issues
+1. Coverage data combination errors: Ensure branch coverage is consistent
+2. Set `COVERAGE_CORE=sysmon` environment variable
+3. Use `--cov-report=` and combine manually if needed
+4. Check `concurrency` setting in pyproject.toml
 
 ### Slow Test Execution
-1. Use parallel execution with `-n auto`
-2. Check for expensive test fixtures
+1. Use parallel execution with `-n auto` (already enabled in CI)
+2. Check cache hit rates in GitHub Actions logs
 3. Consider marking slow tests with `@pytest.mark.slow`
+4. Review test fixtures for unnecessary setup
+
+### Cache Issues
+1. Check cache keys in workflow logs
+2. Clear caches from Settings → Actions → Caches if corrupted
+3. Update cache keys when dependencies change significantly

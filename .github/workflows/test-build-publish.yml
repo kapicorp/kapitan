@@ -168,29 +168,14 @@ jobs:
               echo "### Test Results Summary"
               echo ""
 
-              python -c "
-              import json
-              data = json.load(open('test-results.json'))
-              summary = data['summary']
-              print(f\"✅ Passed: {summary.get('passed', 0)}\")
-              print(f\"❌ Failed: {summary.get('failed', 0)}\")
-              print(f\"⏭️ Skipped: {summary.get('skipped', 0)}\")
-              print(f\"⏱️ Total Duration: {summary.get('duration', 0):.2f}s\")
-              "
+              python -c "import json; data = json.load(open('test-results.json')); summary = data['summary']; print(f\"✅ Passed: {summary.get('passed', 0)}\"); print(f\"❌ Failed: {summary.get('failed', 0)}\"); print(f\"⏭️ Skipped: {summary.get('skipped', 0)}\"); print(f\"⏱️ Total Duration: {summary.get('duration', 0):.2f}s\")"
 
               echo ""
               echo "### Slowest Tests"
               echo '```'
 
-              python -c "
-              import json
-              data = json.load(open('test-results.json'))
-              tests = sorted(data['tests'], key=lambda x: x.get('duration', 0), reverse=True)[:10]
-              for test in tests:
-                  name = test['nodeid'].split('::')[-1][:60]
-                  duration = test.get('duration', 0)
-                  print(f\"{duration:8.3f}s - {name}\")
-              " || echo "No test timing data available"
+              python -c "import json; data = json.load(open('test-results.json')); tests = sorted(data['tests'], key=lambda x: x.get('duration', 0), reverse=True)[:10]; [print(f\"{test.get('duration', 0):8.3f}s - {test['nodeid'].split('::')[-1][:60]}\") for test in tests]" || echo "No test timing data available"
+
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
           fi
