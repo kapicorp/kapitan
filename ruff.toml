@@ -129,6 +129,32 @@ ignore = [
     "EXE001",  # Shebang is present but file is not executable - not always needed
     "PT012",   # pytest.raises() should contain a single simple statement - can be clearer with multiple statements
     
+    # Code modernization (can be done gradually)
+    "UP006",   # Use native types instead of typing module (Dict -> dict, Type -> type) - needs Python 3.9+ for some features
+    "UP008",   # Use super() without arguments - stylistic preference
+    "UP022",   # Replace stdout/stderr with capture_output - not always equivalent
+    "UP031",   # Use format specifiers instead of % formatting - large refactor needed
+    
+    # Exception handling patterns
+    "TRY400",  # Use logging.exception instead of logging.error - not always appropriate
+    "TRY201",  # Verbose raise - explicit can be clearer
+    "RET503",  # Missing explicit return - implicit None is Pythonic
+    
+    # Code style preferences
+    "PIE810",  # Use single startswith/endswith - multiple can be clearer
+    "C408",    # Unnecessary collection call - dict() can be clearer than {}
+    "C406",    # Unnecessary literal dict - dict() vs {}
+    "C416",    # Unnecessary comprehension - list() can be clearer
+    "C403",    # Unnecessary list comprehension for set - intermediate list can be clearer
+    "C417",    # Unnecessary map - comprehension can be more readable
+    "C419",    # Unnecessary comprehension in call - can be clearer
+    "RUF005",  # Collection literal concatenation - [x] + list can be clearer
+    "RUF013",  # Implicit Optional - PEP 484 allows implicit Optional
+    "SIM103",  # Needless bool - explicit can be clearer
+    "SIM118",  # Use `in` instead of `in dict.keys()` - explicit can be clearer
+    "B006",    # Mutable default argument - sometimes intentional with proper handling
+    "FA102",   # Missing from __future__ import annotations - not always needed
+    
     # HIGH PRIORITY TO FIX (currently ignored for migration):
     "B904",    # [HIGH] raise-without-from-inside-except - Important for debugging (59 violations)
     "E722",    # [HIGH] bare-except - Can hide bugs, should specify exception types (3 violations)

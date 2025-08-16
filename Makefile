@@ -69,6 +69,31 @@ lint:
 	@echo "===== Running Code Quality Checks ====="
 	poetry run ruff check kapitan
 
+# Run code quality checks on test files
+.PHONY: lint-tests
+lint-tests:
+	@echo "===== Running Code Quality Checks on Tests ====="
+	poetry run ruff check tests scripts
+
+# Run code quality checks on everything
+.PHONY: lint-all
+lint-all: lint lint-tests
+	@echo "===== All Code Quality Checks Complete ====="
+
+# Fix auto-fixable linting issues
+.PHONY: fix
+fix:
+	@echo "===== Fixing Auto-fixable Issues ====="
+	poetry run ruff check --fix kapitan
+	@echo "Linting issues fixed!"
+
+# Fix auto-fixable linting issues in tests
+.PHONY: fix-tests
+fix-tests:
+	@echo "===== Fixing Auto-fixable Issues in Tests ====="
+	poetry run ruff check --fix tests scripts
+	@echo "Test linting issues fixed!"
+
 # Format code using ruff
 .PHONY: format
 format:
@@ -178,7 +203,11 @@ help:
 	@echo ""
 	@echo "Development Commands:"
 	@echo "  make format             - Format code with ruff"
-	@echo "  make lint               - Run code quality checks"
+	@echo "  make lint               - Run code quality checks on source code"
+	@echo "  make lint-tests         - Run code quality checks on tests"
+	@echo "  make lint-all           - Run code quality checks on everything"
+	@echo "  make fix                - Fix auto-fixable linting issues in source"
+	@echo "  make fix-tests          - Fix auto-fixable linting issues in tests"
 	@echo "  make test_quick         - Run quick tests (no Docker)"
 	@echo "  make test_python        - Run Python unit tests"
 	@echo "  make test               - Run comprehensive test suite"
