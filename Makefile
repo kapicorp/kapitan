@@ -18,10 +18,19 @@ install:
 	@echo "===== Installing Python Dependencies ====="
 	poetry install --with dev --with docs --with test --extras "gojsonnet reclass-rs omegaconf"
 
-# Install external tools required for testing (kustomize, cue)
+# Install external tools required for testing (helm, kustomize, cue)
 .PHONY: install_external_tools
-install_external_tools: install_kustomize install_cue
+install_external_tools: install_helm install_kustomize install_cue
 	@echo "===== All External Tools Installed ====="
+
+# Install Helm for Kubernetes package management
+.PHONY: install_helm
+install_helm:
+	@echo "===== Installing Helm ====="
+	@which helm > /dev/null 2>&1 || ( \
+		curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash \
+	)
+	@helm version --short
 
 # Install kustomize for Kubernetes manifest management
 .PHONY: install_kustomize
@@ -198,7 +207,7 @@ help:
 	@echo "  make setup              - Complete development environment setup"
 	@echo "  make install            - Install Python dependencies"
 	@echo "  make install_poetry     - Install Poetry package manager"
-	@echo "  make install_external_tools - Install kustomize and CUE"
+	@echo "  make install_external_tools - Install Helm, Kustomize, and CUE"
 	@echo "  make install_pre_commit - Configure git pre-commit hooks"
 	@echo ""
 	@echo "Development Commands:"
@@ -226,3 +235,10 @@ help:
 
 # Set help as the default target when running just 'make'
 .DEFAULT_GOAL := help
+
+# Validate that required commands exist
+.PHONY: validate-commands
+validate-commands:
+	@command -v poetry >/dev/null 2>&1 || { echo "poetry is not installed. Run 'make install_poetry' first."; exit 1; }
+	@command -v git >/dev/null 2>&1 || { echo "git is not installed."; exit 1; }
+	@echo "All required commands are available"
