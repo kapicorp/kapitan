@@ -70,16 +70,35 @@ jobs:
           CUE_VERSION=$(curl -s "https://api.github.com/repos/cue-lang/cue/releases/latest" | jq -r '.tag_name')
           curl -L "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_amd64.tar.gz" | \
             sudo tar xz -C /usr/local/bin cue
-      - name: Run pytest
+      - name: Run pytest with coverage
         uses: pavelzw/pytest-action@v2
         with:
           verbose: true
           emoji: false
           job-summary: true
           custom-pytest: poetry run pytest
-          custom-arguments: '-q'
+          custom-arguments: '-q --cov=kapitan --cov-report=xml --cov-report=term-missing --junit-xml=junit.xml --durations=10'
           click-to-expand: true
-          report-title: 'Kapitan tests'
+          report-title: 'Kapitan tests (Python ${{ matrix.python-version }})'
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: |
+            junit.xml
+            coverage.xml
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12' && (github.event_name == 'push' || github.event_name == 'pull_request')
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-${{ matrix.python-version }}
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   build:
     name: build ${{ matrix.platform }} image

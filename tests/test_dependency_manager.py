@@ -5,14 +5,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+"""Refactored dependency manager tests using pytest fixtures for better isolation."""
+
 import multiprocessing
 import os
 import sys
 import tempfile
-import unittest
 from shutil import rmtree
 
-from kapitan.cached import reset_cache
+import pytest
+
 from kapitan.cli import main
 from kapitan.dependency_manager.base import (
     HelmSource,
@@ -28,15 +30,14 @@ from kapitan.inventory.model.dependencies import (
     KapitanDependencyGitConfig,
     KapitanDependencyHelmConfig,
 )
+from tests.test_helpers import CompileTestHelper
 
 
-class DependencyManagerTest(unittest.TestCase):
-    def setUp(self):
-        os.chdir(os.path.join(os.getcwd(), "tests", "test_resources"))
+class TestHttpSources:
+    """Test HTTP/HTTPS dependency sources."""
 
-    def test_fetch_http_sources(self):
-        "Tests fetching http[s] sources"
-        temp_dir = tempfile.mkdtemp()
+    def test_fetch_http_sources(self, temp_dir):
+        """Tests fetching http[s] sources."""
         http_sources = [
             (
                 "https://raw.githubusercontent.com/kapicorp/kapitan/master/examples/docker/components/jsonnet/jsonnet.jsonnet",
@@ -51,26 +52,26 @@ class DependencyManagerTest(unittest.TestCase):
         for source, path_hash in http_sources:
             fetch_http_source(source, os.path.join(temp_dir, path_hash), item_type="Dependency")
 
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "1c3a08e6" + "jsonnet.jsonnet")))
-        self.assertTrue(os.path.isfile(os.path.join(temp_dir, "aff45ec8" + "__init__.py")))
-        rmtree(temp_dir)
+        assert os.path.isfile(os.path.join(temp_dir, "1c3a08e6" + "jsonnet.jsonnet"))
+        assert os.path.isfile(os.path.join(temp_dir, "aff45ec8" + "__init__.py"))
 
-    def test_fetch_git_sources(self):
-        "Tests cloning git repo"
-        temp_dir = tempfile.mkdtemp()
+
+class TestGitSources:
+    """Test Git dependency sources."""
+
+    def test_fetch_git_sources(self, temp_dir):
+        """Tests cloning git repo."""
         repo_dir = os.path.join(temp_dir, "7a8f3940kapitan.git")
         # TODO: also test git ssh urls
         git_source = "https://github.com/kapicorp/kapitan.git"
         fetch_git_source(git_source, repo_dir, item_type="Dependency")
-        self.assertTrue(os.path.isfile(os.path.join(repo_dir, "README.md")))
-        rmtree(temp_dir)
+        assert os.path.isfile(os.path.join(repo_dir, "README.md"))
 
-    def test_clone_repo_subdir(self):
-        """
-        Tests cloning git repo and copy its' subdir
-        """
-        temp_dir = tempfile.mkdtemp()
-        output_dir = tempfile.mkdtemp()
+    def test_clone_repo_subdir(self, temp_dir):
+        """Tests cloning git repo and copy its' subdir."""
+        output_dir = os.path.join(temp_dir, "output")
+        os.makedirs(output_dir)
+
         source = "https://github.com/kapicorp/kapitan.git"
         dep = [
             KapitanDependencyGitConfig(
@@ -84,16 +85,16 @@ class DependencyManagerTest(unittest.TestCase):
             )
         ]
         fetch_git_dependency((source, dep), temp_dir, force=False)
-        self.assertTrue(os.path.isdir(os.path.join(output_dir, "subdir")))
-        rmtree(temp_dir)
-        rmtree(output_dir)
+        assert os.path.isdir(os.path.join(output_dir, "subdir"))
 
-    def test_fetch_helm_chart(self):
-        """
-        Tests fetching helm chart
-        """
-        temp_dir = tempfile.mkdtemp()
-        output_dir = tempfile.mkdtemp()
+
+class TestHelmCharts:
+    """Test Helm chart dependency fetching."""
+
+    def test_fetch_helm_chart(self, temp_dir):
+        """Tests fetching helm chart."""
+        output_dir = os.path.join(temp_dir, "output")
+        os.makedirs(output_dir)
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
         version = "11.3.0"
@@ -109,18 +110,14 @@ class DependencyManagerTest(unittest.TestCase):
             )
         ]
         fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
-        self.assertTrue(os.path.isdir(output_chart_dir))
-        self.assertTrue(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
-        self.assertTrue(os.path.isdir(os.path.join(output_chart_dir, "charts", "kube-state-metrics")))
-        rmtree(temp_dir)
-        rmtree(output_dir)
+        assert os.path.isdir(output_chart_dir)
+        assert os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml"))
+        assert os.path.isdir(os.path.join(output_chart_dir, "charts", "kube-state-metrics"))
 
-    def test_fetch_helm_chart_version_that_does_not_exist(self):
-        """
-        Test fetching helm chart version that does not exist
-        """
-        temp_dir = tempfile.mkdtemp()
-        output_dir = tempfile.mkdtemp()
+    def test_fetch_helm_chart_version_that_does_not_exist(self, temp_dir):
+        """Test fetching helm chart version that does not exist."""
+        output_dir = os.path.join(temp_dir, "output")
+        os.makedirs(output_dir)
         output_chart_dir = os.path.join(output_dir, "charts", "prometheus")
         chart_name = "prometheus"
         version = "10.7.0"
@@ -135,16 +132,22 @@ class DependencyManagerTest(unittest.TestCase):
                 }
             )
         ]
-        with self.assertRaises(HelmFetchingError):
+        with pytest.raises(HelmFetchingError):
             fetch_helm_chart((HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False)
-        self.assertFalse(os.path.isdir(output_chart_dir))
-        self.assertFalse(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
-        rmtree(temp_dir)
-        rmtree(output_dir)
+        assert not os.path.isdir(output_chart_dir)
+        assert not os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml"))
 
-    def test_fetch_dependencies_unpack_parallel(self):
-        output_path = tempfile.mkdtemp()
-        save_dir = tempfile.mkdtemp()
+
+class TestDependenciesParallel:
+    """Test parallel dependency fetching."""
+
+    def test_fetch_dependencies_unpack_parallel(self, temp_dir):
+        """Test fetching and unpacking dependencies in parallel."""
+        output_path = os.path.join(temp_dir, "output")
+        save_dir = os.path.join(temp_dir, "save")
+        os.makedirs(output_path)
+        os.makedirs(save_dir)
+
         # use default parallelism of 4 for test
         with multiprocessing.Pool(4) as pool:
             dependencies = [
@@ -172,33 +175,32 @@ class DependencyManagerTest(unittest.TestCase):
                 raise e
 
         for obj in target_objs[0].dependencies:
-            self.assertTrue(os.path.isdir(os.path.join(output_path, obj.output_path)))
-            self.assertTrue(os.path.isdir(os.path.join(save_dir, obj.output_path)))
-        rmtree(output_path)
-        rmtree(save_dir)
+            assert os.path.isdir(os.path.join(output_path, obj.output_path))
+            assert os.path.isdir(os.path.join(save_dir, obj.output_path))
 
-    def test_compile_fetch(self):
-        "Runs $ kapitan compile --fetch --output-path temp -t nginx nginx-dev monitoring-dev"
-        temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
-            "compile",
-            "--fetch",
-            "--output-path",
-            temp,
-            "-t",
-            "nginx",
-            "nginx-dev",
-            "monitoring-dev",
-        ]
-        main()
-        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "tests")))
-        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "acs-engine-autoscaler")))
-        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "kapitan-repository")))
-        self.assertTrue(os.path.isdir(os.path.join(temp, "components", "source")))
-        self.assertTrue(os.path.isdir(os.path.join(temp, "charts", "prometheus")))
-        rmtree(temp)
 
-    def tearDown(self):
-        os.chdir("../../")
-        reset_cache()
+class TestCompileWithFetch:
+    """Test compile command with fetch dependencies."""
+
+    def test_compile_fetch(self, isolated_test_resources, temp_dir):
+        """Test 'kapitan compile --fetch' command."""
+        helper = CompileTestHelper(isolated_test_resources)
+        helper.compile_with_args(
+            [
+                "kapitan",
+                "compile",
+                "--fetch",
+                "--output-path",
+                temp_dir,
+                "-t",
+                "nginx",
+                "nginx-dev",
+                "monitoring-dev",
+            ]
+        )
+
+        assert os.path.isdir(os.path.join(temp_dir, "components", "tests"))
+        assert os.path.isdir(os.path.join(temp_dir, "components", "acs-engine-autoscaler"))
+        assert os.path.isdir(os.path.join(temp_dir, "components", "kapitan-repository"))
+        assert os.path.isdir(os.path.join(temp_dir, "components", "source"))
+        assert os.path.isdir(os.path.join(temp_dir, "charts", "prometheus"))
