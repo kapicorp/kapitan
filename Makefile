@@ -44,9 +44,18 @@ install_cue:
 	)
 	@cue version
 
+# Configure pre-commit git hooks (pre-commit package installed via poetry)
+.PHONY: install_pre_commit
+install_pre_commit:
+	@echo "===== Setting up Git Pre-commit Hooks ====="
+	@poetry run pre-commit install
+	@echo "Pre-commit hooks configured successfully!"
+	@echo "Hooks will run automatically on 'git commit'"
+	@echo "To run manually: 'poetry run pre-commit run --all-files'"
+
 # Complete development environment setup
 .PHONY: setup
-setup: install_poetry install install_external_tools
+setup: install_poetry install install_external_tools install_pre_commit
 	@echo "===== Development Environment Ready ====="
 	@echo "Run 'make test' to verify everything is working"
 
@@ -165,6 +174,7 @@ help:
 	@echo "  make install            - Install Python dependencies"
 	@echo "  make install_poetry     - Install Poetry package manager"
 	@echo "  make install_external_tools - Install kustomize and CUE"
+	@echo "  make install_pre_commit - Configure git pre-commit hooks"
 	@echo ""
 	@echo "Development Commands:"
 	@echo "  make format             - Format code with ruff"
