@@ -18,6 +18,7 @@ from yamllint.config import YamlLintConfig
 from kapitan.errors import KapitanError
 from kapitan.utils import list_all_paths
 
+
 logger = logging.getLogger(__name__)
 
 yamllint_config = """
@@ -61,7 +62,9 @@ def start_lint(args):
         checks_sum (int): the number of lint warnings found
     """
     if args.skip_class_checks and args.skip_yamllint and not args.search_secrets:
-        logger.info("Nothing to check. Remove --skip-class-checks or add --search-secrets to lint secrets")
+        logger.info(
+            "Nothing to check. Remove --skip-class-checks or add --search-secrets to lint secrets"
+        )
         sys.exit(1)
 
     status_yamllint = 0
@@ -114,7 +117,7 @@ def lint_orphan_secrets(compiled_path, secrets_path):
 
     for path in list_all_paths(compiled_path):
         if os.path.isfile(path):
-            with open(path, "r") as compiled_file:
+            with open(path) as compiled_file:
                 file_contents = compiled_file.read()
                 for secret_path in list(secrets_paths):
                     if secret_path in file_contents:
@@ -143,7 +146,7 @@ def lint_unused_classes(inventory_path):
     """
     classes_dir = os.path.join(inventory_path, "classes/")
     if not os.path.isdir(classes_dir):
-        raise KapitanError("{} is not a valid directory or does not exist".format(classes_dir))
+        raise KapitanError(f"{classes_dir} is not a valid directory or does not exist")
 
     logger.debug("Find unused classes from %s", classes_dir)
     class_paths = set()
@@ -158,7 +161,7 @@ def lint_unused_classes(inventory_path):
 
     for path in list_all_paths(inventory_path):
         if os.path.isfile(path):
-            with open(path, "r") as compiled_file:
+            with open(path) as compiled_file:
                 file_contents = compiled_file.read()
                 for class_path in list(class_paths):
                     exists = class_path in file_contents
@@ -179,7 +182,9 @@ def lint_unused_classes(inventory_path):
     checks_sum = len(class_paths)
     if checks_sum > 0:
         logger.info(
-            "No usage found for the following %s classes:\n%s\n", len(class_paths), pformat(class_paths)
+            "No usage found for the following %s classes:\n%s\n",
+            len(class_paths),
+            pformat(class_paths),
         )
 
     return checks_sum
@@ -204,12 +209,12 @@ def lint_yamllint(inventory_path):
     checks_sum = 0
     for path in list_all_paths(inventory_path):
         if os.path.isfile(path) and (path.endswith(".yml") or path.endswith(".yaml")):
-            with open(path, "r") as yaml_file:
+            with open(path) as yaml_file:
                 file_contents = yaml_file.read()
 
                 try:
                     problems = list(linter.run(file_contents, conf, filepath=path))
-                except EnvironmentError as e:
+                except OSError as e:
                     logger.error(e)
                     sys.exit(-1)
 

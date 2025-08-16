@@ -19,6 +19,7 @@ from kapitan.refs.base import RefController, RefParams, Revealer
 from kapitan.refs.secrets.vaultkv import VaultClient, VaultError, VaultSecret
 from tests.vault_server import VaultServer
 
+
 logger = logging.getLogger(__name__)
 # Create temporary folder
 REFS_PATH = tempfile.mkdtemp()
@@ -48,7 +49,9 @@ class VaultSecretTest(unittest.TestCase):
         env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
 
         test_client = VaultClient(env)
-        self.assertTrue(test_client.is_authenticated(), msg="Authentication with token failed")
+        self.assertTrue(
+            test_client.is_authenticated(), msg="Authentication with token failed"
+        )
         test_client.adapter.close()
 
     def test_token_authentication_envvar(self):
@@ -63,7 +66,9 @@ class VaultSecretTest(unittest.TestCase):
         del os.environ["VAULT_ADDR"]
 
         test_client = VaultClient(env)
-        self.assertTrue(test_client.is_authenticated(), msg="Authentication with token failed")
+        self.assertTrue(
+            test_client.is_authenticated(), msg="Authentication with token failed"
+        )
         test_client.adapter.close()
 
     def test_token_authentication_legacy_config(self):
@@ -76,7 +81,9 @@ class VaultSecretTest(unittest.TestCase):
         env = KapitanReferenceVaultKVConfig(**parameters, **server_params)
 
         test_client = VaultClient(env)
-        self.assertTrue(test_client.is_authenticated(), msg="Authentication with token failed")
+        self.assertTrue(
+            test_client.is_authenticated(), msg="Authentication with token failed"
+        )
         test_client.adapter.close()
 
     def test_userpss_authentication(self):
@@ -86,7 +93,9 @@ class VaultSecretTest(unittest.TestCase):
         parameters = {"auth": "userpass"}
         env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         test_client = VaultClient(env)
-        self.assertTrue(test_client.is_authenticated(), msg="Authentication with userpass failed")
+        self.assertTrue(
+            test_client.is_authenticated(), msg="Authentication with userpass failed"
+        )
         test_client.adapter.close()
 
     def test_approle_authentication(self):
@@ -96,7 +105,9 @@ class VaultSecretTest(unittest.TestCase):
         parameters = {"auth": "approle"}
         env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         test_client = VaultClient(env)
-        self.assertTrue(test_client.is_authenticated(), msg="Authentication with approle failed")
+        self.assertTrue(
+            test_client.is_authenticated(), msg="Authentication with approle failed"
+        )
         test_client.adapter.close()
 
     def test_vault_write_reveal(self):
@@ -118,16 +129,17 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming ref file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_PATH, "secret/harleyquinn")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/harleyquinn")),
+            msg="Secret file doesn't exist",
         )
 
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
-            fp.write("File contents revealed: {}".format(tag))
+            fp.write(f"File contents revealed: {tag}")
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
 
         # confirming secrets are correctly revealed
-        self.assertEqual("File contents revealed: {}".format(secret), revealed)
+        self.assertEqual(f"File contents revealed: {secret}", revealed)
 
     def test_vault_reveal(self):
         """
@@ -144,21 +156,24 @@ class VaultSecretTest(unittest.TestCase):
             secret=secret,
         )
         client.adapter.close()
-        file_data = "foo:some_key".encode()
+        file_data = b"foo:some_key"
         # encrypt false, because we want just reveal
         REF_CONTROLLER[tag] = VaultSecret(file_data, vault_params=env, encrypt=False)
 
         # confirming secret file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_PATH, "secret/batman")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/batman")),
+            msg="Secret file doesn't exist",
         )
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
-            fp.write("File contents revealed: {}".format(tag))
+            fp.write(f"File contents revealed: {tag}")
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
 
         # confirming secrets are correctly revealed
-        self.assertEqual("File contents revealed: {}".format(secret["some_key"]), revealed)
+        self.assertEqual(
+            "File contents revealed: {}".format(secret["some_key"]), revealed
+        )
 
     def test_vault_reveal_missing_path(self):
         """
@@ -167,17 +182,18 @@ class VaultSecretTest(unittest.TestCase):
         tag = "?{vaultkv:secret/joker}"
         parameters = {"auth": "token"}
         env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
-        file_data = "some_not_existing_path:some_key".encode()
+        file_data = b"some_not_existing_path:some_key"
         # encrypt false, because we want just reveal
         REF_CONTROLLER[tag] = VaultSecret(file_data, vault_params=env, encrypt=False)
 
         # confirming secret file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_PATH, "secret/joker")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/joker")),
+            msg="Secret file doesn't exist",
         )
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
-            fp.write("File contents revealed: {}".format(tag))
+            fp.write(f"File contents revealed: {tag}")
         with self.assertRaises(VaultError):
             REVEALER.reveal_raw_file(file_with_secret_tags)
 
@@ -189,17 +205,18 @@ class VaultSecretTest(unittest.TestCase):
         parameters = {"auth": "token"}
         env = KapitanReferenceVaultKVConfig(**parameters, **self.server.parameters)
         # path foo exists from tests before
-        file_data = "foo:some_not_existing_key".encode()
+        file_data = b"foo:some_not_existing_key"
         # encrypt false, because we want just reveal
         REF_CONTROLLER[tag] = VaultSecret(file_data, vault_params=env, encrypt=False)
 
         # confirming secret file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_PATH, "secret/joker")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/joker")),
+            msg="Secret file doesn't exist",
         )
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
-            fp.write("File contents revealed: {}".format(tag))
+            fp.write(f"File contents revealed: {tag}")
         with self.assertRaises(VaultError):
             REVEALER.reveal_raw_file(file_with_secret_tags)
 
@@ -212,17 +229,20 @@ class VaultSecretTest(unittest.TestCase):
         params = RefParams()
         params.kwargs = {"vault_params": env}
 
-        tag = "?{vaultkv:secret/bane:secret:banes_testpath:banes_testkey||random:int:32}"
+        tag = (
+            "?{vaultkv:secret/bane:secret:banes_testpath:banes_testkey||random:int:32}"
+        )
         REF_CONTROLLER[tag] = params
 
         # confirming ref file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_PATH, "secret/bane")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/bane")),
+            msg="Secret file doesn't exist",
         )
 
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
-            fp.write("File contents revealed: {}".format(tag))
+            fp.write(f"File contents revealed: {tag}")
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
         revealed_secret = revealed[24:]
 
@@ -243,12 +263,13 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming ref file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_PATH, "secret/bane")), msg="Secret file doesn't exist"
+            os.path.isfile(os.path.join(REFS_PATH, "secret/bane")),
+            msg="Secret file doesn't exist",
         )
 
         file_with_secret_tags = tempfile.mktemp()
         with open(file_with_secret_tags, "w") as fp:
-            fp.write("File contents revealed: {}".format(tag))
+            fp.write(f"File contents revealed: {tag}")
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
         revealed_secret = revealed[24:]
 
@@ -265,14 +286,16 @@ class VaultSecretTest(unittest.TestCase):
         params.kwargs = {"vault_params": env}
 
         # create two secrets that are in the same path in vault
-        tag_1 = "?{vaultkv:secret/kv1:secret:same/path:first_key||random:int:32}"  # numeric
+        tag_1 = (
+            "?{vaultkv:secret/kv1:secret:same/path:first_key||random:int:32}"  # numeric
+        )
         tag_2 = "?{vaultkv:secret/kv2:secret:same/path:second_key||random:loweralpha:32}"  # alphabetic
         REF_CONTROLLER[tag_1] = params
         REF_CONTROLLER[tag_2] = params
 
         # check if both secrets are still valid
-        revealed_1 = REVEALER.reveal_raw_string("File contents revealed: {}".format(tag_1))
-        revealed_2 = REVEALER.reveal_raw_string("File contents revealed: {}".format(tag_2))
+        revealed_1 = REVEALER.reveal_raw_string(f"File contents revealed: {tag_1}")
+        revealed_2 = REVEALER.reveal_raw_string(f"File contents revealed: {tag_2}")
         revealed_secret_1 = revealed_1[24:]
         revealed_secret_2 = revealed_2[24:]
 
@@ -284,11 +307,14 @@ class VaultSecretTest(unittest.TestCase):
         tag_3 = "?{vaultkv:secret/kv3:secret:same/path:first_key||random:loweralpha:32}"  # updating first key
         REF_CONTROLLER[tag_3] = params
 
-        revealed_3 = REVEALER.reveal_raw_string("File contents revealed: {}".format(tag_3))
+        revealed_3 = REVEALER.reveal_raw_string(f"File contents revealed: {tag_3}")
         revealed_secret_3 = revealed_3[24:]
 
         # confirm that secret in first_key is no longer numeric, but alphabetic
-        self.assertTrue(revealed_secret_3.isalpha(), msg="Error in updating an existing key")
         self.assertTrue(
-            revealed_secret_2.isalpha(), msg="A non accessed key changed by accessing/updating another key"
+            revealed_secret_3.isalpha(), msg="Error in updating an existing key"
+        )
+        self.assertTrue(
+            revealed_secret_2.isalpha(),
+            msg="A non accessed key changed by accessing/updating another key",
         )

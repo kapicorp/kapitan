@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from kapitan.errors import InventoryError
 from kapitan.inventory.model import KapitanInventoryParameters
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -56,7 +57,10 @@ class Inventory(ABC):
         get all targets from inventory
         """
 
-        return {target.name: target.model_dump(by_alias=True) for target in self.targets.values()}
+        return {
+            target.name: target.model_dump(by_alias=True)
+            for target in self.targets.values()
+        }
 
     def __initialise(self, ignore_class_not_found) -> bool:
         """
@@ -76,7 +80,9 @@ class Inventory(ABC):
                         name, ext = os.path.splitext(file)
 
                     if ext not in (".yml", ".yaml"):
-                        logger.debug(f"ignoring {file}: targets have to be .yml or .yaml files.")
+                        logger.debug(
+                            f"ignoring {file}: targets have to be .yml or .yaml files."
+                        )
                         continue
 
                     target = self.target_class(name=name, path=path)
@@ -89,17 +95,23 @@ class Inventory(ABC):
 
                     self.targets[target.name] = target
 
-            self.render_targets(self.targets, ignore_class_not_found=ignore_class_not_found)
+            self.render_targets(
+                self.targets, ignore_class_not_found=ignore_class_not_found
+            )
             self.initialised = True
         return self.initialised
 
-    def get_target(self, target_name: str, ignore_class_not_found: bool = False) -> InventoryTarget:
+    def get_target(
+        self, target_name: str, ignore_class_not_found: bool = False
+    ) -> InventoryTarget:
         """
         helper function to get rendered InventoryTarget object for single target
         """
         return self.targets.get(target_name)
 
-    def get_targets(self, target_names: list[str] = [], ignore_class_not_found: bool = False) -> dict:
+    def get_targets(
+        self, target_names: list[str] = [], ignore_class_not_found: bool = False
+    ) -> dict:
         """
         helper function to get rendered InventoryTarget objects for multiple targets
         """
@@ -110,10 +122,11 @@ class Inventory(ABC):
                 for target_name in target_names
                 if target_name in self.targets
             }
-        else:
-            return self.targets
+        return self.targets
 
-    def get_parameters(self, target_names: str | list[str], ignore_class_not_found: bool = False) -> dict:
+    def get_parameters(
+        self, target_names: str | list[str], ignore_class_not_found: bool = False
+    ) -> dict:
         """
         helper function to get rendered parameters for single target or multiple targets
         """
@@ -122,12 +135,15 @@ class Inventory(ABC):
             return target.parameters
 
         return {
-            name: {"parameters": Dict(target.parameters)} for name, target in self.get_targets(target_names)
+            name: {"parameters": Dict(target.parameters)}
+            for name, target in self.get_targets(target_names)
         }
 
     @abstractmethod
     def render_targets(
-        self, targets: list[InventoryTarget] = None, ignore_class_not_found: bool = False
+        self,
+        targets: list[InventoryTarget] = None,
+        ignore_class_not_found: bool = False,
     ) -> None:
         """
         create the inventory depending on which backend gets used

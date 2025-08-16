@@ -79,14 +79,18 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         It converts the yaml file in test_resources/ to a json string
         """
         current_pwd = os.path.dirname(__file__)
-        json = yaml_load_stream([current_pwd], "test_resources/test_yaml_load_stream.yaml")
+        json = yaml_load_stream(
+            [current_pwd], "test_resources/test_yaml_load_stream.yaml"
+        )
         expected_output = """[{"test1": {"key": "value", "array": ["ele1", "ele2"]}}, {"test2": {"key": "value", "array": ["ele1", "ele2"]}}]"""
         self.assertEqual(json, expected_output)
 
     def test_sha256_string(self):
         """sha256 hex digest for string"""
         hash = sha256_string("test")
-        self.assertEqual(hash, "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08")
+        self.assertEqual(
+            hash, "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+        )
 
     def test_gzip_b64(self):
         """base64-encoded gzip-compression for string"""

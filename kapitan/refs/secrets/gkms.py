@@ -17,10 +17,13 @@ from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
 from kapitan.refs.base64 import Base64Ref, Base64RefBackend
 
+
 logger = logging.getLogger(__name__)
 
 # Ignore warning from googleapiclient if we are using default credentials
-warnings.filterwarnings("ignore", "Your application has authenticated using end user credentials")
+warnings.filterwarnings(
+    "ignore", "Your application has authenticated using end user credentials"
+)
 
 
 class GoogleKMSError(KapitanError):
@@ -112,18 +115,18 @@ class GoogleKMSSecret(Base64Ref):
         if encode_base64:
             _data = base64.b64encode(data.encode())
             self.encoding = "base64"
-        else:
-            # To guarantee _data is bytes
-            if isinstance(data, str):
-                _data = data.encode()
+        # To guarantee _data is bytes
+        elif isinstance(data, str):
+            _data = data.encode()
         try:
             ciphertext = ""
             # Mocking encrypted response for tests
             if key == "mock":
-                ciphertext = base64.b64encode("mock".encode())
+                ciphertext = base64.b64encode(b"mock")
             else:
                 request = gkms_obj().encrypt(
-                    name=key, body={"plaintext": base64.b64encode(_data).decode("ascii")}
+                    name=key,
+                    body={"plaintext": base64.b64encode(_data).decode("ascii")},
                 )
                 response = request.execute()
                 ciphertext = base64.b64decode(response["ciphertext"].encode("ascii"))
@@ -140,10 +143,11 @@ class GoogleKMSSecret(Base64Ref):
             plaintext = ""
             # Mocking decrypted response for tests
             if self.key == "mock":
-                plaintext = "mock".encode()
+                plaintext = b"mock"
             else:
                 request = gkms_obj().decrypt(
-                    name=self.key, body={"ciphertext": base64.b64encode(data).decode("ascii")}
+                    name=self.key,
+                    body={"ciphertext": base64.b64encode(data).decode("ascii")},
                 )
                 response = request.execute()
                 plaintext = base64.b64decode(response["plaintext"].encode("ascii"))
@@ -157,7 +161,12 @@ class GoogleKMSSecret(Base64Ref):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding, "key": self.key, "type": self.type_name}
+        return {
+            "data": self.data,
+            "encoding": self.encoding,
+            "key": self.key,
+            "type": self.type_name,
+        }
 
 
 class GoogleKMSBackend(Base64RefBackend):

@@ -7,8 +7,6 @@
 
 "command line module"
 
-from __future__ import print_function
-
 import argparse
 import json
 import logging
@@ -30,11 +28,14 @@ from kapitan.targets import compile_targets
 from kapitan.utils import check_version, from_dot_kapitan, searchvar
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
+
 logger = logging.getLogger(__name__)
 
 
 def print_deprecated_secrets_msg(args):
-    logger.error("Secrets have been renamed to refs, please refer to: '$ kapitan refs --help'")
+    logger.error(
+        "Secrets have been renamed to refs, please refer to: '$ kapitan refs --help'"
+    )
     sys.exit(1)
 
 
@@ -99,7 +100,9 @@ def build_parser():
     inventory_backend_parser.add_argument(
         "--inventory-backend",
         action="store",
-        default=from_dot_kapitan("inventory_backend", "inventory-backend", InventoryBackends.RECLASS),
+        default=from_dot_kapitan(
+            "inventory_backend", "inventory-backend", InventoryBackends.RECLASS
+        ),
         choices=AVAILABLE_BACKENDS.keys(),
         help="Select the inventory backend to use (default=reclass)",
     )
@@ -116,11 +119,15 @@ def build_parser():
         help="Create same subfolder structure from inventory/targets inside compiled folder",
         action="store_true",
         default=from_dot_kapitan(
-            "global", "compose-target-name", from_dot_kapitan("compile", "compose-node-name", False)
+            "global",
+            "compose-target-name",
+            from_dot_kapitan("compile", "compose-node-name", False),
         ),
     )
 
-    eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
+    eval_parser = subparser.add_parser(
+        "eval", aliases=["e"], help="evaluate jsonnet file"
+    )
     eval_parser.add_argument("jsonnet_file", type=str)
     eval_parser.set_defaults(func=trigger_eval, name="eval")
 
@@ -150,7 +157,10 @@ def build_parser():
     )
 
     compile_parser = subparser.add_parser(
-        "compile", aliases=["c"], help="compile targets", parents=[inventory_backend_parser]
+        "compile",
+        aliases=["c"],
+        help="compile targets",
+        parents=[inventory_backend_parser],
     )
     compile_parser.set_defaults(func=trigger_compile, name="compile")
 
@@ -167,7 +177,9 @@ def build_parser():
         "--jinja2-filters",
         "-J2F",
         type=str,
-        default=from_dot_kapitan("compile", "jinja2-filters", defaults.DEFAULT_JINJA2_FILTERS_PATH),
+        default=from_dot_kapitan(
+            "compile", "jinja2-filters", defaults.DEFAULT_JINJA2_FILTERS_PATH
+        ),
         metavar="FPATH",
         help="load custom jinja2 filters from any file, default is to put\
                                 them inside lib/jinja2_filters.py",
@@ -310,7 +322,9 @@ def build_parser():
         choices=["literal", "folded", "double-quotes"],
         metavar="STYLE",
         action="store",
-        default=from_dot_kapitan("compile", "yaml-multiline-string-style", "double-quotes"),
+        default=from_dot_kapitan(
+            "compile", "yaml-multiline-string-style", "double-quotes"
+        ),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
 
@@ -342,7 +356,10 @@ def build_parser():
     )
 
     inventory_parser = subparser.add_parser(
-        "inventory", aliases=["i"], help="show inventory", parents=[inventory_backend_parser]
+        "inventory",
+        aliases=["i"],
+        help="show inventory",
+        parents=[inventory_backend_parser],
     )
     inventory_parser.set_defaults(func=generate_inventory, name="inventory")
 
@@ -369,7 +386,7 @@ def build_parser():
         "-p",
         default=from_dot_kapitan("inventory", "pattern", ""),
         help="filter pattern (e.g. parameters.mysql.storage_class, or storage_class,"
-        + ' or storage_*), default is ""',
+        ' or storage_*), default is ""',
     )
     inventory_parser.add_argument(
         "--verbose",
@@ -393,12 +410,16 @@ def build_parser():
         choices=["literal", "folded", "double-quotes"],
         metavar="STYLE",
         action="store",
-        default=from_dot_kapitan("inventory", "multiline-string-style", "double-quotes"),
+        default=from_dot_kapitan(
+            "inventory", "multiline-string-style", "double-quotes"
+        ),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
 
     searchvar_parser = subparser.add_parser(
-        "searchvar", aliases=["sv"], help="show all inventory files where var is declared"
+        "searchvar",
+        aliases=["sv"],
+        help="show all inventory files where var is declared",
     )
     searchvar_parser.set_defaults(func=searchvar, name="searchvar")
 
@@ -428,7 +449,9 @@ def build_parser():
         default=from_dot_kapitan("searchvar", "pretty-print", False),
     )
 
-    secrets_parser = subparser.add_parser("secrets", aliases=["s"], help="(DEPRECATED) please use refs")
+    secrets_parser = subparser.add_parser(
+        "secrets", aliases=["s"], help="(DEPRECATED) please use refs"
+    )
     secrets_parser.set_defaults(func=print_deprecated_secrets_msg, name="secrets")
 
     refs_parser = subparser.add_parser(
@@ -480,15 +503,25 @@ def build_parser():
         default=from_dot_kapitan("refs", "reveal", False),
     )
     refs_parser.add_argument(
-        "--tag", help='specify ref tag to reveal, e.g. "?{gkms:my/ref:123456}" ', metavar="REFTAG"
+        "--tag",
+        help='specify ref tag to reveal, e.g. "?{gkms:my/ref:123456}" ',
+        metavar="REFTAG",
     )
     refs_parser.add_argument(
-        "--ref-file", "-rf", help='read ref file, set "-" for stdin', metavar="REFFILENAME"
+        "--ref-file",
+        "-rf",
+        help='read ref file, set "-" for stdin',
+        metavar="REFFILENAME",
     )
     refs_parser.add_argument(
-        "--file", "-f", help='read file or directory, set "-" for stdin', metavar="FILENAME"
+        "--file",
+        "-f",
+        help='read file or directory, set "-" for stdin',
+        metavar="FILENAME",
     )
-    refs_parser.add_argument("--target-name", "-t", help="grab recipients from target name")
+    refs_parser.add_argument(
+        "--target-name", "-t", help="grab recipients from target name"
+    )
     refs_parser.add_argument(
         "--inventory-path",
         default=from_dot_kapitan("refs", "inventory-path", "./inventory"),
@@ -504,7 +537,11 @@ def build_parser():
         metavar="RECIPIENT",
     )
     refs_parser.add_argument(
-        "--key", "-K", help="set KMS key", default=from_dot_kapitan("refs", "key", ""), metavar="KEY"
+        "--key",
+        "-K",
+        help="set KMS key",
+        default=from_dot_kapitan("refs", "key", ""),
+        metavar="KEY",
     )
     refs_parser.add_argument(
         "--vault-auth",
@@ -543,7 +580,9 @@ def build_parser():
         default=from_dot_kapitan("refs", "verbose", False),
     )
 
-    lint_parser = subparser.add_parser("lint", aliases=["l"], help="linter for inventory and refs")
+    lint_parser = subparser.add_parser(
+        "lint", aliases=["l"], help="linter for inventory and refs"
+    )
     lint_parser.set_defaults(func=start_lint, name="lint")
 
     lint_parser.add_argument(
@@ -587,7 +626,8 @@ def build_parser():
     )
 
     init_parser = subparser.add_parser(
-        "init", help="initialize a directory with the recommended kapitan project skeleton."
+        "init",
+        help="initialize a directory with the recommended kapitan project skeleton.",
     )
     init_parser.set_defaults(func=initialise_skeleton, name="init")
 
@@ -600,7 +640,9 @@ def build_parser():
 
     init_parser.add_argument(
         "--template_git_url",
-        default=from_dot_kapitan("init", "template_git_url ", defaults.COPIER_TEMPLATE_REPOSITORY),
+        default=from_dot_kapitan(
+            "init", "template_git_url ", defaults.COPIER_TEMPLATE_REPOSITORY
+        ),
         help=f"Cruft template_git_url, default is {defaults.COPIER_TEMPLATE_REPOSITORY}",
     )
     init_parser.add_argument(
@@ -624,7 +666,11 @@ def main():
     except RuntimeError:
         pass
 
-    if getattr(args, "func", None) == generate_inventory and args.pattern and args.target_name == "":
+    if (
+        getattr(args, "func", None) == generate_inventory
+        and args.pattern
+        and args.target_name == ""
+    ):
         parser.error("--pattern requires --target_name")
 
     logger.debug("Running with args: %s", args)

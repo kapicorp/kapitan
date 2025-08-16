@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from kapitan.utils import StrEnum
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -81,7 +82,9 @@ class KapitanInputTypeHelmConfig(KapitanInputTypeBaseConfig):
     @classmethod
     def type_must_be_auto(cls, _: OutputType) -> OutputType:
         """Helm output type must be auto."""
-        logger.debug("field `output_type` for helm input type must be set to 'auto': enforcing.")
+        logger.debug(
+            "field `output_type` for helm input type must be set to 'auto': enforcing."
+        )
         return OutputType.AUTO
 
 

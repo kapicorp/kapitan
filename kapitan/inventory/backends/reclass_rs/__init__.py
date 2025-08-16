@@ -2,10 +2,10 @@ import logging
 from datetime import datetime
 
 import reclass_rs
-
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory
 from kapitan.inventory.backends.reclass import get_reclass_config
+
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,9 @@ class ReclassRsInventory(Inventory):
         )
         return reclass_rs.Reclass.from_config(config)
 
-    def render_targets(self, targets: list = None, ignore_class_not_found: bool = False):
+    def render_targets(
+        self, targets: list = None, ignore_class_not_found: bool = False
+    ):
         try:
             r = self._make_reclass_rs(ignore_class_not_found)
             start = datetime.now()

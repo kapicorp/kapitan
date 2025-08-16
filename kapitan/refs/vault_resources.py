@@ -13,6 +13,7 @@ import hvac
 from kapitan.errors import KapitanError
 from kapitan.inventory.model.references import KapitanReferenceVaultCommon
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,13 +51,13 @@ class VaultClient(hvac.Client):
 
     def read_token_from_file(self, token_file):
         try:
-            with open(token_file, "r") as fp:
+            with open(token_file) as fp:
                 token = fp.read()
-        except IOError:
-            raise VaultError("Cannot read file {}".format(token_file))
+        except OSError:
+            raise VaultError(f"Cannot read file {token_file}")
 
         if not token:
-            raise VaultError("{} is empty".format(token_file))
+            raise VaultError(f"{token_file} is empty")
 
         return token
 
@@ -74,11 +75,13 @@ class VaultClient(hvac.Client):
         elif auth_type == "userpass":
             self.auth.userpass.login(username=username, password=password)
         elif auth_type == "approle":
-            self.auth.approle.login(os.getenv("VAULT_ROLE_ID"), secret_id=os.getenv("VAULT_SECRET_ID"))
+            self.auth.approle.login(
+                os.getenv("VAULT_ROLE_ID"), secret_id=os.getenv("VAULT_SECRET_ID")
+            )
         elif auth_type == "github":
             self.auth.github.login(token=self.env["token"])
         else:
-            raise VaultError("Authentication type '{}' not supported".format(auth_type))
+            raise VaultError(f"Authentication type '{auth_type}' not supported")
 
         if not self.is_authenticated():
             self.adapter.close()

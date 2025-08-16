@@ -12,7 +12,9 @@ import sys
 from typing import Any
 
 import yaml
+
 from omegaconf import Container, ListMergeMode, Node, OmegaConf
+
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +108,7 @@ def relpath(absolute_path: str, _node_: Node):
     node_parts.reverse()
 
     for idx, (path_part, node_path) in enumerate(zip(path_parts, node_parts)):
-        if not path_part == node_path:
+        if path_part != node_path:
             rel_prefix = "." * (i - idx) if idx != 0 else ""
             relative_path = rel_prefix + ".".join(path_parts[idx:])
             break
@@ -155,7 +157,7 @@ def write_to_key(destination: str, origin: str, _root_):
 
 def from_file(file_path: str):
     if os.path.isfile(file_path):
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             return f.read()
     else:
         logger.error(f"from_file: file {file_path} does not exist")
@@ -181,15 +183,13 @@ def parent_path(_parent_: Node):
 def condition_if(condition: str, config: dict):
     if bool(condition):
         return config
-    else:
-        return {}
+    return {}
 
 
 def condition_if_else(condition: str, config_if: dict, config_else: dict):
     if bool(condition):
         return config_if
-    else:
-        return config_else
+    return config_else
 
 
 def condition_not(condition: str):
@@ -243,7 +243,9 @@ def register_resolvers() -> None:
     OmegaConf.register_new_resolver("equal", condition_equal, replace=replace)
 
     # user defined resolvers
-    user_resolver_file = os.path.join(os.getcwd(), "system/omegaconf/resolvers/resolvers.py")
+    user_resolver_file = os.path.join(
+        os.getcwd(), "system/omegaconf/resolvers/resolvers.py"
+    )
 
     if os.path.exists(user_resolver_file):
         try:
@@ -275,8 +277,6 @@ def register_user_resolvers(user_resolver_file: str) -> None:
     if not isinstance(funcs, dict):
         logger.warning("pass_resolvers() should return a dict")
         return
-
-    import resolvers
 
     for name, func in funcs.items():
         try:

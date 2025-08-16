@@ -16,6 +16,7 @@ import unittest
 
 from kapitan.utils import SafeCopyError, copy_tree, directory_hash, force_copy_file
 
+
 TEST_PWD = os.getcwd()
 TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")
 TEST_DOCKER_PATH = os.path.join(os.getcwd(), "examples/docker/")
@@ -101,7 +102,7 @@ class CopyTreeTest(unittest.TestCase):
             f.write("Test2\n")
         force_copy_file(src, dst2)
         self.assertTrue(os.path.isfile(dst2))
-        with open(dst2, "r", encoding="utf-8") as f:
+        with open(dst2, encoding="utf-8") as f:
             self.assertEqual(f.read(), "Test2\n")
 
     def tearDown(self):

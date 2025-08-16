@@ -12,6 +12,7 @@ from kapitan.cli import main
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.azkms import AzureKMSSecret
 
+
 REFS_HOME = tempfile.mkdtemp()
 REF_CONTROLLER = RefController(REFS_HOME)
 REVEALER = Revealer(REF_CONTROLLER)
@@ -81,7 +82,15 @@ class AzureKMSTest(unittest.TestCase):
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = ["kapitan", "refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_HOME]
+        sys.argv = [
+            "kapitan",
+            "refs",
+            "--reveal",
+            "-f",
+            test_tag_file,
+            "--refs-path",
+            REFS_HOME,
+        ]
 
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):

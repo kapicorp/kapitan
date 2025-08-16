@@ -3,6 +3,7 @@ import os
 import subprocess
 from subprocess import DEVNULL, PIPE
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -13,7 +14,10 @@ def helm_cli(helm_path, args, stdout=None, verbose=False):
     try:
         logger.debug("launching helm with arguments: %s", args)
         res = subprocess.run(
-            args=[helm_path] + args, stderr=PIPE, stdout=stdout or (PIPE if verbose else DEVNULL)
+            args=[helm_path] + args,
+            stderr=PIPE,
+            stdout=stdout or (PIPE if verbose else DEVNULL),
+            check=False,
         )
         if verbose and not stdout:
             for line in res.stdout.splitlines():

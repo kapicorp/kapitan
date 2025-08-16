@@ -22,10 +22,11 @@ from kapitan.inventory.model.input_types import CompileInputTypeConfig, OutputTy
 from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper, prune_empty
 
+
 logger = logging.getLogger(__name__)
 
 
-class InputType(object):
+class InputType:
     """
     Abstract base class for input types.
 
@@ -58,15 +59,17 @@ class InputType(object):
         # expand any globbed paths, taking into account provided search paths
         expanded_input_paths = []
         for input_path in comp_obj.input_paths:
-            globbed_paths = [glob.glob(os.path.join(path, input_path)) for path in self.search_paths]
+            globbed_paths = [
+                glob.glob(os.path.join(path, input_path)) for path in self.search_paths
+            ]
             inputs = list(itertools.chain.from_iterable(globbed_paths))
             # remove duplicate inputs
             inputs = set(inputs)
             ignore_missing = comp_obj.ignore_missing
             if len(inputs) == 0 and not ignore_missing:
                 raise CompileError(
-                    "Compile error: {} for target: {} not found in "
-                    "search_paths: {}".format(input_path, self.target_name, self.search_paths)
+                    f"Compile error: {input_path} for target: {self.target_name} not found in "
+                    f"search_paths: {self.search_paths}"
                 )
             expanded_input_paths.extend(inputs)
 
@@ -100,13 +103,22 @@ class InputType(object):
                 # Remove . from the beginning of the extension
                 detected_type = detected_type[1:]
 
-            if detected_type in [OutputType.TOML, OutputType.JSON, OutputType.YAML, OutputType.YML]:
+            if detected_type in [
+                OutputType.TOML,
+                OutputType.JSON,
+                OutputType.YAML,
+                OutputType.YML,
+            ]:
                 output_type = detected_type
                 file_ext = None
             else:
                 # Extension is not handled, falling back to input type default
                 output_type = self.output_type_default
-                logger.debug("Could not detect extension for %s, defaulting to %s", file_path, output_type)
+                logger.debug(
+                    "Could not detect extension for %s, defaulting to %s",
+                    file_path,
+                    output_type,
+                )
                 file_ext = output_type  # no extension for plain text
 
         if output_type == OutputType.PLAIN:
@@ -157,7 +169,9 @@ class InputType(object):
         logger.debug("Compiling %s", input_path)
 
         try:
-            target_compile_path = os.path.join(self.compile_path, target_name.replace(".", "/"), output_path)
+            target_compile_path = os.path.join(
+                self.compile_path, target_name.replace(".", "/"), output_path
+            )
             os.makedirs(target_compile_path, exist_ok=True)
 
             self.compile_file(
@@ -168,11 +182,13 @@ class InputType(object):
 
         except KapitanError as e:
             raise CompileError(
-                "{}\nCompile error: failed to compile target: {}".format(e, target_name)
+                f"{e}\nCompile error: failed to compile target: {target_name}"
             ) from e
 
     @abc.abstractmethod
-    def compile_file(self, config: CompileInputTypeConfig, input_path: str, compile_path: str):
+    def compile_file(
+        self, config: CompileInputTypeConfig, input_path: str, compile_path: str
+    ):
         """Compile a single input file.
 
         This is an abstract method that should be implemented by subclasses to handle
@@ -186,7 +202,7 @@ class InputType(object):
         return NotImplementedError
 
 
-class CompilingFile(object):
+class CompilingFile:
     """
     A class to handle writing compiled data to a file.
 
@@ -234,7 +250,9 @@ class CompilingFile(object):
         target_name = self.kwargs.get("target_name", None)
 
         # TODO(ademaria): make it configurable per input type
-        style_selection = cached.inv[target_name]["parameters"].get("multiline_string_style", None)
+        style_selection = cached.inv[target_name]["parameters"].get(
+            "multiline_string_style", None
+        )
 
         if not style_selection:
             if hasattr(cached.args, "multiline_string_style"):
@@ -314,7 +332,7 @@ class CompilingFile(object):
             logger.debug("%s is Empty, skipped writing output", self.fp.name)
 
 
-class CompiledFile(object):
+class CompiledFile:
     """
     A context manager to handle writing compiled data to a file.
 

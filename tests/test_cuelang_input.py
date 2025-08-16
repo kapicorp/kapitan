@@ -64,9 +64,11 @@ class CuelangInputTest(unittest.TestCase):
             output_file = os.path.join(self.compile_path, "output.yaml")
             self.assertTrue(os.path.exists(output_file), "Output file was not created.")
 
-            with open(output_file, "r") as f:
+            with open(output_file) as f:
                 output = yaml.safe_load(f)
-                self.assertEqual(output, {"result": 5}, "Output does not match expected result.")
+                self.assertEqual(
+                    output, {"result": 5}, "Output does not match expected result."
+                )
         finally:
             shutil.rmtree(temp_dir)
 

@@ -12,11 +12,12 @@ import unittest
 
 from kapitan.lint import start_lint
 
+
 logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 
-class Object(object):
+class Object:
     pass
 
 
