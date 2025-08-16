@@ -70,18 +70,89 @@ jobs:
           CUE_VERSION=$(curl -s "https://api.github.com/repos/cue-lang/cue/releases/latest" | jq -r '.tag_name')
           curl -L "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_amd64.tar.gz" | \
             sudo tar xz -C /usr/local/bin cue
-      - name: Run pytest with coverage
-        uses: pavelzw/pytest-action@v2
-        with:
-          verbose: true
-          emoji: false
-          job-summary: true
-          custom-pytest: poetry run pytest
-          custom-arguments: '-q --cov=kapitan --cov-report=xml --cov-report=term-missing --junit-xml=junit.xml --durations=10'
-          click-to-expand: true
-          report-title: 'Kapitan tests (Python ${{ matrix.python-version }})'
+      - name: Run pytest with coverage and parallel execution
+        run: |
+          poetry run pytest tests/ \
+            -n auto \
+            --cov=kapitan \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:htmlcov \
+            --cov-report=term-missing \
+            --cov-report=json:coverage.json \
+            --junit-xml=junit.xml \
+            --json-report \
+            --json-report-file=test-results.json \
+            --durations=20 \
+            -v
 
-      - name: Upload test results
+      - name: Generate coverage report summary
+        if: always()
+        run: |
+          {
+            echo "## Coverage Report (Python ${{ matrix.python-version }})"
+            echo ""
+
+            # Extract coverage percentage from JSON
+            if [ -f coverage.json ]; then
+              COVERAGE=$(python -c "import json; data = json.load(open('coverage.json')); print(f\"{data['totals']['percent_covered']:.2f}\")")
+              echo "### Overall Coverage: ${COVERAGE}%"
+              echo ""
+
+              # Add coverage badge color logic
+              if (( $(echo "$COVERAGE >= 80" | bc -l) )); then
+                BADGE_COLOR="green"
+              elif (( $(echo "$COVERAGE >= 60" | bc -l) )); then
+                BADGE_COLOR="yellow"
+              else
+                BADGE_COLOR="red"
+              fi
+              echo "![Coverage](https://img.shields.io/badge/coverage-${COVERAGE}%25-${BADGE_COLOR})"
+            fi
+
+            # Add top uncovered files
+            echo ""
+            echo "### Coverage Details"
+            echo '```'
+            poetry run coverage report --skip-covered --skip-empty | head -30
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Parse test results
+        if: always()
+        run: |
+          if [ -f test-results.json ]; then
+            {
+              echo "### Test Results Summary"
+              echo ""
+
+              python -c "
+              import json
+              data = json.load(open('test-results.json'))
+              summary = data['summary']
+              print(f\"✅ Passed: {summary.get('passed', 0)}\")
+              print(f\"❌ Failed: {summary.get('failed', 0)}\")
+              print(f\"⏭️ Skipped: {summary.get('skipped', 0)}\")
+              print(f\"⏱️ Total Duration: {summary.get('duration', 0):.2f}s\")
+              "
+
+              echo ""
+              echo "### Slowest Tests"
+              echo '```'
+
+              python -c "
+              import json
+              data = json.load(open('test-results.json'))
+              tests = sorted(data['tests'], key=lambda x: x.get('duration', 0), reverse=True)[:10]
+              for test in tests:
+                  name = test['nodeid'].split('::')[-1][:60]
+                  duration = test.get('duration', 0)
+                  print(f\"{duration:8.3f}s - {name}\")
+              " || echo "No test timing data available"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload test results and coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -89,6 +160,18 @@ jobs:
           path: |
             junit.xml
             coverage.xml
+            coverage.json
+            htmlcov/
+            test-results.json
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Results (Python ${{ matrix.python-version }})
+          path: junit.xml
+          reporter: java-junit
+          fail-on-error: false
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.12' && (github.event_name == 'push' || github.event_name == 'pull_request')
@@ -99,6 +182,30 @@ jobs:
           name: codecov-${{ matrix.python-version }}
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  coverage-comment:
+    name: Post Coverage Comment
+    if: github.event_name == 'pull_request'
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results-3.12
+
+      - name: Coverage Comment
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          MINIMUM_GREEN: 80
+          MINIMUM_ORANGE: 60
+          ANNOTATE_MISSING_LINES: true
+          ANNOTATION_TYPE: warning
+          VERBOSE: true
 
   build:
     name: build ${{ matrix.platform }} image
