@@ -78,12 +78,37 @@ If you prefer to set up components individually:
 
 #### Makefile Commands Overview
 
-Run `make help` to see all available commands:
+Run `make help` or simply `make` to see all available commands:
 
-- **Setup**: `make setup`, `make install`, `make install_poetry`
-- **Development**: `make format`, `make lint`, `make test_quick`
-- **Testing**: `make test`, `make test_python`, `make test_coverage`
-- **Documentation**: `make docs_serve`, `make docs_deploy`
+**Setup Commands:**
+- `make setup` - Complete development environment setup (recommended for first-time setup)
+- `make install` - Install Python dependencies
+- `make install_poetry` - Install Poetry package manager
+- `make install_external_tools` - Install kustomize and CUE
+- `make install_pre_commit` - Configure git pre-commit hooks
+
+**Development Commands:**
+- `make format` - Format code with ruff
+- `make lint` - Run code quality checks on source code
+- `make lint-tests` - Run code quality checks on tests
+- `make lint-all` - Run code quality checks on everything
+- `make fix` - Fix auto-fixable linting issues in source
+- `make fix-tests` - Fix auto-fixable linting issues in tests
+
+**Testing Commands:**
+- `make test` - Run comprehensive test suite
+- `make test_quick` - Run quick tests without Docker
+- `make test_python` - Run only Python unit tests
+- `make test_coverage` - Run tests with coverage reporting
+
+**Documentation Commands:**
+- `make docs_serve` - Serve documentation locally at http://localhost:8000
+- `make docs_deploy` - Deploy documentation to GitHub Pages
+
+**Other Commands:**
+- `make clean` - Clean build artifacts and cache directories
+- `make package` - Build Python packages
+- `make release version=X.Y.Z` - Create a new release
 
 #### Troubleshooting
 
@@ -95,16 +120,29 @@ brew install gcc@5
 
 ### Testing
 
-We provide several testing commands with different scopes:
+We provide several testing commands with different scopes to support various development workflows.
 
-#### Test Commands
+#### Quick Development Workflow
 
-- **`make test`** - Run the comprehensive test suite (includes linting, Python tests, Docker tests, coverage, and formatting checks)
-- **`make test_quick`** - Run quick tests without Docker or external tools (ideal for rapid development)
-- **`make test_python`** - Run only Python unit tests
-- **`make test_coverage`** - Run tests with coverage reporting (minimum 65% required)
-- **`make lint`** - Run code quality checks with ruff
-- **`make check_format`** - Verify code formatting without making changes
+For rapid development iteration:
+```bash
+make test_quick  # Runs lint + Python tests + format check
+```
+
+#### Comprehensive Testing
+
+Before submitting a PR:
+```bash
+make test  # Full test suite including Docker tests
+```
+
+#### Individual Test Commands
+
+- `make test_python` - Run only Python unit tests
+- `make test_coverage` - Run tests with coverage reporting (minimum 65% required)
+- `make test_docker` - Build and test Docker image
+- `make lint-all` - Check both source and test code quality
+- `make check_format` - Verify code formatting
 
 #### Testing Guidelines
 
@@ -132,30 +170,42 @@ We provide several testing commands with different scopes:
 
 We use [Ruff](https://github.com/astral-sh/ruff) for both linting and formatting, which enforces the [Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/) and additional best practices.
 
-#### Formatting Commands
+#### Code Quality Commands
 
-- **`make format`** - Automatically format code and fix linting issues
-- **`make lint`** - Check code quality without making changes
-- **`make check_format`** - Verify formatting without making changes
+**Checking Code:**
+- `make lint` - Check source code for quality issues
+- `make lint-tests` - Check test files for quality issues
+- `make lint-all` - Check everything (source + tests)
+- `make check_format` - Verify code formatting
+
+**Fixing Code:**
+- `make format` - Format code with ruff formatter
+- `make fix` - Auto-fix linting issues in source code
+- `make fix-tests` - Auto-fix linting issues in tests
 
 #### Pre-commit Hooks
 
-We use pre-commit hooks to automatically check code quality before commits:
+We use pre-commit hooks to automatically check code quality before commits. These are automatically configured when you run `make setup`.
 
-1. Install pre-commit (included in dev dependencies):
-   ```bash
-   make install  # This includes pre-commit
-   ```
+**Manual Setup:**
+If you didn't use `make setup`, you can configure pre-commit hooks manually:
 
-2. Install the git hooks:
-   ```bash
-   pre-commit install
-   ```
+```bash
+make install_pre_commit
+# or directly:
+poetry run pre-commit install
+```
 
-3. The hooks will now run automatically on `git commit`. To run manually:
-   ```bash
-   pre-commit run --all-files
-   ```
+**Usage:**
+- Hooks run automatically on `git commit`
+- To run manually: `pre-commit run --all-files`
+- To skip hooks temporarily: `git commit --no-verify`
+
+The pre-commit configuration includes:
+- **Ruff**: Code linting and auto-fixing
+- **Ruff-format**: Code formatting
+- **End-of-file-fixer**: Ensures files end with a newline
+- **Check-merge-conflict**: Prevents committing merge conflict markers
 
 #### Ruff Configuration
 
