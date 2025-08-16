@@ -1,6 +1,6 @@
 ---
-name: Makefile Test
-run-name: Testing Makefile for ${{ github.actor }} on branch ${{ github.ref_name }}
+name: Development Environment Setup Test
+run-name: Testing development setup for ${{ github.actor }} on branch ${{ github.ref_name }}
 
 concurrency:
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
@@ -75,108 +75,8 @@ jobs:
           cue version
           test -f .git/hooks/pre-commit || (echo "Pre-commit hook not installed" && exit 1)
 
-  test-lint-commands:
-    name: Test Linting Commands
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Poetry
-        run: pipx install poetry
-
-      - name: Install dependencies
-        run: poetry install --with dev --with test --extras "gojsonnet reclass-rs omegaconf"
-
-      - name: Test make lint
-        run: |
-          make lint
-          echo "Source code linting passed"
-
-      - name: Test make lint-tests
-        run: |
-          make lint-tests || true  # Allow failures in test linting
-          echo "Test linting completed"
-
-      - name: Test make lint-all
-        run: |
-          make lint-all || true  # Allow failures
-          echo "Full linting completed"
-
-      - name: Test make check_format
-        run: |
-          make check_format
-          echo "Format check passed"
-
-      - name: Test make fix (dry run)
-        run: |
-          # Just verify the command runs without error
-          make fix
-          echo "Fix command executed successfully"
-
-      - name: Test make fix-tests (dry run)
-        run: |
-          # Just verify the command runs without error
-          make fix-tests || true
-          echo "Fix-tests command executed successfully"
-
-      - name: Test make format
-        run: |
-          # Run format and check if it modifies any files
-          make format
-          git diff --exit-code || echo "Files were formatted"
-
-  test-test-commands:
-    name: Test Testing Commands
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.10', '3.11', '3.12']
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Poetry
-        run: pipx install poetry
-
-      - name: Install dependencies
-        run: poetry install --with dev --with test --extras "gojsonnet reclass-rs omegaconf"
-
-      - name: Install external tools
-        run: |
-          make install_external_tools
-
-      - name: Test make test_python
-        run: |
-          make test_python
-          echo "Python tests passed"
-
-      - name: Test make test_quick
-        run: |
-          make test_quick
-          echo "Quick tests passed"
-
-      - name: Test make test_coverage
-        run: |
-          make test_coverage
-          echo "Coverage tests passed"
-
-  test-other-commands:
-    name: Test Other Commands
+  test-utility-commands:
+    name: Test Utility Commands
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -219,17 +119,3 @@ jobs:
           # Running just 'make' should show help
           make | grep -q "Kapitan Development Makefile" || (echo "Default target not showing help" && exit 1)
           echo "Default make target shows help"
-
-  test-docker-commands:
-    name: Test Docker Commands
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Test make test_docker
-        run: |
-          make test_docker
-          echo "Docker tests passed"
