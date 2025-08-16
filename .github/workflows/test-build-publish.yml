@@ -36,6 +36,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Cache pre-commit environments
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-
+            pre-commit-
       - uses: pre-commit/action@v3.0.1
 
   test:
@@ -58,15 +68,35 @@ jobs:
         with:
           cache: 'poetry'
           python-version: ${{ matrix.python-version }}
+      - name: Cache system dependencies
+        id: cache-system-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/bin/helm
+            /usr/local/bin/cue
+          key: ${{ runner.os }}-system-deps-helm-cue-${{ hashFiles('.github/workflows/test-build-publish.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-system-deps-helm-cue-
+            ${{ runner.os }}-system-deps-
+
       - name: Install libraries dependencies
         run: |
           poetry install --with test --no-root --extras=gojsonnet --extras=omegaconf --extras=reclass-rs
-      - name: Install testing dependencies (Helm, CUE)
+
+      - name: Install system packages
         run: |
           sudo apt-get -qq update
           sudo apt-get install -y gnupg2 git curl xz-utils jq
+
+      - name: Install Helm
+        if: steps.cache-system-deps.outputs.cache-hit != 'true'
+        run: |
           curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
+      - name: Install CUE
+        if: steps.cache-system-deps.outputs.cache-hit != 'true'
+        run: |
           CUE_VERSION=$(curl -s "https://api.github.com/repos/cue-lang/cue/releases/latest" | jq -r '.tag_name')
           curl -L "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_amd64.tar.gz" | \
             sudo tar xz -C /usr/local/bin cue

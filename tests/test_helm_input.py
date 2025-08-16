@@ -210,7 +210,9 @@ class TestHelmValues:
         from tests.test_helpers import setup_gpg_key
 
         # Setup GPG key for testing
-        key_path = "/home/coder/kapitan/examples/kubernetes/refs/example@kapitan.dev.key"
+        # Get the project root directory (parent of tests directory)
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        key_path = os.path.join(project_root, "examples/kubernetes/refs/example@kapitan.dev.key")
         setup_gpg_key(key_path, gnupg_home)
 
         helper = CompileTestHelper(isolated_test_resources)
