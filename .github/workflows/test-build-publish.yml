@@ -36,6 +36,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Cache pre-commit environments
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-
+            pre-commit-
       - uses: pre-commit/action@v3.0.1
 
   test:
@@ -58,28 +68,252 @@ jobs:
         with:
           cache: 'poetry'
           python-version: ${{ matrix.python-version }}
+      - name: Cache system dependencies
+        id: cache-system-deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/bin/helm
+            /usr/local/bin/cue
+          key: ${{ runner.os }}-system-deps-helm-cue-${{ hashFiles('.github/workflows/test-build-publish.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-system-deps-helm-cue-
+            ${{ runner.os }}-system-deps-
+
       - name: Install libraries dependencies
         run: |
           poetry install --with test --no-root --extras=gojsonnet --extras=omegaconf --extras=reclass-rs
-      - name: Install testing dependencies (Helm, CUE)
+
+      - name: Install system packages
         run: |
           sudo apt-get -qq update
           sudo apt-get install -y gnupg2 git curl xz-utils jq
+
+      - name: Install Helm
+        if: steps.cache-system-deps.outputs.cache-hit != 'true'
+        run: |
           curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
+      - name: Install CUE
+        if: steps.cache-system-deps.outputs.cache-hit != 'true'
+        run: |
           CUE_VERSION=$(curl -s "https://api.github.com/repos/cue-lang/cue/releases/latest" | jq -r '.tag_name')
           curl -L "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_amd64.tar.gz" | \
             sudo tar xz -C /usr/local/bin cue
-      - name: Run pytest
-        uses: pavelzw/pytest-action@v2
+      - name: Run pytest with coverage and parallel execution
+        env:
+          COVERAGE_CORE: sysmon
+        run: |
+          # Clean any existing coverage data
+          rm -f .coverage* coverage.xml coverage.json
+
+          # Run tests with parallel execution and coverage
+          poetry run pytest tests/ \
+            -n auto \
+            --cov=kapitan \
+            --cov-branch \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage.xml \
+            --cov-report=json:coverage.json \
+            --cov-report=html:htmlcov \
+            --junit-xml=junit.xml \
+            --json-report \
+            --json-report-file=test-results.json \
+            --durations=20 \
+            -v
+
+      - name: Generate coverage report summary
+        if: always()
+        run: |
+          {
+            echo "## Coverage Report (Python ${{ matrix.python-version }})"
+            echo ""
+
+            # Extract coverage percentage from JSON
+            if [ -f coverage.json ]; then
+              COVERAGE=$(python -c "import json; data = json.load(open('coverage.json')); print(f\"{data['totals']['percent_covered']:.2f}\")")
+              echo "### Overall Coverage: ${COVERAGE}%"
+              echo ""
+
+              # Add coverage badge color logic
+              if (( $(echo "$COVERAGE >= 80" | bc -l) )); then
+                BADGE_COLOR="green"
+              elif (( $(echo "$COVERAGE >= 60" | bc -l) )); then
+                BADGE_COLOR="yellow"
+              else
+                BADGE_COLOR="red"
+              fi
+              echo "![Coverage](https://img.shields.io/badge/coverage-${COVERAGE}%25-${BADGE_COLOR})"
+            fi
+
+            # Add top uncovered files
+            echo ""
+            echo "### Coverage Details"
+            echo '```'
+            poetry run coverage report --skip-covered --skip-empty | head -30
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Parse test results
+        if: always()
+        run: |
+          if [ -f test-results.json ]; then
+            {
+              echo "### Test Results Summary"
+              echo ""
+
+              python -c "import json; data = json.load(open('test-results.json')); summary = data['summary']; print(f\"✅ Passed: {summary.get('passed', 0)}\"); print(f\"❌ Failed: {summary.get('failed', 0)}\"); print(f\"⏭️ Skipped: {summary.get('skipped', 0)}\"); print(f\"⏱️ Total Duration: {summary.get('duration', 0):.2f}s\")"
+
+              echo ""
+              echo "### Slowest Tests"
+              echo '```'
+
+              python -c "import json; data = json.load(open('test-results.json')); tests = sorted(data['tests'], key=lambda x: x.get('duration', 0), reverse=True)[:10]; [print(f\"{test.get('duration', 0):8.3f}s - {test['nodeid'].split('::')[-1][:60]}\") for test in tests]" || echo "No test timing data available"
+
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload test results and coverage
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          verbose: true
-          emoji: false
-          job-summary: true
-          custom-pytest: poetry run pytest
-          custom-arguments: '-q'
-          click-to-expand: true
-          report-title: 'Kapitan tests'
+          name: test-results-${{ matrix.python-version }}
+          path: |
+            junit.xml
+            coverage.xml
+            coverage.json
+            htmlcov/
+            test-results.json
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Results (Python ${{ matrix.python-version }})
+          path: junit.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12' && (github.event_name == 'push' || github.event_name == 'pull_request')
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-${{ matrix.python-version }}
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  coverage-comment:
+    name: Post Coverage Comment
+    if: always() && github.event_name == 'pull_request'
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results-3.12
+        continue-on-error: true
+
+      - name: Check if coverage data exists
+        id: check-coverage
+        run: |
+          if [ -f coverage.xml ]; then
+            echo "has-coverage=true" >> "$GITHUB_OUTPUT"
+            echo "Coverage data found"
+            ls -la coverage* || true
+          else
+            echo "has-coverage=false" >> "$GITHUB_OUTPUT"
+            echo "No coverage data found - test may have failed"
+          fi
+
+      - name: Coverage Comment
+        if: steps.check-coverage.outputs.has-coverage == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read coverage data
+            const coverageJson = JSON.parse(fs.readFileSync('coverage.json', 'utf8'));
+            const totalCoverage = coverageJson.totals.percent_covered.toFixed(2);
+
+            // Determine badge color
+            let badgeColor = 'red';
+            if (totalCoverage >= 80) badgeColor = 'green';
+            else if (totalCoverage >= 60) badgeColor = 'yellow';
+
+            // Create comment body
+            const commentBody = `## Coverage Report
+
+            **Total Coverage:** ${totalCoverage}%
+
+            ![Coverage](https://img.shields.io/badge/coverage-${totalCoverage}%25-${badgeColor})
+
+            <details>
+            <summary>Coverage Summary</summary>
+
+            | Metric | Value |
+            |--------|-------|
+            | Statements | ${coverageJson.totals.num_statements} |
+            | Missing | ${coverageJson.totals.missing_lines} |
+            | Coverage | ${totalCoverage}% |
+            | Branches | ${coverageJson.totals.num_branches || 'N/A'} |
+            | Partial Branches | ${coverageJson.totals.num_partial_branches || 'N/A'} |
+
+            </details>
+
+            _Coverage data from Python 3.12 tests_`;
+
+            // Post or update comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('## Coverage Report')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
+
+      - name: Post failure notice
+        if: steps.check-coverage.outputs.has-coverage != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ **Coverage Report Unavailable**\n\nNo coverage data was generated. This usually means the tests failed or were interrupted.\n\nPlease check the test results in the Actions tab.'
+            })
 
   build:
     name: build ${{ matrix.platform }} image

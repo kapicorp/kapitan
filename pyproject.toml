@@ -43,6 +43,8 @@ coverage = "^7.6.1"
 pytest-md = "^0.2.0"
 pytest-emoji = "^0.2.0"
 pytest-cov = ">=3,<7"
+pytest-json-report = "^1.5.0"
+pytest-xdist = "^3.8.0"
 docker = "^7.0.0"
 
 [tool.poetry.group.dev]
@@ -129,3 +131,64 @@ target-version = ['py311']
 [tool.poetry_bumpversion.file."kapitan/version.py"]
 search = 'VERSION = "{current_version}"'
 replace = 'VERSION = "{new_version}"'
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "--disable-warnings",
+    "-ra",
+]
+markers = [
+    "requires_gpg: mark test as requiring GPG setup",
+    "requires_vault: mark test as requiring Vault server",
+    "slow: mark test as slow running",
+    "integration: mark test as integration test",
+    "unit: mark test as unit test",
+]
+
+[tool.coverage.run]
+source = ["kapitan"]
+branch = true
+parallel = true
+data_file = ".coverage"
+concurrency = ["multiprocessing", "thread"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+    "*/distutils/*",
+    "*/venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+precision = 2
+skip_covered = false
+skip_empty = true
+sort = "Cover"
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
