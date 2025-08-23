@@ -3,8 +3,9 @@
 ## Project Overview
 This is a modern Python scaffolding for Kapitan v2 using uv package manager with comprehensive tooling and a 3-phase compilation simulation system.
 
-## Current Status: COMPLETED ✅
+## Current Status: ENHANCED WITH ADVANCED TUI ✅
 All requested features have been successfully implemented and tested.
+**NEW**: Full-featured TUI with keyboard navigation, split-screen layout, and JSONPath search!
 
 ## Project Structure
 ```
@@ -16,7 +17,13 @@ All requested features have been successfully implemented and tested.
 │   ├── core/
 │   │   ├── config.py                  # Pydantic configuration system with TOML
 │   │   ├── exceptions.py              # Custom exception classes
-│   │   └── compiler.py                # 3-phase compilation simulator
+│   │   ├── compiler.py                # 3-phase compilation simulator with real inventory
+│   │   ├── inventory_ui.py            # Simple interactive console UI (fallback)
+│   │   └── inventory_tui.py           # Advanced TUI with keyboard navigation and JSONPath search
+│   ├── legacy/
+│   │   ├── __init__.py               # Legacy Kapitan integration interface
+│   │   ├── inventory.py              # Legacy inventory reader with fallback logic
+│   │   └── simple_reader.py          # Direct YAML parser for Kapitan inventory files
 ├── pyproject.toml                     # Modern packaging with uv, Python 3.13
 ├── justfile                          # Development commands
 ├── kapitan.toml                      # Main configuration file
@@ -41,20 +48,43 @@ All requested features have been successfully implemented and tested.
 - **Configuration precedence**: CLI args > env vars > CI config > main config > defaults
 - **Three output formats**: console (Rich), plain (CI), JSON (programmatic)
 
+### ✅ Advanced TUI (Text User Interface)
+- **Full-screen split layout**: Left panel for targets, right panel for content
+- **Keyboard navigation**: Arrow keys for selection, Enter to view details
+- **Scrollable JSON viewer** with syntax highlighting and line numbers
+- **JSONPath search** with auto-completion for deep data querying
+- **Real-time updates** and responsive interface
+- **Keyboard shortcuts**: 'q' to quit, 'r' to refresh, 'f' to search, 'esc' to navigate
+- **Fallback support** to simple interactive mode if TUI fails
+- **Multiple output modes**: TUI (interactive), plain (CI), JSON (API)
+
+### ✅ Real Kapitan Inventory Integration  
+- **Legacy inventory reader** with direct YAML parsing
+- **Automatic fallback system** (real inventory → legacy system → mock data)
+- **Real target detection** from Kapitan inventory files
+- **Class hierarchy resolution** (e.g., `component.mysql` → `component/mysql.yml`)
+- **Compile directive extraction** from class files (`kapitan.compile` sections)
+- **Input type detection** (jsonnet, jinja2, helm, etc.)
+- **Intelligent timing** based on target complexity and type
+- **10 real targets** from Kapitan examples: `minikube-mysql`, `minikube-nginx-jsonnet`, etc.
+
 ### ✅ 3-Phase Compilation Simulation
-**Phase 1: Inventory Reading (~2 seconds)**
+**Phase 1: Inventory Reading (~1-2 seconds)**
 - Progress bar with spinner and elapsed time
-- Shows target count and duration: "Inventory loaded - 20 targets found in 2.1s"
-- No inventory summary table (removed per latest request)
-- Realistic timing simulation (1.8-2.2 seconds)
+- **Real inventory loading** from Kapitan YAML files
+- Shows target count, duration, and backend: "Inventory loaded - 10 targets found in 1.2s (simple-yaml)"
+- **Automatic backend detection**: `(simple-yaml)` for real inventory, `(mock)` for fallback
+- No inventory summary table (compact design)
 
 **Phase 2: Compilation (Variable time)**
-- 20 parallel mock targets with realistic service names
+- **Real or mock targets** depending on inventory availability
+- **Real examples**: `minikube-mysql`, `minikube-nginx-jsonnet`, `minikube-es`, etc.
 - Individual progress bars for each target with status changes
 - Status progression: pending → compiling → verifying → completed/failed
+- **Intelligent timing** based on real target complexity (jsonnet/helm = longer)
 - 5% random failure rate with realistic error messages
-- Output paths displayed: "webapp-frontend → compiled/webapp-frontend"
-- Compact inline summary: "Targets: 20 | Completed: 18 | In Progress: 0 | Failed: 2 | Jobs: 4"
+- Output paths displayed: "minikube-mysql → compiled/minikube-mysql"
+- Compact inline summary: "Targets: 10 | Completed: 8 | In Progress: 0 | Failed: 2 | Jobs: 4"
 
 **Phase 3: Finalizing (1-2 seconds)**
 - Steps through: "Writing manifests", "Generating docs", "Creating archive", "Cleaning up"
@@ -130,26 +160,45 @@ just examples        # Show usage examples
 
 ## Example Usage
 ```bash
-# Console mode with rich output
+# Advanced TUI inventory browser (default mode)
+just run inventory -i /home/coder/kapitan/examples/kubernetes/inventory
+# Use arrow keys to navigate, Enter to select, 'f' to search with JSONPath
+
+# Direct TUI test script
+./test_tui.py
+
+# Non-interactive inventory (specific target)
+just run inventory -i /path/to/inventory --target minikube-mysql --no-interactive
+
+# Inventory in JSON mode (programmatic)
+just run-json inventory -i /path/to/inventory
+
+# Inventory in plain mode (CI-friendly)  
+just run-plain inventory -i /path/to/inventory --verbose
+
+# Console mode with rich output (mock targets)
 just run compile
 
-# Specific targets
-just run compile -t webapp-frontend,database,auth-service
+# Use real Kapitan inventory
+just run compile -i /home/coder/kapitan/examples/kubernetes/inventory
 
-# Custom output directory
-just run compile -o /tmp/build-output
+# Specific real targets
+just run compile -i /path/to/inventory -t minikube-mysql,minikube-nginx-jsonnet
 
-# CI mode (plain output)
-just run-plain compile
+# Custom output directory with real inventory
+just run compile -i /path/to/inventory -o /tmp/build-output
 
-# JSON output with logging to stderr
-just run-json compile
+# CI mode with real inventory (plain output)
+just run-plain compile -i /path/to/inventory
+
+# JSON output with real inventory data
+just run-json compile -i /path/to/inventory
 
 # Verbose mode (shows configuration panel)
-just run --verbose compile
+just run --verbose compile -i /path/to/inventory
 
-# Different parallel job count
-just run --config kapitan.ci.toml.example compile  # Uses 8 jobs
+# Different parallel job count with real targets
+just run --config kapitan.ci.toml.example compile -i /path/to/inventory  # Uses 8 jobs
 ```
 
 ## Architecture Notes
@@ -182,6 +231,13 @@ just run --config kapitan.ci.toml.example compile  # Uses 8 jobs
 ✅ JSON output properly formatted with logging separation
 ✅ Error scenarios handled correctly
 ✅ Parallel execution working as expected
+✅ **Advanced TUI interface fully implemented and tested**
+✅ **Split-screen layout with keyboard navigation working**
+✅ **Scrollable JSON viewer with syntax highlighting working**
+✅ **JSONPath search with auto-completion implemented**
+✅ Real inventory integration working with 10 targets
+✅ Fallback to simple interactive mode working
+✅ Plain and JSON output modes for inventory working
 
 ## Next Steps (Future Development)
 When resuming work on this project:

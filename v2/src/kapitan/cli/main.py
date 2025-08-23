@@ -19,6 +19,7 @@ from kapitan import __version__
 from kapitan.core.config import KapitanConfig, LogLevel, OutputFormat, get_config, reload_config
 from kapitan.core.exceptions import KapitanError
 from kapitan.core.compiler import CompilationSimulator
+from kapitan.core.inventory_tui import show_interactive_inventory
 
 # Install rich traceback handling
 install(show_locals=True)
@@ -321,71 +322,64 @@ def inventory(
         None,
         "--target",
         "-t",
-        help="Target name to show inventory for",
+        help="Target name to show inventory for (non-interactive mode)",
+    ),
+    interactive: bool = typer.Option(
+        True,
+        "--interactive/--no-interactive",
+        help="Use interactive mode (default) or output mode",
     ),
 ) -> None:
-    """[blue]Show[/blue] inventory for targets."""
+    """[blue]Browse[/blue] inventory targets interactively."""
     try:
         config = get_app_config()
         
         # Use CLI args or fall back to config
         inv_path = inventory_path or config.global_.inventory_path
-        target_name = target if target else "all"
         
         logger.info("Showing inventory")
         logger.debug(f"Inventory path: {inv_path}")
-        logger.debug(f"Target: {target_name}")
         
         if config.global_.output_format == OutputFormat.CONSOLE:
-            # Create a rich panel for inventory info
-            info_table = Table.grid(padding=1)
-            info_table.add_column(style="cyan", no_wrap=True)
-            info_table.add_column()
-            
-            info_table.add_row("Inventory path:", f"[yellow]{inv_path}[/yellow]")
-            info_table.add_row("Target:", f"[yellow]{target_name}[/yellow]")
-            
-            console.print(Panel(info_table, title="[bold blue]Inventory Configuration[/bold blue]"))
-            
-            console.print("[yellow]⚠️  Inventory logic not yet implemented[/yellow]")
-            
-            # Example of what inventory output might look like
-            if config.global_.verbose:
-                example_table = Table(title="Example Inventory Structure")
-                example_table.add_column("Target", style="cyan", no_wrap=True)
-                example_table.add_column("Classes", style="magenta")
-                example_table.add_column("Parameters", style="green")
+            if interactive:
+                # Use the interactive inventory viewer
+                show_interactive_inventory(console, inv_path)
+            else:
+                # Show non-interactive output for specific target
+                target_name = target if target else "all"
+                console.print(f"[yellow]Non-interactive mode - showing target: {target_name}[/yellow]")
+                console.print("[dim]Use --interactive for full browsing experience[/dim]")
                 
-                example_table.add_row("webapp", "common, nginx", "replicas: 3")
-                example_table.add_row("database", "common, postgres", "version: 14")
-                
-                console.print(example_table)
-        elif config.global_.output_format == OutputFormat.PLAIN:
-            # Plain text output for CI/pipes
-            print(f"Inventory path: {inv_path}")
-            print(f"Target: {target_name}")
-            print("WARNING: Inventory logic not yet implemented")
+        elif config.global_.output_format in (OutputFormat.PLAIN, OutputFormat.JSON):
+            # For non-console modes, always provide data output
+            from kapitan.legacy import LegacyInventoryReader
             
-            # Example output in verbose mode
-            if config.global_.verbose:
-                print("\nExample inventory structure:")
-                print("webapp: classes=[common, nginx], replicas=3")
-                print("database: classes=[common, postgres], version=14")
-        
-        # Prepare result data
-        result_data = {
-            "inventory_path": inv_path,
-            "target": target_name,
-            "status": "not_implemented",
-            "message": "Inventory logic not yet implemented",
-            "example_data": [
-                {"target": "webapp", "classes": ["common", "nginx"], "parameters": {"replicas": 3}},
-                {"target": "database", "classes": ["common", "postgres"], "parameters": {"version": 14}}
-            ] if config.global_.verbose else None
-        }
-        
-        output_result(result_data, success=False)
-        logger.warning("Inventory logic not yet implemented")
+            reader = LegacyInventoryReader(inv_path)
+            inventory_result = reader.read_targets()
+            
+            target_name = target if target else "all"
+            
+            # Prepare result data
+            result_data = {
+                "inventory_path": inv_path,
+                "target": target_name,
+                "inventory_result": inventory_result,
+                "status": "success" if inventory_result["success"] else "failed"
+            }
+            
+            if config.global_.output_format == OutputFormat.PLAIN:
+                print(f"Inventory path: {inv_path}")
+                print(f"Targets found: {inventory_result['targets_found']}")
+                print(f"Status: {'SUCCESS' if inventory_result['success'] else 'FAILED'}")
+                
+                if config.global_.verbose and inventory_result["targets"]:
+                    print("\nTargets:")
+                    for t in inventory_result["targets"]:
+                        classes = ", ".join(t.get("classes", []))
+                        apps = ", ".join(t.get("applications", []))
+                        print(f"  {t['name']}: type={t.get('type', 'unknown')}, classes=[{classes}], apps=[{apps}]")
+            
+            output_result(result_data, success=inventory_result["success"])
         
     except KapitanError as e:
         error_data = {"error": "KapitanError", "message": e.message}

@@ -21,6 +21,8 @@ from rich.progress import (
 )
 from rich.table import Table
 
+from kapitan.legacy import LegacyInventoryReader
+
 
 class CompilationStatus(str, Enum):
     """Compilation status for individual targets."""
@@ -90,8 +92,11 @@ class CompilationSimulator:
         return targets
     
     def read_inventory(self, targets: Optional[List[str]] = None) -> Dict[str, any]:
-        """Simulate inventory reading phase."""
+        """Read inventory using legacy Kapitan system."""
         start_time = time.time()
+        
+        # Initialize legacy inventory reader
+        legacy_reader = LegacyInventoryReader(self.inventory_path)
         
         if not self.silent:
             from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
@@ -104,49 +109,99 @@ class CompilationSimulator:
             ) as progress:
                 task = progress.add_task("Reading inventory...", total=None)
                 
-                # Simulate inventory reading time (~2 seconds with some variation)
-                inventory_time = random.uniform(1.8, 2.2)
-                
-                # Create mock targets based on inventory first
-                all_targets = self.create_mock_targets()
-                
-                # Filter targets if specific ones requested
-                if targets and targets != ["all"]:
-                    self.targets = [t for t in all_targets if t.name in targets]
+                # Check if inventory exists
+                if not legacy_reader.check_inventory_exists():
+                    progress.update(task, description="[yellow]No inventory found, using mock data[/yellow]")
+                    time.sleep(0.5)
+                    inventory_result = self._create_mock_inventory_result(targets, start_time)
+                    duration = time.time() - start_time
+                    progress.update(task, description=f"[green]Mock inventory loaded[/green] - {len(self.targets)} targets found in {duration:.1f}s")
+                    time.sleep(0.3)
                 else:
-                    self.targets = all_targets
-                
-                # Update progress during inventory reading
-                steps = 5
-                for i in range(steps):
-                    time.sleep(inventory_time / steps)
-                    if i == steps - 1:  # Final step
-                        duration = time.time() - start_time
-                        progress.update(task, description=f"[green]Inventory loaded[/green] - {len(self.targets)} targets found in {duration:.1f}s")
+                    # Read real inventory
+                    progress.update(task, description="Reading inventory structure...")
+                    time.sleep(0.5)
+                    
+                    progress.update(task, description="Loading target definitions...")
+                    time.sleep(0.7)
+                    
+                    progress.update(task, description="Processing classes...")
+                    inventory_result = legacy_reader.read_targets(targets)
+                    
+                    if inventory_result["success"]:
+                        # Convert legacy targets to our format
+                        self._convert_legacy_targets(inventory_result["targets"])
                     else:
-                        progress.update(task, description=f"Reading inventory... ({i+1}/{steps})")
-                
-                time.sleep(0.3)  # Brief pause to show completion message
+                        # Fallback to mock data
+                        inventory_result = self._create_mock_inventory_result(targets, start_time)
+                    
+                    duration = time.time() - start_time
+                    backend = inventory_result.get("backend", "unknown")
+                    progress.update(task, description=f"[green]Inventory loaded[/green] - {len(self.targets)} targets found in {duration:.1f}s ({backend})")
+                    time.sleep(0.3)
         else:
-            # Silent mode - just simulate the work
-            inventory_time = random.uniform(1.8, 2.2)
-            time.sleep(inventory_time)
-            
-            # Create mock targets based on inventory
-            all_targets = self.create_mock_targets()
-            
-            # Filter targets if specific ones requested
-            if targets and targets != ["all"]:
-                self.targets = [t for t in all_targets if t.name in targets]
+            # Silent mode
+            if not legacy_reader.check_inventory_exists():
+                inventory_result = self._create_mock_inventory_result(targets, start_time)
             else:
-                self.targets = all_targets
+                inventory_result = legacy_reader.read_targets(targets)
+                if inventory_result["success"]:
+                    self._convert_legacy_targets(inventory_result["targets"])
+                else:
+                    inventory_result = self._create_mock_inventory_result(targets, start_time)
         
         self.phase_timings["inventory_reading"] = time.time() - start_time
         
         return {
             "targets_found": len(self.targets),
             "inventory_path": self.inventory_path,
-            "duration": self.phase_timings["inventory_reading"]
+            "duration": self.phase_timings["inventory_reading"],
+            "backend": inventory_result.get("backend", "unknown"),
+            "legacy_success": inventory_result.get("success", False)
+        }
+    
+    def _convert_legacy_targets(self, legacy_targets: List[Dict]):
+        """Convert legacy target format to compilation targets."""
+        self.targets = []
+        for target_info in legacy_targets:
+            # Create compilation target with realistic timing based on target complexity
+            base_time = 1.0
+            
+            # Adjust time based on target characteristics
+            if len(target_info.get("applications", [])) > 2:
+                base_time += 0.5
+            if len(target_info.get("classes", [])) > 3:
+                base_time += 0.3
+            if target_info.get("type") in ["jsonnet", "helm"]:
+                base_time += 0.7
+            
+            # Add some randomness
+            duration = base_time + random.uniform(-0.3, 0.5)
+            duration = max(0.1, duration)
+            
+            compilation_target = CompilationTarget(
+                name=target_info["name"],
+                duration=duration
+            )
+            self.targets.append(compilation_target)
+    
+    def _create_mock_inventory_result(self, targets: Optional[List[str]], start_time: float) -> Dict:
+        """Create mock inventory result when legacy system fails."""
+        # Create mock targets as before
+        all_targets = self.create_mock_targets()
+        
+        # Filter targets if specific ones requested
+        if targets and targets != ["all"]:
+            self.targets = [t for t in all_targets if t.name in targets]
+        else:
+            self.targets = all_targets
+        
+        return {
+            "success": True,
+            "targets": [{"name": t.name, "type": "mock", "classes": [], "applications": []} for t in self.targets],
+            "targets_found": len(self.targets),
+            "backend": "mock",
+            "duration": time.time() - start_time
         }
         
     def compile_target(self, target: CompilationTarget, progress: Optional[Progress], task_id: Optional[TaskID]) -> None:
