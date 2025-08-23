@@ -1,0 +1,25 @@
+# Kapitan Configuration File
+# This file contains global settings and configuration for Kapitan v2
+
+[global]
+# Default paths
+inventory_path = "inventory"  # Path to inventory directory
+output_path = "compiled"      # Path to compiled output directory
+cache_dir = "~/.kapitan/cache"  # Cache directory (optional, defaults to ~/.kapitan/cache)
+
+# Compilation settings
+parallel_jobs = 4    # Number of parallel jobs for compilation
+output_format = "console"  # Output format: "console", "plain", or "json"
+verbose = false      # Enable verbose output by default
+
+[logging]
+# Logging configuration
+level = "INFO"       # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+show_time = true     # Show timestamps in logs
+show_path = false    # Show file paths in logs
+json_format = false  # Use JSON format for logs (when not in console output mode)
+
+# Environment-specific overrides can be set using environment variables:
+# KAPITAN_GLOBAL__VERBOSE=true
+# KAPITAN_LOGGING__LEVEL=DEBUG
+# KAPITAN_GLOBAL__PARALLEL_JOBS=8
