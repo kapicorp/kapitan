@@ -1,1 +1,0 @@
-"""Input types module for Kapitan."""

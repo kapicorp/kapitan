@@ -1,1 +1,0 @@
-"""Inventory module for Kapitan."""

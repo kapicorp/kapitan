@@ -1,8 +1,7 @@
 """Test exception classes."""
 
-import pytest
 
-from kapitan.core.exceptions import (
+from skipper.core.exceptions import (
     CompileError,
     InputError,
     InventoryError,

@@ -26,22 +26,22 @@ install-dev:
 
 # Run the CLI with proper Python path
 run *ARGS:
-    uv run python -m kapitan.cli.main {{ARGS}}
+    uv run python -m skipper.cli.main {{ARGS}}
 
 # Run in console mode (rich output)
 run-console *ARGS:
     @mv kapitan.ci.toml kapitan.ci.toml.bak 2>/dev/null || true
-    uv run python -m kapitan.cli.main {{ARGS}}
+    uv run python -m skipper.cli.main {{ARGS}}
     @mv kapitan.ci.toml.bak kapitan.ci.toml 2>/dev/null || true
 
 # Run in plain mode (CI-style output)  
 run-plain *ARGS:
-    @test -f kapitan.ci.toml || echo "[global]\noutput_format = \"plain\"\nverbose = true" > kapitan.ci.toml.temp && mv kapitan.ci.toml.temp kapitan.ci.toml
-    uv run python -m kapitan.cli.main {{ARGS}}
+    @test -f kapitan.ci.toml || (echo "[global]" > kapitan.ci.toml && echo "output_format = \"plain\"" >> kapitan.ci.toml && echo "verbose = true" >> kapitan.ci.toml)
+    uv run python -m skipper.cli.main {{ARGS}}
 
 # Run in JSON mode
 run-json *ARGS:
-    uv run python -m kapitan.cli.main --json {{ARGS}}
+    uv run python -m skipper.cli.main --json {{ARGS}}
 
 # Run tests
 test:

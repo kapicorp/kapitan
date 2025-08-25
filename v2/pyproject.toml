@@ -47,6 +47,14 @@ dependencies = [
     "cryptography>=41.0.0",
     "packaging>=23.0",
     "typing-extensions>=4.8.0",
+    "omegaconf==2.4.0.dev3",
+    "filetype>=1.2.0",
+    "toml>=0.10.2",
+    "six>=1.17.0",
+    "cachetools>=6.1.0",
+    "kadet>=0.3.2",
+    "kapicorp-reclass>=2.0.0",
+    "regex>=2025.7.34",
 ]
 
 [project.optional-dependencies]
@@ -76,7 +84,7 @@ docs = [
 ]
 
 [project.scripts]
-kapitan = "kapitan.cli.main:app"
+kapitan = "skipper.cli.main:app"
 
 [project.urls]
 Homepage = "https://kapitan.dev"
@@ -86,14 +94,14 @@ Issues = "https://github.com/kapicorp/kapitan/issues"
 Changelog = "https://github.com/kapicorp/kapitan/blob/master/CHANGELOG.md"
 
 [tool.hatch.version]
-path = "src/kapitan/__init__.py"
+path = "src/skipper/__init__.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/kapitan"]
+packages = ["src/skipper"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "src/kapitan",
+    "src/skipper",
     "tests",
     "README.md",
     "LICENSE",
@@ -102,6 +110,8 @@ include = [
 [tool.ruff]
 target-version = "py313"
 line-length = 110
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -122,11 +132,11 @@ ignore = [
     "W191",  # indentation contains tabs
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/**/*" = ["S101", "ARG", "FBT"]
 
-[tool.ruff.isort]
-known-first-party = ["kapitan"]
+[tool.ruff.lint.isort]
+known-first-party = ["skipper"]
 
 [tool.black]
 target-version = ['py313']
@@ -157,7 +167,7 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=kapitan",
+    "--cov=skipper",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",
@@ -169,7 +179,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/kapitan"]
+source = ["src/skipper"]
 branch = true
 
 [tool.coverage.report]

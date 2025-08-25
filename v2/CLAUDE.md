@@ -1,7 +1,7 @@
 # Kapitan v2 Development Progress
 
 ## Project Overview
-This is a modern Python scaffolding for Kapitan v2 using uv package manager with comprehensive tooling and a 3-phase compilation simulation system.
+This is a modern Python scaffolding for Kapitan v2 using uv package manager with comprehensive tooling and a 3-phase compilation system.
 
 ## Current Status: ENHANCED WITH ADVANCED TUI ✅
 All requested features have been successfully implemented and tested.
@@ -17,12 +17,12 @@ All requested features have been successfully implemented and tested.
 │   ├── core/
 │   │   ├── config.py                  # Pydantic configuration system with TOML
 │   │   ├── exceptions.py              # Custom exception classes
-│   │   ├── compiler.py                # 3-phase compilation simulator with real inventory
+│   │   ├── compiler.py                # 3-phase compilation system with real inventory
 │   │   ├── inventory_ui.py            # Simple interactive console UI (fallback)
 │   │   └── inventory_tui.py           # Advanced TUI with keyboard navigation and JSONPath search
 │   ├── legacy/
 │   │   ├── __init__.py               # Legacy Kapitan integration interface
-│   │   ├── inventory.py              # Legacy inventory reader with fallback logic
+│   │   ├── inventory.py              # Legacy inventory reader (real data only)
 │   │   └── simple_reader.py          # Direct YAML parser for Kapitan inventory files
 ├── pyproject.toml                     # Modern packaging with uv, Python 3.13
 ├── justfile                          # Development commands
@@ -43,9 +43,10 @@ All requested features have been successfully implemented and tested.
 
 ### ✅ Configuration System
 - **TOML-based configuration** with `kapitan.toml`
+- **User-level configuration** with `~/.kapitan.toml` for personal defaults
 - **CI override support** with `kapitan.ci.toml` automatic detection
 - **Environment variable support** with `KAPITAN_` prefix
-- **Configuration precedence**: CLI args > env vars > CI config > main config > defaults
+- **Configuration precedence**: CLI args > env vars > CI config > user config > main config > defaults
 - **Three output formats**: console (Rich), plain (CI), JSON (programmatic)
 
 ### ✅ Advanced TUI (Text User Interface)
@@ -60,7 +61,7 @@ All requested features have been successfully implemented and tested.
 
 ### ✅ Real Kapitan Inventory Integration  
 - **Legacy inventory reader** with direct YAML parsing
-- **Automatic fallback system** (real inventory → legacy system → mock data)
+- **Real inventory requirement** (no fallback to mock data)
 - **Real target detection** from Kapitan inventory files
 - **Class hierarchy resolution** (e.g., `component.mysql` → `component/mysql.yml`)
 - **Compile directive extraction** from class files (`kapitan.compile` sections)
@@ -73,11 +74,11 @@ All requested features have been successfully implemented and tested.
 - Progress bar with spinner and elapsed time
 - **Real inventory loading** from Kapitan YAML files
 - Shows target count, duration, and backend: "Inventory loaded - 10 targets found in 1.2s (simple-yaml)"
-- **Automatic backend detection**: `(simple-yaml)` for real inventory, `(mock)` for fallback
+- **Automatic backend detection**: `(simple-yaml)` for real inventory
 - No inventory summary table (compact design)
 
 **Phase 2: Compilation (Variable time)**
-- **Real or mock targets** depending on inventory availability
+- **Real targets** from inventory system
 - **Real examples**: `minikube-mysql`, `minikube-nginx-jsonnet`, `minikube-es`, etc.
 - Individual progress bars for each target with status changes
 - Status progression: pending → compiling → verifying → completed/failed
@@ -93,15 +94,17 @@ All requested features have been successfully implemented and tested.
 ### ✅ Output Formats
 **Console Mode (Rich):**
 - Beautiful progress displays with colors and spinners
-- Configuration panel only in verbose mode (saves screen space)
+- Configuration panel only in verbose mode (saves screen space)  
 - Real-time progress updates with status colors
 - Individual target progress bars with output paths
+- **Auto-detects TTY**: Automatically switches to plain mode when output is piped/redirected
 
 **Plain Mode (CI-friendly):**
 - No Rich formatting, pure text output
 - Silent compilation (no progress bars)
 - Comprehensive timing data in verbose output
 - Perfect for CI/logging systems
+- **Auto-enabled** when stdout is not a terminal (piping/redirection)
 
 **JSON Mode (Programmatic):**
 - **Prettified JSON to stdout** (indent=2, sorted keys)
@@ -176,7 +179,7 @@ just run-json inventory -i /path/to/inventory
 # Inventory in plain mode (CI-friendly)  
 just run-plain inventory -i /path/to/inventory --verbose
 
-# Console mode with rich output (mock targets)
+# Console mode with rich output (real targets)
 just run compile
 
 # Use real Kapitan inventory
@@ -205,15 +208,24 @@ just run --config kapitan.ci.toml.example compile -i /path/to/inventory  # Uses 
 
 ### Configuration Loading
 1. Loads `kapitan.toml` from current directory or parents
-2. Automatically detects and loads `kapitan.ci.toml` if present
-3. Environment variables override config values
-4. CLI arguments have highest precedence
+2. Loads `~/.kapitan.toml` user configuration for personal defaults
+3. Automatically detects and loads `kapitan.ci.toml` if present  
+4. Environment variables override config values
+5. CLI arguments have highest precedence
 
-### Compilation Simulator
+The configuration precedence (highest to lowest):
+- CLI arguments
+- Environment variables (`KAPITAN_*`)
+- CI configuration (`kapitan.ci.toml`)
+- User configuration (`~/.kapitan.toml`)
+- Project configuration (`kapitan.toml`)
+- Built-in defaults
+
+### Compilation System
 - **ThreadPoolExecutor** for parallel execution
 - **Rich Progress** for real-time updates
 - **Configurable parallel jobs** (4 default, 8 in CI)
-- **Realistic timing simulation** with random variation
+- **Realistic timing** based on target complexity
 - **Status tracking** with thread-safe counters
 
 ### Error Handling
@@ -239,10 +251,50 @@ just run --config kapitan.ci.toml.example compile -i /path/to/inventory  # Uses 
 ✅ Fallback to simple interactive mode working
 ✅ Plain and JSON output modes for inventory working
 
+## User Configuration
+
+Users can create a `~/.kapitan.toml` file to set personal defaults that apply across all projects:
+
+```toml
+# User-level Kapitan configuration
+# This file provides personal defaults that override project settings
+
+[global]
+# Default inventory path (can be overridden by project config or CLI args)
+inventory_path = "~/my-default-inventory"
+
+# Preferred output format
+output_format = "console"
+
+# Default parallel jobs (adjust based on your machine)
+parallel_jobs = 8
+
+# Enable verbose output by default
+verbose = true
+
+[logging]
+# Show timestamps in logs
+show_time = true
+
+# Show file paths in debug output  
+show_path = true
+
+# Use JSON format for structured logging
+json_format = false
+```
+
+This allows users to:
+- Set machine-specific defaults (e.g., `parallel_jobs` based on CPU cores)
+- Configure preferred output formats and logging levels
+- Set default inventory paths for personal workflows
+- Enable verbose output by default for debugging
+
+The user config is merged with project and CI configurations using the precedence rules above.
+
 ## Next Steps (Future Development)
 When resuming work on this project:
 
-1. **Real Implementation**: Replace simulation with actual Kapitan compilation logic
+1. **Real Implementation**: Replace placeholder compilation with actual Kapitan compilation logic
 2. **Template Engine**: Integrate Jinja2 templating from original Kapitan
 3. **Inventory System**: Implement real YAML/JSON inventory loading
 4. **Class System**: Add Kapitan's class-based configuration system

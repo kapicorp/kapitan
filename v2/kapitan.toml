@@ -3,7 +3,7 @@
 
 [global]
 # Default paths
-inventory_path = "inventory"  # Path to inventory directory
+inventory_path = "../../platform/grid/inventory/"  # Path to inventory directory
 output_path = "compiled"      # Path to compiled output directory
 cache_dir = "~/.kapitan/cache"  # Cache directory (optional, defaults to ~/.kapitan/cache)
 

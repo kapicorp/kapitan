@@ -5,7 +5,7 @@ from typing import Any
 
 class KapitanError(Exception):
     """Base exception class for Kapitan."""
-    
+
     def __init__(self, message: str, *args: Any) -> None:
         super().__init__(message, *args)
         self.message = message

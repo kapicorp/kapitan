@@ -3,7 +3,7 @@
 import pytest
 from typer.testing import CliRunner
 
-from kapitan.cli.main import app
+from skipper.cli.main import app
 
 
 @pytest.fixture
