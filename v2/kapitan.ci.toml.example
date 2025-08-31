@@ -1,0 +1,21 @@
+# Kapitan CI Configuration Override
+# This file overrides settings from kapitan.toml for CI environments
+
+[global]
+# CI-specific settings
+output_format = "plain"  # Use plain text output for CI/logging systems
+verbose = true           # Enable verbose output for better CI debugging
+parallel_jobs = 8        # Increase parallel jobs for faster CI builds
+
+[logging]
+# CI logging configuration
+level = "INFO"           # Keep INFO level but could be DEBUG for troubleshooting
+show_time = true         # Show timestamps in CI logs
+show_path = true         # Show file paths for debugging
+json_format = false      # Use plain text logging (not JSON) for better CI readability
+
+# Example usage in CI:
+# This file is automatically detected and loaded after kapitan.toml
+# Environment variables can still override these settings:
+# KAPITAN_LOGGING__LEVEL=DEBUG
+# KAPITAN_GLOBAL__PARALLEL_JOBS=16

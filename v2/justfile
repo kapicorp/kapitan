@@ -1,0 +1,157 @@
+# Kapitan v2 Development Commands
+# Run with: just <command>
+
+# Set environment variables
+export PYTHONPATH := justfile_directory() + "/src"
+
+# Default recipe - show available commands
+default:
+    @just --list
+
+# Development setup
+setup:
+    @echo "Setting up Kapitan v2 development environment..."
+    uv sync
+    uv sync --group dev
+    uv run pre-commit install
+    @echo "✅ Setup complete!"
+
+# Install dependencies
+install:
+    uv sync
+
+# Install development dependencies
+install-dev:
+    uv sync --group dev
+
+# Run the CLI with proper Python path
+run *ARGS:
+    uv run python -m skipper.cli.main {{ARGS}}
+
+# Run in console mode (rich output)
+run-console *ARGS:
+    @mv kapitan.ci.toml kapitan.ci.toml.bak 2>/dev/null || true
+    uv run python -m skipper.cli.main {{ARGS}}
+    @mv kapitan.ci.toml.bak kapitan.ci.toml 2>/dev/null || true
+
+# Run in plain mode (CI-style output)  
+run-plain *ARGS:
+    @test -f kapitan.ci.toml || (echo "[global]" > kapitan.ci.toml && echo "output_format = \"plain\"" >> kapitan.ci.toml && echo "verbose = true" >> kapitan.ci.toml)
+    uv run python -m skipper.cli.main {{ARGS}}
+
+# Run in JSON mode
+run-json *ARGS:
+    uv run python -m skipper.cli.main --json {{ARGS}}
+
+# Run tests
+test:
+    uv run pytest
+
+# Run tests with coverage
+test-cov:
+    uv run pytest --cov
+
+# Run tests in verbose mode
+test-verbose:
+    uv run pytest -v
+
+# Lint code
+lint:
+    uv run ruff check .
+
+# Format code
+format:
+    uv run ruff format .
+
+# Fix linting issues
+fix:
+    uv run ruff check . --fix
+
+# Type checking
+typecheck:
+    uv run mypy src/
+
+# Run all checks (lint, format, typecheck, test)
+check: lint format typecheck test
+
+# Clean build artifacts
+clean:
+    rm -rf build/
+    rm -rf dist/
+    rm -rf *.egg-info/
+    find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+    find . -name "*.pyc" -delete
+
+# Build the package
+build:
+    uv build
+
+# Install the package in development mode
+install-local:
+    uv pip install -e .
+
+# Run pre-commit hooks
+pre-commit:
+    uv run pre-commit run --all-files
+
+# Update dependencies
+update:
+    uv lock --upgrade
+
+# Show project info
+info:
+    @echo "Kapitan v2 Development Environment"
+    @echo "=================================="
+    @echo "Python: $(uv run python --version)"
+    @echo "UV: $(uv --version)"
+    @echo "Project: $(basename $(pwd))"
+    @echo ""
+    @echo "Configuration files:"
+    @test -f kapitan.toml && echo "✅ kapitan.toml" || echo "❌ kapitan.toml"
+    @test -f kapitan.ci.toml && echo "✅ kapitan.ci.toml" || echo "❌ kapitan.ci.toml"
+    @echo ""
+    @echo "Available commands:"
+    @just --list
+
+# Development server / watch mode (for future use)
+dev:
+    @echo "Development mode - watching for changes..."
+    @echo "Use 'just run <command>' to test CLI commands"
+
+# Examples of CLI usage
+examples:
+    @echo "Kapitan v2 CLI Examples:"
+    @echo "======================="
+    @echo ""
+    @echo "Basic commands:"
+    @echo "  just run --help                    # Show help"
+    @echo "  just run compile                   # Compile with current config"
+    @echo "  just run inventory                 # Show inventory"
+    @echo "  just run init                      # Initialize project"
+    @echo ""
+    @echo "Different output formats:"
+    @echo "  just run-console compile           # Rich terminal output"
+    @echo "  just run-plain compile             # Plain text output"
+    @echo "  just run-json compile              # JSON output"
+    @echo ""
+    @echo "With options:"
+    @echo "  just run --verbose compile         # Verbose output"
+    @echo "  just run compile -t webapp,db      # Specific targets"
+    @echo "  just run --config myconfig.toml compile"
+    @echo ""
+    @echo "Configuration:"
+    @echo "  just run --config kapitan.toml compile    # Use main config"
+    @echo "  just run inventory --verbose              # Verbose inventory"
+
+# Quick test of all output formats
+test-outputs:
+    @echo "Testing all output formats..."
+    @echo ""
+    @echo "=== Console Mode ==="
+    @just run-console compile
+    @echo ""
+    @echo "=== Plain Mode ==="  
+    @just run-plain compile
+    @echo ""
+    @echo "=== JSON Mode ==="
+    @just run-json compile
