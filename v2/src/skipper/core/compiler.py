@@ -1,4 +1,13 @@
-"""Kapitan v2 compilation system."""
+"""Multi-phase compilation system with real-time progress tracking.
+
+Implements a three-phase compilation process:
+1. Inventory reading - Load and parse target definitions
+2. Target compilation - Parallel processing of targets
+3. Finalization - Output writing and cleanup
+
+Features parallel execution, real-time progress display, and comprehensive
+result tracking with timing metrics.
+"""
 
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -29,9 +38,34 @@ from .models import (
 
 
 class KapitanCompiler:
-    """Handles parallel compilation processes with real inventory data."""
+    """Multi-phase compiler with parallel execution and progress tracking.
+    
+    Manages the complete compilation workflow from inventory loading through
+    target compilation to output finalization. Supports both interactive
+    progress display and silent operation for CI environments.
+    
+    Attributes:
+        console: Rich console for output formatting.
+        parallel_jobs: Number of concurrent compilation jobs.
+        silent: Whether to suppress progress display.
+        output_path: Directory for compilation output.
+        inventory_path: Path to inventory directory.
+        targets: List of targets being compiled.
+        completed_count: Number of successfully compiled targets.
+        failed_count: Number of failed targets.
+        phase_timings: Timing data for each compilation phase.
+    """
 
     def __init__(self, console: Console, parallel_jobs: int = 4, silent: bool = False, output_path: str = "compiled", inventory_path: str = "inventory"):
+        """Initialize compiler with configuration and dependencies.
+        
+        Args:
+            console: Rich console for output formatting.
+            parallel_jobs: Number of concurrent compilation jobs.
+            silent: Whether to suppress progress display.
+            output_path: Directory where compilation output will be written.
+            inventory_path: Path to inventory directory to load from.
+        """
         self.console = console
         self.parallel_jobs = parallel_jobs
         self.silent = silent
@@ -44,7 +78,18 @@ class KapitanCompiler:
 
 
     def read_inventory(self, targets: list[str] | None = None) -> InventoryResult:
-        """Read inventory using legacy Kapitan system."""
+        """Load inventory from storage using legacy Kapitan reader.
+        
+        Args:
+            targets: Optional list of specific targets to load.
+            
+        Returns:
+            InventoryResult with loaded targets and metadata.
+            
+        Raises:
+            FileNotFoundError: If inventory directory doesn't exist.
+            RuntimeError: If inventory loading fails.
+        """
         start_time = time.perf_counter()
 
         # Initialize legacy inventory reader
@@ -106,7 +151,14 @@ class KapitanCompiler:
         )
 
     def _convert_legacy_targets(self, legacy_targets: list[TargetInfo]):
-        """Convert legacy target format to compilation targets."""
+        """Convert legacy target info to compilation targets with timing estimates.
+        
+        Analyzes target characteristics to estimate compilation time and
+        creates CompilationTarget instances for progress tracking.
+        
+        Args:
+            legacy_targets: List of target information from legacy reader.
+        """
         self.targets = []
         for target_info in legacy_targets:
             # Create compilation target with realistic timing based on target complexity
@@ -132,7 +184,16 @@ class KapitanCompiler:
 
 
     def compile_target(self, target: CompilationTarget, progress: Progress | None, task_id: TaskID | None) -> None:
-        """Compile a single target."""
+        """Compile a single target with status tracking and progress updates.
+        
+        Simulates the compilation process with realistic timing and status
+        transitions. Updates progress display if provided.
+        
+        Args:
+            target: Target to compile.
+            progress: Optional progress display to update.
+            task_id: Task ID for progress tracking.
+        """
         try:
             start_time = time.perf_counter()
 
@@ -178,7 +239,11 @@ class KapitanCompiler:
                 progress.update(task_id, completed=0)
 
     def create_progress_display(self) -> tuple[Progress, Live]:
-        """Create the progress display with individual target tracking."""
+        """Create Rich progress display with per-target tracking.
+        
+        Returns:
+            Tuple of (Progress, Live) for progress tracking and display.
+        """
         progress = Progress(
             TextColumn("[bold blue]{task.description}"),
             SpinnerColumn(),
@@ -202,7 +267,14 @@ class KapitanCompiler:
         return progress, live
 
     def create_combined_display(self, progress: Progress) -> Table:
-        """Create a combined display with progress and inline summary."""
+        """Create combined display showing progress bars and summary statistics.
+        
+        Args:
+            progress: Progress instance to include in display.
+            
+        Returns:
+            Rich Table with progress and summary information.
+        """
         total_targets = len(self.targets)
         in_progress = total_targets - self.completed_count - self.failed_count
 
@@ -220,7 +292,14 @@ class KapitanCompiler:
         return main_table
 
     def get_status_display(self, status: CompilationStatus) -> str:
-        """Get colored status display string."""
+        """Get color-formatted status string for display.
+        
+        Args:
+            status: Compilation status to format.
+            
+        Returns:
+            Rich markup string with appropriate color formatting.
+        """
         status_colors = {
             CompilationStatus.PENDING: "[dim]pending[/dim]",
             CompilationStatus.COMPILING: "[yellow]compiling[/yellow]",
@@ -231,7 +310,14 @@ class KapitanCompiler:
         return status_colors.get(status, str(status))
 
     def finalize_compilation(self) -> FinalizationResult:
-        """Finalize compilation phase - write outputs and clean up."""
+        """Execute final compilation phase: output writing and cleanup.
+        
+        Performs post-compilation tasks like writing manifests, generating
+        documentation, and cleaning up temporary files.
+        
+        Returns:
+            FinalizationResult with success status and timing.
+        """
         start_time = time.perf_counter()
 
         try:
@@ -276,7 +362,17 @@ class KapitanCompiler:
             )
 
     def run_compilation(self, targets: list[str] | None = None) -> CompilationResult:
-        """Run the complete compilation process with all phases."""
+        """Execute complete three-phase compilation process.
+        
+        Orchestrates inventory loading, parallel target compilation, and
+        finalization with comprehensive result tracking and timing.
+        
+        Args:
+            targets: Optional list of specific targets to compile.
+            
+        Returns:
+            CompilationResult with complete metrics and status.
+        """
         overall_start_time = time.perf_counter()
 
         # Phase 1: Read inventory

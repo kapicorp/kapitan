@@ -1,4 +1,10 @@
-"""Base output formatter interface."""
+"""Abstract base class for output formatting implementations.
+
+Defines the interface that all output formatters must implement
+for consistent display across console, plain text, and JSON formats.
+Each formatter handles the presentation of compilation results,
+inventory data, and error messages in its specific format.
+"""
 
 from abc import ABC, abstractmethod
 from typing import Any
@@ -10,9 +16,24 @@ from ..models import CLIResult, CompilationResult, InventoryResult
 
 
 class OutputFormatter(ABC):
-    """Base class for output formatters."""
+    """Abstract interface for output formatting implementations.
+    
+    Defines the contract for displaying compilation results, inventory data,
+    and error messages across different output formats. Implementations
+    handle format-specific presentation logic.
+    
+    Attributes:
+        config: Application configuration for formatting preferences.
+        console: Rich console instance for output (may be null for some formats).
+    """
 
     def __init__(self, config: KapitanConfig, console: Console | None = None):
+        """Initialize formatter with configuration and console.
+        
+        Args:
+            config: Application configuration.
+            console: Rich console instance, creates default if None.
+        """
         self.config = config
         self.console = console or Console()
 

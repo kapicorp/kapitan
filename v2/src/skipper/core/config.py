@@ -1,4 +1,12 @@
-"""Configuration management for Kapitan."""
+"""Configuration management system for Skipper.
+
+Provides comprehensive configuration loading with multiple sources and precedence:
+- Project configuration (skipper.toml)
+- User configuration (~/.kapitan.toml) 
+- CI overrides (skipper.ci.toml)
+- Environment variables (KAPITAN_*)
+- CLI argument overrides
+"""
 
 import os
 import tomllib
@@ -10,7 +18,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class LogLevel(str, Enum):
-    """Logging levels."""
+    """Available logging levels for application output."""
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -19,14 +27,27 @@ class LogLevel(str, Enum):
 
 
 class OutputFormat(str, Enum):
-    """Output formats."""
+    """Available output formats for CLI commands.
+    
+    Attributes:
+        CONSOLE: Rich terminal output with colors and formatting.
+        PLAIN: Plain text output suitable for CI and piping.
+        JSON: Structured JSON output for programmatic consumption.
+    """
     CONSOLE = "console"  # Rich terminal output with colors and formatting
     PLAIN = "plain"      # Plain text output for CI/pipes
     JSON = "json"        # JSON output for programmatic use
 
 
 class LoggingConfig(BaseModel):
-    """Logging configuration."""
+    """Configuration for application logging behavior.
+    
+    Attributes:
+        level: Minimum log level to output.
+        show_time: Whether to include timestamps in log output.
+        show_path: Whether to include file paths in log output.
+        json_format: Whether to use JSON formatting for logs.
+    """
     level: LogLevel = LogLevel.INFO
     show_time: bool = True
     show_path: bool = False
@@ -37,7 +58,16 @@ class LoggingConfig(BaseModel):
 
 
 class GlobalConfig(BaseModel):
-    """Global configuration."""
+    """Global application configuration settings.
+    
+    Attributes:
+        inventory_path: Default path to inventory directory.
+        output_path: Default path for compilation output.
+        cache_dir: Directory for caching compilation artifacts.
+        parallel_jobs: Number of parallel compilation jobs.
+        output_format: Default output format for commands.
+        verbose: Whether to enable verbose output by default.
+    """
     inventory_path: str = Field(default="inventory", description="Default inventory directory path")
     output_path: str = Field(default="compiled", description="Default output directory path")
     cache_dir: str | None = Field(default=None, description="Cache directory path")
@@ -48,7 +78,14 @@ class GlobalConfig(BaseModel):
     @field_validator('inventory_path', 'output_path', 'cache_dir')
     @classmethod
     def expand_path(cls, v: str | None) -> str | None:
-        """Expand user home directory (~) and environment variables in paths."""
+        """Expand user home directory and environment variables in path strings.
+        
+        Args:
+            v: Path string that may contain ~ or environment variables.
+            
+        Returns:
+            Expanded path string with ~ and variables resolved, or None.
+        """
         if v is None:
             return None
         # Expand ~ to user home directory and environment variables
@@ -60,7 +97,16 @@ class GlobalConfig(BaseModel):
 
 
 class KapitanConfig(BaseSettings):
-    """Main Kapitan configuration."""
+    """Main configuration class with multi-source loading and environment integration.
+    
+    Supports loading from multiple configuration sources with proper precedence:
+    1. CLI arguments (highest)
+    2. Environment variables (KAPITAN_*)
+    3. CI configuration (skipper.ci.toml)
+    4. User configuration (~/.kapitan.toml)
+    5. Project configuration (skipper.toml)
+    6. Built-in defaults (lowest)
+    """
     model_config = SettingsConfigDict(
         env_prefix="KAPITAN_",
         env_nested_delimiter="__",
@@ -73,7 +119,21 @@ class KapitanConfig(BaseSettings):
 
     @classmethod
     def load_from_file(cls, config_path: Path | None = None) -> "KapitanConfig":
-        """Load configuration from TOML file and environment variables."""
+        """Load configuration from multiple sources with proper precedence.
+        
+        Loads configuration from TOML files and environment variables,
+        applying proper precedence rules. Automatically discovers configuration
+        files if not explicitly provided.
+        
+        Args:
+            config_path: Explicit path to configuration file, or None for auto-discovery.
+            
+        Returns:
+            Fully configured KapitanConfig instance.
+            
+        Raises:
+            ValueError: If configuration files cannot be loaded or parsed.
+        """
         config_data = {}
 
         # Determine config file path
@@ -150,7 +210,15 @@ class KapitanConfig(BaseSettings):
 
     @staticmethod
     def _deep_merge_config(base: dict, override: dict) -> dict:
-        """Deep merge override configuration into base configuration."""
+        """Recursively merge override dictionary into base dictionary.
+        
+        Args:
+            base: Base configuration dictionary.
+            override: Override configuration dictionary.
+            
+        Returns:
+            Merged configuration dictionary.
+        """
         result = base.copy()
 
         for key, value in override.items():
@@ -162,7 +230,11 @@ class KapitanConfig(BaseSettings):
         return result
 
     def get_cache_dir(self) -> Path:
-        """Get cache directory path, creating if necessary."""
+        """Get cache directory path, creating directories as needed.
+        
+        Returns:
+            Path object for cache directory, guaranteed to exist.
+        """
         if self.global_.cache_dir:
             cache_dir = Path(self.global_.cache_dir)
         else:
@@ -172,11 +244,19 @@ class KapitanConfig(BaseSettings):
         return cache_dir
 
     def get_inventory_path(self) -> Path:
-        """Get inventory path as Path object."""
+        """Get configured inventory path as a Path object.
+        
+        Returns:
+            Path object for inventory directory.
+        """
         return Path(self.global_.inventory_path)
 
     def get_output_path(self) -> Path:
-        """Get output path as Path object."""
+        """Get configured output path as a Path object.
+        
+        Returns:
+            Path object for compilation output directory.
+        """
         return Path(self.global_.output_path)
 
 
@@ -185,7 +265,11 @@ _config: KapitanConfig | None = None
 
 
 def get_config() -> KapitanConfig:
-    """Get the global configuration instance."""
+    """Get the global configuration instance, loading if necessary.
+    
+    Returns:
+        Global KapitanConfig instance.
+    """
     global _config
     if _config is None:
         _config = KapitanConfig.load_from_file()
@@ -193,7 +277,14 @@ def get_config() -> KapitanConfig:
 
 
 def reload_config(config_path: Path | None = None) -> KapitanConfig:
-    """Reload configuration from file."""
+    """Force reload of configuration from file sources.
+    
+    Args:
+        config_path: Optional explicit configuration file path.
+        
+    Returns:
+        Newly loaded KapitanConfig instance.
+    """
     global _config
     _config = KapitanConfig.load_from_file(config_path)
     return _config

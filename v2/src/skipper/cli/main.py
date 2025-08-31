@@ -1,4 +1,11 @@
-"""Main CLI entry point for Kapitan."""
+"""Main CLI entry point for Skipper (Kapitan v2).
+
+This module provides the primary command-line interface for Skipper, featuring:
+- Multi-format output (console, plain, JSON)
+- Configuration management with precedence handling
+- Rich logging and error reporting
+- Auto-detection of TTY for appropriate output formatting
+"""
 
 import logging
 import sys
@@ -26,14 +33,28 @@ logger = logging.getLogger("kapitan")
 
 
 def version_callback(value: bool) -> None:
-    """Show version and exit."""
+    """Callback to display version information and exit.
+    
+    Args:
+        value: If True, displays version and exits the application.
+    """
     if value:
         typer.echo(f"Kapitan v{__version__}")
         raise typer.Exit()
 
 
 def configure_logging(config: KapitanConfig, verbose: bool | None = None, json_output: bool | None = None):
-    """Configure application logging."""
+    """Configure application logging with appropriate handlers and formatters.
+    
+    Sets up logging to use either Rich handlers for human-readable output or
+    JSON handlers for programmatic consumption. Automatically configures
+    log levels, output destinations, and formatting based on configuration.
+    
+    Args:
+        config: Application configuration containing logging preferences.
+        verbose: Override to enable debug-level logging.
+        json_output: Override to force JSON log formatting.
+    """
     # Determine log level
     log_level = LogLevel.DEBUG if verbose else config.logging.level
 
@@ -96,7 +117,20 @@ def main(
         help="Path to configuration file",
     ),
 ) -> None:
-    """Main CLI entry point."""
+    """Main CLI callback that handles global options and configuration.
+    
+    Processes global CLI options, loads configuration with proper precedence,
+    sets up logging, and auto-detects output format based on TTY status.
+    
+    Args:
+        _version: Triggers version display when True.
+        verbose: Enables debug-level logging.
+        json_output: Forces JSON output format.
+        _config_file: Path to custom configuration file (not yet implemented).
+        
+    Raises:
+        typer.Exit: On configuration loading errors or version display.
+    """
     # Load configuration
     try:
         # TODO: Implement custom config file loading

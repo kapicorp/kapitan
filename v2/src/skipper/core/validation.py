@@ -1,4 +1,9 @@
-"""Pydantic models and validators for common data validation patterns."""
+"""Data validation models and utilities using Pydantic.
+
+Provides validated models for common data validation patterns including
+path validation, directory checking, and inventory structure validation.
+Ensures data integrity throughout the application.
+"""
 
 from pathlib import Path
 
@@ -6,7 +11,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ValidatedPath(BaseModel):
-    """A Pydantic model for validating file system paths."""
+    """Pydantic model for validating file system path existence.
+    
+    Ensures that provided paths exist on the file system and resolves
+    them to absolute paths. Supports user home directory expansion.
+    
+    Attributes:
+        path: Validated file system path as string.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -15,7 +27,17 @@ class ValidatedPath(BaseModel):
     @field_validator('path')
     @classmethod
     def validate_path_exists(cls, v: str) -> str:
-        """Validate that the path exists."""
+        """Validate path existence and resolve to absolute path.
+        
+        Args:
+            v: Path string to validate.
+            
+        Returns:
+            Absolute path string.
+            
+        Raises:
+            ValueError: If path is empty or doesn't exist.
+        """
         if not v:
             raise ValueError("Path cannot be empty")
 
@@ -31,7 +53,14 @@ class ValidatedPath(BaseModel):
 
 
 class ValidatedDirectory(BaseModel):
-    """A Pydantic model for validating directories."""
+    """Pydantic model for validating directory paths and accessibility.
+    
+    Ensures that provided paths exist, are directories, and can be read.
+    Resolves paths to absolute form with user directory expansion.
+    
+    Attributes:
+        path: Validated directory path as string.
+    """
 
     model_config = ConfigDict(frozen=True)
 

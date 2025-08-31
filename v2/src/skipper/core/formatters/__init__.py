@@ -1,4 +1,9 @@
-"""Output formatters for different display modes."""
+"""Output formatting system supporting multiple display modes.
+
+Provides formatters for console (Rich), plain text (CI), and JSON (API) output.
+The formatter selection is based on configuration and automatically adapts
+to TTY detection for appropriate output in different environments.
+"""
 
 from rich.console import Console
 
@@ -10,7 +15,15 @@ from .plain import PlainFormatter
 
 
 def create_formatter(config: KapitanConfig, console: Console | None = None) -> OutputFormatter:
-    """Factory function to create the appropriate formatter."""
+    """Create appropriate output formatter based on configuration.
+    
+    Args:
+        config: Application configuration containing output format preference.
+        console: Optional Rich console instance.
+        
+    Returns:
+        OutputFormatter instance configured for the specified format.
+    """
     if config.global_.output_format == OutputFormat.JSON:
         return JSONFormatter(config, console)
     elif config.global_.output_format == OutputFormat.PLAIN:

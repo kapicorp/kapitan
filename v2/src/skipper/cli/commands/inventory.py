@@ -1,4 +1,9 @@
-"""Inventory browsing command."""
+"""Interactive inventory browsing command with advanced TUI.
+
+Provides both interactive TUI and non-interactive modes for exploring
+inventory structure, target definitions, and configuration data.
+Features split-screen layout, keyboard navigation, and JSONPath search.
+"""
 
 import logging
 
@@ -12,7 +17,12 @@ logger = logging.getLogger(__name__)
 
 
 class InventoryCommand(CommandBase):
-    """Handles inventory browsing functionality."""
+    """CLI command for interactive inventory browsing.
+    
+    Provides advanced TUI for exploring inventory with keyboard navigation,
+    split-screen layout, and search capabilities. Falls back to non-interactive
+    mode when appropriate.
+    """
 
     @common_error_handler(Exception, default_message="Failed to browse inventory")
     @log_execution("inventory_browsing", log_args=True)
@@ -23,7 +33,13 @@ class InventoryCommand(CommandBase):
         target: str | None = None,
         interactive: bool = True,
     ) -> None:
-        """Browse inventory targets interactively."""
+        """Launch inventory browser in interactive or non-interactive mode.
+        
+        Args:
+            inventory_path: Override inventory directory path.
+            target: Specific target to focus on in non-interactive mode.
+            interactive: Whether to use interactive TUI (default True).
+        """
         config = self.get_config()
 
         # Resolve inventory path

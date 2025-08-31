@@ -35,14 +35,23 @@ class TargetResolver:
             self.targets_dir = os.path.join(inventory_path, "targets")
 
     def resolve_targets(self, target_patterns: list[str]) -> list[str]:
-        """
-        Resolve target patterns to actual target names.
-
-        Supports:
+        """Resolve target patterns to concrete target names.
+        
+        Expands glob patterns, wildcards, and exact matches to actual
+        target names found in the inventory. Supports multiple pattern
+        types and validates target existence.
+        
+        Supported patterns:
         - Direct target names: webapp-frontend
         - Directory patterns: inventory/targets/infra/*
         - File patterns: inventory/targets/infra/*.yml
         - Relative paths: infra/apps, gcp/project
+        
+        Args:
+            target_patterns: List of patterns to resolve (globs, names, wildcards).
+            
+        Returns:
+            List of concrete target names that match the patterns.
         """
         if not target_patterns:
             return ["all"]

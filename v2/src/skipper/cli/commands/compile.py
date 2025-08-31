@@ -1,4 +1,9 @@
-"""Compile command."""
+"""Target compilation command implementation.
+
+Provides the main compilation workflow that orchestrates inventory loading,
+parallel target compilation, and output generation. Supports target filtering,
+custom paths, and multiple output formats.
+"""
 
 import logging
 
@@ -15,7 +20,12 @@ logger = logging.getLogger(__name__)
 
 
 class CompileCommand(CommandBase):
-    """Handles compilation functionality."""
+    """CLI command for compiling targets from inventory.
+    
+    Manages the complete compilation workflow including target resolution,
+    parallel processing, and result formatting. Integrates with the
+    KapitanCompiler for actual compilation work.
+    """
 
     @common_error_handler(KapitanError, reraise=False, exit_code=1)
     @common_error_handler(Exception, default_message="Compilation failed")
@@ -28,7 +38,17 @@ class CompileCommand(CommandBase):
         output_path: str | None = None,
         targets: list[str] | None = None,
     ) -> None:
-        """Compile configuration for targets."""
+        """Execute target compilation workflow with comprehensive error handling.
+        
+        Args:
+            target_patterns: Positional target patterns or names.
+            inventory_path: Override inventory directory path.
+            output_path: Override output directory path.
+            targets: Target names from --targets option.
+            
+        Raises:
+            typer.Exit: On compilation failure or configuration errors.
+        """
         config = self.get_config()
         formatter = self.create_formatter(config)
 

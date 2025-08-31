@@ -1,4 +1,11 @@
-"""Common decorators for error handling and other cross-cutting concerns."""
+"""Decorators for cross-cutting concerns like error handling and logging.
+
+Provides reusable decorators for:
+- Consistent error handling with formatter integration
+- Structured operation logging with context
+- Path validation for file operations  
+- Configuration requirement enforcement
+"""
 
 import functools
 import logging
@@ -19,20 +26,25 @@ def handle_errors(*exception_types: type[Exception],
                   reraise: bool = False,
                   default_message: str | None = None,
                   exit_code: int = 1) -> Callable[[Callable[..., T]], Callable[..., T]]:
-    """
-    Decorator to handle exceptions consistently across CLI commands.
-
+    """Decorator for consistent exception handling across CLI commands.
+    
+    Provides uniform error handling with formatter integration, logging,
+    and appropriate exit behavior. Supports multiple output formats.
+    
     Args:
-        exception_types: Exception types to handle
-        reraise: Whether to reraise the exception after handling
-        default_message: Default error message if none provided
-        exit_code: Exit code to use when exiting
-
-    Usage:
+        exception_types: Exception classes to catch and handle.
+        reraise: Whether to reraise exception after handling.
+        default_message: Fallback message if exception has no message.
+        exit_code: Exit code for application termination.
+        
+    Returns:
+        Decorator function that wraps the target function.
+        
+    Example:
         @handle_errors(FileNotFoundError, default_message="File not found")
         @handle_errors(KapitanError, reraise=True)
         def my_command():
-            # command logic
+            # command implementation
     """
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
@@ -86,18 +98,24 @@ def handle_errors(*exception_types: type[Exception],
 def log_execution(operation_name: str,
                   log_args: bool = False,
                   log_result: bool = False) -> Callable[[Callable[..., T]], Callable[..., T]]:
-    """
-    Decorator to log function execution with structured information.
-
+    """Decorator for structured logging of function execution.
+    
+    Provides consistent logging for operation start, completion, and failure
+    with optional argument and result logging. Includes timing information
+    and structured context for log analysis.
+    
     Args:
-        operation_name: Name of the operation for logging context
-        log_args: Whether to log function arguments
-        log_result: Whether to log function result
-
-    Usage:
+        operation_name: Human-readable operation name for log context.
+        log_args: Whether to include function arguments in logs.
+        log_result: Whether to include function result in logs.
+        
+    Returns:
+        Decorator function that adds logging to the target function.
+        
+    Example:
         @log_execution("target_resolution", log_args=True)
-        def resolve_targets(self, patterns: List[str]) -> List[str]:
-            # function logic
+        def resolve_targets(self, patterns: list[str]) -> list[str]:
+            # function implementation
     """
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
@@ -134,16 +152,24 @@ def log_execution(operation_name: str,
 
 
 def validate_paths(*path_args: str) -> Callable[[Callable[..., T]], Callable[..., T]]:
-    """
-    Decorator to validate that specified path arguments exist.
-
+    """Decorator to validate existence of specified path arguments.
+    
+    Checks that path arguments refer to existing files or directories
+    before function execution. Raises FileNotFoundError for missing paths.
+    
     Args:
-        path_args: Names of arguments that should be validated as paths
-
-    Usage:
+        path_args: Parameter names that should be validated as existing paths.
+        
+    Returns:
+        Decorator function that validates paths before execution.
+        
+    Raises:
+        FileNotFoundError: If any specified path does not exist.
+        
+    Example:
         @validate_paths("inventory_path", "output_path")
         def my_command(inventory_path: str, output_path: str):
-            # command logic
+            # command implementation
     """
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
@@ -169,14 +195,26 @@ def validate_paths(*path_args: str) -> Callable[[Callable[..., T]], Callable[...
     return decorator
 
 
-def require_config[T](func: Callable[..., T]) -> Callable[..., T]:
-    """
-    Decorator to ensure configuration is loaded before command execution.
-
-    Usage:
+def require_config(func: Callable[..., T]) -> Callable[..., T]:
+    """Decorator to ensure configuration is loaded before command execution.
+    
+    Validates that application configuration can be loaded successfully
+    before allowing command execution to proceed. Provides early failure
+    for configuration issues.
+    
+    Args:
+        func: Function to wrap with configuration requirement.
+        
+    Returns:
+        Wrapped function that validates configuration availability.
+        
+    Raises:
+        KapitanError: If configuration cannot be loaded.
+        
+    Example:
         @require_config
         def my_command():
-            # command logic - config is guaranteed to be available
+            # command logic - config guaranteed available
     """
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> T:

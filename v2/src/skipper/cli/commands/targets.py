@@ -1,4 +1,9 @@
-"""Targets listing command."""
+"""Command for listing and filtering available targets from inventory.
+
+Provides functionality to discover targets in inventory, apply pattern filtering,
+and display target information in various formats. Supports both complete
+target listings and filtered views based on patterns.
+"""
 
 import logging
 
@@ -13,7 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 class TargetsCommand(CommandBase):
-    """Handles targets listing functionality."""
+    """CLI command for listing targets from inventory.
+    
+    Provides target discovery and listing functionality with optional
+    filtering by patterns. Integrates with inventory readers to load
+    target information and formats output appropriately.
+    """
 
     @common_error_handler(Exception, default_message="Failed to list targets")
     @log_execution("targets_listing", log_args=True)
@@ -24,7 +34,16 @@ class TargetsCommand(CommandBase):
         inventory_path: str | None = None,
         verbose: bool = False,
     ) -> None:
-        """List available targets from inventory."""
+        """List targets from inventory with optional filtering and verbose output.
+        
+        Args:
+            target_patterns: Optional patterns to filter targets.
+            inventory_path: Override inventory directory path.
+            verbose: Enable verbose output with configuration details.
+            
+        Raises:
+            typer.Exit: On inventory loading failure.
+        """
         config = self.get_config()
         formatter = self.create_formatter(config)
 
