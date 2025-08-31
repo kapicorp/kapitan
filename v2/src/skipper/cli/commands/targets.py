@@ -4,9 +4,9 @@ import logging
 
 import typer
 
-from ...core.decorators import log_execution
-from ...core.inventory import get_inventory_reader
-from ...core.models import CLIResult
+from skipper.core.decorators import log_execution
+from skipper.core.inventory import get_inventory_reader
+from skipper.core.models import CLIResult
 from .base import CommandBase, command_with_config, common_error_handler
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ class TargetsCommand(CommandBase):
         # Filter targets if patterns were provided
         targets_to_show = inventory_result.targets
         if target_patterns:
-            from ...core.targets import TargetResolver
+            from skipper.core.targets import TargetResolver
             resolver = TargetResolver(inv_path)
             resolved_names = resolver.resolve_targets(target_patterns)
             targets_to_show = [t for t in inventory_result.targets if t.name in resolved_names]

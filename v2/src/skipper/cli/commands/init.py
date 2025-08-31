@@ -4,7 +4,7 @@ import logging
 
 import typer
 
-from ...core.decorators import log_execution
+from skipper.core.decorators import log_execution
 from .base import CommandBase, common_error_handler
 
 logger = logging.getLogger(__name__)

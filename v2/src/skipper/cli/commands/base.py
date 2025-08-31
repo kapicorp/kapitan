@@ -5,10 +5,10 @@ import logging
 import typer
 from rich.console import Console
 
-from ...core.config import KapitanConfig
-from ...core.container import get_container
-from ...core.decorators import handle_errors, require_config
-from ...core.formatters import OutputFormatter
+from skipper.core.config import KapitanConfig
+from skipper.core.container import get_container
+from skipper.core.decorators import handle_errors, require_config
+from skipper.core.formatters import OutputFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class CommandBase:
             return self._container.get('formatter')
         else:
             # Create custom formatter with provided config
-            from ...core.formatters import create_formatter
+            from skipper.core.formatters import create_formatter
             return create_formatter(config, self.get_console())
 
     @property

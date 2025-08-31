@@ -4,8 +4,8 @@ import logging
 
 import typer
 
-from ...core.decorators import log_execution
-from ...core.inventory_tui import show_interactive_inventory
+from skipper.core.decorators import log_execution
+from skipper.core.inventory_tui import show_interactive_inventory
 from .base import CommandBase, command_with_config, common_error_handler
 
 logger = logging.getLogger(__name__)

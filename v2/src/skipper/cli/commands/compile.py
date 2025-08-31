@@ -5,10 +5,10 @@ import logging
 import typer
 from rich.console import Console
 
-from ...core.compiler import KapitanCompiler
-from ...core.decorators import log_execution
-from ...core.exceptions import KapitanError
-from ...core.models import CLIResult
+from skipper.core.compiler import KapitanCompiler
+from skipper.core.decorators import log_execution
+from skipper.core.exceptions import KapitanError
+from skipper.core.models import CLIResult
 from .base import CommandBase, command_with_config, common_error_handler
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class CompileCommand(CommandBase):
         out_path = output_path or config.global_.output_path
 
         # Resolve targets from positional args or -t option
-        from ...core.targets import TargetResolver
+        from skipper.core.targets import TargetResolver
 
         resolver = TargetResolver(inv_path)
 
