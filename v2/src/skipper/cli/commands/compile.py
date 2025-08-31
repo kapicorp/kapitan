@@ -77,15 +77,12 @@ class CompileCommand(CommandBase):
         # Resolve patterns to actual target names
         target_list = resolver.resolve_targets(all_target_patterns)
 
-        logger.info("Starting compilation")
         logger.debug(f"Inventory path: {inv_path}")
         logger.debug(f"Output path: {out_path}")
         logger.debug(f"Targets: {', '.join(target_list)}")
         logger.debug(f"Parallel jobs: {config.global_.parallel_jobs}")
 
         # Create formatter and show compilation start info
-        if config.global_.verbose:
-            formatter.show_configuration()
         formatter.show_compilation_start(inv_path, out_path, target_list, config.global_.parallel_jobs)
 
         # Run compilation with appropriate mode based on formatter
@@ -107,7 +104,7 @@ class CompileCommand(CommandBase):
         formatter.finalize_output(result)
 
         if compilation_result.success:
-            logger.info("Compilation completed successfully")
+            logger.debug("Compilation completed successfully")
         else:
             logger.error(f"Compilation failed: {compilation_result.failed} targets failed")
             raise typer.Exit(1)

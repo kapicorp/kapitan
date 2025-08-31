@@ -38,12 +38,8 @@ class ConsoleFormatter(OutputFormatter):
     def show_compilation_start(self, inventory_path: str, output_path: str,
                              target_patterns: list[str], parallel_jobs: int) -> None:
         """Show compilation start with Rich formatting."""
-        targets_str = ", ".join(target_patterns) if target_patterns else "all"
-
-        self.console.print(f"[bold cyan]Compiling targets:[/bold cyan] {targets_str}")
-        self.console.print(f"[dim]Inventory path:[/dim] {inventory_path}")
-        self.console.print(f"[dim]Output path:[/dim] {output_path}")
-        self.console.print(f"[dim]Parallel jobs:[/dim] {parallel_jobs}")
+        # Start compilation without showing configuration details
+        pass
 
     def show_inventory_start(self) -> None:
         """Show inventory loading start."""
@@ -78,12 +74,12 @@ class ConsoleFormatter(OutputFormatter):
 
     def show_compilation_result(self, result: CompilationResult) -> None:
         """Show final compilation result."""
-        if result.success:
-            self.console.print(f"[green]Compilation completed:[/green] {result.completed}/{result.total} targets")
-            self.console.print("[green]Status: SUCCESS[/green]")
-        else:
-            self.console.print(f"[red]Compilation failed:[/red] {result.completed}/{result.total} targets completed, {result.failed} failed")
-            self.console.print("[red]Status: FAILED[/red]")
+        total_targets = result.total
+        in_progress = total_targets - result.completed - result.failed
+        
+        # Show the targets summary at the end
+        summary_text = f"[cyan]Targets:[/cyan] {total_targets} | [green]Completed:[/green] {result.completed} | [yellow]In Progress:[/yellow] {in_progress} | [red]Failed:[/red] {result.failed}"
+        self.console.print(summary_text)
 
     def show_targets_list(self, targets: list[str]) -> None:
         """Show list of targets."""

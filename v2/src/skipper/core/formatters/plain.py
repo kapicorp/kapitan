@@ -26,11 +26,8 @@ class PlainFormatter(OutputFormatter):
     def show_compilation_start(self, inventory_path: str, output_path: str,
                              target_patterns: list[str], parallel_jobs: int) -> None:
         """Show compilation start in plain text."""
-        targets_str = ", ".join(target_patterns) if target_patterns else "all"
-        print(f"Compiling targets: {targets_str}")
-        print(f"Inventory path: {inventory_path}")
-        print(f"Output path: {output_path}")
-        print(f"Parallel jobs: {parallel_jobs}")
+        # Start compilation without configuration details
+        pass
 
     def show_inventory_start(self) -> None:
         """Show inventory loading start."""
@@ -53,11 +50,12 @@ class PlainFormatter(OutputFormatter):
 
     def show_compilation_result(self, result: CompilationResult) -> None:
         """Show final compilation result."""
-        print(f"Compilation completed: {result.completed}/{result.total} targets")
-        if result.success:
-            print("Status: SUCCESS")
-        else:
-            print("Status: FAILED")
+        total_targets = result.total
+        in_progress = total_targets - result.completed - result.failed
+        
+        # Show the targets summary at the end  
+        summary_text = f"Targets: {total_targets} | Completed: {result.completed} | In Progress: {in_progress} | Failed: {result.failed}"
+        print(summary_text)
 
     def show_targets_list(self, targets: list[str]) -> None:
         """Show list of targets."""

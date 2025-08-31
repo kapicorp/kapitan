@@ -129,7 +129,7 @@ def log_execution(operation_name: str,
                 safe_kwargs = {k: str(v)[:100] for k, v in kwargs.items()}
                 context.update({"call_args": safe_args, "call_kwargs": safe_kwargs})
 
-            logger.info(f"Starting {operation_name}", extra=context)
+            logger.debug(f"Starting {operation_name}", extra=context)
 
             try:
                 result = func(*args, **kwargs)
@@ -139,7 +139,7 @@ def log_execution(operation_name: str,
                     result_str = str(result)[:200] if result else "None"
                     context["result"] = result_str
 
-                logger.info(f"Completed {operation_name}", extra=context)
+                logger.debug(f"Completed {operation_name}", extra=context)
                 return result
 
             except Exception as e:

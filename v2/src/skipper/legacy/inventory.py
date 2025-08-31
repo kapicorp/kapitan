@@ -72,7 +72,7 @@ class LegacyInventoryReader(InventoryReader):
         try:
             result = self.simple_reader.read_targets(target_filter)
             if result.success and result.targets_found > 0:
-                logger.info(f"Successfully loaded {result.targets_found} targets using simple YAML reader")
+                logger.debug(f"Successfully loaded {result.targets_found} targets using simple YAML reader")
                 return result
         except Exception as e:
             logger.debug(f"Simple reader failed: {e}")
@@ -81,13 +81,13 @@ class LegacyInventoryReader(InventoryReader):
         try:
             legacy_inv = self._get_legacy_inventory()
             if legacy_inv:
-                logger.info("Trying legacy Kapitan inventory system with OmegaConf support")
+                logger.debug("Trying legacy Kapitan inventory system with OmegaConf support")
                 # Use the legacy inventory to render all targets
                 # Handle 'all' filter by passing None (legacy Kapitan doesn't understand 'all')
                 actual_filter = None if target_filter == ['all'] else target_filter
-                logger.info(f"Requesting targets with filter: {actual_filter}")
+                logger.debug(f"Requesting targets with filter: {actual_filter}")
                 all_targets = legacy_inv.get_targets(actual_filter)
-                logger.info(f"Legacy inventory returned {len(all_targets) if all_targets else 0} targets")
+                logger.debug(f"Legacy inventory returned {len(all_targets) if all_targets else 0} targets")
 
                 targets = []
                 for target_name, target_obj in all_targets.items():
@@ -96,7 +96,7 @@ class LegacyInventoryReader(InventoryReader):
                     targets.append(target_info)
 
                 duration = time.perf_counter() - start_time
-                logger.info(f"Successfully loaded {len(targets)} targets using OmegaConf inventory")
+                logger.debug(f"Successfully loaded {len(targets)} targets using OmegaConf inventory")
                 return InventoryResult(
                     success=True,
                     targets=targets,

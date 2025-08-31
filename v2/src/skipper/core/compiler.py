@@ -257,39 +257,25 @@ class KapitanCompiler:
             console=self.console,
         )
 
-        # Create a live display that combines progress and summary
+        # Create a live display for progress only
         live = Live(
-            self.create_combined_display(progress),
+            progress,
             console=self.console,
             refresh_per_second=4
         )
 
         return progress, live
 
-    def create_combined_display(self, progress: Progress) -> Table:
-        """Create combined display showing progress bars and summary statistics.
+    def create_combined_display(self, progress: Progress) -> Progress:
+        """Create display showing just progress bars without summary.
         
         Args:
-            progress: Progress instance to include in display.
+            progress: Progress instance to display.
             
         Returns:
-            Rich Table with progress and summary information.
+            Progress instance for display.
         """
-        total_targets = len(self.targets)
-        in_progress = total_targets - self.completed_count - self.failed_count
-
-        # Create inline summary string
-        summary_text = f"[cyan]Targets:[/cyan] {total_targets} | [green]Completed:[/green] {self.completed_count} | [yellow]In Progress:[/yellow] {in_progress} | [red]Failed:[/red] {self.failed_count} | [blue]Jobs:[/blue] {self.parallel_jobs}"
-
-        # Main table container
-        main_table = Table.grid()
-        main_table.add_column()
-
-        main_table.add_row(summary_text)
-        main_table.add_row("")
-        main_table.add_row(progress)
-
-        return main_table
+        return progress
 
     def get_status_display(self, status: CompilationStatus) -> str:
         """Get color-formatted status string for display.
@@ -321,26 +307,9 @@ class KapitanCompiler:
         start_time = time.perf_counter()
 
         try:
-            if not self.silent:
-                from rich.progress import Progress, SpinnerColumn, TextColumn
-
-                with Progress(
-                    SpinnerColumn(),
-                    TextColumn("[progress.description]{task.description}"),
-                    console=self.console,
-                ) as progress:
-                    task = progress.add_task("Finalizing compilation...", total=None)
-
-                    # TODO: Replace with actual finalization tasks
-                    steps = ["Writing manifests", "Generating docs", "Creating archive", "Cleaning up"]
-                    for _i, step in enumerate(steps):
-                        progress.update(task, description=f"[yellow]{step}...[/yellow]")
-                        # TODO: Replace sleep with actual work
-
-                    progress.update(task, description="[green]Compilation finalized[/green]")
-            else:
-                # Silent mode - TODO: Replace with actual finalization work
-                pass
+            # Finalization work without progress display
+            # TODO: Replace with actual finalization tasks
+            pass
 
             duration = time.perf_counter() - start_time
 
@@ -449,9 +418,9 @@ class KapitanCompiler:
                                     status=self.get_status_display(target.status)
                                 )
 
-                        # Update the combined display
+                        # Update the progress display
                         if live:
-                            live.update(self.create_combined_display(progress))
+                            live.update(progress)
 
                     # Final update
                     for i, target in enumerate(self.targets):
@@ -461,7 +430,7 @@ class KapitanCompiler:
                                 status=self.get_status_display(target.status)
                             )
                     if live:
-                        live.update(self.create_combined_display(progress))
+                        live.update(progress)
                 else:
                     # Silent mode - just wait for completion
                     while any(not future.done() for future, _ in futures):
@@ -471,7 +440,7 @@ class KapitanCompiler:
             with context_manager:
                 # Update the display to show initial state
                 if live:
-                    live.update(self.create_combined_display(progress))
+                    live.update(progress)
                 run_compilation()
         else:
             run_compilation()
