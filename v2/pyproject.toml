@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "kapitan"
+name = "skipper"
 dynamic = ["version"]
 description = "Generic templated configuration management for Kubernetes, Terraform and other things"
 readme = "README.md"
@@ -51,10 +51,11 @@ dependencies = [
     "filetype>=1.2.0",
     "toml>=0.10.2",
     "six>=1.17.0",
-    "cachetools>=6.1.0",
+    "cachetools>=5.5.0,<6.0.0",
     "kadet>=0.3.2",
     "kapicorp-reclass>=2.0.0",
     "regex>=2025.7.34",
+    "kapitan @ file:///home/coder/kapitan",
 ]
 
 [project.optional-dependencies]
@@ -68,6 +69,9 @@ dev = [
     "black>=24.0.0",
     "isort>=5.13.0",
     "coverage[toml]>=7.6.0",
+]
+legacy = [
+    "kapitan @ file:///home/coder/kapitan",
 ]
 test = [
     "pytest>=8.0.0",
@@ -95,6 +99,9 @@ Changelog = "https://github.com/kapicorp/kapitan/blob/master/CHANGELOG.md"
 
 [tool.hatch.version]
 path = "src/skipper/__init__.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/skipper"]

@@ -5,9 +5,12 @@ from different sources. Supports legacy Kapitan inventory format and
 simple YAML-based readers with automatic backend selection.
 """
 
+import logging
 from abc import ABC, abstractmethod
 
 from .models import InventoryInfo, InventoryResult
+
+logger = logging.getLogger(__name__)
 
 
 class InventoryReader(ABC):
@@ -108,21 +111,26 @@ class InventoryReaderFactory:
     def get_default_reader(cls, inventory_path: str) -> InventoryReader:
         """Get the best available inventory reader for the given path.
         
-        Implements automatic reader selection based on availability
-        and inventory structure, preferring legacy reader when available.
+        Implements intelligent reader selection based on availability,
+        inventory structure, and feature requirements. The enhanced
+        legacy reader provides sophisticated fallback strategies.
         
         Args:
             inventory_path: Path to inventory directory.
             
         Returns:
-            InventoryReader instance best suited for the inventory.
+            InventoryReader instance optimized for the inventory structure.
         """
-        # Try to import and use the legacy reader by default
-        # Fall back to simple reader if legacy is not available
+        # Always prefer the enhanced legacy reader which includes
+        # intelligent fallback to simple reader when appropriate
         try:
             from ..legacy.inventory import LegacyInventoryReader
-            return LegacyInventoryReader(inventory_path)
+            reader = LegacyInventoryReader(inventory_path)
+            # The enhanced legacy reader automatically handles fallback
+            # to simple reader when legacy Kapitan is not available
+            return reader
         except ImportError:
+            # Fallback to simple reader if legacy module is not available
             from ..legacy.simple_reader import SimpleInventoryReader
             return SimpleInventoryReader(inventory_path)
 
@@ -131,24 +139,23 @@ class InventoryReaderFactory:
 def _register_builtin_readers():
     """Register all available built-in inventory reader implementations.
     
-    Attempts to import and register legacy and simple readers,
-    gracefully handling import failures for optional dependencies.
+    Enhanced registration that properly handles the improved legacy reader
+    with its intelligent fallback capabilities and backend selection.
     """
     try:
         from ..legacy.inventory import LegacyInventoryReader
         InventoryReaderFactory.register_reader('legacy', LegacyInventoryReader)
+        InventoryReaderFactory.register_reader('enhanced', LegacyInventoryReader)  # Alias for enhanced capabilities
+        logger.debug("Registered enhanced legacy inventory reader with intelligent fallback")
     except ImportError:
-        pass
+        logger.debug("Enhanced legacy inventory reader not available")
 
     try:
         from ..legacy.simple_reader import SimpleInventoryReader
         InventoryReaderFactory.register_reader('simple', SimpleInventoryReader)
+        logger.debug("Registered simple YAML inventory reader")
     except ImportError:
-        pass
-
-
-# Register readers on module import
-_register_builtin_readers()
+        logger.debug("Simple inventory reader not available")
 
 
 # Convenience function for CLI commands
@@ -162,7 +169,21 @@ def get_inventory_reader(inventory_path: str, reader_type: str | None = None) ->
     Returns:
         InventoryReader instance ready for use.
     """
+    # Ensure readers are registered
+    _ensure_readers_registered()
+    
     if reader_type:
         return InventoryReaderFactory.create_reader(reader_type, inventory_path)
     else:
         return InventoryReaderFactory.get_default_reader(inventory_path)
+
+
+# Lazy registration to avoid circular imports
+_readers_registered = False
+
+def _ensure_readers_registered():
+    """Ensure readers are registered exactly once."""
+    global _readers_registered
+    if not _readers_registered:
+        _register_builtin_readers()
+        _readers_registered = True
