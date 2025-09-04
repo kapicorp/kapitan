@@ -35,7 +35,7 @@ jobs:
     if: success() || failure()  # Continue running if other jobs fail
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
       - uses: pre-commit/action@v3.0.1
 
   test:
@@ -54,7 +54,7 @@ jobs:
       - name: Install poetry
         run: pipx install poetry
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           cache: 'poetry'
           python-version: ${{ matrix.python-version }}
