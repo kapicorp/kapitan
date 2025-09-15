@@ -115,7 +115,6 @@ jobs:
         with:
           push: False
           platforms: ${{ matrix.platform }}
-          python-builder-version: ${{ matrix.python-builder-version }}
           load: True
           file: Dockerfile
           tags: local-test-${{ matrix.platform }}
