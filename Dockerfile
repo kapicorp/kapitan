@@ -1,5 +1,6 @@
 # Build the virtualenv for Kapitan
-FROM python:3.11-slim AS python-builder
+ARG PYTHON_BUILDER_VERSION
+FROM python:${PYTHON_BUILDER_VERSION}-slim AS python-builder
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
 
@@ -48,7 +49,7 @@ FROM golang:1 AS go-builder
 RUN GOBIN=$(pwd)/ go install cuelang.org/go/cmd/cue@latest
 
 # Final image with virtualenv built in previous step
-FROM python:3.11-slim
+FROM python:${PYTHON_BUILDER_VERSION}-slim
 
 ENV PATH="/opt/venv/bin:${PATH}"
 ENV HELM_CACHE_HOME=".cache/helm"
