@@ -60,6 +60,8 @@ To build a docker image for the architecture of your machine, run `docker build 
 
 To build a multi-platform image (as the CI does), follow [the docker multi-platform documentation](https://docs.docker.com/build/building/multi-platform/).
 
+To build a docker image using a specific python version, run `docker build --build-arg PYTHON_BUILDER_VERSION=<python-version> . -t you-kapitan-image`. By default the Dockerfile is pinned using python 3.11 as the python builder version.
+
 ## Related projects
 
 * [Tesoro](https://github.com/kapicorp/tesoro) - Kubernetes Admission Controller for Kapitan Secrets
