@@ -1,5 +1,5 @@
 # Build the virtualenv for Kapitan
-ARG PYTHON_BUILDER_VERSION
+ARG PYTHON_BUILDER_VERSION=3.11
 FROM python:${PYTHON_BUILDER_VERSION}-slim AS python-builder
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
@@ -45,6 +45,7 @@ COPY ./kapitan ./kapitan
 
 RUN pip install .[gojsonnet,omegaconf,reclass-rs]
 
+ARG PYTHON_BUILDER_VERSION=3.11
 FROM golang:1 AS go-builder
 RUN GOBIN=$(pwd)/ go install cuelang.org/go/cmd/cue@latest
 
