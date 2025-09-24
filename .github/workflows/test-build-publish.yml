@@ -82,7 +82,7 @@ jobs:
           report-title: 'Kapitan tests'
 
   build:
-    name: build ${{ matrix.platform }} image
+    name: build ${{ matrix.platform }} image using python ${{ matrix.python-version }}
     if: success() || failure()   # Continue running if other jobs fail
     runs-on: ubuntu-latest
     strategy:
@@ -91,6 +91,11 @@ jobs:
         platform:
           - linux/amd64
           - linux/arm64
+        python-version:
+          - '3.10'
+          - '3.11'
+          - '3.12'
+          - '3.13'
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@v4
@@ -115,6 +120,8 @@ jobs:
           tags: local-test-${{ matrix.platform }}
           cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
+          build-args: |
+            - PYTHON_VERSION=${{ matrix.python-version }}
 
       - name: Test Kapitan for ${{ matrix.platform }}
         run: |
@@ -133,6 +140,15 @@ jobs:
         platform:
           - linux/amd64
           - linux/arm64
+        python-version:
+          - '3.10'
+          - '3.11'
+          - '3.12'
+          - '3.13'
+    outputs:
+      python-version: ${{ matrix.python-version }}
+      platform: ${{ matrix.platform }}
+
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@v4
@@ -163,7 +179,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name=${{ vars.DOCKERHUB_REPOSITORY }}/kapitan
+            name=${{ matrix.python-version }} == '3.11' && ${{ vars.DOCKERHUB_REPOSITORY }}/kapitan || ${{ vars.DOCKERHUB_REPOSITORY }}/kapitan-py${{ matrix.python-version }}
           # generate Docker tags based on the following events/attributes
           tags: |
             type=ref,event=branch
@@ -187,6 +203,8 @@ jobs:
           labels: ${{steps.meta.outputs.labels}}
           cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
+          build-args: |
+            - PYTHON_VERSION=${{ matrix.python-version }}
 
   build-multi-architecture:
     name: combine platform images
@@ -219,7 +237,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name=${{ vars.DOCKERHUB_REPOSITORY }}/kapitan
+            name=${{ needs.publish.outputs.python-version }} == '3.11' && ${{ vars.DOCKERHUB_REPOSITORY }}/kapitan || ${{ vars.DOCKERHUB_REPOSITORY }}/kapitan-py${{ needs.publish.outputs.python-version }}
           # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
