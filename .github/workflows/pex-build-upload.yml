@@ -31,7 +31,7 @@ jobs:
         run: |
           poetry export --without-hashes --format=requirements.txt > requirements.txt
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: 1.17
       - name: Install Python dependencies
