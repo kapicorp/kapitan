@@ -7,11 +7,13 @@
 
 import contextvars
 import inspect
+import json
 import logging
 import os
 import sys
 from functools import lru_cache
 from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path, PurePath
 
 import kadet
 from kadet import BaseModel, BaseObj, Dict
@@ -19,6 +21,7 @@ from kadet import BaseModel, BaseObj, Dict
 from kapitan import cached
 from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType
+from kapitan.inputs.cache import InputCache
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
 
 # Set external kadet exception to kapitan.error.CompileError
@@ -39,6 +42,11 @@ def inventory_global(lazy=False):
 
 def inventory(lazy=False):
     return inventory_global(lazy)[current_target.get()]
+
+
+@lru_cache(maxsize=None)
+def inventory_frozen():
+    return kadet.Box(data=inventory().dump(), frozen_box=True)
 
 
 def module_from_path(path, check_name=None):
@@ -83,7 +91,6 @@ def load_from_search_paths(module_name):
 
 
 class Kadet(InputType):
-
     def compile_file(self, config: KapitanInputTypeKadetConfig, input_path, compile_path):
         """
         Compile a kadet input file.
@@ -102,34 +109,42 @@ class Kadet(InputType):
         target_name = self.target_name
         current_target.set(target_name)
         search_paths.set(self.search_paths)
-
-        # set compile_path allowing kadet functions to have context on where files
-        # are being compiled on the current kapitan run
-        # we only do this if user didn't pass its own value
-        input_params.setdefault("compile_path", compile_path)
-
-        kadet_module, spec = module_from_path(input_path)
-        sys.modules[spec.name] = kadet_module
-        spec.loader.exec_module(kadet_module)
-        logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
-
-        kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
-        logger.debug("Kadet main args: %s", kadet_arg_spec.args)
-
-        if len(kadet_arg_spec.args) > 1:
-            raise ValueError(f"Kadet {spec.name} main parameters not equal to 1 or 0")
-
         output_obj = None
-        try:
-            if len(kadet_arg_spec.args) == 1:
-                output_obj = kadet_module.main(input_params)
-            elif len(kadet_arg_spec.args) == 0:
-                output_obj = kadet_module.main()
 
-        except Exception as exc:
-            raise CompileError(f"Could not load Kadet module: {spec.name[16:]}") from exc
+        if cache_obj := self.cacheable():
+            inputs_hash = self.inputs_hash(inventory_frozen(), input_params, Path(input_path))
+            output_obj = cache_obj.get(inputs_hash)
+        # else, compile
+        if output_obj is None:
+            # set compile_path allowing kadet functions to have context on where files
+            # are being compiled on the current kapitan run
+            # we only do this if user didn't pass its own value
+            input_params.setdefault("compile_path", compile_path)
 
-        output_obj = _to_dict(output_obj)
+            kadet_module, spec = module_from_path(input_path)
+            sys.modules[spec.name] = kadet_module
+            spec.loader.exec_module(kadet_module)
+            logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
+
+            kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
+            logger.debug("Kadet main args: %s", kadet_arg_spec.args)
+
+            if len(kadet_arg_spec.args) > 1:
+                raise ValueError(f"Kadet {spec.name} main parameters not equal to 1 or 0")
+
+            try:
+                if len(kadet_arg_spec.args) == 1:
+                    output_obj = kadet_module.main(input_params)
+                elif len(kadet_arg_spec.args) == 0:
+                    output_obj = kadet_module.main()
+
+            except Exception as exc:
+                raise CompileError(f"Could not load Kadet module: {spec.name[16:]}") from exc
+
+            output_obj = _to_dict(output_obj)
+
+            if cache_obj := self.cacheable():
+                cache_obj.set(inputs_hash, output_obj)
 
         # Return None if output_obj has no output
         if not output_obj:
@@ -138,6 +153,45 @@ class Kadet(InputType):
         for item_key, item_value in output_obj.items():
             file_path = os.path.join(compile_path, item_key)
             self.to_file(config, file_path, item_value)
+
+    def inputs_hash(self, *inputs, **kwargs):
+        # Hash all inputs to kadet component.
+        # Can we hash refs? Or do we need to hash all refs? Or do can we infer ref as dependencies?
+
+        # this should be hidden away in a subsystem to ensure hash function is standard accross inputs
+        h = InputCache.hash_object()
+        for i in inputs:
+            if isinstance(i, (dict, list)):
+                h.update(json.dumps(i, sort_keys=True).encode("utf-8"))
+            if isinstance(i, str):
+                h.update(i)
+            if isinstance(i, int):
+                h.update(bytes(int))
+            if isinstance(i, Path):
+                # walk and update hash
+                def walk_and_hash(path: Path):
+                    if path.is_file():
+                        h.update(open(path, "rb").read())
+
+                    if path.is_dir():
+                        for root, dirs, files in path.walk(follow_symlinks=True):
+                            for f in files:
+                                # TODO there must be a better way to avoid pycache...
+                                if not str(root).endswith("__pycache__"):
+                                    walk_and_hash(PurePath.joinpath(root, f))
+
+                walk_and_hash(i)
+        return h.hexdigest()
+
+    def cacheable(self):
+        if cached.args.cache:
+            try:
+                return self.cache
+            except AttributeError:
+                self.cache = InputCache("kadet")
+                return self.cache
+        else:
+            return False
 
 
 def _to_dict(obj):
