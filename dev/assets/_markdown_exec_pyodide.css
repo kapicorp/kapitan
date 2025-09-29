@@ -13,8 +13,6 @@ html[data-theme="dark"] {
 
 .pyodide-editor {
     width: 100%;
-    min-height: 200px;
-    max-height: 400px;
     font-size: .85em;
 }
 

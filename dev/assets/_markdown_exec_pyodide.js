@@ -77,7 +77,15 @@ function updateTheme(editor, light, dark) {
     });
 }
 
-async function setupPyodide(idPrefix, install = null, themeLight = 'tomorrow', themeDark = 'tomorrow_night', session = null) {
+async function setupPyodide(
+    idPrefix,
+    install = null,
+    themeLight = 'tomorrow',
+    themeDark = 'tomorrow_night',
+    session = null,
+    minLines = 5,
+    maxLines = 30,
+) {
     const editor = ace.edit(idPrefix + "editor");
     const run = document.getElementById(idPrefix + "run");
     const clear = document.getElementById(idPrefix + "clear");
@@ -87,6 +95,12 @@ async function setupPyodide(idPrefix, install = null, themeLight = 'tomorrow', t
 
     editor.session.setMode("ace/mode/python");
     setTheme(editor, getTheme(), themeLight, themeDark);
+
+    editor.setOption("minLines", minLines);
+    editor.setOption("maxLines", maxLines);
+
+    // Force editor to resize after setting options
+    editor.resize();
 
     writeOutput(output, "Initializing...");
     let pyodide = await pyodidePromise;
