@@ -16,6 +16,7 @@ from copier import run_copy
 from kapitan.errors import KapitanError
 from kapitan.version import VERSION as kapitan_version
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,9 +33,13 @@ def initialise_skeleton(args):
     directory = os.path.abspath(args.directory)
 
     if set(glob.iglob(os.path.join(directory, "./*"))):
-        raise KapitanError(f"Directory {directory} is not empty. Please initialise in an empty directory.")
+        raise KapitanError(
+            f"Directory {directory} is not empty. Please initialise in an empty directory."
+        )
 
-    logger.info(f"Initialising kapitan from {template_git_url}@{checkout_ref} in {directory}")
+    logger.info(
+        f"Initialising kapitan from {template_git_url}@{checkout_ref} in {directory}"
+    )
     user_defaults = {
         "kapitan_version": kapitan_version,
     }
@@ -49,7 +54,7 @@ def initialise_skeleton(args):
     )
 
     if directory == os.path.abspath(os.path.curdir):
-        logger.info(f"Successfully initialised: run `kapitan --version`")
+        logger.info("Successfully initialised: run `kapitan --version`")
     else:
         logger.info(f"Successfully initialised kapitan in {directory}")
         logger.info("Please go to the directory and run `kapitan --version`")

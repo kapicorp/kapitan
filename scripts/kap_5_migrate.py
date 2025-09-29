@@ -36,15 +36,13 @@ def update_inventory(file_path):
         tag, token, _ = match_obj.groups()
         if token.startswith("ref:"):
             return "?{base64" + token[3:] + "}"
-        else:
-            return tag
+        return tag
 
     def single_to_double(match_obj):
         tag, token, funcs = match_obj.groups()
-        if not (funcs is None):
+        if funcs is not None:
             return tag.replace("|", "||", 1)
-        else:
-            return tag
+        return tag
 
     with open(file_path) as fp:
         for line in fp:
@@ -113,11 +111,16 @@ def post_warning():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="Kapitan KAP-5 migration", description="Updates ref secret types into base64 ref types"
+        prog="Kapitan KAP-5 migration",
+        description="Updates ref secret types into base64 ref types",
     )
 
-    parser.add_argument("--secrets-path", type=str, default="./secrets", help="set secrets path")
-    parser.add_argument("--inventory-path", type=str, default="./inventory", help="set inventory path")
+    parser.add_argument(
+        "--secrets-path", type=str, default="./secrets", help="set secrets path"
+    )
+    parser.add_argument(
+        "--inventory-path", type=str, default="./inventory", help="set inventory path"
+    )
 
     args = parser.parse_args()
 

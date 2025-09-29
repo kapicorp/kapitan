@@ -25,6 +25,7 @@ from kapitan.utils import (
     unpack_downloaded_file,
 )
 
+
 logger = logging.getLogger(__name__)
 
 HelmSource = namedtuple("HelmSource", ["repo", "chart_name", "version", "helm_path"])
@@ -55,29 +56,38 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
                 # The target key "output_path" is relative to the compile output path set by the user
                 # point to the full output path
                 full_output_path = normalise_join_path(output_path, item.output_path)
-                logger.debug("Updated output_path from %s to %s", item.output_path, output_path)
+                logger.debug(
+                    "Updated output_path from %s to %s", item.output_path, output_path
+                )
                 item.output_path = full_output_path
 
                 if full_output_path in deps_output_paths[source_uri]:
                     # if the output_path is duplicated for the same source_uri
-                    logger.debug("Skipping duplicate output path for uri %s", source_uri)
+                    logger.debug(
+                        "Skipping duplicate output path for uri %s", source_uri
+                    )
                     continue
-                else:
-                    deps_output_paths[source_uri].add(full_output_path)
+                deps_output_paths[source_uri].add(full_output_path)
 
                 if dependency_type == KapitanDependencyTypes.GIT:
                     git_deps[source_uri].append(item)
-                elif dependency_type in (KapitanDependencyTypes.HTTP, KapitanDependencyTypes.HTTPS):
+                elif dependency_type in (
+                    KapitanDependencyTypes.HTTP,
+                    KapitanDependencyTypes.HTTPS,
+                ):
                     http_deps[source_uri].append(item)
                 elif dependency_type == KapitanDependencyTypes.HELM:
                     version = item.version
-                    helm_deps[HelmSource(source_uri, item.chart_name, version, item.helm_path)].append(item)
+                    helm_deps[
+                        HelmSource(source_uri, item.chart_name, version, item.helm_path)
+                    ].append(item)
                 else:
                     logger.warning("%s is not a valid source type", dependency_type)
 
         except KeyError:
             logger.debug(
-                "Target object %s has no 'dependencies' key, continuing", target_obj["vars"]["target"]
+                "Target object %s has no 'dependencies' key, continuing",
+                target_obj["vars"]["target"],
             )
             continue
 
@@ -121,7 +131,7 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
                 copy_src_path = full_subdir
             else:
                 raise GitSubdirNotFoundError(
-                    "{} {}: subdir {} not found in repo".format(item_type, source, sub_dir)
+                    f"{item_type} {source}: subdir {sub_dir} not found in repo"
                 )
         if force:
             # We need `clobber_files=True` here, since we otherwise can't overwrite read-only Git
@@ -146,7 +156,9 @@ def fetch_git_source(source, save_dir, item_type):
         logger.debug("Git clone cached to %s", save_dir)
     except GitCommandError as e:
         logger.error(e)
-        raise GitFetchingError("{} {}: fetching unsuccessful\n{}".format(item_type, source, e.stderr))
+        raise GitFetchingError(
+            f"{item_type} {source}: fetching unsuccessful\n{e.stderr}"
+        )
 
 
 def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
@@ -169,13 +181,17 @@ def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
             # ensure that the directory we are extracting to exists
             os.makedirs(output_path, exist_ok=True)
             if force:
-                is_unpacked = unpack_downloaded_file(cached_source_path, output_path, content_type)
+                is_unpacked = unpack_downloaded_file(
+                    cached_source_path, output_path, content_type
+                )
             else:
                 unpack_output = os.path.join(
                     save_dir, "extracted-" + str(multiprocessing.current_process().name)
                 )
                 os.makedirs(unpack_output)
-                is_unpacked = unpack_downloaded_file(cached_source_path, unpack_output, content_type)
+                is_unpacked = unpack_downloaded_file(
+                    cached_source_path, unpack_output, content_type
+                )
                 safe_copy_tree(unpack_output, output_path)
                 # delete unpack output
                 rmtree(unpack_output)
@@ -236,7 +252,11 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
         if not os.path.exists(output_path) or force:
             if not exists_in_cache(cached_repo_path):
                 fetch_helm_archive(
-                    source.helm_path, source.repo, source.chart_name, source.version, cached_repo_path
+                    source.helm_path,
+                    source.repo,
+                    source.chart_name,
+                    source.version,
+                    cached_repo_path,
                 )
             else:
                 logger.debug("Using cached helm chart at %s", cached_repo_path)
@@ -251,11 +271,17 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
                 copied = safe_copy_tree(cached_repo_path, output_path)
 
             if copied:
-                logger.info("Dependency %s: saved to %s", source.chart_name, output_path)
+                logger.info(
+                    "Dependency %s: saved to %s", source.chart_name, output_path
+                )
 
 
 def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
-    logger.debug("Dependency helm chart %s and version %s: fetching now", chart_name, version or "latest")
+    logger.debug(
+        "Dependency helm chart %s and version %s: fetching now",
+        chart_name,
+        version or "latest",
+    )
     # Fetch archive and untar it into parent dir
     save_dir = os.path.dirname(save_path)
     args = ["pull", "--destination", save_dir, "--untar"]
@@ -273,13 +299,23 @@ def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
 
     response = helm_cli(helm_path, args)
     if response != "":
-        logger.warning("Dependency helm chart %s and version %s: %s", chart_name, version, response)
+        logger.warning(
+            "Dependency helm chart %s and version %s: %s", chart_name, version, response
+        )
         raise HelmFetchingError(response)
-    else:
-        # rename chart to requested name
-        os.rename(os.path.join(save_dir, chart_name), save_path)
-        logger.debug("Dependency helm chart %s and version %s: successfully fetched", chart_name, version)
-        logger.debug("Dependency helm chart %s and version %s: saved to %s", chart_name, version, save_path)
+    # rename chart to requested name
+    os.rename(os.path.join(save_dir, chart_name), save_path)
+    logger.debug(
+        "Dependency helm chart %s and version %s: successfully fetched",
+        chart_name,
+        version,
+    )
+    logger.debug(
+        "Dependency helm chart %s and version %s: saved to %s",
+        chart_name,
+        version,
+        save_path,
+    )
 
 
 def exists_in_cache(item_path):

@@ -8,6 +8,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "kapitan"
 description = "Generic templated configuration management for Kubernetes, Terraform and other things"
+homepage = "https://kapitan.dev"
 authors = [
     "Ricardo Amaro <ramaro@kapicorp.com>"
 ]
@@ -50,12 +51,8 @@ docker = "^7.0.0"
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-black = ">=24.8,<26.0"
+ruff = "^0.8.6"
 pre-commit = ">=3.8,<5.0"
-isort = "^5.13.2"
-flake8 = "^7.1.1"
-flake8-pyproject = "^1.2.3"
-flake8-bugbear = "^24.8.19"
 
 
 [tool.poetry.group.docs]
@@ -75,58 +72,111 @@ source = "git-tag"
 
 [tool.poetry.dependencies]
 python = "^3.10,<3.14"
-strenum = { version = "^0.4.15", python = "^3.10" }
+
 addict = "^2.4.0"
-azure-keyvault-keys = "^4.7.0"
-boto3 = "^1.18.17"
-cryptography = ">=3.4.7,<44.0.0"
-gitpython = "^3.1.30"
-google-api-python-client = "^2.15.0"
-hvac = "2.3.0"
 jinja2 = "^3.0.1"
 jsonnet = "^0.21.0"
 jsonschema = "^4.17.3"
-python-gnupg = ">=0.4.7,<0.6.0"
 pyyaml = "^6.0"
 requests = "^2.28.2"
-six = "^1.16.0"
 toml = "^0.10.2"
 yamllint = "^1.29.0"
-azure-identity = "^1.12.0"
-certifi = "*"
-gitdb = "^4.0.10"
-packaging = ">=23,<26"
-typing-extensions = "^4.0.0"
-kadet = "^0.3.0"
-regex = "^2024.5.10"
-omegaconf = {version = "^2.4.0.dev3", optional = true}
-reclass-rs = {version = "^0.8.0", optional = true }
-gojsonnet = { version = "^0.21.0", optional = true }
-kapicorp-reclass = ">=2.0.0"
+
+# Data validation and configuration
 pydantic = "^2.8.2"
 pydantic-settings = "^2.4.0"
 python-box = "^7.2.0"
-copier = "^9.3.1"
 jsonpath-ng = "^1.7.0"
+
+# Inventory backends
+kapicorp-reclass = ">=2.0.0"
+omegaconf = {version = "^2.4.0.dev3", optional = true}
+reclass-rs = {version = "^0.8.0", optional = true }
+
+# Input types
+gojsonnet = { version = "^0.21.0", optional = true }
+kadet = "^0.3.0"
+copier = "^9.3.1"
+
+# Cloud and secrets management
+azure-keyvault-keys = "^4.7.0"
+azure-identity = "^1.12.0"
+boto3 = "^1.18.17"
+google-api-python-client = "^2.15.0"
+hvac = "2.3.0"
+python-gnupg = ">=0.4.7,<0.6.0"
+cryptography = ">=3.4.7,<44.0.0"
+
+# Git and file management
+gitpython = "^3.1.30"
+gitdb = "^4.0.10"
 filetype = "^1.2.0"
+
+# Utilities
+certifi = "*"
+packaging = ">=23,<26"
+regex = "^2024.5.10"
+strenum = { version = "^0.4.15", python = "^3.10" }
+typing-extensions = "^4.0.0"
+six = "^1.16.0"  # TODO: Remove after replacing six.string_types with native Python
 
 [tool.poetry.extras]
 gojsonnet = ["gojsonnet"]
 reclass-rs = ["reclass-rs"]
 omegaconf = ["omegaconf"]
 
-[tool.isort]
-profile = "black"
-
-[tool.flake8]
-max-line-length = 110
-extend-select = "B950"
-extend-ignore = "E203,E501,E701"
-
-[tool.black]
-line-length = 110
-target-version = ['py311']
+# Tool configurations moved to ruff.toml for consistency
+# See ruff.toml for linting and formatting configuration
 
 [tool.poetry_bumpversion.file."kapitan/version.py"]
 search = 'VERSION = "{current_version}"'
 replace = 'VERSION = "{new_version}"'
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["kapitan"]
+branch = true
+parallel = true
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/conftest.py",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+precision = 2
+fail_under = 65
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "def __str__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
+    "@abstractmethod",
+    "@abc.abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"

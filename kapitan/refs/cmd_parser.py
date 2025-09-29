@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import base64
 import logging
 import mimetypes
@@ -25,6 +23,7 @@ from kapitan.refs.secrets.vaultkv import VaultSecret
 from kapitan.refs.secrets.vaulttransit import VaultTransit
 from kapitan.resources import get_inventory
 from kapitan.utils import fatal_error, search_target_token_paths
+
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +62,7 @@ def ref_write(args, ref_controller):
                 data = fp.read()
             except UnicodeDecodeError as e:
                 raise KapitanError(
-                    "Could not read file. Please add '--binary' if the file contains binary data. ({})".format(
-                        e
-                    )
+                    f"Could not read file. Please add '--binary' if the file contains binary data. ({e})"
                 )
 
     # Empty configuration object
@@ -75,9 +72,13 @@ def ref_write(args, ref_controller):
         inv = get_inventory(args.inventory_path)
 
         try:
-            reference_backend_configs = inv.get_parameters(args.target_name).kapitan.secrets
+            reference_backend_configs = inv.get_parameters(
+                args.target_name
+            ).kapitan.secrets
         except (KeyError, AttributeError):
-            raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+            raise KapitanError(
+                f"parameters.kapitan.secrets not defined in {args.target_name}"
+            )
 
     type_name, token_path = token_name.split(":")
 
@@ -100,7 +101,7 @@ def ref_write(args, ref_controller):
         if not recipients:
             raise KapitanError(
                 "No GPG recipients specified. Use --recipients or specify them in "
-                + "parameters.kapitan.secrets.gpg.recipients and use --target"
+                "parameters.kapitan.secrets.gpg.recipients and use --target"
             )
 
         secret_obj = GPGSecret(data, recipients, encode_base64=args.base64)
@@ -256,8 +257,12 @@ def secret_update(args, ref_controller):
         inv = get_inventory(args.inventory_path)
 
         if not inv.get_parameters(args.target_name).kapitan.secrets:
-            reference_backend_configs = inv.get_parameters(args.target_name).kapitan.secrets
-            raise KapitanError("parameters.kapitan.secrets not defined in {}".format(args.target_name))
+            reference_backend_configs = inv.get_parameters(
+                args.target_name
+            ).kapitan.secrets
+            raise KapitanError(
+                f"parameters.kapitan.secrets not defined in {args.target_name}"
+            )
 
     type_name, token_path = token_name.split(":")
 
@@ -278,7 +283,7 @@ def secret_update(args, ref_controller):
         if not recipients:
             raise KapitanError(
                 "No GPG recipients specified. Use --recipients or specify them in "
-                + "parameters.kapitan.secrets.gpg.recipients and use --target"
+                "parameters.kapitan.secrets.gpg.recipients and use --target"
             )
 
         secret_obj = ref_controller[tag]
@@ -329,7 +334,9 @@ def secret_update(args, ref_controller):
         ref_controller[tag] = secret_obj
 
     else:
-        fatal_error("Invalid token: {name}. Try using gpg/gkms/awskms:{name}".format(name=token_name))
+        fatal_error(
+            f"Invalid token: {token_name}. Try using gpg/gkms/awskms:{token_name}"
+        )
 
 
 def ref_reveal(args, ref_controller):
@@ -355,7 +362,7 @@ def ref_reveal(args, ref_controller):
             out = revealer.reveal_raw_string(tag_name)
             sys.stdout.write(out)
     except (RefHashMismatchError, KeyError):
-        raise KapitanError("Reveal failed for file {name}".format(name=file_name))
+        raise KapitanError(f"Reveal failed for file {file_name}")
 
 
 def secret_update_validate(args, ref_controller):
@@ -371,7 +378,9 @@ def secret_update_validate(args, ref_controller):
     for target_name, token_paths in target_token_paths.items():
         secrets = inv.get_parameters(target_name).kapitan.secrets
         if not secrets:
-            raise KapitanError("parameters.kapitan.secrets not defined in {}".format(target_name))
+            raise KapitanError(
+                f"parameters.kapitan.secrets not defined in {target_name}"
+            )
 
         for token_path in token_paths:
             type_name = re.match(r"\?\{(\w+):", token_path).group(1)
@@ -482,6 +491,8 @@ def secret_update_validate(args, ref_controller):
                         ref_controller[token_path] = secret_obj
 
             else:
-                logger.info("Invalid secret %s, could not get type, skipping", token_path)
+                logger.info(
+                    "Invalid secret %s, could not get type, skipping", token_path
+                )
 
     sys.exit(ret_code)

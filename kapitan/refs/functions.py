@@ -17,6 +17,7 @@ from cryptography.hazmat.primitives.asymmetric import ed25519, rsa
 
 from kapitan.errors import RefError
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,7 +61,8 @@ def sha256(ctx, salt=""):
         ctx.data = hashlib.sha256(salted_input_value.encode()).hexdigest()
     else:
         raise RefError(
-            "Ref error: eval_func: nothing to sha256 hash; try " "something like '|random:str|sha256'"
+            "Ref error: eval_func: nothing to sha256 hash; try "
+            "something like '|random:str|sha256'"
         )
 
 
@@ -83,7 +85,9 @@ def rsa_private_key(ctx, key_size="4096"):
     """sets ctx.data to a RSA private key of key_size, default 4096"""
     rsa_key_size = int(key_size)
 
-    key = rsa.generate_private_key(public_exponent=65537, key_size=rsa_key_size, backend=default_backend())
+    key = rsa.generate_private_key(
+        public_exponent=65537, key_size=rsa_key_size, backend=default_backend()
+    )
 
     ctx.data = str(
         key.private_bytes(
@@ -125,7 +129,8 @@ def public_key(ctx):
 
     ctx.data = str(
         public_key.public_bytes(
-            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
         ),
         "UTF-8",
     )
@@ -136,7 +141,7 @@ def reveal(ctx, secret_path):
     decrypt and return data from secret_path
     """
     token_type_name = ctx.ref_controller.token_type_name(ctx.token)
-    secret_tag = "?{{{}:{}}}".format(token_type_name, secret_path)
+    secret_tag = f"?{{{token_type_name}:{secret_path}}}"
     try:
         ref_obj = ctx.ref_controller[secret_tag]
         ctx.ref_encoding = ref_obj.encoding
@@ -150,7 +155,9 @@ def reveal(ctx, secret_path):
 def loweralphanum(ctx, nchars="8"):
     """generates a DNS-compliant text string (a-z and 0-9), containing lower alphanum chars"""
     # deprecated function
-    logger.info("DeprecationWarning: loweralphanum is deprecated. Use random:loweralphanum instead")
+    logger.info(
+        "DeprecationWarning: loweralphanum is deprecated. Use random:loweralphanum instead"
+    )
     random(ctx, "loweralphanum", nchars)
 
 
@@ -175,10 +182,10 @@ def random(ctx, type="str", nchars="", special_chars=string.punctuation):
     }
 
     # get pool of given type
-    pool = pool_lookup.get(type, None)
+    pool = pool_lookup.get(type)
     if not pool:
         raise RefError(
-            "{}: unknown random type used. Choose one of {}".format(type, [key for key in pool_lookup])
+            f"{type}: unknown random type used. Choose one of {[key for key in pool_lookup]}"
         )
 
     # get default value for nchars if nchars is not specified
@@ -189,14 +196,14 @@ def random(ctx, type="str", nchars="", special_chars=string.punctuation):
         try:
             nchars = int(nchars)
         except ValueError:
-            raise RefError(f"Ref error: eval_func: {nchars} cannot be converted into integer.")
+            raise RefError(
+                f"Ref error: eval_func: {nchars} cannot be converted into integer."
+            )
 
     # check if any special characters are specified without using type special
     if type != "special" and special_chars != string.punctuation:
         raise RefError(
-            "Ref error: eval_func: {} has no option to use special characters. Use type special instead, i.e. ||random:special:{}".format(
-                type, special_chars
-            )
+            f"Ref error: eval_func: {type} has no option to use special characters. Use type special instead, i.e. ||random:special:{special_chars}"
         )
 
     # check if pool is valid, eliminates duplicates

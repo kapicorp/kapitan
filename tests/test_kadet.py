@@ -36,7 +36,7 @@ class KadetTestObjWithInner(KadetTestObj):
     def body(self):
         super().body()
 
-        class Inner(BaseObj):  # noqa E306
+        class Inner(BaseObj):
             def body(self):
                 self.root.i_am_inside = True
 
@@ -88,7 +88,14 @@ class KadetTest(unittest.TestCase):
         kobj.root.with_lists = [
             Dict({"i_am_inside_a_list": True}),
             BaseObj.from_dict({"me": "too"}),
-            BaseObj.from_dict({"list_of_objs": [BaseObj.from_dict(dict(a=1, b=2)), Dict(dict(c=3, d=4))]}),
+            BaseObj.from_dict(
+                {
+                    "list_of_objs": [
+                        BaseObj.from_dict(dict(a=1, b=2)),
+                        Dict(dict(c=3, d=4)),
+                    ]
+                }
+            ),
         ]
         output = kobj.dump()
         desired_output = {

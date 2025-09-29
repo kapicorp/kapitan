@@ -2,21 +2,23 @@ import logging
 import os
 from datetime import datetime
 
+import yaml
+
 import reclass
 import reclass.core
-import yaml
-from reclass.errors import NotFoundError, ReclassException
-
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory, InventoryTarget
+from reclass.errors import NotFoundError, ReclassException
+
 
 logger = logging.getLogger(__name__)
 
 
 class ReclassInventory(Inventory):
-
     def render_targets(
-        self, targets: list[InventoryTarget] = None, ignore_class_not_found: bool = False
+        self,
+        targets: list[InventoryTarget] = None,
+        ignore_class_not_found: bool = False,
     ) -> None:
         """
         Runs a reclass inventory in inventory_path
@@ -38,8 +40,12 @@ class ReclassInventory(Inventory):
                 reclass_config["classes_uri"],
                 reclass_config["compose_node_name"],
             )
-            class_mappings = reclass_config.get("class_mappings")  # this defaults to None (disabled)
-            _reclass = reclass.core.Core(storage, class_mappings, reclass.settings.Settings(reclass_config))
+            class_mappings = reclass_config.get(
+                "class_mappings"
+            )  # this defaults to None (disabled)
+            _reclass = reclass.core.Core(
+                storage, class_mappings, reclass.settings.Settings(reclass_config)
+            )
             start = datetime.now()
             rendered_inventory = _reclass.inventory()
             elapsed = datetime.now() - start
@@ -84,7 +90,7 @@ def get_reclass_config(
     # get reclass config from file 'inventory/reclass-config.yml'
     cfg_file = os.path.join(inventory_path, "reclass-config.yml")
     if os.path.isfile(cfg_file):
-        with open(cfg_file, "r") as fp:
+        with open(cfg_file) as fp:
             config = yaml.load(fp.read(), Loader=YamlLoader)
             logger.debug(f"Using reclass inventory config at: {cfg_file}")
         if config:
@@ -96,11 +102,15 @@ def get_reclass_config(
                 f"Reclass config: Empty config file at {cfg_file}. Using reclass inventory config defaults"
             )
     else:
-        logger.debug("Inventory reclass: No config file found. Using reclass inventory config defaults")
+        logger.debug(
+            "Inventory reclass: No config file found. Using reclass inventory config defaults"
+        )
 
     # normalise relative nodes_uri and classes_uri paths
     if normalise_nodes_classes:
         for uri in ("nodes_uri", "classes_uri"):
-            reclass_config[uri] = os.path.normpath(os.path.join(inventory_path, reclass_config[uri]))
+            reclass_config[uri] = os.path.normpath(
+                os.path.join(inventory_path, reclass_config[uri])
+            )
 
     return reclass_config

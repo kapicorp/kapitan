@@ -9,6 +9,7 @@
 
 import os
 
+
 DEFAULT_KUBERNETES_VERSION = "1.14.0"
 # standalone is used for standalone json schema (i.e. without external $refs)
 # strict is used as it behaves similarly to kubectl

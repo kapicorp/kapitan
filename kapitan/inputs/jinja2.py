@@ -13,12 +13,14 @@ from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeJinja2Config
 from kapitan.utils import render_jinja2
 
+
 logger = logging.getLogger(__name__)
 
 
 class Jinja2(InputType):
-
-    def compile_file(self, config: KapitanInputTypeJinja2Config, input_path, compile_path):
+    def compile_file(
+        self, config: KapitanInputTypeJinja2Config, input_path, compile_path
+    ):
         """
         Compile Jinja2 templates.
 
@@ -57,13 +59,20 @@ class Jinja2(InputType):
         jinja2_filters = self.args.jinja2_filters
 
         for item_key, item_value in render_jinja2(
-            input_path, context, jinja2_filters=jinja2_filters, search_paths=self.search_paths
+            input_path,
+            context,
+            jinja2_filters=jinja2_filters,
+            search_paths=self.search_paths,
         ).items():
             if strip_postfix and item_key.endswith(stripped_postfix):
                 item_key = item_key.rstrip(stripped_postfix)
             full_item_path = os.path.join(compile_path, item_key)
             with CompiledFile(
-                full_item_path, self.ref_controller, mode="w", reveal=reveal, target_name=target_name
+                full_item_path,
+                self.ref_controller,
+                mode="w",
+                reveal=reveal,
+                target_name=target_name,
             ) as fp:
                 fp.write(item_value["content"])
                 mode = item_value["mode"]

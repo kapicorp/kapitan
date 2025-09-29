@@ -13,11 +13,14 @@ from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeCopyConfig
 from kapitan.utils import copy_tree
 
+
 logger = logging.getLogger(__name__)
 
 
 class Copy(InputType):
-    def compile_file(self, config: KapitanInputTypeCopyConfig, input_path, compile_path):
+    def compile_file(
+        self, config: KapitanInputTypeCopyConfig, input_path, compile_path
+    ):
         """Copy input_path to compile_path.
 
         Args:
@@ -42,14 +45,21 @@ class Copy(InputType):
                         # create destination directory if it doesn't exist
                         os.makedirs(compile_path, exist_ok=True)
                         # copy file to destination directory
-                        shutil.copy2(input_path, os.path.join(compile_path, os.path.basename(input_path)))
+                        shutil.copy2(
+                            input_path,
+                            os.path.join(compile_path, os.path.basename(input_path)),
+                        )
                 else:
                     # Resolve relative paths to avoid issues with copy_tree
-                    compile_path = os.path.abspath(compile_path)  # Resolve relative paths
+                    compile_path = os.path.abspath(
+                        compile_path
+                    )  # Resolve relative paths
                     copy_tree(input_path, compile_path)
             elif not ignore_missing:
                 # Raise exception if input path does not exist and ignore_missing is False
-                raise OSError(f"Path {input_path} does not exist and `ignore_missing` is {ignore_missing}")
+                raise OSError(
+                    f"Path {input_path} does not exist and `ignore_missing` is {ignore_missing}"
+                )
         except OSError as e:
             # Log exception and re-raise
             logger.exception("Input dir not copied. Error: %s", e)

@@ -103,15 +103,14 @@ class AWSKMSSecret(Base64Ref):
         if encode_base64:
             _data = base64.b64encode(data.encode())
             self.encoding = "base64"
-        else:
-            # To guarantee _data is bytes
-            if isinstance(data, str):
-                _data = data.encode()
+        # To guarantee _data is bytes
+        elif isinstance(data, str):
+            _data = data.encode()
         try:
             ciphertext = ""
             # Mocking encrypted response for tests
             if key == "mock":
-                ciphertext = base64.b64encode("mock".encode())
+                ciphertext = base64.b64encode(b"mock")
             else:
                 response = awskms_obj().encrypt(KeyId=key, Plaintext=_data)
                 ciphertext = base64.b64encode(response["CiphertextBlob"])
@@ -127,7 +126,7 @@ class AWSKMSSecret(Base64Ref):
             plaintext = ""
             # Mocking decrypted response for tests
             if self.key == "mock":
-                plaintext = "mock".encode()
+                plaintext = b"mock"
             else:
                 response = awskms_obj().decrypt(CiphertextBlob=base64.b64decode(data))
                 plaintext = response["Plaintext"]
@@ -141,7 +140,12 @@ class AWSKMSSecret(Base64Ref):
         """
         Returns dict with keys/values to be serialised.
         """
-        return {"data": self.data, "encoding": self.encoding, "key": self.key, "type": self.type_name}
+        return {
+            "data": self.data,
+            "encoding": self.encoding,
+            "key": self.key,
+            "type": self.type_name,
+        }
 
 
 class AWSKMSBackend(Base64RefBackend):

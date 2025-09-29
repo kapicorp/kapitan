@@ -38,5 +38,9 @@ class KapitanInventoryParameters(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     kapitan: Optional[KapitanInventorySettings] = KapitanInventorySettings()
-    kapitan_metadata: Optional[KapitanInventoryMetadata] = Field(alias="_kapitan_", default=None)
-    reclass_metadata: Optional[KapitanInventoryMetadata] = Field(alias="_reclass_", default=None)
+    kapitan_metadata: Optional[KapitanInventoryMetadata] = Field(
+        alias="_kapitan_", default=None
+    )
+    reclass_metadata: Optional[KapitanInventoryMetadata] = Field(
+        alias="_reclass_", default=None
+    )

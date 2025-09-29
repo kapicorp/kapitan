@@ -5,8 +5,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import print_function
-
 import collections
 import functools
 import glob
@@ -19,6 +17,7 @@ import shutil
 import stat
 import sys
 import tarfile
+import traceback
 from collections import Counter, defaultdict
 from functools import lru_cache
 from hashlib import sha256
@@ -38,13 +37,14 @@ from kapitan.jinja2_filters import (
 )
 from kapitan.version import VERSION
 
+
 logger = logging.getLogger(__name__)
 
 
 try:
     from enum import StrEnum
 except ImportError:
-    from strenum import StrEnum
+    from strenum import StrEnum  # noqa: F401
 
 try:
     from yaml import CSafeLoader as YamlLoader
@@ -101,7 +101,11 @@ def prune_empty(d):
 
     if isinstance(d, dict):
         if len(d) > 0:
-            return {k: v for k, v in ((k, prune_empty(v)) for k, v in d.items()) if v is not None}
+            return {
+                k: v
+                for k, v in ((k, prune_empty(v)) for k, v in d.items())
+                if v is not None
+            }
 
 
 class PrettyDumper(yaml.SafeDumper):
@@ -116,7 +120,10 @@ class PrettyDumper(yaml.SafeDumper):
 
     @classmethod
     def get_dumper_for_style(cls, style_selection="double-quotes"):
-        cls.add_representer(str, functools.partial(multiline_str_presenter, style_selection=style_selection))
+        cls.add_representer(
+            str,
+            functools.partial(multiline_str_presenter, style_selection=style_selection),
+        )
         return cls
 
 
@@ -145,8 +152,7 @@ def null_presenter(dumper, data):
 
     if flag_value:
         return dumper.represent_scalar("tag:yaml.org,2002:null", "")
-    else:
-        return dumper.represent_scalar("tag:yaml.org,2002:null", "null")
+    return dumper.represent_scalar("tag:yaml.org,2002:null", "null")
 
 
 PrettyDumper.add_representer(type(None), null_presenter)
@@ -181,32 +187,33 @@ def deep_get(dictionary, keys, previousKey=None):
 
             # Recurse with next keys in the chain on the dict
             return deep_get(value, keys[1:], previousKey=keys[0])
-        else:
-            if isinstance(dictionary, dict):
-                # If we find nothing, check for globbing, loop and match with dict keys
-                if "*" in keys[0]:
-                    key_lower = keys[0].replace("*", "").lower()
-                    for dict_key in dictionary.keys():
-                        if key_lower in dict_key.lower():
-                            # If we're at the last key in the chain, return matched value
-                            if len(keys) == 1:
-                                return dictionary[dict_key]
+        if isinstance(dictionary, dict):
+            # If we find nothing, check for globbing, loop and match with dict keys
+            if "*" in keys[0]:
+                key_lower = keys[0].replace("*", "").lower()
+                for dict_key in dictionary.keys():
+                    if key_lower in dict_key.lower():
+                        # If we're at the last key in the chain, return matched value
+                        if len(keys) == 1:
+                            return dictionary[dict_key]
 
-                            # If we have more variables in the chain, continue recursion
-                            return deep_get(dictionary[dict_key], keys[1:], previousKey=keys[0])
+                        # If we have more variables in the chain, continue recursion
+                        return deep_get(
+                            dictionary[dict_key], keys[1:], previousKey=keys[0]
+                        )
 
-                if not previousKey:
-                    # No previous keys in chain and no globbing, move down the dictionary and recurse
-                    for v in dictionary.values():
-                        if isinstance(v, dict):
-                            item = None
-                            if len(keys) > 1:
-                                item = deep_get(v, keys, previousKey=keys[0])
-                            else:
-                                item = deep_get(v, keys)
+            if not previousKey:
+                # No previous keys in chain and no globbing, move down the dictionary and recurse
+                for v in dictionary.values():
+                    if isinstance(v, dict):
+                        item = None
+                        if len(keys) > 1:
+                            item = deep_get(v, keys, previousKey=keys[0])
+                        else:
+                            item = deep_get(v, keys)
 
-                            if item is not None:
-                                return item
+                        if item is not None:
+                            return item
 
     return value
 
@@ -218,13 +225,12 @@ def searchvar(args):
     keys = args.searchvar.split(".")
     for full_path in list_all_paths(args.inventory_path):
         if full_path.endswith(".yml") or full_path.endswith(".yaml"):
-            with open(full_path, "r") as fd:
+            with open(full_path) as fd:
                 data = yaml.load(fd, Loader=YamlLoader)
                 value = deep_get(data, keys)
                 if value is not None:
                     output.append((full_path, value))
-                    if len(full_path) > maxlength:
-                        maxlength = len(full_path)
+                    maxlength = max(len(full_path), maxlength)
     if args.pretty_print:
         for i in output:
             print(i[0])
@@ -239,10 +245,10 @@ def searchvar(args):
 def directory_hash(directory):
     """Return the sha256 hash for the file contents of a directory"""
     if not os.path.exists(directory):
-        raise IOError(f"utils.directory_hash failed, {directory} dir doesn't exist")
+        raise OSError(f"utils.directory_hash failed, {directory} dir doesn't exist")
 
     if not os.path.isdir(directory):
-        raise IOError(f"utils.directory_hash failed, {directory} is not a directory")
+        raise OSError(f"utils.directory_hash failed, {directory} is not a directory")
 
     try:
         hash = sha256()
@@ -250,7 +256,7 @@ def directory_hash(directory):
             for names in sorted(files):
                 file_path = os.path.join(root, names)
                 try:
-                    with open(file_path, "r") as f:
+                    with open(file_path) as f:
                         file_hash = sha256(f.read().encode("UTF-8"))
                         hash.update(file_hash.hexdigest().encode("UTF-8"))
                 except Exception as e:
@@ -259,7 +265,9 @@ def directory_hash(directory):
                             binary_file_hash = sha256(f.read())
                             hash.update(binary_file_hash.hexdigest().encode("UTF-8"))
                     else:
-                        raise CompileError(f"utils.directory_hash failed to open {file_path}: {e}")
+                        raise CompileError(
+                            f"utils.directory_hash failed to open {file_path}: {e}"
+                        )
     except Exception as e:
         raise CompileError(f"utils.directory_hash failed: {e}")
 
@@ -275,7 +283,9 @@ def get_entropy(s):
     """Computes and returns the Shannon Entropy for string 's'"""
     length = float(len(s))
     # https://en.wiktionary.org/wiki/Shannon_entropy
-    entropy = -sum(count / length * math.log(count / length, 2) for count in Counter(s).values())
+    entropy = -sum(
+        count / length * math.log2(count / length) for count in Counter(s).values()
+    )
     return round(entropy, 2)
 
 
@@ -292,7 +302,7 @@ def dot_kapitan_config():
     """Returns the parsed YAML .kapitan file. Subsequent requests will be cached"""
     if not cached.dot_kapitan:
         if os.path.exists(".kapitan"):
-            with open(".kapitan", "r") as f:
+            with open(".kapitan") as f:
                 cached.dot_kapitan = yaml.safe_load(f)
 
     return cached.dot_kapitan
@@ -338,7 +348,7 @@ def compare_versions(v1_raw, v2_raw):
 
         if not v1_is_rc and v2_is_rc:
             return "greater"
-        elif v1_is_rc and not v2_is_rc:
+        if v1_is_rc and not v2_is_rc:
             return "lower"
 
     return "equal"
@@ -362,17 +372,25 @@ def check_version():
 
             # If .kapitan version is greater than current version
             if result == "greater":
-                print(f"Upgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n")
+                print(
+                    f"Upgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n"
+                )
             # If .kapitan version is lower than current version
             elif result == "lower":
-                print(f"Option 1: You can update the version in .kapitan to '{VERSION}' and recompile\n")
+                print(
+                    f"Option 1: You can update the version in .kapitan to '{VERSION}' and recompile\n"
+                )
                 print(
                     f"Option 2: Downgrade kapitan to '{dot_kapitan_version}' in order to keep results consistent:\n"
                 )
 
             print(f"Docker: docker pull kapicorp/kapitan:{dot_kapitan_version}")
-            print(f"Pip (user): pip3 install --user --upgrade kapitan=={dot_kapitan_version}\n")
-            print("Check https://github.com/kapicorp/kapitan#quickstart for more info.\n")
+            print(
+                f"Pip (user): pip3 install --user --upgrade kapitan=={dot_kapitan_version}\n"
+            )
+            print(
+                "Check https://github.com/kapicorp/kapitan#quickstart for more info.\n"
+            )
             print(
                 "If you know what you're doing, you can skip this check by adding '--ignore-version-check'."
             )
@@ -410,8 +428,7 @@ def make_request(source):
     r = requests.get(source)
     if r.ok:
         return r.content, r.headers["Content-Type"]
-    else:
-        r.raise_for_status()
+    r.raise_for_status()
     return None, None
 
 
@@ -419,7 +436,7 @@ def unpack_downloaded_file(file_path, output_path, content_type):
     """unpacks files of various MIME type and stores it to the output_path"""
     is_unpacked = False
 
-    if content_type == None or content_type == "application/octet-stream":
+    if content_type is None or content_type == "application/octet-stream":
         kind = filetype.guess(file_path)
         if kind and kind.mime == "application/zip":
             content_type = "application/zip"
@@ -472,7 +489,7 @@ def safe_copy_file(src, dst):
     """
 
     if not os.path.isfile(src):
-        raise SafeCopyError("Can't copy {}: doesn't exist or is not a regular file".format(src))
+        raise SafeCopyError(f"Can't copy {src}: doesn't exist or is not a regular file")
 
     if os.path.isdir(dst):
         dir = dst
@@ -498,11 +515,11 @@ def safe_copy_tree(src, dst):
     Returns a list of copied file paths.
     """
     if not os.path.isdir(src):
-        raise SafeCopyError("Cannot copy tree {}: not a directory".format(src))
+        raise SafeCopyError(f"Cannot copy tree {src}: not a directory")
     try:
         names = os.listdir(src)
     except OSError as e:
-        raise SafeCopyError("Error listing files in {}: {}".format(src, e.strerror))
+        raise SafeCopyError(f"Error listing files in {src}: {e.strerror}")
 
     try:
         os.makedirs(dst, exist_ok=True)
@@ -556,7 +573,9 @@ def copy_tree(src: str, dst: str, clobber_files=False) -> list:
         raise SafeCopyError(f"Cannot copy tree {src}: not a directory")
 
     if os.path.exists(dst) and not os.path.isdir(dst):
-        raise SafeCopyError(f"Cannot copy tree to {dst}: destination exists but not a directory")
+        raise SafeCopyError(
+            f"Cannot copy tree to {dst}: destination exists but not a directory"
+        )
 
     # this will generate an empty set if `dst` doesn't exist
     before = set(glob.iglob(f"{dst}/*", recursive=True))
@@ -570,7 +589,12 @@ def copy_tree(src: str, dst: str, clobber_files=False) -> list:
     return list(after - before)
 
 
-def render_jinja2_file(name, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH, search_paths=None):
+def render_jinja2_file(
+    name,
+    context,
+    jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH,
+    search_paths=None,
+):
     """Render jinja2 file name with context"""
     path, filename = os.path.split(name)
     search_paths = [path or "./"] + (search_paths or [])
@@ -591,7 +615,12 @@ def render_jinja2_file(name, context, jinja2_filters=defaults.DEFAULT_JINJA2_FIL
         raise CompileError(f"Jinja2 TemplateError: {e}, at {err_info[0]}:{err_info[1]}")
 
 
-def render_jinja2(path, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH, search_paths=None):
+def render_jinja2(
+    path,
+    context,
+    jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_PATH,
+    search_paths=None,
+):
     """
     Render files in path with context
     Returns a dict where the is key is the filename (with subpath)
@@ -621,7 +650,10 @@ def render_jinja2(path, context, jinja2_filters=defaults.DEFAULT_JINJA2_FILTERS_
             try:
                 rendered[name] = {
                     "content": render_jinja2_file(
-                        render_path, context, jinja2_filters=jinja2_filters, search_paths=search_paths
+                        render_path,
+                        context,
+                        jinja2_filters=jinja2_filters,
+                        search_paths=search_paths,
                     ),
                     "mode": file_mode(render_path),
                 }

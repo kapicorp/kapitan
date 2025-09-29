@@ -14,6 +14,7 @@ import yaml
 
 from kapitan.refs.base import KapitanReferencesTypes, PlainRef, PlainRefBackend
 
+
 try:
     from yaml import CSafeLoader as YamlLoader
 except ImportError:
@@ -73,11 +74,15 @@ class Base64Ref(PlainRef):
         try:
             with open(ref_full_path) as fp:
                 obj = yaml.load(fp, Loader=YamlLoader)
-                _kwargs = {key: value for key, value in obj.items() if key not in ("data", "from_base64")}
+                _kwargs = {
+                    key: value
+                    for key, value in obj.items()
+                    if key not in ("data", "from_base64")
+                }
                 kwargs.update(_kwargs)
                 return cls(obj["data"], from_base64=True, **kwargs)
 
-        except IOError as ex:
+        except OSError as ex:
             if ex.errno == errno.ENOENT:
                 return None
 

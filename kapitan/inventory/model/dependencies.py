@@ -40,6 +40,10 @@ class KapitanDependencyHttpsConfig(KapitanDependencyBaseConfig):
 
 
 DependencyTypeConfig = Annotated[
-    Union[KapitanDependencyHelmConfig, KapitanDependencyHttpsConfig, KapitanDependencyGitConfig],
+    Union[
+        KapitanDependencyHelmConfig,
+        KapitanDependencyHttpsConfig,
+        KapitanDependencyGitConfig,
+    ],
     Field(discriminator="type"),
 ]
