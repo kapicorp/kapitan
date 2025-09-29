@@ -105,7 +105,7 @@ boto3 = "^1.18.17"
 google-api-python-client = "^2.15.0"
 hvac = "2.3.0"
 python-gnupg = ">=0.4.7,<0.6.0"
-cryptography = ">=3.4.7,<44.0.0"
+cryptography = ">=3.4.7,<47.0.0"
 
 # Git and file management
 gitpython = "^3.1.30"
