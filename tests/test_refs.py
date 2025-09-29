@@ -389,9 +389,9 @@ class Base64RefsTest(unittest.TestCase):
         tag = "?{base64:ref/randomstr||randomstr}"
         REF_CONTROLLER[tag] = RefParams()
         # The file should exist in either location depending on implementation
-        file_exists = os.path.isfile(os.path.join(REFS_HOME, "ref/base64")) or os.path.isfile(
-            os.path.join(REFS_HOME, "ref/randomstr")
-        )
+        file_exists = os.path.isfile(
+            os.path.join(REFS_HOME, "ref/base64")
+        ) or os.path.isfile(os.path.join(REFS_HOME, "ref/randomstr"))
         self.assertTrue(file_exists)
 
         file_with_tags = tempfile.mktemp()

@@ -17,7 +17,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
@@ -41,7 +40,9 @@ class CompileTestHelper:
         self.original_dir = os.getcwd()
 
     def compile_targets(
-        self, targets: Optional[List[str]] = None, extra_args: Optional[List[str]] = None
+        self,
+        targets: Optional[List[str]] = None,
+        extra_args: Optional[List[str]] = None,
     ) -> None:
         """
         Compile specified targets or all targets.
@@ -86,7 +87,7 @@ class CompileTestHelper:
             File contents as string
         """
         compiled_path = os.path.join(self.isolated_path, "compiled", relative_path)
-        with open(compiled_path, "r") as f:
+        with open(compiled_path) as f:
             return f.read()
 
     def verify_compiled_output_exists(self, relative_path: str) -> bool:
@@ -189,7 +190,11 @@ def setup_gpg_key(key_path: str, gnupg_home: Optional[str] = None) -> None:
 
     # Get key fingerprint
     result = subprocess.run(
-        ["gpg", "--list-secret-keys", "--with-colons"], env=env, capture_output=True, text=True
+        ["gpg", "--list-secret-keys", "--with-colons"],
+        check=False,
+        env=env,
+        capture_output=True,
+        text=True,
     )
 
     # Trust the key (for testing only!)
@@ -200,7 +205,9 @@ def setup_gpg_key(key_path: str, gnupg_home: Optional[str] = None) -> None:
             trust_file.write(f"{fingerprint}:6\n")
             trust_file.close()
 
-            subprocess.run(["gpg", "--import-ownertrust", trust_file.name], env=env, check=True)
+            subprocess.run(
+                ["gpg", "--import-ownertrust", trust_file.name], env=env, check=True
+            )
             os.unlink(trust_file.name)
             break
 
@@ -293,9 +300,11 @@ def assert_file_contains(file_path: str, expected_content: str) -> None:
     Raises:
         AssertionError: If content not found
     """
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
-        assert expected_content in content, f"Expected '{expected_content}' not found in {file_path}"
+        assert (
+            expected_content in content
+        ), f"Expected '{expected_content}' not found in {file_path}"
 
 
 def assert_file_not_contains(file_path: str, unexpected_content: str) -> None:
@@ -309,6 +318,8 @@ def assert_file_not_contains(file_path: str, unexpected_content: str) -> None:
     Raises:
         AssertionError: If content is found
     """
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         content = f.read()
-        assert unexpected_content not in content, f"Unexpected '{unexpected_content}' found in {file_path}"
+        assert (
+            unexpected_content not in content
+        ), f"Unexpected '{unexpected_content}' found in {file_path}"

@@ -14,12 +14,12 @@ import os
 import shutil
 import tempfile
 from contextlib import contextmanager
-from pathlib import Path
 from typing import Optional
 
 import pytest
 
 from kapitan.cached import reset_cache
+
 
 # Base paths - these are read-only references
 TEST_PWD = os.getcwd()
@@ -233,7 +233,9 @@ def ensure_compile_dirs_isolated():
 def pytest_configure(config):
     """Configure pytest with custom markers."""
     config.addinivalue_line("markers", "requires_gpg: mark test as requiring GPG setup")
-    config.addinivalue_line("markers", "requires_vault: mark test as requiring Vault server")
+    config.addinivalue_line(
+        "markers", "requires_vault: mark test as requiring Vault server"
+    )
     config.addinivalue_line("markers", "slow: mark test as slow running")
 
 
