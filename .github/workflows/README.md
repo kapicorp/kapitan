@@ -7,7 +7,7 @@ This directory contains GitHub Actions workflows for the Kapitan project.
 ### 1. Test, Build and Publish (`test-build-publish.yml`)
 Main CI/CD workflow that:
 - Runs pre-commit checks with cached environments
-- Executes tests on Python 3.10, 3.11, and 3.12 **in parallel** using pytest-xdist
+- Executes tests on Python 3.10, 3.11, 3.12, 3.13 and 3.14 **in parallel** using pytest-xdist
 - Generates comprehensive test coverage reports (XML, JSON, HTML)
 - Provides detailed test metrics and performance analysis
 - Posts coverage comments on pull requests

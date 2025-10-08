@@ -27,6 +27,7 @@ jobs:
             3.11
             3.12
             3.13
+            3.14
       - name: Install libraries dependencies
         run: |
           poetry export --without-hashes --format=requirements.txt > requirements.txt
@@ -47,6 +48,7 @@ jobs:
             --python=python3.10 \
             --python=python3.12 \
             --python=python3.13 \
+            --python=python3.14 \
             -m kapitan \
             -o dist/kapitan.linux-x86_64.pex
           dist/kapitan.linux-x86_64.pex --help
