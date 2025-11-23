@@ -134,7 +134,7 @@ class Inventory(ABC):
             return target.parameters
 
         return {
-            name: {"parameters": Dict(target.parameters)}
+            name: {"parameters": dict(target.parameters)}
             for name, target in self.get_targets(target_names)
         }
 
