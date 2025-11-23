@@ -151,7 +151,7 @@ def lint_unused_classes(inventory_path):
     logger.debug("Find unused classes from %s", classes_dir)
     class_paths = set()
     for path in list_all_paths(classes_dir):
-        if os.path.isfile(path) and (path.endswith(".yml") or path.endswith(".yaml")):
+        if os.path.isfile(path) and path.endswith((".yml", ".yaml")):
             path = path[len(classes_dir) :]
             path = path.replace(".yml", "").replace(".yaml", "").replace("/", ".")
             class_paths.add(path)
@@ -208,7 +208,7 @@ def lint_yamllint(inventory_path):
 
     checks_sum = 0
     for path in list_all_paths(inventory_path):
-        if os.path.isfile(path) and (path.endswith(".yml") or path.endswith(".yaml")):
+        if os.path.isfile(path) and path.endswith((".yml", ".yaml")):
             with open(path) as yaml_file:
                 file_contents = yaml_file.read()
 
