@@ -8,6 +8,7 @@
 "command line module"
 
 import argparse
+import contextlib
 import json
 import logging
 import multiprocessing
@@ -659,12 +660,10 @@ def main():
     parser = build_parser()
     args = parser.parse_args()
 
-    try:
-        multiprocessing.set_start_method(args.mp_method)
-    # main() is explicitly multiple times in tests
+    # main() is explicitly called multiple times in tests
     # and will raise RuntimeError
-    except RuntimeError:
-        pass
+    with contextlib.suppress(RuntimeError):
+        multiprocessing.set_start_method(args.mp_method)
 
     if (
         getattr(args, "func", None) == generate_inventory

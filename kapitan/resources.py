@@ -138,9 +138,7 @@ def yaml_load(search_paths, name):
     for path in search_paths:
         _full_path = os.path.join(path, name)
         logger.debug("yaml_load trying file %s", _full_path)
-        if os.path.exists(_full_path) and (
-            name.endswith(".yml") or name.endswith(".yaml")
-        ):
+        if os.path.exists(_full_path) and name.endswith((".yml", ".yaml")):
             logger.debug("yaml_load found file at %s", _full_path)
             try:
                 with open(_full_path) as f:
@@ -156,9 +154,7 @@ def yaml_load_stream(search_paths, name):
     for path in search_paths:
         _full_path = os.path.join(path, name)
         logger.debug("yaml_load_stream trying file %s", _full_path)
-        if os.path.exists(_full_path) and (
-            name.endswith(".yml") or name.endswith(".yaml")
-        ):
+        if os.path.exists(_full_path) and name.endswith((".yml", ".yaml")):
             logger.debug("yaml_load_stream found file at %s", _full_path)
             try:
                 with open(_full_path) as f:
