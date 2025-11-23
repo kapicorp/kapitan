@@ -5,19 +5,22 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"default values for kapitan variables"
+"""Default configuration values for Kapitan."""
 
 import os
 
 
-DEFAULT_KUBERNETES_VERSION = "1.14.0"
+# Kubernetes JSON schema defaults
+DEFAULT_KUBERNETES_VERSION: str = "1.14.0"
 # standalone is used for standalone json schema (i.e. without external $refs)
 # strict is used as it behaves similarly to kubectl
 # see https://github.com/garethr/kubernetes-json-schema#kubernetes-json-schemas for more info
-SCHEMA_TYPE = "standalone-strict"
-FILE_PATH_FORMAT = f"v{{}}-{SCHEMA_TYPE}/{{}}.json"
+SCHEMA_TYPE: str = "standalone-strict"
+FILE_PATH_FORMAT: str = f"v{{}}-{SCHEMA_TYPE}/{{}}.json"
 
-# default path from where user defined custom filters are read
-DEFAULT_JINJA2_FILTERS_PATH = os.path.join("lib", "jinja2_filters.py")
-COPIER_TEMPLATE_REPOSITORY = "https://github.com/kapicorp/kapitan-reference.git"
-COPIER_TEMPLATE_REF = "copier"
+# Jinja2 configuration
+DEFAULT_JINJA2_FILTERS_PATH: str = os.path.join("lib", "jinja2_filters.py")
+
+# Copier template defaults
+COPIER_TEMPLATE_REPOSITORY: str = "https://github.com/kapicorp/kapitan-reference.git"
+COPIER_TEMPLATE_REF: str = "copier"
