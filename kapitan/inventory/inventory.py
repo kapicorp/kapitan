@@ -109,11 +109,15 @@ class Inventory(ABC):
         return self.targets.get(target_name)
 
     def get_targets(
-        self, target_names: list[str] = [], ignore_class_not_found: bool = False
+        self,
+        target_names: list[str] | None = None,
+        ignore_class_not_found: bool = False,
     ) -> dict:
         """
         helper function to get rendered InventoryTarget objects for multiple targets
         """
+        if target_names is None:
+            target_names = []
 
         if target_names:
             return {
