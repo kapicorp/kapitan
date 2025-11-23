@@ -726,7 +726,7 @@ class RefController:
 
     def __setitem__(self, key, value):
         # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
-        tag, token, func_str = self.tag_params(key)
+        _tag, token, func_str = self.tag_params(key)
 
         with self.detailedException(key):
             if func_str is None and isinstance(value, self.token_type(token)):

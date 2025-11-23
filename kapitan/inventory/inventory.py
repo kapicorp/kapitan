@@ -9,7 +9,6 @@ import functools
 import logging
 import os
 from abc import ABC, abstractmethod
-from typing import Dict
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -135,7 +134,7 @@ class Inventory(ABC):
             return target.parameters
 
         return {
-            name: {"parameters": Dict(target.parameters)}
+            name: {"parameters": dict(target.parameters)}
             for name, target in self.get_targets(target_names)
         }
 

@@ -4,7 +4,6 @@
 
 import functools  # Import functools for caching
 import importlib
-from typing import Type
 
 from kapitan.inventory.model.input_types import InputTypes
 
@@ -12,7 +11,7 @@ from .base import InputType
 
 
 @functools.cache  # Use lru_cache for caching
-def get_compiler(input_type: InputType) -> Type[InputType]:
+def get_compiler(input_type: InputType) -> type[InputType]:
     """Dynamically imports and returns the compiler class based on input_type."""
 
     module_map = {

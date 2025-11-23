@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import Literal, Optional
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings
@@ -11,7 +11,7 @@ class KapitanReferenceBaseConfig(BaseModel):
 
 
 class KapitanReferenceGPGConfig(KapitanReferenceBaseConfig):
-    recipients: List[dict[str, str]] = []
+    recipients: list[dict[str, str]] = []
 
 
 # Must be pydantic_settings.BaseSettings so that environment variables are actually used to

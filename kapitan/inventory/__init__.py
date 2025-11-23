@@ -1,5 +1,3 @@
-from typing import Type
-
 from kapitan.utils import StrEnum
 
 from .inventory import Inventory, InventoryError, InventoryTarget
@@ -45,14 +43,14 @@ def load_omegaconf_backend():
 
 # Dict mapping values for command line flag `--inventory-backend` to the
 # associated `Inventory` subclass.
-AVAILABLE_BACKENDS: dict[str, Type[Inventory]] = {
+AVAILABLE_BACKENDS: dict[str, type[Inventory]] = {
     InventoryBackends.RECLASS: load_reclass_backend,
     InventoryBackends.RECLASS_RS: load_reclass_rs_backend,
     InventoryBackends.OMEGACONF: load_omegaconf_backend,
 }
 
 
-def get_inventory_backend(backend_name: str) -> Type[Inventory]:
+def get_inventory_backend(backend_name: str) -> type[Inventory]:
     """
     Get the `Inventory` subclass associated with the given `backend_name`.
     """

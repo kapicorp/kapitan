@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union
+from typing import Annotated, Any, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -34,7 +34,7 @@ class KapitanInputTypeBaseConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: Optional[str] = Field(default=None)
     input_type: InputTypes
-    input_paths: List[str]
+    input_paths: list[str]
     output_path: str
     input_params: dict = {}
     continue_on_compile_error: Optional[bool] = False
@@ -52,7 +52,7 @@ class KapitanInputTypeJsonnetConfig(KapitanInputTypeBaseConfig):
 class KapitanInputTypeExternalConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.EXTERNAL] = InputTypes.EXTERNAL
     env_vars: dict[str, str] = {}
-    args: List[str] = []
+    args: list[str] = []
 
 
 class KapitanInputTypeCopyConfig(KapitanInputTypeBaseConfig):
@@ -74,7 +74,7 @@ class KapitanInputTypeHelmConfig(KapitanInputTypeBaseConfig):
     prune: Optional[bool] = False
     helm_params: dict = {}
     helm_values: Optional[dict] = {}
-    helm_values_files: Optional[List[str]] = []
+    helm_values_files: Optional[list[str]] = []
     helm_path: Optional[str] = None
     kube_version: Optional[str] = None
 
@@ -105,16 +105,16 @@ class KapitanInputTypeKustomizeConfig(KapitanInputTypeBaseConfig):
     output_type: OutputType = OutputType.YAML
     namespace: Optional[str] = None
     prune: Optional[bool] = False
-    patches: Optional[Dict[str, Any]] = {}
-    patches_strategic: Optional[Dict[str, Any]] = {}
-    patches_json: Optional[Dict[str, Any]] = {}
+    patches: Optional[dict[str, Any]] = {}
+    patches_strategic: Optional[dict[str, Any]] = {}
+    patches_json: Optional[dict[str, Any]] = {}
 
 
 class KapitanInputTypeCuelangConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.CUELANG] = InputTypes.CUELANG
     output_type: OutputType = OutputType.YAML
     # optional value to pass to the CUE input
-    input: Optional[Dict[str, Any]] = None
+    input: Optional[dict[str, Any]] = None
     # optional CUE path in which the input is injected. By default, the input
     # is injected at the root.
     input_fill_path: Optional[str] = None
