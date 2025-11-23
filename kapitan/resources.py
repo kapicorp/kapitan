@@ -279,7 +279,7 @@ def search_imports(cwd, import_str, search_paths):
 
 
 def inventory(
-    search_paths: list = [],
+    search_paths: list | None = None,
     target_name: str = None,
     inventory_path: str = "./inventory",
 ):
@@ -290,6 +290,8 @@ def inventory(
     set inventory_path to read custom path. None defaults to value set via cli
     Returns a dictionary with the inventory for target
     """
+    if search_paths is None:
+        search_paths = []
     inventory_path = inventory_path or cached.args.inventory_path
 
     inv_path_exists = False
