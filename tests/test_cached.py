@@ -9,8 +9,6 @@
 
 from argparse import Namespace
 
-import pytest
-
 from kapitan import cached
 
 

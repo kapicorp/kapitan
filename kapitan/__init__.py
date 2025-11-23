@@ -9,7 +9,9 @@ import logging
 import sys
 
 
-def setup_logging(name: str | None = None, level: int = logging.INFO, force: bool = False) -> None:
+def setup_logging(
+    name: str | None = None, level: int = logging.INFO, force: bool = False
+) -> None:
     """
     Configure Python logging with appropriate format and level.
 

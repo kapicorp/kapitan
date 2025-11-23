@@ -15,6 +15,7 @@ objects that need to be shared across Kapitan's execution.
 from argparse import Namespace
 from typing import Any
 
+
 # Inventory caches
 inv: dict[str, Any] = {}
 global_inv: dict[str, Any] = {}
