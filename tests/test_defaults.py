@@ -47,7 +47,7 @@ class TestJinja2Defaults:
         """Test that DEFAULT_JINJA2_FILTERS_PATH is a valid path."""
         assert isinstance(defaults.DEFAULT_JINJA2_FILTERS_PATH, str)
         expected = os.path.join("lib", "jinja2_filters.py")
-        assert defaults.DEFAULT_JINJA2_FILTERS_PATH == expected
+        assert expected == defaults.DEFAULT_JINJA2_FILTERS_PATH
 
 
 class TestCopierDefaults:
