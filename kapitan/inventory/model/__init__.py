@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -13,10 +13,10 @@ class KapitanEssentialVars(BaseModel):
 
 
 class KapitanInventorySettings(BaseModel):
-    compile: List[CompileInputTypeConfig] = []
+    compile: list[CompileInputTypeConfig] = []
     vars: KapitanEssentialVars = KapitanEssentialVars()
     labels: dict[str, str] = {}
-    dependencies: Optional[List[DependencyTypeConfig]] = []
+    dependencies: Optional[list[DependencyTypeConfig]] = []
     target_full_path: str = ""
     secrets: Optional[KapitanReferenceConfig] = None
     validate_: list[dict] = Field(alias="validate", default=[])
@@ -26,7 +26,7 @@ class KapitanMetadataName(BaseModel):
     short: str
     full: str
     path: str
-    parts: List[str]
+    parts: list[str]
 
 
 class KapitanInventoryMetadata(BaseModel):

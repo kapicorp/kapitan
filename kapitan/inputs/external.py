@@ -9,7 +9,6 @@ import logging
 import os
 import re
 import subprocess
-from typing import Dict, List
 
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeExternalConfig
@@ -23,10 +22,10 @@ class External(InputType):
     External input type. Executes an external command to generate Kubernetes manifests.
     """
 
-    env_vars: Dict[
+    env_vars: dict[
         str, str
     ] = {}  #: Environment variables to pass to the external command.
-    command_args: List[
+    command_args: list[
         str
     ] = []  #: Command-line arguments to pass to the external command.
 
@@ -46,7 +45,7 @@ class External(InputType):
             env_vars["HOME"] = os.environ["HOME"]
         self.env_vars = env_vars
 
-    def set_args(self, args: List[str]):
+    def set_args(self, args: list[str]):
         """Sets command-line arguments for the external command."""
         self.command_args = args
 
