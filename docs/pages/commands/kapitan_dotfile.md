@@ -69,3 +69,5 @@ global:
 which would be equivalent to always running **Kapitan** with `--inventory-backend=reclass`.
 
 Please note that the `inventory-backend` flag currently can't be set through the command-specific sections of the **Kapitan** config file.
+
+For additional entries in the `.kapitan` please search for `from_dot_kapitan` in the Kapitan source code.
