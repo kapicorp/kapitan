@@ -94,7 +94,7 @@ You can write your own resolvers and are able to achieve any behavior you want.
 In your inventory you have to create a file `resolvers.py`.
 You should define a function `pass_resolvers()` that returns a dictionary with the resolvers name and the respective function pointer.
 
-Now you can start writing python functions with your custom .
+Now you can start writing Python functions with your custom resolvers.
 
 ### Example
 
