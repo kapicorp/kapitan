@@ -52,7 +52,7 @@ OmegaConf uses the default yaml-path notation using dots (`.`) as key delimiter.
 
 ## New Functionalities
 
-All of [OmegaConfs native functionalities](https://omegaconf.readthedocs.io/en/2.3_branch/grammar.html#the-omegaconf-grammar) are supported.
+All of [OmegaConf's native functionalities](https://omegaconf.readthedocs.io/en/2.3_branch/grammar.html#the-omegaconf-grammar) are supported.
 
 ### General
 * relative interpolation
@@ -157,7 +157,7 @@ parameters:
   deployment:
 
     namespace: ${target_name}
-    component_name: \${parentkey:} # hack to get the component's name
+    component_name: \${parentkey:} # workaround: retrieves the component's name in this context
 
     labels:
       app.kubernetes.io/name: ${relpath:deployment.namespace} # gets resolved relatively
@@ -259,7 +259,7 @@ components:
     image_pull_secrets:
       - name: default-secret
     labels:
-      app.kubernetes.io/name: example1
+      app.kubernetes.io/name: example2
     namespace: example2
     ports:
       http:
