@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://kapitan.dev/0.33/pages/inventory/advanced/">
+        <link rel="canonical" href="https://kapitan.dev/0.33/pages/input_types/kustomize/">
       
       
-        <link rel="prev" href="../parameters_interpolation/">
+        <link rel="prev" href="../helm/">
       
       
-        <link rel="next" href="../backends/">
+        <link rel="next" href="../cuelang/">
       
       
       <link rel="icon" href="../../../images/logo.min.svg">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Advanced - Kapitan: Keep your ship together</title>
+        <title>Kustomize - Kapitan: Keep your ship together</title>
       
     
     
@@ -91,7 +91,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#advanced-inventory-features" class="md-skip">
+        <a href="#kustomize-input-type" class="md-skip">
           Skip to content
         </a>
       
@@ -130,7 +130,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Advanced
+              Kustomize
             
           </span>
         </div>
@@ -664,10 +664,8 @@
                 
   
   
-    
   
   
-  
     
     
       
@@ -690,11 +688,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
         
           
           <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
@@ -710,7 +708,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_2">
             <span class="md-nav__icon md-icon"></span>
             Inventory
@@ -724,7 +722,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../introduction/" class="md-nav__link">
+      <a href="../../inventory/introduction/" class="md-nav__link">
         
   
   
@@ -747,7 +745,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../targets/" class="md-nav__link">
+      <a href="../../inventory/targets/" class="md-nav__link">
         
   
   
@@ -770,7 +768,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../classes/" class="md-nav__link">
+      <a href="../../inventory/classes/" class="md-nav__link">
         
   
   
@@ -793,7 +791,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../parameters_interpolation/" class="md-nav__link">
+      <a href="../../inventory/parameters_interpolation/" class="md-nav__link">
         
   
   
@@ -813,32 +811,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Advanced
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../inventory/advanced/" class="md-nav__link">
         
   
   
@@ -849,35 +825,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#target-labels" class="md-nav__link">
-    <span class="md-ellipsis">
-      Target labels
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -939,7 +886,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backends/" class="md-nav__link">
+      <a href="../../inventory/backends/" class="md-nav__link">
         
   
   
@@ -962,7 +909,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reclass-rs/" class="md-nav__link">
+      <a href="../../inventory/reclass-rs/" class="md-nav__link">
         
   
   
@@ -985,7 +932,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../omegaconf/" class="md-nav__link">
+      <a href="../../inventory/omegaconf/" class="md-nav__link">
         
   
   
@@ -1021,8 +968,10 @@
                 
   
   
+    
   
   
+  
     
     
       
@@ -1055,11 +1004,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" checked>
         
           
           <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
@@ -1075,7 +1024,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4_3">
             <span class="md-nav__icon md-icon"></span>
             Input Types
@@ -1089,7 +1038,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../input_types/introduction/" class="md-nav__link">
+      <a href="../introduction/" class="md-nav__link">
         
   
   
@@ -1112,7 +1061,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../input_types/kadet/" class="md-nav__link">
+      <a href="../kadet/" class="md-nav__link">
         
   
   
@@ -1135,7 +1084,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../input_types/jinja/" class="md-nav__link">
+      <a href="../jinja/" class="md-nav__link">
         
   
   
@@ -1158,7 +1107,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../input_types/cuelang/" class="md-nav__link">
+      <a href="../cuelang/" class="md-nav__link">
         
   
   
@@ -1181,7 +1130,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../input_types/helm/" class="md-nav__link">
+      <a href="../helm/" class="md-nav__link">
         
   
   
@@ -1201,10 +1150,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../input_types/kustomize/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Kustomize
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1215,6 +1186,143 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Options
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-patches" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Patches
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multiple Environments
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugging
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      Related
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1227,7 +1335,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../input_types/cuelang/" class="md-nav__link">
+      <a href="../cuelang/" class="md-nav__link">
         
   
   
@@ -1250,7 +1358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../input_types/jsonnet/" class="md-nav__link">
+      <a href="../jsonnet/" class="md-nav__link">
         
   
   
@@ -1273,7 +1381,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../input_types/external/" class="md-nav__link">
+      <a href="../external/" class="md-nav__link">
         
   
   
@@ -1296,7 +1404,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../input_types/copy/" class="md-nav__link">
+      <a href="../copy/" class="md-nav__link">
         
   
   
@@ -1319,7 +1427,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../input_types/remove/" class="md-nav__link">
+      <a href="../remove/" class="md-nav__link">
         
   
   
@@ -2141,47 +2249,245 @@
   <!-- Edit button -->
   
   <a
-      href="https://github.com/kapicorp/kapitan/edit/master/docs/pages/inventory/advanced.md"
+      href="https://github.com/kapicorp/kapitan/edit/master/docs/pages/input_types/kustomize.md"
       title="edit.link.title"
       class="md-content__button md-icon"
   >
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
   </a>
 
-<h1 id="advanced-inventory-features">Advanced Inventory Features</h1>
-<h2 id="target-labels">Target labels</h2>
-<p>Kapitan allows you to define labels in your inventory, which can then be used to group together targets with similar labels.</p>
-<p>For instance you could define the following:</p>
-<div class="admonition example">
-<p>Defines a class to add the <code>customer</code> label to selected targets</p>
-<div class="admonition example">
-<p class="admonition-title"><code>inventory/classes/type/customer_project.yml</code></p>
-<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">customer_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${target_name}</span><span class="w"> </span><span class="c1"># Defaults to the target_name</span>
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">customer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${customer_name}</span>
+<h1 id="kustomize-input-type">Kustomize Input Type</h1>
+<p>The Kustomize input type allows you to use <a href="https://kustomize.io/">Kustomize</a> to manage and customize Kubernetes manifests within Kapitan. This input type is particularly useful when you need to:</p>
+<ul>
+<li>Apply patches to existing Kubernetes manifests</li>
+<li>Set namespaces for resources</li>
+<li>Manage multiple environments with overlays</li>
+<li>Customize resources without modifying the original manifests</li>
+</ul>
+<h2 id="configuration">Configuration</h2>
+<p>The Kustomize input type supports the following configuration options:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
+<span class="w">      </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
+<span class="w">      </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">path/to/kustomize/overlay</span>
+<span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-namespace</span><span class="w">  </span><span class="c1"># Optional: Set namespace for all resources</span>
+<span class="w">      </span><span class="nt">patches</span><span class="p">:</span><span class="w">  </span><span class="c1"># Optional: Apply patches to resources</span>
+<span class="w">        </span><span class="nt">patch-name</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">target</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-deployment</span>
+<span class="w">            </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-namespace</span>
+<span class="w">          </span><span class="nt">patch</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="w">            </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="w">            </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-deployment</span>
+<span class="w">              </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-namespace</span>
+<span class="w">            </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">                  </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">                    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-container</span>
+<span class="w">                      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:1.19</span>
 </code></pre></div>
-</div>
-<p>Apply the class to the target for customer <code>acme</code></p>
-<div class="admonition example">
-<p class="admonition-title"><code>inventory/targets/customers/acme.yml</code></p>
-<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
-<span class="nn">...</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">type.customer_project</span>
+<h3 id="configuration-options">Configuration Options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>output_path</code></td>
+<td>string</td>
+<td>Path where compiled manifests will be written</td>
+</tr>
+<tr>
+<td><code>input_type</code></td>
+<td>string</td>
+<td>Must be set to <code>kustomize</code></td>
+</tr>
+<tr>
+<td><code>input_paths</code></td>
+<td>list</td>
+<td>List of paths to Kustomize overlays</td>
+</tr>
+<tr>
+<td><code>namespace</code></td>
+<td>string</td>
+<td>Optional: Namespace to set for all resources</td>
+</tr>
+<tr>
+<td><code>patches</code></td>
+<td>object</td>
+<td>Optional: Dictionary of patches to apply</td>
+</tr>
+</tbody>
+</table>
+<h2 id="examples">Examples</h2>
+<h3 id="basic-usage">Basic Usage</h3>
+<p>Here's a simple example that uses Kustomize to manage a deployment:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/my-app.yml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
 
 <span class="nt">parameters</span><span class="p">:</span>
-<span class="nn">...</span>
+<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
+<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kubernetes/base</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
 </code></pre></div>
-</div>
-<p>You can now selectively compile targets for customer <code>acme</code> using the following (see see <a href="../../commands/kapitan_compile/#using-labels"><strong>Labels</strong></a> for more details )</p>
-<div class="admonition example">
-<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile<span class="w"> </span>-l<span class="w"> </span><span class="nv">customer</span><span class="o">=</span>acme
-Compiled<span class="w"> </span>acme<span class="w"> </span><span class="o">(</span><span class="m">0</span>.06s<span class="o">)</span>
-Compiled<span class="w"> </span>acme-documentation<span class="w"> </span><span class="o">(</span><span class="m">0</span>.09s<span class="o">)</span>
+<p>With the following directory structure:
+<div class="highlight"><pre><span></span><code>kubernetes/
+  base/
+    kustomization.yaml
+    deployment.yaml
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/base/kustomization.yaml</span>
+<span class="nt">resources</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deployment.yaml</span>
 </code></pre></div>
-</div>
-</div>
+<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/base/deployment.yaml</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:latest</span>
+</code></pre></div>
+<h3 id="using-patches">Using Patches</h3>
+<p>Here's an example that uses patches to customize a deployment:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/my-app.yml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
+<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kubernetes/base</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">        </span><span class="nt">patches</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">update-image</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">target</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="w">              </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">              </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">            </span><span class="nt">patch</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="w">              </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="w">              </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">                </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">              </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">                  </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">                    </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">                      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">                        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:1.19</span>
+</code></pre></div>
+<h3 id="multiple-environments">Multiple Environments</h3>
+<p>You can use Kustomize overlays to manage different environments:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/my-app-prod.yml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-prod</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
+<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kubernetes/overlays/prod</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-prod</span>
+</code></pre></div>
+<p>With the following directory structure:
+<div class="highlight"><pre><span></span><code>kubernetes/
+  base/
+    kustomization.yaml
+    deployment.yaml
+  overlays/
+    prod/
+      kustomization.yaml
+      patches/
+        replicas.yaml
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/overlays/prod/kustomization.yaml</span>
+<span class="nt">resources</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">../../base</span>
+<span class="nt">patches</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">patches/replicas.yaml</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/overlays/prod/patches/replicas.yaml</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</code></pre></div>
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li>
+<p><strong>Use Base and Overlays</strong>: Organize your Kustomize resources using base and overlays for better maintainability.</p>
+</li>
+<li>
+<p><strong>Keep Patches Small</strong>: Create small, focused patches that modify specific aspects of resources.</p>
+</li>
+<li>
+<p><strong>Use Namespaces</strong>: Always specify namespaces in your patches to avoid conflicts.</p>
+</li>
+<li>
+<p><strong>Version Control</strong>: Keep your Kustomize resources in version control for better tracking and collaboration.</p>
+</li>
+<li>
+<p><strong>Documentation</strong>: Document your Kustomize overlays and patches for better maintainability.</p>
+</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-issues">Common Issues</h3>
+<ol>
+<li>
+<p><strong>Patch Not Applied</strong>: Ensure that the target resource exists and the patch format is correct.</p>
+</li>
+<li>
+<p><strong>Namespace Issues</strong>: Make sure to specify the namespace in both the target and patch.</p>
+</li>
+<li>
+<p><strong>Resource Not Found</strong>: Verify that the input paths are correct and the resources exist.</p>
+</li>
+</ol>
+<h3 id="debugging">Debugging</h3>
+<p>To debug Kustomize issues:</p>
+<ol>
+<li>Check the generated kustomization.yaml in the temporary directory</li>
+<li>Verify that all paths are correct</li>
+<li>Ensure that patches are properly formatted</li>
+<li>Check that target resources exist</li>
+</ol>
+<h2 id="related">Related</h2>
+<ul>
+<li><a href="https://kustomize.io/">Kustomize Documentation</a></li>
+<li><a href="https://kubernetes.io/docs/home/">Kubernetes Documentation</a></li>
+<li><a href="../introduction/">Kapitan Input Types</a></li>
+</ul>
 
               </article>
             </div>
