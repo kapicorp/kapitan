@@ -116,7 +116,7 @@ def split_dots(input: str):
 
 # required function
 def pass_resolvers():
-    return {"concat": concat, "plus_ten": add_ten, "default": default_value, "split", split_dots}
+    return {"concat": concat, "plus_ten": add_ten, "default": default_value, "split": split_dots}
 ```
 
 If we render a file the result would be:
@@ -157,7 +157,7 @@ parameters:
   deployment:
 
     namespace: ${target_name}
-    component_name: \${parentkey:} # hack to get the components name
+    component_name: \${parentkey:} # hack to get the component's name
 
     labels:
       app.kubernetes.io/name: ${relpath:deployment.namespace} # gets resolved relatively
