@@ -323,10 +323,8 @@ def build_parser():
         choices=["literal", "folded", "double-quotes"],
         metavar="STYLE",
         action="store",
-        default=from_dot_kapitan(
-            "compile", "yaml-multiline-string-style", "double-quotes"
-        ),
-        help="set multiline string style to STYLE, default is 'double-quotes'",
+        default=from_dot_kapitan("compile", "yaml-multiline-string-style", "literal"),
+        help="set multiline string style to STYLE, default is 'literal'",
     )
 
     compile_parser.add_argument(
