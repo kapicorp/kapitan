@@ -6,7 +6,7 @@ With version `0.33.0` we are introducing a new inventory backend as an alternati
 
 !!! warning
 
-    OmegaConf is currently in experimental mode. If you encouter unexpected errors or bugs, please let us know and create an [issue](https://github.com/kapicorp/kapitan/issues/new/choose).
+    OmegaConf is currently in experimental mode. If you encounter unexpected errors or bugs, please let us know and create an [issue](https://github.com/kapicorp/kapitan/issues/new/choose).
 
 
 ## Installation
