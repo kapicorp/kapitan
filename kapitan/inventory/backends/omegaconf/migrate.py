@@ -26,7 +26,7 @@ def migrate_dir(path: str):
     for root, _, files in os.walk(path):
         for file in files:
             file = os.path.join(root, file)
-            name, ext = os.path.splitext(file)
+            _name, ext = os.path.splitext(file)
 
             if ext not in (".yml", ".yaml"):
                 continue

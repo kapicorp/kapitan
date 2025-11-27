@@ -241,7 +241,7 @@ class Revealer:
         detects filename by extension (.yml/.yaml, .json or otherwise raw)
         reveals secrets in content
         """
-        if filename.endswith(".yml") or filename.endswith(".yaml"):
+        if filename.endswith((".yml", ".yaml")):
             logger.debug("Revealer: revealing yml file: %s", filename)
             with open(filename) as fp:
                 obj = [o for o in yaml.load_all(fp, Loader=YamlLoader)]
@@ -278,7 +278,7 @@ class Revealer:
         for fpath in list_all_paths(dirname):
             if not os.path.isfile(fpath):
                 continue
-            if fpath.endswith(".yml") or fpath.endswith(".yaml"):
+            if fpath.endswith((".yml", ".yaml")):
                 out, _ = self._reveal_file(fpath)
                 out_yaml += out
             elif fpath.endswith(".json"):
@@ -726,7 +726,7 @@ class RefController:
 
     def __setitem__(self, key, value):
         # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
-        tag, token, func_str = self.tag_params(key)
+        _tag, token, func_str = self.tag_params(key)
 
         with self.detailedException(key):
             if func_str is None and isinstance(value, self.token_type(token)):

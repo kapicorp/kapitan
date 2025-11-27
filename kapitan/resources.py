@@ -138,9 +138,7 @@ def yaml_load(search_paths, name):
     for path in search_paths:
         _full_path = os.path.join(path, name)
         logger.debug("yaml_load trying file %s", _full_path)
-        if os.path.exists(_full_path) and (
-            name.endswith(".yml") or name.endswith(".yaml")
-        ):
+        if os.path.exists(_full_path) and name.endswith((".yml", ".yaml")):
             logger.debug("yaml_load found file at %s", _full_path)
             try:
                 with open(_full_path) as f:
@@ -156,9 +154,7 @@ def yaml_load_stream(search_paths, name):
     for path in search_paths:
         _full_path = os.path.join(path, name)
         logger.debug("yaml_load_stream trying file %s", _full_path)
-        if os.path.exists(_full_path) and (
-            name.endswith(".yml") or name.endswith(".yaml")
-        ):
+        if os.path.exists(_full_path) and name.endswith((".yml", ".yaml")):
             logger.debug("yaml_load_stream found file at %s", _full_path)
             try:
                 with open(_full_path) as f:
@@ -283,7 +279,7 @@ def search_imports(cwd, import_str, search_paths):
 
 
 def inventory(
-    search_paths: list = [],
+    search_paths: list | None = None,
     target_name: str = None,
     inventory_path: str = "./inventory",
 ):
@@ -294,6 +290,8 @@ def inventory(
     set inventory_path to read custom path. None defaults to value set via cli
     Returns a dictionary with the inventory for target
     """
+    if search_paths is None:
+        search_paths = []
     inventory_path = inventory_path or cached.args.inventory_path
 
     inv_path_exists = False

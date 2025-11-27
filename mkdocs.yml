@@ -84,6 +84,7 @@ nav:
         - Backends:
           - Introduction: pages/inventory/backends.md
           - reclass-rs: pages/inventory/reclass-rs.md
+          - omegaconf: pages/inventory/omegaconf.md
       - Input Types:
           - Introduction: pages/input_types/introduction.md
           - Kadet: pages/input_types/kadet.md

@@ -153,7 +153,9 @@ class OmegaConfInventory(Inventory):
         with open(filename) as f:
             return yaml.safe_load(f)
 
-    def load_parameters_from_file(self, filename, parameters={}) -> Dict:
+    def load_parameters_from_file(self, filename, parameters=None) -> Dict:
+        if parameters is None:
+            parameters = {}
         parameters = OmegaConf.create(parameters)
         applications = []
         classes = []
