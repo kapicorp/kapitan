@@ -92,7 +92,7 @@ class DependencyManagerTest(unittest.TestCase):
         rmtree(temp_dir)
         rmtree(output_dir)
 
-    def test_fetch_helm_chart(self):
+    def test_fetch_helm_chart_https(self):
         """
         Tests fetching helm chart
         """
@@ -120,6 +120,32 @@ class DependencyManagerTest(unittest.TestCase):
                 os.path.join(output_chart_dir, "charts", "kube-state-metrics")
             )
         )
+        rmtree(temp_dir)
+        rmtree(output_dir)
+
+    def test_fetch_helm_chart_oci(self):
+        """
+        Tests fetching helm chart
+        """
+        temp_dir = tempfile.mkdtemp()
+        output_dir = tempfile.mkdtemp()
+        output_chart_dir = os.path.join(output_dir, "charts", "kserve-crd")
+        chart_name = "kserve-crd"
+        version = "v0.16.0"
+        repo = "oci://ghcr.io/kserve/charts/kserve-crd"
+        dep = [
+            KapitanDependencyHelmConfig(
+                output_path=output_chart_dir,
+                version=version,
+                chart_name=chart_name,
+                source=repo,
+            )
+        ]
+        fetch_helm_chart(
+            (HelmSource(repo, chart_name, version, None), dep), temp_dir, force=False
+        )
+        self.assertTrue(os.path.isdir(output_chart_dir))
+        self.assertTrue(os.path.isfile(os.path.join(output_chart_dir, "Chart.yaml")))
         rmtree(temp_dir)
         rmtree(output_dir)
 
