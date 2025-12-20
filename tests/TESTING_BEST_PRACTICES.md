@@ -148,7 +148,7 @@ To migrate existing unittest-based tests to pytest:
    pip install pytest-xdist
 
    # Run tests in parallel
-   pytest tests/ -n auto
+   poetry run pytest -n auto
    ```
 
 ## Testing Checklist
@@ -167,19 +167,19 @@ Before committing test changes, ensure:
 
 ```bash
 # Run all tests
-pytest tests/
+poetry run pytest
 
 # Run tests in parallel
-pytest tests/ -n auto
+poetry run pytest -n auto
 
 # Run specific test class
-pytest tests/test_compile_refactored.py::TestCompileResourcesObjs
+poetry run pytest tests/test_compile_refactored.py::TestCompileResourcesObjs
 
 # Run with verbose output
-pytest tests/ -v
+poetry run pytest -v
 
 # Run with coverage
-pytest tests/ --cov=kapitan
+poetry run pytest --cov=kapitan
 ```
 
 ## Benefits

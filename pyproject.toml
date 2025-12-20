@@ -143,10 +143,6 @@ addopts = [
     # don't report when running pytest, get report with: uv run coverage report
     "--cov-report=",
 ]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",

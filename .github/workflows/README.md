@@ -73,21 +73,21 @@ The project uses comprehensive coverage tracking integrated into the main workfl
 
 ### Basic Test Run
 ```bash
-poetry run pytest tests/
+poetry run pytest
 ```
 
 ### With Coverage
 ```bash
-poetry run pytest tests/ --cov=kapitan --cov-report=html --cov-report=term
+poetry run pytest --cov=kapitan --cov-report=html --cov-report=term
 ```
 
 ### Parallel Execution (Recommended)
 ```bash
 # Use all available CPU cores
-poetry run pytest tests/ -n auto
+poetry run pytest -n auto
 
 # With coverage in parallel
-poetry run pytest tests/ -n auto --cov=kapitan --cov-branch
+poetry run pytest -n auto --cov=kapitan --cov-branch
 ```
 
 ### Generate All Reports (CI-style)
@@ -97,7 +97,7 @@ rm -f .coverage* coverage.xml coverage.json
 
 # Run tests with parallel execution and coverage
 # Note: Direct report generation is more reliable with pytest-xdist
-poetry run pytest tests/ \
+poetry run pytest \
   -n auto \
   --cov=kapitan \
   --cov-branch \
