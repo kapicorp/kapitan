@@ -145,10 +145,6 @@ To migrate existing unittest-based tests to pytest:
 
 4. **Run Tests in Parallel**:
    ```bash
-   # Install pytest-xdist
-   pip install pytest-xdist
-
-   # Run tests in parallel
    poetry run pytest -n auto
    ```
 
