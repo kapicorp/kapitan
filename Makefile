@@ -121,7 +121,7 @@ check_format:
 .PHONY: test_python
 test_python:
 	@echo "===== Running Python Tests with coverage ====="
-	poetry run pytest
+	poetry run pytest -n auto
 
 # Run tests coverage report
 .PHONY: test_coverage
