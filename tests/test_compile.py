@@ -14,9 +14,9 @@ import logging
 import os
 import shutil
 import sys
-import tempfile
 import unittest
 
+import pytest
 import toml
 import yaml
 
@@ -179,13 +179,13 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
         reset_cache()
 
 
+@pytest.mark.usefixtures("isolated_kubernetes_inventory")
 class CompileKubernetesTest(unittest.TestCase):
     extraArgv = []
-    inventory_path = TEST_KUBERNETES_PATH
 
     def setUp(self):
+        self.inventory_path = os.getcwd()
         reset_cache()
-        os.chdir(self.inventory_path)
         shutil.rmtree("compiled", ignore_errors=True)
 
     def test_compile(self):
@@ -213,9 +213,6 @@ class CompileKubernetesTest(unittest.TestCase):
             os.path.exists("compiled/minikube-mysql")
             and not os.path.exists("compiled/minikube-es")
         )
-        # Reset compiled dir
-        sys.argv = ["kapitan", "compile"] + self.extraArgv
-        main()
 
     def test_compile_target_with_label(self):
         reset_cache()
@@ -225,9 +222,6 @@ class CompileKubernetesTest(unittest.TestCase):
             os.path.exists("compiled/minikube-nginx-kadet")
             and not os.path.exists("compiled/minikube-nginx-jsonnet")
         )
-        # Reset compiled dir
-        sys.argv = ["kapitan", "compile"] + self.extraArgv
-        main()
 
     def test_compile_jsonnet_env(self):
         sys.argv = ["kapitan", "compile", "-t", "jsonnet-env"] + self.extraArgv
@@ -250,7 +244,6 @@ class CompileKubernetesTest(unittest.TestCase):
             self.assertEqual(env["exports"], {})
 
     def tearDown(self):
-        shutil.rmtree("compiled", ignore_errors=True)
         os.chdir(TEST_PWD)
         reset_cache()
 
@@ -266,25 +259,16 @@ class CompileKubernetesTestReclassRs(CompileKubernetesTest):
 
 
 class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
-    temp_dir = tempfile.mkdtemp()
-
     def setUp(self):
-        reset_cache()
-        shutil.copytree(self.inventory_path, self.temp_dir, dirs_exist_ok=True)
-        self.inventory_path = self.temp_dir
         super().setUp()
         self.extraArgv = ["--inventory-backend=omegaconf"]
         from kapitan.inventory.backends.omegaconf import migrate
 
-        migrate(self.temp_dir)
+        migrate(os.getcwd())
 
     @unittest.skip("Already tested")
     def test_compile_not_enough_args(self):
         pass
-
-    def tearDown(self):
-        shutil.rmtree(self.temp_dir)
-        super().tearDown()
 
 
 class CompileTerraformTest(unittest.TestCase):
