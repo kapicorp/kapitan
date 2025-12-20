@@ -174,14 +174,11 @@ package:
 	@echo "===== Building Python Package ====="
 	python3 setup.py sdist bdist_wheel
 
-# Clean build artifacts
+# Clean all git ignored artifacts
 .PHONY: clean
 clean:
-	@echo "===== Cleaning Build Artifacts ====="
-	rm -rf dist/ build/ kapitan.egg-info/ bindist/
-	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name .ruff_cache -exec rm -rf {} + 2>/dev/null || true
+	@echo "===== Cleaning git ignored Artifacts ====="
+	git clean -Xdf
 
 ################################################################################
 # Documentation
