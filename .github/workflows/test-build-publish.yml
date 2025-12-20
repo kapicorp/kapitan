@@ -88,19 +88,16 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: recursive
-
-      - name: Install poetry
-        run: pipx install poetry
-
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
-          cache: 'poetry'
           python-version: ${{ matrix.python-version }}
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
       - name: Install libraries dependencies
         run: |
-          poetry install --with test --no-root --extras=gojsonnet --extras=omegaconf --extras=reclass-rs
+          uv sync --locked --all-extras --dev
 
       - name: Cache external tools
         id: cache-tools
@@ -139,7 +136,7 @@ jobs:
           verbose: true
           emoji: false
           job-summary: true
-          custom-pytest: poetry run pytest -n auto
+          custom-pytest: uv run pytest -n auto
           custom-arguments: '-q'
           click-to-expand: true
           report-title: 'Kapitan tests'

@@ -30,23 +30,23 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
-      - name: Install poetry
-        run: pipx install poetry
       - name: Set up Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
-          cache: 'poetry'
+          python-version-file: pyproject.toml
+      - name: Set up uv
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
       - name: Install libraries dependencies
         run: |
-          poetry install --only docs --no-root
-          poetry run mike --version
-          poetry run mkdocs --version
+          uv sync --group docs
+          uv run mike --version
+          uv run mkdocs --version
 
-      - run: poetry run mkdocs build
+      - run: uv run mkdocs build
       - name: Deploy docs
         if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_COMMITTER_NAME: mike-mkdocs-bot
           GIT_COMMITTER_EMAIL: admins@kapicorp
-        run: poetry run mike deploy --push dev master
+        run: uv run mike deploy --push dev master
