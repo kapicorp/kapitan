@@ -22,6 +22,9 @@ from kapitan.inputs.kadet import BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
 
 
+TEST_PWD = os.getcwd()
+
+
 class HelmInputTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.path.join("tests", "test_resources"))
@@ -308,5 +311,5 @@ class HelmInputTest(unittest.TestCase):
             self.assertIsInstance(chart.root[resource_name], BaseObj)
 
     def tearDown(self):
-        os.chdir("../../")
+        os.chdir(TEST_PWD)
         reset_cache()
