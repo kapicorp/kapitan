@@ -12,6 +12,7 @@ Provides utilities for test isolation and parallel execution.
 
 import os
 import shutil
+import subprocess
 import tempfile
 from contextlib import contextmanager
 from typing import Optional
@@ -255,3 +256,20 @@ def reset_environment():
     os.environ.clear()
     os.environ.update(original_env)
     reset_cache()
+
+
+@pytest.fixture
+def setup_gpg_key():
+    example_key = "examples/kubernetes/refs/example@kapitan.dev.key"
+    example_key = os.path.join(os.getcwd(), example_key)
+
+    subprocess.run(["gpg", "--import", example_key], check=True)
+
+    # always trust this key - for testing only!
+    ownertrust = b"D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C:6\n"
+
+    subprocess.run(
+        ["gpg", "--import-ownertrust"],
+        input=ownertrust,
+        check=True,
+    )

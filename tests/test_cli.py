@@ -10,11 +10,12 @@ import contextlib
 import io
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+
+import pytest
 
 from kapitan.cli import build_parser, main
 from kapitan.refs.secrets.vaultkv import VaultSecret
@@ -54,6 +55,7 @@ def set_env(**environ):
         os.environ.update(old_environ)
 
 
+@pytest.mark.usefixtures("setup_gpg_key")
 class CliFuncsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -65,21 +67,6 @@ class CliFuncsTest(unittest.TestCase):
         # close connection
         cls.server.close_container()
         shutil.rmtree(REFS_PATH, ignore_errors=True)
-
-    def setUp(self):
-        example_key = "examples/kubernetes/refs/example@kapitan.dev.key"
-        example_key = os.path.join(os.getcwd(), example_key)
-        example_key_ownertrust = tempfile.mktemp()
-
-        # always trust this key - for testing only!
-        with open(example_key_ownertrust, "w") as fp:
-            fp.write("D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C:6\n")
-
-        subprocess.run(["gpg", "--import", example_key], check=False)
-        subprocess.run(
-            ["gpg", "--import-ownertrust", example_key_ownertrust], check=False
-        )
-        os.remove(example_key_ownertrust)
 
     def test_cli_secret_reveal_tag(self):
         """

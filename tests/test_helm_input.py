@@ -12,6 +12,7 @@ import sys
 import tempfile
 import unittest
 
+import pytest
 import yaml
 
 from kapitan.cached import reset_cache
@@ -263,6 +264,7 @@ class HelmInputTest(unittest.TestCase):
                 ),
             )
 
+    @pytest.mark.usefixtures("setup_gpg_key")
     def test_compile_with_refs(self):
         temp = tempfile.mkdtemp()
         sys.argv = [
