@@ -14,7 +14,7 @@ _rand_uint32() {
 }
 
 _pytest() {
-  poetry run pytest -n auto --no-cov --random-order-seed="${1}"
+  uv run pytest -n auto --no-cov --random-order-seed="${1}"
 }
 
 _run_tests() {

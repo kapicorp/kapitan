@@ -1,7 +1,10 @@
 # Build the virtualenv for Kapitan
-FROM python:3.11-slim AS python-builder
+ARG VIRTUAL_ENV_PATH=/opt/venv
+
+FROM ghcr.io/astral-sh/uv:python3.11-trixie-slim AS python-builder
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
+ARG VIRTUAL_ENV_PATH
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
@@ -13,11 +16,10 @@ RUN apt-get update \
         git \
         default-jre
 
-ENV POETRY_VERSION=1.8.3
-ENV VIRTUAL_ENV=/opt/venv
-ENV PATH="$VIRTUAL_ENV/bin:/usr/local/go/bin:${PATH}"
-RUN python -m venv $VIRTUAL_ENV \
-    && pip install --upgrade pip yq wheel poetry==$POETRY_VERSION
+ENV VIRTUAL_ENV=${VIRTUAL_ENV_PATH}
+ENV PATH="${VIRTUAL_ENV}/bin:/usr/local/go/bin:${PATH}"
+RUN uv venv ${VIRTUAL_ENV} && \
+    uv pip install yq wheel
 
 # Install Go (for go-jsonnet)
 RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.24.2.linux-${TARGETARCH}.tar.gz \
@@ -27,24 +29,25 @@ RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.24.2.linux-${TARGETARCH}.tar.g
 
 COPY ./MANIFEST.in ./MANIFEST.in
 COPY ./pyproject.toml ./pyproject.toml
-COPY ./poetry.lock ./poetry.lock
+COPY ./uv.lock ./uv.lock
 COPY ./README.md ./README.md
+COPY ./kapitan/version.py ./kapitan/version.py
 
-# Installs and caches dependencies
-ENV POETRY_VIRTUALENVS_CREATE=false
-RUN poetry install --no-root --extras=gojsonnet --extras=reclass-rs --extras=omegaconf
+RUN uv sync --locked --all-extras
 
 COPY ./kapitan ./kapitan
 
-RUN pip install .[gojsonnet,omegaconf,reclass-rs]
+RUN uv pip install .[gojsonnet,omegaconf,reclass-rs]
 
 FROM golang:1 AS go-builder
 RUN GOBIN=$(pwd)/ go install cuelang.org/go/cmd/cue@latest
 
 # Final image with virtualenv built in previous step
-FROM python:3.11-slim
+FROM ghcr.io/astral-sh/uv:python3.11-trixie-slim
+ARG VIRTUAL_ENV_PATH
 
-ENV PATH="/opt/venv/bin:${PATH}"
+ENV VIRTUAL_ENV=${VIRTUAL_ENV_PATH}
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 ENV HELM_CACHE_HOME=".cache/helm"
 ENV SEARCHPATH="/src"
 VOLUME ${SEARCHPATH}
@@ -76,7 +79,7 @@ RUN apt-get update \
 RUN useradd --create-home --no-log-init --user-group kapitan
 
 COPY --from=go-builder /go/cue /usr/bin/cue
-COPY --from=python-builder /opt/venv /opt/venv
+COPY --from=python-builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 USER kapitan
 
