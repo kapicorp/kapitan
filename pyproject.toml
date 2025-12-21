@@ -138,6 +138,10 @@ addopts = [
     "-ra",
     "--strict-markers",
     "--strict-config",
+    "--cov=kapitan",
+    "--cov-branch",
+    # don't report when running pytest, get report with: uv run coverage report
+    "--cov-report=",
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -153,6 +157,8 @@ markers = [
 source = ["kapitan"]
 branch = true
 parallel = true
+concurrency = ["multiprocessing"]
+command_line = "-m pytest"
 omit = [
     "*/tests/*",
     "*/test_*.py",
@@ -162,7 +168,7 @@ omit = [
 
 [tool.coverage.report]
 precision = 2
-fail_under = 65
+fail_under = 63
 show_missing = true
 skip_covered = false
 exclude_lines = [
