@@ -25,7 +25,6 @@ RUN curl -fsSL -o go.tar.gz https://go.dev/dl/go1.24.2.linux-${TARGETARCH}.tar.g
     && rm go.tar.gz
 
 
-
 COPY ./MANIFEST.in ./MANIFEST.in
 COPY ./pyproject.toml ./pyproject.toml
 COPY ./poetry.lock ./poetry.lock
