@@ -231,6 +231,21 @@ def render_chart(
             if os.path.exists(helm_temp):
                 os.remove(helm_temp)
     error_message = helm_cli(helm_path, args, verbose="--debug" in helm_flags)
+
+    # Post-process files written by helm to filter empty documents and null values
+    # This ensures consistent behavior with the output_file code path
+    if output_path and not error_message:
+        for current_dir, _, files in os.walk(output_path):
+            for file in files:
+                file_path = os.path.join(current_dir, file)
+                with open(file_path, encoding="utf-8") as f:
+                    docs = [doc for doc in yaml.safe_load_all(f) if doc is not None]
+                docs = [remove_null_values(doc) for doc in docs]
+                with open(file_path, "w", encoding="utf-8") as f:
+                    yaml.dump_all(
+                        docs, f, default_flow_style=False, Dumper=PrettyDumper
+                    )
+
     return ("", error_message)
 
 
