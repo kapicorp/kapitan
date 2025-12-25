@@ -52,27 +52,31 @@ class Helm(InputType):
         helm_path = config.helm_path
 
         helm_values_file = None
-        if config.helm_values:
-            helm_values_file = write_helm_values_file(config.helm_values)
+        try:
+            if config.helm_values:
+                helm_values_file = write_helm_values_file(config.helm_values)
 
-        helm_flags = dict(HELM_DEFAULT_FLAGS)
-        # add to flags if set
-        if config.kube_version:
-            helm_flags["--api-versions"] = config.kube_version
+            helm_flags = dict(HELM_DEFAULT_FLAGS)
+            # add to flags if set
+            if config.kube_version:
+                helm_flags["--api-versions"] = config.kube_version
 
-        temp_dir = tempfile.mkdtemp()
-        # save the template output to temp dir first
-        _, error_message = render_chart(
-            chart_dir=input_path,
-            output_path=temp_dir,
-            helm_path=helm_path,
-            helm_params=helm_params,
-            helm_values_file=helm_values_file,
-            helm_values_files=helm_values_files,
-            helm_flags=helm_flags,
-        )
-        if error_message:
-            raise HelmTemplateError(error_message)
+            temp_dir = tempfile.mkdtemp()
+            # save the template output to temp dir first
+            _, error_message = render_chart(
+                chart_dir=input_path,
+                output_path=temp_dir,
+                helm_path=helm_path,
+                helm_params=helm_params,
+                helm_values_file=helm_values_file,
+                helm_values_files=helm_values_files,
+                helm_flags=helm_flags,
+            )
+            if error_message:
+                raise HelmTemplateError(error_message)
+        finally:
+            if helm_values_file and os.path.exists(helm_values_file):
+                os.remove(helm_values_file)
         # Iterate over all files in the temporary directory
 
         walk_root_files = os.walk(temp_dir)
@@ -194,28 +198,38 @@ def render_chart(
 
     # If output_path is '-', output is a string with rendered chart
     if output_path == "-":
-        _, helm_output = tempfile.mkstemp(".helm_output.yml", text=True)
-        with open(helm_output, "w+") as f:
-            error_message = helm_cli(helm_path, args, stdout=f)
-            f.seek(0)
-            return (f.read(), error_message)
+        fd, helm_output = tempfile.mkstemp(".helm_output.yml", text=True)
+        try:
+            os.close(fd)
+            with open(helm_output, "w+") as f:
+                error_message = helm_cli(helm_path, args, stdout=f)
+                f.seek(0)
+                return (f.read(), error_message)
+        finally:
+            if os.path.exists(helm_output):
+                os.remove(helm_output)
 
     if output_file:
         # Capture helm output, filter empty documents, then write to file
-        _, helm_temp = tempfile.mkstemp(".helm_output.yml", text=True)
-        with open(helm_temp, "w+") as f:
-            error_message = helm_cli(helm_path, args, stdout=f)
-            f.seek(0)
-            # Filter out empty documents from conditional helm templates
-            docs = [doc for doc in yaml.safe_load_all(f) if doc is not None]
-            # Remove keys with null values recursively
-            docs = [remove_null_values(doc) for doc in docs]
+        fd, helm_temp = tempfile.mkstemp(".helm_output.yml", text=True)
+        try:
+            os.close(fd)
+            with open(helm_temp, "w+") as f:
+                error_message = helm_cli(helm_path, args, stdout=f)
+                f.seek(0)
+                # Filter out empty documents from conditional helm templates
+                docs = [doc for doc in yaml.safe_load_all(f) if doc is not None]
+                # Remove keys with null values recursively
+                docs = [remove_null_values(doc) for doc in docs]
 
-        output_file_path = os.path.join(output_path, output_file)
-        with open(output_file_path, "w") as f:
-            yaml.dump_all(docs, f, default_flow_style=False, Dumper=PrettyDumper)
+            output_file_path = os.path.join(output_path, output_file)
+            with open(output_file_path, "w") as f:
+                yaml.dump_all(docs, f, default_flow_style=False, Dumper=PrettyDumper)
 
-        return ("", error_message)
+            return ("", error_message)
+        finally:
+            if os.path.exists(helm_temp):
+                os.remove(helm_temp)
     error_message = helm_cli(helm_path, args, verbose="--debug" in helm_flags)
     return ("", error_message)
 
@@ -237,10 +251,19 @@ def write_helm_values_file(helm_values: dict):
 
     Returns:
         str: The path to the temporary YAML file.
+
+    Note:
+        The caller is responsible for cleaning up the temporary file.
     """
-    _, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
-    with open(helm_values_file, "w") as fp:
-        yaml.safe_dump(helm_values, fp)
+    fd, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
+    try:
+        os.close(fd)
+        with open(helm_values_file, "w") as fp:
+            yaml.safe_dump(helm_values, fp)
+    except Exception:
+        if os.path.exists(helm_values_file):
+            os.remove(helm_values_file)
+        raise
 
     return helm_values_file
 
@@ -270,17 +293,21 @@ class HelmChart(BaseModel):
 
     def load_chart(self):
         helm_values_file = None
-        if self.helm_values != {}:
-            helm_values_file = write_helm_values_file(self.helm_values)
-        output, error_message = render_chart(
-            self.chart_dir,
-            "-",
-            self.helm_path,
-            self.helm_params,
-            helm_values_file,
-            None,
-        )
-        if error_message:
-            raise HelmTemplateError(error_message)
+        try:
+            if self.helm_values != {}:
+                helm_values_file = write_helm_values_file(self.helm_values)
+            output, error_message = render_chart(
+                self.chart_dir,
+                "-",
+                self.helm_path,
+                self.helm_params,
+                helm_values_file,
+                None,
+            )
+            if error_message:
+                raise HelmTemplateError(error_message)
 
-        return yaml.safe_load_all(output)
+            return yaml.safe_load_all(output)
+        finally:
+            if helm_values_file and os.path.exists(helm_values_file):
+                os.remove(helm_values_file)
