@@ -16,6 +16,7 @@ from kapitan.helm_cli import helm_cli
 from kapitan.inputs.base import InputType
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
+from kapitan.utils import PrettyDumper
 
 
 logger = logging.getLogger(__name__)
@@ -51,27 +52,31 @@ class Helm(InputType):
         helm_path = config.helm_path
 
         helm_values_file = None
-        if config.helm_values:
-            helm_values_file = write_helm_values_file(config.helm_values)
+        try:
+            if config.helm_values:
+                helm_values_file = write_helm_values_file(config.helm_values)
 
-        helm_flags = dict(HELM_DEFAULT_FLAGS)
-        # add to flags if set
-        if config.kube_version:
-            helm_flags["--api-versions"] = config.kube_version
+            helm_flags = dict(HELM_DEFAULT_FLAGS)
+            # add to flags if set
+            if config.kube_version:
+                helm_flags["--api-versions"] = config.kube_version
 
-        temp_dir = tempfile.mkdtemp()
-        # save the template output to temp dir first
-        _, error_message = render_chart(
-            chart_dir=input_path,
-            output_path=temp_dir,
-            helm_path=helm_path,
-            helm_params=helm_params,
-            helm_values_file=helm_values_file,
-            helm_values_files=helm_values_files,
-            helm_flags=helm_flags,
-        )
-        if error_message:
-            raise HelmTemplateError(error_message)
+            temp_dir = tempfile.mkdtemp()
+            # save the template output to temp dir first
+            _, error_message = render_chart(
+                chart_dir=input_path,
+                output_path=temp_dir,
+                helm_path=helm_path,
+                helm_params=helm_params,
+                helm_values_file=helm_values_file,
+                helm_values_files=helm_values_files,
+                helm_flags=helm_flags,
+            )
+            if error_message:
+                raise HelmTemplateError(error_message)
+        finally:
+            if helm_values_file and os.path.exists(helm_values_file):
+                os.remove(helm_values_file)
         # Iterate over all files in the temporary directory
 
         walk_root_files = os.walk(temp_dir)
@@ -84,7 +89,9 @@ class Helm(InputType):
                 with open(full_file_name, encoding="utf-8") as f:
                     file_path = os.path.join(compile_path, rel_file_name)
                     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                    item_value = list(yaml.safe_load_all(f))
+                    item_value = [
+                        doc for doc in yaml.safe_load_all(f) if doc is not None
+                    ]
                     self.to_file(config, file_path, item_value)
 
     def render_chart(self, *args, **kwargs):
@@ -191,20 +198,64 @@ def render_chart(
 
     # If output_path is '-', output is a string with rendered chart
     if output_path == "-":
-        _, helm_output = tempfile.mkstemp(".helm_output.yml", text=True)
-        with open(helm_output, "w+") as f:
-            error_message = helm_cli(helm_path, args, stdout=f)
-            f.seek(0)
-            return (f.read(), error_message)
+        fd, helm_output = tempfile.mkstemp(".helm_output.yml", text=True)
+        try:
+            os.close(fd)
+            with open(helm_output, "w+") as f:
+                error_message = helm_cli(helm_path, args, stdout=f)
+                f.seek(0)
+                return (f.read(), error_message)
+        finally:
+            if os.path.exists(helm_output):
+                os.remove(helm_output)
 
     if output_file:
-        with open(os.path.join(output_path, output_file), "wb") as f:
-            # can't be verbose when capturing stdout
-            error_message = helm_cli(helm_path, args, stdout=f)
+        # Capture helm output, filter empty documents, then write to file
+        fd, helm_temp = tempfile.mkstemp(".helm_output.yml", text=True)
+        try:
+            os.close(fd)
+            with open(helm_temp, "w+") as f:
+                error_message = helm_cli(helm_path, args, stdout=f)
+                f.seek(0)
+                # Filter out empty documents from conditional helm templates
+                docs = [doc for doc in yaml.safe_load_all(f) if doc is not None]
+                # Remove keys with null values recursively
+                docs = [remove_null_values(doc) for doc in docs]
+
+            output_file_path = os.path.join(output_path, output_file)
+            with open(output_file_path, "w") as f:
+                yaml.dump_all(docs, f, default_flow_style=False, Dumper=PrettyDumper)
+
             return ("", error_message)
-    else:
-        error_message = helm_cli(helm_path, args, verbose="--debug" in helm_flags)
-        return ("", error_message)
+        finally:
+            if os.path.exists(helm_temp):
+                os.remove(helm_temp)
+    error_message = helm_cli(helm_path, args, verbose="--debug" in helm_flags)
+
+    # Post-process files written by helm to filter empty documents and null values
+    # This ensures consistent behavior with the output_file code path
+    if output_path and not error_message:
+        for current_dir, _, files in os.walk(output_path):
+            for file in files:
+                file_path = os.path.join(current_dir, file)
+                with open(file_path, encoding="utf-8") as f:
+                    docs = [doc for doc in yaml.safe_load_all(f) if doc is not None]
+                docs = [remove_null_values(doc) for doc in docs]
+                with open(file_path, "w", encoding="utf-8") as f:
+                    yaml.dump_all(
+                        docs, f, default_flow_style=False, Dumper=PrettyDumper
+                    )
+
+    return ("", error_message)
+
+
+def remove_null_values(obj):
+    """Recursively remove keys with null values from dictionaries."""
+    if isinstance(obj, dict):
+        return {k: remove_null_values(v) for k, v in obj.items() if v is not None}
+    if isinstance(obj, list):
+        return [remove_null_values(item) for item in obj]
+    return obj
 
 
 def write_helm_values_file(helm_values: dict):
@@ -215,10 +266,19 @@ def write_helm_values_file(helm_values: dict):
 
     Returns:
         str: The path to the temporary YAML file.
+
+    Note:
+        The caller is responsible for cleaning up the temporary file.
     """
-    _, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
-    with open(helm_values_file, "w") as fp:
-        yaml.safe_dump(helm_values, fp)
+    fd, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
+    try:
+        os.close(fd)
+        with open(helm_values_file, "w") as fp:
+            yaml.safe_dump(helm_values, fp)
+    except Exception:
+        if os.path.exists(helm_values_file):
+            os.remove(helm_values_file)
+        raise
 
     return helm_values_file
 
@@ -248,17 +308,21 @@ class HelmChart(BaseModel):
 
     def load_chart(self):
         helm_values_file = None
-        if self.helm_values != {}:
-            helm_values_file = write_helm_values_file(self.helm_values)
-        output, error_message = render_chart(
-            self.chart_dir,
-            "-",
-            self.helm_path,
-            self.helm_params,
-            helm_values_file,
-            None,
-        )
-        if error_message:
-            raise HelmTemplateError(error_message)
+        try:
+            if self.helm_values != {}:
+                helm_values_file = write_helm_values_file(self.helm_values)
+            output, error_message = render_chart(
+                self.chart_dir,
+                "-",
+                self.helm_path,
+                self.helm_params,
+                helm_values_file,
+                None,
+            )
+            if error_message:
+                raise HelmTemplateError(error_message)
 
-        return yaml.safe_load_all(output)
+            return yaml.safe_load_all(output)
+        finally:
+            if helm_values_file and os.path.exists(helm_values_file):
+                os.remove(helm_values_file)

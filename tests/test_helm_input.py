@@ -308,3 +308,51 @@ class HelmInputTest(unittest.TestCase):
     def tearDown(self):
         os.chdir("../../")
         reset_cache()
+
+    def test_compile_helm_filters_empty_documents(self):
+        """Test that empty YAML documents from conditional helm templates are filtered out.
+
+        When helm charts have conditional templates (e.g., {{- if .Values.feature.enabled }}),
+        disabled features produce empty YAML documents. These should be filtered out and not
+        appear as consecutive '---' separators in the compiled output.
+        """
+        temp = tempfile.mkdtemp()
+        sys.argv = [
+            "kapitan",
+            "compile",
+            "--output-path",
+            temp,
+            "-t",
+            "helm-conditional-templates",
+        ]
+        main()
+
+        output_file = os.path.join(
+            temp,
+            "compiled",
+            "helm-conditional-templates",
+            "conditional-chart",
+            "all.yaml",
+        )
+
+        self.assertTrue(os.path.isfile(output_file))
+
+        with open(output_file) as fp:
+            content = fp.read()
+
+        # Check that there are no consecutive --- separators (empty documents)
+        self.assertNotIn("---\n---", content)
+
+        # Verify valid documents are still present
+        documents = list(yaml.safe_load_all(content))
+        # Filter out None values that might still be parsed
+        valid_documents = [doc for doc in documents if doc is not None]
+
+        # Should have exactly 2 valid documents (configmap and service, not the disabled deployment)
+        self.assertEqual(len(valid_documents), 2)
+
+        # Verify the expected resources are present
+        kinds = {doc.get("kind") for doc in valid_documents}
+        self.assertIn("ConfigMap", kinds)
+        self.assertIn("Service", kinds)
+        self.assertNotIn("Deployment", kinds)  # Deployment should be disabled
