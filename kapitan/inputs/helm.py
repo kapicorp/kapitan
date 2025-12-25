@@ -16,6 +16,7 @@ from kapitan.helm_cli import helm_cli
 from kapitan.inputs.base import InputType
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
+from kapitan.utils import PrettyDumper
 
 
 logger = logging.getLogger(__name__)
@@ -200,13 +201,32 @@ def render_chart(
             return (f.read(), error_message)
 
     if output_file:
-        with open(os.path.join(output_path, output_file), "wb") as f:
-            # can't be verbose when capturing stdout
+        # Capture helm output, filter empty documents, then write to file
+        _, helm_temp = tempfile.mkstemp(".helm_output.yml", text=True)
+        with open(helm_temp, "w+") as f:
             error_message = helm_cli(helm_path, args, stdout=f)
-            return ("", error_message)
-    else:
-        error_message = helm_cli(helm_path, args, verbose="--debug" in helm_flags)
+            f.seek(0)
+            # Filter out empty documents from conditional helm templates
+            docs = [doc for doc in yaml.safe_load_all(f) if doc is not None]
+            # Remove keys with null values recursively
+            docs = [remove_null_values(doc) for doc in docs]
+
+        output_file_path = os.path.join(output_path, output_file)
+        with open(output_file_path, "w") as f:
+            yaml.dump_all(docs, f, default_flow_style=False, Dumper=PrettyDumper)
+
         return ("", error_message)
+    error_message = helm_cli(helm_path, args, verbose="--debug" in helm_flags)
+    return ("", error_message)
+
+
+def remove_null_values(obj):
+    """Recursively remove keys with null values from dictionaries."""
+    if isinstance(obj, dict):
+        return {k: remove_null_values(v) for k, v in obj.items() if v is not None}
+    if isinstance(obj, list):
+        return [remove_null_values(item) for item in obj]
+    return obj
 
 
 def write_helm_values_file(helm_values: dict):

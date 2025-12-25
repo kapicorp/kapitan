@@ -1,0 +1,8 @@
+deployment:
+  enabled: true
+
+configmap:
+  enabled: true
+
+service:
+  enabled: true
