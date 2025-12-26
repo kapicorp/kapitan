@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import tempfile
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Optional
 
 import pytest
@@ -38,6 +39,12 @@ def temp_dir():
     shutil.rmtree(temp_path, ignore_errors=True)
 
 
+def _attach_fixture(request, name, value):
+    instance = getattr(request, "instance", None)
+    if instance is not None:
+        setattr(instance, name, value)
+
+
 @pytest.fixture
 def isolated_compile_dir(temp_dir):
     """
@@ -58,7 +65,7 @@ def isolated_compile_dir(temp_dir):
 
 
 @pytest.fixture
-def isolated_test_resources(temp_dir):
+def isolated_test_resources(temp_dir, request):
     """
     Create an isolated copy of test_resources for test execution.
     Returns the path to the isolated copy.
@@ -70,6 +77,7 @@ def isolated_test_resources(temp_dir):
     reset_cache()
     os.chdir(isolated_path)
 
+    _attach_fixture(request, "isolated_test_resources", isolated_path)
     yield isolated_path
 
     os.chdir(original_dir)
@@ -273,3 +281,38 @@ def setup_gpg_key():
         input=ownertrust,
         check=True,
     )
+
+
+@pytest.fixture
+def local_http_server(request, httpserver):
+    """
+    Expose pytest-httpserver to unittest.TestCase classes.
+    """
+    if request.cls is not None:
+        request.cls.httpserver = httpserver
+
+
+@pytest.fixture
+def seeded_git_repo(git_repo, request):
+    repo = git_repo.api
+    repo_path = Path(repo.working_tree_dir)
+
+    readme = repo_path / "README.md"
+    readme.write_text("kapitan test repo\n", encoding="utf-8")
+
+    tests_dir = repo_path / "tests"
+    tests_dir.mkdir(parents=True, exist_ok=True)
+
+    subdir_file = tests_dir / "subdir.txt"
+    subdir_file.write_text("subdir content\n", encoding="utf-8")
+
+    repo.index.add(["README.md", "tests/subdir.txt"])
+
+    if repo.is_dirty(untracked_files=True):
+        repo.index.commit("initial commit")
+
+    repo.git.branch("-M", "master")
+
+    _attach_fixture(request, "seeded_git_repo", repo_path)
+
+    return repo_path
