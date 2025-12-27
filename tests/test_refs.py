@@ -218,6 +218,7 @@ class Base64RefsTest(unittest.TestCase):
     def test_base64_ref_revealer_reveal_raw_data_tag(self):
         "check Revealer reveals raw data"
         tag = "?{base64:my/ref2}"
+        REF_CONTROLLER[tag] = Base64Ref(b"ref 2 data")
         data = f"data with {tag}, period."
         revealed_data = REVEALER.reveal_raw(data)
         self.assertEqual(revealed_data, "data with ref 2 data, period.")
@@ -225,6 +226,7 @@ class Base64RefsTest(unittest.TestCase):
     def test_base64_ref_revealer_reveal_raw_data_tag_compiled_hash(self):
         "check Revealer reveals raw data with compiled tag (with hash)"
         tag = "?{base64:my/ref2}"
+        REF_CONTROLLER[tag] = Base64Ref(b"ref 2 data")
         tag_compiled = REF_CONTROLLER[tag].compile()
         data = f"data with {tag_compiled}, period."
         revealed_data = REVEALER.reveal_raw(data)
@@ -235,6 +237,8 @@ class Base64RefsTest(unittest.TestCase):
         check Revealer reveals raises RefHashMismatchError
         on mismatch compiled tag hashes
         """
+        tag = "?{base64:my/ref2}"
+        REF_CONTROLLER[tag] = Base64Ref(b"ref 2 data")
         tag_compiled_hash_mismatch = "?{base64:my/ref2:deadbeef}"
         with self.assertRaises(RefHashMismatchError):
             data = f"data with {tag_compiled_hash_mismatch}, period."
