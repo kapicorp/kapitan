@@ -8,7 +8,6 @@
 "helm input tests"
 
 import os
-import sys
 import tempfile
 import unittest
 
@@ -16,7 +15,7 @@ import pytest
 import yaml
 
 from kapitan.cached import reset_cache
-from kapitan.cli import main
+from kapitan.cli import main as kapitan
 from kapitan.inputs.helm import Helm, HelmChart
 from kapitan.inputs.kadet import BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
@@ -81,15 +80,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_chart(self):
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
-            "compile",
-            "--output-path",
-            temp,
-            "-t",
-            "acs-engine-autoscaler",
-        ]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "acs-engine-autoscaler")
         self.assertTrue(
             os.path.isfile(
                 os.path.join(
@@ -105,8 +96,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_subcharts(self):
         temp = tempfile.mkdtemp()
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "istio"]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "istio")
         self.assertTrue(
             os.path.isdir(os.path.join(temp, "compiled", "istio", "istio", "charts"))
         )
@@ -116,8 +106,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_multiple_targets(self):
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "compile",
             "--output-path",
             temp,
@@ -126,8 +115,7 @@ class HelmInputTest(unittest.TestCase):
             "nginx-ingress",
             "-p",
             "2",
-        ]
-        main()
+        )
         self.assertTrue(
             os.path.isfile(
                 os.path.join(
@@ -155,8 +143,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_multiple_charts_per_target(self):
         temp = tempfile.mkdtemp()
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx-istio"]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "nginx-istio")
         self.assertTrue(
             os.path.isdir(
                 os.path.join(temp, "compiled", "nginx-istio", "istio", "templates")
@@ -172,8 +159,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_with_helm_values(self):
         temp = tempfile.mkdtemp()
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx-ingress"]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "nginx-ingress")
         controller_deployment_file = os.path.join(
             temp,
             "compiled",
@@ -190,16 +176,14 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_with_helm_values_files(self):
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "compile",
             "--output-path",
             temp,
             "-t",
             "monitoring-dev",
             "monitoring-prd",
-        ]
-        main()
+        )
         dev_server_deployment_file = os.path.join(
             temp,
             "compiled",
@@ -231,8 +215,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_with_helm_params(self):
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
+        argv = [
             "compile",
             "--output-path",
             temp,
@@ -245,7 +228,7 @@ class HelmInputTest(unittest.TestCase):
             release_name = helm_params["name"]
             namespace = helm_params["namespace"]
 
-        main()
+        kapitan(*argv)
         controller_deployment_file = os.path.join(
             temp,
             "compiled",
@@ -270,16 +253,7 @@ class HelmInputTest(unittest.TestCase):
     @pytest.mark.usefixtures("setup_gpg_key")
     def test_compile_with_refs(self):
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
-            "compile",
-            "--output-path",
-            temp,
-            "-t",
-            "nginx-ingress",
-            "--reveal",
-        ]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "nginx-ingress", "--reveal")
         controller_deployment_file = os.path.join(
             temp,
             "compiled",

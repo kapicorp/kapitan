@@ -10,12 +10,11 @@
 import filecmp
 import hashlib
 import os
-import sys
 import unittest
 
 import pytest
 
-from kapitan.cli import main
+from kapitan.cli import main as kapitan
 from kapitan.inputs.copy import Copy
 from kapitan.inventory.model.input_types import KapitanInputTypeCopyConfig
 from kapitan.utils import directory_hash
@@ -95,9 +94,6 @@ class CopyMissingFileTest(unittest.TestCase):
 
 @pytest.mark.usefixtures("isolated_kubernetes_inventory")
 class CompileCopyTest(unittest.TestCase):
-    def setUp(self):
-        self.original_argv = sys.argv
-
     def _validate_files_were_copied(self, base_path: str) -> None:
         original_filepath = os.path.join(base_path, "components", "busybox", "pod.yml")
         copied_filepath = os.path.join(
@@ -116,14 +112,9 @@ class CompileCopyTest(unittest.TestCase):
         self.assertTrue(filecmp.cmp(original_filepath, copied_filepath))
 
     def test_compiled_copy_target(self):
-        sys.argv = ["kapitan", "compile", "-t", "busybox"]
-        main()
+        kapitan("compile", "-t", "busybox")
         self._validate_files_were_copied(os.getcwd())
 
     def test_compiled_copy_all_targets(self):
-        sys.argv = ["kapitan", "compile"]
-        main()
+        kapitan("compile")
         self._validate_files_were_copied(os.getcwd())
-
-    def tearDown(self):
-        sys.argv = self.original_argv

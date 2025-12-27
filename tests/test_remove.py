@@ -8,12 +8,11 @@
 "remove tests"
 
 import os
-import sys
 import unittest
 
 import pytest
 
-from kapitan.cli import main
+from kapitan.cli import main as kapitan
 from kapitan.inputs.copy import Copy
 from kapitan.inputs.remove import Remove
 from kapitan.inventory.model.input_types import (
@@ -110,10 +109,5 @@ class CompileRemoveTest(unittest.TestCase):
         self.assertFalse(os.path.exists(removed_file))
 
     def test_compiled_remove_target(self):
-        original_argv = sys.argv
-        try:
-            sys.argv = ["kapitan", "compile", "-t", "removal"]
-            main()
-            self.validate_files_were_removed(os.getcwd())
-        finally:
-            sys.argv = original_argv
+        kapitan("compile", "-t", "removal")
+        self.validate_files_were_removed(os.getcwd())

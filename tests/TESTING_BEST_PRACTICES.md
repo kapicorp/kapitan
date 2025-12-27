@@ -53,17 +53,18 @@ Demonstrates how to refactor existing tests to use the new patterns:
 
 **Bad:**
 ```python
+from kapitan.cli import main as kapitan
+
 def test_compile(self):
     os.chdir(TEST_RESOURCES_PATH)  # Shared directory!
-    sys.argv = ["kapitan", "compile"]
-    main()
+    kapitan("compile")
 ```
 
 **Good:**
 ```python
 def test_compile(self, isolated_test_resources):
     helper = CompileTestHelper(isolated_test_resources)
-    helper.compile_with_args(["kapitan", "compile"])
+    helper.compile_with_args(["compile"])
 ```
 
 ### 2. Never Rely on Test Order

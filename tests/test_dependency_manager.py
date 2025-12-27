@@ -7,7 +7,6 @@
 
 import io
 import multiprocessing
-import sys
 import tempfile
 import unittest
 import zipfile
@@ -15,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from kapitan.cli import main
+from kapitan.cli import main as kapitan
 from kapitan.dependency_manager.base import (
     HelmSource,
     fetch_dependencies,
@@ -327,8 +326,7 @@ class DependencyManagerTest(unittest.TestCase):
         monitoring_class_path.write_text(monitoring_class, encoding="utf-8")
 
         temp = Path(tempfile.mkdtemp())
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "compile",
             "--fetch",
             "--output-path",
@@ -336,8 +334,7 @@ class DependencyManagerTest(unittest.TestCase):
             "-t",
             "nginx",
             "monitoring-dev",
-        ]
-        main()
+        )
 
         self.assertTrue((temp / "components" / "tests").is_dir())
         self.assertTrue((temp / "components" / "kapitan-repository").is_dir())

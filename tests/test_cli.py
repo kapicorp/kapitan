@@ -10,14 +10,14 @@ import contextlib
 import io
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
 import pytest
 
-from kapitan.cli import build_parser, main
+from kapitan.cli import build_parser
+from kapitan.cli import main as kapitan
 from kapitan.refs.secrets.vaultkv import VaultSecret
 from tests.vault_server import VaultServer
 
@@ -79,8 +79,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "gpg:test_secret",
@@ -90,15 +89,13 @@ class CliFuncsTest(unittest.TestCase):
             REFS_PATH,
             "--recipients",
             "example@kapitan.dev",
-        ]
-        main()
+        )
 
         test_tag_content = "?{gpg:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "--tag",
@@ -110,7 +107,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         stdout = stdout.getvalue()
         self.assertEqual(test_secret_content, stdout)
 
@@ -127,8 +124,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "gpg:test_secretb64",
@@ -139,15 +135,13 @@ class CliFuncsTest(unittest.TestCase):
             REFS_PATH,
             "--recipients",
             "example@kapitan.dev",
-        ]
-        main()
+        )
 
         test_tag_content = "?{gpg:test_secretb64}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "--tag",
@@ -159,7 +153,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         stdout_base64 = base64.b64decode(stdout.getvalue()).decode()
         self.assertEqual(test_secret_content, stdout_base64)
 
@@ -176,8 +170,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "gpg:test_secret",
@@ -187,15 +180,13 @@ class CliFuncsTest(unittest.TestCase):
             REFS_PATH,
             "--recipients",
             "example@kapitan.dev",
-        ]
-        main()
+        )
 
         test_tag_content = "revealing: ?{gpg:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "-f",
@@ -207,7 +198,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(f"revealing: {test_secret_content}", stdout.getvalue())
 
         os.remove(test_tag_file)
@@ -223,8 +214,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "gpg:test_secretb64",
@@ -235,15 +225,13 @@ class CliFuncsTest(unittest.TestCase):
             REFS_PATH,
             "--recipients",
             "example@kapitan.dev",
-        ]
-        main()
+        )
 
         test_tag_content = "?{gpg:test_secretb64}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "-f",
@@ -255,7 +243,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         stdout_base64 = base64.b64decode(stdout.getvalue()).decode()
         self.assertEqual(test_secret_content, stdout_base64)
 
@@ -276,8 +264,7 @@ class CliFuncsTest(unittest.TestCase):
             with open(ref_file, "w") as fp:
                 fp.write(ref_content)
 
-            sys.argv = [
-                "kapitan",
+            kapitan(
                 "refs",
                 "--write",
                 f"base64:test_ref_{ref_count}",
@@ -285,8 +272,7 @@ class CliFuncsTest(unittest.TestCase):
                 ref_file,
                 "--refs-path",
                 REFS_PATH,
-            ]
-            main()
+            )
 
         # create nested dir structure with unrevealed manifests
         unrevealed_dir = tempfile.mkdtemp()
@@ -312,8 +298,7 @@ class CliFuncsTest(unittest.TestCase):
             expected_ref_rev = f"I am ref{count}!"
             expected_output += ref_content.format(count, expected_ref_rev)
 
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "-f",
@@ -324,7 +309,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(expected_output, stdout.getvalue())
 
     def test_cli_secret_validate_targets(self):
@@ -333,16 +318,14 @@ class CliFuncsTest(unittest.TestCase):
         expect 0 (success) exit status code
         """
         with self.assertRaises(SystemExit) as cm:
-            sys.argv = [
-                "kapitan",
+            kapitan(
                 "refs",
                 "--validate-targets",
                 "--refs-path",
                 "examples/kubernetes/refs/targets/",
                 "--inventory-path",
                 "examples/kubernetes/inventory/",
-            ]
-            main()
+            )
         self.assertEqual(cm.exception.code, 0)
 
     def test_cli_secret_write_reveal_gkms(self):
@@ -356,8 +339,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "gkms:test_secret",
@@ -367,15 +349,13 @@ class CliFuncsTest(unittest.TestCase):
             REFS_PATH,
             "--key",
             "mock",
-        ]
-        main()
+        )
 
         test_tag_content = "revealing: ?{gkms:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "-f",
@@ -387,7 +367,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(f"revealing: {test_secret_content}", stdout.getvalue())
 
         os.remove(test_tag_file)
@@ -403,8 +383,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "awskms:test_secret",
@@ -414,15 +393,13 @@ class CliFuncsTest(unittest.TestCase):
             REFS_PATH,
             "--key",
             "mock",
-        ]
-        main()
+        )
 
         test_tag_content = "revealing: ?{awskms:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "-f",
@@ -434,7 +411,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(f"revealing: {test_secret_content}", stdout.getvalue())
 
         os.remove(test_tag_file)
@@ -449,8 +426,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "plain:test_secret",
@@ -458,15 +434,13 @@ class CliFuncsTest(unittest.TestCase):
             test_secret_file,
             "--refs-path",
             REFS_PATH,
-        ]
-        main()
+        )
 
         test_tag_content = "revealing: ?{plain:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "-f",
@@ -478,7 +452,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(f"revealing: {test_secret_content}", stdout.getvalue())
 
         os.remove(test_tag_file)
@@ -493,8 +467,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "plain:test_secret",
@@ -502,16 +475,14 @@ class CliFuncsTest(unittest.TestCase):
             test_secret_file,
             "--refs-path",
             REFS_PATH,
-        ]
-        main()
+        )
 
         test_tag_content = "?{plain:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
 
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "--ref-file",
@@ -523,7 +494,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(test_secret_content, stdout.getvalue())
 
         os.remove(test_tag_file)
@@ -538,8 +509,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "base64:test_secret",
@@ -547,15 +517,13 @@ class CliFuncsTest(unittest.TestCase):
             test_secret_file,
             "--refs-path",
             REFS_PATH,
-        ]
-        main()
+        )
 
         test_tag_content = "revealing: ?{base64:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "-f",
@@ -567,7 +535,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(f"revealing: {test_secret_content}", stdout.getvalue())
 
         os.remove(test_tag_file)
@@ -583,8 +551,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "base64:test_secret",
@@ -593,15 +560,13 @@ class CliFuncsTest(unittest.TestCase):
             test_secret_file,
             "--refs-path",
             REFS_PATH,
-        ]
-        main()
+        )
 
         test_tag_content = "revealing: ?{base64:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "-f",
@@ -613,7 +578,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(
             f"revealing: {test_secret_content_b64.decode()}", stdout.getvalue()
         )
@@ -637,8 +602,7 @@ class CliFuncsTest(unittest.TestCase):
             with open(test_secret_file, "w") as fp:
                 fp.write(test_secret_content)
 
-            sys.argv = [
-                "kapitan",
+            kapitan(
                 "refs",
                 "--write",
                 f"{reftype}:test_secret_subvar",
@@ -646,8 +610,7 @@ class CliFuncsTest(unittest.TestCase):
                 test_secret_file,
                 "--refs-path",
                 REFS_PATH,
-            ]
-            main()
+            )
 
             test_tag_content = f"""
         revealing1: ?{{{reftype}}}:test_secret_subvar@var1.var2}}
@@ -656,8 +619,7 @@ class CliFuncsTest(unittest.TestCase):
             test_tag_file = tempfile.mktemp()
             with open(test_tag_file, "w") as fp:
                 fp.write(test_tag_content)
-            sys.argv = [
-                "kapitan",
+            argv = [
                 "refs",
                 "--reveal",
                 "-f",
@@ -669,7 +631,7 @@ class CliFuncsTest(unittest.TestCase):
             # set stdout as string
             stdout = io.StringIO()
             with contextlib.redirect_stdout(stdout):
-                main()
+                kapitan(*argv)
 
             expected = """
         revealing1: {}
@@ -696,8 +658,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "gpg:test_secret_subvar",
@@ -707,8 +668,7 @@ class CliFuncsTest(unittest.TestCase):
             REFS_PATH,
             "--recipients",
             "example@kapitan.dev",
-        ]
-        main()
+        )
 
         test_tag_content = """
                 revealing1: ?{gpg:test_secret_subvar@var1.var2}
@@ -717,8 +677,7 @@ class CliFuncsTest(unittest.TestCase):
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "-f",
@@ -730,7 +689,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
 
         expected = """
                 revealing1: {}
@@ -749,8 +708,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "gpg:test_secret",
@@ -760,11 +718,9 @@ class CliFuncsTest(unittest.TestCase):
             REFS_PATH,
             "--recipients",
             "example@kapitan.dev",
-        ]
-        main()
+        )
 
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "--ref-file",
@@ -776,7 +732,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(test_secret_content, stdout.getvalue())
 
     @patch.object(VaultSecret, "_decrypt")
@@ -790,8 +746,7 @@ class CliFuncsTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--write",
             "vaultkv:test_secret",
@@ -809,7 +764,7 @@ class CliFuncsTest(unittest.TestCase):
             "testkey",
         ]
         with set_env(VAULT_ADDR=self.server.vault_url):
-            main()
+            kapitan(*argv)
 
         test_tag_content = "revealing: ?{vaultkv:test_secret}"
         test_tag_file = tempfile.mktemp()
@@ -817,8 +772,7 @@ class CliFuncsTest(unittest.TestCase):
             fp.write(test_tag_content)
 
         mock_reveal.return_value = test_secret_content
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "-f",
@@ -831,7 +785,7 @@ class CliFuncsTest(unittest.TestCase):
         stdout = io.StringIO()
         # don't set VAULT_ADDR in the environment here, since that would cause a validation error.
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(f"revealing: {test_secret_content}", stdout.getvalue())
 
         os.remove(test_tag_file)
@@ -840,8 +794,7 @@ class CliFuncsTest(unittest.TestCase):
         """
         run $ kapitan searchvar mysql.replicas
         """
-        sys.argv = [
-            "kapitan",
+        argv = [
             "searchvar",
             "mysql.replicas",
             "--inventory-path",
@@ -851,7 +804,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(
             "examples/kubernetes/inventory/targets/minikube-mysql.yml   1\n",
             stdout.getvalue(),
@@ -861,8 +814,7 @@ class CliFuncsTest(unittest.TestCase):
         """
         run $ kapitan inventory -t minikube-es -F -p cluster
         """
-        sys.argv = [
-            "kapitan",
+        argv = [
             "inventory",
             "-t",
             "minikube-es",
@@ -876,7 +828,7 @@ class CliFuncsTest(unittest.TestCase):
         # set stdout as string
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(
             "id: minikube\nname: minikube\ntype: minikube\nuser: minikube\n",
             stdout.getvalue(),
