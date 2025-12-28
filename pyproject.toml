@@ -168,6 +168,11 @@ markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
 ]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "default::DeprecationWarning:kapitan",
+]
 
 [tool.coverage.run]
 source = ["kapitan"]
