@@ -14,12 +14,14 @@ import os
 import shutil
 import subprocess
 import tempfile
+from argparse import Namespace
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
 import pytest
 
+from kapitan import cached
 from kapitan.cached import reset_cache
 
 
@@ -39,6 +41,18 @@ def temp_dir():
     shutil.rmtree(temp_path, ignore_errors=True)
 
 
+@pytest.fixture
+def reset_cached_args():
+    """
+    Reset cached globals and args to avoid backend leakage between tests.
+    """
+    reset_cache()
+    cached.args = Namespace()
+    yield
+    reset_cache()
+    cached.args = Namespace()
+
+
 def _attach_fixture(request, name, value):
     instance = getattr(request, "instance", None)
     if instance is not None:
@@ -53,6 +67,7 @@ def isolated_compile_dir(temp_dir):
     """
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
 
     # Create the isolated directory
     os.chdir(temp_dir)
@@ -62,6 +77,7 @@ def isolated_compile_dir(temp_dir):
     # Cleanup
     os.chdir(original_dir)
     reset_cache()
+    cached.args = Namespace()
 
 
 @pytest.fixture
@@ -75,6 +91,7 @@ def isolated_test_resources(temp_dir, request):
 
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
     os.chdir(isolated_path)
 
     _attach_fixture(request, "isolated_test_resources", isolated_path)
@@ -82,6 +99,7 @@ def isolated_test_resources(temp_dir, request):
 
     os.chdir(original_dir)
     reset_cache()
+    cached.args = Namespace()
 
 
 @pytest.fixture
@@ -95,6 +113,7 @@ def isolated_kubernetes_inventory(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
     os.chdir(isolated_path)
 
     # Clean any existing compiled directory in the ISOLATED copy only
@@ -109,6 +128,7 @@ def isolated_kubernetes_inventory(temp_dir):
 
     os.chdir(original_dir)
     reset_cache()
+    cached.args = Namespace()
 
 
 @pytest.fixture
@@ -122,6 +142,7 @@ def isolated_terraform_inventory(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
     os.chdir(isolated_path)
 
     # Safety check: ensure we're not in the actual examples directory
@@ -132,6 +153,7 @@ def isolated_terraform_inventory(temp_dir):
 
     os.chdir(original_dir)
     reset_cache()
+    cached.args = Namespace()
 
 
 @pytest.fixture
@@ -145,6 +167,7 @@ def isolated_docker_inventory(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
     os.chdir(isolated_path)
 
     # Safety check: ensure we're not in the actual examples directory
@@ -155,6 +178,7 @@ def isolated_docker_inventory(temp_dir):
 
     os.chdir(original_dir)
     reset_cache()
+    cached.args = Namespace()
 
 
 @contextmanager
@@ -175,6 +199,7 @@ def isolated_compile_context(base_path: str, target_subdir: Optional[str] = None
 
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
 
     # Change to target directory
     if target_subdir:
@@ -196,6 +221,7 @@ def isolated_compile_context(base_path: str, target_subdir: Optional[str] = None
         os.chdir(original_dir)
         shutil.rmtree(temp_path, ignore_errors=True)
         reset_cache()
+        cached.args = Namespace()
 
 
 @pytest.fixture
