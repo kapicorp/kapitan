@@ -21,16 +21,14 @@ from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
 logger = logging.getLogger(__name__)
 
 TEST_PWD = os.getcwd()
-TEST_OMEGACONF_INVENTORY = os.path.join(TEST_PWD, "tests/test_resources copy/inventory")
-TEST_OMEGACONF_SYSTEM = os.path.join(TEST_PWD, "tests/test_resources copy/system")
+TEST_OMEGACONF_INVENTORY = os.path.join(TEST_PWD, "tests/test_resources_oc/inventory")
 
 
 def register_custom_resolvers():
     """Register custom resolvers from the test resources"""
-    # Add the system path to import custom resolvers
-    resolvers_path = os.path.join(TEST_OMEGACONF_SYSTEM, "omegaconf/resolvers")
-    if resolvers_path not in sys.path:
-        sys.path.insert(0, resolvers_path)
+    # Add the inventory path to import custom resolvers
+    if TEST_OMEGACONF_INVENTORY not in sys.path:
+        sys.path.insert(0, TEST_OMEGACONF_INVENTORY)
 
     from resolvers import pass_resolvers
 
@@ -42,7 +40,7 @@ def register_custom_resolvers():
 
 class InventoryTestOmegaConf(unittest.TestCase):
     def setUp(self) -> None:
-        register_resolvers()
+        register_resolvers(TEST_OMEGACONF_INVENTORY)
         register_custom_resolvers()
         inventory_backend = get_inventory_backend("omegaconf")
         self.inventory_path = TEST_OMEGACONF_INVENTORY
@@ -52,15 +50,16 @@ class InventoryTestOmegaConf(unittest.TestCase):
         )
 
     def test_load_and_resolve_single_target(self):
-        target_name = "oc-testxxx"
+        target_name = "k8s-infra-common"
+        target_path = "infra/private/k8s-infra-common.yml"
         target_kapitan_metadata = dict(
             {
                 "_kapitan_": {
                     "name": {
-                        "short": "oc-testxxx",
-                        "full": "oc-testxxx",
-                        "path": "oc-testxxx",
-                        "parts": ["oc-testxxx"],
+                        "short": "k8s-infra-common",
+                        "full": "k8s-infra-common",
+                        "path": "infra/private/k8s-infra-common",
+                        "parts": ["k8s-infra-common"],
                     }
                 }
             }
@@ -70,7 +69,7 @@ class InventoryTestOmegaConf(unittest.TestCase):
         inventory = self.inventory_backend
 
         # Manually create a new Target
-        target = inventory.target_class(name=target_name, path="oc-testxxx.yml")
+        target = inventory.target_class(name=target_name, path=target_path)
         logger.error(f"Loading target {target_name} from {target.path}")
         logger.error(target.parameters)
         # Adds target to Inventory
@@ -82,5 +81,5 @@ class InventoryTestOmegaConf(unittest.TestCase):
         # Check if the target is loaded correctly
         metadata = target.parameters.model_dump(by_alias=True)["_kapitan_"]
         self.assertDictEqual(target_kapitan_metadata["_kapitan_"], metadata)
-        self.assertEqual(metadata["name"]["short"], "oc-testxxx")
-        self.assertEqual(target.parameters.target_name, "oc-testxxx")
+        self.assertEqual(metadata["name"]["short"], "k8s-infra-common")
+        self.assertEqual(target.parameters.target_name, "k8s-infra-common")

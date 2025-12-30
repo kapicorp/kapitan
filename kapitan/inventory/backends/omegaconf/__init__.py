@@ -98,7 +98,7 @@ class OmegaConfInventory(Inventory):
     def inventory_worker(zipped_args):
         self, target, shared_targets = zipped_args
         try:
-            register_resolvers()
+            register_resolvers(self.inventory_path)
             self.load_target(target)
             shared_targets[target.name] = target
 
@@ -214,7 +214,17 @@ class OmegaConfInventory(Inventory):
             full_target_path, parameters=parameters
         )
         load_parameters = time.perf_counter() - start
-        target.parameters = OmegaConf.to_container(p, resolve=True)
+
+        # First resolve pass - resolves all interpolations, escaped ones become unescaped
+        OmegaConf.resolve(p)
+        # Second resolve pass - resolves the previously escaped interpolations
+        OmegaConf.resolve(p)
+        # Convert to container with resolve=True to ensure all interpolations are resolved
+        resolved_params = OmegaConf.to_container(p, resolve=True)
+
+        # Validate and construct KapitanInventoryParameters from the resolved dict
+        target.parameters = KapitanInventoryParameters.model_validate(resolved_params)
+
         to_container = time.perf_counter() - load_parameters
         target.classes = c
         target.applications = a

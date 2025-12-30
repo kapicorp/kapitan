@@ -139,14 +139,14 @@ def write_to_key(destination: str, origin: str, _root_):
             # replace with OC.to_object(), when it supports escaped interpolations (wip)
             # reference: https://github.com/omry/omegaconf/pull/1113
             config = copy.deepcopy(content)
-            OmegaConf.resolve(config, True)
+            OmegaConf.resolve(config)
         except Exception as e:
             # resolver error
             logger.warning(e)
             return "ERROR WHILE RESOLVING"
 
         # remove when issue above is resolved
-        OmegaConf.set_readonly(config, False, recursive=True)
+        OmegaConf.set_readonly(config, False)
 
         # write resolved content back to _root_
         OmegaConf.update(_root_, destination, config, merge=True, force_add=True)
@@ -208,7 +208,7 @@ def condition_equal(*configs):
     return all(config == configs[0] for config in configs)
 
 
-def register_resolvers() -> None:
+def register_resolvers(inventory_path: str = None) -> None:
     """register pre-defined and user-defined resolvers"""
     replace = True
 
@@ -242,10 +242,15 @@ def register_resolvers() -> None:
     OmegaConf.register_new_resolver("not", condition_not, replace=replace)
     OmegaConf.register_new_resolver("equal", condition_equal, replace=replace)
 
-    # user defined resolvers
-    user_resolver_file = os.path.join(
-        os.getcwd(), "system/omegaconf/resolvers/resolvers.py"
-    )
+    # user defined resolvers - check inventory path first, then fall back to system path
+    user_resolver_file = None
+    if inventory_path:
+        user_resolver_file = os.path.join(inventory_path, "resolvers.py")
+
+    if not user_resolver_file or not os.path.exists(user_resolver_file):
+        user_resolver_file = os.path.join(
+            os.getcwd(), "system/omegaconf/resolvers/resolvers.py"
+        )
 
     if os.path.exists(user_resolver_file):
         try:

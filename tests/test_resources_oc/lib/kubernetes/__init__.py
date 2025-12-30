@@ -11,7 +11,7 @@ from kapitan.utils import render_jinja2_file
 from . import k8s
 
 
-search_paths = args.get("search_paths")
+search_paths = getattr(args, "search_paths", [])
 
 inv = inventory(lazy=True)
 
