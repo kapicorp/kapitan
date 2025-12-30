@@ -1,0 +1,36 @@
+---
+parameters:
+  kapitan:
+    compile:
+      # -----------------------------------------------
+      # Kubernetes Manifest Generator
+      # -----------------------------------------------
+      - output_path: k8s
+        input_type: kadet
+        output_type: yml
+        input_paths:
+          - lib/kubernetes
+
+      # CURRENTLY NOT IN USE!!
+      # -----------------------------------------------
+      # Kubernetes Pre-Deploy Generator
+      # -----------------------------------------------
+      - output_path: k8s
+        input_type: kadet
+        output_type: yml
+        input_params:
+          function: generate_resource_manifests
+        input_paths:
+          - lib/kubernetes
+
+      # -----------------------------------------------
+      # Kubernetes Docs Generator
+      # -----------------------------------------------
+      # - output_path: k8s/docs
+      #   input_type: kadet
+      #   output_type: plain
+      #   input_params:
+      #     function: generate_docs
+      #     template_path: templates/docs/service_component.md.j2
+      #   input_paths:
+      #     - lib/kubernetes

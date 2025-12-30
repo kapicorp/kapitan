@@ -1,0 +1,142 @@
+---
+classes:
+  - ._secrets
+# source https://artifacthub.io/packages/helm/gitlab/gitlab-runner
+# -------------------------------------------------
+# Parameters
+# -------------------------------------------------
+parameters:
+  # metakey to remove keys at runtime
+  # to avoid having base objects (like vault) in the output
+  # TODO: move to a class "omegaconf"
+  omegaconf:
+    remove:
+      - gitlab-runner
+
+  gitlab-runner:
+    chart_name: gitlab-runner
+    chart_version: "0.74.0"
+    chart_url: http://charts.gitlab.io/
+    fullname: ${relpath:gitlab-runner.namespace}
+    application_version: "17.5.2"
+    namespace: gitlab-runner
+    instance: \${parentkey:}
+
+    tolerations: []
+    group: ???
+
+    helm_values:
+      imagePullPolicy: Always
+      replicas: 1
+      gitlabUrl: "https://gitlab.com"
+      unregisterRunners: true
+      concurrent: 10
+
+      fullnameOverride: gitlab-runner-${relpath:gitlab-runner.group}
+
+      tolerations: ${relpath:gitlab-runner.tolerations}
+
+      volumeMounts:
+        - mountPath: /secrets
+          name: projected-secrets
+
+      volumes:
+        - name: projected-secrets
+          projected:
+            sources:
+              - secret:
+                  items:
+                    # - key: runner-registration-token
+                    #   path: runner-registration-token
+                    - key: RUNNER_TOKEN
+                      path: runner-token
+                  name: gitlab-runner-${relpath:gitlab-runner.group}-secret
+
+      extraEnv:
+        HTTP_PROXY: ${http_proxy}
+        HTTPS_PROXY: ${https_proxy}
+        NO_PROXY: ${no_proxy}
+
+      #
+      # Security
+      #
+      rbac:
+        create: true
+        clusterWideAccess: false
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: false
+        runAsNonRoot: true
+        privileged: false
+        capabilities:
+          drop: ["ALL"]
+      podSecurityContext:
+        runAsUser: 100
+        runAsGroup: 65533
+        fsGroup: 65533
+        supplementalGroups: [65533]
+
+      #
+      # Resources
+      #
+      limits:
+        memory: 256Mi
+        cpu: 200m
+        ephemeral-storage: 512Mi
+      requests:
+        memory: 128Mi
+        cpu: 100m
+        ephemeral-storage: 256Mi
+
+      #
+      # Monitoring
+      #
+      metrics:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+      service:
+        enabled: true
+      logFormat: json
+
+      runners:
+        config: |
+          log_format = "json"
+          [[runners]]
+            name = "Kubernetes Runner"
+            environment = ["FF_USE_ADVANCED_POD_SPEC_CONFIGURATION=true"]
+            [runners.kubernetes]
+              namespace = "{{.Release.Namespace}}"
+              image = "${registry}/dockerhub/docker:27.2-dind"
+              privileged = true
+              cpu_limit = "2"
+              cpu_request = "1"
+              memory_limit = "1024Mi"
+              memory_request = "512Mi"
+              helper_cpu_limit = "500m"
+              helper_memory_limit = "256Mi"
+              helper_image = "${registry}/ecrpub/gitlab/gitlab-runner-helper:x86_64-v17.5.2"
+            [runners.kubernetes.node_tolerations]
+              "my^.topology.io/zone=backend" = "NoSchedule"
+            [[runners.kubernetes.pod_spec]] # proxy setting for job execution.
+              name = "build envvars"
+              patch = '''
+              containers:
+                - name: build
+                  env:
+                  - name: HTTPS_PROXY
+                    value: ${https_proxy}
+                  - name: HTTP_PROXY
+                    value: ${http_proxy}
+                  - name: NO_PROXY
+                    value: ${no_proxy}
+                - name: helper
+                  env:
+                  - name: HTTPS_PROXY
+                    value: ${https_proxy}
+                  - name: HTTP_PROXY
+                    value: ${http_proxy}
+                  - name: NO_PROXY
+                    value: ${no_proxy}
+              '''
+              patch_type = "strategic"

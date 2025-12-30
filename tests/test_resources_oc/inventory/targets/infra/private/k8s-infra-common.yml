@@ -1,0 +1,13 @@
+---
+classes:
+  # -----------------------------------------------
+  # DEFAULTS
+  # -----------------------------------------------
+  - infra.common
+  - infra.defaults
+  - infra.components.gitlab-runner
+  - kapitan.common
+
+parameters:
+  product: infra
+  cluster: common

@@ -1,0 +1,40 @@
+classes:
+  - tools.gitlab-runner._helm
+  - tools.gitlab-runner.airgap.aws
+
+# -------------------------------------------------
+# Gitlab-Runner configuration
+# -------------------------------------------------
+parameters:
+  # -----------------------------------------------
+  # Gitlab-Runner
+  # -----------------------------------------------
+  gitlab-runner-infra-aaa: ${merge:${gitlab-runner},${gitlab-runner-infra-common-aaa}}
+  gitlab-runner-infra-bbb: ${merge:${gitlab-runner},${gitlab-runner-infra-common-bbb}}
+
+  gitlab-runner-infra-common-aaa:
+    group: ops
+    tolerations:
+      - key: "my.topology.io/zone"
+        operator: "Equal"
+        value: backend
+        effect: "NoSchedule"
+
+  gitlab-runner-infra-common-bbb:
+    group: adap
+    tolerations:
+      - key: "my.topology.io/zone"
+        operator: "Equal"
+        value: backend
+        effect: "NoSchedule"
+
+  # -----------------------------------------------
+  # KAPITAN COMPILE
+  # -----------------------------------------------
+  kapitan:
+    compile:
+      - ${helm_input:gitlab-runner-infra-aaa}
+      - ${helm_input:gitlab-runner-infra-bbb}
+    dependencies:
+      - ${helm_dep:gitlab-runner-infra-aaa, ${gitlab-runner.chart_url}}
+      - ${helm_dep:gitlab-runner-infra-bbb, ${gitlab-runner.chart_url}}
