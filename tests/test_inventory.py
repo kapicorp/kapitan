@@ -89,4 +89,48 @@ class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
         return super().tearDown()
 
 
+TEST_RESOURCES_OC_INVENTORY = os.path.join(
+    TEST_PWD, "tests/test_resources_oc/inventory"
+)
+
+
+class InventoryTargetTestOmegaConfOC(unittest.TestCase):
+    """Test inventory with test_resources_oc using omegaconf backend (deferred resolvers)."""
+
+    def setUp(self) -> None:
+        from omegaconf import OmegaConf
+
+        from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
+
+        self.backend_id = InventoryBackends.OMEGACONF
+        self.inventory_path = TEST_RESOURCES_OC_INVENTORY
+
+        # Register resolvers
+        register_resolvers(self.inventory_path)
+        if self.inventory_path not in sys.path:
+            sys.path.insert(0, self.inventory_path)
+        from resolvers import pass_resolvers
+
+        for name, func in pass_resolvers().items():
+            if not OmegaConf.has_resolver(name):
+                OmegaConf.register_new_resolver(name, func)
+
+        sys.argv = ["kapitan", "compile"]
+        args = build_parser().parse_args()
+        args.inventory_backend = self.backend_id
+        kapitan.cached.args = args
+
+    def test_inventory_target(self):
+        inv = inventory(
+            inventory_path=self.inventory_path, target_name="k8s-infra-common"
+        )
+        logger.debug(inv)
+        self.assertEqual(inv["parameters"]["target_name"], "k8s-infra-common")
+
+    def test_inventory_all_targets(self):
+        inv = inventory(inventory_path=self.inventory_path)
+        self.assertNotEqual(inv.get("k8s-infra-common"), None)
+        self.assertEqual(len(inv), 1)
+
+
 del InventoryTargetTestBase  # remove InventoryTargetTestBase so that it doesn't run

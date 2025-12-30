@@ -287,6 +287,48 @@ class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
         super().tearDown()
 
 
+class CompileTestResourcesOCOmegaconf(unittest.TestCase):
+    """Test compile with test_resources_oc inventory using omegaconf backend."""
+
+    inventory_path = os.path.join(TEST_PWD, "tests/test_resources_oc")
+    extraArgv = ["--inventory-backend=omegaconf"]
+
+    def setUp(self):
+        reset_cache()
+        os.chdir(self.inventory_path)
+        shutil.rmtree("compiled", ignore_errors=True)
+        # Register custom resolvers from test_resources_oc
+        import sys
+
+        from omegaconf import OmegaConf
+
+        from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
+
+        inv_path = os.path.join(self.inventory_path, "inventory")
+        register_resolvers(inv_path)
+        if inv_path not in sys.path:
+            sys.path.insert(0, inv_path)
+        from resolvers import pass_resolvers
+
+        for name, func in pass_resolvers().items():
+            if not OmegaConf.has_resolver(name):
+                OmegaConf.register_new_resolver(name, func)
+
+    def test_compile(self):
+        sys.argv = ["kapitan", "compile", "-t", "k8s-infra-common"] + self.extraArgv
+        main()
+        compile_dir = os.path.join(os.getcwd(), "compiled")
+        reference_dir = os.path.join(TEST_PWD, "tests/test_resources_oc/compiled")
+        compiled_dir_hash = directory_hash(compile_dir)
+        test_compiled_dir_hash = directory_hash(reference_dir)
+        self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
+
+    def tearDown(self):
+        shutil.rmtree("compiled", ignore_errors=True)
+        os.chdir(TEST_PWD)
+        reset_cache()
+
+
 class CompileTerraformTest(unittest.TestCase):
     def setUp(self):
         os.chdir(TEST_TERRAFORM_PATH)

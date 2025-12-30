@@ -8,4 +8,4 @@ parameters:
     vars:
       target: ${target_name}
 
-  target_name: ${_meta_.name.short}
+  target_name: ${_kapitan_.name.short}

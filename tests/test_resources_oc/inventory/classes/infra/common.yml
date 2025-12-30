@@ -8,7 +8,7 @@ parameters:
   # -------------------------------------------------
   # get target_name from file name
   # -------------------------------------------------
-  target_name: ${_meta_.name.short}
+  target_name: ${_kapitan_.name.short}
   short_name: ${get_suffix:${target_name}}
   env_name: ${get_substr:${target_name}}
   namespace: ${target_name}
