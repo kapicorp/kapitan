@@ -161,6 +161,10 @@ def write_to_key(destination: str, origin: str, _root_):
         try:
             # replace with OC.to_object(), when it supports escaped interpolations (wip)
             # reference: https://github.com/omry/omegaconf/pull/1113
+            # NOTE: This used to call OmegaConf.resolve(config, True). The second argument
+            # was removed intentionally to support Kapitan's two-pass/deferred resolution
+            # strategy implemented in __init__.py, where final/full resolution (including
+            # handling of escaped interpolations) is performed in a later pass.
             config = copy.deepcopy(content)
             OmegaConf.resolve(config)
         except Exception as e:
