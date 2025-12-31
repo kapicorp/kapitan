@@ -1,0 +1,6 @@
+# Test class with empty/null classes and parameters values
+# Used to verify omegaconf handles null values correctly
+classes:
+parameters:
+  merge_tests:
+    extra_option_from_empty_class: true

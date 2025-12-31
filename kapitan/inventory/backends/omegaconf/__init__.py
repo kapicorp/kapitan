@@ -103,7 +103,10 @@ class OmegaConfInventory(Inventory):
             shared_targets[target.name] = target
 
         except Exception as e:
+            import traceback
+
             logger.error(f"{target.name}: could not render due to error {e}")
+            logger.debug(f"{target.name}: traceback: {traceback.format_exc()}")
             raise
 
     @cached(cache=LRUCache(maxsize=1024))
@@ -163,10 +166,16 @@ class OmegaConfInventory(Inventory):
 
         content = self.load_file(filename)
 
-        _classes = content.get("classes", [])
-        _parameters = keys_to_strings(content.get("parameters", {}))
-        _applications = content.get("applications", [])
-        _exports = content.get("exports", {})
+        # Handle empty files (yaml.safe_load returns None for empty files)
+        if content is None:
+            content = {}
+
+        # Handle None values for classes/parameters/applications/exports
+        # (e.g., "classes:" with nothing after it returns None, not [])
+        _classes = content.get("classes") or []
+        _parameters = keys_to_strings(content.get("parameters") or {})
+        _applications = content.get("applications") or []
+        _exports = content.get("exports") or {}
 
         # first processes all classes
         for class_name in _classes:
@@ -221,6 +230,11 @@ class OmegaConfInventory(Inventory):
         OmegaConf.resolve(p)
         # Convert to container with resolve=True to ensure all interpolations are resolved
         resolved_params = OmegaConf.to_container(p, resolve=True)
+
+        # Process literal markers (from escape resolver) back to actual ${...} syntax
+        from .resolvers import process_literals
+
+        resolved_params = process_literals(resolved_params)
 
         # Validate and construct KapitanInventoryParameters from the resolved dict
         target.parameters = KapitanInventoryParameters.model_validate(resolved_params)
