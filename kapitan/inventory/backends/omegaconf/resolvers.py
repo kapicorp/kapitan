@@ -146,7 +146,7 @@ def write_to_key(destination: str, origin: str, _root_):
             return "ERROR WHILE RESOLVING"
 
         # remove when issue above is resolved
-        OmegaConf.set_readonly(config, False)
+        OmegaConf.set_readonly(config, False, recursive=True)
 
         # write resolved content back to _root_
         OmegaConf.update(_root_, destination, config, merge=True, force_add=True)
