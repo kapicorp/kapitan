@@ -17,7 +17,7 @@ test:
 
 # Run only the compile test
 test-compile:
-	cd ../.. && poetry run pytest tests/test_omegaconf.py::CompileTestOmegaConf -v
+	cd ../.. && poetry run pytest tests/test_compile.py::CompileTestResourcesOCOmegaconf -v
 
 # Show compiled files
 list:
