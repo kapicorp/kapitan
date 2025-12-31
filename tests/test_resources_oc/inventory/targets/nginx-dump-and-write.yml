@@ -3,9 +3,9 @@ classes:
   # -----------------------------------------------
   # DEFAULTS
   # -----------------------------------------------
-  - infra.common
-  - infra.defaults
-  - infra.components.gitlab-runner
+  - common
+  - defaults
+  - components.nginx
   - kapitan.common
 
 parameters:

@@ -1,0 +1,51 @@
+---
+classes:
+  - ._secrets
+  - ._configs
+# source https://artifacthub.io/packages/helm/bitnami/nginx
+# -------------------------------------------------
+# Parameters
+# -------------------------------------------------
+parameters:
+  # metakey to remove keys at runtime
+  # to avoid having base objects (like vault) in the output
+  # TODO: move to a class "omegaconf"
+  omegaconf:
+    remove:
+      - nginx
+
+  nginx:
+    chart_name: nginx
+    chart_version: "18.2.6"
+    chart_url: https://charts.bitnami.com/bitnami
+    fullname: ${relpath:nginx.namespace}
+    application_version: "1.27.3"
+    namespace: nginx
+    instance: \${parentkey:}
+
+    tolerations: []
+    group: ???
+
+    helm_values:
+      replicaCount: 1
+      fullnameOverride: nginx-${relpath:nginx.group}
+
+      tolerations: ${relpath:nginx.tolerations}
+
+      #
+      # Resources
+      #
+      resources:
+        limits:
+          memory: 128Mi
+          cpu: 100m
+        requests:
+          memory: 64Mi
+          cpu: 50m
+
+      #
+      # Service
+      #
+      service:
+        type: ClusterIP
+        port: 80

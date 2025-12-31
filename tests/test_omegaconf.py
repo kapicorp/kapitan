@@ -114,16 +114,16 @@ class InventoryTestOmegaConfOC(unittest.TestCase):
         )
 
     def test_load_and_resolve_single_target(self):
-        target_name = "k8s-infra-common"
-        target_path = "infra/private/k8s-infra-common.yml"
+        target_name = "nginx-dump-and-write"
+        target_path = "nginx-dump-and-write.yml"
         target_kapitan_metadata = dict(
             {
                 "_kapitan_": {
                     "name": {
-                        "short": "k8s-infra-common",
-                        "full": "k8s-infra-common",
-                        "path": "infra/private/k8s-infra-common",
-                        "parts": ["k8s-infra-common"],
+                        "short": "nginx-dump-and-write",
+                        "full": "nginx-dump-and-write",
+                        "path": "nginx-dump-and-write",
+                        "parts": ["nginx-dump-and-write"],
                     }
                 }
             }
@@ -145,5 +145,8 @@ class InventoryTestOmegaConfOC(unittest.TestCase):
         # Check if the target is loaded correctly
         metadata = target.parameters.model_dump(by_alias=True)["_kapitan_"]
         self.assertDictEqual(target_kapitan_metadata["_kapitan_"], metadata)
-        self.assertEqual(metadata["name"]["short"], "k8s-infra-common")
-        self.assertEqual(target.parameters.target_name, "k8s-infra-common")
+        self.assertEqual(metadata["name"]["short"], "nginx-dump-and-write")
+        self.assertEqual(target.parameters.target_name, "nginx-dump-and-write")
+
+
+# Compile tests for omegaconf are in test_compile.py (CompileTestResourcesOCOmegaconf)

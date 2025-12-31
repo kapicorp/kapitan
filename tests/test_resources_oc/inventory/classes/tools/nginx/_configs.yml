@@ -1,0 +1,24 @@
+---
+parameters:
+  nginx:
+    configs_path: generators.kubernetes.configs.${relpath:nginx.instance}
+    dump:
+      - >-
+        \${write:
+        ${relpath:nginx.configs_path}-nginx-config,
+        ${relpath:nginx.instance}.helm_configs.nginx-config
+        }
+    helm_configs:
+      nginx-config:
+        name: nginx-config
+        namespace: ${relpath:nginx.namespace}
+        data:
+          NGINX_API_KEY:
+            value: |
+              {
+                "api_key": "example-api-key",
+                "settings": {
+                  "max_connections": 1000,
+                  "timeout": 60
+                }
+              }

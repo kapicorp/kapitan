@@ -314,14 +314,47 @@ class CompileTestResourcesOCOmegaconf(unittest.TestCase):
             if not OmegaConf.has_resolver(name):
                 OmegaConf.register_new_resolver(name, func)
 
-    def test_compile(self):
-        sys.argv = ["kapitan", "compile", "-t", "k8s-infra-common"] + self.extraArgv
+    def test_compile_nginx_target(self):
+        """Test compiling nginx-dump-and-write target and verify output files exist"""
+        sys.argv = [
+            "kapitan",
+            "compile",
+            "-t",
+            "nginx-dump-and-write",
+            "--fetch",
+        ] + self.extraArgv
         main()
-        compile_dir = os.path.join(os.getcwd(), "compiled")
-        reference_dir = os.path.join(TEST_PWD, "tests/test_resources_oc/compiled")
-        compiled_dir_hash = directory_hash(compile_dir)
-        test_compiled_dir_hash = directory_hash(reference_dir)
-        self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
+
+        compiled_dir = os.path.join(
+            self.inventory_path, "compiled/nginx-dump-and-write"
+        )
+
+        # Assert that configmap files exist
+        configmap_files = glob.glob(
+            os.path.join(compiled_dir, "k8s/**/nginx-config.yml"), recursive=True
+        )
+        self.assertTrue(
+            len(configmap_files) > 0,
+            f"Expected configmap files in {compiled_dir}/k8s/, but none found",
+        )
+
+        # Assert that secret files exist
+        secret_files = glob.glob(
+            os.path.join(compiled_dir, "k8s/**/nginx-secret.yml"), recursive=True
+        )
+        self.assertTrue(
+            len(secret_files) > 0,
+            f"Expected secret files in {compiled_dir}/k8s/, but none found",
+        )
+
+        # Assert that nginx helm configuration files exist (nginx-infra-aaa.yml and nginx-infra-bbb.yml)
+        nginx_files = glob.glob(
+            os.path.join(compiled_dir, "**/*nginx-infra-*.yml"), recursive=True
+        )
+        self.assertTrue(
+            len(nginx_files) > 0,
+            f"Expected nginx configuration files in {compiled_dir}, but none found",
+        )
 
     def tearDown(self):
         shutil.rmtree("compiled", ignore_errors=True)

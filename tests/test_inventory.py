@@ -122,14 +122,14 @@ class InventoryTargetTestOmegaConfOC(unittest.TestCase):
 
     def test_inventory_target(self):
         inv = inventory(
-            inventory_path=self.inventory_path, target_name="k8s-infra-common"
+            inventory_path=self.inventory_path, target_name="nginx-dump-and-write"
         )
         logger.debug(inv)
-        self.assertEqual(inv["parameters"]["target_name"], "k8s-infra-common")
+        self.assertEqual(inv["parameters"]["target_name"], "nginx-dump-and-write")
 
     def test_inventory_all_targets(self):
         inv = inventory(inventory_path=self.inventory_path)
-        self.assertNotEqual(inv.get("k8s-infra-common"), None)
+        self.assertNotEqual(inv.get("nginx-dump-and-write"), None)
         self.assertEqual(len(inv), 1)
 
 

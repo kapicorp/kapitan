@@ -1,8 +1,0 @@
----
-parameters:
-  gitlab-runner:
-    helm_values:
-      image:
-        registry: ${registry}
-        image: ecrpub/gitlab/gitlab-runner
-      imagePullPolicy: Always

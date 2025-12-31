@@ -1,26 +1,9 @@
-def mul(a: int, b: int):
-    return a * b
-
-
-def escape(content: str):
-    return f"\\${{{content}}}"
-
-
 def get_suffix(name: str):
     return name.split("-")[-1]
 
 
 def get_substr(name: str, substr: int = -2):
     return name.split("-")[substr]
-
-
-def capitalize(input: str):
-    parts = input.split("-")
-    return parts[0] + "".join([x.capitalize() for x in parts[1:]])
-
-
-def upper(content: str):
-    return content.upper()
 
 
 def helm_dep(name: str, source: str):
@@ -56,12 +39,8 @@ def helm_input(name: str, output_file: str = ""):
 
 def pass_resolvers():
     return {
-        "mul": mul,
-        "escape": escape,
         "get_suffix": get_suffix,
         "get_substr": get_substr,
-        "capitalize": capitalize,
-        "upper": upper,
         "helm_dep": helm_dep,
         "helm_input": helm_input,
     }
