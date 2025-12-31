@@ -122,15 +122,15 @@ class InventoryTargetTestOmegaConfOC(unittest.TestCase):
 
     def test_inventory_target(self):
         inv = inventory(
-            inventory_path=self.inventory_path, target_name="nginx-dump-and-write"
+            inventory_path=self.inventory_path, target_name="test-resolvers"
         )
         logger.debug(inv)
-        self.assertEqual(inv["parameters"]["target_name"], "nginx-dump-and-write")
+        self.assertEqual(inv["parameters"]["target_name"], "test-resolvers")
 
     def test_inventory_all_targets(self):
         inv = inventory(inventory_path=self.inventory_path)
-        self.assertNotEqual(inv.get("nginx-dump-and-write"), None)
-        self.assertEqual(len(inv), 1)
+        self.assertNotEqual(inv.get("test-resolvers"), None)
+        self.assertEqual(len(inv), 3)  # test-resolvers, test-merge, test-deferred
 
 
 del InventoryTargetTestBase  # remove InventoryTargetTestBase so that it doesn't run
