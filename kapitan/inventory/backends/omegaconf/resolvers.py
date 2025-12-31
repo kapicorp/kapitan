@@ -139,14 +139,14 @@ def write_to_key(destination: str, origin: str, _root_):
             # replace with OC.to_object(), when it supports escaped interpolations (wip)
             # reference: https://github.com/omry/omegaconf/pull/1113
             config = copy.deepcopy(content)
-            OmegaConf.resolve(config, throw_on_resolution_failure=True)
+            OmegaConf.resolve(config)
         except Exception as e:
             # resolver error
             logger.warning(e)
             return "ERROR WHILE RESOLVING"
 
         # remove when issue above is resolved
-        OmegaConf.set_readonly(config, False, recursive=True)
+        OmegaConf.set_readonly(config, False)
 
         # write resolved content back to _root_
         OmegaConf.update(_root_, destination, config, merge=True, force_add=True)
