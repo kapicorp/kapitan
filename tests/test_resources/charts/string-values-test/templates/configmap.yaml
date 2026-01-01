@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+data:
+  NUMERIC_STRING: {{ .Values.numeric_string | quote }}
+  NORMAL_STRING: {{ .Values.normal_string | quote }}
