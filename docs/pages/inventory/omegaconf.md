@@ -16,12 +16,12 @@ flowchart TD
     B --> C[Merge Parameters]
     C --> D[First Resolution Pass]
     D --> E{Escaped Interpolations?}
-    E -->|Yes| F[Unescape \${...} → ${...}]
+    E -->|Yes| F["Unescape \${...} → `${...}`"]
     F --> G[Second Resolution Pass]
     E -->|No| H[Process Literal Markers]
     G --> H
     H --> I[Final Resolved Inventory]
-    
+
     style D fill:#e1f5fe
     style G fill:#e1f5fe
     style H fill:#fff3e0
