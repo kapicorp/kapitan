@@ -13,13 +13,13 @@ jobs:
   pex_build_publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Install poetry
         run: |-
           pipx install poetry
           pipx inject poetry poetry-plugin-export --force
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           cache: 'pip'
           python-version: |
@@ -32,7 +32,7 @@ jobs:
         run: |
           poetry export --without-hashes --format=requirements.txt > requirements.txt
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: 1.17
       - name: Install Python dependencies
@@ -54,7 +54,7 @@ jobs:
           dist/kapitan.linux-x86_64.pex --help
 
       - name: Add linux-x86_64 pex to assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: dist/kapitan.linux-x86_64.pex

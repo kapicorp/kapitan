@@ -652,11 +652,11 @@ def build_parser():
     return parser
 
 
-def main():
+def main(*argv):
     """main function for command line usage"""
 
     parser = build_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv or None)
 
     # main() is explicitly called multiple times in tests
     # and will raise RuntimeError
@@ -672,7 +672,8 @@ def main():
 
     logger.debug("Running with args: %s", args)
 
-    if len(sys.argv) < 2:
+    effective_argv = argv if argv else sys.argv[1:]
+    if not effective_argv:
         parser.print_help()
         sys.exit(1)
 

@@ -11,12 +11,11 @@ import os
 import random
 import string
 import subprocess
-import sys
 import tempfile
 import unittest
 
 from kapitan.cached import reset_cache
-from kapitan.cli import main
+from kapitan.cli import main as kapitan
 from kapitan.inputs.external import External
 from kapitan.inventory.model.input_types import KapitanInputTypeExternalConfig
 
@@ -27,8 +26,7 @@ class ExternalInputTest(unittest.TestCase):
 
     def test_compile(self):
         temp = tempfile.mkdtemp()
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "external-test"]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "external-test")
         self.assertTrue(
             os.path.isfile(
                 os.path.join(

@@ -53,17 +53,18 @@ Demonstrates how to refactor existing tests to use the new patterns:
 
 **Bad:**
 ```python
+from kapitan.cli import main as kapitan
+
 def test_compile(self):
     os.chdir(TEST_RESOURCES_PATH)  # Shared directory!
-    sys.argv = ["kapitan", "compile"]
-    main()
+    kapitan("compile")
 ```
 
 **Good:**
 ```python
 def test_compile(self, isolated_test_resources):
     helper = CompileTestHelper(isolated_test_resources)
-    helper.compile_with_args(["kapitan", "compile"])
+    helper.compile_with_args(["compile"])
 ```
 
 ### 2. Never Rely on Test Order
@@ -144,11 +145,7 @@ To migrate existing unittest-based tests to pytest:
 
 4. **Run Tests in Parallel**:
    ```bash
-   # Install pytest-xdist
-   pip install pytest-xdist
-
-   # Run tests in parallel
-   pytest tests/ -n auto
+   poetry run pytest -n auto
    ```
 
 ## Testing Checklist
@@ -167,19 +164,19 @@ Before committing test changes, ensure:
 
 ```bash
 # Run all tests
-pytest tests/
+poetry run pytest
 
 # Run tests in parallel
-pytest tests/ -n auto
+poetry run pytest -n auto
 
 # Run specific test class
-pytest tests/test_compile_refactored.py::TestCompileResourcesObjs
+poetry run pytest tests/test_compile_refactored.py::TestCompileResourcesObjs
 
 # Run with verbose output
-pytest tests/ -v
+poetry run pytest -v
 
 # Run with coverage
-pytest tests/ --cov=kapitan
+poetry run pytest --cov=kapitan
 ```
 
 ## Benefits
