@@ -13,15 +13,14 @@ import io
 import logging
 import os
 import shutil
-import sys
-import tempfile
 import unittest
 
+import pytest
 import toml
 import yaml
 
 from kapitan.cached import reset_cache
-from kapitan.cli import main
+from kapitan.cli import main as kapitan
 from kapitan.inventory import InventoryBackends
 from kapitan.utils import directory_hash
 
@@ -42,22 +41,19 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
 
     def test_compile_no_reveal(self):
         # check if the --no-reveal flag takes precedence over --reveal when passed together
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "compile",
             "-t",
             "reveal-output",
             "--reveal",
             "--no-reveal",
-        ]
-        main()
+        )
 
         with open("compiled/reveal-output/main.json") as f:
             self.assertTrue("?{gpg:" in f.read())
 
     def test_single_target_compile(self):
-        sys.argv = ["kapitan", "compile", "-t", "test-objects"]
-        main()
+        kapitan("compile", "-t", "test-objects")
 
     def test_plain_ref_revealed(self):
         "check plain refs are revealed in test-objects"
@@ -76,8 +72,7 @@ class CompileTestResourcesTestKadet(unittest.TestCase):
         reset_cache()
 
     def test_compile(self):
-        sys.argv = ["kapitan", "compile", "-t", "kadet-test"]
-        main()
+        kapitan("compile", "-t", "kadet-test")
 
     def test_compile_with_input_params(self):
         # input_params propagate through and written out to file
@@ -109,8 +104,7 @@ class FailCompileTestResourcesTestKadet(unittest.TestCase):
         reset_cache()
 
     def test_compile(self):
-        sys.argv = ["kapitan", "compile", "-t", "fail-compile"]
-        main()
+        kapitan("compile", "-t", "fail-compile")
 
     def tearDown(self):
         os.chdir(TEST_PWD)
@@ -123,8 +117,7 @@ class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
         reset_cache()
 
     def test_compile(self):
-        sys.argv = ["kapitan", "compile", "-t", "jinja2-input-params"]
-        main()
+        kapitan("compile", "-t", "jinja2-input-params")
 
     def test_compile_with_input_params(self):
         # input_params propagate through and written out to file
@@ -156,8 +149,7 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
         reset_cache()
 
     def test_compile(self):
-        sys.argv = ["kapitan", "compile", "-t", "jinja2-postfix-strip"]
-        main()
+        kapitan("compile", "-t", "jinja2-postfix-strip")
 
     def test_compile_postfix_strip_disabled(self):
         self.assertListEqual(
@@ -179,18 +171,17 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
         reset_cache()
 
 
+@pytest.mark.usefixtures("isolated_kubernetes_inventory")
 class CompileKubernetesTest(unittest.TestCase):
     extraArgv = []
-    inventory_path = TEST_KUBERNETES_PATH
 
     def setUp(self):
+        self.inventory_path = os.getcwd()
         reset_cache()
-        os.chdir(self.inventory_path)
         shutil.rmtree("compiled", ignore_errors=True)
 
     def test_compile(self):
-        sys.argv = ["kapitan", "compile", "-c"] + self.extraArgv
-        main()
+        kapitan("compile", "-c", *self.extraArgv)
         compile_dir = os.path.join(os.getcwd(), "compiled")
         reference_dir = os.path.join(TEST_PWD, "tests/test_kubernetes_compiled")
         compiled_dir_hash = directory_hash(compile_dir)
@@ -201,37 +192,27 @@ class CompileKubernetesTest(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             # Ignoring stdout for "kapitan --help"
             with contextlib.redirect_stdout(io.StringIO()):
-                sys.argv = ["kapitan"]
-                main()
+                kapitan()
         self.assertEqual(cm.exception.code, 1)
 
     def test_compile_specific_target(self):
         reset_cache()
-        sys.argv = ["kapitan", "compile", "-t", "minikube-mysql"] + self.extraArgv
-        main()
+        kapitan("compile", "-t", "minikube-mysql", *self.extraArgv)
         self.assertTrue(
             os.path.exists("compiled/minikube-mysql")
             and not os.path.exists("compiled/minikube-es")
         )
-        # Reset compiled dir
-        sys.argv = ["kapitan", "compile"] + self.extraArgv
-        main()
 
     def test_compile_target_with_label(self):
         reset_cache()
-        sys.argv = ["kapitan", "compile", "-l", "type=kadet"] + self.extraArgv
-        main()
+        kapitan("compile", "-l", "type=kadet", *self.extraArgv)
         self.assertTrue(
             os.path.exists("compiled/minikube-nginx-kadet")
             and not os.path.exists("compiled/minikube-nginx-jsonnet")
         )
-        # Reset compiled dir
-        sys.argv = ["kapitan", "compile"] + self.extraArgv
-        main()
 
     def test_compile_jsonnet_env(self):
-        sys.argv = ["kapitan", "compile", "-t", "jsonnet-env"] + self.extraArgv
-        main()
+        kapitan("compile", "-t", "jsonnet-env", *self.extraArgv)
         self.assertTrue(os.path.exists("compiled/jsonnet-env/jsonnet-env/env.yml"))
         with open("compiled/jsonnet-env/jsonnet-env/env.yml", encoding="utf-8") as f:
             env = dict(yaml.safe_load(f))
@@ -250,7 +231,6 @@ class CompileKubernetesTest(unittest.TestCase):
             self.assertEqual(env["exports"], {})
 
     def tearDown(self):
-        shutil.rmtree("compiled", ignore_errors=True)
         os.chdir(TEST_PWD)
         reset_cache()
 
@@ -266,25 +246,16 @@ class CompileKubernetesTestReclassRs(CompileKubernetesTest):
 
 
 class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
-    temp_dir = tempfile.mkdtemp()
-
     def setUp(self):
-        reset_cache()
-        shutil.copytree(self.inventory_path, self.temp_dir, dirs_exist_ok=True)
-        self.inventory_path = self.temp_dir
         super().setUp()
         self.extraArgv = ["--inventory-backend=omegaconf"]
         from kapitan.inventory.backends.omegaconf import migrate
 
-        migrate(self.temp_dir)
+        migrate(os.getcwd())
 
     @unittest.skip("Already tested")
     def test_compile_not_enough_args(self):
         pass
-
-    def tearDown(self):
-        shutil.rmtree(self.temp_dir)
-        super().tearDown()
 
 
 class CompileTerraformTest(unittest.TestCase):
@@ -292,8 +263,7 @@ class CompileTerraformTest(unittest.TestCase):
         os.chdir(TEST_TERRAFORM_PATH)
 
     def test_compile(self):
-        sys.argv = ["kapitan", "compile"]
-        main()
+        kapitan("compile")
         compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
         test_compiled_dir_hash = directory_hash(
             os.getcwd() + "/../../tests/test_terraform_compiled"
@@ -310,8 +280,7 @@ class PlainOutputTest(unittest.TestCase):
         os.chdir(TEST_DOCKER_PATH)
 
     def test_compile(self):
-        sys.argv = ["kapitan", "compile"]
-        main()
+        kapitan("compile")
         compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
         test_compiled_dir_hash = directory_hash(
             os.getcwd() + "/../../tests/test_docker_compiled"
@@ -327,8 +296,7 @@ class TomlOutputTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         os.chdir(TEST_RESOURCES_PATH)
-        sys.argv = ["kapitan", "compile", "-t", "toml-output"]
-        main()
+        kapitan("compile", "-t", "toml-output")
 
     def setUp(self):
         target_file_path = os.path.join(

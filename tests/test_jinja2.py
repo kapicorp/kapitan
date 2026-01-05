@@ -13,12 +13,17 @@ import tempfile
 import time
 import unittest
 
+import pytest
+
 from kapitan import cached
 from kapitan.jinja2_filters import base64_encode
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.resources import inventory
 from kapitan.utils import render_jinja2_file
+
+
+pytestmark = pytest.mark.usefixtures("reset_cached_args")
 
 
 class Jinja2FiltersTest(unittest.TestCase):
