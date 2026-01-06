@@ -293,15 +293,7 @@ class HelmInputTest(unittest.TestCase):
         (3.190301e+06) because they pass through YAML without proper quoting.
         """
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
-            "compile",
-            "--output-path",
-            temp,
-            "-t",
-            "helm-string-values",
-        ]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "helm-string-values")
 
         configmap_file = os.path.join(
             temp,
