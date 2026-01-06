@@ -11,7 +11,6 @@ import importlib
 import logging
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 
@@ -34,8 +33,7 @@ class InventoryTargetTestBase(unittest.TestCase):
     expected_targets_count = None
 
     def setUp(self) -> None:
-        sys.argv = ["kapitan", "compile"]
-        args = build_parser().parse_args()
+        args = build_parser().parse_args(["compile"])
 
         # Fix inconsistency between reclass-rs (option name) and reclass_rs (module name)
         backend_module_name = self.backend_id.replace("-", "_")

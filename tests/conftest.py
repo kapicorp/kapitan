@@ -12,12 +12,16 @@ Provides utilities for test isolation and parallel execution.
 
 import os
 import shutil
+import subprocess
 import tempfile
+from argparse import Namespace
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Optional
 
 import pytest
 
+from kapitan import cached
 from kapitan.cached import reset_cache
 
 
@@ -38,6 +42,24 @@ def temp_dir():
 
 
 @pytest.fixture
+def reset_cached_args():
+    """
+    Reset cached globals and args to avoid backend leakage between tests.
+    """
+    reset_cache()
+    cached.args = Namespace()
+    yield
+    reset_cache()
+    cached.args = Namespace()
+
+
+def _attach_fixture(request, name, value):
+    instance = getattr(request, "instance", None)
+    if instance is not None:
+        setattr(instance, name, value)
+
+
+@pytest.fixture
 def isolated_compile_dir(temp_dir):
     """
     Create an isolated compilation directory with its own compiled/ output.
@@ -45,6 +67,7 @@ def isolated_compile_dir(temp_dir):
     """
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
 
     # Create the isolated directory
     os.chdir(temp_dir)
@@ -54,10 +77,11 @@ def isolated_compile_dir(temp_dir):
     # Cleanup
     os.chdir(original_dir)
     reset_cache()
+    cached.args = Namespace()
 
 
 @pytest.fixture
-def isolated_test_resources(temp_dir):
+def isolated_test_resources(temp_dir, request):
     """
     Create an isolated copy of test_resources for test execution.
     Returns the path to the isolated copy.
@@ -67,12 +91,15 @@ def isolated_test_resources(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
     os.chdir(isolated_path)
 
+    _attach_fixture(request, "isolated_test_resources", isolated_path)
     yield isolated_path
 
     os.chdir(original_dir)
     reset_cache()
+    cached.args = Namespace()
 
 
 @pytest.fixture
@@ -86,6 +113,7 @@ def isolated_kubernetes_inventory(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
     os.chdir(isolated_path)
 
     # Clean any existing compiled directory in the ISOLATED copy only
@@ -100,6 +128,7 @@ def isolated_kubernetes_inventory(temp_dir):
 
     os.chdir(original_dir)
     reset_cache()
+    cached.args = Namespace()
 
 
 @pytest.fixture
@@ -113,6 +142,7 @@ def isolated_terraform_inventory(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
     os.chdir(isolated_path)
 
     # Safety check: ensure we're not in the actual examples directory
@@ -123,6 +153,7 @@ def isolated_terraform_inventory(temp_dir):
 
     os.chdir(original_dir)
     reset_cache()
+    cached.args = Namespace()
 
 
 @pytest.fixture
@@ -136,6 +167,7 @@ def isolated_docker_inventory(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
     os.chdir(isolated_path)
 
     # Safety check: ensure we're not in the actual examples directory
@@ -146,6 +178,7 @@ def isolated_docker_inventory(temp_dir):
 
     os.chdir(original_dir)
     reset_cache()
+    cached.args = Namespace()
 
 
 @contextmanager
@@ -166,6 +199,7 @@ def isolated_compile_context(base_path: str, target_subdir: Optional[str] = None
 
     original_dir = os.getcwd()
     reset_cache()
+    cached.args = Namespace()
 
     # Change to target directory
     if target_subdir:
@@ -187,6 +221,7 @@ def isolated_compile_context(base_path: str, target_subdir: Optional[str] = None
         os.chdir(original_dir)
         shutil.rmtree(temp_path, ignore_errors=True)
         reset_cache()
+        cached.args = Namespace()
 
 
 @pytest.fixture
@@ -255,3 +290,55 @@ def reset_environment():
     os.environ.clear()
     os.environ.update(original_env)
     reset_cache()
+
+
+@pytest.fixture
+def setup_gpg_key():
+    example_key = "examples/kubernetes/refs/example@kapitan.dev.key"
+    example_key = os.path.join(os.getcwd(), example_key)
+
+    subprocess.run(["gpg", "--import", example_key], check=True)
+
+    # always trust this key - for testing only!
+    ownertrust = b"D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C:6\n"
+
+    subprocess.run(
+        ["gpg", "--import-ownertrust"],
+        input=ownertrust,
+        check=True,
+    )
+
+
+@pytest.fixture
+def local_http_server(request, httpserver):
+    """
+    Expose pytest-httpserver to unittest.TestCase classes.
+    """
+    if request.cls is not None:
+        request.cls.httpserver = httpserver
+
+
+@pytest.fixture
+def seeded_git_repo(git_repo, request):
+    repo = git_repo.api
+    repo_path = Path(repo.working_tree_dir)
+
+    readme = repo_path / "README.md"
+    readme.write_text("kapitan test repo\n", encoding="utf-8")
+
+    tests_dir = repo_path / "tests"
+    tests_dir.mkdir(parents=True, exist_ok=True)
+
+    subdir_file = tests_dir / "subdir.txt"
+    subdir_file.write_text("subdir content\n", encoding="utf-8")
+
+    repo.index.add(["README.md", "tests/subdir.txt"])
+
+    if repo.is_dirty(untracked_files=True):
+        repo.index.commit("initial commit")
+
+    repo.git.branch("-M", "master")
+
+    _attach_fixture(request, "seeded_git_repo", repo_path)
+
+    return repo_path

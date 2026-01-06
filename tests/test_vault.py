@@ -263,7 +263,7 @@ class VaultSecretTest(unittest.TestCase):
 
         # confirming ref file exists
         self.assertTrue(
-            os.path.isfile(os.path.join(REFS_PATH, "secret/bane")),
+            os.path.isfile(os.path.join(REFS_PATH, "secret/robin")),
             msg="Secret file doesn't exist",
         )
 

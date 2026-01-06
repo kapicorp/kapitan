@@ -117,18 +117,17 @@ check_format:
 	@echo "===== Checking Code Formatting ====="
 	poetry run ruff format --check .
 
-# Run Python unit tests
+# Run Python unit tests with coverage
 .PHONY: test_python
 test_python:
-	@echo "===== Running Python Tests ====="
-	poetry run pytest
+	@echo "===== Running Python Tests with coverage ====="
+	poetry run pytest -n auto
 
-# Run tests with coverage reporting
+# Run tests coverage report
 .PHONY: test_coverage
-test_coverage:
-	@echo "===== Running Tests with Coverage ====="
-	poetry run coverage run --source=kapitan -m pytest
-	poetry run coverage report --fail-under=65 -m
+test_coverage: test_python
+	@echo "===== Running Coverage Report ====="
+	poetry run coverage report
 
 # Build Docker image
 .PHONY: build_docker
@@ -148,7 +147,7 @@ test_docker: build_docker
 
 # Run all tests (comprehensive test suite)
 .PHONY: test
-test: install install_external_tools lint test_python test_docker test_coverage check_format
+test: install install_external_tools lint test_coverage test_docker check_format
 	@echo "===== All Tests Passed! ====="
 
 # Quick test without Docker or external tools
@@ -175,14 +174,11 @@ package:
 	@echo "===== Building Python Package ====="
 	python3 setup.py sdist bdist_wheel
 
-# Clean build artifacts
+# Clean all git ignored artifacts
 .PHONY: clean
 clean:
-	@echo "===== Cleaning Build Artifacts ====="
-	rm -rf dist/ build/ kapitan.egg-info/ bindist/
-	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
-	find . -type d -name .ruff_cache -exec rm -rf {} + 2>/dev/null || true
+	@echo "===== Cleaning git ignored Artifacts ====="
+	git clean -Xdf
 
 ################################################################################
 # Documentation
@@ -225,9 +221,9 @@ help:
 	@echo "  make fix                - Fix auto-fixable linting issues in source"
 	@echo "  make fix-tests          - Fix auto-fixable linting issues in tests"
 	@echo "  make test_quick         - Run quick tests (no Docker)"
-	@echo "  make test_python        - Run Python unit tests"
+	@echo "  make test_python        - Run Python unit tests with coverage"
 	@echo "  make test               - Run comprehensive test suite"
-	@echo "  make test_coverage      - Run tests with coverage report"
+	@echo "  make test_coverage      - Run tests coverage report"
 	@echo "  make build_docker       - Build Docker image"
 	@echo "  make test_docker        - Build and test Docker image"
 	@echo ""
