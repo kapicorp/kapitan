@@ -295,13 +295,7 @@ class CompileTestResourcesOCOmegaconf(unittest.TestCase):
         This test verifies that omegaconf inventory resolves correctly
         and compiles without errors (even with empty compile list).
         """
-        sys.argv = [
-            "kapitan",
-            "compile",
-            "-t",
-            "test-resolvers",
-        ] + self.extraArgv
-        main()
+        kapitan("compile", "-t", "test-resolvers", *self.extraArgv)
 
         # Target should compile successfully (even with empty compile list)
         compiled_dir = os.path.join(self.inventory_path, "compiled/test-resolvers")

@@ -105,16 +105,19 @@ class InventoryTargetTestOmegaConfOC(unittest.TestCase):
 
         # Register resolvers
         register_resolvers(self.inventory_path)
-        if self.inventory_path not in sys.path:
-            sys.path.insert(0, self.inventory_path)
-        from resolvers import pass_resolvers
 
-        for name, func in pass_resolvers().items():
+        # Use importlib to load the resolvers module from the inventory path
+        spec = importlib.util.spec_from_file_location(
+            "resolvers", os.path.join(self.inventory_path, "resolvers.py")
+        )
+        resolvers_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(resolvers_module)
+
+        for name, func in resolvers_module.pass_resolvers().items():
             if not OmegaConf.has_resolver(name):
                 OmegaConf.register_new_resolver(name, func)
 
-        sys.argv = ["kapitan", "compile"]
-        args = build_parser().parse_args()
+        args = build_parser().parse_args(["compile"])
         args.inventory_backend = self.backend_id
         kapitan.cached.args = args
 

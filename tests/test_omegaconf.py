@@ -7,10 +7,10 @@
 
 "inventory tests for omegaconf backend"
 
+import importlib.util
 import logging
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 
@@ -92,13 +92,14 @@ class InventoryTestOmegaConfOC(unittest.TestCase):
     @staticmethod
     def register_custom_resolvers():
         """Register custom resolvers from the test resources"""
-        # Add the inventory path to import custom resolvers
-        if TEST_OMEGACONF_INVENTORY not in sys.path:
-            sys.path.insert(0, TEST_OMEGACONF_INVENTORY)
+        # Load resolvers module without modifying sys.path (parallel-test safe)
+        spec = importlib.util.spec_from_file_location(
+            "resolvers", os.path.join(TEST_OMEGACONF_INVENTORY, "resolvers.py")
+        )
+        resolvers_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(resolvers_module)
 
-        from resolvers import pass_resolvers
-
-        custom_resolvers = pass_resolvers()
+        custom_resolvers = resolvers_module.pass_resolvers()
         for name, func in custom_resolvers.items():
             if not OmegaConf.has_resolver(name):
                 OmegaConf.register_new_resolver(name, func)
@@ -290,12 +291,14 @@ class InventoryTestOmegaConfMergeResolver(unittest.TestCase):
     @staticmethod
     def register_custom_resolvers():
         """Register custom resolvers from the test resources"""
-        if TEST_OMEGACONF_INVENTORY not in sys.path:
-            sys.path.insert(0, TEST_OMEGACONF_INVENTORY)
+        # Load resolvers module without modifying sys.path (parallel-test safe)
+        spec = importlib.util.spec_from_file_location(
+            "resolvers", os.path.join(TEST_OMEGACONF_INVENTORY, "resolvers.py")
+        )
+        resolvers_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(resolvers_module)
 
-        from resolvers import pass_resolvers
-
-        custom_resolvers = pass_resolvers()
+        custom_resolvers = resolvers_module.pass_resolvers()
         for name, func in custom_resolvers.items():
             if not OmegaConf.has_resolver(name):
                 OmegaConf.register_new_resolver(name, func)
@@ -431,12 +434,14 @@ class InventoryTestOmegaConfDeferredResolvers(unittest.TestCase):
     @staticmethod
     def register_custom_resolvers():
         """Register custom resolvers from the test resources"""
-        if TEST_OMEGACONF_INVENTORY not in sys.path:
-            sys.path.insert(0, TEST_OMEGACONF_INVENTORY)
+        # Load resolvers module without modifying sys.path (parallel-test safe)
+        spec = importlib.util.spec_from_file_location(
+            "resolvers", os.path.join(TEST_OMEGACONF_INVENTORY, "resolvers.py")
+        )
+        resolvers_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(resolvers_module)
 
-        from resolvers import pass_resolvers
-
-        custom_resolvers = pass_resolvers()
+        custom_resolvers = resolvers_module.pass_resolvers()
         for name, func in custom_resolvers.items():
             if not OmegaConf.has_resolver(name):
                 OmegaConf.register_new_resolver(name, func)
