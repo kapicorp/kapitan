@@ -107,7 +107,9 @@ def relpath(absolute_path: str, _node_: Node):
 
     node_parts.reverse()
 
-    for idx, (path_part, node_path) in enumerate(zip(path_parts, node_parts)):
+    for idx, (path_part, node_path) in enumerate(
+        zip(path_parts, node_parts, strict=False)
+    ):
         if path_part != node_path:
             rel_prefix = "." * (i - idx) if idx != 0 else ""
             relative_path = rel_prefix + ".".join(path_parts[idx:])
