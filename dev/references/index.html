@@ -2722,7 +2722,7 @@ read-write:
 <div class="admonition note">
 <p class="admonition-title">Setting default value only</p>
 <p>The <code>env</code> backend works in a slightly different ways, as it allows you to reference environment variables at runtime.</p>
-<p>For example, for a reference called <strong><code>{?env:targets/envs_defaults/mysql_port_${target_name}}</code></strong>, <strong>Kapitan</strong> would look for an environment variable called <strong><code>KAPITAN_ENV_mysql_port_${TARGET_NAME}</code></strong>.</p>
+<p>For example, for a reference called <strong><code>{?env:targets/envs_defaults/mysql_port_${target_name}}</code></strong>, <strong>Kapitan</strong> would look for an environment variable called <strong><code>KAPITAN_VAR_mysql_port_${TARGET_NAME}</code></strong>.</p>
 <p>If that variable cannot be found in the <strong>Kapitan</strong> environment, the default will be taken from the <strong><code>refs/targets/envs_defaults/mysql_port_${TARGET_NAME}</code></strong> file instead.</p>
 </div>
 <div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>refs<span class="w"> </span>--write<span class="w"> </span>env:refs/targets/envs_defaults/mysql_port_<span class="si">${</span><span class="nv">TARGET_NAME</span><span class="si">}</span><span class="w"> </span>-t<span class="w"> </span><span class="si">${</span><span class="nv">TARGET_NAME</span><span class="si">}</span><span class="w"> </span>-f<span class="w"> </span>&lt;input<span class="w"> </span>file&gt;
