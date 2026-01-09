@@ -44,7 +44,7 @@ RUN GOBIN=$(pwd)/ go install cuelang.org/go/cmd/cue@latest
 
 # Final image with virtualenv built in previous step
 ARG PYTHON_VERSION=3.11
-FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION-trixie-slim
+FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-trixie-slim
 ARG VIRTUAL_ENV_PATH
 
 ENV VIRTUAL_ENV=${VIRTUAL_ENV_PATH}
