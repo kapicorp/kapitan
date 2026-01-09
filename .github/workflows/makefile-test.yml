@@ -15,7 +15,7 @@ on:
       - 'Makefile'
       - '.github/workflows/makefile-test.yml'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - 'ruff.toml'
       - '.pre-commit-config.yaml'
   
@@ -24,7 +24,7 @@ on:
       - 'Makefile'
       - '.github/workflows/makefile-test.yml'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - 'ruff.toml'
       - '.pre-commit-config.yaml'
 
@@ -41,17 +41,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
-          python-version: '3.11'
+          python-version-file: pyproject.toml
 
-      - name: Test make install_poetry
+      - name: Test make install_uv
         run: |
-          make install_poetry
-          poetry --version
+          make install_uv
+          uv --version
 
       - name: Test make install
         run: |
           make install
-          poetry run python -c "import kapitan; print('Kapitan imported successfully')"
+          uv run python -c "import kapitan; print('Kapitan imported successfully')"
 
       - name: Test make install_external_tools
         run: |
@@ -70,7 +70,7 @@ jobs:
           # Remove .git/hooks to test fresh setup
           rm -f .git/hooks/pre-commit
           make setup
-          poetry --version
+          uv --version
           kustomize version
           cue version
           test -f .git/hooks/pre-commit || (echo "Pre-commit hook not installed" && exit 1)
@@ -87,13 +87,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
-          python-version: '3.11'
+          python-version-file: pyproject.toml
 
-      - name: Install Poetry
-        run: pipx install poetry
+      - name: Set up uv
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
 
       - name: Install dependencies
-        run: poetry install --with dev --with test --with docs --extras "gojsonnet reclass-rs omegaconf"
+        run: uv sync --locked --all-extras --dev
 
       - name: Test make clean
         run: |

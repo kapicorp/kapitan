@@ -145,7 +145,7 @@ To migrate existing unittest-based tests to pytest:
 
 4. **Run Tests in Parallel**:
    ```bash
-   poetry run pytest -n auto
+   uv run pytest -n auto
    ```
 
 ## Testing Checklist
@@ -164,19 +164,19 @@ Before committing test changes, ensure:
 
 ```bash
 # Run all tests
-poetry run pytest
+uv run pytest
 
 # Run tests in parallel
-poetry run pytest -n auto
+uv run pytest -n auto
 
 # Run specific test class
-poetry run pytest tests/test_compile_refactored.py::TestCompileResourcesObjs
+uv run pytest tests/test_compile_refactored.py::TestCompileResourcesObjs
 
 # Run with verbose output
-poetry run pytest -v
+uv run pytest -v
 
 # Run with coverage
-poetry run pytest --cov=kapitan
+uv run pytest --cov=kapitan
 ```
 
 ## Benefits

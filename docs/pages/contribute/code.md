@@ -17,7 +17,7 @@ targeting master branch. All submissions, including submissions by project membe
 
 ### Setup
 
-We build Kapitan using `poetry` and provide a comprehensive Makefile for development tasks.
+We build Kapitan using `uv` and provide a comprehensive Makefile for development tasks.
 
 #### Quick Start
 
@@ -29,7 +29,7 @@ make setup
 ```
 
 This command will:
-- Install Poetry package manager
+- Install `uv` package manager
 - Install all Python dependencies (including dev, test, docs, and optional extras)
 - Install external tools (kustomize and CUE)
 
@@ -37,12 +37,12 @@ This command will:
 
 If you prefer to set up components individually:
 
-1. **Install Poetry**
+1. **Install `uv`**
 
     ```bash
-    make install_poetry
+    make install_uv
     # or manually:
-    pip install poetry
+    curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
 
 2. **Install Python Dependencies**
@@ -50,7 +50,7 @@ If you prefer to set up components individually:
     ```bash
     make install
     # or manually:
-    poetry install --with dev --with test --with docs --extras "gojsonnet reclass-rs omegaconf"
+    uv sync --locked --all-extras --dev
     ```
 
 3. **Install External Tools** (required for some tests)
@@ -74,7 +74,7 @@ If you prefer to set up components individually:
 5. **Run Kapitan with your compiled code**
 
     ```bash
-    poetry run kapitan <your command>
+    uv run kapitan <your command>
     ```
 
 #### Makefile Commands Overview
@@ -84,7 +84,7 @@ Run `make help` or simply `make` to see all available commands:
 **Setup Commands:**
 - `make setup` - Complete development environment setup (recommended for first-time setup)
 - `make install` - Install Python dependencies
-- `make install_poetry` - Install Poetry package manager
+- `make install_uv` - Install `uv` package manager
 - `make install_external_tools` - Install Helm, Kustomize, and CUE
 - `make install_pre_commit` - Configure git pre-commit hooks
 
@@ -157,16 +157,16 @@ make test  # Full test suite including Docker tests
 
 3. To test your changes with your local Kapitan version:
    ```bash
-   poetry run kapitan <your command>
+   uv run kapitan <your command>
    # or set an alias:
-   alias kapitan='poetry run kapitan'
+   alias kapitan='uv run kapitan'
    ```
 
 4. To run specific test files:
    ```bash
-   poetry run pytest tests/test_vault_transit.py
+   uv run pytest tests/test_vault_transit.py
    # or using unittest:
-   python3 -m unittest tests/test_vault_transit.py
+   uv run python -m unittest tests/test_vault_transit.py
    ```
 
 ### Code Style
@@ -196,7 +196,7 @@ If you didn't use `make setup`, you can configure pre-commit hooks manually:
 ```bash
 make install_pre_commit
 # or directly:
-poetry run pre-commit install
+uv run pre-commit install
 ```
 
 **Usage:**
