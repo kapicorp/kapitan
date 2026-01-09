@@ -1,10 +1,9 @@
 # Build the virtualenv for Kapitan
 ARG VIRTUAL_ENV_PATH=/opt/venv
-
-FROM ghcr.io/astral-sh/uv:python3.11-trixie-slim AS python-builder
+ARG PYTHON_VERSION=3.11
+FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-trixie-slim AS python-builder
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
-ARG VIRTUAL_ENV_PATH
 
 RUN mkdir /kapitan
 WORKDIR /kapitan
@@ -39,11 +38,13 @@ COPY ./kapitan ./kapitan
 
 RUN uv pip install .[gojsonnet,omegaconf,reclass-rs]
 
+
 FROM golang:1 AS go-builder
 RUN GOBIN=$(pwd)/ go install cuelang.org/go/cmd/cue@latest
 
 # Final image with virtualenv built in previous step
-FROM ghcr.io/astral-sh/uv:python3.11-trixie-slim
+ARG PYTHON_VERSION=3.11
+FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION-trixie-slim
 ARG VIRTUAL_ENV_PATH
 
 ENV VIRTUAL_ENV=${VIRTUAL_ENV_PATH}
