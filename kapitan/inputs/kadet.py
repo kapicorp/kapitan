@@ -149,7 +149,7 @@ def _to_dict(obj):
     recursively update obj should it contain other
     BaseObj values
     """
-    if isinstance(obj, (BaseObj, BaseModel)):
+    if isinstance(obj, BaseObj | BaseModel):
         for k, v in obj.root.items():
             obj.root[k] = _to_dict(v)
         # BaseObj needs to return to_dict()
