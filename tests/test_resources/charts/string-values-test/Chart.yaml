@@ -1,0 +1,5 @@
+apiVersion: v2
+name: string-values-test
+description: A test chart to verify string value preservation
+type: application
+version: 0.1.0

@@ -207,6 +207,19 @@ def render_chart(
         return ("", error_message)
 
 
+def _helm_str_representer(dumper, data):
+    """Quote strings that could be misinterpreted by Helm's Go YAML parser.
+
+    Fixes https://github.com/kapicorp/kapitan/issues/1370 where strings like
+    "03190301" are converted to scientific notation (3.190301e+06).
+    """
+    style = None
+    # Quote digit-only strings starting with 0 or large numeric strings
+    if data and len(data) > 1 and data.isdigit() and (data[0] == "0" or len(data) > 6):
+        style = "'"
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
+
+
 def write_helm_values_file(helm_values: dict):
     """Dump helm values into a temporary YAML file.
 
@@ -218,7 +231,9 @@ def write_helm_values_file(helm_values: dict):
     """
     _, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
     with open(helm_values_file, "w") as fp:
-        yaml.safe_dump(helm_values, fp)
+        dumper = yaml.SafeDumper
+        dumper.add_representer(str, _helm_str_representer)
+        yaml.dump(helm_values, fp, Dumper=dumper)
 
     return helm_values_file
 
