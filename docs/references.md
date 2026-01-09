@@ -359,7 +359,7 @@ You can assign values to your reference using the command line. Both reading fro
         !!! note "Setting default value only"
             The `env` backend works in a slightly different ways, as it allows you to reference environment variables at runtime.
 
-            For example, for a reference called **`{?env:targets/envs_defaults/mysql_port_${target_name}}`**, **Kapitan** would look for an environment variable called **`KAPITAN_ENV_mysql_port_${TARGET_NAME}`**.
+            For example, for a reference called **`{?env:targets/envs_defaults/mysql_port_${target_name}}`**, **Kapitan** would look for an environment variable called **`KAPITAN_VAR_mysql_port_${TARGET_NAME}`**.
 
             If that variable cannot be found in the **Kapitan** environment, the default will be taken from the **`refs/targets/envs_defaults/mysql_port_${TARGET_NAME}`** file instead.
 
