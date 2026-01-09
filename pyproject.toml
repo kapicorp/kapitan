@@ -58,6 +58,7 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.8.6"
 pre-commit = ">=3.8,<5.0"
+filelock = ">=3.20.1"  # Security fix for CVE in versions < 3.20.1
 
 
 [tool.poetry.group.docs]
