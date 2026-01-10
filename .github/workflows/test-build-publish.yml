@@ -357,30 +357,39 @@ jobs:
       - name: Combine tags and generate sources
         id: tags
         run: |
-          # Combine primary tags with py-suffixed tags (if any)
-          TAGS=$(cat <<'EOFTAGS'
+          # Primary tags (these have platform-specific images pushed)
+          PRIMARY_TAGS=$(cat <<'EOFTAGS'
           ${{ steps.meta.outputs.tags }}
+          EOFTAGS
+          )
+          PRIMARY_TAGS=$(echo "$PRIMARY_TAGS" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//')
+
+          # Alias tags (py-suffixed, for compatibility - same images, different tag names)
+          ALIAS_TAGS=$(cat <<'EOFTAGS'
           ${{ steps.meta-py.outputs.tags }}
           EOFTAGS
           )
-          # Remove empty lines
-          TAGS=$(echo "$TAGS" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//')
+          ALIAS_TAGS=$(echo "$ALIAS_TAGS" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//')
+
+          # All tags for the manifest
+          ALL_TAGS=$(printf '%s\n%s' "$PRIMARY_TAGS" "$ALIAS_TAGS" | grep -v '^$')
 
           {
             echo 'tags<<EOF'
-            echo "$TAGS"
+            echo "$ALL_TAGS"
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
-          # Generate sources by appending platform suffixes to each tag
+          # Generate sources ONLY from primary tags (these are the actual pushed images)
           SUFFIXES=$(cat <<'EOFSUFFIXES'
           ${{ needs.setup.outputs.platform-suffixes }}
           EOFSUFFIXES
           )
+          SUFFIXES=$(echo "$SUFFIXES" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//')
 
           {
             echo 'sources<<EOF'
-            echo "$TAGS" | while read -r tag; do
+            echo "$PRIMARY_TAGS" | while read -r tag; do
               [ -z "$tag" ] && continue
               echo "$SUFFIXES" | while read -r suffix; do
                 [ -z "$suffix" ] && continue
