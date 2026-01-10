@@ -354,14 +354,39 @@ jobs:
             type=semver,pattern={{major}}.{{minor}},suffix=-py${{ matrix.python-version }}
             type=semver,pattern={{major}},suffix=-py${{ matrix.python-version }}
 
-      - name: Combine tags
+      - name: Combine tags and generate sources
         id: tags
         run: |
           # Combine primary tags with py-suffixed tags (if any)
+          TAGS=$(cat <<'EOFTAGS'
+          ${{ steps.meta.outputs.tags }}
+          ${{ steps.meta-py.outputs.tags }}
+          EOFTAGS
+          )
+          # Remove empty lines
+          TAGS=$(echo "$TAGS" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//')
+
           {
             echo 'tags<<EOF'
-            echo "${{ steps.meta.outputs.tags }}"
-            echo "${{ steps.meta-py.outputs.tags }}"
+            echo "$TAGS"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+          # Generate sources by appending platform suffixes to each tag
+          SUFFIXES=$(cat <<'EOFSUFFIXES'
+          ${{ needs.setup.outputs.platform-suffixes }}
+          EOFSUFFIXES
+          )
+
+          {
+            echo 'sources<<EOF'
+            echo "$TAGS" | while read -r tag; do
+              [ -z "$tag" ] && continue
+              echo "$SUFFIXES" | while read -r suffix; do
+                [ -z "$suffix" ] && continue
+                echo "${tag}${suffix}"
+              done
+            done
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
@@ -372,5 +397,4 @@ jobs:
         uses: int128/docker-manifest-create-action@b60433fd4312d7a64a56d769b76ebe3f45cf36b4 # v2.10.0
         with:
           tags: ${{ steps.tags.outputs.tags }}
-          builder: buildx
-          suffixes: ${{ needs.setup.outputs.platform-suffixes }}
+          sources: ${{ steps.tags.outputs.sources }}
