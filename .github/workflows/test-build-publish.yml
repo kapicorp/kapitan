@@ -146,46 +146,7 @@ jobs:
 
   build:
     name: build ${{ matrix.platform.platform }} image using python ${{ matrix.python-version }}
-    needs: [setup]
-    runs-on: ${{ matrix.platform.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: ${{ fromJson(needs.setup.outputs.platforms) }}
-        python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
-    steps:
-      - name: Checkout kapitan recursively
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          submodules: recursive
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
-
-      # Builds docker image and allow scoped caching
-      - name: build Kapitan Image
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-        with:
-          push: False
-          platforms: ${{ matrix.platform.platform }}
-          load: True
-          file: Dockerfile
-          tags: local-test-${{ matrix.platform.platform }}
-          cache-from: type=gha,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
-          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
-          build-args: |
-            PYTHON_VERSION=${{ matrix.python-version }}
-
-      - name: Test Kapitan for ${{ matrix.platform.platform }}
-        run: |
-          docker run -t --rm local-test-${{ matrix.platform.platform }} --version
-
-
-  publish:
-    name: publish platform images
-    # Only starts if everything else is successful
-    needs: [setup, precommit, test, build]
-    if: github.event_name != 'pull_request'
+    needs: [setup, precommit, test]
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       fail-fast: false
@@ -205,7 +166,7 @@ jobs:
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        if: env.DOCKERHUB_USERNAME != ''
+        if: env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -230,10 +191,8 @@ jobs:
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
-          # list of Docker images to use as base name for tags
           images: |
             name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
-          # generate Docker tags based on the following events/attributes
           tags: |
             type=ref,event=branch,suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
             type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
@@ -269,11 +228,28 @@ jobs:
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
-      - name: Build and push by digest
-        id: push-digest
+      # Build, test locally, then push if not a PR
+      - name: Build Kapitan image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          platforms: ${{ matrix.platform.platform }}
+          push: false
+          load: true
+          file: Dockerfile
+          tags: local-test
+          cache-from: type=gha,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
+          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
+          build-args: |
+            PYTHON_VERSION=${{ matrix.python-version }}
+
+      - name: Test Kapitan image
+        run: |
+          docker run -t --rm local-test --version
+
+      - name: Push image to DockerHub
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        if: env.DOCKERHUB_USERNAME != ''
+        if: env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           platforms: ${{ matrix.platform.platform }}
@@ -281,7 +257,6 @@ jobs:
           tags: ${{ steps.tags.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
-          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
           build-args: |
             PYTHON_VERSION=${{ matrix.python-version }}
 
@@ -289,7 +264,8 @@ jobs:
     name: combine platform images for python ${{ matrix.python-version }}
     needs:
       - setup
-      - publish
+      - build
+    if: github.event_name != 'pull_request'
     runs-on: ${{ needs.setup.outputs.runner }}
     timeout-minutes: 10
     strategy:
