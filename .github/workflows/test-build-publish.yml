@@ -46,15 +46,19 @@ jobs:
       platforms: ${{ steps.set-matrix.outputs.platforms }}
       platform-suffixes: ${{ steps.set-matrix.outputs.platform-suffixes }}
       runner: ${{ steps.set-matrix.outputs.runner }}
+      default-python-version: ${{ steps.set-matrix.outputs.default-python-version }}
+      default-image-name: ${{ steps.set-matrix.outputs.default-image-name }}
     steps:
       - id: set-matrix
         run: |
           {
             echo "python-versions=${{ env.PYTHON_VERSIONS }}"
-            echo "platforms=$(echo '${{ env.PLATFORMS }}' | sed 's/24\.04/${{ env.UBUNTU_VERSION }}/g')"
+            echo "platforms=${{ env.PLATFORMS }}"
             # Generate suffixes from platforms for manifest creation (e.g., "-linux-amd64")
-            echo "platform-suffixes=$(echo '${{ env.PLATFORMS }}' | jq -c '[.[].platform | gsub("/"; "-") | "-" + .]')"
+            echo "platform-suffixes=$(echo '${{ env.PLATFORMS }}' | jq -r '[.[].platform | gsub("/"; "-") | "-" + .] | join("\n")')"
             echo "runner=ubuntu-${{ env.UBUNTU_VERSION }}"
+            echo "default-python-version=${{ env.DEFAULT_PYTHON_VERSION }}"
+            echo "default-image-name=kapitan"
           } >> "$GITHUB_OUTPUT"
 
   precommit:
@@ -173,13 +177,22 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Compute image name
+        id: image
+        run: |
+          if [ "${{ matrix.python-version }}" = "${{ needs.setup.outputs.default-python-version }}" ]; then
+            echo "name=${{ needs.setup.outputs.default-image-name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=kapitan-py${{ matrix.python-version }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ matrix.python-version == env.DEFAULT_PYTHON_VERSION && 'kapitan' || format('kapitan-py{0}', matrix.python-version) }}
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ steps.image.outputs.name }}
           # generate Docker tags based on the following events/attributes
           tags: |
             type=ref,event=branch
@@ -230,13 +243,22 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Compute image name
+        id: image
+        run: |
+          if [ "${{ matrix.python-version }}" = "${{ needs.setup.outputs.default-python-version }}" ]; then
+            echo "name=${{ needs.setup.outputs.default-image-name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=kapitan-py${{ matrix.python-version }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ matrix.python-version == env.DEFAULT_PYTHON_VERSION && 'kapitan' || format('kapitan-py{0}', matrix.python-version) }}
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ steps.image.outputs.name }}
           # generate Docker tags based on the following events/attributes
           tags: |
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
@@ -253,4 +275,4 @@ jobs:
         with:
           tags: ${{ steps.meta.outputs.tags }}
           builder: buildx
-          suffixes: ${{ join(fromJson(needs.setup.outputs.platform-suffixes), '\n') }}
+          suffixes: ${{ needs.setup.outputs.platform-suffixes }}
