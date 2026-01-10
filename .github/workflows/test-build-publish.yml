@@ -2,6 +2,14 @@
 name: Test, Build and Publish docker image
 run-name: Docker Build for ${{ github.actor }} on branch ${{ github.ref_name }}
 
+env:
+  DEFAULT_PYTHON_VERSION: '3.11'
+  PYTHON_VERSIONS: '["3.11", "3.12", "3.13", "3.14"]'
+  # Each platform entry includes the docker platform and the corresponding GitHub runner
+  # Update UBUNTU_VERSION below to change all runners at once
+  UBUNTU_VERSION: '24.04'
+  PLATFORMS: '[{"platform": "linux/amd64", "runner": "ubuntu-24.04"}, {"platform": "linux/arm64", "runner": "ubuntu-24.04-arm"}]'
+
 concurrency:
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
   cancel-in-progress: true
@@ -29,10 +37,39 @@ on:
       - 'CNAME'
 
 jobs:
+  setup:
+    name: setup build matrix
+    # NOTE: Update this runner and UBUNTU_VERSION together when changing Ubuntu version
+    runs-on: ubuntu-24.04
+    outputs:
+      python-versions: ${{ steps.set-matrix.outputs.python-versions }}
+      platforms: ${{ steps.set-matrix.outputs.platforms }}
+      runner: ${{ steps.set-matrix.outputs.runner }}
+      default-python-version: ${{ steps.set-matrix.outputs.default-python-version }}
+      default-image-name: ${{ steps.set-matrix.outputs.default-image-name }}
+    steps:
+      - id: set-matrix
+        run: |
+          # All outputs in a single grouped redirect
+          {
+            echo "runner=ubuntu-${{ env.UBUNTU_VERSION }}"
+            echo "default-python-version=${{ env.DEFAULT_PYTHON_VERSION }}"
+            echo "default-image-name=kapitan"
+
+            # JSON values need heredoc to handle embedded quotes
+            echo 'python-versions<<EOF'
+            echo '${{ env.PYTHON_VERSIONS }}'
+            echo 'EOF'
+
+            echo 'platforms<<EOF'
+            echo '${{ env.PLATFORMS }}'
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
   precommit:
     name: precommit checks
-    runs-on: ubuntu-latest
-    if: success() || failure()  # Continue running if other jobs fail
+    needs: [setup]
+    runs-on: ${{ needs.setup.outputs.runner }}
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
@@ -40,12 +77,12 @@ jobs:
 
   test:
     name: python ${{ matrix.python-version }} tests
-    runs-on: ubuntu-latest
-    if: success() || failure()   # Continue running if other jobs fail
+    needs: [setup]
+    runs-on: ${{ needs.setup.outputs.runner }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -60,13 +97,37 @@ jobs:
       - name: Install libraries dependencies
         run: |
           uv sync --locked --all-extras --dev
-      - name: Install testing dependencies (Helm, CUE, Kustomize)
+      - name: Cache external tools
+        id: cache-tools
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            /usr/local/bin/helm
+            /usr/local/bin/kustomize
+            /usr/local/bin/cue
+          key: external-tools-${{ runner.os }}-${{ runner.arch }}-v1
+
+      - name: Install external tools
+        if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
-          sudo apt-get -qq update
-          sudo apt-get install -y gnupg2 git curl xz-utils jq
-          
-          # Install all external tools using make command
-          make install_external_tools
+          # Install Helm
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+          # Install Kustomize
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+
+          # Install CUE
+          CUE_VERSION=$(curl -s "https://api.github.com/repos/cue-lang/cue/releases/latest" | jq -r '.tag_name')
+          ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
+          curl -fsSL "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_${ARCH}.tar.gz" | sudo tar xz -C /usr/local/bin cue
+
+      - name: Verify external tools
+        run: |
+          helm version --short
+          kustomize version
+          cue version
+
       - name: Run pytest
         uses: pavelzw/pytest-action@510c5e90c360a185039bea56ce8b3e7e51a16507 # v2.2.0
         with:
@@ -79,177 +140,227 @@ jobs:
           report-title: 'Kapitan tests'
 
   build:
-    name: build ${{ matrix.platform }} image using python ${{ matrix.python-version }}
-    if: success() || failure()   # Continue running if other jobs fail
-    runs-on: ubuntu-latest
+    name: build ${{ matrix.platform.platform }} image using python ${{ matrix.python-version }}
+    needs: [setup, precommit, test]
+    runs-on: ${{ matrix.platform.runner }}
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
-        python-version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
+        platform: ${{ fromJson(needs.setup.outputs.platforms) }}
+        python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: recursive
 
-      # Setup QEMU and Buildx to build multi-platform image
-      # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
-
-      # Builds docker image and allow scoped caching
-      - name: build Kapitan Image
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-        with:
-          push: False
-          platforms: ${{ matrix.platform }}
-          load: True
-          file: Dockerfile
-          tags: local-test-${{ matrix.platform }}
-          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
-          build-args: |
-            - PYTHON_VERSION=${{ matrix.python-version }}
-
-      - name: Test Kapitan for ${{ matrix.platform }}
-        run: |
-          docker run -t --rm local-test-${{ matrix.platform }} --version
-
-
-  publish:
-    name: publish platform images
-    # Only starts if everything else is successful
-    needs: [precommit, test, build]
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
-        python-version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
-    outputs:
-      python-version: ${{ matrix.python-version }}
-      platform: ${{ matrix.platform }}
-
-    steps:
-      - name: Checkout kapitan recursively
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-        with:
-          submodules: recursive
-
-      # Setup QEMU and Buildx to build multi-platform image
-      # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Login to DockerHub
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
-        if: env.DOCKERHUB_USERNAME != null
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        if: env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Compute tag suffix
+        id: suffix
+        run: |
+          # Platform suffix: convert linux/amd64 -> -linux-amd64
+          PLATFORM_SUFFIX="-$(echo '${{ matrix.platform.platform }}' | tr '/' '-')"
+          echo "platform-suffix=$PLATFORM_SUFFIX" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ matrix.python-version }}" = "${{ needs.setup.outputs.default-python-version }}" ]; then
+            # Default python version: no suffix (but we'll also create -py3.X tags for compatibility)
+            echo "python-suffix=" >> "$GITHUB_OUTPUT"
+            echo "is-default=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "python-suffix=-py${{ matrix.python-version }}" >> "$GITHUB_OUTPUT"
+            echo "is-default=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
         with:
-          # list of Docker images to use as base name for tags
           images: |
-            name=${{ matrix.python-version }} == '3.11' && ${{ vars.DOCKERHUB_REPOSITORY }}/kapitan || ${{ vars.DOCKERHUB_REPOSITORY }}/kapitan-py${{ matrix.python-version }}
-          # generate Docker tags based on the following events/attributes
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
           tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=ref,event=branch,suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{major}}.{{minor}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{major}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
           flavor: |
-            latest=auto
-            suffix=-${{ matrix.platform }},onlatest=true
+            latest=false
 
-      - name: Build and push by digest
-        id: push-digest
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
-        if: env.DOCKERHUB_USERNAME != null
+      # For default python version, also create tags with -py suffix for compatibility
+      - name: Docker meta (py-suffixed tags for default version)
+        id: meta-py
+        if: steps.suffix.outputs.is-default == 'true'
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: |
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
+          tags: |
+            type=ref,event=branch,suffix=-py${{ matrix.python-version }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{version}},suffix=-py${{ matrix.python-version }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{major}}.{{minor}},suffix=-py${{ matrix.python-version }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{major}},suffix=-py${{ matrix.python-version }}${{ steps.suffix.outputs.platform-suffix }}
+          flavor: |
+            latest=false
+
+      - name: Combine tags
+        id: tags
+        run: |
+          # Combine primary tags with py-suffixed tags (if any)
+          {
+            echo 'tags<<EOF'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo "${{ steps.meta-py.outputs.tags }}"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      # Build, test locally, then push if not a PR
+      - name: Build Kapitan image
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
-          platforms: ${{ matrix.platform }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{steps.meta.outputs.labels}}
-          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
+          platforms: ${{ matrix.platform.platform }}
+          push: false
+          load: true
+          file: Dockerfile
+          tags: local-test
+          cache-from: type=gha,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
+          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
           build-args: |
-            - PYTHON_VERSION=${{ matrix.python-version }}
+            PYTHON_VERSION=${{ matrix.python-version }}
+
+      - name: Test Kapitan image
+        run: |
+          docker run -t --rm local-test --version
+
+      - name: Push image to DockerHub
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        if: env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          platforms: ${{ matrix.platform.platform }}
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
+          build-args: |
+            PYTHON_VERSION=${{ matrix.python-version }}
 
   build-multi-architecture:
-    name: combine platform images
+    name: combine platform images for python ${{ matrix.python-version }}
     needs:
-      - publish
-    runs-on: ubuntu-latest
+      - setup
+      - build
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ needs.setup.outputs.runner }}
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
-      # Setup QEMU and Buildx to build multi-platform image
-      # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Login to DockerHub
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
-        if: env.DOCKERHUB_USERNAME != null
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        if: env.DOCKERHUB_USERNAME != ''
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Compute tag suffix
+        id: suffix
+        run: |
+          if [ "${{ matrix.python-version }}" = "${{ needs.setup.outputs.default-python-version }}" ]; then
+            # Default python version: no suffix (but we'll also create -py3.X tags for compatibility)
+            echo "python-suffix=" >> "$GITHUB_OUTPUT"
+            echo "is-default=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "python-suffix=-py${{ matrix.python-version }}" >> "$GITHUB_OUTPUT"
+            echo "is-default=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name=${{ needs.publish.outputs.python-version }} == '3.11' && ${{ vars.DOCKERHUB_REPOSITORY }}/kapitan || ${{ vars.DOCKERHUB_REPOSITORY }}/kapitan-py${{ needs.publish.outputs.python-version }}
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.suffix.outputs.is-default == 'true' }}
+            type=ref,event=branch,suffix=${{ steps.suffix.outputs.python-suffix }}
+            type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.python-suffix }}
+            type=semver,pattern={{major}}.{{minor}},suffix=${{ steps.suffix.outputs.python-suffix }}
+            type=semver,pattern={{major}},suffix=${{ steps.suffix.outputs.python-suffix }}
 
-      - uses: int128/docker-manifest-create-action@b60433fd4312d7a64a56d769b76ebe3f45cf36b4 # v2.10.0
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
-        if: env.DOCKERHUB_USERNAME != null
+      # For default python version, also create tags with -py suffix for compatibility
+      - name: Docker meta (py-suffixed tags for default version)
+        id: meta-py
+        if: steps.suffix.outputs.is-default == 'true'
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
-          tags: ${{ steps.meta.outputs.tags }}
-          builder: buildx
-          suffixes: |
-            -linux-amd64
-            -linux-arm64
+          images: |
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
+          tags: |
+            type=ref,event=branch,suffix=-py${{ matrix.python-version }}
+            type=semver,pattern={{version}},suffix=-py${{ matrix.python-version }}
+            type=semver,pattern={{major}}.{{minor}},suffix=-py${{ matrix.python-version }}
+            type=semver,pattern={{major}},suffix=-py${{ matrix.python-version }}
+
+      - name: Create and push multi-arch manifests
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        if: env.DOCKERHUB_USERNAME != ''
+        run: |
+          # Get primary tags (without platform suffix)
+          PRIMARY_TAGS=$(cat <<'EOFTAGS'
+          ${{ steps.meta.outputs.tags }}
+          EOFTAGS
+          )
+          PRIMARY_TAGS=$(echo "$PRIMARY_TAGS" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//')
+
+          # Get alias tags for default python version (py-suffixed for compatibility)
+          ALIAS_TAGS=$(cat <<'EOFTAGS'
+          ${{ steps.meta-py.outputs.tags }}
+          EOFTAGS
+          )
+          ALIAS_TAGS=$(echo "$ALIAS_TAGS" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//')
+
+          # Create manifests for each primary tag
+          echo "$PRIMARY_TAGS" | while read -r tag; do
+            [ -z "$tag" ] && continue
+            echo "Creating manifest for: $tag"
+            docker buildx imagetools create -t "$tag" \
+              "${tag}-linux-amd64" \
+              "${tag}-linux-arm64"
+          done
+
+          # For default python version, create alias manifests with -py suffix
+          # These point to the same source images as the primary tags
+          if [ -n "$ALIAS_TAGS" ]; then
+            # Store tags in temp files for line-by-line pairing
+            echo "$PRIMARY_TAGS" > /tmp/primary_tags.txt
+            echo "$ALIAS_TAGS" > /tmp/alias_tags.txt
+
+            paste /tmp/primary_tags.txt /tmp/alias_tags.txt | while IFS=$'\t' read -r primary alias; do
+              [ -z "$primary" ] || [ -z "$alias" ] && continue
+              echo "Creating alias manifest: $alias (from $primary sources)"
+              docker buildx imagetools create -t "$alias" \
+                "${primary}-linux-amd64" \
+                "${primary}-linux-arm64"
+            done
+          fi
