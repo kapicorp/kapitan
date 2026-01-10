@@ -51,17 +51,22 @@ jobs:
     steps:
       - id: set-matrix
         run: |
+          # All outputs in a single grouped redirect
           {
-            echo "python-versions=${{ env.PYTHON_VERSIONS }}"
-            echo "platforms=${{ env.PLATFORMS }}"
             echo "runner=ubuntu-${{ env.UBUNTU_VERSION }}"
             echo "default-python-version=${{ env.DEFAULT_PYTHON_VERSION }}"
             echo "default-image-name=kapitan"
-          } >> "$GITHUB_OUTPUT"
 
-          # Generate suffixes from platforms for manifest creation (e.g., "-linux-amd64")
-          # Multi-line output requires heredoc syntax
-          {
+            # JSON values need heredoc to handle embedded quotes
+            echo 'python-versions<<EOF'
+            echo '${{ env.PYTHON_VERSIONS }}'
+            echo 'EOF'
+
+            echo 'platforms<<EOF'
+            echo '${{ env.PLATFORMS }}'
+            echo 'EOF'
+
+            # Generate suffixes from platforms for manifest creation (e.g., "-linux-amd64")
             echo 'platform-suffixes<<EOF'
             echo '${{ env.PLATFORMS }}' | jq -r '.[].platform | gsub("/"; "-") | "-" + .'
             echo 'EOF'
