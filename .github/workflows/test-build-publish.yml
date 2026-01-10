@@ -6,6 +6,8 @@ env:
   DEFAULT_PYTHON_VERSION: '3.11'
   PYTHON_VERSIONS: '["3.11", "3.12", "3.13", "3.14"]'
   # Each platform entry includes the docker platform and the corresponding GitHub runner
+  # Update UBUNTU_VERSION below to change all runners at once
+  UBUNTU_VERSION: '24.04'
   PLATFORMS: '[{"platform": "linux/amd64", "runner": "ubuntu-24.04"}, {"platform": "linux/arm64", "runner": "ubuntu-24.04-arm"}]'
 
 concurrency:
@@ -37,20 +39,28 @@ on:
 jobs:
   setup:
     name: setup build matrix
-    runs-on: ubuntu-latest
+    # NOTE: Update this runner and UBUNTU_VERSION together when changing Ubuntu version
+    runs-on: ubuntu-24.04
     outputs:
       python-versions: ${{ steps.set-matrix.outputs.python-versions }}
       platforms: ${{ steps.set-matrix.outputs.platforms }}
+      platform-suffixes: ${{ steps.set-matrix.outputs.platform-suffixes }}
+      runner: ${{ steps.set-matrix.outputs.runner }}
     steps:
       - id: set-matrix
         run: |
-          echo "python-versions=${{ env.PYTHON_VERSIONS }}" >> $GITHUB_OUTPUT
-          echo "platforms=${{ env.PLATFORMS }}" >> $GITHUB_OUTPUT
+          {
+            echo "python-versions=${{ env.PYTHON_VERSIONS }}"
+            echo "platforms=$(echo '${{ env.PLATFORMS }}' | sed 's/24\.04/${{ env.UBUNTU_VERSION }}/g')"
+            # Generate suffixes from platforms for manifest creation (e.g., "-linux-amd64")
+            echo "platform-suffixes=$(echo '${{ env.PLATFORMS }}' | jq -c '[.[].platform | gsub("/"; "-") | "-" + .]')"
+            echo "runner=ubuntu-${{ env.UBUNTU_VERSION }}"
+          } >> "$GITHUB_OUTPUT"
 
   precommit:
     name: precommit checks
-    runs-on: ubuntu-latest
-    if: success() || failure()  # Continue running if other jobs fail
+    needs: [setup]
+    runs-on: ${{ needs.setup.outputs.runner }}
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
@@ -59,8 +69,7 @@ jobs:
   test:
     name: python ${{ matrix.python-version }} tests
     needs: [setup]
-    runs-on: ubuntu-latest
-    if: success() || failure()   # Continue running if other jobs fail
+    runs-on: ${{ needs.setup.outputs.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -101,7 +110,6 @@ jobs:
   build:
     name: build ${{ matrix.platform.platform }} image using python ${{ matrix.python-version }}
     needs: [setup]
-    if: success() || failure()   # Continue running if other jobs fail
     runs-on: ${{ matrix.platform.runner }}
     strategy:
       fail-fast: false
@@ -126,8 +134,8 @@ jobs:
           load: True
           file: Dockerfile
           tags: local-test-${{ matrix.platform.platform }}
-          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform.platform }}
-          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform.platform }}
+          cache-from: type=gha,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
+          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
           build-args: |
             PYTHON_VERSION=${{ matrix.python-version }}
 
@@ -193,8 +201,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform.platform }}
-          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform.platform }}
+          cache-from: type=gha,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
+          cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
           build-args: |
             PYTHON_VERSION=${{ matrix.python-version }}
 
@@ -203,14 +211,13 @@ jobs:
     needs:
       - setup
       - publish
-    runs-on: ubuntu-latest
+    runs-on: ${{ needs.setup.outputs.runner }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
         python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
-      # QEMU not needed here - just creating manifests, not building
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
@@ -246,6 +253,4 @@ jobs:
         with:
           tags: ${{ steps.meta.outputs.tags }}
           builder: buildx
-          suffixes: |
-            -linux-amd64
-            -linux-arm64
+          suffixes: ${{ join(fromJson(needs.setup.outputs.platform-suffixes), '\n') }}
