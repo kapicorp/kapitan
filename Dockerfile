@@ -39,6 +39,7 @@ COPY ./kapitan ./kapitan
 RUN uv pip install .[gojsonnet,omegaconf,reclass-rs]
 
 
+ARG PYTHON_VERSION=3.11
 FROM golang:1 AS go-builder
 RUN GOBIN=$(pwd)/ go install cuelang.org/go/cmd/cue@latest
 
