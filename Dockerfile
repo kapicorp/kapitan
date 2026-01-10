@@ -2,6 +2,7 @@
 ARG VIRTUAL_ENV_PATH=/opt/venv
 ARG PYTHON_VERSION=3.11
 FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-trixie-slim AS python-builder
+ARG VIRTUAL_ENV_PATH
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
 
