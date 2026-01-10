@@ -4,8 +4,7 @@ run-name: Docker Build for ${{ github.actor }} on branch ${{ github.ref_name }}
 
 env:
   DEFAULT_PYTHON_VERSION: '3.11'
-  #PYTHON_VERSIONS: '["3.11", "3.12", "3.13", "3.14"]'
-  PYTHON_VERSIONS: '["3.11"]'
+  PYTHON_VERSIONS: '["3.11", "3.12", "3.13", "3.14"]'
   # Each platform entry includes the docker platform and the corresponding GitHub runner
   # Update UBUNTU_VERSION below to change all runners at once
   UBUNTU_VERSION: '24.04'
