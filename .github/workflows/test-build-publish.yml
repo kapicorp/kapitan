@@ -89,23 +89,51 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: recursive
+
       - name: Install poetry
         run: pipx install poetry
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           cache: 'poetry'
           python-version: ${{ matrix.python-version }}
+
       - name: Install libraries dependencies
         run: |
           poetry install --with test --no-root --extras=gojsonnet --extras=omegaconf --extras=reclass-rs
-      - name: Install testing dependencies (Helm, CUE, Kustomize)
+
+      - name: Cache external tools
+        id: cache-tools
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            /usr/local/bin/helm
+            /usr/local/bin/kustomize
+            /usr/local/bin/cue
+          key: external-tools-${{ runner.os }}-${{ runner.arch }}-v1
+
+      - name: Install external tools
+        if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
-          sudo apt-get -qq update
-          sudo apt-get install -y gnupg2 git curl xz-utils jq
-          
-          # Install all external tools using make command
-          make install_external_tools
+          # Install Helm
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+          # Install Kustomize
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+
+          # Install CUE
+          CUE_VERSION=$(curl -s "https://api.github.com/repos/cue-lang/cue/releases/latest" | jq -r '.tag_name')
+          ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
+          curl -fsSL "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_${ARCH}.tar.gz" | sudo tar xz -C /usr/local/bin cue
+
+      - name: Verify external tools
+        run: |
+          helm version --short
+          kustomize version
+          cue version
+
       - name: Run pytest
         uses: pavelzw/pytest-action@510c5e90c360a185039bea56ce8b3e7e51a16507 # v2.2.0
         with:
