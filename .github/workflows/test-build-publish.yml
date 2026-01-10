@@ -4,11 +4,13 @@ run-name: Docker Build for ${{ github.actor }} on branch ${{ github.ref_name }}
 
 env:
   DEFAULT_PYTHON_VERSION: '3.11'
-  PYTHON_VERSIONS: '["3.11", "3.12", "3.13", "3.14"]'
+  #PYTHON_VERSIONS: '["3.11", "3.12", "3.13", "3.14"]'
+  PYTHON_VERSIONS: '["3.11"]'
   # Each platform entry includes the docker platform and the corresponding GitHub runner
   # Update UBUNTU_VERSION below to change all runners at once
   UBUNTU_VERSION: '24.04'
-  PLATFORMS: '[{"platform": "linux/amd64", "runner": "ubuntu-24.04"}, {"platform": "linux/arm64", "runner": "ubuntu-24.04-arm"}]'
+  #PLATFORMS: '[{"platform": "linux/amd64", "runner": "ubuntu-24.04"}, {"platform": "linux/arm64", "runner": "ubuntu-24.04-arm"}]'
+  PLATFORMS: '[{"platform": "linux/amd64", "runner": "ubuntu-24.04"}]'
 
 concurrency:
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
@@ -44,7 +46,6 @@ jobs:
     outputs:
       python-versions: ${{ steps.set-matrix.outputs.python-versions }}
       platforms: ${{ steps.set-matrix.outputs.platforms }}
-      platform-suffixes: ${{ steps.set-matrix.outputs.platform-suffixes }}
       runner: ${{ steps.set-matrix.outputs.runner }}
       default-python-version: ${{ steps.set-matrix.outputs.default-python-version }}
       default-image-name: ${{ steps.set-matrix.outputs.default-image-name }}
@@ -64,11 +65,6 @@ jobs:
 
             echo 'platforms<<EOF'
             echo '${{ env.PLATFORMS }}'
-            echo 'EOF'
-
-            # Generate suffixes from platforms for manifest creation (e.g., "-linux-amd64")
-            echo 'platform-suffixes<<EOF'
-            echo '${{ env.PLATFORMS }}' | jq -r '.[].platform | gsub("/"; "-") | "-" + .'
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
@@ -354,56 +350,46 @@ jobs:
             type=semver,pattern={{major}}.{{minor}},suffix=-py${{ matrix.python-version }}
             type=semver,pattern={{major}},suffix=-py${{ matrix.python-version }}
 
-      - name: Combine tags and generate sources
-        id: tags
+      - name: Create and push multi-arch manifests
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        if: env.DOCKERHUB_USERNAME != ''
         run: |
-          # Primary tags (these have platform-specific images pushed)
+          # Get primary tags (without platform suffix)
           PRIMARY_TAGS=$(cat <<'EOFTAGS'
           ${{ steps.meta.outputs.tags }}
           EOFTAGS
           )
           PRIMARY_TAGS=$(echo "$PRIMARY_TAGS" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//')
 
-          # Alias tags (py-suffixed, for compatibility - same images, different tag names)
+          # Get alias tags for default python version (py-suffixed for compatibility)
           ALIAS_TAGS=$(cat <<'EOFTAGS'
           ${{ steps.meta-py.outputs.tags }}
           EOFTAGS
           )
           ALIAS_TAGS=$(echo "$ALIAS_TAGS" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//')
 
-          # All tags for the manifest
-          ALL_TAGS=$(printf '%s\n%s' "$PRIMARY_TAGS" "$ALIAS_TAGS" | grep -v '^$')
+          # Create manifests for each primary tag
+          echo "$PRIMARY_TAGS" | while read -r tag; do
+            [ -z "$tag" ] && continue
+            echo "Creating manifest for: $tag"
+            docker buildx imagetools create -t "$tag" \
+              "${tag}-linux-amd64" \
+              "${tag}-linux-arm64"
+          done
 
-          {
-            echo 'tags<<EOF'
-            echo "$ALL_TAGS"
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
+          # For default python version, create alias manifests with -py suffix
+          # These point to the same source images as the primary tags
+          if [ -n "$ALIAS_TAGS" ]; then
+            # Store tags in temp files for line-by-line pairing
+            echo "$PRIMARY_TAGS" > /tmp/primary_tags.txt
+            echo "$ALIAS_TAGS" > /tmp/alias_tags.txt
 
-          # Generate sources ONLY from primary tags (these are the actual pushed images)
-          SUFFIXES=$(cat <<'EOFSUFFIXES'
-          ${{ needs.setup.outputs.platform-suffixes }}
-          EOFSUFFIXES
-          )
-          SUFFIXES=$(echo "$SUFFIXES" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//')
-
-          {
-            echo 'sources<<EOF'
-            echo "$PRIMARY_TAGS" | while read -r tag; do
-              [ -z "$tag" ] && continue
-              echo "$SUFFIXES" | while read -r suffix; do
-                [ -z "$suffix" ] && continue
-                echo "${tag}${suffix}"
-              done
+            paste /tmp/primary_tags.txt /tmp/alias_tags.txt | while IFS=$'\t' read -r primary alias; do
+              [ -z "$primary" ] || [ -z "$alias" ] && continue
+              echo "Creating alias manifest: $alias (from $primary sources)"
+              docker buildx imagetools create -t "$alias" \
+                "${primary}-linux-amd64" \
+                "${primary}-linux-arm64"
             done
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Create and push manifest
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        if: env.DOCKERHUB_USERNAME != ''
-        uses: int128/docker-manifest-create-action@b60433fd4312d7a64a56d769b76ebe3f45cf36b4 # v2.10.0
-        with:
-          tags: ${{ steps.tags.outputs.tags }}
-          sources: ${{ steps.tags.outputs.sources }}
+          fi
