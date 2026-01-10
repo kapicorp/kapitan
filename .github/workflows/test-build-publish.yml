@@ -4,6 +4,9 @@ run-name: Docker Build for ${{ github.actor }} on branch ${{ github.ref_name }}
 
 env:
   DEFAULT_PYTHON_VERSION: '3.11'
+  PYTHON_VERSIONS: '["3.11", "3.12", "3.13", "3.14"]'
+  # Each platform entry includes the docker platform and the corresponding GitHub runner
+  PLATFORMS: '[{"platform": "linux/amd64", "runner": "ubuntu-24.04"}, {"platform": "linux/arm64", "runner": "ubuntu-24.04-arm"}]'
 
 concurrency:
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
@@ -32,6 +35,18 @@ on:
       - 'CNAME'
 
 jobs:
+  setup:
+    name: setup build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      python-versions: ${{ steps.set-matrix.outputs.python-versions }}
+      platforms: ${{ steps.set-matrix.outputs.platforms }}
+    steps:
+      - id: set-matrix
+        run: |
+          echo "python-versions=${{ env.PYTHON_VERSIONS }}" >> $GITHUB_OUTPUT
+          echo "platforms=${{ env.PLATFORMS }}" >> $GITHUB_OUTPUT
+
   precommit:
     name: precommit checks
     runs-on: ubuntu-latest
@@ -43,12 +58,13 @@ jobs:
 
   test:
     name: python ${{ matrix.python-version }} tests
+    needs: [setup]
     runs-on: ubuntu-latest
     if: success() || failure()   # Continue running if other jobs fail
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -83,30 +99,21 @@ jobs:
           report-title: 'Kapitan tests'
 
   build:
-    name: build ${{ matrix.platform }} image using python ${{ matrix.python-version }}
+    name: build ${{ matrix.platform.platform }} image using python ${{ matrix.python-version }}
+    needs: [setup]
     if: success() || failure()   # Continue running if other jobs fail
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform.runner }}
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
-        python-version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
+        platform: ${{ fromJson(needs.setup.outputs.platforms) }}
+        python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: recursive
 
-      # Setup QEMU and Buildx to build multi-platform image
-      # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
@@ -115,55 +122,43 @@ jobs:
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           push: False
-          platforms: ${{ matrix.platform }}
+          platforms: ${{ matrix.platform.platform }}
           load: True
           file: Dockerfile
-          tags: local-test-${{ matrix.platform }}
-          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
+          tags: local-test-${{ matrix.platform.platform }}
+          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform.platform }}
+          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform.platform }}
           build-args: |
             PYTHON_VERSION=${{ matrix.python-version }}
 
-      - name: Test Kapitan for ${{ matrix.platform }}
+      - name: Test Kapitan for ${{ matrix.platform.platform }}
         run: |
-          docker run -t --rm local-test-${{ matrix.platform }} --version
+          docker run -t --rm local-test-${{ matrix.platform.platform }} --version
 
 
   publish:
     name: publish platform images
     # Only starts if everything else is successful
-    needs: [precommit, test, build]
+    needs: [setup, precommit, test, build]
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform.runner }}
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
-        python-version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
+        platform: ${{ fromJson(needs.setup.outputs.platforms) }}
+        python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
       - name: Checkout kapitan recursively
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: recursive
 
-      # Setup QEMU and Buildx to build multi-platform image
-      # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Login to DockerHub
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
-        if: env.DOCKERHUB_USERNAME != null
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -171,8 +166,6 @@ jobs:
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
         with:
           # list of Docker images to use as base name for tags
           images: |
@@ -185,51 +178,41 @@ jobs:
             type=semver,pattern={{major}}
           flavor: |
             latest=auto
-            suffix=-${{ matrix.platform }},onlatest=true
+            suffix=-${{ matrix.platform.platform }},onlatest=true
 
       - name: Build and push by digest
         id: push-digest
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
-        if: env.DOCKERHUB_USERNAME != null
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
-          platforms: ${{ matrix.platform }}
+          platforms: ${{ matrix.platform.platform }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{steps.meta.outputs.labels}}
-          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=$GITHUB_REF_NAME-${{ matrix.platform.platform }}
+          cache-to: type=gha,mode=max,scope=$GITHUB_REF_NAME-${{ matrix.platform.platform }}
           build-args: |
             PYTHON_VERSION=${{ matrix.python-version }}
 
   build-multi-architecture:
     name: combine platform images for python ${{ matrix.python-version }}
     needs:
+      - setup
       - publish
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        python-version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
+        python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
-      # Setup QEMU and Buildx to build multi-platform image
-      # This was inspired by this example : https://docs.docker.com/build/ci/github-actions/examples/#multi-platform-images
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+      # QEMU not needed here - just creating manifests, not building
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Login to DockerHub
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
-        if: env.DOCKERHUB_USERNAME != null
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -237,8 +220,6 @@ jobs:
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
         with:
           # list of Docker images to use as base name for tags
           images: |
@@ -251,10 +232,9 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
 
-      - uses: int128/docker-manifest-create-action@b60433fd4312d7a64a56d769b76ebe3f45cf36b4 # v2.10.0
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
-        if: env.DOCKERHUB_USERNAME != null
+      - name: Create and push manifest
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        uses: int128/docker-manifest-create-action@b60433fd4312d7a64a56d769b76ebe3f45cf36b4 # v2.10.0
         with:
           tags: ${{ steps.meta.outputs.tags }}
           builder: buildx
