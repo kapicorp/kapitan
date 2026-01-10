@@ -177,13 +177,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Compute image name
-        id: image
+      - name: Compute tag suffix
+        id: suffix
         run: |
           if [ "${{ matrix.python-version }}" = "${{ needs.setup.outputs.default-python-version }}" ]; then
-            echo "name=${{ needs.setup.outputs.default-image-name }}" >> "$GITHUB_OUTPUT"
+            # Default python version: no suffix (but we'll also create -py3.X tags for compatibility)
+            echo "python-suffix=" >> "$GITHUB_OUTPUT"
+            echo "is-default=true" >> "$GITHUB_OUTPUT"
           else
-            echo "name=kapitan-py${{ matrix.python-version }}" >> "$GITHUB_OUTPUT"
+            echo "python-suffix=-py${{ matrix.python-version }}" >> "$GITHUB_OUTPUT"
+            echo "is-default=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Docker meta
@@ -192,16 +195,44 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ steps.image.outputs.name }}
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=ref,event=branch,suffix=${{ steps.suffix.outputs.python-suffix }}
+            type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.python-suffix }}
+            type=semver,pattern={{major}}.{{minor}},suffix=${{ steps.suffix.outputs.python-suffix }}
+            type=semver,pattern={{major}},suffix=${{ steps.suffix.outputs.python-suffix }}
           flavor: |
-            latest=auto
+            latest=false
             suffix=-${{ matrix.platform.platform }},onlatest=true
+
+      # For default python version, also create tags with -py suffix for compatibility
+      - name: Docker meta (py-suffixed tags for default version)
+        id: meta-py
+        if: steps.suffix.outputs.is-default == 'true'
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: |
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
+          tags: |
+            type=ref,event=branch,suffix=-py${{ matrix.python-version }}
+            type=semver,pattern={{version}},suffix=-py${{ matrix.python-version }}
+            type=semver,pattern={{major}}.{{minor}},suffix=-py${{ matrix.python-version }}
+            type=semver,pattern={{major}},suffix=-py${{ matrix.python-version }}
+          flavor: |
+            latest=false
+            suffix=-${{ matrix.platform.platform }},onlatest=true
+
+      - name: Combine tags
+        id: tags
+        run: |
+          # Combine primary tags with py-suffixed tags (if any)
+          {
+            echo 'tags<<EOF'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo "${{ steps.meta-py.outputs.tags }}"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build and push by digest
         id: push-digest
@@ -212,7 +243,7 @@ jobs:
         with:
           platforms: ${{ matrix.platform.platform }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.tags.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
           cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
@@ -243,13 +274,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Compute image name
-        id: image
+      - name: Compute tag suffix
+        id: suffix
         run: |
           if [ "${{ matrix.python-version }}" = "${{ needs.setup.outputs.default-python-version }}" ]; then
-            echo "name=${{ needs.setup.outputs.default-image-name }}" >> "$GITHUB_OUTPUT"
+            # Default python version: no suffix (but we'll also create -py3.X tags for compatibility)
+            echo "python-suffix=" >> "$GITHUB_OUTPUT"
+            echo "is-default=true" >> "$GITHUB_OUTPUT"
           else
-            echo "name=kapitan-py${{ matrix.python-version }}" >> "$GITHUB_OUTPUT"
+            echo "python-suffix=-py${{ matrix.python-version }}" >> "$GITHUB_OUTPUT"
+            echo "is-default=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Docker meta
@@ -258,14 +292,39 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ steps.image.outputs.name }}
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.suffix.outputs.is-default == 'true' }}
+            type=ref,event=branch,suffix=${{ steps.suffix.outputs.python-suffix }}
+            type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.python-suffix }}
+            type=semver,pattern={{major}}.{{minor}},suffix=${{ steps.suffix.outputs.python-suffix }}
+            type=semver,pattern={{major}},suffix=${{ steps.suffix.outputs.python-suffix }}
+
+      # For default python version, also create tags with -py suffix for compatibility
+      - name: Docker meta (py-suffixed tags for default version)
+        id: meta-py
+        if: steps.suffix.outputs.is-default == 'true'
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: |
+            name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
+          tags: |
+            type=ref,event=branch,suffix=-py${{ matrix.python-version }}
+            type=semver,pattern={{version}},suffix=-py${{ matrix.python-version }}
+            type=semver,pattern={{major}}.{{minor}},suffix=-py${{ matrix.python-version }}
+            type=semver,pattern={{major}},suffix=-py${{ matrix.python-version }}
+
+      - name: Combine tags
+        id: tags
+        run: |
+          # Combine primary tags with py-suffixed tags (if any)
+          {
+            echo 'tags<<EOF'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo "${{ steps.meta-py.outputs.tags }}"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create and push manifest
         env:
@@ -273,6 +332,6 @@ jobs:
         if: env.DOCKERHUB_USERNAME != ''
         uses: int128/docker-manifest-create-action@b60433fd4312d7a64a56d769b76ebe3f45cf36b4 # v2.10.0
         with:
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.tags.outputs.tags }}
           builder: buildx
           suffixes: ${{ needs.setup.outputs.platform-suffixes }}
