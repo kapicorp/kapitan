@@ -213,6 +213,10 @@ jobs:
       - name: Compute tag suffix
         id: suffix
         run: |
+          # Platform suffix: convert linux/amd64 -> -linux-amd64
+          PLATFORM_SUFFIX="-$(echo '${{ matrix.platform.platform }}' | tr '/' '-')"
+          echo "platform-suffix=$PLATFORM_SUFFIX" >> "$GITHUB_OUTPUT"
+
           if [ "${{ matrix.python-version }}" = "${{ needs.setup.outputs.default-python-version }}" ]; then
             # Default python version: no suffix (but we'll also create -py3.X tags for compatibility)
             echo "python-suffix=" >> "$GITHUB_OUTPUT"
@@ -231,13 +235,12 @@ jobs:
             name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=ref,event=branch,suffix=${{ steps.suffix.outputs.python-suffix }}
-            type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.python-suffix }}
-            type=semver,pattern={{major}}.{{minor}},suffix=${{ steps.suffix.outputs.python-suffix }}
-            type=semver,pattern={{major}},suffix=${{ steps.suffix.outputs.python-suffix }}
+            type=ref,event=branch,suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{major}}.{{minor}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{major}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
           flavor: |
             latest=false
-            suffix=-${{ matrix.platform.platform }},onlatest=true
 
       # For default python version, also create tags with -py suffix for compatibility
       - name: Docker meta (py-suffixed tags for default version)
@@ -248,13 +251,12 @@ jobs:
           images: |
             name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
           tags: |
-            type=ref,event=branch,suffix=-py${{ matrix.python-version }}
-            type=semver,pattern={{version}},suffix=-py${{ matrix.python-version }}
-            type=semver,pattern={{major}}.{{minor}},suffix=-py${{ matrix.python-version }}
-            type=semver,pattern={{major}},suffix=-py${{ matrix.python-version }}
+            type=ref,event=branch,suffix=-py${{ matrix.python-version }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{version}},suffix=-py${{ matrix.python-version }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{major}}.{{minor}},suffix=-py${{ matrix.python-version }}${{ steps.suffix.outputs.platform-suffix }}
+            type=semver,pattern={{major}},suffix=-py${{ matrix.python-version }}${{ steps.suffix.outputs.platform-suffix }}
           flavor: |
             latest=false
-            suffix=-${{ matrix.platform.platform }},onlatest=true
 
       - name: Combine tags
         id: tags
