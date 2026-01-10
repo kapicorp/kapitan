@@ -40,3 +40,6 @@ coverage.xml
 coverage.json
 /htmlcov/
 junit.xml
+
+# Python venv
+.venv
