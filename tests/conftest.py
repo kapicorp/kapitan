@@ -10,6 +10,7 @@ Pytest configuration and shared fixtures for Kapitan tests.
 Provides utilities for test isolation and parallel execution.
 """
 
+import multiprocessing.pool as mp
 import os
 import shutil
 import subprocess
@@ -272,6 +273,24 @@ def pytest_configure(config):
         "markers", "requires_vault: mark test as requiring Vault server"
     )
     config.addinivalue_line("markers", "slow: mark test as slow running")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def graceful_multiprocessing_pool_exit():
+    # Pool.__exit__ calls terminate() unconditionally, which can corrupt
+    # coverage data files. Patch to close/join on success during tests.
+    original_exit = mp.Pool.__exit__
+
+    def _graceful_exit(self, exc_type, exc_val, exc_tb):
+        if exc_type is None:
+            self.close()
+            self.join()
+        else:
+            self.terminate()
+
+    mp.Pool.__exit__ = _graceful_exit
+    yield
+    mp.Pool.__exit__ = original_exit
 
 
 @pytest.fixture(autouse=True)

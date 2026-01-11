@@ -16,7 +16,7 @@ import yaml
 
 from kapitan.cached import reset_cache
 from kapitan.cli import main as kapitan
-from kapitan.inputs.helm import Helm, HelmChart
+from kapitan.inputs.helm import Helm, HelmChart, write_helm_values_file
 from kapitan.inputs.kadet import BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
 
@@ -283,6 +283,79 @@ class HelmInputTest(unittest.TestCase):
         # All values must be BaseObj
         for resource_name in chart.root:
             self.assertIsInstance(chart.root[resource_name], BaseObj)
+
+    def test_numeric_string_values_preserved(self):
+        """
+        Test that numeric-looking strings with leading zeros are preserved.
+
+        This tests the bug reported in https://github.com/kapicorp/kapitan/issues/1370
+        where string values like "03190301" are converted to scientific notation
+        (3.190301e+06) because they pass through YAML without proper quoting.
+        """
+        temp = tempfile.mkdtemp()
+        kapitan("compile", "--output-path", temp, "-t", "helm-string-values")
+
+        configmap_file = os.path.join(
+            temp,
+            "compiled",
+            "helm-string-values",
+            "string-values-test",
+            "templates",
+            "configmap.yaml",
+        )
+        self.assertTrue(os.path.isfile(configmap_file))
+
+        with open(configmap_file) as fp:
+            manifest = yaml.safe_load(fp.read())
+            # The numeric string "03190301" should be preserved exactly
+            # Currently fails: value becomes "3.190301e+06" (scientific notation)
+            numeric_value = manifest["data"]["NUMERIC_STRING"]
+            self.assertEqual(
+                numeric_value,
+                "03190301",
+                f"Numeric string was not preserved. Got '{numeric_value}' instead of '03190301'. "
+                "This indicates the string was converted to a number and displayed in scientific notation.",
+            )
+
+    def test_write_helm_values_file_preserves_numeric_strings(self):
+        """
+        Unit test for write_helm_values_file to verify that numeric-looking strings
+        are written with proper quoting to preserve their string type when read by
+        Helm's Go YAML parser (which uses YAML 1.1 rules).
+
+        Related to https://github.com/kapicorp/kapitan/issues/1370
+
+        The issue: Python's yaml.safe_dump writes "03190301" unquoted because Python's
+        YAML parser knows it's not a valid octal (contains 8 and 9). However, Helm's
+        Go YAML parser interprets unquoted "03190301" as an integer 3190301, which
+        then gets displayed in scientific notation for large values.
+
+        The fix requires setting helm_values_quote_strings: true in the compile config.
+        """
+        # Test values with numeric-looking strings
+        helm_values = {
+            "leading_zero": "03190301",  # Leading zero string - causes the bug
+            "octal_like": "0755",  # Octal-looking string
+            "all_zeros": "00000000",  # All zeros string
+            "normal_string": "hello",  # Normal string for comparison
+            "actual_number": 12345,  # Actual number
+        }
+
+        values_file = write_helm_values_file(helm_values)
+
+        # Read the file content to check how it's written
+        with open(values_file) as fp:
+            content = fp.read()
+
+        # The key check: verify that numeric-looking strings are QUOTED in the YAML output
+        # This is what matters for Helm's Go YAML parser
+
+        # Check that leading_zero string is quoted (single or double quotes)
+        self.assertTrue(
+            "'03190301'" in content or '"03190301"' in content,
+            f"Leading zero string '03190301' should be quoted in YAML output to prevent "
+            f"Helm (Go YAML) from parsing it as an integer. Current YAML content:\n{content}",
+        )
 
     def tearDown(self):
         os.chdir(TEST_PWD)
