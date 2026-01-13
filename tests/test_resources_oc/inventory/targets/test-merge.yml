@@ -1,0 +1,9 @@
+---
+classes:
+  - test-common
+  - _empty_classes  # Test handling of null/empty classes: and parameters:
+  - components.test-merge
+
+parameters:
+  cluster: merge-test
+  environment: staging

@@ -1,0 +1,16 @@
+---
+classes:
+  - test-common
+  - components.test-resolvers
+
+parameters:
+  cluster: resolvers-test
+  environment: dev
+
+  # Test conditional logic
+  feature_enabled: true
+  feature_disabled: false
+
+  # Test value for multiplication
+  base_replicas: 3
+  multiplier: 2
