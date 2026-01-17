@@ -5,18 +5,18 @@ all: clean package
 # Setup and Installation
 ################################################################################
 
-# Install poetry package manager using pipx
-.PHONY: install_poetry
-install_poetry:
-	@echo "===== Installing Poetry Package Manager ====="
-	@which poetry > /dev/null 2>&1 || pipx install poetry
-	@poetry --version
+# Install uv package manager
+.PHONY: install_uv
+install_uv:
+	@echo "===== Installing uv Package Manager ====="
+	@which uv > /dev/null 2>&1 || curl -LsSf https://astral.sh/uv/install.sh | sh
+	@uv --version
 
 # Install all Python dependencies including dev, test, docs, and optional extras
 .PHONY: install
 install:
 	@echo "===== Installing Python Dependencies ====="
-	poetry install --with dev --with docs --with test --extras "gojsonnet reclass-rs omegaconf"
+	uv sync --locked --all-extras --dev
 
 # Install external tools required for testing (helm, kustomize, cue)
 .PHONY: install_external_tools
@@ -53,18 +53,18 @@ install_cue:
 	)
 	@cue version
 
-# Configure pre-commit git hooks (pre-commit package installed via poetry)
+# Configure pre-commit git hooks (pre-commit package installed via uv)
 .PHONY: install_pre_commit
 install_pre_commit:
 	@echo "===== Setting up Git Pre-commit Hooks ====="
-	@poetry run pre-commit install
+	@uv run pre-commit install
 	@echo "Pre-commit hooks configured successfully!"
 	@echo "Hooks will run automatically on 'git commit'"
-	@echo "To run manually: 'poetry run pre-commit run --all-files'"
+	@echo "To run manually: 'uv run pre-commit run --all-files'"
 
 # Complete development environment setup
 .PHONY: setup
-setup: install_poetry install install_external_tools install_pre_commit
+setup: install_uv install install_external_tools install_pre_commit
 	@echo "===== Development Environment Ready ====="
 	@echo "Run 'make test' to verify everything is working"
 
@@ -76,13 +76,13 @@ setup: install_poetry install install_external_tools install_pre_commit
 .PHONY: lint
 lint:
 	@echo "===== Running Code Quality Checks ====="
-	poetry run ruff check kapitan
+	uv run ruff check kapitan
 
 # Run code quality checks on test files
 .PHONY: lint-tests
 lint-tests:
 	@echo "===== Running Code Quality Checks on Tests ====="
-	poetry run ruff check tests scripts
+	uv run ruff check tests scripts
 
 # Run code quality checks on everything
 .PHONY: lint-all
@@ -93,41 +93,41 @@ lint-all: lint lint-tests
 .PHONY: fix
 fix:
 	@echo "===== Fixing Auto-fixable Issues ====="
-	poetry run ruff check --fix kapitan
+	uv run ruff check --fix kapitan
 	@echo "Linting issues fixed!"
 
 # Fix auto-fixable linting issues in tests
 .PHONY: fix-tests
 fix-tests:
 	@echo "===== Fixing Auto-fixable Issues in Tests ====="
-	poetry run ruff check --fix tests scripts
+	uv run ruff check --fix tests scripts
 	@echo "Test linting issues fixed!"
 
 # Format code using ruff
 .PHONY: format
 format:
 	@echo "===== Formatting Code ====="
-	poetry run ruff format .
-	poetry run ruff check --fix .
+	uv run ruff format .
+	uv run ruff check --fix .
 	@echo "Code formatting complete!"
 
 # Check if code formatting is correct (used in CI)
 .PHONY: check_format
 check_format:
 	@echo "===== Checking Code Formatting ====="
-	poetry run ruff format --check .
+	uv run ruff format --check .
 
 # Run Python unit tests with coverage
 .PHONY: test_python
 test_python:
 	@echo "===== Running Python Tests with coverage ====="
-	poetry run pytest -n auto
+	uv run pytest -n auto
 
 # Run tests coverage report
 .PHONY: test_coverage
 test_coverage: test_python
 	@echo "===== Running Coverage Report ====="
-	poetry run coverage report
+	uv run coverage report
 
 # Build Docker image
 .PHONY: build_docker
@@ -189,13 +189,13 @@ clean:
 docs_serve:
 	@echo "===== Serving Documentation Locally ====="
 	@echo "Documentation will be available at http://localhost:8000"
-	poetry run mike serve
+	uv run mike serve
 
 # Deploy documentation to GitHub Pages
 .PHONY: docs_deploy
 docs_deploy:
 	@echo "===== Deploying Documentation to GitHub Pages ====="
-	poetry run mike deploy --push dev master
+	uv run mike deploy --push dev master
 
 ################################################################################
 # Help
@@ -209,7 +209,7 @@ help:
 	@echo "Setup Commands:"
 	@echo "  make setup              - Complete development environment setup"
 	@echo "  make install            - Install Python dependencies"
-	@echo "  make install_poetry     - Install Poetry package manager"
+	@echo "  make install_uv         - Install uv package manager"
 	@echo "  make install_external_tools - Install Helm, Kustomize, and CUE"
 	@echo "  make install_pre_commit - Configure git pre-commit hooks"
 	@echo ""
@@ -244,6 +244,6 @@ help:
 # Validate that required commands exist
 .PHONY: validate-commands
 validate-commands:
-	@command -v poetry >/dev/null 2>&1 || { echo "poetry is not installed. Run 'make install_poetry' first."; exit 1; }
+	@command -v uv >/dev/null 2>&1 || { echo "uv is not installed. Run 'make install_uv' first."; exit 1; }
 	@command -v git >/dev/null 2>&1 || { echo "git is not installed."; exit 1; }
 	@echo "All required commands are available"

@@ -1,0 +1,41 @@
+---
+name: Publish Python Package to PyPI
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
+
+jobs:
+  pypi-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # NOTE:
+      # Remove user/password and uncomment id-token permission once Trusted
+      # Publishing (OIDC) is setup in pypi. See:
+      # https://github.com/pypa/gh-action-pypi-publish
+      # id-token: write
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          submodules: recursive
+      - name: Set up Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version-file: pyproject.toml
+      - name: Set up uv
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+      - name: Build and check
+        run: |
+          uv build
+          uvx twine check dist/*
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}

@@ -14,35 +14,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-      - name: Install poetry
-        run: |-
-          pipx install poetry
-          pipx inject poetry poetry-plugin-export --force
       - name: Set up Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
-          cache: 'pip'
           python-version: |
             3.10
             3.11
             3.12
             3.13
             3.14
+      - name: Set up uv
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
       - name: Install libraries dependencies
         run: |
-          poetry export --without-hashes --format=requirements.txt > requirements.txt
+          uv pip compile \
+            --all-extras \
+            --format=requirements.txt \
+            --output-file=requirements.txt \
+            pyproject.toml
       - name: Set up Go
-        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version: 1.17
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pex
       - name: Build Pex
         run: |-
           mkdir -p dist
-          pex '.[gojsonnet,omegaconf,reclass-rs]' -r requirements.txt \
+          uvx pex '.[gojsonnet,omegaconf,reclass-rs]' -r requirements.txt \
             --python-shebang='#!/usr/bin/env python3' \
             --python=python3.11 \
             --python=python3.10 \
