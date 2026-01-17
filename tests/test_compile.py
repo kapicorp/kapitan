@@ -332,3 +332,110 @@ class TomlOutputTest(unittest.TestCase):
     def tearDownClass(cls):
         os.chdir(TEST_PWD)
         reset_cache()
+
+
+class CompileTestEmptyKapitanConfig(unittest.TestCase):
+    """Test for issue #1379: misleading error when parameters.kapitan.compile is missing"""
+
+    def test_missing_compile_config_no_error(self):
+        """Test that targets without compile configuration are skipped gracefully without FileNotFoundError"""
+        import tempfile
+
+        test_configs = [
+            ("empty-kapitan", "parameters:\n  kapitan: {}"),
+            (
+                "no-compile-key",
+                "parameters:\n  kapitan:\n    vars:\n      target: test-target",
+            ),
+        ]
+
+        for target_name, target_config in test_configs:
+            with self.subTest(config=target_name):
+                with tempfile.TemporaryDirectory() as test_dir:
+                    inventory_dir = os.path.join(test_dir, "inventory")
+                    os.makedirs(os.path.join(inventory_dir, "classes"), exist_ok=True)
+                    os.makedirs(os.path.join(inventory_dir, "targets"), exist_ok=True)
+
+                    # Create target with the config
+                    with open(
+                        os.path.join(inventory_dir, "targets", "test-target.yml"), "w"
+                    ) as f:
+                        f.write(target_config)
+
+                    original_dir = os.getcwd()
+                    try:
+                        os.chdir(test_dir)
+                        reset_cache()
+                        # Should complete without errors, just skip the target
+                        with contextlib.redirect_stdout(io.StringIO()):
+                            kapitan("compile")
+
+                        # Verify no target directory was compiled
+                        compiled_dir = os.path.join(test_dir, "compiled")
+                        if os.path.exists(compiled_dir):
+                            self.assertFalse(
+                                os.path.exists(
+                                    os.path.join(compiled_dir, "test-target")
+                                )
+                            )
+                    finally:
+                        os.chdir(original_dir)
+                        reset_cache()
+
+    def test_mixed_targets_compile_only_valid(self):
+        """Test that when mixing valid and invalid targets, only valid ones are compiled"""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as test_dir:
+            inventory_dir = os.path.join(test_dir, "inventory")
+            os.makedirs(os.path.join(inventory_dir, "classes"), exist_ok=True)
+            os.makedirs(os.path.join(inventory_dir, "targets"), exist_ok=True)
+
+            # Create target WITHOUT compile config
+            with open(
+                os.path.join(inventory_dir, "targets", "no-compile.yml"), "w"
+            ) as f:
+                f.write("parameters:\n  kapitan: {}")
+
+            # Create target WITH compile config
+            with open(
+                os.path.join(inventory_dir, "targets", "with-compile.yml"), "w"
+            ) as f:
+                f.write("""parameters:
+  kapitan:
+    vars:
+      target: with-compile
+    compile:
+      - output_path: .
+        input_type: copy
+        input_paths:
+          - inventory/targets/with-compile.yml
+""")
+
+            original_dir = os.getcwd()
+            try:
+                os.chdir(test_dir)
+                reset_cache()
+                # Should compile only the valid target
+                with contextlib.redirect_stdout(io.StringIO()):
+                    kapitan("compile")
+
+                # Verify only with-compile was compiled
+                compiled_dir = os.path.join(test_dir, "compiled")
+                self.assertTrue(os.path.exists(compiled_dir))
+                self.assertTrue(
+                    os.path.exists(os.path.join(compiled_dir, "with-compile"))
+                )
+                self.assertFalse(
+                    os.path.exists(os.path.join(compiled_dir, "no-compile"))
+                )
+
+                # Verify the file was actually compiled
+                self.assertTrue(
+                    os.path.exists(
+                        os.path.join(compiled_dir, "with-compile", "with-compile.yml")
+                    )
+                )
+            finally:
+                os.chdir(original_dir)
+                reset_cache()
