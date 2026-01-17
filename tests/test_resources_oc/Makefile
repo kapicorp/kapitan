@@ -5,7 +5,7 @@ all: compile
 
 # Compile the nginx-dump-and-write target using omegaconf backend
 compile:
-	poetry run kapitan compile -t nginx-dump-and-write --inventory-backend=omegaconf --fetch
+	uv run kapitan compile -t nginx-dump-and-write --inventory-backend=omegaconf --fetch
 
 # Clean compiled output
 clean:
@@ -13,11 +13,11 @@ clean:
 
 # Run the omegaconf tests
 test:
-	cd ../.. && poetry run pytest tests/test_omegaconf.py -v
+	cd ../.. && uv run pytest tests/test_omegaconf.py -v
 
 # Run only the compile test
 test-compile:
-	cd ../.. && poetry run pytest tests/test_compile.py::CompileTestResourcesOCOmegaconf -v
+	cd ../.. && uv run pytest tests/test_compile.py::CompileTestResourcesOCOmegaconf -v
 
 # Show compiled files
 list:
