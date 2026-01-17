@@ -87,4 +87,51 @@ class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
         return super().tearDown()
 
 
+TEST_RESOURCES_OC_INVENTORY = os.path.join(
+    TEST_PWD, "tests/test_resources_oc/inventory"
+)
+
+
+class InventoryTargetTestOmegaConfOC(unittest.TestCase):
+    """Test inventory with test_resources_oc using omegaconf backend (deferred resolvers)."""
+
+    def setUp(self) -> None:
+        from omegaconf import OmegaConf
+
+        from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
+
+        self.backend_id = InventoryBackends.OMEGACONF
+        self.inventory_path = TEST_RESOURCES_OC_INVENTORY
+
+        # Register resolvers
+        register_resolvers(self.inventory_path)
+
+        # Use importlib to load the resolvers module from the inventory path
+        spec = importlib.util.spec_from_file_location(
+            "resolvers", os.path.join(self.inventory_path, "resolvers.py")
+        )
+        resolvers_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(resolvers_module)
+
+        for name, func in resolvers_module.pass_resolvers().items():
+            if not OmegaConf.has_resolver(name):
+                OmegaConf.register_new_resolver(name, func)
+
+        args = build_parser().parse_args(["compile"])
+        args.inventory_backend = self.backend_id
+        kapitan.cached.args = args
+
+    def test_inventory_target(self):
+        inv = inventory(
+            inventory_path=self.inventory_path, target_name="test-resolvers"
+        )
+        logger.debug(inv)
+        self.assertEqual(inv["parameters"]["target_name"], "test-resolvers")
+
+    def test_inventory_all_targets(self):
+        inv = inventory(inventory_path=self.inventory_path)
+        self.assertNotEqual(inv.get("test-resolvers"), None)
+        self.assertEqual(len(inv), 3)  # test-resolvers, test-merge, test-deferred
+
+
 del InventoryTargetTestBase  # remove InventoryTargetTestBase so that it doesn't run

@@ -154,6 +154,7 @@ pattern = '^VERSION = "(.*)"$'
 
 [tool.pytest.ini_options]
 minversion = "8.0"
+testpaths = ["tests"]
 addopts = [
     "-ra",
     "--strict-markers",
@@ -189,7 +190,7 @@ omit = [
 
 [tool.coverage.report]
 precision = 2
-fail_under = 63
+fail_under = 65
 show_missing = true
 skip_covered = false
 exclude_lines = [
