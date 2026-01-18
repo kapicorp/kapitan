@@ -480,10 +480,15 @@ For instance, to automatically initialise a reference with a ***random string***
         ```
     === "publickey"
         !!! quote ""
-            Derives the public key from a revealed private key
+            Derives the public key from a revealed private key. Both keys can be created in a single compile - if the private key doesn't exist yet, it will be automatically created when the public key reference is compiled.
         ```yaml
+        # Both references can be defined together - dependency ordering is handled automatically
         ?{${backend}:targets/${target_name}/private_key||rsa}
         ?{${backend}:targets/${target_name}/public_key||reveal:targets/${target_name}/private_key|publickey}
+        
+        # Also works with Ed25519 keys
+        ?{${backend}:targets/${target_name}/ed25519_private||ed25519}
+        ?{${backend}:targets/${target_name}/ed25519_public||reveal:targets/${target_name}/ed25519_private|publickey}
         ```
     === "rsapublic"
         !!! quote ""
