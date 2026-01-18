@@ -450,17 +450,133 @@ class Revealer:
 
     def compile_obj(self, obj, **kwargs):
         """
-        recursively updates obj with compiled refs
-        kwargs are passed to ref compile function
+        Recursively compiles objects containing reference tags.
+
+        For dictionaries, uses multi-pass compilation to resolve reference dependencies:
+        - Base references (||rsa, ||random, etc.) are created first
+        - Dependent references (||reveal) are processed after their dependencies exist
+        - Multi-level dependency chains are resolved through iterative passes
+
+        This solves issue #749 where references with dependencies (e.g., public keys
+        derived from private keys) failed when defined in reverse dependency order.
+
+        Args:
+            obj: Object to compile (dict, list, str, or other)
+            **kwargs: Additional parameters passed to ref compile functions
+
+        Returns:
+            Compiled object with all reference tags resolved
         """
         if isinstance(obj, dict):
-            for k, v in obj.items():
-                obj[k] = self.compile_obj(v, **kwargs)
-        elif isinstance(obj, list):
-            obj = [self.compile_obj(item, **kwargs) for item in obj]
-        elif isinstance(obj, str):
-            obj = self.regex.sub(self._compile_replace_match_with_args(**kwargs), obj)
+            return self._compile_dict_with_dependency_resolution(obj, **kwargs)
+        if isinstance(obj, list):
+            return [self.compile_obj(item, **kwargs) for item in obj]
+        if isinstance(obj, str):
+            return self.regex.sub(self._compile_replace_match_with_args(**kwargs), obj)
         return obj
+
+    def _compile_dict_with_dependency_resolution(self, dictionary, **kwargs):
+        """
+        Compiles a dictionary using multi-pass approach to handle reference dependencies.
+
+        Algorithm:
+        1. Process non-reveal references and nested structures (they have no dependencies)
+        2. Iteratively attempt to process reveal references until all succeed or no progress
+        3. Final pass with error propagation for any remaining failures
+
+        Args:
+            dictionary: Dictionary to compile
+            **kwargs: Parameters passed to ref compile functions
+
+        Returns:
+            Compiled dictionary with resolved references
+        """
+        successfully_compiled_keys = set()
+        max_compilation_passes = (
+            len(dictionary) + 1
+        )  # Safety limit to prevent infinite loops
+
+        for _current_pass in range(max_compilation_passes):
+            compiled_any_key_this_pass = False
+
+            for key, value in dictionary.items():
+                if key in successfully_compiled_keys:
+                    continue
+
+                compilation_result = self._attempt_compile_dict_value(
+                    key, value, successfully_compiled_keys, **kwargs
+                )
+
+                if compilation_result.succeeded:
+                    dictionary[key] = compilation_result.compiled_value
+                    successfully_compiled_keys.add(key)
+                    compiled_any_key_this_pass = True
+
+            # Stop if all keys compiled or no progress made this pass
+            all_keys_compiled = len(successfully_compiled_keys) == len(dictionary)
+            if all_keys_compiled or not compiled_any_key_this_pass:
+                break
+
+        # Final pass: compile any remaining reveal references with error propagation
+        self._compile_remaining_keys(dictionary, successfully_compiled_keys, **kwargs)
+
+        return dictionary
+
+    def _attempt_compile_dict_value(self, key, value, already_compiled_keys, **kwargs):
+        """
+        Attempts to compile a single dictionary value.
+
+        Strategy:
+        - Nested structures (dicts/lists): Always compile recursively
+        - Non-reveal strings: Compile immediately (no dependencies)
+        - Reveal strings: Attempt compilation, may fail if dependencies not ready
+
+        Args:
+            key: Dictionary key (for tracking)
+            value: Value to compile
+            already_compiled_keys: Set to track which keys already succeeded
+            **kwargs: Parameters for ref compile functions
+
+        Returns:
+            _CompilationResult indicating success/failure and compiled value
+        """
+        # Nested structures always compile immediately (they handle their own dependencies)
+        if not isinstance(value, str):
+            compiled_value = self.compile_obj(value, **kwargs)
+            return _CompilationResult(succeeded=True, compiled_value=compiled_value)
+
+        # Non-reveal references have no dependencies, compile immediately
+        if "||reveal:" not in value:
+            compiled_value = self.compile_obj(value, **kwargs)
+            return _CompilationResult(succeeded=True, compiled_value=compiled_value)
+
+        # Reveal references may fail if their dependencies don't exist yet
+        try:
+            compiled_value = self.compile_obj(value, **kwargs)
+            return _CompilationResult(succeeded=True, compiled_value=compiled_value)
+        except (RefError, KeyError):
+            # Dependency not ready yet - will retry in next pass
+            return _CompilationResult(succeeded=False, compiled_value=None)
+
+    def _compile_remaining_keys(self, dictionary, successfully_compiled_keys, **kwargs):
+        """
+        Final compilation pass for any unprocessed keys with error propagation.
+
+        If any reveal references still haven't compiled, this will raise the error
+        to inform the user about missing or circular dependencies.
+
+        Args:
+            dictionary: Dictionary being compiled
+            successfully_compiled_keys: Keys that already succeeded
+            **kwargs: Parameters for ref compile functions
+
+        Raises:
+            RefError: If reveal reference dependencies are missing or circular
+        """
+        for key, value in dictionary.items():
+            if key not in successfully_compiled_keys and isinstance(value, str):
+                # Let any errors propagate - these are real failures
+                dictionary[key] = self.compile_obj(value, **kwargs)
 
 
 class RevealedObj:
@@ -469,6 +585,14 @@ class RevealedObj:
     def __init__(self, content, content_type):
         self.content = content
         self.content_type = content_type
+
+
+class _CompilationResult:
+    """Internal helper class for tracking compilation results during multi-pass dict compilation."""
+
+    def __init__(self, succeeded, compiled_value):
+        self.succeeded = succeeded
+        self.compiled_value = compiled_value
 
 
 class RefController:
