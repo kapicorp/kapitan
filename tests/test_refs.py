@@ -665,7 +665,6 @@ class Base64RefsTest(unittest.TestCase):
         Test RSA keypair generation with public key defined BEFORE private key.
 
         This verifies that the dependency ordering is truly independent of definition order.
-        Note: This test will fail until the proper implementation handles dependencies correctly.
         """
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import serialization
