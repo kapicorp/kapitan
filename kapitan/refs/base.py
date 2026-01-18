@@ -469,9 +469,9 @@ class Revealer:
         """
         if isinstance(obj, dict):
             return self._compile_dict_with_dependency_resolution(obj, **kwargs)
-        if isinstance(obj, list):
+        elif isinstance(obj, list):
             return [self.compile_obj(item, **kwargs) for item in obj]
-        if isinstance(obj, str):
+        elif isinstance(obj, str):
             return self.regex.sub(self._compile_replace_match_with_args(**kwargs), obj)
         return obj
 
