@@ -482,7 +482,8 @@ For instance, to automatically initialise a reference with a ***random string***
         !!! quote ""
             Derives the public key from a revealed private key. Both keys can be created in a single compile - if the private key doesn't exist yet, it will be automatically created when the public key reference is compiled.
         ```yaml
-        # Both references can be defined together - dependency ordering is handled automatically
+        # Both references can be defined together; during a single compile Kapitan will create the private key
+        # before deriving the public key, as long as the private key path matches the one used in the public key reference.
         ?{${backend}:targets/${target_name}/private_key||rsa}
         ?{${backend}:targets/${target_name}/public_key||reveal:targets/${target_name}/private_key|publickey}
         

@@ -171,7 +171,6 @@ def reveal(ctx, secret_path):
         pubkey: "?{base64:target/ssh/pubkey||reveal:target/ssh/privkey|publickey}"
     """
     from kapitan.errors import RefFromFuncError
-    from kapitan.refs.base import RefParams
 
     token_type_name = ctx.ref_controller.token_type_name(ctx.token)
     secret_tag = f"?{{{token_type_name}:{secret_path}}}"
@@ -180,20 +179,14 @@ def reveal(ctx, secret_path):
         ref_obj = ctx.ref_controller[secret_tag]
         ctx.ref_encoding = ref_obj.encoding
         ctx.data = ref_obj.reveal()
-    except RefFromFuncError:
-        # The reference doesn't exist yet but has a generation function defined.
-        # This happens when revealing a dependency that should be auto-created
-        # (e.g., revealing "targets/prod/ssh_key" which has ||rsa:4096).
-        # Create the missing reference first, then reveal its content.
-        # Note: This works recursively - if the newly created reference itself
-        # uses reveal functions, they will be resolved in the same way.
-        ctx.ref_controller[secret_tag] = RefParams()
-        ref_obj = ctx.ref_controller[secret_tag]
-        ctx.ref_encoding = ref_obj.encoding
-        ctx.data = ref_obj.reveal()
-    except KeyError as e:
-        # The reference file doesn't exist and has no generation function.
-        # This is a true error - the user referenced something that doesn't exist.
+    except (KeyError, RefFromFuncError) as e:
+        # The reference doesn't exist yet. This is a true error - the reveal function
+        # cannot auto-create references because it doesn't know what generation function
+        # to use. The dependency must be defined elsewhere in the compilation.
+        #
+        # For the use case in issue #749, both the private and public keys should be
+        # defined in inventory, and the compilation order will be handled by processing
+        # them in the correct sequence.
         raise RefError(
             f"|reveal function error: {secret_path} file in {ctx.token}|reveal:{secret_path} does not exist"
         ) from e
