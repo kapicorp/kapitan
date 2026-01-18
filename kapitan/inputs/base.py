@@ -46,35 +46,50 @@ class InputType:
         self.args = args
 
     def compile_obj(self, comp_obj: CompileInputTypeConfig):
-        """Expand globbed input paths and compile each resolved input path.
+        """Process and compile all input paths defined in the compilation configuration.
+
+        This method handles glob pattern expansion and path resolution across multiple search paths.
+        For each input path in the configuration:
+
+        1. Expands glob patterns (e.g., `templates/*.yaml`) against each search path
+        2. Deduplicates resolved paths (important when search paths overlap)
+        3. Validates that at least one file was found (unless ignore_missing is True)
+        4. Compiles each resolved file via compile_input_path()
+
+        The compilation happens as paths are resolved, rather than buffering all paths first.
+        This allows earlier error detection and reduces memory usage for large projects.
 
         Args:
-            comp_obj: CompileInputTypeConfig object containing input paths and other compilation options.
+            comp_obj: CompileInputTypeConfig containing:
+                - input_paths: List of file paths or glob patterns to compile
+                - ignore_missing: Whether to skip paths that don't resolve to any files
+                - Additional input-type-specific compilation options
 
         Raises:
-            CompileError: If an input path is not found and ignore_missing is False.
+            CompileError: If an input path resolves to no files and ignore_missing is False.
+
+        Example:
+            If comp_obj.input_paths = ["components/*.jsonnet", "lib/utils.libsonnet"]
+            and search_paths = [".", "vendor"], this will:
+            - Expand components/*.jsonnet in . and vendor/
+            - Look for lib/utils.libsonnet in . and vendor/
+            - Compile each unique file found
 
         """
-
-        # expand any globbed paths, taking into account provided search paths
-        expanded_input_paths = []
         for input_path in comp_obj.input_paths:
             globbed_paths = [
                 glob.glob(os.path.join(path, input_path)) for path in self.search_paths
             ]
-            inputs = list(itertools.chain.from_iterable(globbed_paths))
-            # remove duplicate inputs
-            inputs = set(inputs)
-            ignore_missing = comp_obj.ignore_missing
-            if len(inputs) == 0 and not ignore_missing:
+            expanded_paths = set(itertools.chain.from_iterable(globbed_paths))
+
+            if not expanded_paths and not comp_obj.ignore_missing:
                 raise CompileError(
                     f"Compile error: {input_path} for target: {self.target_name} not found in "
                     f"search_paths: {self.search_paths}"
                 )
-            expanded_input_paths.extend(inputs)
 
-        for expanded_path in expanded_input_paths:
-            self.compile_input_path(comp_obj, expanded_path)
+            for expanded_path in expanded_paths:
+                self.compile_input_path(comp_obj, expanded_path)
 
     def to_file(self, config: CompileInputTypeConfig, file_path, file_content):
         """Write compiled content to file, handling different output types and revealing refs if needed.
