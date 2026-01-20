@@ -201,6 +201,10 @@ class InputType:
         """
         return NotImplementedError
 
+    @abc.abstractmethod
+    def inputs_hash(self, *inputs, **kwargs):
+        return NotImplementedError
+
 
 class CompilingFile:
     """
