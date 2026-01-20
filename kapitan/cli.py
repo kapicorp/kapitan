@@ -507,12 +507,9 @@ def build_parser():
         "-f",
         help='read file or directory, set "-" for stdin',
         metavar="FILENAME",
-<<<<<<< HEAD
     )
     refs_parser.add_argument(
         "--target-name", "-t", help="grab recipients from target name"
-=======
->>>>>>> c2a32354 (refactor into cache lib)
     )
     refs_parser.add_argument(
         "--inventory-path",
