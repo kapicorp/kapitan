@@ -1,77 +1,47 @@
-# :kapitan-logo: **Kapitan Overview**
+# :kapitan-logo: **Installation**
 
-## Setup your installation
+## Setup your project
 
-Using our reference repositories you can easily get started with **Kapitan**
-
-### Examples repository
-
-[kapicorp/kapitan-reference](https://github.com/kapicorp/kapitan-reference) repository is meant show you many working examples of things you can do with Kapitan.
-You can use this to get familiar with **Kapitan**
+Once you have installed *Kapitan* (see #installation-methods), you can easily initialise your project with:
 
 ```
-$ git clone git@github.com:kapicorp/kapitan-reference.git kapitan-templates
-$ cd kapitan-templates
-
-$ ./kapitan compile
-Compiled postgres-proxy (1.51s)
-Compiled tesoro (1.70s)
-Compiled echo-server (1.64s)
-Compiled mysql (1.67s)
-Compiled gke-pvm-killer (1.17s)
-Compiled prod-sockshop (4.74s)
-Compiled dev-sockshop (4.74s)
-Compiled tutorial (1.68s)
-Compiled global (0.76s)
-Compiled examples (2.60s)
-Compiled pritunl (2.03s)
-Compiled sock-shop (4.36s)
+kapitan init --directory $HOME/kapitan-templates
 ```
 
-### Minimal repository
+??? note "Example output"
+    ```
+    Initialising skeleton from https://github.com/kapicorp/kapitan-reference.git@copier in $HOME/kapitan-templates
+    🎤 What version of Kapitan
+    0.32.0
 
-> Using [cruft](https://cruft.github.io/cruft/) based cookiecutter
+    Copying from template version 0.0.0.post140.dev0+aaeecf6
+        create  .
+        create  .kapitan
+        create  .github
+        create  .github/workflows
+        create  .github/workflows/integration-test.yml
+        create  .github/workflows/pre-commit.yml
+        create  .gitignore
+        create  system
+        create  system/sources
+        [OMITTED]
+        create  .pre-commit-config.yaml
+        create  README.md
+        create  kapitan
 
-```shell
-pip3 install cruft
-```
-
-```shell
-cruft create http://github.com/kapicorp/kapitan-reference --checkout cookiecutter --no-input
-Dependency https://github.com/kapicorp/generators.git: saved to system/lib
-Dependency https://github.com/kapicorp/generators.git: saved to system/generators/kubernetes
-Dependency https://github.com/kapicorp/generators.git: saved to system/generators/terraform
-Rendered inventory (1.74s)
-Compiled echo-server (0.14s)
-```
-
-## running **Kapitan**
-
-!!! success "recommended"
-    ### `kapitan` wrapper script
-    If you use the provided repository, we already package a `kapitan` shell script that wraps the docker command to run **Kapitan**
-
-    ```shell
-    $ ./kapitan compile
-    Compiled postgres-proxy (1.51s)
-    Compiled tesoro (1.70s)
-    Compiled echo-server (1.64s)
-    Compiled mysql (1.67s)
-    Compiled gke-pvm-killer (1.17s)
-    Compiled prod-sockshop (4.74s)
-    Compiled dev-sockshop (4.74s)
-    Compiled tutorial (1.68s)
-    Compiled global (0.76s)
-    Compiled examples (2.60s)
-    Compiled pritunl (2.03s)
-    Compiled sock-shop (4.36s)
+    > Running task 1 of 2: git init --quiet
+    > Running task 2 of 2: ./kapitan compile
+    Dependency https://github.com/kapicorp/generators.git: saved to system/lib
+    Dependency https://github.com/kapicorp/generators.git: saved to system/generators/kubernetes
+    Dependency https://github.com/kapicorp/generators.git: saved to system/generators/terraform
+    Rendered inventory (2.09s)
+    Compiled tutorial (0.16s)
     ```
 
-## Other installation methods
 
-### Docker
+## Installation methods
 
-[![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
+We provide you with different easy ways to install `kapitan`. Please pick one of the following methods
 
 !!! success "recommended"
     ### Docker

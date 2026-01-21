@@ -1,0 +1,40 @@
+name: Generate gifs from VHS tapes
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - docs/vhs/tapes/*.tape
+
+jobs:
+  vhs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+          cache: pip
+      - name: Setup Kapitan
+        run: |
+          python -m pip install --upgrade pip
+          pip install git+https://github.com/kapicorp/kapitan@init-with-copier
+      - name: Install vhs-action
+        uses: charmbracelet/vhs-action@v2.1.0
+      - name: run VHS
+        run: |
+          # shellcheck disable=SC2086
+          for file in docs/vhs/tapes/*.tape
+          do
+            filename="$(basename ${file})"
+            vhs "${file}" -o "docs/vhs/gifs/${filename%%.tape}.gif"
+          done
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          commit_message: Update generated VHS GIF
+          commit_user_name: vhs-action 📼
+          commit_user_email: actions@github.com
+          commit_author: vhs-action 📼 <actions@github.com>
+          file_pattern: '*.gif'

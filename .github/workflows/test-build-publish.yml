@@ -23,6 +23,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - '.github/workflows/documentation.yml'
+      - '.github/workflows/vhs.yml'
       - 'mkdocs.yml'
       - 'CNAME'
 
@@ -33,6 +34,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - '.github/workflows/documentation.yml'
+      - '.github/workflows/vhs.yml'
       - 'mkdocs.yml'
       - 'CNAME'
 
