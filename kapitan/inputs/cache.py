@@ -32,7 +32,7 @@ class InputCache:
         cached_path_lock = Path(str(cached_path) + ".lock")
         return cached_path, cached_path_lock, sub_path
 
-    def get(self, inputs_hash, lock_retries=2) -> dict:  # output_obj
+    def get(self, inputs_hash, lock_retries=2) -> dict | None:  # output_obj
         cached_path, cached_path_lock, _ = self.hash_paths(inputs_hash)
         if not cached_path_lock.exists():
             for retry in range(lock_retries):
