@@ -9,16 +9,16 @@ from kapitan.inventory.model.references import KapitanReferenceConfig
 
 class KapitanEssentialVars(BaseModel):
     model_config = ConfigDict(extra="allow")
-    target: Optional[str] = None
+    target: str | None = None
 
 
 class KapitanInventorySettings(BaseModel):
     compile: list[CompileInputTypeConfig] = []
     vars: KapitanEssentialVars = KapitanEssentialVars()
     labels: dict[str, str] = {}
-    dependencies: Optional[list[DependencyTypeConfig]] = []
+    dependencies: list[DependencyTypeConfig] | None = []
     target_full_path: str = ""
-    secrets: Optional[KapitanReferenceConfig] = None
+    secrets: KapitanReferenceConfig | None = None
     validate_: list[dict] = Field(alias="validate", default=[])
 
 
@@ -31,16 +31,16 @@ class KapitanMetadataName(BaseModel):
 
 class KapitanInventoryMetadata(BaseModel):
     model_config = ConfigDict(extra="allow", validate_assignment=True)
-    name: Optional[KapitanMetadataName] = None
+    name: KapitanMetadataName | None = None
 
 
 class KapitanInventoryParameters(BaseModel):
     model_config = ConfigDict(extra="allow")
 
-    kapitan: Optional[KapitanInventorySettings] = KapitanInventorySettings()
-    kapitan_metadata: Optional[KapitanInventoryMetadata] = Field(
+    kapitan: KapitanInventorySettings | None = KapitanInventorySettings()
+    kapitan_metadata: KapitanInventoryMetadata | None = Field(
         alias="_kapitan_", default=None
     )
-    reclass_metadata: Optional[KapitanInventoryMetadata] = Field(
+    reclass_metadata: KapitanInventoryMetadata | None = Field(
         alias="_reclass_", default=None
     )
