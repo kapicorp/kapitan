@@ -282,7 +282,7 @@ def build_parser():
     compile_parser.add_argument(
         "--cache",
         "-c",
-        help="enable compilation caching to $XDG_CACHE_HOME/kapitan, default is False",
+        help="enable compilation caching to $XDG_CACHE_HOME/kapitan, default is False [this is EXPERIMENTAL]",
         action="store_true",
         default=from_dot_kapitan("compile", "cache", False),
     )
