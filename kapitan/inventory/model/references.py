@@ -20,9 +20,7 @@ class KapitanReferenceGPGConfig(KapitanReferenceBaseConfig):
 # Note that this will break if both alias choices are set for a field (either through envvar or
 # initializer).
 class KapitanReferenceVaultEnv(BaseSettings):
-    addr: str | None = Field(
-        None, validation_alias=AliasChoices("addr", "VAULT_ADDR")
-    )
+    addr: str | None = Field(None, validation_alias=AliasChoices("addr", "VAULT_ADDR"))
     skip_verify: bool | None = Field(
         True, validation_alias=AliasChoices("skip_verify", "VAULT_SKIP_VERIFY")
     )
