@@ -1,10 +1,12 @@
 import hashlib
-import pickle
-import os
-from pathlib import Path
-from kapitan.errors import CompileError
 import logging
+import os
+import pickle
+from pathlib import Path
 from typing import Tuple
+
+from kapitan.errors import CompileError
+
 
 logger = logging.getLogger(__name__)
 
