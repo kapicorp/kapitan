@@ -38,42 +38,6 @@ def _secrets_config(**overrides):
     return SimpleNamespace(**base)
 
 
-@pytest.fixture(autouse=True)
-def patch_cmd_parser_reference_types_membership(monkeypatch):
-    """Patch cmd_parser enum membership to accept string token values.
-
-    Python 3.11 raises TypeError for `"value" in EnumType`; Python 3.12 accepts
-    value membership. This keeps secret-update tests behaviorally stable across
-    supported runtimes without changing production code.
-    """
-    from kapitan.refs import KapitanReferencesTypes as _Enum
-
-    class _CompatTypes:
-        GPG = _Enum.GPG
-        VAULTKV = _Enum.VAULTKV
-        VAULTTRANSIT = _Enum.VAULTTRANSIT
-        AWSKMS = _Enum.AWSKMS
-        GKMS = _Enum.GKMS
-        AZKMS = _Enum.AZKMS
-        BASE64 = _Enum.BASE64
-        PLAIN = _Enum.PLAIN
-        ENV = _Enum.ENV
-
-        def __contains__(self, value):
-            try:
-                _Enum(value)
-            except ValueError:
-                return False
-            return True
-
-        def __call__(self, value):
-            return _Enum(value)
-
-    monkeypatch.setattr(
-        "kapitan.refs.cmd_parser.KapitanReferencesTypes", _CompatTypes()
-    )
-
-
 def test_ref_write_base64(cmd_parser_args, cmd_parser_secret_file, ref_controller):
     secret_file = cmd_parser_secret_file(content="hello")
     args = cmd_parser_args(
