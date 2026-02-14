@@ -9,7 +9,7 @@ import unittest
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.vaulttransit import VaultTransit
 from kapitan.refs.vault_resources import VaultClient
-from tests.vault_server import VaultTransitServer
+from tests.support.vault_server import VaultTransitServer
 
 
 logger = logging.getLogger(__name__)

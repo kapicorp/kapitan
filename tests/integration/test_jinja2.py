@@ -5,8 +5,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"jinja2 tests"
-
 import argparse
 import base64
 import tempfile
@@ -71,8 +69,8 @@ class Jinja2FiltersTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as f:
             f.write(b"{{ text|fileglob }}")
             f.seek(0)
-            context = {"text": "./tests/*jinja2.py"}
-            output = "['./tests/test_jinja2.py']"
+            context = {"text": "./tests/integration/*jinja2.py"}
+            output = "['./tests/integration/test_jinja2.py']"
             self.assertEqual(render_jinja2_file(f.name, context), output)
 
     def test_bool(self):
@@ -149,9 +147,6 @@ class Jinja2FiltersTest(unittest.TestCase):
             self.assertNotEqual(render_jinja2_file(f.name, context), array)
 
     def test_reveal_maybe_b64encode_tag(self):
-        """
-        creates ?{base64:some_value} and runs reveal_maybe|b64encode jinja2 filters
-        """
         with tempfile.NamedTemporaryFile() as f:
             f.write(b"{{ my_ref_tag_var|reveal_maybe|b64encode }}")
             f.seek(0)
@@ -169,9 +164,6 @@ class Jinja2FiltersTest(unittest.TestCase):
             self.assertEqual(render_jinja2_file(f.name, context), ref_value_b64)
 
     def test_reveal_maybe_tag_no_reveal_flag(self):
-        """
-        creates ?{base64:some_value} and runs reveal_maybe jinja2 filters without --reveal flag
-        """
         with tempfile.NamedTemporaryFile() as f:
             f.write(b"{{ my_ref_tag_var|reveal_maybe }}")
             f.seek(0)
@@ -190,9 +182,6 @@ class Jinja2FiltersTest(unittest.TestCase):
             )
 
     def test_reveal_maybe_no_tag(self):
-        """
-        runs reveal_maybe jinja2 filter on data without ref tags
-        """
         with tempfile.NamedTemporaryFile() as f:
             f.write(b"{{ my_var|reveal_maybe }}")
             f.seek(0)

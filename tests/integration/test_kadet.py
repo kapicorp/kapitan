@@ -5,8 +5,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"kadet tests"
-
 import tempfile
 import unittest
 

@@ -5,8 +5,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"inventory tests"
-
 import importlib
 import logging
 import os
@@ -21,7 +19,6 @@ from kapitan.resources import inventory
 
 
 logger = logging.getLogger(__name__)
-
 
 TEST_PWD = os.getcwd()
 TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")

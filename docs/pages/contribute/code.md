@@ -158,7 +158,7 @@ make test  # Full test suite including Docker tests
 
 4. To run specific test files:
    ```bash
-   mise exec -- uv run pytest --no-cov tests/test_vault_transit.py
+   mise exec -- uv run pytest --no-cov tests/unit/kapitan/refs/secrets/test_vaulttransit.py
    ```
 
 ### Code Style

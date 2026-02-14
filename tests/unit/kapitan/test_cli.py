@@ -19,7 +19,7 @@ import pytest
 from kapitan.cli import build_parser
 from kapitan.cli import main as kapitan
 from kapitan.refs.secrets.vaultkv import VaultSecret
-from tests.vault_server import VaultServer
+from tests.support.vault_server import VaultServer
 
 
 REFS_PATH = tempfile.mkdtemp()

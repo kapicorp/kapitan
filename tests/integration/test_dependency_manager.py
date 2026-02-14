@@ -32,7 +32,7 @@ from kapitan.inventory.model.dependencies import (
 
 
 def _http_sources_dir() -> Path:
-    return Path(__file__).parent / "test_resources" / "http_sources"
+    return Path(__file__).resolve().parents[1] / "test_resources" / "http_sources"
 
 
 def _read_http_source(filename: str) -> bytes:

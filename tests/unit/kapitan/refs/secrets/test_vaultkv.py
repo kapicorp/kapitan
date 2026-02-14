@@ -17,7 +17,7 @@ import unittest
 from kapitan.inventory.model.references import KapitanReferenceVaultKVConfig
 from kapitan.refs.base import RefController, RefParams, Revealer
 from kapitan.refs.secrets.vaultkv import VaultClient, VaultError, VaultSecret
-from tests.vault_server import VaultServer
+from tests.support.vault_server import VaultServer
 
 
 logger = logging.getLogger(__name__)

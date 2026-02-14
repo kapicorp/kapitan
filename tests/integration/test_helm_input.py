@@ -5,8 +5,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"helm input tests"
-
 import os
 import tempfile
 import unittest
@@ -285,13 +283,6 @@ class HelmInputTest(unittest.TestCase):
             self.assertIsInstance(chart.root[resource_name], BaseObj)
 
     def test_numeric_string_values_preserved(self):
-        """
-        Test that numeric-looking strings with leading zeros are preserved.
-
-        This tests the bug reported in https://github.com/kapicorp/kapitan/issues/1370
-        where string values like "03190301" are converted to scientific notation
-        (3.190301e+06) because they pass through YAML without proper quoting.
-        """
         temp = tempfile.mkdtemp()
         kapitan("compile", "--output-path", temp, "-t", "helm-string-values")
 
@@ -318,20 +309,6 @@ class HelmInputTest(unittest.TestCase):
             )
 
     def test_write_helm_values_file_preserves_numeric_strings(self):
-        """
-        Unit test for write_helm_values_file to verify that numeric-looking strings
-        are written with proper quoting to preserve their string type when read by
-        Helm's Go YAML parser (which uses YAML 1.1 rules).
-
-        Related to https://github.com/kapicorp/kapitan/issues/1370
-
-        The issue: Python's yaml.safe_dump writes "03190301" unquoted because Python's
-        YAML parser knows it's not a valid octal (contains 8 and 9). However, Helm's
-        Go YAML parser interprets unquoted "03190301" as an integer 3190301, which
-        then gets displayed in scientific notation for large values.
-
-        The fix requires setting helm_values_quote_strings: true in the compile config.
-        """
         # Test values with numeric-looking strings
         helm_values = {
             "leading_zero": "03190301",  # Leading zero string - causes the bug

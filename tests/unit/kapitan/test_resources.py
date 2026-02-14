@@ -39,8 +39,11 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
     def test_file_exists(self):
         """test that file_exists finds this test file"""
         search_paths = [os.getcwd(), "./tests/"]
-        result = file_exists(search_paths, "test_jsonnet.py")
-        expected = {"exists": True, "path": "./tests/test_jsonnet.py"}
+        result = file_exists(search_paths, "unit/kapitan/test_resources.py")
+        expected = {
+            "exists": True,
+            "path": "./tests/unit/kapitan/test_resources.py",
+        }
         self.assertEqual(result, expected)
 
     def test_dir_files_list(self):
@@ -68,8 +71,8 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         This tests the yaml_load function.
         It converts the yaml file in test_resources/ to a json string
         """
-        current_pwd = os.path.dirname(__file__)
-        json = yaml_load([current_pwd], "test_resources/test_yaml_load.yaml")
+        tests_root = os.path.join(os.getcwd(), "tests")
+        json = yaml_load([tests_root], "test_resources/test_yaml_load.yaml")
         expected_output = """{"test": {"key": "value", "array": ["ele1", "ele2"]}}"""
         self.assertEqual(json, expected_output)
 
@@ -78,9 +81,9 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
         This tests the yaml_load_stream function.
         It converts the yaml file in test_resources/ to a json string
         """
-        current_pwd = os.path.dirname(__file__)
+        tests_root = os.path.join(os.getcwd(), "tests")
         json = yaml_load_stream(
-            [current_pwd], "test_resources/test_yaml_load_stream.yaml"
+            [tests_root], "test_resources/test_yaml_load_stream.yaml"
         )
         expected_output = """[{"test1": {"key": "value", "array": ["ele1", "ele2"]}}, {"test2": {"key": "value", "array": ["ele1", "ele2"]}}]"""
         self.assertEqual(json, expected_output)

@@ -5,11 +5,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""
-Helper utilities for Kapitan tests.
-Provides common functionality for test isolation and execution.
-"""
-
 import contextlib
 import io
 import os

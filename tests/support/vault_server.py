@@ -3,8 +3,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"hashicorp vault resource functions"
-
 import logging
 import os
 from time import sleep

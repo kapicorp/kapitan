@@ -5,8 +5,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"inventory tests"
-
 import logging
 import os
 import shutil
