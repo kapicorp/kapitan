@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright 2019 The Kapitan Authors
 # SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
 #
