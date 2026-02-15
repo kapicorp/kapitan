@@ -6,10 +6,12 @@
 import base64
 import contextlib
 import os
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 
+import kapitan.cli as cli_module
 from kapitan.cli import build_parser
 from kapitan.cli import main as kapitan
 from kapitan.refs.secrets.vaultkv import VaultSecret
@@ -390,6 +392,168 @@ def test_parser_aliases():
         assert result.name == command
 
 
+def test_print_deprecated_secrets_message_exits():
+    with pytest.raises(SystemExit) as excinfo:
+        cli_module.print_deprecated_secrets_msg(SimpleNamespace())
+    assert excinfo.value.code == 1
+
+
+def test_trigger_eval_outputs_yaml_and_json(monkeypatch, capsys):
+    monkeypatch.setattr(
+        cli_module,
+        "select_jsonnet_runtime",
+        lambda *_args, **_kwargs: '{"name": "demo"}',
+    )
+    monkeypatch.setattr(cli_module, "resource_callbacks", lambda _paths: {})
+
+    yaml_args = SimpleNamespace(
+        jsonnet_file="input.jsonnet",
+        search_paths=["."],
+        vars=["foo=bar", "answer=42"],
+        output="yaml",
+    )
+    cli_module.trigger_eval(yaml_args)
+    assert "name: demo" in capsys.readouterr().out
+
+    json_args = SimpleNamespace(
+        jsonnet_file="input.jsonnet",
+        search_paths=["."],
+        vars=None,
+        output="json",
+    )
+    cli_module.trigger_eval(json_args)
+    assert capsys.readouterr().out.strip() == '{"name": "demo"}'
+
+
+def test_trigger_eval_invokes_import_callback_and_skips_empty_json_output(
+    monkeypatch, capsys
+):
+    calls = {}
+
+    def _fake_search_imports(cwd, imp, search_paths):
+        calls["search_imports"] = (cwd, imp, list(search_paths))
+        return "/resolved/import.jsonnet"
+
+    def _fake_runtime(
+        file_path, import_callback=None, native_callbacks=None, ext_vars=None
+    ):
+        calls["file_path"] = file_path
+        calls["resolved_import"] = import_callback("/workdir", "lib/import.jsonnet")
+        calls["native_callbacks"] = native_callbacks
+        calls["ext_vars"] = ext_vars
+        return ""
+
+    monkeypatch.setattr(cli_module, "search_imports", _fake_search_imports)
+    monkeypatch.setattr(cli_module, "select_jsonnet_runtime", _fake_runtime)
+    monkeypatch.setattr(cli_module, "resource_callbacks", lambda _paths: {})
+
+    args = SimpleNamespace(
+        jsonnet_file="input.jsonnet",
+        search_paths=["."],
+        vars=None,
+        output="json",
+    )
+    cli_module.trigger_eval(args)
+
+    assert calls["file_path"] == "input.jsonnet"
+    assert calls["resolved_import"] == "/resolved/import.jsonnet"
+    assert calls["ext_vars"] == {}
+    assert "lib/import.jsonnet" in calls["search_imports"][1]
+    assert capsys.readouterr().out == ""
+
+
+def test_trigger_compile_version_check_and_error_exit(monkeypatch):
+    calls = {"check_version": 0, "compile_targets": 0}
+
+    monkeypatch.setattr(
+        cli_module,
+        "check_version",
+        lambda: calls.__setitem__("check_version", calls["check_version"] + 1),
+    )
+    monkeypatch.setattr(cli_module, "RefController", lambda *_a, **_k: object())
+    monkeypatch.setattr(cli_module, "Revealer", lambda *_a, **_k: object())
+
+    def _raise_compile(**_kwargs):
+        calls["compile_targets"] += 1
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(cli_module, "compile_targets", _raise_compile)
+
+    args = SimpleNamespace(
+        search_paths=["."],
+        ignore_version_check=False,
+        refs_path="./refs",
+        embed_refs=False,
+        inventory_path="./inventory",
+    )
+    with pytest.raises(SystemExit) as excinfo:
+        cli_module.trigger_compile(args)
+    assert excinfo.value.code == 1
+    assert calls["check_version"] == 1
+    assert calls["compile_targets"] == 1
+
+    monkeypatch.setattr(
+        cli_module,
+        "compile_targets",
+        lambda **_kwargs: calls.__setitem__(
+            "compile_targets", calls["compile_targets"] + 1
+        ),
+    )
+    args.ignore_version_check = True
+    cli_module.trigger_compile(args)
+    assert calls["check_version"] == 1
+    assert calls["compile_targets"] == 2
+
+
 def test_main_rejects_pattern_without_target_name():
     with pytest.raises(SystemExit):
         kapitan("inventory", "--pattern", "parameters.foo")
+
+
+@pytest.mark.parametrize(
+    ("verbose", "quiet", "expected_level"),
+    [
+        (True, False, cli_module.logging.DEBUG),
+        (False, True, cli_module.logging.CRITICAL),
+    ],
+)
+def test_main_sets_logging_level_for_verbose_and_quiet(
+    monkeypatch, verbose, quiet, expected_level
+):
+    class _FakeParser:
+        def __init__(self, args):
+            self._args = args
+
+        def parse_args(self, _argv):
+            return self._args
+
+        def error(self, message):
+            raise RuntimeError(message)
+
+        def print_help(self):
+            raise AssertionError("help should not be printed in this test")
+
+    args = SimpleNamespace(
+        mp_method="spawn",
+        func=lambda _args: None,
+        pattern="",
+        target_name="",
+        verbose=verbose,
+        quiet=quiet,
+    )
+
+    captured = {}
+    monkeypatch.setattr(cli_module, "build_parser", lambda: _FakeParser(args))
+    monkeypatch.setattr(
+        cli_module.multiprocessing,
+        "set_start_method",
+        lambda _method: None,
+    )
+    monkeypatch.setattr(
+        cli_module,
+        "setup_logging",
+        lambda level, force=True: captured.__setitem__("level", level),
+    )
+
+    assert cli_module.main("dummy-command") == 0
+    assert captured["level"] == expected_level

@@ -4,10 +4,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import shutil
+from types import SimpleNamespace
 
 import pytest
 import yaml
 
+from kapitan.errors import KustomizeTemplateError
 from kapitan.inputs.kustomize import Kustomize
 from kapitan.inventory.model.input_types import KapitanInputTypeKustomizeConfig
 
@@ -223,3 +225,51 @@ def test_compile_file_with_invalid_patch(kustomize_env, tmp_path):
             output["spec"]["template"]["spec"]["containers"][0]["image"]
             == "nginx:latest"
         )
+
+
+def test_compile_file_requires_directory_input(kustomize_env, tmp_path):
+    kustomize, compile_path = kustomize_env
+    not_a_dir = tmp_path / "not-a-dir.yaml"
+    not_a_dir.write_text("apiVersion: v1\nkind: ConfigMap\n", encoding="utf-8")
+
+    config = KapitanInputTypeKustomizeConfig(
+        input_paths=[str(not_a_dir)],
+        output_path=str(compile_path),
+    )
+
+    with pytest.raises(KustomizeTemplateError, match="must be a directory"):
+        kustomize.compile_file(config, str(not_a_dir), str(compile_path))
+
+
+def test_compile_file_without_original_kustomization_and_skips_empty_docs(
+    kustomize_env, tmp_path, monkeypatch
+):
+    kustomize, compile_path = kustomize_env
+    overlay_dir = tmp_path / "overlay-no-kustomization"
+    overlay_dir.mkdir()
+    _write_yaml(
+        overlay_dir / "deployment.yaml",
+        {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": "demo"},
+        },
+    )
+
+    def _run(cmd, stdout, stderr, text, check):
+        stdout.write("---\n")
+        return SimpleNamespace(returncode=0, stderr="")
+
+    monkeypatch.setattr("kapitan.inputs.kustomize.subprocess.run", _run)
+    monkeypatch.setattr(
+        "kapitan.inputs.kustomize.yaml.safe_load_all",
+        lambda _fp: iter([None, {"kind": "ConfigMap", "metadata": {"name": "demo"}}]),
+    )
+
+    config = KapitanInputTypeKustomizeConfig(
+        input_paths=[str(overlay_dir)],
+        output_path=str(compile_path),
+    )
+
+    kustomize.compile_file(config, str(overlay_dir), str(compile_path))
+    assert (compile_path / "demo-configmap.yaml").is_file()

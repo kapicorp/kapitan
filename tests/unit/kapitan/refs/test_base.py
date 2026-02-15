@@ -6,6 +6,7 @@
 import base64
 import errno
 import importlib.util
+import io
 import os
 import string
 import sys
@@ -14,11 +15,14 @@ from pathlib import Path
 
 import pytest
 
-from kapitan.errors import RefError
+from kapitan.errors import RefBackendError, RefError
+from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import (
+    FunctionContext,
     PlainRef,
     PlainRefBackend,
     RefParams,
+    Revealer,
 )
 from kapitan.refs.base64 import Base64Ref
 from kapitan.utils import get_entropy
@@ -328,6 +332,117 @@ def test_plain_ref_from_path_missing_file_returns_none(tmp_path):
     assert PlainRef.from_path(str(tmp_path / "does-not-exist")) is None
 
 
+def test_plain_ref_backend_iterator_contains_and_iteritems(tmp_path):
+    refs_dir = tmp_path / "refs"
+    ref_file = refs_dir / "nested" / "secret"
+    ref_file.parent.mkdir(parents=True)
+    ref_file.write_text(
+        "data: hello\nencoding: original\ntype: plain\n",
+        encoding="utf-8",
+    )
+
+    backend = PlainRefBackend(str(refs_dir))
+    assert "nested/secret" in backend
+    assert "nested/missing" not in backend
+    assert any(path.endswith("nested/secret") for path in backend)
+
+    class _KeySkippingBackend(PlainRefBackend):
+        def __iter__(self):
+            yield "keep"
+            yield "skip"
+
+        def __getitem__(self, ref_path):
+            if ref_path == "skip":
+                raise KeyError(ref_path)
+            return PlainRef(b"value")
+
+    filtered_items = list(_KeySkippingBackend(str(refs_dir)).iteritems())
+    assert len(filtered_items) == 1
+    assert filtered_items[0][0] == "keep"
+    assert filtered_items[0][1].reveal() == b"value"
+
+
+def test_revealer_path_and_stdin_branches(
+    tmp_path, ref_controller, revealer, monkeypatch
+):
+    json_dir = tmp_path / "json"
+    json_dir.mkdir()
+    (json_dir / "obj.json").write_text('{"k": "v"}', encoding="utf-8")
+
+    json_revealed = revealer.reveal_path(str(json_dir))
+    assert len(json_revealed) == 1
+    assert json_revealed[0].content_type == "json"
+    assert '"k": "v"' in json_revealed[0].content
+
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "values.txt").write_text("plain-value\n", encoding="utf-8")
+
+    raw_revealed = revealer.reveal_path(str(raw_dir))
+    assert len(raw_revealed) == 1
+    assert raw_revealed[0].content_type == "raw"
+    assert raw_revealed[0].content == "plain-value\n"
+
+    with pytest.raises(FileNotFoundError):
+        revealer.reveal_path(str(tmp_path / "missing-path"))
+
+    ref_controller["?{plain:stdin/secret}"] = PlainRef(b"stdin-value")
+    monkeypatch.setattr("sys.stdin", io.StringIO("line ?{plain:stdin/secret}\n"))
+    assert revealer.reveal_raw_file(None) == "line stdin-value\n"
+
+
+def test_revealer_compile_raw_reports_missing_backends():
+    class _AlwaysMissingRefController:
+        def __getitem__(self, _key):
+            raise KeyError("missing")
+
+        def __setitem__(self, _key, _value):
+            return None
+
+    with pytest.raises(RefError, match="Could not find ref backend"):
+        Revealer(_AlwaysMissingRefController()).compile_raw("?{plain:missing}")
+
+
+def test_ref_controller_error_and_validation_branches(ref_controller):
+    with pytest.raises(RefBackendError, match="for key broken/key"):
+        with ref_controller.detailedException("broken/key"):
+            raise RefBackendError("backend failed")
+
+    with pytest.raises(RefBackendError, match="no backend for ref type"):
+        ref_controller._get_backend("nope")
+
+    with pytest.raises(RefError, match="is not a valid tag"):
+        ref_controller.tag_params("plain:missing")
+
+    assert ref_controller._get_from_token("plain:a:b:c") is None
+
+    with pytest.raises(RefError, match="is not a valid token"):
+        ref_controller._set_to_token("plain", PlainRef(b"unused"))
+
+    unknown_ctx = FunctionContext("seed")
+    with pytest.raises(RefError, match="unknown ref function used"):
+        ref_controller._eval_func_str(unknown_ctx, "||doesnotexist")
+
+    type_error_ctx = FunctionContext("seed")
+    with pytest.raises(RefError, match="too many arguments"):
+        ref_controller._eval_func_str(type_error_ctx, "||basicauth:u:p:extra")
+
+    with pytest.raises(RefError, match="sub-variables must be created manually"):
+        ref_controller["?{base64:new/ref@nested.value||random:str}"]
+
+    with pytest.raises(KeyError, match="ref not found"):
+        ref_controller["?{plain:missing/ref:hash:extra}"]
+
+    ref_controller["?{base64:ignored/ref||random:str}"] = PlainRef(b"noop")
+    with pytest.raises(KeyError, match="ignored/ref"):
+        ref_controller["?{base64:ignored/ref}"]
+
+    vault_transit_backend = ref_controller._get_backend(
+        KapitanReferencesTypes.VAULTTRANSIT
+    )
+    assert vault_transit_backend.type_name == KapitanReferencesTypes.VAULTTRANSIT
+
+
 def test_base_module_falls_back_to_yaml_safeloader(monkeypatch):
     import yaml as real_yaml
 
@@ -369,6 +484,28 @@ def test_plain_ref_non_enoent_and_unknown_encoding_branches(monkeypatch):
 def test_plain_ref_backend_iterates_empty_directory(tmp_path):
     backend = PlainRefBackend(str(tmp_path / "refs-empty"))
     assert list(backend) == []
+
+
+def test_revealer_empty_directory_and_embedded_non_mapping_errors(tmp_path, revealer):
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    assert revealer.reveal_path(str(empty_dir)) == []
+
+    class _EmbeddedRef:
+        embedded_subvar_path = "nested.value"
+        encoding = "original"
+
+        @staticmethod
+        def reveal():
+            return "- item"
+
+    class _Controller:
+        @staticmethod
+        def __getitem__(_key):
+            return _EmbeddedRef()
+
+    with pytest.raises(RefError, match="not in embedded yaml"):
+        Revealer(_Controller()).reveal_raw("?{plain:embedded/path}")
 
 
 def test_revealer_compile_raw_success_and_create_from_function(

@@ -319,6 +319,30 @@ def refs_cli(kapitan_stdout):
 
 
 @pytest.fixture
+def input_args():
+    """Factory for common input compiler args."""
+    defaults = {
+        "reveal": False,
+        "indent": 2,
+    }
+
+    def _make(**overrides):
+        args = defaults.copy()
+        args.update(overrides)
+        return Namespace(**args)
+
+    return _make
+
+
+@pytest.fixture
+def restore_cached_state():
+    """Restore kapitan.cached module state after test mutation."""
+    state = cached.as_dict()
+    yield
+    cached.from_dict(state)
+
+
+@pytest.fixture
 def sample_pod_manifest():
     return """\
 apiVersion: v1

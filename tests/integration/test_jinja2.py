@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import argparse
+import ast
 import base64
 import tempfile
 import time
@@ -66,6 +67,17 @@ def test_yaml():
         context = {"text": ["this", "that"]}
         output = "- this\n- that\n"
         assert render_jinja2_file(f.name, context) == output
+
+
+def test_fileglob():
+    with tempfile.NamedTemporaryFile() as f:
+        f.write(b"{{ text|fileglob }}")
+        f.seek(0)
+        tests_dir = Path(__file__).resolve().parent
+        context = {"text": str(tests_dir / "*jinja2.py")}
+        output = render_jinja2_file(f.name, context)
+        expected = sorted(str(path) for path in tests_dir.glob("*jinja2.py"))
+        assert sorted(ast.literal_eval(output)) == expected
 
 
 def test_bool():

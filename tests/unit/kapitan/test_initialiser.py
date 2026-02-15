@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
 #
 # SPDX-License-Identifier: Apache-2.0
-"initialiser module tests"
 
 from pathlib import Path
 from unittest.mock import patch
@@ -16,15 +15,6 @@ from kapitan.initialiser import initialise_skeleton
 @pytest.mark.usefixtures("local_http_server", "seeded_git_repo")
 class TestInitialiser:
     def test_initialise_skeleton_success(self, temp_dir):
-        """Test initialise skeleton success.
-
-        Exercises `kapitan/initialiser.py` for the "initialise skeleton success"
-        path, then validates the expected result/output contract.
-
-        It targets project skeleton initialization flow. This protects stable
-        behavior for downstream callers and guards normal execution paths from
-        regressions.
-        """
         template_path = Path(self.seeded_git_repo)
 
         target_dir = Path(temp_dir) / "skeleton"
@@ -39,15 +29,6 @@ class TestInitialiser:
 
     @patch("kapitan.initialiser.run_copy")
     def test_initialise_skeleton_non_empty_dir(self, mocked_run_copy, temp_dir):
-        """Test initialise skeleton non empty dir.
-
-        Exercises `kapitan/initialiser.py` for the "initialise skeleton non
-        empty dir" path, then validates the expected error-handling contract.
-
-        It targets project skeleton initialization flow. This prevents invalid
-        input or dependency failures from being silently accepted and keeps
-        failures deterministic.
-        """
         dummy_file = Path(temp_dir) / "dummy.txt"
         dummy_file.write_text("This is a dummy file", encoding="utf-8")
 
@@ -72,3 +53,34 @@ class TestInitialiser:
                 "directory": target_dir,
             },
         )
+
+
+def test_initialise_skeleton_logs_current_directory_path(monkeypatch, tmp_path, caplog):
+    target_dir = tmp_path / "empty"
+    target_dir.mkdir()
+    monkeypatch.chdir(target_dir)
+
+    run_copy_calls = {}
+    monkeypatch.setattr(
+        "kapitan.initialiser.run_copy",
+        lambda *args, **kwargs: run_copy_calls.update({"args": args, "kwargs": kwargs}),
+    )
+
+    args = type(
+        "args",
+        (object,),
+        {
+            "template_git_url": "https://example.com/template.git",
+            "checkout_ref": "main",
+            "directory": ".",
+        },
+    )
+
+    with caplog.at_level("INFO", logger="kapitan.initialiser"):
+        initialise_skeleton(args)
+
+    assert run_copy_calls["kwargs"]["dst_path"] == str(target_dir.resolve())
+    assert any(
+        "Successfully initialised: run `kapitan --version`" in m
+        for m in caplog.messages
+    )

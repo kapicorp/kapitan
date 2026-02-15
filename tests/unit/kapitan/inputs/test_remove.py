@@ -75,3 +75,22 @@ def _validate_files_were_removed(base_path):
 def test_compiled_remove_target(isolated_kubernetes_inventory):
     kapitan("compile", "-t", "removal")
     _validate_files_were_removed(os.getcwd())
+
+
+def test_remove_file_logs_oserror_and_continues(
+    tmp_path, caplog, input_args, monkeypatch
+):
+    target_file = tmp_path / "artifact.txt"
+    target_file.write_text("data", encoding="utf-8")
+
+    remove_compiler = Remove(str(tmp_path), "", "", "test", input_args())
+    remove_config = KapitanInputTypeRemoveConfig(input_paths=[str(target_file)])
+
+    def _failing_remove(_path):
+        raise OSError("cannot remove file")
+
+    monkeypatch.setattr("kapitan.inputs.remove.os.remove", _failing_remove)
+    with caplog.at_level("ERROR", logger="kapitan.inputs.remove"):
+        remove_compiler.compile_file(remove_config, str(target_file), str(tmp_path))
+
+    assert any("Input dir not removed" in message for message in caplog.messages)
