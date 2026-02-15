@@ -3,97 +3,95 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"external input tests"
-
 import os
 import random
 import string
 import subprocess
-import tempfile
-import unittest
 
-from kapitan.cached import reset_cache
-from kapitan.cli import main as kapitan
+import pytest
+
 from kapitan.inputs.external import External
 from kapitan.inventory.model.input_types import KapitanInputTypeExternalConfig
+from tests.support.helpers import CompileTestHelper
 
 
-class ExternalInputTest(unittest.TestCase):
-    def setUp(self):
-        os.chdir(os.path.join("tests", "test_resources"))
+def test_compile_external_target(isolated_test_resources, temp_dir):
+    helper = CompileTestHelper(isolated_test_resources)
+    helper.compile_with_args(
+        ["compile", "--output-path", temp_dir, "-t", "external-test"]
+    )
+    assert os.path.isfile(
+        os.path.join(temp_dir, "compiled", "external-test", "test.md")
+    )
 
-    def test_compile(self):
-        temp = tempfile.mkdtemp()
-        kapitan("compile", "--output-path", temp, "-t", "external-test")
-        self.assertTrue(
-            os.path.isfile(
-                os.path.join(
-                    temp,
-                    "compiled",
-                    "external-test",
-                    "test.md",
-                )
-            )
+
+def test_compile_file(tmp_path):
+    external_script_content = """
+    #!/usr/bin/env bash
+    set -ex
+
+    name=$1
+    compiled_target_dir=$2
+
+    echo "test-${NAME}" > "${compiled_target_dir}/${name}"
+    """
+    compile_path = tmp_path / "compiled"
+    compile_path.mkdir()
+    temp_dir = tmp_path / "script_dir"
+    temp_dir.mkdir()
+    external_script_file_path = temp_dir / "script.sh"
+    external_script_file_path.write_text(external_script_content)
+
+    search_paths = [str(external_script_file_path)]
+    external_compiler = External(str(compile_path), search_paths, None, "test", None)
+
+    name = "".join(random.choice(string.ascii_lowercase) for _ in range(8))
+    config = KapitanInputTypeExternalConfig(
+        input_paths=[str(external_script_file_path)],
+        output_path=str(compile_path),
+        env_vars={"NAME": name},
+        args=[name, r"\${compiled_target_dir}"],
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        external_compiler.compile_file(
+            config, str(external_script_file_path), str(compile_path)
         )
 
-    def test_compile_file(self):
-        # tests setting of args, env_vars and "\${compiled_target_dir}" being properly substituted
-        external_script_content = """
-        #!/usr/bin/env bash
-        set -ex
+    assert "Executing external input with command" in excinfo.value.args[0]
+    assert "failed" in excinfo.value.args[0]
+    assert "Permission" in excinfo.value.args[0]
 
-        name=$1
-        compiled_target_dir=$2
+    subprocess.check_call(["chmod", "+x", str(external_script_file_path)])
+    external_compiler.compile_file(
+        config, str(external_script_file_path), str(compile_path)
+    )
 
-        echo "test-${NAME}" > "${compiled_target_dir}/${name}"
-        """
-        compile_path = tempfile.mkdtemp()
-        temp_dir = tempfile.mkdtemp()
-        external_script_file_path = os.path.join(temp_dir, "script.sh")
-        with open(external_script_file_path, "w") as f:
-            f.write(external_script_content)
+    generated_file = compile_path / name
+    assert generated_file.is_file()
+    assert generated_file.read_text() == f"test-{name}\n"
 
-        search_paths = [external_script_file_path]
-        ref_controller = None
-        external_compiler = External(
-            compile_path, search_paths, ref_controller, "test", None
+
+def test_compile_file_logs_oserror_and_continues(tmp_path, monkeypatch, caplog):
+    compile_path = tmp_path / "compiled"
+    compile_path.mkdir()
+
+    external_compiler = External(str(compile_path), [], None, "test", None)
+    config = KapitanInputTypeExternalConfig(
+        input_paths=["/tmp/missing-script.sh"],
+        output_path=str(compile_path),
+        env_vars={},
+        args=[],
+    )
+
+    def _raise_oserror(*_args, **_kwargs):
+        raise OSError("cannot execute")
+
+    monkeypatch.setattr("kapitan.inputs.external.subprocess.run", _raise_oserror)
+
+    with caplog.at_level("ERROR", logger="kapitan.inputs.external"):
+        external_compiler.compile_file(
+            config, "/tmp/missing-script.sh", str(compile_path)
         )
 
-        letters = string.ascii_lowercase
-        name = "".join(random.choice(letters) for i in range(8))
-        config = KapitanInputTypeExternalConfig(
-            input_paths=[external_script_file_path],
-            output_path=compile_path,
-            env_vars={"NAME": name},
-            args=[name, r"\${compiled_target_dir}"],
-        )
-
-        with self.assertRaises(ValueError) as e:
-            external_compiler.compile_file(
-                config, external_script_file_path, compile_path
-            )
-
-        self.assertTrue("Executing external input with command" in e.exception.args[0])
-        self.assertTrue("failed" in e.exception.args[0])
-        self.assertTrue("Permission denied" in e.exception.args[0])
-
-        # make file executable so there's no failure
-        subprocess.check_call(["chmod", "+x", external_script_file_path])
-        external_compiler.compile_file(config, external_script_file_path, compile_path)
-
-        generated_file = os.path.join(compile_path, name)
-        with open(generated_file) as f:
-            generated_file_content = f.readlines()[0]
-        self.assertTrue(
-            os.path.isfile(generated_file),
-            msg=f"File {generated_file} should be generated by compile_file",
-        )
-        self.assertEqual(
-            generated_file_content,
-            f"test-{name}\n",
-            msg="Correct content should be written to file",
-        )
-
-    def tearDown(self):
-        os.chdir("../../")
-        reset_cache()
+    assert any("External failed to run" in message for message in caplog.messages)

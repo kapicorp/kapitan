@@ -3,101 +3,77 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"Azure secrets test"
-
-import contextlib
-import io
+import base64
 import os
-import tempfile
-import unittest
+from types import SimpleNamespace
+
+import pytest
 
 from kapitan import cached
-from kapitan.cli import main as kapitan
-from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.azkms import AzureKMSSecret
 
 
-REFS_HOME = tempfile.mkdtemp()
-REF_CONTROLLER = RefController(REFS_HOME)
-REVEALER = Revealer(REF_CONTROLLER)
-REF_CONTROLLER_EMBEDDED = RefController(REFS_HOME, embed_refs=True)
-REVEALER_EMBEDDED = Revealer(REF_CONTROLLER_EMBEDDED)
+class _FailingClient:
+    def encrypt(self, *args, **kwargs):
+        raise RuntimeError("boom")
+
+    def decrypt(self, *args, **kwargs):
+        raise RuntimeError("boom")
 
 
-class AzureKMSTest(unittest.TestCase):
-    "Test Azure key vault secrets"
+class _FakeAzureClient:
+    def encrypt(self, algorithm, data):
+        return SimpleNamespace(ciphertext=base64.b64encode(b"ciphertext"))
 
-    def test_azkms_write_reveal(self):
-        """
-        Write secret, confirm secret file exists, reveal and compare content
-        """
-        tag = "?{azkms:secret/test}"
-        REF_CONTROLLER[tag] = AzureKMSSecret("mock", "mock")
-        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "secret/test")))
+    def decrypt(self, algorithm, data):
+        return SimpleNamespace(plaintext=b"plaintext")
 
-        file_with_secret_tags = tempfile.mktemp()
-        with open(file_with_secret_tags, "w") as fp:
-            fp.write("I am a ?{azkms:secret/test} value")
-        revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
-        self.assertEqual("I am a mock value", revealed)
 
-    def test_azkms_write_embedded_reveal(self):
-        """
-        write and compile embedded secret, confirm secret file exists, reveal and compare content"
-        """
-        tag = "?{azkms:secret/test}"
-        REF_CONTROLLER_EMBEDDED[tag] = AzureKMSSecret("mock", "mock")
-        self.assertTrue(os.path.isfile(os.path.join(REFS_HOME, "secret/test")))
-        ref_obj = REF_CONTROLLER_EMBEDDED[tag]
+@pytest.fixture(autouse=True)
+def reset_cached_after():
+    yield
+    cached.reset_cache()
 
-        file_with_secret_tags = tempfile.mktemp()
-        with open(file_with_secret_tags, "w") as fp:
-            fp.write(f"I am a {ref_obj.compile()} value")
 
-        revealed = REVEALER_EMBEDDED.reveal_raw_file(file_with_secret_tags)
-        self.assertEqual("I am a mock value", revealed)
+def test_azkms_write_reveal(tmp_path, ref_controller, revealer):
+    tag = "?{azkms:secret/test}"
+    ref_controller[tag] = AzureKMSSecret("mock", "mock")
+    assert os.path.isfile(os.path.join(ref_controller.path, "secret/test"))
 
-    def test_cli_secret_write_reveal_azkms(self):
-        """
-        run $ kapitan refs --write azkms:test_secret
-        and $ kapitan refs --reveal
-        using mock key
-        """
-        test_secret_content = "mock"
-        test_secret_file = tempfile.mktemp()
-        with open(test_secret_file, "w") as fp:
-            fp.write(test_secret_content)
+    file_with_secret_tags = tmp_path / "tags.txt"
+    file_with_secret_tags.write_text("I am a ?{azkms:secret/test} value")
+    revealed = revealer.reveal_raw_file(str(file_with_secret_tags))
+    assert revealed == "I am a mock value"
 
-        kapitan(
-            "refs",
-            "--write",
-            "azkms:test_secret",
-            "-f",
-            test_secret_file,
-            "--refs-path",
-            REFS_HOME,
-            "--key",
-            "mock",
-        )
-        test_tag_content = "revealing: ?{azkms:test_secret}"
-        test_tag_file = tempfile.mktemp()
-        with open(test_tag_file, "w") as fp:
-            fp.write(test_tag_content)
-        argv = [
-            "refs",
-            "--reveal",
-            "-f",
-            test_tag_file,
-            "--refs-path",
-            REFS_HOME,
-        ]
 
-        stdout = io.StringIO()
-        with contextlib.redirect_stdout(stdout):
-            kapitan(*argv)
-        self.assertEqual(f"revealing: {test_secret_content}", stdout.getvalue())
+def test_azkms_write_embedded_reveal(
+    tmp_path, ref_controller_embedded, revealer_embedded
+):
+    tag = "?{azkms:secret/test}"
+    ref_controller_embedded[tag] = AzureKMSSecret("mock", "mock")
+    assert os.path.isfile(os.path.join(ref_controller_embedded.path, "secret/test"))
+    ref_obj = ref_controller_embedded[tag]
 
-        os.remove(test_tag_file)
+    file_with_secret_tags = tmp_path / "tags.txt"
+    file_with_secret_tags.write_text(f"I am a {ref_obj.compile()} value")
 
-    def tearDown(self):
-        cached.reset_cache()
+    revealed = revealer_embedded.reveal_raw_file(str(file_with_secret_tags))
+    assert revealed == "I am a mock value"
+
+
+def test_cli_secret_write_reveal_azkms(refs_cli, tmp_path, refs_path):
+    test_secret_content = "mock"
+    test_secret_file = tmp_path / "secret.txt"
+    test_secret_file.write_text(test_secret_content)
+
+    refs_cli.write("azkms:test_secret", test_secret_file, refs_path, key="mock")
+    test_tag_content = "revealing: ?{azkms:test_secret}"
+    test_tag_file = tmp_path / "tag.txt"
+    test_tag_file.write_text(test_tag_content)
+    stdout = refs_cli.reveal_file(test_tag_file, refs_path)
+    assert stdout == f"revealing: {test_secret_content}"
+
+
+def test_azkms_update_key_no_change():
+    azkms = AzureKMSSecret(b"data", "mock", encrypt=False)
+    assert azkms.update_key("mock") is False

@@ -3,18 +3,13 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for the kapitan.cached module."""
-
 from argparse import Namespace
 
 from kapitan import cached
 
 
 class TestResetCache:
-    """Tests for reset_cache function."""
-
     def test_reset_cache_clears_all_variables(self):
-        """Test that reset_cache clears all global cache variables."""
         # Set some values
         cached.inv = {"key": "value"}
         cached.global_inv = {"global": "data"}
@@ -45,7 +40,6 @@ class TestResetCache:
         assert cached.revealer_obj is None
 
     def test_reset_cache_preserves_args(self):
-        """Test that reset_cache does not reset args."""
         original_args = cached.args
         cached.args = Namespace(test="value")
 
@@ -56,10 +50,7 @@ class TestResetCache:
 
 
 class TestFromDict:
-    """Tests for from_dict function."""
-
     def test_from_dict_restores_all_variables(self):
-        """Test that from_dict correctly restores cache from dictionary."""
         cache_dict = {
             "inv": {"inv_key": "inv_value"},
             "global_inv": {"global_key": "global_value"},
@@ -92,10 +83,7 @@ class TestFromDict:
 
 
 class TestAsDict:
-    """Tests for as_dict function."""
-
     def test_as_dict_serializes_all_variables(self):
-        """Test that as_dict returns dictionary with all cache variables."""
         # Setup some test values
         cached.reset_cache()
         cached.inv = {"test": "inv"}
@@ -113,7 +101,6 @@ class TestAsDict:
         assert "args" in result
 
     def test_as_dict_round_trip(self):
-        """Test that as_dict -> from_dict preserves state."""
         # Setup initial state
         cached.reset_cache()
         cached.inv = {"key1": "value1"}
@@ -137,10 +124,7 @@ class TestAsDict:
 
 
 class TestResetInv:
-    """Tests for reset_inv function."""
-
     def test_reset_inv_clears_only_inv(self):
-        """Test that reset_inv only clears inv, not other variables."""
         cached.inv = {"key": "value"}
         cached.global_inv = {"global": "value"}
         cached.inv_cache = {"cache": "value"}
@@ -153,10 +137,7 @@ class TestResetInv:
 
 
 class TestModuleVariables:
-    """Tests for module-level variable initialization."""
-
     def test_initial_state(self):
-        """Test that module variables have correct initial state."""
         cached.reset_cache()
 
         assert isinstance(cached.inv, dict)

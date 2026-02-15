@@ -1,146 +1,148 @@
-import os
-import tempfile
-import unittest
+# Copyright 2025 The Kapitan Authors
+# SPDX-FileCopyrightText: 2025 The Kapitan Authors <kapitan-admins@googlegroups.com>
+#
+# SPDX-License-Identifier: Apache-2.0
+
+import hashlib
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from kapitan.errors import CompileError
 from kapitan.inputs.cache import InputCache
 
 
-class InputCacheTest(unittest.TestCase):
-    def test_cache_home_xdg(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"XDG_CACHE_HOME": tmpdir}):
-                cache = InputCache("test_input")
-                self.assertEqual(cache.input_cache_home, f"{tmpdir}/kapitan/test_input")
+@pytest.fixture
+def cache_env(monkeypatch, tmp_path):
+    monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    return tmp_path
 
-    def test_cache_home_home(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"HOME": tmpdir}, clear=True):
-                cache = InputCache("test_input")
-                self.assertEqual(
-                    cache.input_cache_home, f"{tmpdir}/.cache/kapitan/test_input"
-                )
 
-    def test_cache_home_missing(self):
-        with patch.dict(os.environ, {}, clear=True):
-            with self.assertRaises(CompileError):
-                InputCache("test_input")
+def test_cache_home_prefers_xdg_cache_home(monkeypatch, tmp_path):
+    home_dir = tmp_path / "home"
+    xdg_cache_home = tmp_path / "xdg-cache"
+    monkeypatch.setenv("HOME", str(home_dir))
+    monkeypatch.setenv("XDG_CACHE_HOME", str(xdg_cache_home))
 
-    def test_hash_paths(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"HOME": tmpdir}, clear=True):
-                cache = InputCache("test_input")
-                inputs_hash = "abcdef123456"
-                cached_path, cached_path_lock, sub_path = cache.hash_paths(inputs_hash)
-                self.assertEqual(sub_path, Path(cache.input_cache_home, "ab"))
-                self.assertEqual(cached_path, Path(sub_path, "cdef123456"))
-                self.assertEqual(cached_path_lock, Path(str(cached_path) + ".lock"))
+    cache = InputCache("test_input")
 
-    def test_set_and_get(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"HOME": tmpdir}, clear=True):
-                cache = InputCache("test_input")
-                inputs_hash = "abcdef123456"
-                test_obj = {"a": 1, "b": 2}
+    assert cache.input_cache_home == f"{xdg_cache_home}/kapitan/test_input"
 
-                # Test get on a non-existent cache entry
-                self.assertIsNone(cache.get(inputs_hash))
 
-                # Test set and get
-                cache.set(inputs_hash, test_obj)
-                retrieved_obj = cache.get(inputs_hash)
-                self.assertEqual(test_obj, retrieved_obj)
+def test_cache_home_falls_back_to_home(cache_env):
+    cache = InputCache("test_input")
 
-                # Test that set does not overwrite
-                cache.set(inputs_hash, {"c": 3})
-                retrieved_obj = cache.get(inputs_hash)
-                self.assertEqual(test_obj, retrieved_obj)
+    assert cache.input_cache_home == f"{cache_env}/.cache/kapitan/test_input"
 
-    def test_kv_cache(self):
-        cache = InputCache("test_input")
-        cache.set_value("key1", "value1")
-        self.assertEqual(cache.get_key("key1"), "value1")
 
-    def test_hashing(self):
-        cache = InputCache("test_input")
-        hasher = cache.hash_object()
-        self.assertIsNotNone(hasher)
+def test_cache_home_missing_raises(monkeypatch):
+    monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+    monkeypatch.delenv("HOME", raising=False)
 
-        with tempfile.NamedTemporaryFile(delete=False) as tmpfile:
-            tmpfile.write(b"test content")
-            tmpfile.flush()
-            tmpfile.seek(0)
-            digest = cache.hash_file_digest(tmpfile)
-            self.assertIsNotNone(digest)
-        os.remove(tmpfile.name)
+    with pytest.raises(CompileError):
+        InputCache("test_input")
 
-    def test_get_cache_miss(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"HOME": tmpdir}, clear=True):
-                cache = InputCache("test_input")
-                inputs_hash = "nonexistenthash"
-                self.assertIsNone(cache.get(inputs_hash))
 
-    def test_cache_lock_contention(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"HOME": tmpdir}, clear=True):
-                cache = InputCache("test_input")
-                inputs_hash = "abcdef123456"
-                test_obj = {"a": 1, "b": 2}
+def test_hash_paths_returns_expected_paths(cache_env):
+    cache = InputCache("test_input")
 
-                _, cached_path_lock, sub_path = cache.hash_paths(inputs_hash)
-                sub_path.mkdir(parents=True, exist_ok=True)
-                cached_path_lock.touch()
+    cached_path, cached_path_lock, sub_path = cache.hash_paths("abcdef123456")
 
-                # Test get with lock file present
-                self.assertIsNone(cache.get(inputs_hash))
+    assert sub_path == Path(cache.input_cache_home, "ab")
+    assert cached_path == Path(sub_path, "cdef123456")
+    assert cached_path_lock == Path(f"{cached_path}.lock")
 
-                # Test set with lock file present
-                self.assertIsNone(cache.set(inputs_hash, test_obj))
 
-    def test_set_file_exists_error(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"HOME": tmpdir}, clear=True):
-                cache = InputCache("test_input")
-                inputs_hash = "abcdef123456"
-                test_obj = {"a": 1, "b": 2}
+def test_set_and_get_round_trip(cache_env):
+    cache = InputCache("test_input")
+    inputs_hash = "abcdef123456"
+    output_obj = {"a": 1, "b": 2}
 
-                # Mocking os.rename to raise FileExistsError
-                with patch("pathlib.Path.rename", side_effect=FileExistsError):
-                    with self.assertRaises(FileExistsError):
-                        cache.set(inputs_hash, test_obj)
+    assert cache.get(inputs_hash) is None
+    assert cache.set(inputs_hash, output_obj) == inputs_hash
+    assert cache.get(inputs_hash) == output_obj
+    assert cache.set(inputs_hash, {"c": 3}) == inputs_hash
+    assert cache.get(inputs_hash) == output_obj
 
-    def test_get_file_not_found_error(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"HOME": tmpdir}, clear=True):
-                cache = InputCache("test_input")
-                inputs_hash = "abcdef123456"
 
-                with patch("builtins.open", side_effect=FileNotFoundError):
-                    self.assertIsNone(cache.get(inputs_hash))
+def test_set_value_and_get_key(cache_env):
+    cache = InputCache("test_input")
 
-    def test_different_input_types(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"HOME": tmpdir}, clear=True):
-                cache1 = InputCache("input1")
-                cache2 = InputCache("input2")
-                self.assertNotEqual(cache1.input_cache_home, cache2.input_cache_home)
-                self.assertTrue("input1" in cache1.input_cache_home)
-                self.assertTrue("input2" in cache2.input_cache_home)
+    cache.set_value("key1", "value1")
 
-    def test_dump_and_load_output(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch.dict(os.environ, {"HOME": tmpdir}, clear=True):
-                cache = InputCache("test_input")
-                test_obj = {"a": 1, "b": 2}
-                file_path = Path(tmpdir) / "test.txt"
+    assert cache.get_key("key1") == "value1"
 
-                with open(file_path, "wb") as fp:
-                    cache.dump_output(test_obj, fp)
 
-                with open(file_path, "rb") as fp:
-                    loaded_obj = cache.load_output(fp)
+def test_hash_helpers_return_hasher_and_digest(cache_env, tmp_path):
+    cache = InputCache("test_input")
+    file_path = tmp_path / "input.txt"
+    content = b"test content"
+    file_path.write_bytes(content)
 
-                self.assertEqual(test_obj, loaded_obj)
+    hasher = cache.hash_object()
+    hasher.update(content)
+    assert hasher.hexdigest() == hashlib.blake2b(content, digest_size=32).hexdigest()
+    with file_path.open("rb") as fp:
+        assert (
+            cache.hash_file_digest(fp).hexdigest()
+            == hashlib.blake2b(content).hexdigest()
+        )
+
+
+def test_get_returns_none_for_cache_miss(cache_env):
+    cache = InputCache("test_input")
+
+    assert cache.get("nonexistenthash") is None
+
+
+def test_cache_lock_contention_returns_none(cache_env):
+    cache = InputCache("test_input")
+    inputs_hash = "abcdef123456"
+    output_obj = {"a": 1, "b": 2}
+
+    _, cached_path_lock, sub_path = cache.hash_paths(inputs_hash)
+    sub_path.mkdir(parents=True, exist_ok=True)
+    cached_path_lock.touch()
+
+    assert cache.get(inputs_hash) is None
+    assert cache.set(inputs_hash, output_obj) is None
+
+
+def test_set_propagates_file_exists_error(cache_env):
+    cache = InputCache("test_input")
+
+    with patch("pathlib.Path.rename", side_effect=FileExistsError):
+        with pytest.raises(FileExistsError):
+            cache.set("abcdef123456", {"a": 1, "b": 2})
+
+
+def test_get_handles_file_not_found_during_read(cache_env):
+    cache = InputCache("test_input")
+
+    with patch("builtins.open", side_effect=FileNotFoundError):
+        assert cache.get("abcdef123456") is None
+
+
+def test_different_input_types_use_separate_directories(cache_env):
+    cache_one = InputCache("input1")
+    cache_two = InputCache("input2")
+
+    assert cache_one.input_cache_home != cache_two.input_cache_home
+    assert "input1" in cache_one.input_cache_home
+    assert "input2" in cache_two.input_cache_home
+
+
+def test_dump_and_load_output_round_trip(cache_env, tmp_path):
+    cache = InputCache("test_input")
+    file_path = tmp_path / "cache.bin"
+    output_obj = {"a": 1, "b": 2}
+
+    with file_path.open("wb") as fp:
+        cache.dump_output(output_obj, fp)
+
+    with file_path.open("rb") as fp:
+        loaded_obj = cache.load_output(fp)
+
+    assert loaded_obj == output_obj

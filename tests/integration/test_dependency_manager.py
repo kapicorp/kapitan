@@ -5,8 +5,8 @@
 
 import io
 import multiprocessing
-import tempfile
-import unittest
+import os
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -29,8 +29,11 @@ from kapitan.inventory.model.dependencies import (
 )
 
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
 def _http_sources_dir() -> Path:
-    return Path(__file__).resolve().parents[1] / "test_resources" / "http_sources"
+    return REPO_ROOT / "tests" / "test_resources" / "http_sources"
 
 
 def _read_http_source(filename: str) -> bytes:
@@ -75,265 +78,257 @@ def _make_zip_bytes(files: dict[str, str]):
     return zip_buffer.getvalue()
 
 
-@pytest.mark.usefixtures("isolated_test_resources", "local_http_server")
-class DependencyManagerTest(unittest.TestCase):
-    def test_fetch_http_sources(self):
-        "Tests fetching http[s] sources"
-        temp_dir = Path(self.isolated_test_resources)
+def test_fetch_http_sources(isolated_test_resources, local_http_server):
+    temp_dir = Path(isolated_test_resources)
+    http_sources = [
+        ("/jsonnet.jsonnet", "4897ec6.jsonnet.jsonnet"),
+        ("/__init__.py", "4897ec6.__init__.py"),
+    ]
+
+    for path, source_file in http_sources:
+        content = _read_http_source(source_file)
+        _expect_http_file(local_http_server, path, content, content_type="text/plain")
+
+        output_path = temp_dir / path.lstrip("/")
+        fetch_http_source(
+            local_http_server.url_for(path), str(output_path), item_type="Dependency"
+        )
+
+        assert output_path.is_file()
+        assert output_path.read_bytes() == content
+
+
+@pytest.mark.usefixtures("seeded_git_repo")
+def test_fetch_git_sources(isolated_test_resources, seeded_git_repo):
+    temp_dir = Path(isolated_test_resources)
+    repo_dir = temp_dir / "repo.git"
+
+    fetch_git_source(str(seeded_git_repo), str(repo_dir), item_type="Dependency")
+
+    readme = repo_dir / "README.md"
+    assert readme.is_file()
+
+
+@pytest.mark.usefixtures("seeded_git_repo")
+def test_clone_repo_subdir(isolated_test_resources, seeded_git_repo, tmp_path):
+    temp_dir = Path(isolated_test_resources)
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    subdir = output_dir / "subdir"
+
+    source = str(seeded_git_repo)
+    dep = [
+        KapitanDependencyGitConfig(
+            type="git",
+            source=source,
+            output_path=str(subdir),
+            ref="master",
+            subdir="tests",
+        )
+    ]
+    fetch_git_dependency((source, dep), str(temp_dir), force=False)
+    assert subdir.is_dir()
+
+
+def test_fetch_helm_chart_http(isolated_test_resources, local_http_server, tmp_path):
+    temp_dir = Path(isolated_test_resources)
+    output_dir = tmp_path / "charts"
+    output_chart_dir = output_dir / "charts" / "prometheus"
+
+    chart_name = "prometheus"
+    version = "11.3.0"
+    chart_filename = f"{chart_name}-{version}.tgz"
+
+    chart_content = _read_http_source(f"e452e07.{chart_filename}")
+    _expect_index_yaml(local_http_server, "/", chart_name, version, chart_filename)
+    _expect_chart_archive(local_http_server, "/", chart_filename, chart_content)
+    repo = local_http_server.url_for("/")
+    dep = [
+        KapitanDependencyHelmConfig(
+            output_path=str(output_chart_dir),
+            version=version,
+            chart_name=chart_name,
+            source=repo,
+        )
+    ]
+    fetch_helm_chart(
+        (HelmSource(repo, chart_name, version, None), dep),
+        str(temp_dir),
+        force=False,
+    )
+    assert output_chart_dir.is_dir()
+    assert (output_chart_dir / "Chart.yaml").is_file()
+    assert (output_chart_dir / "charts" / "kube-state-metrics").is_dir()
+
+
+@pytest.mark.requires_network
+def test_fetch_helm_chart_oci(isolated_test_resources, tmp_path):
+    if os.environ.get("KAPITAN_ENABLE_NETWORK_TESTS") != "1":
+        pytest.skip("network tests disabled; set KAPITAN_ENABLE_NETWORK_TESTS=1")
+    if shutil.which("helm") is None:
+        pytest.skip("helm binary not found")
+    temp_dir = Path(isolated_test_resources)
+    output_dir = tmp_path / "charts"
+    output_chart_dir = output_dir / "charts" / "kserve-crd"
+
+    chart_name = "kserve-crd"
+    version = "v0.16.0"
+    repo = "oci://ghcr.io/kserve/charts/kserve-crd"
+    dep = [
+        KapitanDependencyHelmConfig(
+            output_path=str(output_chart_dir),
+            version=version,
+            chart_name=chart_name,
+            source=repo,
+        )
+    ]
+    fetch_helm_chart(
+        (HelmSource(repo, chart_name, version, None), dep),
+        str(temp_dir),
+        force=False,
+    )
+    assert output_chart_dir.is_dir()
+    assert (output_chart_dir / "Chart.yaml").is_file()
+
+
+def test_fetch_helm_chart_version_that_does_not_exist(
+    isolated_test_resources, local_http_server, tmp_path
+):
+    temp_dir = Path(isolated_test_resources)
+    output_dir = tmp_path / "charts"
+    output_chart_dir = output_dir / "charts" / "prometheus"
+
+    chart_name = "prometheus"
+    version = "10.7.0"
+    repo = local_http_server.url_for("/charts")
+    local_http_server.expect_request("/charts/index.yaml").respond_with_data(
+        "not found", status=404, content_type="text/plain"
+    )
+    dep = [
+        KapitanDependencyHelmConfig(
+            output_path=str(output_chart_dir),
+            version=version,
+            chart_name=chart_name,
+            source=repo,
+        )
+    ]
+    with pytest.raises(HelmFetchingError):
+        fetch_helm_chart(
+            (HelmSource(repo, chart_name, version, None), dep),
+            str(temp_dir),
+            force=False,
+        )
+    assert not output_chart_dir.is_dir()
+    assert not (output_chart_dir / "Chart.yaml").is_file()
+
+
+def test_fetch_dependencies_unpack_parallel(
+    isolated_test_resources, local_http_server, tmp_path
+):
+    output_path = tmp_path / "output"
+    output_path.mkdir()
+    save_dir = Path(isolated_test_resources)
+    with multiprocessing.Pool(4) as pool:
         http_sources = [
-            ("/jsonnet.jsonnet", "4897ec6.jsonnet.jsonnet"),
-            ("/__init__.py", "4897ec6.__init__.py"),
+            (
+                "/nfs-client-provisioner-1.2.8.tgz",
+                "e452e07.nfs-client-provisioner-1.2.8.tgz",
+                "nfs-client-provisioner",
+            ),
+            (
+                "/prometheus-pushgateway-1.2.13.tgz",
+                "e452e07.prometheus-pushgateway-1.2.13.tgz",
+                "prometheus-pushgateway",
+            ),
         ]
+        dependencies = []
 
-        for path, source_file in http_sources:
+        for path, source_file, output_dir in http_sources:
             content = _read_http_source(source_file)
-            _expect_http_file(self.httpserver, path, content, content_type="text/plain")
-
-            output_path = temp_dir / path.lstrip("/")
-            fetch_http_source(
-                self.httpserver.url_for(path), str(output_path), item_type="Dependency"
+            _expect_http_file(
+                local_http_server, path, content, content_type="application/gzip"
             )
 
-            self.assertTrue(output_path.is_file())
-            self.assertEqual(output_path.read_bytes(), content)
-
-    @pytest.mark.usefixtures("seeded_git_repo")
-    def test_fetch_git_sources(self):
-        "Tests cloning git repo"
-        temp_dir = Path(self.isolated_test_resources)
-        repo_dir = temp_dir / "repo.git"
-
-        # TODO: also test git ssh urls
-        fetch_git_source(
-            str(self.seeded_git_repo), str(repo_dir), item_type="Dependency"
-        )
-
-        readme = repo_dir / "README.md"
-        self.assertTrue(readme.is_file())
-
-    @pytest.mark.usefixtures("seeded_git_repo")
-    def test_clone_repo_subdir(self):
-        """
-        Tests cloning git repo and copy its' subdir
-        """
-        temp_dir = Path(self.isolated_test_resources)
-        output_dir = Path(tempfile.mkdtemp())
-        subdir = output_dir / "subdir"
-
-        source = str(self.seeded_git_repo)
-        dep = [
-            KapitanDependencyGitConfig(
-                type="git",
-                source=source,
-                output_path=str(subdir),
-                ref="master",
-                subdir="tests",
+            dependencies.append(
+                {
+                    "type": "http",
+                    "source": local_http_server.url_for(path),
+                    "output_path": output_dir,
+                    "unpack": True,
+                }
             )
-        ]
-        fetch_git_dependency((source, dep), str(temp_dir), force=False)
-        self.assertTrue(subdir.is_dir())
 
-    def test_fetch_helm_chart_http(self):
-        """
-        Tests fetching helm chart
-        """
-        temp_dir = Path(self.isolated_test_resources)
-        output_dir = Path(tempfile.mkdtemp())
-        output_chart_dir = output_dir / "charts" / "prometheus"
+        inventory = KapitanInventorySettings(dependencies=dependencies)
+        target_objs = [inventory]
+        fetch_dependencies(str(output_path), target_objs, str(save_dir), False, pool)
+        pool.close()
 
-        chart_name = "prometheus"
-        version = "11.3.0"
-        chart_filename = f"{chart_name}-{version}.tgz"
+    for obj in target_objs[0].dependencies:
+        for path in (output_path, save_dir):
+            dir_path = Path(path) / obj.output_path
+            assert dir_path.is_dir()
 
-        chart_content = _read_http_source(f"e452e07.{chart_filename}")
-        _expect_index_yaml(self.httpserver, "/", chart_name, version, chart_filename)
-        _expect_chart_archive(self.httpserver, "/", chart_filename, chart_content)
-        repo = self.httpserver.url_for("/")
-        dep = [
-            KapitanDependencyHelmConfig(
-                output_path=str(output_chart_dir),
-                version=version,
-                chart_name=chart_name,
-                source=repo,
-            )
-        ]
-        fetch_helm_chart(
-            (HelmSource(repo, chart_name, version, None), dep),
-            str(temp_dir),
-            force=False,
-        )
-        self.assertTrue(output_chart_dir.is_dir())
-        self.assertTrue((output_chart_dir / "Chart.yaml").is_file())
-        self.assertTrue((output_chart_dir / "charts" / "kube-state-metrics").is_dir())
 
-    def test_fetch_helm_chart_oci(self):
-        """
-        Tests fetching helm chart
-        """
-        temp_dir = Path(self.isolated_test_resources)
-        output_dir = Path(tempfile.mkdtemp())
-        output_chart_dir = output_dir / "charts" / "kserve-crd"
+@pytest.mark.usefixtures("seeded_git_repo")
+def test_compile_fetch(
+    isolated_test_resources, local_http_server, seeded_git_repo, tmp_path
+):
+    temp_dir = Path(isolated_test_resources)
 
-        chart_name = "kserve-crd"
-        version = "v0.16.0"
-        repo = "oci://ghcr.io/kserve/charts/kserve-crd"
-        dep = [
-            KapitanDependencyHelmConfig(
-                output_path=str(output_chart_dir),
-                version=version,
-                chart_name=chart_name,
-                source=repo,
-            )
-        ]
-        fetch_helm_chart(
-            (HelmSource(repo, chart_name, version, None), dep),
-            str(temp_dir),
-            force=False,
-        )
-        self.assertTrue(output_chart_dir.is_dir())
-        self.assertTrue((output_chart_dir / "Chart.yaml").is_file())
+    chart_name = "prometheus"
+    version = "11.3.0"
+    chart_filename = f"{chart_name}-{version}.tgz"
 
-    def test_fetch_helm_chart_version_that_does_not_exist(self):
-        """
-        Test fetching helm chart version that does not exist
-        """
-        temp_dir = Path(self.isolated_test_resources)
-        output_dir = Path(tempfile.mkdtemp())
-        output_chart_dir = output_dir / "charts" / "prometheus"
+    chart_content = _read_http_source(f"e452e07.{chart_filename}")
 
-        chart_name = "prometheus"
-        version = "10.7.0"
-        repo = self.httpserver.url_for("/charts")
-        self.httpserver.expect_request("/charts/index.yaml").respond_with_data(
-            "not found", status=404, content_type="text/plain"
-        )
-        dep = [
-            KapitanDependencyHelmConfig(
-                output_path=str(output_chart_dir),
-                version=version,
-                chart_name=chart_name,
-                source=repo,
-            )
-        ]
-        with self.assertRaises(HelmFetchingError):
-            fetch_helm_chart(
-                (HelmSource(repo, chart_name, version, None), dep),
-                str(temp_dir),
-                force=False,
-            )
-        self.assertFalse(output_chart_dir.is_dir())
-        self.assertFalse((output_chart_dir / "Chart.yaml").is_file())
+    _expect_index_yaml(local_http_server, "/", chart_name, version, chart_filename)
+    _expect_chart_archive(local_http_server, "/", chart_filename, chart_content)
 
-    def test_fetch_dependencies_unpack_parallel(self):
-        output_path = Path(tempfile.mkdtemp())
-        save_dir = Path(self.isolated_test_resources)
-        # use default parallelism of 4 for test
-        with multiprocessing.Pool(4) as pool:
-            http_sources = [
-                (
-                    "/nfs-client-provisioner-1.2.8.tgz",
-                    "e452e07.nfs-client-provisioner-1.2.8.tgz",
-                    "nfs-client-provisioner",
-                ),
-                (
-                    "/prometheus-pushgateway-1.2.13.tgz",
-                    "e452e07.prometheus-pushgateway-1.2.13.tgz",
-                    "prometheus-pushgateway",
-                ),
-            ]
-            dependencies = []
+    zip_content = _make_zip_bytes({"kapitan-master/README.md": "test\n"})
+    _expect_http_file(
+        local_http_server, "/master.zip", zip_content, content_type="application/zip"
+    )
 
-            for path, source_file, output_dir in http_sources:
-                content = _read_http_source(source_file)
-                _expect_http_file(
-                    self.httpserver, path, content, content_type="application/gzip"
-                )
+    nginx_target_path = temp_dir / "inventory" / "targets" / "nginx.yml"
+    nginx_target = nginx_target_path.read_text(encoding="utf-8")
 
-                dependencies.append(
-                    {
-                        "type": "http",
-                        "source": self.httpserver.url_for(path),
-                        "output_path": output_dir,
-                        "unpack": True,
-                    }
-                )
+    nginx_target = nginx_target.replace(
+        "source: https://github.com/kapicorp/kapitan.git",
+        f"source: {seeded_git_repo}",
+    )
+    nginx_target = nginx_target.replace(
+        "source: https://github.com/kapicorp/kapitan/archive/master.zip",
+        f"source: {local_http_server.url_for('/master.zip')}",
+    )
 
-            inventory = KapitanInventorySettings(dependencies=dependencies)
-            target_objs = [inventory]
-            try:
-                fetch_dependencies(
-                    str(output_path), target_objs, str(save_dir), False, pool
-                )
-                pool.close()
-            except Exception as e:
-                pool.terminate()
-                raise e
+    nginx_target_path.write_text(nginx_target, encoding="utf-8")
 
-        for obj in target_objs[0].dependencies:
-            for path in (output_path, save_dir):
-                dir_path = Path(path) / obj.output_path
-                self.assertTrue(dir_path.is_dir())
+    monitoring_class_path = (
+        temp_dir / "inventory" / "classes" / "component" / "monitoring.yml"
+    )
+    monitoring_class = monitoring_class_path.read_text(encoding="utf-8")
 
-    @pytest.mark.usefixtures("seeded_git_repo")
-    def test_compile_fetch(self):
-        """
-        Runs $ kapitan compile --fetch --output-path temp -t nginx monitoring-dev
-        """
-        temp_dir = Path(self.isolated_test_resources)
+    repo_url = local_http_server.url_for("/")
 
-        chart_name = "prometheus"
-        version = "11.3.0"
-        chart_filename = f"{chart_name}-{version}.tgz"
+    monitoring_class = monitoring_class.replace(
+        "source: https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/",
+        f"source: {repo_url}",
+    )
 
-        chart_content = _read_http_source(f"e452e07.{chart_filename}")
+    monitoring_class_path.write_text(monitoring_class, encoding="utf-8")
 
-        _expect_index_yaml(self.httpserver, "/", chart_name, version, chart_filename)
-        _expect_chart_archive(self.httpserver, "/", chart_filename, chart_content)
+    temp = tmp_path / "out"
+    temp.mkdir()
+    kapitan(
+        "compile",
+        "--fetch",
+        "--output-path",
+        str(temp),
+        "-t",
+        "nginx",
+        "monitoring-dev",
+    )
 
-        zip_content = _make_zip_bytes({"kapitan-master/README.md": "test\n"})
-        _expect_http_file(
-            self.httpserver, "/master.zip", zip_content, content_type="application/zip"
-        )
-
-        nginx_target_path = temp_dir / "inventory" / "targets" / "nginx.yml"
-        nginx_target = nginx_target_path.read_text(encoding="utf-8")
-
-        nginx_target = nginx_target.replace(
-            "source: https://github.com/kapicorp/kapitan.git",
-            f"source: {self.seeded_git_repo}",
-        )
-        nginx_target = nginx_target.replace(
-            "source: https://github.com/kapicorp/kapitan/archive/master.zip",
-            f"source: {self.httpserver.url_for('/master.zip')}",
-        )
-
-        nginx_target_path.write_text(nginx_target, encoding="utf-8")
-
-        monitoring_class_path = (
-            temp_dir / "inventory" / "classes" / "component" / "monitoring.yml"
-        )
-        monitoring_class = monitoring_class_path.read_text(encoding="utf-8")
-
-        repo_url = self.httpserver.url_for("/")
-
-        monitoring_class = monitoring_class.replace(
-            "source: https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/",
-            f"source: {repo_url}",
-        )
-
-        monitoring_class_path.write_text(monitoring_class, encoding="utf-8")
-
-        temp = Path(tempfile.mkdtemp())
-        kapitan(
-            "compile",
-            "--fetch",
-            "--output-path",
-            str(temp),
-            "-t",
-            "nginx",
-            "monitoring-dev",
-        )
-
-        self.assertTrue((temp / "components" / "tests").is_dir())
-        self.assertTrue((temp / "components" / "kapitan-repository").is_dir())
-        self.assertTrue((temp / "charts" / "prometheus").is_dir())
+    assert (temp / "components" / "tests").is_dir()
+    assert (temp / "components" / "kapitan-repository").is_dir()
+    assert (temp / "charts" / "prometheus").is_dir()

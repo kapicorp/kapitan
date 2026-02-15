@@ -9,321 +9,280 @@ import io
 import logging
 import os
 import shutil
-import unittest
+from pathlib import Path
 
 import pytest
 import toml
 import yaml
 
-from kapitan.cached import reset_cache
 from kapitan.cli import main as kapitan
 from kapitan.inventory import InventoryBackends
-from kapitan.utils import directory_hash
+from tests.support.helpers import CompileTestHelper, assert_compiled_output_exists
 
 
 logger = logging.getLogger(__name__)
 
-TEST_PWD = os.getcwd()
-TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")
-TEST_DOCKER_PATH = os.path.join(os.getcwd(), "examples/docker/")
-TEST_TERRAFORM_PATH = os.path.join(os.getcwd(), "examples/terraform/")
-TEST_KUBERNETES_PATH = os.path.join(os.getcwd(), "examples/kubernetes/")
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-class CompileTestResourcesTestObjs(unittest.TestCase):
-    def setUp(self):
-        reset_cache()
-        os.chdir(TEST_RESOURCES_PATH)
-
-    def test_compile_no_reveal(self):
-        # check if the --no-reveal flag takes precedence over --reveal when passed together
-        kapitan(
-            "compile",
-            "-t",
-            "reveal-output",
-            "--reveal",
-            "--no-reveal",
-        )
-
-        with open("compiled/reveal-output/main.json") as f:
-            self.assertTrue("?{gpg:" in f.read())
-
-    def test_single_target_compile(self):
-        kapitan("compile", "-t", "test-objects")
-
-    def test_plain_ref_revealed(self):
-        for g in glob.glob("compiled/test-objects/*.json"):
-            with open(g) as f:
-                self.assertTrue("?{plain:" not in f.read())
-
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
+def _compile_targets(helper: CompileTestHelper, targets, extra_args=None):
+    shutil.rmtree("compiled", ignore_errors=True)
+    args = ["compile"]
+    if targets:
+        args.extend(["-t", *targets])
+    if extra_args:
+        args.extend(extra_args)
+    helper.compile_with_args(args)
 
 
-class CompileTestResourcesTestKadet(unittest.TestCase):
-    def setUp(self):
-        os.chdir(TEST_RESOURCES_PATH)
-        reset_cache()
+def test_compile_no_reveal(isolated_test_resources):
+    helper = CompileTestHelper(isolated_test_resources)
+    _compile_targets(
+        helper,
+        ["reveal-output"],
+        extra_args=["--reveal", "--no-reveal"],
+    )
 
-    def test_compile(self):
-        kapitan("compile", "-t", "kadet-test")
-
-    def test_compile_with_input_params(self):
-        # input_params propagate through and written out to file
-        for g in glob.glob("compiled/kadet-test/test-1/*.yaml"):
-            with open(g) as fp:
-                manifest = yaml.safe_load(fp.read())
-                namespace = manifest["metadata"]["namespace"]
-                team_name = manifest["metadata"]["labels"]["team_name"]
-                self.assertEqual(namespace, "ops")
-                self.assertEqual(team_name, "client-operations")
-        # same kadet function was called with new params should have
-        # different results
-        for g in glob.glob("compiled/kadet-test/test-2/*.yaml"):
-            with open(g) as fp:
-                manifest = yaml.safe_load(fp.read())
-                namespace = manifest["metadata"]["namespace"]
-                team_name = manifest["metadata"]["labels"]["team_name"]
-                self.assertEqual(namespace, "team-2")
-                self.assertEqual(team_name, "SRE")
-
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
+    output = helper.get_compiled_output("reveal-output/main.json")
+    assert "?{gpg:" in output
 
 
-class FailCompileTestResourcesTestKadet(unittest.TestCase):
-    def setUp(self):
-        os.chdir(TEST_RESOURCES_PATH)
-        reset_cache()
-
-    def test_compile(self):
-        kapitan("compile", "-t", "fail-compile")
-
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
+def test_single_target_compile(isolated_test_resources):
+    helper = CompileTestHelper(isolated_test_resources)
+    _compile_targets(helper, ["test-objects"])
 
 
-class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
-    def setUp(self):
-        os.chdir(TEST_RESOURCES_PATH)
-        reset_cache()
+def test_plain_ref_revealed(isolated_test_resources):
+    helper = CompileTestHelper(isolated_test_resources)
+    _compile_targets(helper, ["test-objects"])
 
-    def test_compile(self):
-        kapitan("compile", "-t", "jinja2-input-params")
-
-    def test_compile_with_input_params(self):
-        # input_params propagate through and written out to file
-        for g in glob.glob("compiled/jinja2-input-params/test-1/*.yml"):
-            with open(g) as fp:
-                manifest = yaml.safe_load(fp.read())
-                namespace = manifest["metadata"]["namespace"]
-                name = manifest["metadata"]["name"]
-                self.assertEqual(namespace, "ns1")
-                self.assertEqual(name, "test1")
-        # same jinja2 function was called with new params should have
-        # different results
-        for g in glob.glob("compiled/jinja2-input-params/test-2/*.yaml"):
-            with open(g) as fp:
-                manifest = yaml.safe_load(fp.read())
-                namespace = manifest["metadata"]["namespace"]
-                name = manifest["metadata"]["name"]
-                self.assertEqual(namespace, "ns2")
-                self.assertEqual(name, "test2")
-
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
+    for path in glob.glob("compiled/test-objects/*.json"):
+        with open(path, encoding="utf-8") as handle:
+            assert "?{plain:" not in handle.read()
 
 
-class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
-    def setUp(self):
-        os.chdir(TEST_RESOURCES_PATH)
-        reset_cache()
-
-    def test_compile(self):
-        kapitan("compile", "-t", "jinja2-postfix-strip")
-
-    def test_compile_postfix_strip_disabled(self):
-        self.assertListEqual(
-            os.listdir("compiled/jinja2-postfix-strip/unstripped"), ["stub.txt.j2"]
-        )
-
-    def test_compile_postfix_strip_overridden(self):
-        self.assertListEqual(
-            os.listdir("compiled/jinja2-postfix-strip/stripped-overridden"), ["stub"]
-        )
-
-    def test_compile_postfix_strip_enabled(self):
-        self.assertListEqual(
-            os.listdir("compiled/jinja2-postfix-strip/stripped"), ["stub.txt"]
-        )
-
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
+def test_kadet_compile(isolated_test_resources):
+    helper = CompileTestHelper(isolated_test_resources)
+    _compile_targets(helper, ["kadet-test"])
 
 
-@pytest.mark.usefixtures("isolated_kubernetes_inventory")
-class CompileKubernetesTest(unittest.TestCase):
-    extraArgv = []
+def test_kadet_compile_with_input_params(isolated_test_resources):
+    helper = CompileTestHelper(isolated_test_resources)
+    _compile_targets(helper, ["kadet-test"])
 
-    def setUp(self):
-        self.inventory_path = os.getcwd()
-        reset_cache()
-        shutil.rmtree("compiled", ignore_errors=True)
+    # input_params propagate through and written out to file
+    for path in glob.glob("compiled/kadet-test/test-1/*.yaml"):
+        with open(path, encoding="utf-8") as handle:
+            manifest = yaml.safe_load(handle.read())
+            namespace = manifest["metadata"]["namespace"]
+            team_name = manifest["metadata"]["labels"]["team_name"]
+            assert namespace == "ops"
+            assert team_name == "client-operations"
 
-    def test_compile(self):
-        kapitan("compile", "-c", *self.extraArgv)
-        compile_dir = os.path.join(os.getcwd(), "compiled")
-        reference_dir = os.path.join(TEST_PWD, "tests/test_kubernetes_compiled")
-        compiled_dir_hash = directory_hash(compile_dir)
-        test_compiled_dir_hash = directory_hash(reference_dir)
-        self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
-
-    def test_compile_not_enough_args(self):
-        with self.assertRaises(SystemExit) as cm:
-            # Ignoring stdout for "kapitan --help"
-            with contextlib.redirect_stdout(io.StringIO()):
-                kapitan()
-        self.assertEqual(cm.exception.code, 1)
-
-    def test_compile_specific_target(self):
-        reset_cache()
-        kapitan("compile", "-t", "minikube-mysql", *self.extraArgv)
-        self.assertTrue(
-            os.path.exists("compiled/minikube-mysql")
-            and not os.path.exists("compiled/minikube-es")
-        )
-
-    def test_compile_target_with_label(self):
-        reset_cache()
-        kapitan("compile", "-l", "type=kadet", *self.extraArgv)
-        self.assertTrue(
-            os.path.exists("compiled/minikube-nginx-kadet")
-            and not os.path.exists("compiled/minikube-nginx-jsonnet")
-        )
-
-    def test_compile_jsonnet_env(self):
-        kapitan("compile", "-t", "jsonnet-env", *self.extraArgv)
-        self.assertTrue(os.path.exists("compiled/jsonnet-env/jsonnet-env/env.yml"))
-        with open("compiled/jsonnet-env/jsonnet-env/env.yml", encoding="utf-8") as f:
-            env = dict(yaml.safe_load(f))
-            logger.error(env)
-            self.assertEqual(
-                set(env.keys()), {"applications", "parameters", "classes", "exports"}
-            )
-            self.assertEqual(env["applications"], ["a", "b", "c"])
-            self.assertEqual(env["classes"], ["common", "jsonnet-env"])
-            self.assertTrue("a" in env["parameters"])
-            self.assertEqual(env["parameters"]["a"], "aaaaa")
-            self.assertTrue("b" in env["parameters"])
-            self.assertEqual(env["parameters"]["b"], "bbbbb")
-            self.assertTrue("c" in env["parameters"])
-            self.assertEqual(env["parameters"]["c"], "ccccc")
-            self.assertEqual(env["exports"], {})
-
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
+    # same kadet function was called with new params should have
+    # different results
+    for path in glob.glob("compiled/kadet-test/test-2/*.yaml"):
+        with open(path, encoding="utf-8") as handle:
+            manifest = yaml.safe_load(handle.read())
+            namespace = manifest["metadata"]["namespace"]
+            team_name = manifest["metadata"]["labels"]["team_name"]
+            assert namespace == "team-2"
+            assert team_name == "SRE"
 
 
-class CompileKubernetesTestReclassRs(CompileKubernetesTest):
-    def setUp(self):
-        super().setUp()
-        self.extraArgv = [f"--inventory-backend={(InventoryBackends.RECLASS_RS)}"]
-
-    @unittest.skip("Already tested")
-    def test_compile_not_enough_args(self):
-        pass
+def test_fail_compile_kadet(isolated_test_resources):
+    helper = CompileTestHelper(isolated_test_resources)
+    _compile_targets(helper, ["fail-compile"])
+    assert os.path.isdir("compiled")
 
 
-class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
-    def setUp(self):
-        super().setUp()
-        self.extraArgv = ["--inventory-backend=omegaconf"]
+def test_jinja2_input_params_compile(isolated_test_resources):
+    helper = CompileTestHelper(isolated_test_resources)
+    _compile_targets(helper, ["jinja2-input-params"])
+
+
+def test_jinja2_input_params_values(isolated_test_resources):
+    helper = CompileTestHelper(isolated_test_resources)
+    _compile_targets(helper, ["jinja2-input-params"])
+
+    # input_params propagate through and written out to file
+    for path in glob.glob("compiled/jinja2-input-params/test-1/*.yml"):
+        with open(path, encoding="utf-8") as handle:
+            manifest = yaml.safe_load(handle.read())
+            namespace = manifest["metadata"]["namespace"]
+            name = manifest["metadata"]["name"]
+            assert namespace == "ns1"
+            assert name == "test1"
+
+    # same jinja2 function was called with new params should have
+    # different results
+    for path in glob.glob("compiled/jinja2-input-params/test-2/*.yaml"):
+        with open(path, encoding="utf-8") as handle:
+            manifest = yaml.safe_load(handle.read())
+            namespace = manifest["metadata"]["namespace"]
+            name = manifest["metadata"]["name"]
+            assert namespace == "ns2"
+            assert name == "test2"
+
+
+def test_jinja2_postfix_strip(isolated_test_resources):
+    helper = CompileTestHelper(isolated_test_resources)
+    _compile_targets(helper, ["jinja2-postfix-strip"])
+
+    assert os.listdir("compiled/jinja2-postfix-strip/unstripped") == ["stub.txt.j2"]
+    assert os.listdir("compiled/jinja2-postfix-strip/stripped-overridden") == ["stub"]
+    assert os.listdir("compiled/jinja2-postfix-strip/stripped") == ["stub.txt"]
+
+
+@pytest.fixture(
+    params=[
+        InventoryBackends.RECLASS,
+        InventoryBackends.RECLASS_RS,
+        "omegaconf",
+    ]
+)
+def inventory_backend_args(request, isolated_kubernetes_inventory):
+    if request.param == "omegaconf":
         from kapitan.inventory.backends.omegaconf import migrate
 
         migrate(os.getcwd())
+        return ["--inventory-backend=omegaconf"]
 
-    @unittest.skip("Already tested")
-    def test_compile_not_enough_args(self):
-        pass
+    if request.param == InventoryBackends.RECLASS_RS:
+        return [f"--inventory-backend={InventoryBackends.RECLASS_RS}"]
+
+    return []
 
 
-class CompileTerraformTest(unittest.TestCase):
-    def setUp(self):
-        os.chdir(TEST_TERRAFORM_PATH)
+def test_compile_kubernetes(inventory_backend_args):
+    helper = CompileTestHelper(os.getcwd())
+    helper.compile_with_args(["compile", "-c", *inventory_backend_args])
 
-    def test_compile(self):
-        kapitan("compile")
-        compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
-        test_compiled_dir_hash = directory_hash(
-            os.getcwd() + "/../../tests/test_terraform_compiled"
+    reference_dir = REPO_ROOT / "tests/test_kubernetes_compiled"
+    comparisons = [
+        "minikube-es/manifests/es-master.yml",
+        "minikube-nginx-jsonnet/manifests/app-deployment.yml",
+        "minikube-mysql/manifests/mysql_statefulset.yml",
+    ]
+    for relative_path in comparisons:
+        compiled_file = assert_compiled_output_exists(os.getcwd(), relative_path)
+        expected_file = reference_dir / relative_path
+        assert compiled_file.read_text(encoding="utf-8") == expected_file.read_text(
+            encoding="utf-8"
         )
-        self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
-
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
 
 
-class PlainOutputTest(unittest.TestCase):
-    def setUp(self):
-        os.chdir(TEST_DOCKER_PATH)
+def test_compile_not_enough_args(isolated_kubernetes_inventory):
+    with pytest.raises(SystemExit) as excinfo:
+        with contextlib.redirect_stdout(io.StringIO()):
+            kapitan()
+    assert excinfo.value.code == 1
 
-    def test_compile(self):
-        kapitan("compile")
-        compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
-        test_compiled_dir_hash = directory_hash(
-            os.getcwd() + "/../../tests/test_docker_compiled"
+
+def test_compile_specific_target(inventory_backend_args):
+    helper = CompileTestHelper(os.getcwd())
+    helper.compile_with_args(
+        ["compile", "-t", "minikube-mysql", *inventory_backend_args]
+    )
+
+    assert os.path.exists("compiled/minikube-mysql")
+    assert not os.path.exists("compiled/minikube-es")
+
+
+def test_compile_target_with_label(inventory_backend_args):
+    helper = CompileTestHelper(os.getcwd())
+    helper.compile_with_args(["compile", "-l", "type=kadet", *inventory_backend_args])
+
+    assert os.path.exists("compiled/minikube-nginx-kadet")
+    assert not os.path.exists("compiled/minikube-nginx-jsonnet")
+
+
+def test_compile_jsonnet_env(inventory_backend_args):
+    helper = CompileTestHelper(os.getcwd())
+    helper.compile_with_args(["compile", "-t", "jsonnet-env", *inventory_backend_args])
+
+    env_path = "compiled/jsonnet-env/jsonnet-env/env.yml"
+    assert os.path.exists(env_path)
+
+    with open(env_path, encoding="utf-8") as handle:
+        env = dict(yaml.safe_load(handle))
+        logger.error(env)
+        assert set(env.keys()) == {"applications", "parameters", "classes", "exports"}
+        assert env["applications"] == ["a", "b", "c"]
+        assert env["classes"] == ["common", "jsonnet-env"]
+        assert env["parameters"]["a"] == "aaaaa"
+        assert env["parameters"]["b"] == "bbbbb"
+        assert env["parameters"]["c"] == "ccccc"
+        assert env["exports"] == {}
+
+
+def test_compile_terraform(isolated_terraform_inventory):
+    helper = CompileTestHelper(os.getcwd())
+    helper.compile_with_args(["compile"])
+
+    reference_dir = REPO_ROOT / "tests/test_terraform_compiled"
+    comparisons = [
+        "project1/terraform/provider.tf.json",
+        "project2/terraform/output.tf.json",
+        "project3/terraform/modules.tf.json",
+    ]
+    for relative_path in comparisons:
+        compiled_file = assert_compiled_output_exists(os.getcwd(), relative_path)
+        expected_file = reference_dir / relative_path
+        assert compiled_file.read_text(encoding="utf-8") == expected_file.read_text(
+            encoding="utf-8"
         )
-        self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
-
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
 
 
-class TomlOutputTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        os.chdir(TEST_RESOURCES_PATH)
-        kapitan("compile", "-t", "toml-output")
+def test_compile_docker(isolated_docker_inventory):
+    helper = CompileTestHelper(os.getcwd())
+    helper.compile_with_args(["compile"])
 
-    def setUp(self):
-        target_file_path = os.path.join(
-            os.getcwd(), "inventory/targets/toml-output.yml"
+    reference_dir = REPO_ROOT / "tests/test_docker_compiled"
+    comparisons = [
+        "docker/jsonnet/Dockerfile.web",
+        "docker/jsonnet/Dockerfile.worker",
+        "docker/kadet/Dockerfile.web",
+    ]
+    for relative_path in comparisons:
+        compiled_file = assert_compiled_output_exists(os.getcwd(), relative_path)
+        expected_file = reference_dir / relative_path
+        assert compiled_file.read_text(encoding="utf-8") == expected_file.read_text(
+            encoding="utf-8"
         )
-        with open(target_file_path) as target_file:
-            target = yaml.safe_load(target_file)
-        self.input_parameter = target["parameters"]["input"]
 
-    def test_jsonnet_output(self):
-        output_file_path = os.path.join(
-            os.getcwd(), "compiled/toml-output/jsonnet-output/nested.toml"
-        )
-        expected = self.input_parameter["nested"]
 
-        with open(output_file_path) as output_file:
-            output = toml.load(output_file)
+@pytest.fixture
+def toml_output_env(isolated_test_resources):
+    helper = CompileTestHelper(isolated_test_resources)
+    _compile_targets(helper, ["toml-output"])
 
-        self.assertDictEqual(output, expected)
+    target_file_path = (
+        Path(isolated_test_resources) / "inventory/targets/toml-output.yml"
+    )
+    with target_file_path.open(encoding="utf-8") as target_file:
+        target = yaml.safe_load(target_file)
 
-    def test_kadet_output(self):
-        output_file_path = os.path.join(
-            os.getcwd(), "compiled/toml-output/kadet-output/nested.toml"
-        )
-        expected = self.input_parameter["nested"]
+    return target["parameters"]["input"], Path(isolated_test_resources)
 
-        with open(output_file_path) as output_file:
-            output = toml.load(output_file)
 
-        self.assertDictEqual(output, expected)
+def test_toml_jsonnet_output(toml_output_env):
+    input_parameter, isolated_path = toml_output_env
+    output_file_path = isolated_path / "compiled/toml-output/jsonnet-output/nested.toml"
+    expected = input_parameter["nested"]
 
-    @classmethod
-    def tearDownClass(cls):
-        os.chdir(TEST_PWD)
-        reset_cache()
+    with output_file_path.open(encoding="utf-8") as output_file:
+        output = toml.load(output_file)
+
+    assert output == expected
+
+
+def test_toml_kadet_output(toml_output_env):
+    input_parameter, isolated_path = toml_output_env
+    output_file_path = isolated_path / "compiled/toml-output/kadet-output/nested.toml"
+    expected = input_parameter["nested"]
+
+    with output_file_path.open(encoding="utf-8") as output_file:
+        output = toml.load(output_file)
+
+    assert output == expected

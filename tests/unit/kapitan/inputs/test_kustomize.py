@@ -3,311 +3,223 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for Kustomize input type."""
-
-import os
 import shutil
-import tempfile
-import unittest
 
+import pytest
 import yaml
 
 from kapitan.inputs.kustomize import Kustomize
 from kapitan.inventory.model.input_types import KapitanInputTypeKustomizeConfig
 
 
-class KustomizeInputTest(unittest.TestCase):
-    """Test cases for Kustomize input type."""
+pytestmark = pytest.mark.requires_kustomize
 
-    def setUp(self):
-        """Set up test environment."""
-        self.compile_path = tempfile.mkdtemp()
-        self.search_paths = []
-        self.ref_controller = None
-        self.target_name = "test-target"
-        self.args = type("Args", (), {"kustomize_path": "kustomize"})
-        self.kustomize = Kustomize(
-            self.compile_path,
-            self.search_paths,
-            self.ref_controller,
-            self.target_name,
-            self.args,
+if shutil.which("kustomize") is None:
+    pytest.skip("kustomize binary not found", allow_module_level=True)
+
+
+@pytest.fixture
+def kustomize_env(tmp_path):
+    compile_path = tmp_path / "compiled"
+    compile_path.mkdir()
+    args = type("Args", (), {"kustomize_path": "kustomize"})
+    kustomize = Kustomize(
+        str(compile_path),
+        [],
+        None,
+        "test-target",
+        args,
+    )
+    return kustomize, compile_path
+
+
+def _write_yaml(path, payload):
+    with open(path, "w", encoding="utf-8") as handle:
+        yaml.dump(payload, handle)
+
+
+def test_compile_file_with_patches(kustomize_env, tmp_path):
+    kustomize, compile_path = kustomize_env
+    temp_dir = tmp_path / "overlay"
+    temp_dir.mkdir()
+
+    _write_yaml(
+        temp_dir / "kustomization.yaml",
+        {"resources": ["deployment.yaml"], "namespace": "test-namespace"},
+    )
+    _write_yaml(
+        temp_dir / "deployment.yaml",
+        {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": "test-deployment", "namespace": "test-namespace"},
+            "spec": {
+                "template": {
+                    "spec": {
+                        "containers": [
+                            {"name": "test-container", "image": "nginx:latest"}
+                        ]
+                    }
+                }
+            },
+        },
+    )
+
+    patch = {
+        "target": {
+            "kind": "Deployment",
+            "name": "test-deployment",
+            "namespace": "test-namespace",
+        },
+        "patch": {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": "test-deployment", "namespace": "test-namespace"},
+            "spec": {
+                "template": {
+                    "spec": {
+                        "containers": [
+                            {"name": "test-container", "image": "nginx:1.19"}
+                        ]
+                    }
+                }
+            },
+        },
+    }
+
+    config = KapitanInputTypeKustomizeConfig(
+        namespace="test-namespace",
+        patches={"image-patch": patch},
+        input_paths=[str(temp_dir)],
+        output_path=str(compile_path),
+    )
+
+    kustomize.compile_file(config, str(temp_dir), str(compile_path))
+
+    output_file = compile_path / "test-deployment-deployment.yaml"
+    assert output_file.exists()
+
+    with open(output_file, encoding="utf-8") as handle:
+        output = yaml.safe_load(handle)
+        assert (
+            output["spec"]["template"]["spec"]["containers"][0]["image"] == "nginx:1.19"
         )
 
-    def tearDown(self):
-        """Clean up test environment."""
-        shutil.rmtree(self.compile_path)
 
-    def test_compile_file_with_patches(self):
-        """Test compiling a Kustomize overlay with patches."""
-        # Create a temporary directory for the test
-        temp_dir = tempfile.mkdtemp()
-        try:
-            # Create a basic kustomization.yaml
-            kustomization = {
-                "resources": ["deployment.yaml"],
-                "namespace": "test-namespace",
-            }
-            with open(os.path.join(temp_dir, "kustomization.yaml"), "w") as f:
-                yaml.dump(kustomization, f)
+def test_compile_file_with_namespace(kustomize_env, tmp_path):
+    kustomize, compile_path = kustomize_env
+    temp_dir = tmp_path / "overlay"
+    temp_dir.mkdir()
 
-            # Create a basic deployment.yaml
-            deployment = {
-                "apiVersion": "apps/v1",
-                "kind": "Deployment",
-                "metadata": {
-                    "name": "test-deployment",
-                    "namespace": "test-namespace",
-                },
-                "spec": {
-                    "template": {
-                        "spec": {
-                            "containers": [
-                                {
-                                    "name": "test-container",
-                                    "image": "nginx:latest",
-                                }
-                            ]
-                        }
-                    }
-                },
-            }
-            with open(os.path.join(temp_dir, "deployment.yaml"), "w") as f:
-                yaml.dump(deployment, f)
-
-            # Create a patch
-            patch = {
-                "target": {
-                    "kind": "Deployment",
-                    "name": "test-deployment",
-                    "namespace": "test-namespace",
-                },
-                "patch": {
-                    "apiVersion": "apps/v1",
-                    "kind": "Deployment",
-                    "metadata": {
-                        "name": "test-deployment",
-                        "namespace": "test-namespace",
-                    },
+    _write_yaml(temp_dir / "kustomization.yaml", {"resources": ["deployment.yaml"]})
+    _write_yaml(
+        temp_dir / "deployment.yaml",
+        {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": "test-deployment"},
+            "spec": {
+                "template": {
                     "spec": {
-                        "template": {
-                            "spec": {
-                                "containers": [
-                                    {
-                                        "name": "test-container",
-                                        "image": "nginx:1.19",
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                },
-            }
-
-            # Create config
-            config = KapitanInputTypeKustomizeConfig(
-                namespace="test-namespace",
-                patches={"image-patch": patch},
-                input_paths=[temp_dir],
-                output_path=self.compile_path,
-            )
-
-            # Compile the overlay
-            self.kustomize.compile_file(config, temp_dir, self.compile_path)
-
-            # Verify the output
-            output_file = os.path.join(
-                self.compile_path, "test-deployment-deployment.yaml"
-            )
-            self.assertTrue(os.path.exists(output_file))
-
-            with open(output_file) as f:
-                output = yaml.safe_load(f)
-                self.assertEqual(
-                    output["spec"]["template"]["spec"]["containers"][0]["image"],
-                    "nginx:1.19",
-                )
-
-        finally:
-            shutil.rmtree(temp_dir)
-
-    def test_compile_file_with_namespace(self):
-        """Test compiling a Kustomize overlay with namespace."""
-        # Create a temporary directory for the test
-        temp_dir = tempfile.mkdtemp()
-        try:
-            # Create a basic kustomization.yaml
-            kustomization = {
-                "resources": ["deployment.yaml"],
-            }
-            with open(os.path.join(temp_dir, "kustomization.yaml"), "w") as f:
-                yaml.dump(kustomization, f)
-
-            # Create a basic deployment.yaml
-            deployment = {
-                "apiVersion": "apps/v1",
-                "kind": "Deployment",
-                "metadata": {
-                    "name": "test-deployment",
-                },
-                "spec": {
-                    "template": {
-                        "spec": {
-                            "containers": [
-                                {
-                                    "name": "test-container",
-                                    "image": "nginx:latest",
-                                }
-                            ]
-                        }
+                        "containers": [
+                            {"name": "test-container", "image": "nginx:latest"}
+                        ]
                     }
-                },
-            }
-            with open(os.path.join(temp_dir, "deployment.yaml"), "w") as f:
-                yaml.dump(deployment, f)
+                }
+            },
+        },
+    )
 
-            # Create config
-            config = KapitanInputTypeKustomizeConfig(
-                namespace="test-namespace",
-                input_paths=[temp_dir],
-                output_path=self.compile_path,
-            )
+    config = KapitanInputTypeKustomizeConfig(
+        namespace="test-namespace",
+        input_paths=[str(temp_dir)],
+        output_path=str(compile_path),
+    )
 
-            # Compile the overlay
-            self.kustomize.compile_file(config, temp_dir, self.compile_path)
+    kustomize.compile_file(config, str(temp_dir), str(compile_path))
 
-            # Verify the output
-            output_file = os.path.join(
-                self.compile_path, "test-deployment-deployment.yaml"
-            )
-            self.assertTrue(os.path.exists(output_file))
+    output_file = compile_path / "test-deployment-deployment.yaml"
+    assert output_file.exists()
 
-            with open(output_file) as f:
-                output = yaml.safe_load(f)
-                self.assertEqual(
-                    output["metadata"]["namespace"],
-                    "test-namespace",
-                )
+    with open(output_file, encoding="utf-8") as handle:
+        output = yaml.safe_load(handle)
+        assert output["metadata"]["namespace"] == "test-namespace"
 
-        finally:
-            shutil.rmtree(temp_dir)
 
-    def test_compile_file_with_invalid_input(self):
-        """Test compiling a Kustomize overlay with invalid input."""
-        # Create a temporary directory for the test
-        temp_dir = tempfile.mkdtemp()
-        try:
-            # Create an invalid kustomization.yaml
-            kustomization = {
-                "resources": ["nonexistent.yaml"],
-            }
-            with open(os.path.join(temp_dir, "kustomization.yaml"), "w") as f:
-                yaml.dump(kustomization, f)
+def test_compile_file_with_invalid_input(kustomize_env, tmp_path):
+    kustomize, compile_path = kustomize_env
+    temp_dir = tmp_path / "overlay"
+    temp_dir.mkdir()
 
-            # Create config
-            config = KapitanInputTypeKustomizeConfig(
-                namespace="test-namespace",
-                input_paths=[temp_dir],
-                output_path=self.compile_path,
-            )
+    _write_yaml(temp_dir / "kustomization.yaml", {"resources": ["nonexistent.yaml"]})
 
-            # Compile the overlay and expect an error
-            with self.assertRaises(Exception):
-                self.kustomize.compile_file(config, temp_dir, self.compile_path)
+    config = KapitanInputTypeKustomizeConfig(
+        namespace="test-namespace",
+        input_paths=[str(temp_dir)],
+        output_path=str(compile_path),
+    )
 
-        finally:
-            shutil.rmtree(temp_dir)
+    with pytest.raises(Exception):
+        kustomize.compile_file(config, str(temp_dir), str(compile_path))
 
-    def test_compile_file_with_invalid_patch(self):
-        """Test compiling a Kustomize overlay with invalid patch."""
-        # Create a temporary directory for the test
-        temp_dir = tempfile.mkdtemp()
-        try:
-            # Create a basic kustomization.yaml
-            kustomization = {
-                "resources": ["deployment.yaml"],
-            }
-            with open(os.path.join(temp_dir, "kustomization.yaml"), "w") as f:
-                yaml.dump(kustomization, f)
 
-            # Create a basic deployment.yaml
-            deployment = {
-                "apiVersion": "apps/v1",
-                "kind": "Deployment",
-                "metadata": {
-                    "name": "test-deployment",
-                },
-                "spec": {
-                    "template": {
-                        "spec": {
-                            "containers": [
-                                {
-                                    "name": "test-container",
-                                    "image": "nginx:latest",
-                                }
-                            ]
-                        }
-                    }
-                },
-            }
-            with open(os.path.join(temp_dir, "deployment.yaml"), "w") as f:
-                yaml.dump(deployment, f)
+def test_compile_file_with_invalid_patch(kustomize_env, tmp_path):
+    kustomize, compile_path = kustomize_env
+    temp_dir = tmp_path / "overlay"
+    temp_dir.mkdir()
 
-            # Create an invalid patch
-            patch = {
-                "target": {
-                    "kind": "Deployment",
-                    "name": "nonexistent-deployment",
-                },
-                "patch": {
-                    "apiVersion": "apps/v1",
-                    "kind": "Deployment",
-                    "metadata": {
-                        "name": "nonexistent-deployment",
-                    },
+    _write_yaml(temp_dir / "kustomization.yaml", {"resources": ["deployment.yaml"]})
+    _write_yaml(
+        temp_dir / "deployment.yaml",
+        {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": "test-deployment"},
+            "spec": {
+                "template": {
                     "spec": {
-                        "template": {
-                            "spec": {
-                                "containers": [
-                                    {
-                                        "name": "test-container",
-                                        "image": "nginx:1.19",
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                },
-            }
+                        "containers": [
+                            {"name": "test-container", "image": "nginx:latest"}
+                        ]
+                    }
+                }
+            },
+        },
+    )
 
-            # Create config
-            config = KapitanInputTypeKustomizeConfig(
-                namespace="test-namespace",
-                patches={"invalid-patch": patch},
-                input_paths=[temp_dir],
-                output_path=self.compile_path,
-            )
+    patch = {
+        "target": {"kind": "Deployment", "name": "nonexistent-deployment"},
+        "patch": {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": "nonexistent-deployment"},
+            "spec": {
+                "template": {
+                    "spec": {
+                        "containers": [
+                            {"name": "test-container", "image": "nginx:1.19"}
+                        ]
+                    }
+                }
+            },
+        },
+    }
 
-            # Compile the overlay
-            self.kustomize.compile_file(config, temp_dir, self.compile_path)
+    config = KapitanInputTypeKustomizeConfig(
+        namespace="test-namespace",
+        patches={"invalid-patch": patch},
+        input_paths=[str(temp_dir)],
+        output_path=str(compile_path),
+    )
 
-            # Verify the output
-            output_file = os.path.join(
-                self.compile_path, "test-deployment-deployment.yaml"
-            )
-            self.assertTrue(os.path.exists(output_file))
+    kustomize.compile_file(config, str(temp_dir), str(compile_path))
 
-            # Verify that the patch was not applied (image should still be nginx:latest)
-            with open(output_file) as f:
-                output = yaml.safe_load(f)
-                self.assertEqual(
-                    output["spec"]["template"]["spec"]["containers"][0]["image"],
-                    "nginx:latest",
-                )
+    output_file = compile_path / "test-deployment-deployment.yaml"
+    assert output_file.exists()
 
-        finally:
-            shutil.rmtree(temp_dir)
-
-
-if __name__ == "__main__":
-    unittest.main()
+    with open(output_file, encoding="utf-8") as handle:
+        output = yaml.safe_load(handle)
+        assert (
+            output["spec"]["template"]["spec"]["containers"][0]["image"]
+            == "nginx:latest"
+        )

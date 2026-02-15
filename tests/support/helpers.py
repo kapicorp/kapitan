@@ -5,11 +5,13 @@
 
 import contextlib
 import io
+import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
@@ -277,6 +279,38 @@ def run_kapitan_command(args: List[str]) -> tuple[int, str, str]:
             exit_code = e.code if e.code is not None else 0
 
     return exit_code, stdout.getvalue(), stderr.getvalue()
+
+
+def write_text_file(path: str | Path, content: str) -> Path:
+    """
+    Write text content to a file and return the Path.
+    """
+    file_path = Path(path)
+    file_path.write_text(content, encoding="utf-8")
+    return file_path
+
+
+def read_yaml_file(path: str | Path) -> Any:
+    """
+    Read a YAML file and return the parsed content.
+    """
+    return yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+
+
+def read_json_file(path: str | Path) -> Any:
+    """
+    Read a JSON file and return the parsed content.
+    """
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def assert_compiled_output_exists(base_path: str | Path, relative_path: str) -> Path:
+    """
+    Assert that a compiled output exists under compiled/ and return the Path.
+    """
+    compiled_path = Path(base_path) / "compiled" / relative_path
+    assert compiled_path.exists()
+    return compiled_path
 
 
 def assert_file_contains(file_path: str, expected_content: str) -> None:

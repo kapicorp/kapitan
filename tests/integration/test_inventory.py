@@ -4,11 +4,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import importlib
-import logging
-import os
-import shutil
-import tempfile
-import unittest
+from pathlib import Path
+
+import pytest
 
 import kapitan.cached
 from kapitan.cli import build_parser
@@ -16,70 +14,53 @@ from kapitan.inventory import InventoryBackends
 from kapitan.resources import inventory
 
 
-logger = logging.getLogger(__name__)
-
-TEST_PWD = os.getcwd()
-TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")
+EXPECTED_TARGETS_COUNT = 10
 
 
-class InventoryTargetTestBase(unittest.TestCase):
-    backend_id = None
-    inventory_path = None
-    expected_targets_count = None
-
-    def setUp(self) -> None:
-        args = build_parser().parse_args(["compile"])
-
-        # Fix inconsistency between reclass-rs (option name) and reclass_rs (module name)
-        backend_module_name = self.backend_id.replace("-", "_")
-        if not importlib.util.find_spec(backend_module_name):
-            self.skipTest(f"backend module {backend_module_name} not available")
-        args.inventory_backend = self.backend_id
-        kapitan.cached.args = args
-
-    def test_inventory_target(self):
-        inv = inventory(inventory_path=self.inventory_path, target_name="minikube-es")
-        logger.error(inv)
-        self.assertEqual(inv["parameters"]["cluster"]["name"], "minikube")
-
-    def test_inventory_all_targets(self):
-        inv = inventory(inventory_path=self.inventory_path)
-        self.assertNotEqual(inv.get("minikube-es"), None)
-        self.assertEqual(len(inv), self.expected_targets_count)
+def _set_inventory_backend(backend_id: str) -> None:
+    args = build_parser().parse_args(["compile"])
+    backend_module_name = backend_id.replace("-", "_")
+    if not importlib.util.find_spec(backend_module_name):
+        pytest.skip(f"backend module {backend_module_name} not available")
+    args.inventory_backend = backend_id
+    kapitan.cached.args = args
 
 
-class InventoryTargetTestReclass(InventoryTargetTestBase):
-    def setUp(self):
-        self.backend_id = InventoryBackends.RECLASS
-        self.expected_targets_count = 10
-        self.inventory_path = "examples/kubernetes/inventory"
-        super().setUp()
+@pytest.mark.parametrize(
+    "backend_id", [InventoryBackends.RECLASS, InventoryBackends.RECLASS_RS]
+)
+def test_inventory_target(kubernetes_inventory_copy, backend_id, reset_cached_args):
+    _set_inventory_backend(backend_id)
+    inventory_path = Path(kubernetes_inventory_copy) / "inventory"
+    inv = inventory(inventory_path=str(inventory_path), target_name="minikube-es")
+    assert inv["parameters"]["cluster"]["name"] == "minikube"
 
 
-class InventoryTargetTestReclassRs(InventoryTargetTestBase):
-    def setUp(self):
-        self.backend_id = InventoryBackends.RECLASS_RS
-        self.expected_targets_count = 10
-        self.inventory_path = "examples/kubernetes/inventory"
-        super().setUp()
+@pytest.mark.parametrize(
+    "backend_id", [InventoryBackends.RECLASS, InventoryBackends.RECLASS_RS]
+)
+def test_inventory_all_targets(
+    kubernetes_inventory_copy, backend_id, reset_cached_args
+):
+    _set_inventory_backend(backend_id)
+    inventory_path = Path(kubernetes_inventory_copy) / "inventory"
+    inv = inventory(inventory_path=str(inventory_path))
+    assert inv.get("minikube-es") is not None
+    assert len(inv) == EXPECTED_TARGETS_COUNT
 
 
-class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
-    temp_dir = tempfile.mkdtemp()
-
-    def setUp(self) -> None:
-        shutil.copytree(TEST_KUBERNETES_INVENTORY, self.temp_dir, dirs_exist_ok=True)
-        self.backend_id = InventoryBackends.OMEGACONF
-        self.expected_targets_count = 10
-        from kapitan.inventory.backends.omegaconf import migrate
-
-        self.inventory_path = os.path.join(self.temp_dir, "inventory")
-        migrate(self.inventory_path)
-        super().setUp()
-
-    def tearDown(self) -> None:
-        shutil.rmtree(self.temp_dir)
-        return super().tearDown()
+def test_inventory_target_omegaconf(migrated_omegaconf_inventory, reset_cached_args):
+    _set_inventory_backend(InventoryBackends.OMEGACONF)
+    inv = inventory(
+        inventory_path=str(migrated_omegaconf_inventory), target_name="minikube-es"
+    )
+    assert inv["parameters"]["cluster"]["name"] == "minikube"
 
 
-del InventoryTargetTestBase  # remove InventoryTargetTestBase so that it doesn't run
+def test_inventory_all_targets_omegaconf(
+    migrated_omegaconf_inventory, reset_cached_args
+):
+    _set_inventory_backend(InventoryBackends.OMEGACONF)
+    inv = inventory(inventory_path=str(migrated_omegaconf_inventory))
+    assert inv.get("minikube-es") is not None
+    assert len(inv) == EXPECTED_TARGETS_COUNT

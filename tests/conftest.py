@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import contextlib
+import io
 import multiprocessing.pool as mp
 import os
 import shutil
@@ -174,11 +176,167 @@ def isolated_docker_inventory(temp_dir):
 
 
 @pytest.fixture
+def kubernetes_inventory_copy(temp_dir):
+    """
+    Create a writable copy of the kubernetes example without changing cwd.
+    Returns the path to the isolated copy.
+    """
+    isolated_path = os.path.join(temp_dir, "kubernetes")
+    shutil.copytree(_TEST_KUBERNETES_PATH, isolated_path)
+    return isolated_path
+
+
+@pytest.fixture
+def migrated_omegaconf_inventory(kubernetes_inventory_copy):
+    """
+    Return a migrated omegaconf inventory path under a writable copy.
+    """
+    from kapitan.inventory.backends.omegaconf import migrate
+    from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
+
+    inventory_path = os.path.join(kubernetes_inventory_copy, "inventory")
+    migrate(inventory_path)
+    register_resolvers()
+    return inventory_path
+
+
+@pytest.fixture
 def refs_path(temp_dir):
     """Create an isolated refs path for secret management tests."""
     refs_dir = os.path.join(temp_dir, "refs")
     os.makedirs(refs_dir, exist_ok=True)
     return refs_dir
+
+
+@pytest.fixture
+def ref_controller(refs_path):
+    from kapitan.refs.base import RefController
+
+    return RefController(refs_path)
+
+
+@pytest.fixture
+def revealer(ref_controller):
+    from kapitan.refs.base import Revealer
+
+    return Revealer(ref_controller)
+
+
+@pytest.fixture
+def ref_controller_embedded(refs_path):
+    from kapitan.refs.base import RefController
+
+    return RefController(refs_path, embed_refs=True)
+
+
+@pytest.fixture
+def revealer_embedded(ref_controller_embedded):
+    from kapitan.refs.base import Revealer
+
+    return Revealer(ref_controller_embedded)
+
+
+@pytest.fixture
+def kapitan_stdout():
+    """Run kapitan CLI and capture stdout."""
+    from kapitan.cli import main as kapitan
+
+    def _run(*argv):
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            kapitan(*argv)
+        return stdout.getvalue()
+
+    return _run
+
+
+@pytest.fixture
+def refs_cli(kapitan_stdout):
+    """Helpers for common refs CLI write/reveal flows."""
+    from kapitan.cli import main as kapitan
+
+    def _write(
+        token,
+        file_path,
+        refs_path,
+        *,
+        base64=False,
+        key=None,
+        recipients=None,
+        extra_args=None,
+    ):
+        argv = [
+            "refs",
+            "--write",
+            token,
+            "-f",
+            str(file_path),
+            "--refs-path",
+            refs_path,
+        ]
+        if base64:
+            argv.append("--base64")
+        if key:
+            argv.extend(["--key", key])
+        if recipients:
+            for recipient in recipients:
+                argv.extend(["--recipients", recipient])
+        if extra_args:
+            argv.extend(extra_args)
+        kapitan(*argv)
+
+    def _reveal_file(file_path, refs_path):
+        return kapitan_stdout(
+            "refs",
+            "--reveal",
+            "-f",
+            str(file_path),
+            "--refs-path",
+            refs_path,
+        )
+
+    def _reveal_tag(tag, refs_path):
+        return kapitan_stdout(
+            "refs", "--reveal", "--tag", tag, "--refs-path", refs_path
+        )
+
+    def _reveal_ref_file(ref_file, refs_path):
+        return kapitan_stdout(
+            "refs",
+            "--reveal",
+            "--ref-file",
+            str(ref_file),
+            "--refs-path",
+            refs_path,
+        )
+
+    return Namespace(
+        write=_write,
+        reveal_file=_reveal_file,
+        reveal_tag=_reveal_tag,
+        reveal_ref_file=_reveal_ref_file,
+    )
+
+
+@pytest.fixture
+def sample_pod_manifest():
+    return """\
+apiVersion: v1
+kind: Pod
+metadata:
+  name: alpine
+  namespace: default
+spec:
+  containers:
+  - image: alpine:3.2
+    command:
+      - /bin/sh
+      - "-c"
+      - "sleep 60m"
+    imagePullPolicy: IfNotPresent
+    name: alpine
+  restartPolicy: Always
+"""
 
 
 @pytest.fixture
@@ -206,6 +364,18 @@ def gnupg_home(temp_dir):
 def pytest_configure(config):
     """Configure pytest with custom markers."""
     config.addinivalue_line("markers", "requires_gpg: mark test as requiring GPG setup")
+    config.addinivalue_line(
+        "markers", "requires_helm: mark test as requiring helm binary"
+    )
+    config.addinivalue_line(
+        "markers", "requires_kustomize: mark test as requiring kustomize binary"
+    )
+    config.addinivalue_line(
+        "markers", "requires_cue: mark test as requiring cue binary"
+    )
+    config.addinivalue_line(
+        "markers", "requires_network: mark test as requiring network access"
+    )
     config.addinivalue_line(
         "markers", "requires_vault: mark test as requiring Vault server"
     )
@@ -249,7 +419,7 @@ def reset_environment():
 
 
 @pytest.fixture
-def setup_gpg_key():
+def setup_gpg_key(gpg_env):
     example_key = "examples/kubernetes/refs/example@kapitan.dev.key"
     example_key = os.path.join(os.getcwd(), example_key)
 
@@ -263,6 +433,7 @@ def setup_gpg_key():
         input=ownertrust,
         check=True,
     )
+    cached.gpg_obj = None
 
 
 @pytest.fixture
@@ -272,6 +443,26 @@ def local_http_server(request, httpserver):
     """
     if request.cls is not None:
         request.cls.httpserver = httpserver
+    return httpserver
+
+
+@pytest.fixture
+def gpg_env(gnupg_home):
+    from kapitan import cached
+    from kapitan.refs.secrets.gpg import gpg_obj
+
+    cached.gpg_obj = None
+    gpg_obj(gnupghome=gnupg_home)
+    return gnupg_home
+
+
+@pytest.fixture(scope="module")
+def vault_server():
+    from tests.support.vault_server import VaultServer
+
+    server = VaultServer()
+    yield server
+    server.close_container()
 
 
 @pytest.fixture

@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: 2020 The Kapitan Authors <kapitan-admins@googlegroups.com>
 #
 # SPDX-License-Identifier: Apache-2.0
-
 "initialiser module tests"
 
 from pathlib import Path
@@ -17,8 +16,14 @@ from kapitan.initialiser import initialise_skeleton
 @pytest.mark.usefixtures("local_http_server", "seeded_git_repo")
 class TestInitialiser:
     def test_initialise_skeleton_success(self, temp_dir):
-        """
-        Verify that initialise_skeleton succeeds when target directory is empty
+        """Test initialise skeleton success.
+
+        Exercises `kapitan/initialiser.py` for the "initialise skeleton success"
+        path, then validates the expected result/output contract.
+
+        It targets project skeleton initialization flow. This protects stable
+        behavior for downstream callers and guards normal execution paths from
+        regressions.
         """
         template_path = Path(self.seeded_git_repo)
 
@@ -34,8 +39,14 @@ class TestInitialiser:
 
     @patch("kapitan.initialiser.run_copy")
     def test_initialise_skeleton_non_empty_dir(self, mocked_run_copy, temp_dir):
-        """
-        Verify that initialise_skeleton logs an error when target directory is not empty
+        """Test initialise skeleton non empty dir.
+
+        Exercises `kapitan/initialiser.py` for the "initialise skeleton non
+        empty dir" path, then validates the expected error-handling contract.
+
+        It targets project skeleton initialization flow. This prevents invalid
+        input or dependency failures from being silently accepted and keeps
+        failures deterministic.
         """
         dummy_file = Path(temp_dir) / "dummy.txt"
         dummy_file.write_text("This is a dummy file", encoding="utf-8")
@@ -51,7 +62,7 @@ class TestInitialiser:
         mocked_run_copy.assert_not_called()
 
     def _create_args(self, target_dir, template_git_url):
-        """Helper function to create Namespace object for testing"""
+        """Helper function to create Namespace object for testing."""
         return type(
             "args",
             (object,),

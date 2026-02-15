@@ -3,80 +3,123 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for CueLang input type."""
-
 import os
 import shutil
-import tempfile
-import unittest
+from types import SimpleNamespace
 
+import pytest
 import yaml
 
+from kapitan.errors import KustomizeTemplateError
 from kapitan.inputs.cuelang import Cuelang
 from kapitan.inventory.model.input_types import KapitanInputTypeCuelangConfig
 
 
-class CuelangInputTest(unittest.TestCase):
-    """Test cases for Cuelang input type."""
+pytestmark = pytest.mark.requires_cue
 
-    def setUp(self):
-        """Set up the test environment."""
-        self.compile_path = tempfile.mkdtemp()
-        self.search_paths = []
-        self.ref_controller = None
-        self.target_name = "test_target"
-        self.args = type("Args", (), {"cue_path": "cue"})()
-        self.cuelang = Cuelang(
-            compile_path=self.compile_path,
-            search_paths=self.search_paths,
-            ref_controller=self.ref_controller,
-            target_name=self.target_name,
-            args=self.args,
-        )
-
-    def tearDown(self):
-        """Clean up the test environment."""
-        shutil.rmtree(self.compile_path, ignore_errors=True)
-
-    def test_compile_file(self):
-        """Compile a CUE-Lang template."""
-        temp_dir = tempfile.mkdtemp()
-
-        try:
-            shutil.copytree("tests/test_cue/module1", temp_dir, dirs_exist_ok=True)
-
-            config = KapitanInputTypeCuelangConfig(
-                input_paths=[temp_dir],
-                output_path=self.compile_path,
-                input_fill_path="input:",
-                input={
-                    "numerator": 10,
-                    "denominator": 2,
-                },
-                output_yield_path="output",
-            )
-
-            cue_input = Cuelang(
-                compile_path=self.compile_path,
-                search_paths=self.search_paths,
-                ref_controller=self.ref_controller,
-                target_name=self.target_name,
-                args=self.args,
-            )
-
-            cue_input.compile_file(config, temp_dir, self.compile_path)
-
-            output_file = os.path.join(self.compile_path, "output.yaml")
-            self.assertTrue(os.path.exists(output_file), "Output file was not created.")
-
-            with open(output_file) as f:
-                output = yaml.safe_load(f)
-                self.assertEqual(
-                    output, {"result": 5}, "Output does not match expected result."
-                )
-        finally:
-            shutil.rmtree(temp_dir)
+if shutil.which("cue") is None:
+    pytest.skip("cue binary not found", allow_module_level=True)
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_compile_file(tmp_path):
+    compile_path = tmp_path / "compiled"
+    compile_path.mkdir()
+    args = type("Args", (), {"cue_path": "cue"})()
+
+    temp_dir = tmp_path / "cue"
+    shutil.copytree("tests/test_cue/module1", temp_dir, dirs_exist_ok=True)
+
+    config = KapitanInputTypeCuelangConfig(
+        input_paths=[str(temp_dir)],
+        output_path=str(compile_path),
+        input_fill_path="input:",
+        input={"numerator": 10, "denominator": 2},
+        output_yield_path="output",
+    )
+
+    cue_input = Cuelang(
+        compile_path=str(compile_path),
+        search_paths=[],
+        ref_controller=None,
+        target_name="test_target",
+        args=args,
+    )
+
+    cue_input.compile_file(config, str(temp_dir), str(compile_path))
+
+    output_file = compile_path / "output.yaml"
+    assert os.path.exists(output_file)
+
+    with open(output_file, encoding="utf-8") as handle:
+        output = yaml.safe_load(handle)
+        assert output == {"result": 5}
+
+
+def test_compile_file_without_optional_flags(tmp_path, monkeypatch):
+    compile_path = tmp_path / "compiled"
+    compile_path.mkdir()
+    args = type("Args", (), {"cue_path": "cue"})()
+
+    temp_dir = tmp_path / "cue"
+    shutil.copytree("tests/test_cue/module1", temp_dir, dirs_exist_ok=True)
+
+    captured = {}
+
+    def _run(cmd, stdout, stderr, text, cwd, check):
+        captured["cmd"] = cmd
+        stdout.write("result: 5\n")
+        return SimpleNamespace(returncode=0, stderr="")
+
+    monkeypatch.setattr("kapitan.inputs.cuelang.subprocess.run", _run)
+
+    config = KapitanInputTypeCuelangConfig(
+        input_paths=[str(temp_dir)],
+        output_path=str(compile_path),
+        input={"numerator": 10, "denominator": 2},
+        input_fill_path=None,
+        output_yield_path=None,
+    )
+
+    cue_input = Cuelang(
+        compile_path=str(compile_path),
+        search_paths=[],
+        ref_controller=None,
+        target_name="test_target",
+        args=args,
+    )
+    cue_input.compile_file(config, str(temp_dir), str(compile_path))
+
+    assert "-l" not in captured["cmd"]
+    assert "--expression" not in captured["cmd"]
+
+
+def test_compile_file_raises_on_cue_export_error(tmp_path, monkeypatch):
+    compile_path = tmp_path / "compiled"
+    compile_path.mkdir()
+    args = type("Args", (), {"cue_path": "cue"})()
+
+    temp_dir = tmp_path / "cue"
+    shutil.copytree("tests/test_cue/module1", temp_dir, dirs_exist_ok=True)
+
+    monkeypatch.setattr(
+        "kapitan.inputs.cuelang.subprocess.run",
+        lambda *_, **__: SimpleNamespace(returncode=1, stderr="boom"),
+    )
+
+    config = KapitanInputTypeCuelangConfig(
+        input_paths=[str(temp_dir)],
+        output_path=str(compile_path),
+        input_fill_path="input:",
+        input={"numerator": 10, "denominator": 2},
+        output_yield_path="output",
+    )
+
+    cue_input = Cuelang(
+        compile_path=str(compile_path),
+        search_paths=[],
+        ref_controller=None,
+        target_name="test_target",
+        args=args,
+    )
+    with pytest.raises(KustomizeTemplateError, match="Failed to run CUE export"):
+        cue_input.compile_file(config, str(temp_dir), str(compile_path))

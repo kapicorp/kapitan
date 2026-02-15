@@ -3,107 +3,146 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"vault transit tests"
-
 import base64
 import logging
-import shutil
-import tempfile
-import unittest
+from types import SimpleNamespace
 
-from kapitan.refs.base import RefController, Revealer
+import pytest
+from hvac.exceptions import Forbidden
+
+from kapitan.inventory.model.references import KapitanReferenceVaultTransitConfig
 from kapitan.refs.secrets.vaulttransit import VaultTransit
 from kapitan.refs.vault_resources import VaultClient
 from tests.support.vault_server import VaultTransitServer
 
 
 logger = logging.getLogger(__name__)
-
-# Create temporary folder
-REFS_PATH = tempfile.mkdtemp()
-REF_CONTROLLER = RefController(REFS_PATH)
-REVEALER = Revealer(REF_CONTROLLER)
+pytestmark = pytest.mark.requires_vault
 
 
-class VaultTransitTest(unittest.TestCase):
-    "Test Vault Transit"
+@pytest.fixture(scope="module")
+def vault_transit_env():
+    server = VaultTransitServer()
+    server.vault_client.secrets.transit.create_key(name="hvac_key")
+    server.vault_client.secrets.transit.create_key(name="hvac_updated_key")
 
-    @classmethod
-    def setUpClass(cls):
-        # setup vaulttransit server (running in container)
-        cls.server = VaultTransitServer()
-        cls.server.vault_client.secrets.transit.create_key(name="hvac_key")
-        cls.server.vault_client.secrets.transit.create_key(name="hvac_updated_key")
+    parameters = {"auth": "token", "crypto_key": "hvac_key"}
+    env = dict(**parameters, **server.parameters)
+    client = VaultClient(env)
 
-        # setup static vault client
-        parameters = {"auth": "token", "crypto_key": "hvac_key"}
-        env = dict(**parameters, **cls.server.parameters)
-        cls.client = VaultClient(env)
+    yield server, client
 
-    @classmethod
-    def tearDownClass(cls):
-        # close connections
-        cls.client.adapter.close()
-        cls.server.close_container()
-        shutil.rmtree(REFS_PATH, ignore_errors=True)
+    client.adapter.close()
+    server.close_container()
 
-    def test_vault_transit_enc_data(self):
-        """
-        Check the encryption works
-        """
-        parameters = {"auth": "token", "crypto_key": "hvac_key"}
-        env = dict(**parameters, **self.server.parameters)
 
-        file_data = "foo:some_random_value"
-        vault_transit_obj = VaultTransit(file_data, env)
+def test_vault_transit_enc_data(vault_transit_env):
+    server, client = vault_transit_env
+    parameters = {"auth": "token", "crypto_key": "hvac_key"}
+    env = dict(**parameters, **server.parameters)
 
-        data = base64.b64decode(vault_transit_obj.data.encode())
+    file_data = "foo:some_random_value"
+    vault_transit_obj = VaultTransit(file_data, env)
 
-        response = self.client.secrets.transit.decrypt_data(
-            name="hvac_key", mount_point="transit", ciphertext=data.decode()
-        )
+    data = base64.b64decode(vault_transit_obj.data.encode())
 
-        plaintext = base64.b64decode(response["data"]["plaintext"])
-        file_data_b64 = file_data.encode()
-        self.assertTrue(plaintext == file_data_b64, "message")
+    response = client.secrets.transit.decrypt_data(
+        name="hvac_key", mount_point="transit", ciphertext=data.decode()
+    )
 
-    def test_vault_transit_dec_data(self):
-        """
-        Check the decryption works
-        """
-        parameters = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
-        env = dict(**parameters, **self.server.parameters)
-        file_data = "foo:some_random_value"
-        vault_transit_obj = VaultTransit(file_data, env)
+    plaintext = base64.b64decode(response["data"]["plaintext"])
+    assert plaintext == file_data.encode()
 
-        b64_file_data = base64.b64encode(file_data.encode())
-        response = self.client.secrets.transit.encrypt_data(
-            name="hvac_key", mount_point="transit", plaintext=b64_file_data.decode()
-        )
 
-        data = response["data"]["ciphertext"].encode()
-        dec_data = vault_transit_obj._decrypt(data)
-        self.assertTrue(dec_data == file_data, "message")
+def test_vault_transit_dec_data(vault_transit_env):
+    server, client = vault_transit_env
+    parameters = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
+    env = dict(**parameters, **server.parameters)
+    file_data = "foo:some_random_value"
+    vault_transit_obj = VaultTransit(file_data, env)
 
-    def test_vault_transit_update_key(self):
-        """
-        Checks the key update works
-        """
-        parameters = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
-        env = dict(**parameters, **self.server.parameters)
-        file_data = "foo:some_random_value"
-        vault_transit_obj = VaultTransit(file_data, env)
+    b64_file_data = base64.b64encode(file_data.encode())
+    response = client.secrets.transit.encrypt_data(
+        name="hvac_key", mount_point="transit", plaintext=b64_file_data.decode()
+    )
 
-        data = base64.b64decode(vault_transit_obj.data.encode())
+    data = response["data"]["ciphertext"].encode()
+    dec_data = vault_transit_obj._decrypt(data)
+    assert dec_data == file_data
 
-        self.assertTrue(vault_transit_obj.update_key("hvac_updated_key"), "message")
-        updated_ciphertext = base64.b64decode(vault_transit_obj.data)
-        self.assertNotEqual(data, updated_ciphertext, "message")
 
-        response = self.client.secrets.transit.decrypt_data(
-            name="hvac_key", mount_point="transit", ciphertext=data.decode()
-        )
+def test_vault_transit_update_key(vault_transit_env):
+    server, client = vault_transit_env
+    parameters = {"auth": "token", "crypto_key": "hvac_key", "always_latest": False}
+    env = dict(**parameters, **server.parameters)
+    file_data = "foo:some_random_value"
+    vault_transit_obj = VaultTransit(file_data, env)
 
-        plaintext = base64.b64decode(response["data"]["plaintext"])
-        file_data_b64 = file_data.encode()
-        self.assertTrue(plaintext == file_data_b64, "message")
+    data = base64.b64decode(vault_transit_obj.data.encode())
+
+    assert vault_transit_obj.update_key("hvac_updated_key") is True
+    updated_ciphertext = base64.b64decode(vault_transit_obj.data)
+    assert data != updated_ciphertext
+
+    response = client.secrets.transit.decrypt_data(
+        name="hvac_key", mount_point="transit", ciphertext=data.decode()
+    )
+
+    plaintext = base64.b64decode(response["data"]["plaintext"])
+    assert plaintext == file_data.encode()
+
+
+class _FailingTransit:
+    def encrypt_data(self, *args, **kwargs):
+        raise Forbidden("nope")
+
+
+class _FailingClient:
+    def __init__(self):
+        self.secrets = SimpleNamespace(transit=_FailingTransit())
+        self.adapter = SimpleNamespace(close=lambda: None)
+
+
+class _NoopClient:
+    def __init__(self):
+        self.secrets = SimpleNamespace(transit=SimpleNamespace())
+        self.adapter = SimpleNamespace(close=lambda: None)
+
+
+class _FakeTransit:
+    def __init__(self):
+        self.rewrap_called = False
+
+    def encrypt_data(self, name, mount_point, plaintext):
+        ciphertext = base64.b64encode(b"cipher").decode("ascii")
+        return {"data": {"ciphertext": ciphertext}}
+
+    def decrypt_data(self, name, mount_point, ciphertext):
+        plaintext = base64.b64encode(b"plain").decode("ascii")
+        return {"data": {"plaintext": plaintext}}
+
+    def rewrap_data(self, name, mount_point, ciphertext):
+        self.rewrap_called = True
+        return {"data": {"ciphertext": ciphertext}}
+
+
+class _FakeClient:
+    def __init__(self):
+        self.secrets = SimpleNamespace(transit=_FakeTransit())
+        self.adapter = SimpleNamespace(close=lambda: None)
+
+
+def test_vaulttransit_encrypt_reveal_update(monkeypatch):
+    client = _FakeClient()
+    monkeypatch.setattr(
+        "kapitan.refs.secrets.vaulttransit.VaultClient", lambda _p: client
+    )
+
+    params = KapitanReferenceVaultTransitConfig(
+        auth="token", crypto_key="key", always_latest=True
+    )
+    secret = VaultTransit("data", params, encrypt=True)
+
+    assert secret.reveal() == "plain"
+    assert client.secrets.transit.rewrap_called is True
+    assert secret.update_key("new-key") is True
