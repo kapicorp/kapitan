@@ -27,13 +27,11 @@ from kapitan.inventory.model.dependencies import (
     KapitanDependencyGitConfig,
     KapitanDependencyHelmConfig,
 )
-
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
+from tests.support.paths import HTTP_SOURCES_ROOT
 
 
 def _http_sources_dir() -> Path:
-    return REPO_ROOT / "tests" / "test_resources" / "http_sources"
+    return HTTP_SOURCES_ROOT
 
 
 def _read_http_source(filename: str) -> bytes:
@@ -271,9 +269,9 @@ def test_fetch_dependencies_unpack_parallel(
 
 @pytest.mark.usefixtures("seeded_git_repo")
 def test_compile_fetch(
-    isolated_test_resources, local_http_server, seeded_git_repo, tmp_path
+    isolated_helm_project, local_http_server, seeded_git_repo, tmp_path
 ):
-    temp_dir = Path(isolated_test_resources)
+    temp_dir = Path(isolated_helm_project)
 
     chart_name = "prometheus"
     version = "11.3.0"

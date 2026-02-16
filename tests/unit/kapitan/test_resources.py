@@ -32,6 +32,7 @@ from kapitan.resources import (
     inventory as inventory_func,
 )
 from kapitan.utils import prune_empty, sha256_string
+from tests.support.paths import TESTS_ROOT
 
 
 def test_resource_callbacks_contains_expected_keys():
@@ -352,10 +353,6 @@ def test_get_inventory_backend_error_exits(monkeypatch, restore_cached_state):
         get_inventory("/tmp")
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-TESTS_ROOT = REPO_ROOT / "tests"
-
-
 def test_yaml_dump_serializes_json_object_to_yaml():
     yaml = yaml_dump('{"key":"value"}')
     assert yaml == "key: value\n"
@@ -376,7 +373,7 @@ def test_file_exists():
 
 def test_dir_files_list():
     search_paths = [str(TESTS_ROOT)]
-    result = dir_files_list(search_paths, "test_jsonnet")
+    result = dir_files_list(search_paths, "resources/fixtures/jsonnet/files")
     expected = ["file1.txt", "file2.txt"]
     assert sorted(result) == sorted(expected)
 
@@ -389,23 +386,23 @@ def test_dir_files_list_missing():
 
 def test_dir_files_read():
     search_paths = [str(TESTS_ROOT)]
-    result = dir_files_read(search_paths, "test_jsonnet")
+    result = dir_files_read(search_paths, "resources/fixtures/jsonnet/files")
     expected = {
-        "file1.txt": "To be, or not to be: that is the question",
-        "file2.txt": "Nothing will come of nothing.",
+        "file1.txt": "To be, or not to be: that is the question\n",
+        "file2.txt": "Nothing will come of nothing.\n",
     }
     assert result == expected
 
 
 def test_yaml_load_returns_json_for_yaml_document():
-    json_output = yaml_load([str(TESTS_ROOT)], "test_resources/test_yaml_load.yaml")
+    json_output = yaml_load([str(TESTS_ROOT)], "resources/fixtures/yaml/yaml_load.yaml")
     expected_output = """{"test": {"key": "value", "array": ["ele1", "ele2"]}}"""
     assert json_output == expected_output
 
 
 def test_yaml_load_stream():
     json_output = yaml_load_stream(
-        [str(TESTS_ROOT)], "test_resources/test_yaml_load_stream.yaml"
+        [str(TESTS_ROOT)], "resources/fixtures/yaml/yaml_load_stream.yaml"
     )
     expected_output = """[{"test1": {"key": "value", "array": ["ele1", "ele2"]}}, {"test2": {"key": "value", "array": ["ele1", "ele2"]}}]"""
     assert json_output == expected_output

@@ -27,11 +27,9 @@ exclude = [
     "site-packages",
     "venv",
     "examples",
-    "tests/test_terraform_compiled",
-    "tests/test_kubernetes_compiled",
-    "tests/test_docker_compiled",
-    "tests/test_resources",
-    "tests/test_jsonnet",
+    "tests/resources/golden",
+    "tests/resources/projects",
+    "tests/resources/fixtures",
 ]
 
 # Same as Black.

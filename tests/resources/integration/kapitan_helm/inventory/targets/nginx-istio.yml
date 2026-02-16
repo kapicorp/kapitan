@@ -1,0 +1,13 @@
+parameters:
+  kapitan:
+    vars:
+      target: nginx-istio
+    compile:
+      - input_type: helm
+        output_path: .
+        input_paths:
+          - charts/istio
+      - input_type: helm
+        output_path: .
+        input_paths:
+          - charts/nginx-ingress

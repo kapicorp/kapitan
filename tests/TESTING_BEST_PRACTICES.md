@@ -18,7 +18,9 @@ This document describes best practices for writing tests in the Kapitan project 
 Created reusable pytest fixtures that provide isolated environments:
 
 - `temp_dir`: Basic temporary directory with automatic cleanup
-- `isolated_test_resources`: Isolated copy of test_resources directory
+- `isolated_test_resources`: Isolated copy of compile fixtures at `tests/resources/integration/kapitan_compile`
+- `isolated_helm_project`: Isolated copy of helm fixtures at `tests/resources/integration/kapitan_helm`
+- `isolated_lint_project`: Isolated copy of lint fixtures at `tests/resources/fixtures/lint`
 - `isolated_kubernetes_inventory`: Isolated copy of kubernetes example
 - `isolated_terraform_inventory`: Isolated copy of terraform example
 - `isolated_docker_inventory`: Isolated copy of docker example
@@ -26,7 +28,7 @@ Created reusable pytest fixtures that provide isolated environments:
 - `gnupg_home`: Isolated GNUPGHOME for GPG tests
 - `reset_environment`: Auto-resets environment after each test
 
-### 2. Test Helpers (`test_helpers.py`)
+### 2. Test Helpers (`tests/support/helpers.py`)
 
 Created helper utilities for common test patterns:
 
@@ -111,7 +113,9 @@ def test_something(self, temp_dir):
 
 **Bad:**
 ```python
-reference_dir = os.path.join(os.getcwd(), "tests/test_compiled")
+reference_dir = os.path.join(
+    os.getcwd(), "tests/resources/golden/compile/kubernetes"
+)
 ```
 
 **Good:**

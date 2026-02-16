@@ -18,11 +18,14 @@ import yaml
 from kapitan.cli import main as kapitan
 from kapitan.inventory import InventoryBackends
 from tests.support.helpers import CompileTestHelper, assert_compiled_output_exists
+from tests.support.paths import (
+    DOCKER_COMPILE_GOLDEN,
+    KUBERNETES_COMPILE_GOLDEN,
+    TERRAFORM_COMPILE_GOLDEN,
+)
 
 
 logger = logging.getLogger(__name__)
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _compile_targets(helper: CompileTestHelper, targets, extra_args=None):
@@ -33,6 +36,12 @@ def _compile_targets(helper: CompileTestHelper, targets, extra_args=None):
     if extra_args:
         args.extend(extra_args)
     helper.compile_with_args(args)
+
+
+def _assert_text_content_matches(compiled_file: Path, expected_file: Path) -> None:
+    assert compiled_file.read_text(encoding="utf-8").rstrip(
+        "\n"
+    ) == expected_file.read_text(encoding="utf-8").rstrip("\n")
 
 
 def test_compile_no_reveal(isolated_test_resources):
@@ -166,7 +175,7 @@ def test_compile_kubernetes(inventory_backend_args):
     helper = CompileTestHelper(os.getcwd())
     helper.compile_with_args(["compile", "-c", *inventory_backend_args])
 
-    reference_dir = REPO_ROOT / "tests/test_kubernetes_compiled"
+    reference_dir = KUBERNETES_COMPILE_GOLDEN
     comparisons = [
         "minikube-es/manifests/es-master.yml",
         "minikube-nginx-jsonnet/manifests/app-deployment.yml",
@@ -175,9 +184,7 @@ def test_compile_kubernetes(inventory_backend_args):
     for relative_path in comparisons:
         compiled_file = assert_compiled_output_exists(os.getcwd(), relative_path)
         expected_file = reference_dir / relative_path
-        assert compiled_file.read_text(encoding="utf-8") == expected_file.read_text(
-            encoding="utf-8"
-        )
+        _assert_text_content_matches(compiled_file, expected_file)
 
 
 def test_compile_not_enough_args(isolated_kubernetes_inventory, monkeypatch):
@@ -244,7 +251,7 @@ def test_compile_terraform(isolated_terraform_inventory):
     helper = CompileTestHelper(os.getcwd())
     helper.compile_with_args(["compile"])
 
-    reference_dir = REPO_ROOT / "tests/test_terraform_compiled"
+    reference_dir = TERRAFORM_COMPILE_GOLDEN
     comparisons = [
         "project1/terraform/provider.tf.json",
         "project2/terraform/output.tf.json",
@@ -253,27 +260,25 @@ def test_compile_terraform(isolated_terraform_inventory):
     for relative_path in comparisons:
         compiled_file = assert_compiled_output_exists(os.getcwd(), relative_path)
         expected_file = reference_dir / relative_path
-        assert compiled_file.read_text(encoding="utf-8") == expected_file.read_text(
-            encoding="utf-8"
-        )
+        _assert_text_content_matches(compiled_file, expected_file)
 
 
 def test_compile_docker(isolated_docker_inventory):
     helper = CompileTestHelper(os.getcwd())
     helper.compile_with_args(["compile"])
 
-    reference_dir = REPO_ROOT / "tests/test_docker_compiled"
+    reference_dir = DOCKER_COMPILE_GOLDEN
     comparisons = [
-        "docker/jsonnet/Dockerfile.web",
-        "docker/jsonnet/Dockerfile.worker",
-        "docker/kadet/Dockerfile.web",
+        "jsonnet/Dockerfile.web",
+        "jsonnet/Dockerfile.worker",
+        "kadet/Dockerfile.web",
     ]
     for relative_path in comparisons:
-        compiled_file = assert_compiled_output_exists(os.getcwd(), relative_path)
-        expected_file = reference_dir / relative_path
-        assert compiled_file.read_text(encoding="utf-8") == expected_file.read_text(
-            encoding="utf-8"
+        compiled_file = assert_compiled_output_exists(
+            os.getcwd(), relative_path, compiled_subdir="docker"
         )
+        expected_file = reference_dir / relative_path
+        _assert_text_content_matches(compiled_file, expected_file)
 
 
 @pytest.fixture

@@ -1,0 +1,15 @@
+{
+  "resource": {
+    "google_logging_organization_sink": {
+      "catch-all-sink": {
+        "depends_on": [
+          "google_project.project2"
+        ],
+        "destination": "storage.googleapis.com/bucket-for-logs-archive",
+        "include_children": true,
+        "name": "catch-all-sink",
+        "org_id": 123456789012
+      }
+    }
+  }
+}

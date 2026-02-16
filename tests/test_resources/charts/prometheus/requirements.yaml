@@ -1,7 +1,0 @@
-dependencies:
-
-  - name: kube-state-metrics
-    version: "2.7.*"
-    repository: https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/
-    condition: kubeStateMetrics.enabled
-

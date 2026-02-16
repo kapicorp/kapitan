@@ -304,11 +304,19 @@ def read_json_file(path: str | Path) -> Any:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def assert_compiled_output_exists(base_path: str | Path, relative_path: str) -> Path:
+def assert_compiled_output_exists(
+    base_path: str | Path,
+    relative_path: str,
+    *,
+    compiled_subdir: str | Path | None = None,
+) -> Path:
     """
     Assert that a compiled output exists under compiled/ and return the Path.
     """
-    compiled_path = Path(base_path) / "compiled" / relative_path
+    compiled_path = Path(base_path) / "compiled"
+    if compiled_subdir:
+        compiled_path = compiled_path / compiled_subdir
+    compiled_path = compiled_path / relative_path
     assert compiled_path.exists()
     return compiled_path
 

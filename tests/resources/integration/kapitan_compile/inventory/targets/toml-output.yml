@@ -1,0 +1,26 @@
+parameters:
+  input: 
+    nested:
+      dictionary:
+        foo: bar
+        with_list:
+        - 1
+        - 2
+        - 3
+  kapitan:
+    vars:
+      target: toml-output
+    compile:
+      - name: generate-toml-kadet
+        input_type: kadet
+        output_path: kadet-output
+        output_type: toml
+        input_paths:
+          - kadet_functions/input_to_output
+      - name: generate-toml-jsonnet
+        input_type: jsonnet
+        output_path: jsonnet-output
+        output_type: toml
+        input_paths:
+          - components/input-to-output/main.jsonnet
+          

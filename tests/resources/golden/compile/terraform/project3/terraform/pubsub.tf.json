@@ -1,0 +1,25 @@
+{
+  "resource": {
+    "google_pubsub_subscription": {
+      "project3_sub": {
+        "depends_on": [
+          "google_pubsub_topic.project3_topic"
+        ],
+        "name": "project3-sub",
+        "project": "project3",
+        "topic": "project3-topic"
+      }
+    },
+    "google_pubsub_topic": {
+      "project3_topic": {
+        "message_storage_policy": {
+          "allowed_persistence_regions": [
+            "europe-west2"
+          ]
+        },
+        "name": "project3-topic",
+        "project": "project3"
+      }
+    }
+  }
+}

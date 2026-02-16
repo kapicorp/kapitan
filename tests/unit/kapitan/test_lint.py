@@ -20,15 +20,15 @@ from kapitan.lint import (
 logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
 
 
-def test_start_lint_reports_expected_issue_count(isolated_test_resources):
+def test_start_lint_reports_expected_issue_count(isolated_lint_project):
     args = SimpleNamespace(
         fail_on_warning=False,
         skip_class_checks=False,
         skip_yamllint=False,
-        inventory_path=f"{isolated_test_resources}/inventory",
+        inventory_path=f"{isolated_lint_project}/inventory",
         search_secrets=True,
-        refs_path=f"{isolated_test_resources}/secrets",
-        compiled_path=f"{isolated_test_resources}/compiled",
+        refs_path=f"{isolated_lint_project}/secrets",
+        compiled_path=f"{isolated_lint_project}/compiled",
     )
 
     num_issues_found = start_lint(args)

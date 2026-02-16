@@ -1,0 +1,14 @@
+parameters:
+  kapitan:
+    vars:
+      target: fail-compile
+    compile:
+      - name: fail_compile
+        input_type: kadet
+        output_path: file_compile
+        continue_on_compile_error: True
+        input_paths:
+          - kadet_functions/fail_compile
+
+
+        

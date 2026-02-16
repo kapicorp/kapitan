@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: labels
+  labels:
+    app.kubernetes.io/name: db
+    app.kubernetes.io/version: 11.0
+    app.kubernetes.io/managed-by: kapitan
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+    name: postgres

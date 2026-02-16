@@ -13,6 +13,7 @@ import yaml
 from kapitan.errors import KustomizeTemplateError
 from kapitan.inputs.cuelang import Cuelang
 from kapitan.inventory.model.input_types import KapitanInputTypeCuelangConfig
+from tests.support.paths import CUE_FIXTURE_MODULE1
 
 
 pytestmark = pytest.mark.requires_cue
@@ -27,7 +28,7 @@ def test_compile_file(tmp_path):
     args = type("Args", (), {"cue_path": "cue"})()
 
     temp_dir = tmp_path / "cue"
-    shutil.copytree("tests/test_cue/module1", temp_dir, dirs_exist_ok=True)
+    shutil.copytree(CUE_FIXTURE_MODULE1, temp_dir, dirs_exist_ok=True)
 
     config = KapitanInputTypeCuelangConfig(
         input_paths=[str(temp_dir)],
@@ -61,7 +62,7 @@ def test_compile_file_without_optional_flags(tmp_path, monkeypatch):
     args = type("Args", (), {"cue_path": "cue"})()
 
     temp_dir = tmp_path / "cue"
-    shutil.copytree("tests/test_cue/module1", temp_dir, dirs_exist_ok=True)
+    shutil.copytree(CUE_FIXTURE_MODULE1, temp_dir, dirs_exist_ok=True)
 
     captured = {}
 
@@ -99,7 +100,7 @@ def test_compile_file_raises_on_cue_export_error(tmp_path, monkeypatch):
     args = type("Args", (), {"cue_path": "cue"})()
 
     temp_dir = tmp_path / "cue"
-    shutil.copytree("tests/test_cue/module1", temp_dir, dirs_exist_ok=True)
+    shutil.copytree(CUE_FIXTURE_MODULE1, temp_dir, dirs_exist_ok=True)
 
     monkeypatch.setattr(
         "kapitan.inputs.cuelang.subprocess.run",

@@ -147,7 +147,7 @@ make test  # Full test suite including Docker tests
 
 #### Testing Guidelines
 
-1. If you modify anything in the `examples/` folder, make sure you replicate the compiled result in `tests/test_kubernetes_compiled`.
+1. If you modify anything in the `examples/` folder, make sure you replicate the compiled result in `tests/resources/golden/compile/kubernetes`.
 
 2. When adding new features:
    - Run `make tests` and `make coverage_report` to ensure test coverage remains at current or better levels

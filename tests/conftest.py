@@ -17,14 +17,23 @@ import pytest
 
 from kapitan import cached
 from kapitan.cached import reset_cache
+from tests.support.paths import (
+    EXAMPLE_DOCKER_ROOT,
+    EXAMPLE_KUBERNETES_ROOT,
+    EXAMPLE_TERRAFORM_ROOT,
+    KAPITAN_COMPILE_INTEGRATION,
+    KAPITAN_HELM_INTEGRATION,
+    KAPITAN_LINT_FIXTURE,
+)
 
 
 # Base paths - these are read-only references
-_TEST_PWD = os.getcwd()
-_TEST_RESOURCES_PATH = os.path.join(_TEST_PWD, "tests/test_resources")
-_TEST_DOCKER_PATH = os.path.join(_TEST_PWD, "examples/docker/")
-_TEST_TERRAFORM_PATH = os.path.join(_TEST_PWD, "examples/terraform/")
-_TEST_KUBERNETES_PATH = os.path.join(_TEST_PWD, "examples/kubernetes/")
+_TEST_COMPILE_PROJECT_PATH = str(KAPITAN_COMPILE_INTEGRATION)
+_TEST_HELM_PROJECT_PATH = str(KAPITAN_HELM_INTEGRATION)
+_TEST_LINT_PROJECT_PATH = str(KAPITAN_LINT_FIXTURE)
+_TEST_DOCKER_PATH = str(EXAMPLE_DOCKER_ROOT)
+_TEST_TERRAFORM_PATH = str(EXAMPLE_TERRAFORM_ROOT)
+_TEST_KUBERNETES_PATH = str(EXAMPLE_KUBERNETES_ROOT)
 
 
 def _cached_args_defaults(**overrides):
@@ -83,11 +92,11 @@ def isolated_compile_dir(temp_dir):
 @pytest.fixture
 def isolated_test_resources(temp_dir, request):
     """
-    Create an isolated copy of test_resources for test execution.
+    Create an isolated copy of the compile fixture project for test execution.
     Returns the path to the isolated copy.
     """
-    isolated_path = os.path.join(temp_dir, "test_resources")
-    shutil.copytree(_TEST_RESOURCES_PATH, isolated_path)
+    isolated_path = os.path.join(temp_dir, "compile_project")
+    shutil.copytree(_TEST_COMPILE_PROJECT_PATH, isolated_path)
 
     original_dir = os.getcwd()
     reset_cache()
@@ -95,6 +104,48 @@ def isolated_test_resources(temp_dir, request):
     os.chdir(isolated_path)
 
     _attach_fixture(request, "isolated_test_resources", isolated_path)
+    yield isolated_path
+
+    os.chdir(original_dir)
+    reset_cache()
+    cached.args = _cached_args_defaults()
+
+
+@pytest.fixture
+def isolated_helm_project(temp_dir):
+    """
+    Create an isolated copy of the helm fixture project for test execution.
+    Returns the path to the isolated copy.
+    """
+    isolated_path = os.path.join(temp_dir, "helm_project")
+    shutil.copytree(_TEST_HELM_PROJECT_PATH, isolated_path)
+
+    original_dir = os.getcwd()
+    reset_cache()
+    cached.args = _cached_args_defaults()
+    os.chdir(isolated_path)
+
+    yield isolated_path
+
+    os.chdir(original_dir)
+    reset_cache()
+    cached.args = _cached_args_defaults()
+
+
+@pytest.fixture
+def isolated_lint_project(temp_dir):
+    """
+    Create an isolated copy of the lint fixture project for test execution.
+    Returns the path to the isolated copy.
+    """
+    isolated_path = os.path.join(temp_dir, "lint_project")
+    shutil.copytree(_TEST_LINT_PROJECT_PATH, isolated_path)
+
+    original_dir = os.getcwd()
+    reset_cache()
+    cached.args = _cached_args_defaults()
+    os.chdir(isolated_path)
+
     yield isolated_path
 
     os.chdir(original_dir)

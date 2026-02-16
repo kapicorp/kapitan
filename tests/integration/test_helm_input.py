@@ -26,8 +26,8 @@ if shutil.which("helm") is None:
 
 
 @pytest.fixture
-def helm_env(isolated_test_resources):
-    helper = CompileTestHelper(isolated_test_resources)
+def helm_env(isolated_helm_project):
+    helper = CompileTestHelper(isolated_helm_project)
     return helper
 
 

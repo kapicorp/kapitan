@@ -1,0 +1,80 @@
+{
+  "resource": {
+    "google_container_cluster": {
+      "cluster1": {
+        "depends_on": [
+          "google_project_service.enable_container_service"
+        ],
+        "initial_node_count": 1,
+        "master_auth": {
+          "password": "",
+          "username": ""
+        },
+        "min_master_version": "1.9.2-gke.1",
+        "name": "cluster1",
+        "node_version": "1.9.2-gke.1"
+      },
+      "cluster2": {
+        "depends_on": [
+          "google_project_service.enable_container_service"
+        ],
+        "initial_node_count": 1,
+        "master_auth": {
+          "password": "",
+          "username": ""
+        },
+        "min_master_version": "1.9.2-gke.1",
+        "name": "cluster2",
+        "node_version": "1.9.2-gke.1"
+      }
+    },
+    "google_container_node_pool": {
+      "pool1a": {
+        "cluster": "cluster1",
+        "depends_on": [
+          "google_container_cluster.cluster1"
+        ],
+        "name": "pool1a",
+        "node_config": {
+          "disk_size_gb": 100,
+          "image_type": "COS",
+          "machine_type": "n1-standard-2",
+          "oauth_scopes": [
+            "https://www.googleapis.com/auth/compute",
+            "https://www.googleapis.com/auth/devstorage.read_only",
+            "https://www.googleapis.com/auth/logging.write",
+            "https://www.googleapis.com/auth/monitoring"
+          ]
+        },
+        "node_count": 3,
+        "version": "1.9.2-gke.1"
+      },
+      "pool2a": {
+        "cluster": "cluster2",
+        "depends_on": [
+          "google_container_cluster.cluster2"
+        ],
+        "name": "pool2a",
+        "node_config": {
+          "disk_size_gb": 100,
+          "image_type": "COS",
+          "machine_type": "n1-standard-2",
+          "oauth_scopes": [
+            "https://www.googleapis.com/auth/compute",
+            "https://www.googleapis.com/auth/devstorage.read_only",
+            "https://www.googleapis.com/auth/logging.write",
+            "https://www.googleapis.com/auth/monitoring"
+          ]
+        },
+        "node_count": 3,
+        "version": "1.9.2-gke.1"
+      }
+    },
+    "google_project_service": {
+      "enable_container_service": {
+        "disable_on_destroy": true,
+        "service": "container.googleapis.com"
+      }
+    }
+  }
+}
