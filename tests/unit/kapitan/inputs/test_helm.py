@@ -270,7 +270,8 @@ def test_render_chart_handles_name_template_and_false_bool_flag(monkeypatch):
     assert error == ""
     args = captured["args"]
     assert "--include-crds" not in args
-    assert "--generate-name" in args
+    assert "--generate-name" not in args
+    assert "--name-template" in args
     assert "from-template" in args
 
 
@@ -292,12 +293,49 @@ def test_render_chart_skips_generate_name_when_name_template_flag_present(monkey
         helm_params={},
         helm_values_file=None,
         helm_values_files=None,
-        helm_flags={"name_template": True},
+        helm_flags={"--name-template": "from-template"},
     )
 
     assert output == "ok"
     assert error == ""
     assert "--generate-name" not in captured["args"]
+
+
+def test_render_chart_does_not_leak_default_flags_between_calls(monkeypatch, tmp_path):
+    calls = []
+
+    def _helm_cli(_helm_path, args, stdout=None, **_kwargs):
+        calls.append(list(args))
+        if stdout is not None:
+            stdout.write("ok")
+        return ""
+
+    monkeypatch.setattr("kapitan.inputs.helm.helm_cli", _helm_cli)
+
+    # First call adds --name-template through helm_params.
+    render_chart(
+        chart_dir="/tmp/chart",
+        output_path="-",
+        helm_path="helm",
+        helm_params={"name_template": "from-template"},
+        helm_values_file=None,
+        helm_values_files=None,
+    )
+
+    # Second call must not inherit --name-template from the previous call.
+    render_chart(
+        chart_dir="/tmp/chart",
+        output_path=str(tmp_path),
+        helm_path="helm",
+        helm_params={"name": "release-a"},
+        helm_values_file=None,
+        helm_values_files=None,
+    )
+
+    first_args, second_args = calls
+    assert "--name-template" in first_args
+    assert "--name-template" not in second_args
+    assert "release-a" in second_args
 
 
 def test_helmchart_load_chart_with_values_and_error_paths(monkeypatch):

@@ -110,12 +110,16 @@ def render_chart(
         tuple: (output, error_message)
     """
     args = ["template"]
+    helm_params = dict(helm_params or {})
 
     name = helm_params.pop("name", None)
     output_file = helm_params.pop("output_file", None)
 
+    # Always copy input/default maps to avoid leaking state between calls.
     if helm_flags is None:
-        helm_flags = HELM_DEFAULT_FLAGS
+        helm_flags = dict(HELM_DEFAULT_FLAGS)
+    else:
+        helm_flags = dict(helm_flags)
 
     # Validate and process helm parameters
     for param, value in helm_params.items():
@@ -181,7 +185,7 @@ def render_chart(
         args.append("--output-dir")
         args.append(output_path)
 
-    if "name_template" not in helm_flags:
+    if "--name-template" not in helm_flags:
         args.append(name or "--generate-name")
 
     # Add chart directory to args list
