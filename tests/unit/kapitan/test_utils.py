@@ -67,12 +67,13 @@ def test_copy_tree_copies_directory_and_preserves_content_hash(tmp_path):
     stable behavior for downstream callers and guards normal execution paths
     from regressions.
     """
+    dst = tmp_path / "copied"
     original = set(glob.iglob(f"{TEST_KUBERNETES_PATH}/*", recursive=True))
-    copied = copy_tree(str(TEST_KUBERNETES_PATH), str(tmp_path))
+    copied = copy_tree(str(TEST_KUBERNETES_PATH), str(dst))
     assert len(copied) == len(original)
 
     original_hash = directory_hash(str(TEST_KUBERNETES_PATH))
-    copied_hash = directory_hash(str(tmp_path))
+    copied_hash = directory_hash(str(dst))
     assert copied_hash == original_hash
 
 
