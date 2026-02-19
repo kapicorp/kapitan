@@ -3,8 +3,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import atexit
 import logging
 import os
+from contextlib import suppress
 from time import sleep
 
 import docker
@@ -30,9 +32,22 @@ class VaultServer:
         self.root_token = None
         self.vault_client = None
         self.dev_root_token = "root"
+        self.vault_container = None
+        self._closed = False
+        self._close_at_exit = None
         self.docker_client = docker.from_env()
-        self.vault_container = self.setup_container()
-        self.setup_vault()
+
+        try:
+            self.vault_container = self.setup_container()
+            self.setup_vault()
+        except Exception:
+            # If setup fails before pytest fixture teardown, prevent orphaned
+            # containers by cleaning up the partially initialised server.
+            self.close_container()
+            raise
+
+        self._close_at_exit = self.close_container
+        atexit.register(self._close_at_exit)
 
     def setup_container(self):
         env = {
@@ -156,12 +171,30 @@ class VaultServer:
         )["auth"]["client_token"]
 
     def close_container(self):
-        logger.info(f"Closing vault container {self.vault_url}")
-        self.vault_client.adapter.close()
+        if self._closed:
+            return
+        self._closed = True
 
-        self.vault_container.stop()
-        self.vault_container.remove()
-        self.docker_client.close()
+        logger.info(f"Closing vault container {self.vault_url}")
+
+        if self._close_at_exit is not None:
+            with suppress(Exception):
+                atexit.unregister(self._close_at_exit)
+            self._close_at_exit = None
+
+        if self.vault_client is not None:
+            with suppress(Exception):
+                self.vault_client.adapter.close()
+
+        if self.vault_container is not None:
+            with suppress(Exception):
+                self.vault_container.stop()
+            with suppress(Exception):
+                self.vault_container.remove(force=True)
+
+        if self.docker_client is not None:
+            with suppress(Exception):
+                self.docker_client.close()
 
 
 class VaultTransitServer(VaultServer):
