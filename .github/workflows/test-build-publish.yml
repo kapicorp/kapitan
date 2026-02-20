@@ -105,6 +105,13 @@ jobs:
           mise exec -- kustomize version
           mise exec -- cue version
 
+      - name: Generate pytest random seed
+        id: pytest-seed
+        run: |
+          PYTEST_RANDOM_SEED="$(od -An -N4 -D /dev/urandom | tr -d ' ')"
+          echo "PYTEST_RANDOM_SEED=${PYTEST_RANDOM_SEED}"
+          echo "seed=${PYTEST_RANDOM_SEED}" >> "$GITHUB_OUTPUT"
+
       - name: Run pytest
         uses: pavelzw/pytest-action@510c5e90c360a185039bea56ce8b3e7e51a16507 # v2.2.0
         with:
@@ -112,7 +119,7 @@ jobs:
           emoji: false
           job-summary: true
           custom-pytest: mise exec -- uv run pytest -n auto
-          custom-arguments: '-q'
+          custom-arguments: '-q --random-order-seed=${{ steps.pytest-seed.outputs.seed }}'
           click-to-expand: true
           report-title: 'Kapitan tests'
 

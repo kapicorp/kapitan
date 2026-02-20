@@ -123,6 +123,12 @@ jobs:
           make help | grep -q "make test" || (echo "Test command not in help" && exit 1)
           echo "Help command works correctly"
 
+      - name: Test pytest random seed wiring
+        run: |
+          make -n tests PYTEST_RANDOM_SEED=123 > /tmp/make-tests.out
+          grep -q -- "--random-order-seed=123" /tmp/make-tests.out || (cat /tmp/make-tests.out && echo "PYTEST_RANDOM_SEED was not wired into pytest command" && exit 1)
+          echo "PYTEST_RANDOM_SEED wiring works"
+
       - name: Test default make target
         run: |
           # Running just 'make' should show help

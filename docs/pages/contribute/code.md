@@ -165,6 +165,11 @@ make test  # Full test suite including Docker tests
    mise exec -- uv run pytest --no-cov tests/unit/kapitan/refs/secrets/test_vaulttransit.py
    ```
 
+5. To reproduce a failure from a specific randomized test order:
+   ```bash
+   PYTEST_RANDOM_SEED=123456 make tests
+   ```
+
 ### Code Style
 
 We use [Ruff](https://github.com/astral-sh/ruff) for both linting and formatting, which enforces the [Style Guide for Python (PEP8)](http://python.org/dev/peps/pep-0008/) and additional best practices.

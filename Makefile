@@ -52,7 +52,9 @@ setup: install install_pre_commit
 PYTEST ?= $(UV_RUN) pytest
 PYTEST_JOBS ?= auto
 PYTEST_ARGS ?=
-PYTEST_BASE := $(PYTEST) -n $(PYTEST_JOBS) $(PYTEST_ARGS)
+# rand_uint32 from /dev/urandom
+PYTEST_RANDOM_SEED ?= $(shell od -An -N4 -D /dev/urandom | tr -d ' ')
+PYTEST_BASE := $(PYTEST) -n $(PYTEST_JOBS) --random-order-seed=$(PYTEST_RANDOM_SEED) $(PYTEST_ARGS)
 
 ################################################################################
 # Code Quality and Testing
