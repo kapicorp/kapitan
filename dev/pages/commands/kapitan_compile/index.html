@@ -2696,9 +2696,8 @@ options:
 <span class="w">  </span>--embed-refs<span class="w">          </span>embed<span class="w"> </span>ref<span class="w"> </span>contents
 <span class="w">  </span>--inventory-path<span class="w"> </span>INVENTORY_PATH
 <span class="w">                        </span><span class="nb">set</span><span class="w"> </span>inventory<span class="w"> </span>path,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="s2">&quot;./inventory&quot;</span>
-<span class="w">  </span>--cache,<span class="w"> </span>-c<span class="w">           </span><span class="nb">enable</span><span class="w"> </span>compilation<span class="w"> </span>caching<span class="w"> </span>to<span class="w"> </span>.kapitan_cache<span class="w"> </span>and
-<span class="w">                        </span>dependency<span class="w"> </span>caching<span class="w"> </span>to<span class="w"> </span>.dependency_cache,<span class="w"> </span>default<span class="w"> </span>is
-<span class="w">                        </span>False
+<span class="w">  </span>--cache,<span class="w"> </span>-c<span class="w">           </span><span class="nb">enable</span><span class="w"> </span>compilation<span class="w"> </span>caching<span class="w"> </span>to<span class="w"> </span><span class="nv">$XDG_CACHE_HOME</span>/kapitan,
+<span class="w">                        </span>default<span class="w"> </span>is<span class="w"> </span>False<span class="w"> </span><span class="o">[</span>this<span class="w"> </span>is<span class="w"> </span>EXPERIMENTAL<span class="o">]</span>
 <span class="w">  </span>--cache-paths<span class="w"> </span>PATH<span class="w"> </span><span class="o">[</span>PATH<span class="w"> </span>...<span class="o">]</span>
 <span class="w">                        </span>cache<span class="w"> </span>additional<span class="w"> </span>paths<span class="w"> </span>to<span class="w"> </span>.kapitan_cache,<span class="w"> </span>default<span class="w"> </span>is
 <span class="w">                        </span><span class="o">[]</span>
