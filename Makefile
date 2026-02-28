@@ -169,13 +169,17 @@ clean:
 docs_serve:
 	@echo "===== Serving Documentation Locally ====="
 	@echo "Documentation will be available at http://localhost:8000"
-	$(UV_RUN) mike serve
+	$(UV_RUN) mike deploy -u -b local/preview-docs dev master
+	@git rev-parse --verify local/preview-docs:index.html >/dev/null 2>&1 || \
+		$(UV_RUN) mike set-default -b local/preview-docs master
+	$(UV_RUN) mike serve -b local/preview-docs
 
 # Deploy documentation to GitHub Pages
 .PHONY: docs_deploy
 docs_deploy:
 	@echo "===== Deploying Documentation to GitHub Pages ====="
 	$(UV_RUN) mike deploy --push dev master
+	$(UV_RUN) mike set-default --push master
 
 ################################################################################
 # Help
