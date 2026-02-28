@@ -164,15 +164,18 @@ clean:
 # Documentation
 ################################################################################
 
+# Mike development server address (override with `make docs_serve DOCS_DEV_ADDR=localhost:8001`)
+DOCS_DEV_ADDR ?= localhost:8000
+
 # Serve documentation locally for development
 .PHONY: docs_serve
 docs_serve:
 	@echo "===== Serving Documentation Locally ====="
-	@echo "Documentation will be available at http://localhost:8000"
+	@echo "Documentation will be available at http://$(DOCS_DEV_ADDR)"
 	$(UV_RUN) mike deploy -u -b local/preview-docs dev master
 	@git rev-parse --verify local/preview-docs:index.html >/dev/null 2>&1 || \
 		$(UV_RUN) mike set-default -b local/preview-docs master
-	$(UV_RUN) mike serve -b local/preview-docs
+	$(UV_RUN) mike serve -b local/preview-docs -a $(DOCS_DEV_ADDR)
 
 # Deploy documentation to GitHub Pages
 .PHONY: docs_deploy

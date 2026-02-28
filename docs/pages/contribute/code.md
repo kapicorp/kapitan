@@ -99,7 +99,7 @@ Run `make help` or simply `make` to see all available commands:
 - `make test_docker` - Build and test Docker image
 
 **Documentation Commands:**
-- `make docs_serve` - Serve documentation locally at http://localhost:8000
+- `make docs_serve` - Serve documentation locally at `DOCS_DEV_ADDR` (default `localhost:8000`)
 - `make docs_deploy` - Deploy documentation to GitHub Pages
 
 **Other Commands:**
