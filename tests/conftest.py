@@ -3,13 +3,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import contextlib
-import io
 import multiprocessing.pool as mp
 import os
-import subprocess
-import tempfile
-from argparse import Namespace
 from pathlib import Path
 
 import pytest
@@ -21,14 +16,10 @@ from tests.support.projects import copy_project_tree, prepare_isolated_project
 from tests.support.runtime import cached_args_defaults
 
 
-@pytest.fixture
-def temp_dir():
-    """Create a temporary directory that is automatically cleaned up."""
-    temp_path = tempfile.mkdtemp(prefix="kapitan_test_")
-    yield temp_path
-    from shutil import rmtree
-
-    rmtree(temp_path, ignore_errors=True)
+pytest_plugins = (
+    "tests.support.fixtures.refs",
+    "tests.support.fixtures.secrets",
+)
 
 
 @pytest.fixture
@@ -109,144 +100,6 @@ def migrated_omegaconf_inventory(kubernetes_inventory_copy):
     return inventory_path
 
 
-@pytest.fixture
-def refs_path(tmp_path):
-    """Create an isolated refs path for secret management tests."""
-    refs_dir = tmp_path / "refs"
-    refs_dir.mkdir(parents=True, exist_ok=True)
-    return str(refs_dir)
-
-
-@pytest.fixture
-def ref_controller(refs_path):
-    from kapitan.refs.base import RefController
-
-    return RefController(refs_path)
-
-
-@pytest.fixture
-def revealer(ref_controller):
-    from kapitan.refs.base import Revealer
-
-    return Revealer(ref_controller)
-
-
-@pytest.fixture
-def ref_controller_embedded(refs_path):
-    from kapitan.refs.base import RefController
-
-    return RefController(refs_path, embed_refs=True)
-
-
-@pytest.fixture
-def revealer_embedded(ref_controller_embedded):
-    from kapitan.refs.base import Revealer
-
-    return Revealer(ref_controller_embedded)
-
-
-@pytest.fixture
-def kapitan_stdout():
-    """Run kapitan CLI and capture stdout."""
-    from kapitan.cli import main as kapitan
-
-    def _run(*argv):
-        stdout = io.StringIO()
-        with contextlib.redirect_stdout(stdout):
-            kapitan(*argv)
-        return stdout.getvalue()
-
-    return _run
-
-
-@pytest.fixture
-def refs_cli(kapitan_stdout):
-    """Helpers for common refs CLI write/reveal flows."""
-    from kapitan.cli import main as kapitan
-
-    def _write(
-        token,
-        file_path,
-        refs_path,
-        *,
-        base64=False,
-        key=None,
-        recipients=None,
-        extra_args=None,
-    ):
-        argv = [
-            "refs",
-            "--write",
-            token,
-            "-f",
-            str(file_path),
-            "--refs-path",
-            refs_path,
-        ]
-        if base64:
-            argv.append("--base64")
-        if key:
-            argv.extend(["--key", key])
-        if recipients:
-            for recipient in recipients:
-                argv.extend(["--recipients", recipient])
-        if extra_args:
-            argv.extend(extra_args)
-        kapitan(*argv)
-
-    def _reveal_file(file_path, refs_path):
-        return kapitan_stdout(
-            "refs",
-            "--reveal",
-            "-f",
-            str(file_path),
-            "--refs-path",
-            refs_path,
-        )
-
-    def _reveal_tag(tag, refs_path):
-        return kapitan_stdout(
-            "refs", "--reveal", "--tag", tag, "--refs-path", refs_path
-        )
-
-    def _reveal_ref_file(ref_file, refs_path):
-        return kapitan_stdout(
-            "refs",
-            "--reveal",
-            "--ref-file",
-            str(ref_file),
-            "--refs-path",
-            refs_path,
-        )
-
-    return Namespace(
-        write=_write,
-        reveal_file=_reveal_file,
-        reveal_tag=_reveal_tag,
-        reveal_ref_file=_reveal_ref_file,
-    )
-
-
-@pytest.fixture
-def gnupg_home(temp_dir):
-    """
-    Create an isolated GNUPGHOME for GPG tests.
-    Sets and restores the GNUPGHOME environment variable.
-    """
-    gnupg_dir = os.path.join(temp_dir, "gnupg")
-    os.makedirs(gnupg_dir, mode=0o700)
-
-    original_gnupghome = os.environ.get("GNUPGHOME")
-    os.environ["GNUPGHOME"] = gnupg_dir
-
-    yield gnupg_dir
-
-    if original_gnupghome:
-        os.environ["GNUPGHOME"] = original_gnupghome
-    else:
-        os.environ.pop("GNUPGHOME", None)
-
-
 # Pytest configuration
 def pytest_configure(config):
     """Configure pytest with custom markers."""
@@ -308,23 +161,6 @@ def reset_environment():
 
 
 @pytest.fixture
-def setup_gpg_key(gpg_env):
-    example_key = "examples/kubernetes/refs/example@kapitan.dev.key"
-    example_key = os.path.join(os.getcwd(), example_key)
-
-    subprocess.run(["gpg", "--import", example_key], check=True)
-
-    ownertrust = b"D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C:6\n"
-
-    subprocess.run(
-        ["gpg", "--import-ownertrust"],
-        input=ownertrust,
-        check=True,
-    )
-    cached.gpg_obj = None
-
-
-@pytest.fixture
 def local_http_server(request, httpserver):
     """
     Expose pytest-httpserver to unittest.TestCase classes.
@@ -332,24 +168,6 @@ def local_http_server(request, httpserver):
     if request.cls is not None:
         request.cls.httpserver = httpserver
     return httpserver
-
-
-@pytest.fixture
-def gpg_env(gnupg_home):
-    from kapitan.refs.secrets.gpg import gpg_obj
-
-    cached.gpg_obj = None
-    gpg_obj(gnupghome=gnupg_home)
-    return gnupg_home
-
-
-@pytest.fixture(scope="module")
-def vault_server():
-    from tests.support.vault_server import VaultServer
-
-    server = VaultServer()
-    yield server
-    server.close_container()
 
 
 @pytest.fixture

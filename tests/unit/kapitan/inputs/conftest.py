@@ -3,7 +3,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 from argparse import Namespace
 
 import pytest
@@ -14,19 +13,20 @@ from tests.support.runtime import cached_args_defaults
 
 
 @pytest.fixture
-def isolated_compile_dir(temp_dir):
+def isolated_compile_dir(tmp_path, monkeypatch):
     """
     Create an isolated compilation directory with its own compiled/ output.
     Automatically resets cache and returns to original directory after test.
     """
-    original_dir = os.getcwd()
+    compile_root = tmp_path / "compile_project"
+    compile_root.mkdir()
+
     reset_cache()
     cached.args = cached_args_defaults()
-    os.chdir(temp_dir)
+    monkeypatch.chdir(compile_root)
 
-    yield temp_dir
+    yield compile_root
 
-    os.chdir(original_dir)
     reset_cache()
     cached.args = cached_args_defaults()
 

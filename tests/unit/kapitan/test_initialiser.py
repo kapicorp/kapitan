@@ -14,10 +14,10 @@ from kapitan.initialiser import initialise_skeleton
 
 @pytest.mark.usefixtures("local_http_server", "seeded_git_repo")
 class TestInitialiser:
-    def test_initialise_skeleton_success(self, temp_dir):
+    def test_initialise_skeleton_success(self, tmp_path):
         template_path = Path(self.seeded_git_repo)
 
-        target_dir = Path(temp_dir) / "skeleton"
+        target_dir = tmp_path / "skeleton"
         target_dir.mkdir()
 
         initialise_skeleton(
@@ -28,14 +28,14 @@ class TestInitialiser:
         assert rendered_file.is_file()
 
     @patch("kapitan.initialiser.run_copy")
-    def test_initialise_skeleton_non_empty_dir(self, mocked_run_copy, temp_dir):
-        dummy_file = Path(temp_dir) / "dummy.txt"
+    def test_initialise_skeleton_non_empty_dir(self, mocked_run_copy, tmp_path):
+        dummy_file = tmp_path / "dummy.txt"
         dummy_file.write_text("This is a dummy file", encoding="utf-8")
 
         with pytest.raises(KapitanError):
             initialise_skeleton(
                 self._create_args(
-                    temp_dir,
+                    str(tmp_path),
                     template_git_url=self.httpserver.url_for("/kapitan-template.git"),
                 )
             )
