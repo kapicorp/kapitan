@@ -85,18 +85,19 @@ Run `make help` or simply `make` to see all available commands:
 **Development Commands:**
 - `make format` - Format code with ruff
 - `make lint` - Run code quality checks on source code
-- `make lint-tests` - Run code quality checks on tests
-- `make lint-all` - Run code quality checks on everything
+- `make lint_tests` - Run code quality checks on tests
+- `make lint_all` - Run code quality checks on everything
 - `make fix` - Fix auto-fixable linting issues in source
-- `make fix-tests` - Fix auto-fixable linting issues in tests
+- `make fix_tests` - Fix auto-fixable linting issues in tests
 
 **Testing Commands:**
-- `make test` - Run comprehensive test suite
-- `make test_quick` - Run quick tests without Docker
-- `make test_python` - Run only Python unit tests
-- `make test_coverage` - Run tests with coverage reporting
-- `make build_docker` - Build Docker image
-- `make test_docker` - Build and test Docker image
+- `make tests_unit` - Run unit tests only, excluding `requires_network`
+- `make tests_integration` - Run integration tests only, excluding `requires_network`
+- `make tests` - Run the full Python test suite, excluding `requires_network`
+- `make tests_network` - Run network-dependent tests explicitly
+- `make test` - Run the full validation suite
+- `make coverage_report` - Show the current coverage report
+- `make build_docker` - Build and test the Docker image
 
 **Documentation Commands:**
 - `make docs_serve` - Serve documentation locally at `DOCS_DEV_ADDR` (default `localhost:8000`)
@@ -123,7 +124,7 @@ We provide several testing commands with different scopes to support various dev
 
 For rapid development iteration:
 ```bash
-make test_quick  # Runs lint + Python tests + format check
+make tests_unit  # Fast feedback for unit-only changes
 ```
 
 #### Comprehensive Testing
@@ -135,10 +136,13 @@ make test  # Full test suite including Docker tests
 
 #### Individual Test Commands
 
-- `make test_python` - Run only Python unit tests
-- `make test_coverage` - Run tests with coverage reporting (minimum 65% required)
-- `make test_docker` - Build and test Docker image
-- `make lint-all` - Check both source and test code quality
+- `make tests_unit` - Run unit tests only, excluding `requires_network`
+- `make tests_integration` - Run integration tests only, excluding `requires_network`
+- `make tests` - Run the full Python test suite, excluding `requires_network`
+- `make tests_network` - Run network-dependent tests explicitly
+- `make coverage_report` - Show the current coverage report
+- `make build_docker` - Build and test the Docker image
+- `make lint_all` - Check both source and test code quality
 - `make check_format` - Verify code formatting
 
 #### Testing Guidelines
@@ -146,7 +150,7 @@ make test  # Full test suite including Docker tests
 1. If you modify anything in the `examples/` folder, make sure you replicate the compiled result in `tests/test_kubernetes_compiled`.
 
 2. When adding new features:
-   - Run `make test_coverage` to ensure test coverage remains at current or better levels
+   - Run `make tests` and `make coverage_report` to ensure test coverage remains at current or better levels
    - Run `make format` to apply code formatting
 
 3. To test your changes with your local Kapitan version:
@@ -169,14 +173,14 @@ We use [Ruff](https://github.com/astral-sh/ruff) for both linting and formatting
 
 **Checking Code:**
 - `make lint` - Check source code for quality issues
-- `make lint-tests` - Check test files for quality issues
-- `make lint-all` - Check everything (source + tests)
+- `make lint_tests` - Check test files for quality issues
+- `make lint_all` - Check everything (source + tests)
 - `make check_format` - Verify code formatting
 
 **Fixing Code:**
 - `make format` - Format code with ruff formatter
 - `make fix` - Auto-fix linting issues in source code
-- `make fix-tests` - Auto-fix linting issues in tests
+- `make fix_tests` - Auto-fix linting issues in tests
 
 #### Pre-commit Hooks
 

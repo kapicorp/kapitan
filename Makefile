@@ -48,6 +48,12 @@ setup: install install_pre_commit
 	@echo "===== Development Environment Ready ====="
 	@echo "Run 'make test' to verify everything is working"
 
+# Pytest command defaults (override from CLI, e.g. `make tests_unit PYTEST_JOBS=4 PYTEST_ARGS="--durations=20"`)
+PYTEST ?= $(UV_RUN) pytest
+PYTEST_JOBS ?= auto
+PYTEST_ARGS ?=
+PYTEST_BASE := $(PYTEST) -n $(PYTEST_JOBS) $(PYTEST_ARGS)
+
 ################################################################################
 # Code Quality and Testing
 ################################################################################
@@ -59,14 +65,14 @@ lint:
 	$(UV_RUN) ruff check kapitan
 
 # Run code quality checks on test files
-.PHONY: lint-tests
-lint-tests:
+.PHONY: lint_tests
+lint_tests:
 	@echo "===== Running Code Quality Checks on Tests ====="
 	$(UV_RUN) ruff check tests scripts
 
 # Run code quality checks on everything
-.PHONY: lint-all
-lint-all: lint lint-tests
+.PHONY: lint_all
+lint_all: lint lint_tests
 	@echo "===== All Code Quality Checks Complete ====="
 
 # Fix auto-fixable linting issues
@@ -77,8 +83,8 @@ fix:
 	@echo "Linting issues fixed!"
 
 # Fix auto-fixable linting issues in tests
-.PHONY: fix-tests
-fix-tests:
+.PHONY: fix_tests
+fix_tests:
 	@echo "===== Fixing Auto-fixable Issues in Tests ====="
 	$(UV_RUN) ruff check --fix tests scripts
 	@echo "Test linting issues fixed!"
@@ -97,43 +103,64 @@ check_format:
 	@echo "===== Checking Code Formatting ====="
 	$(UV_RUN) ruff format --check .
 
-# Run Python unit tests with coverage
+# Validate Docker daemon availability for Docker-backed tests
+.PHONY: check_docker
+check_docker:
+	@command -v docker >/dev/null 2>&1 || { echo "docker is not installed."; exit 1; }
+	@docker info >/dev/null 2>&1 || { echo "docker daemon is not running."; exit 1; }
+
+# Run unit tests only, excluding network-dependent cases
+.PHONY: tests_unit
+tests_unit:
+	@echo "===== Running Unit Tests (except requires_network) ====="
+	$(PYTEST_BASE) tests/unit -m "not requires_network"
+
+# Run integration tests only, excluding network-dependent cases
+.PHONY: tests_integration
+tests_integration:
+	@echo "===== Running Integration Tests (except requires_network) ====="
+	$(PYTEST_BASE) tests/integration -m "not requires_network"
+
+# Run all tests, excluding network-dependent cases
+.PHONY: tests
+tests: check_docker
+	@echo "===== Running Full Python Test Suite (except requires_network) ====="
+	$(PYTEST_BASE) -m "not requires_network"
+
+# Run network-dependent tests explicitly
+.PHONY: tests_network
+tests_network:
+	@echo "===== Running Network-Dependent Tests ====="
+	KAPITAN_ENABLE_NETWORK_TESTS=1 $(PYTEST_BASE) -m "requires_network"
+
+# Run the full Python test suite, including network-dependent cases
 .PHONY: test_python
-test_python:
-	@echo "===== Running Python Tests with coverage ====="
-	$(UV_RUN) pytest -n auto
+test_python: setup lint check_format check_docker
+	@echo "===== Running Full Python Test Suite ====="
+	KAPITAN_ENABLE_NETWORK_TESTS=1 $(PYTEST_BASE)
 
-# Run tests coverage report
-.PHONY: test_coverage
-test_coverage: test_python
-	@echo "===== Running Coverage Report ====="
-	$(UV_RUN) coverage report
-
-# Build Docker image
+# Build and test Docker image
 .PHONY: build_docker
-build_docker:
+build_docker: check_docker
 	@echo "===== Building Docker Image ====="
 	docker pull kapicorp/kapitan:latest || true
 	docker build . --cache-from kapicorp/kapitan:latest -t kapitan
 	@echo "Docker image built successfully"
-
-# Test Docker image
-.PHONY: test_docker
-test_docker: build_docker
+	@echo
 	@echo "===== Testing Docker Image ====="
 	docker run --rm kapitan --help
 	docker run --rm kapitan lint
 	@echo "Docker tests passed"
 
-# Run all tests (comprehensive test suite)
+# Run the full test suite, including Docker image checks
 .PHONY: test
-test: install lint test_coverage test_docker check_format
+test: test_python build_docker
 	@echo "===== All Tests Passed! ====="
 
-# Quick test without Docker or external tools
-.PHONY: test_quick
-test_quick: lint test_python check_format
-	@echo "===== Quick Tests Passed! ====="
+.PHONY: coverage_report
+coverage_report:
+	@echo "===== Running Coverage Report ====="
+	$(UV_RUN) coverage report
 
 ################################################################################
 # Release and Packaging
@@ -202,16 +229,18 @@ help:
 	@echo "Development Commands:"
 	@echo "  make format             - Format code with ruff"
 	@echo "  make lint               - Run code quality checks on source code"
-	@echo "  make lint-tests         - Run code quality checks on tests"
-	@echo "  make lint-all           - Run code quality checks on everything"
+	@echo "  make lint_tests         - Run code quality checks on tests"
+	@echo "  make lint_all           - Run code quality checks on everything"
 	@echo "  make fix                - Fix auto-fixable linting issues in source"
-	@echo "  make fix-tests          - Fix auto-fixable linting issues in tests"
-	@echo "  make test_quick         - Run quick tests (no Docker)"
-	@echo "  make test_python        - Run Python unit tests with coverage"
-	@echo "  make test               - Run comprehensive test suite"
-	@echo "  make test_coverage      - Run tests coverage report"
-	@echo "  make build_docker       - Build Docker image"
-	@echo "  make test_docker        - Build and test Docker image"
+	@echo "  make fix_tests          - Fix auto-fixable linting issues in tests"
+	@echo "  make tests_unit         - Run tests/unit only (except requires_network)"
+	@echo "  make tests_integration  - Run tests/integration (except requires_network)"
+	@echo "  make tests              - Run full Python test suite (except requires_network)"
+	@echo "  make tests_network      - Run only network-dependent tests"
+	@echo "  make test_python        - Run full Python test suite (no image build)"
+	@echo "  make test               - Run full Kapitan test suite"
+	@echo "  make coverage_report    - Run tests coverage report"
+	@echo "  make build_docker       - Build and test Docker image"
 	@echo ""
 	@echo "Documentation:"
 	@echo "  make docs_serve         - Serve documentation locally"
@@ -228,8 +257,8 @@ help:
 .DEFAULT_GOAL := help
 
 # Validate that required commands exist
-.PHONY: validate-commands
-validate-commands: check_mise
+.PHONY: validate_commands
+validate_commands: check_mise
 	@$(MISE) exec -- uv --version >/dev/null 2>&1 || { echo "uv is not installed. Run 'make install_tools' first."; exit 1; }
 	@command -v git >/dev/null 2>&1 || { echo "git is not installed."; exit 1; }
 	@echo "All required commands are available"
