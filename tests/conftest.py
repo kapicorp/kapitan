@@ -25,6 +25,7 @@ from tests.support.paths import (
     KAPITAN_HELM_INTEGRATION,
     KAPITAN_LINT_FIXTURE,
 )
+from tests.support.runtime import cached_args_defaults
 
 
 # Base paths - these are read-only references
@@ -34,12 +35,6 @@ _TEST_LINT_PROJECT_PATH = str(KAPITAN_LINT_FIXTURE)
 _TEST_DOCKER_PATH = str(EXAMPLE_DOCKER_ROOT)
 _TEST_TERRAFORM_PATH = str(EXAMPLE_TERRAFORM_ROOT)
 _TEST_KUBERNETES_PATH = str(EXAMPLE_KUBERNETES_ROOT)
-
-
-def _cached_args_defaults(**overrides):
-    args = {"cache": False}
-    args.update(overrides)
-    return Namespace(**args)
 
 
 @pytest.fixture
@@ -56,37 +51,16 @@ def reset_cached_args():
     Reset cached globals and args to avoid backend leakage between tests.
     """
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
     yield
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
 
 
 def _attach_fixture(request, name, value):
     instance = getattr(request, "instance", None)
     if instance is not None:
         setattr(instance, name, value)
-
-
-@pytest.fixture
-def isolated_compile_dir(temp_dir):
-    """
-    Create an isolated compilation directory with its own compiled/ output.
-    Automatically resets cache and returns to original directory after test.
-    """
-    original_dir = os.getcwd()
-    reset_cache()
-    cached.args = _cached_args_defaults()
-
-    # Create the isolated directory
-    os.chdir(temp_dir)
-
-    yield temp_dir
-
-    # Cleanup
-    os.chdir(original_dir)
-    reset_cache()
-    cached.args = _cached_args_defaults()
 
 
 @pytest.fixture
@@ -100,7 +74,7 @@ def isolated_test_resources(temp_dir, request):
 
     original_dir = os.getcwd()
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
     os.chdir(isolated_path)
 
     _attach_fixture(request, "isolated_test_resources", isolated_path)
@@ -108,7 +82,7 @@ def isolated_test_resources(temp_dir, request):
 
     os.chdir(original_dir)
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
 
 
 @pytest.fixture
@@ -122,14 +96,14 @@ def isolated_helm_project(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
     os.chdir(isolated_path)
 
     yield isolated_path
 
     os.chdir(original_dir)
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
 
 
 @pytest.fixture
@@ -143,14 +117,14 @@ def isolated_lint_project(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
     os.chdir(isolated_path)
 
     yield isolated_path
 
     os.chdir(original_dir)
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
 
 
 @pytest.fixture
@@ -164,7 +138,7 @@ def isolated_kubernetes_inventory(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
     os.chdir(isolated_path)
 
     # Clean any existing compiled directory in the ISOLATED copy only
@@ -179,7 +153,7 @@ def isolated_kubernetes_inventory(temp_dir):
 
     os.chdir(original_dir)
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
 
 
 @pytest.fixture
@@ -193,7 +167,7 @@ def isolated_terraform_inventory(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
     os.chdir(isolated_path)
 
     # Safety check: ensure we're not in the actual examples directory
@@ -204,7 +178,7 @@ def isolated_terraform_inventory(temp_dir):
 
     os.chdir(original_dir)
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
 
 
 @pytest.fixture
@@ -218,7 +192,7 @@ def isolated_docker_inventory(temp_dir):
 
     original_dir = os.getcwd()
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
     os.chdir(isolated_path)
 
     # Safety check: ensure we're not in the actual examples directory
@@ -229,7 +203,7 @@ def isolated_docker_inventory(temp_dir):
 
     os.chdir(original_dir)
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
 
 
 @pytest.fixture
@@ -291,98 +265,6 @@ def revealer_embedded(ref_controller_embedded):
     from kapitan.refs.base import Revealer
 
     return Revealer(ref_controller_embedded)
-
-
-@pytest.fixture
-def cmd_parser_args():
-    """Factory for kapitan.refs.cmd_parser CLI-style args."""
-    defaults = {
-        "refs_path": "refs",
-        "write": None,
-        "file": None,
-        "binary": False,
-        "base64": False,
-        "target_name": None,
-        "inventory_path": None,
-        "recipients": [],
-        "key": None,
-        "vault_auth": None,
-        "vault_mount": None,
-        "vault_path": None,
-        "vault_key": None,
-        "ref_file": None,
-        "tag": None,
-        "update": None,
-        "reveal": False,
-        "update_targets": False,
-        "validate_targets": False,
-    }
-
-    def _make(**overrides):
-        args = defaults.copy()
-        args.update(overrides)
-        if "recipients" not in overrides:
-            # Avoid sharing a mutable list between test calls.
-            args["recipients"] = []
-        return Namespace(**args)
-
-    return _make
-
-
-@pytest.fixture
-def cmd_parser_secret_file(tmp_path):
-    """Factory for cmd_parser input files under a test tmp_path."""
-
-    def _create(name="secret.txt", content="data", binary=False):
-        file_path = tmp_path / name
-        if binary:
-            payload = (
-                content
-                if isinstance(content, bytes | bytearray)
-                else str(content).encode("utf-8")
-            )
-            file_path.write_bytes(payload)
-        else:
-            text = (
-                content.decode("utf-8")
-                if isinstance(content, bytes | bytearray)
-                else str(content)
-            )
-            file_path.write_text(text, encoding="utf-8")
-        return file_path
-
-    return _create
-
-
-@pytest.fixture
-def cmd_parser_inventory():
-    """Factory for lightweight inventory objects used by cmd_parser tests."""
-
-    def _create(secrets, target_name="target"):
-        return Namespace(
-            targets={target_name: object()},
-            get_parameters=lambda _target: Namespace(
-                kapitan=Namespace(secrets=secrets)
-            ),
-        )
-
-    return _create
-
-
-@pytest.fixture
-def patch_cmd_parser_inventory(monkeypatch):
-    """Patch cmd_parser inventory and target token path discovery."""
-
-    def _patch(inventory, target_token_paths):
-        monkeypatch.setattr(
-            "kapitan.refs.cmd_parser.get_inventory", lambda _path: inventory
-        )
-        monkeypatch.setattr(
-            "kapitan.refs.cmd_parser.search_target_token_paths",
-            lambda _path, _targets: target_token_paths,
-        )
-
-    return _patch
 
 
 @pytest.fixture
@@ -468,75 +350,6 @@ def refs_cli(kapitan_stdout):
 
 
 @pytest.fixture
-def targets_compile_args():
-    """Factory for kapitan.targets.compile_targets args."""
-    defaults = {
-        "targets": None,
-        "labels": None,
-        "parallelism": 1,
-        "force_fetch": False,
-        "fetch": False,
-        "force": False,
-        "output_path": None,
-        "inventory_pool_cache": False,
-        "verbose": False,
-    }
-
-    def _make(**overrides):
-        args = defaults.copy()
-        args.update(overrides)
-        return Namespace(**args)
-
-    return _make
-
-
-@pytest.fixture
-def input_args():
-    """Factory for common input compiler args."""
-    defaults = {
-        "cache": False,
-        "reveal": False,
-        "indent": 2,
-    }
-
-    def _make(**overrides):
-        args = defaults.copy()
-        args.update(overrides)
-        return Namespace(**args)
-
-    return _make
-
-
-@pytest.fixture
-def restore_cached_state():
-    """Restore kapitan.cached module state after test mutation."""
-    state = cached.as_dict()
-    yield
-    cached.from_dict(state)
-
-
-@pytest.fixture
-def sample_pod_manifest():
-    return """\
-apiVersion: v1
-kind: Pod
-metadata:
-  name: alpine
-  namespace: default
-spec:
-  containers:
-  - image: alpine:3.2
-    command:
-      - /bin/sh
-      - "-c"
-      - "sleep 60m"
-    imagePullPolicy: IfNotPresent
-    name: alpine
-  restartPolicy: Always
-"""
-
-
-@pytest.fixture
 def gnupg_home(temp_dir):
     """
     Create an isolated GNUPGHOME for GPG tests.
@@ -605,7 +418,7 @@ def reset_environment():
     """
     original_dir = os.getcwd()
     original_env = os.environ.copy()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
 
     yield
 
@@ -614,7 +427,7 @@ def reset_environment():
     os.environ.clear()
     os.environ.update(original_env)
     reset_cache()
-    cached.args = _cached_args_defaults()
+    cached.args = cached_args_defaults()
 
 
 @pytest.fixture
