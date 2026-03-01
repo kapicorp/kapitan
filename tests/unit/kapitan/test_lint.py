@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -21,14 +22,15 @@ logging.basicConfig(level=logging.CRITICAL, format="%(message)s")
 
 
 def test_start_lint_reports_expected_issue_count(isolated_lint_project):
+    project_root = Path(isolated_lint_project)
     args = SimpleNamespace(
         fail_on_warning=False,
         skip_class_checks=False,
         skip_yamllint=False,
-        inventory_path=f"{isolated_lint_project}/inventory",
+        inventory_path=str(project_root / "inventory"),
         search_secrets=True,
-        refs_path=f"{isolated_lint_project}/secrets",
-        compiled_path=f"{isolated_lint_project}/compiled",
+        refs_path=str(project_root / "secrets"),
+        compiled_path=str(project_root / "compiled"),
     )
 
     num_issues_found = start_lint(args)

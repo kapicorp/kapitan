@@ -3,8 +3,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import contextlib
 import json
-import os
 from pathlib import Path
 from typing import Any, List, Optional
 
@@ -18,14 +18,14 @@ from kapitan.utils import directory_hash
 class CompileTestHelper:
     """Helper class for compilation tests."""
 
-    def __init__(self, isolated_path: str):
+    def __init__(self, isolated_path: str | Path):
         """
         Initialize compile test helper.
 
         Args:
             isolated_path: Path to isolated test directory
         """
-        self.isolated_path = isolated_path
+        self.isolated_path = Path(isolated_path)
 
     def compile_targets(
         self,
@@ -50,7 +50,8 @@ class CompileTestHelper:
         if extra_args:
             args.extend(extra_args)
 
-        kapitan(*args)
+        with contextlib.chdir(self.isolated_path):
+            kapitan(*args)
 
     def compile_with_args(self, argv: List[str]) -> None:
         """
@@ -60,7 +61,8 @@ class CompileTestHelper:
             argv: Command arguments for kapitan (without the program name)
         """
         reset_cache()
-        kapitan(*argv)
+        with contextlib.chdir(self.isolated_path):
+            kapitan(*argv)
 
     def get_compiled_output(self, relative_path: str) -> str:
         """
@@ -72,9 +74,8 @@ class CompileTestHelper:
         Returns:
             File contents as string
         """
-        compiled_path = os.path.join(self.isolated_path, "compiled", relative_path)
-        with open(compiled_path) as f:
-            return f.read()
+        compiled_path = self.isolated_path / "compiled" / relative_path
+        return compiled_path.read_text(encoding="utf-8")
 
     def verify_compiled_output_exists(self, relative_path: str) -> bool:
         """
@@ -86,10 +87,10 @@ class CompileTestHelper:
         Returns:
             True if file exists
         """
-        compiled_path = os.path.join(self.isolated_path, "compiled", relative_path)
-        return os.path.exists(compiled_path)
+        compiled_path = self.isolated_path / "compiled" / relative_path
+        return compiled_path.exists()
 
-    def compare_compiled_dirs(self, expected_dir: str) -> bool:
+    def compare_compiled_dirs(self, expected_dir: str | Path) -> bool:
         """
         Compare compiled output with expected directory.
 
@@ -99,9 +100,9 @@ class CompileTestHelper:
         Returns:
             True if directories match
         """
-        compiled_dir = os.path.join(self.isolated_path, "compiled")
-        compiled_hash = directory_hash(compiled_dir)
-        expected_hash = directory_hash(expected_dir)
+        compiled_dir = self.isolated_path / "compiled"
+        compiled_hash = directory_hash(str(compiled_dir))
+        expected_hash = directory_hash(str(expected_dir))
         return compiled_hash == expected_hash
 
 

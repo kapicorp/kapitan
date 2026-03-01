@@ -3,7 +3,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 import random
 import string
 import subprocess
@@ -12,17 +11,15 @@ import pytest
 
 from kapitan.inputs.external import External
 from kapitan.inventory.model.input_types import KapitanInputTypeExternalConfig
-from tests.support.helpers import CompileTestHelper
+from tests.support.helpers import CompileTestHelper, assert_compiled_output_exists
 
 
-def test_compile_external_target(isolated_test_resources, temp_dir):
+def test_compile_external_target(isolated_test_resources, tmp_path):
     helper = CompileTestHelper(isolated_test_resources)
     helper.compile_with_args(
-        ["compile", "--output-path", temp_dir, "-t", "external-test"]
+        ["compile", "--output-path", str(tmp_path), "-t", "external-test"]
     )
-    assert os.path.isfile(
-        os.path.join(temp_dir, "compiled", "external-test", "test.md")
-    )
+    assert assert_compiled_output_exists(tmp_path, "external-test/test.md").is_file()
 
 
 def test_compile_file(tmp_path):

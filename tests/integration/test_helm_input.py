@@ -3,8 +3,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 import shutil
+from pathlib import Path
 
 import pytest
 import yaml
@@ -31,40 +31,36 @@ def helm_env(isolated_helm_project):
     return helper
 
 
-def test_render_chart(helm_env, temp_dir):
+def test_render_chart(helm_env, tmp_path):
     chart_path = "charts/acs-engine-autoscaler"
     helm_params = {"name": "acs-engine-autoscaler"}
     helm_config = KapitanInputTypeHelmConfig(
-        input_paths=[chart_path], helm_params=helm_params, output_path=temp_dir
+        input_paths=[chart_path], helm_params=helm_params, output_path=str(tmp_path)
     )
     helm = Helm(None, None, None, None, None)
     _, error_message = helm.render_chart(
         chart_path,
-        temp_dir,
+        str(tmp_path),
         helm_config.helm_path,
         helm_config.helm_params,
         None,
         None,
     )
     assert not error_message
-    assert os.path.isfile(
-        os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "secrets.yaml")
-    )
-    assert os.path.isfile(
-        os.path.join(temp_dir, "acs-engine-autoscaler", "templates", "deployment.yaml")
-    )
+    assert (tmp_path / "acs-engine-autoscaler/templates/secrets.yaml").is_file()
+    assert (tmp_path / "acs-engine-autoscaler/templates/deployment.yaml").is_file()
 
 
-def test_error_invalid_chart_dir(helm_env, temp_dir):
+def test_error_invalid_chart_dir(helm_env, tmp_path):
     chart_path = "./non-existent"
     helm_params = {"name": "mychart"}
     helm_config = KapitanInputTypeHelmConfig(
-        input_paths=[chart_path], output_path=temp_dir, helm_params=helm_params
+        input_paths=[chart_path], output_path=str(tmp_path), helm_params=helm_params
     )
     helm = Helm(None, None, None, None, None)
     _, error_message = helm.render_chart(
         chart_path,
-        temp_dir,
+        str(tmp_path),
         helm_config.helm_path,
         helm_config.helm_params,
         None,
@@ -74,36 +70,30 @@ def test_error_invalid_chart_dir(helm_env, temp_dir):
     assert "not found" in error_message
 
 
-def test_compile_chart(helm_env, temp_dir):
+def test_compile_chart(helm_env, tmp_path):
     helm_env.compile_with_args(
-        ["compile", "--output-path", temp_dir, "-t", "acs-engine-autoscaler"]
+        ["compile", "--output-path", str(tmp_path), "-t", "acs-engine-autoscaler"]
     )
-    assert os.path.isfile(
-        os.path.join(
-            temp_dir,
-            "compiled",
-            "acs-engine-autoscaler",
-            "acs-engine-autoscaler",
-            "templates",
-            "secrets.yaml",
-        )
+    assert (
+        tmp_path
+        / "compiled/acs-engine-autoscaler/acs-engine-autoscaler/templates/secrets.yaml"
+    ).is_file()
+
+
+def test_compile_subcharts(helm_env, tmp_path):
+    helm_env.compile_with_args(
+        ["compile", "--output-path", str(tmp_path), "-t", "istio"]
     )
+    assert (tmp_path / "compiled/istio/istio/charts").is_dir()
+    assert (tmp_path / "compiled/istio/istio/templates").is_dir()
 
 
-def test_compile_subcharts(helm_env, temp_dir):
-    helm_env.compile_with_args(["compile", "--output-path", temp_dir, "-t", "istio"])
-    assert os.path.isdir(os.path.join(temp_dir, "compiled", "istio", "istio", "charts"))
-    assert os.path.isdir(
-        os.path.join(temp_dir, "compiled", "istio", "istio", "templates")
-    )
-
-
-def test_compile_multiple_targets(helm_env, temp_dir):
+def test_compile_multiple_targets(helm_env, tmp_path):
     helm_env.compile_with_args(
         [
             "compile",
             "--output-path",
-            temp_dir,
+            str(tmp_path),
             "-t",
             "acs-engine-autoscaler",
             "nginx-ingress",
@@ -111,46 +101,30 @@ def test_compile_multiple_targets(helm_env, temp_dir):
             "2",
         ]
     )
-    assert os.path.isfile(
-        os.path.join(
-            temp_dir,
-            "compiled",
-            "acs-engine-autoscaler",
-            "acs-engine-autoscaler",
-            "templates",
-            "secrets.yaml",
-        )
-    )
-    assert os.path.isfile(
-        os.path.join(
-            temp_dir,
-            "compiled",
-            "nginx-ingress",
-            "nginx-ingress",
-            "templates",
-            "clusterrolebinding.yaml",
-        )
-    )
+    assert (
+        tmp_path
+        / "compiled/acs-engine-autoscaler/acs-engine-autoscaler/templates/secrets.yaml"
+    ).is_file()
+    assert (
+        tmp_path
+        / "compiled/nginx-ingress/nginx-ingress/templates/clusterrolebinding.yaml"
+    ).is_file()
 
 
-def test_compile_multiple_charts_per_target(helm_env, temp_dir):
+def test_compile_multiple_charts_per_target(helm_env, tmp_path):
     helm_env.compile_with_args(
-        ["compile", "--output-path", temp_dir, "-t", "nginx-istio"]
+        ["compile", "--output-path", str(tmp_path), "-t", "nginx-istio"]
     )
-    assert os.path.isdir(
-        os.path.join(temp_dir, "compiled", "nginx-istio", "istio", "templates")
-    )
-    assert os.path.isdir(
-        os.path.join(temp_dir, "compiled", "nginx-istio", "nginx-ingress", "templates")
-    )
+    assert (tmp_path / "compiled/nginx-istio/istio/templates").is_dir()
+    assert (tmp_path / "compiled/nginx-istio/nginx-ingress/templates").is_dir()
 
 
-def test_compile_with_helm_values(helm_env, temp_dir):
+def test_compile_with_helm_values(helm_env, tmp_path):
     helm_env.compile_with_args(
-        ["compile", "--output-path", temp_dir, "-t", "nginx-ingress"]
+        ["compile", "--output-path", str(tmp_path), "-t", "nginx-ingress"]
     )
     controller_deployment_file = assert_compiled_output_exists(
-        temp_dir,
+        tmp_path,
         "nginx-ingress/nginx-ingress/templates/controller-deployment.yaml",
     )
     manifest = read_yaml_file(controller_deployment_file)
@@ -158,16 +132,23 @@ def test_compile_with_helm_values(helm_env, temp_dir):
     assert name == "release-name-nginx-ingress-my-controller"
 
 
-def test_compile_with_helm_values_files(helm_env, temp_dir):
+def test_compile_with_helm_values_files(helm_env, tmp_path):
     helm_env.compile_with_args(
-        ["compile", "--output-path", temp_dir, "-t", "monitoring-dev", "monitoring-prd"]
+        [
+            "compile",
+            "--output-path",
+            str(tmp_path),
+            "-t",
+            "monitoring-dev",
+            "monitoring-prd",
+        ]
     )
     dev_server_deployment_file = assert_compiled_output_exists(
-        temp_dir,
+        tmp_path,
         "monitoring-dev/prometheus/templates/server-deployment.yaml",
     )
     prd_server_deployment_file = assert_compiled_output_exists(
-        temp_dir,
+        tmp_path,
         "monitoring-prd/prometheus/templates/server-deployment.yaml",
     )
 
@@ -178,11 +159,11 @@ def test_compile_with_helm_values_files(helm_env, temp_dir):
     assert prd_manifest["metadata"]["name"] == "prometheus-prd-server"
 
 
-def test_compile_with_helm_params(helm_env, temp_dir):
+def test_compile_with_helm_params(helm_env, tmp_path):
     argv = [
         "compile",
         "--output-path",
-        temp_dir,
+        str(tmp_path),
         "-t",
         "nginx-ingress-helm-params",
     ]
@@ -196,7 +177,7 @@ def test_compile_with_helm_params(helm_env, temp_dir):
 
     helm_env.compile_with_args(argv)
     controller_deployment_file = assert_compiled_output_exists(
-        temp_dir,
+        tmp_path,
         "nginx-ingress-helm-params/nginx-ingress/templates/controller-deployment.yaml",
     )
     manifest = read_yaml_file(controller_deployment_file)
@@ -208,12 +189,12 @@ def test_compile_with_helm_params(helm_env, temp_dir):
 
 
 @pytest.mark.usefixtures("setup_gpg_key")
-def test_compile_with_refs(helm_env, temp_dir, gnupg_home, gpg_env):
+def test_compile_with_refs(helm_env, tmp_path, gnupg_home, gpg_env):
     helm_env.compile_with_args(
-        ["compile", "--output-path", temp_dir, "-t", "nginx-ingress", "--reveal"]
+        ["compile", "--output-path", str(tmp_path), "-t", "nginx-ingress", "--reveal"]
     )
     controller_deployment_file = assert_compiled_output_exists(
-        temp_dir,
+        tmp_path,
         "nginx-ingress/nginx-ingress/templates/controller-deployment.yaml",
     )
     manifest = read_yaml_file(controller_deployment_file)
@@ -235,13 +216,13 @@ def test_compile_kadet_helm_chart(helm_env):
         assert isinstance(chart.root[resource_name], BaseObj)
 
 
-def test_numeric_string_values_preserved(helm_env, temp_dir):
+def test_numeric_string_values_preserved(helm_env, tmp_path):
     helm_env.compile_with_args(
-        ["compile", "--output-path", temp_dir, "-t", "helm-string-values"]
+        ["compile", "--output-path", str(tmp_path), "-t", "helm-string-values"]
     )
 
     configmap_file = assert_compiled_output_exists(
-        temp_dir,
+        tmp_path,
         "helm-string-values/string-values-test/templates/configmap.yaml",
     )
     manifest = read_yaml_file(configmap_file)
@@ -260,7 +241,7 @@ def test_write_helm_values_file_preserves_numeric_strings():
 
     values_file = write_helm_values_file(helm_values)
 
-    with open(values_file, encoding="utf-8") as fp:
+    with Path(values_file).open(encoding="utf-8") as fp:
         content = fp.read()
 
     assert "'03190301'" in content or '"03190301"' in content
