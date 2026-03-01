@@ -119,6 +119,7 @@ brew install gcc@5
 ### Testing
 
 We provide several testing commands with different scopes to support various development workflows.
+For suite layout, markers, and coverage expectations, see `tests/README.md`.
 
 #### Quick Development Workflow
 
