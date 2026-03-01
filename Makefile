@@ -1,70 +1,50 @@
 ## Build and Package Commands
 all: clean package
 
+MISE ?= mise
+UV ?= $(MISE) exec -- uv
+UV_RUN ?= $(UV) run
+
 ################################################################################
 # Setup and Installation
 ################################################################################
 
-# Install uv package manager
-.PHONY: install_uv
-install_uv:
-	@echo "===== Installing uv Package Manager ====="
-	@which uv > /dev/null 2>&1 || curl -LsSf https://astral.sh/uv/install.sh | sh
-	@uv --version
+# Ensure mise runtime manager is installed
+.PHONY: check_mise
+check_mise:
+	@command -v $(MISE) >/dev/null 2>&1 || { \
+		echo "mise is not installed. Install it from https://mise.jdx.dev/getting-started.html"; \
+		exit 1; \
+	}
 
 # Install all Python dependencies including dev, test, docs, and optional extras
 .PHONY: install
-install:
+install: install_tools
 	@echo "===== Installing Python Dependencies ====="
-	uv sync --locked --all-extras --dev
+	$(UV) sync --locked --all-extras --dev
 
-# Install external tools required for testing (helm, kustomize, cue)
-.PHONY: install_external_tools
-install_external_tools: install_helm install_kustomize install_cue
-	@echo "===== All External Tools Installed ====="
-
-# Install Helm for Kubernetes package management
-.PHONY: install_helm
-install_helm:
-	@echo "===== Installing Helm ====="
-	@which helm > /dev/null 2>&1 || ( \
-		curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash \
-	)
-	@helm version --short
-
-# Install kustomize for Kubernetes manifest management
-.PHONY: install_kustomize
-install_kustomize:
-	@echo "===== Installing Kustomize ====="
-	@which kustomize > /dev/null 2>&1 || ( \
-		curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash && \
-		sudo mv kustomize /usr/local/bin/ \
-	)
-	@kustomize version
-
-# Install CUE language for data validation and configuration
-.PHONY: install_cue
-install_cue:
-	@echo "===== Installing CUE Language ====="
-	@which cue > /dev/null 2>&1 || ( \
-		CUE_VERSION=$$(curl -s "https://api.github.com/repos/cue-lang/cue/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")') && \
-		curl -L "https://github.com/cue-lang/cue/releases/download/$${CUE_VERSION}/cue_$${CUE_VERSION}_linux_amd64.tar.gz" | \
-		sudo tar xz -C /usr/local/bin cue \
-	)
-	@cue version
+# Install full development toolchain defined in mise.toml
+.PHONY: install_tools
+install_tools: check_mise
+	@echo "===== Installing Development Toolchain via mise ====="
+	@$(MISE) install --locked
+	@$(MISE) exec -- uv --version
+	@$(MISE) exec -- helm version --short
+	@$(MISE) exec -- kustomize version
+	@$(MISE) exec -- cue version
 
 # Configure pre-commit git hooks (pre-commit package installed via uv)
 .PHONY: install_pre_commit
 install_pre_commit:
 	@echo "===== Setting up Git Pre-commit Hooks ====="
-	@uv run pre-commit install
+	@$(UV_RUN) pre-commit install
 	@echo "Pre-commit hooks configured successfully!"
 	@echo "Hooks will run automatically on 'git commit'"
-	@echo "To run manually: 'uv run pre-commit run --all-files'"
+	@echo "To run manually: '$(UV_RUN) pre-commit run --all-files'"
 
 # Complete development environment setup
 .PHONY: setup
-setup: install_uv install install_external_tools install_pre_commit
+setup: install install_pre_commit
 	@echo "===== Development Environment Ready ====="
 	@echo "Run 'make test' to verify everything is working"
 
@@ -76,13 +56,13 @@ setup: install_uv install install_external_tools install_pre_commit
 .PHONY: lint
 lint:
 	@echo "===== Running Code Quality Checks ====="
-	uv run ruff check kapitan
+	$(UV_RUN) ruff check kapitan
 
 # Run code quality checks on test files
 .PHONY: lint-tests
 lint-tests:
 	@echo "===== Running Code Quality Checks on Tests ====="
-	uv run ruff check tests scripts
+	$(UV_RUN) ruff check tests scripts
 
 # Run code quality checks on everything
 .PHONY: lint-all
@@ -93,41 +73,41 @@ lint-all: lint lint-tests
 .PHONY: fix
 fix:
 	@echo "===== Fixing Auto-fixable Issues ====="
-	uv run ruff check --fix kapitan
+	$(UV_RUN) ruff check --fix kapitan
 	@echo "Linting issues fixed!"
 
 # Fix auto-fixable linting issues in tests
 .PHONY: fix-tests
 fix-tests:
 	@echo "===== Fixing Auto-fixable Issues in Tests ====="
-	uv run ruff check --fix tests scripts
+	$(UV_RUN) ruff check --fix tests scripts
 	@echo "Test linting issues fixed!"
 
 # Format code using ruff
 .PHONY: format
 format:
 	@echo "===== Formatting Code ====="
-	uv run ruff format .
-	uv run ruff check --fix .
+	$(UV_RUN) ruff format .
+	$(UV_RUN) ruff check --fix .
 	@echo "Code formatting complete!"
 
 # Check if code formatting is correct (used in CI)
 .PHONY: check_format
 check_format:
 	@echo "===== Checking Code Formatting ====="
-	uv run ruff format --check .
+	$(UV_RUN) ruff format --check .
 
 # Run Python unit tests with coverage
 .PHONY: test_python
 test_python:
 	@echo "===== Running Python Tests with coverage ====="
-	uv run pytest -n auto
+	$(UV_RUN) pytest -n auto
 
 # Run tests coverage report
 .PHONY: test_coverage
 test_coverage: test_python
 	@echo "===== Running Coverage Report ====="
-	uv run coverage report
+	$(UV_RUN) coverage report
 
 # Build Docker image
 .PHONY: build_docker
@@ -147,7 +127,7 @@ test_docker: build_docker
 
 # Run all tests (comprehensive test suite)
 .PHONY: test
-test: install install_external_tools lint test_coverage test_docker check_format
+test: install lint test_coverage test_docker check_format
 	@echo "===== All Tests Passed! ====="
 
 # Quick test without Docker or external tools
@@ -189,13 +169,13 @@ clean:
 docs_serve:
 	@echo "===== Serving Documentation Locally ====="
 	@echo "Documentation will be available at http://localhost:8000"
-	uv run mike serve
+	$(UV_RUN) mike serve
 
 # Deploy documentation to GitHub Pages
 .PHONY: docs_deploy
 docs_deploy:
 	@echo "===== Deploying Documentation to GitHub Pages ====="
-	uv run mike deploy --push dev master
+	$(UV_RUN) mike deploy --push dev master
 
 ################################################################################
 # Help
@@ -209,8 +189,7 @@ help:
 	@echo "Setup Commands:"
 	@echo "  make setup              - Complete development environment setup"
 	@echo "  make install            - Install Python dependencies"
-	@echo "  make install_uv         - Install uv package manager"
-	@echo "  make install_external_tools - Install Helm, Kustomize, and CUE"
+	@echo "  make install_tools      - Install all pinned tools from mise.toml"
 	@echo "  make install_pre_commit - Configure git pre-commit hooks"
 	@echo ""
 	@echo "Development Commands:"
@@ -243,7 +222,7 @@ help:
 
 # Validate that required commands exist
 .PHONY: validate-commands
-validate-commands:
-	@command -v uv >/dev/null 2>&1 || { echo "uv is not installed. Run 'make install_uv' first."; exit 1; }
+validate-commands: check_mise
+	@$(MISE) exec -- uv --version >/dev/null 2>&1 || { echo "uv is not installed. Run 'make install_tools' first."; exit 1; }
 	@command -v git >/dev/null 2>&1 || { echo "git is not installed."; exit 1; }
 	@echo "All required commands are available"

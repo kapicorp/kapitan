@@ -5,6 +5,7 @@ run-name: Docker Build for ${{ github.actor }} on branch ${{ github.ref_name }}
 env:
   DEFAULT_PYTHON_VERSION: '3.11'
   PYTHON_VERSIONS: '["3.11", "3.12", "3.13", "3.14"]'
+  MISE_LOCKED: '1'
   # Each platform entry includes the docker platform and the corresponding GitHub runner
   # Update UBUNTU_VERSION below to change all runners at once
   UBUNTU_VERSION: '24.04'
@@ -93,42 +94,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+      - name: Set up mise toolchain
+        uses: jdx/mise-action@6d1e696aa24c1aa1bcc1adea0212707c71ab78a8 # v3.6.1
       - name: Install libraries dependencies
         run: |
-          uv sync --locked --all-extras --dev
-
-      - name: Cache external tools
-        id: cache-tools
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
-        with:
-          path: |
-            /usr/local/bin/helm
-            /usr/local/bin/kustomize
-            /usr/local/bin/cue
-          key: external-tools-${{ runner.os }}-${{ runner.arch }}-v1
-
-      - name: Install external tools
-        if: steps.cache-tools.outputs.cache-hit != 'true'
-        run: |
-          # Install Helm
-          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-          # Install Kustomize
-          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-          sudo mv kustomize /usr/local/bin/
-
-          # Install CUE
-          CUE_VERSION=$(curl -s "https://api.github.com/repos/cue-lang/cue/releases/latest" | jq -r '.tag_name')
-          ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
-          curl -fsSL "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_${ARCH}.tar.gz" | sudo tar xz -C /usr/local/bin cue
+          mise exec -- uv sync --locked --all-extras --dev
 
       - name: Verify external tools
         run: |
-          helm version --short
-          kustomize version
-          cue version
+          mise exec -- helm version --short
+          mise exec -- kustomize version
+          mise exec -- cue version
 
       - name: Run pytest
         uses: pavelzw/pytest-action@510c5e90c360a185039bea56ce8b3e7e51a16507 # v2.2.0
@@ -136,7 +112,7 @@ jobs:
           verbose: true
           emoji: false
           job-summary: true
-          custom-pytest: uv run pytest -n auto
+          custom-pytest: mise exec -- uv run pytest -n auto
           custom-arguments: '-q'
           click-to-expand: true
           report-title: 'Kapitan tests'

@@ -17,7 +17,7 @@ Main CI/CD workflow that:
 
 **Key Features:**
 - ✅ Parallel test execution with `-n auto` for faster CI
-- ✅ Cached dependencies (uv, Helm, CUE, pre-commit)
+- ✅ Cached toolchain setup via `mise` (uv, Helm, Kustomize, CUE)
 - ✅ Coverage tracking with branch coverage enabled
 - ✅ Test performance metrics and slowest test identification
 - ✅ GitHub Actions summaries with coverage badges
@@ -70,6 +70,12 @@ The project uses comprehensive coverage tracking integrated into the main workfl
 - **GitHub Summaries**: Markdown summaries in PR/workflow UI
 
 ## Running Tests Locally
+
+Before running commands below, install the pinned toolchain with:
+
+```bash
+mise install --locked
+```
 
 ### Basic Test Run
 ```bash
@@ -154,7 +160,7 @@ Add these badges to your README:
 4. Ensure `COVERAGE_CORE=sysmon` is set for parallel tests
 
 ### Tests Failing in CI but Passing Locally
-1. Check for missing system dependencies (Helm, CUE)
+1. Run `mise install --locked` to install the pinned toolchain (uv, Helm, Kustomize, CUE)
 2. Verify test isolation (no shared state)
 3. Check for race conditions in parallel tests
 4. Ensure paths are relative, not absolute (e.g., GPG key paths)
