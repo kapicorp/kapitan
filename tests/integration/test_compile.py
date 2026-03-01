@@ -134,6 +134,14 @@ def test_jinja2_postfix_strip(isolated_test_resources):
     assert os.listdir("compiled/jinja2-postfix-strip/stripped") == ["stub.txt"]
 
 
+def test_external_input_compile_writes_expected_output(isolated_test_resources):
+    helper = CompileTestHelper(isolated_test_resources)
+    _compile_targets(helper, ["external-test"])
+
+    compiled_file = assert_compiled_output_exists(os.getcwd(), "external-test/test.md")
+    assert compiled_file.read_text(encoding="utf-8") == "This is going into a file\n"
+
+
 @pytest.fixture(
     params=[
         InventoryBackends.RECLASS,
@@ -172,7 +180,8 @@ def test_compile_kubernetes(inventory_backend_args):
         )
 
 
-def test_compile_not_enough_args(isolated_kubernetes_inventory):
+def test_compile_not_enough_args(isolated_kubernetes_inventory, monkeypatch):
+    monkeypatch.setattr("sys.argv", ["kapitan"])
     with pytest.raises(SystemExit) as excinfo:
         with contextlib.redirect_stdout(io.StringIO()):
             kapitan()
@@ -195,6 +204,21 @@ def test_compile_target_with_label(inventory_backend_args):
 
     assert os.path.exists("compiled/minikube-nginx-kadet")
     assert not os.path.exists("compiled/minikube-nginx-jsonnet")
+
+
+def test_compile_copy_input_target(inventory_backend_args):
+    helper = CompileTestHelper(os.getcwd())
+    helper.compile_with_args(["compile", "-t", "busybox", *inventory_backend_args])
+
+    assert_compiled_output_exists(os.getcwd(), "busybox/copy_target")
+    assert_compiled_output_exists(os.getcwd(), "busybox/copy/copy_target")
+
+
+def test_compile_remove_input_target(inventory_backend_args):
+    helper = CompileTestHelper(os.getcwd())
+    helper.compile_with_args(["compile", "-t", "removal", *inventory_backend_args])
+
+    assert not os.path.exists("compiled/removal/copy_target")
 
 
 def test_compile_jsonnet_env(inventory_backend_args):
