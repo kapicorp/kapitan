@@ -7,7 +7,6 @@ import contextlib
 import io
 import multiprocessing.pool as mp
 import os
-import shutil
 import subprocess
 import tempfile
 from argparse import Namespace
@@ -17,24 +16,9 @@ import pytest
 
 from kapitan import cached
 from kapitan.cached import reset_cache
-from tests.support.paths import (
-    EXAMPLE_DOCKER_ROOT,
-    EXAMPLE_KUBERNETES_ROOT,
-    EXAMPLE_TERRAFORM_ROOT,
-    KAPITAN_COMPILE_INTEGRATION,
-    KAPITAN_HELM_INTEGRATION,
-    KAPITAN_LINT_FIXTURE,
-)
+from tests.support.paths import EXAMPLE_KUBERNETES_ROOT, KAPITAN_COMPILE_INTEGRATION
+from tests.support.projects import copy_project_tree, prepare_isolated_project
 from tests.support.runtime import cached_args_defaults
-
-
-# Base paths - these are read-only references
-_TEST_COMPILE_PROJECT_PATH = str(KAPITAN_COMPILE_INTEGRATION)
-_TEST_HELM_PROJECT_PATH = str(KAPITAN_HELM_INTEGRATION)
-_TEST_LINT_PROJECT_PATH = str(KAPITAN_LINT_FIXTURE)
-_TEST_DOCKER_PATH = str(EXAMPLE_DOCKER_ROOT)
-_TEST_TERRAFORM_PATH = str(EXAMPLE_TERRAFORM_ROOT)
-_TEST_KUBERNETES_PATH = str(EXAMPLE_KUBERNETES_ROOT)
 
 
 @pytest.fixture
@@ -42,7 +26,9 @@ def temp_dir():
     """Create a temporary directory that is automatically cleaned up."""
     temp_path = tempfile.mkdtemp(prefix="kapitan_test_")
     yield temp_path
-    shutil.rmtree(temp_path, ignore_errors=True)
+    from shutil import rmtree
+
+    rmtree(temp_path, ignore_errors=True)
 
 
 @pytest.fixture
@@ -64,157 +50,49 @@ def _attach_fixture(request, name, value):
 
 
 @pytest.fixture
-def isolated_test_resources(temp_dir, request):
+def isolated_test_resources(tmp_path, monkeypatch, request):
     """
     Create an isolated copy of the compile fixture project for test execution.
     Returns the path to the isolated copy.
     """
-    isolated_path = os.path.join(temp_dir, "compile_project")
-    shutil.copytree(_TEST_COMPILE_PROJECT_PATH, isolated_path)
-
-    original_dir = os.getcwd()
-    reset_cache()
-    cached.args = cached_args_defaults()
-    os.chdir(isolated_path)
-
+    isolated_path = prepare_isolated_project(
+        tmp_path, monkeypatch, KAPITAN_COMPILE_INTEGRATION, "compile_project"
+    )
     _attach_fixture(request, "isolated_test_resources", isolated_path)
-    yield isolated_path
-
-    os.chdir(original_dir)
-    reset_cache()
-    cached.args = cached_args_defaults()
+    return isolated_path
 
 
 @pytest.fixture
-def isolated_helm_project(temp_dir):
-    """
-    Create an isolated copy of the helm fixture project for test execution.
-    Returns the path to the isolated copy.
-    """
-    isolated_path = os.path.join(temp_dir, "helm_project")
-    shutil.copytree(_TEST_HELM_PROJECT_PATH, isolated_path)
-
-    original_dir = os.getcwd()
-    reset_cache()
-    cached.args = cached_args_defaults()
-    os.chdir(isolated_path)
-
-    yield isolated_path
-
-    os.chdir(original_dir)
-    reset_cache()
-    cached.args = cached_args_defaults()
-
-
-@pytest.fixture
-def isolated_lint_project(temp_dir):
-    """
-    Create an isolated copy of the lint fixture project for test execution.
-    Returns the path to the isolated copy.
-    """
-    isolated_path = os.path.join(temp_dir, "lint_project")
-    shutil.copytree(_TEST_LINT_PROJECT_PATH, isolated_path)
-
-    original_dir = os.getcwd()
-    reset_cache()
-    cached.args = cached_args_defaults()
-    os.chdir(isolated_path)
-
-    yield isolated_path
-
-    os.chdir(original_dir)
-    reset_cache()
-    cached.args = cached_args_defaults()
-
-
-@pytest.fixture
-def isolated_kubernetes_inventory(temp_dir):
+def isolated_kubernetes_inventory(tmp_path, monkeypatch):
     """
     Create an isolated copy of the kubernetes example for test execution.
     Returns the path to the isolated copy.
     """
-    isolated_path = os.path.join(temp_dir, "kubernetes")
-    shutil.copytree(_TEST_KUBERNETES_PATH, isolated_path)
-
-    original_dir = os.getcwd()
-    reset_cache()
-    cached.args = cached_args_defaults()
-    os.chdir(isolated_path)
-
-    # Clean any existing compiled directory in the ISOLATED copy only
-    compiled_path = os.path.join(isolated_path, "compiled")
+    isolated_path = prepare_isolated_project(
+        tmp_path,
+        monkeypatch,
+        EXAMPLE_KUBERNETES_ROOT,
+        "kubernetes",
+        clean_compiled=True,
+    )
+    compiled_path = isolated_path / "compiled"
     # Safety check: ensure we're not in the actual examples directory
-    assert "examples/kubernetes" not in isolated_path
-    assert temp_dir in isolated_path
-    if os.path.exists(compiled_path):
-        shutil.rmtree(compiled_path)
+    assert EXAMPLE_KUBERNETES_ROOT not in isolated_path.parents
+    assert tmp_path in isolated_path.parents
+    if compiled_path.exists():
+        from shutil import rmtree
 
-    yield isolated_path
-
-    os.chdir(original_dir)
-    reset_cache()
-    cached.args = cached_args_defaults()
+        rmtree(compiled_path)
+    return isolated_path
 
 
 @pytest.fixture
-def isolated_terraform_inventory(temp_dir):
-    """
-    Create an isolated copy of the terraform example for test execution.
-    Returns the path to the isolated copy.
-    """
-    isolated_path = os.path.join(temp_dir, "terraform")
-    shutil.copytree(_TEST_TERRAFORM_PATH, isolated_path)
-
-    original_dir = os.getcwd()
-    reset_cache()
-    cached.args = cached_args_defaults()
-    os.chdir(isolated_path)
-
-    # Safety check: ensure we're not in the actual examples directory
-    assert "examples/terraform" not in isolated_path
-    assert temp_dir in isolated_path
-
-    yield isolated_path
-
-    os.chdir(original_dir)
-    reset_cache()
-    cached.args = cached_args_defaults()
-
-
-@pytest.fixture
-def isolated_docker_inventory(temp_dir):
-    """
-    Create an isolated copy of the docker example for test execution.
-    Returns the path to the isolated copy.
-    """
-    isolated_path = os.path.join(temp_dir, "docker")
-    shutil.copytree(_TEST_DOCKER_PATH, isolated_path)
-
-    original_dir = os.getcwd()
-    reset_cache()
-    cached.args = cached_args_defaults()
-    os.chdir(isolated_path)
-
-    # Safety check: ensure we're not in the actual examples directory
-    assert "examples/docker" not in isolated_path
-    assert temp_dir in isolated_path
-
-    yield isolated_path
-
-    os.chdir(original_dir)
-    reset_cache()
-    cached.args = cached_args_defaults()
-
-
-@pytest.fixture
-def kubernetes_inventory_copy(temp_dir):
+def kubernetes_inventory_copy(tmp_path):
     """
     Create a writable copy of the kubernetes example without changing cwd.
     Returns the path to the isolated copy.
     """
-    isolated_path = os.path.join(temp_dir, "kubernetes")
-    shutil.copytree(_TEST_KUBERNETES_PATH, isolated_path)
-    return isolated_path
+    return copy_project_tree(tmp_path, EXAMPLE_KUBERNETES_ROOT, "kubernetes")
 
 
 @pytest.fixture
@@ -225,18 +103,18 @@ def migrated_omegaconf_inventory(kubernetes_inventory_copy):
     from kapitan.inventory.backends.omegaconf import migrate
     from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
 
-    inventory_path = os.path.join(kubernetes_inventory_copy, "inventory")
-    migrate(inventory_path)
+    inventory_path = Path(kubernetes_inventory_copy) / "inventory"
+    migrate(str(inventory_path))
     register_resolvers()
     return inventory_path
 
 
 @pytest.fixture
-def refs_path(temp_dir):
+def refs_path(tmp_path):
     """Create an isolated refs path for secret management tests."""
-    refs_dir = os.path.join(temp_dir, "refs")
-    os.makedirs(refs_dir, exist_ok=True)
-    return refs_dir
+    refs_dir = tmp_path / "refs"
+    refs_dir.mkdir(parents=True, exist_ok=True)
+    return str(refs_dir)
 
 
 @pytest.fixture
@@ -363,7 +241,6 @@ def gnupg_home(temp_dir):
 
     yield gnupg_dir
 
-    # Restore original GNUPGHOME
     if original_gnupghome:
         os.environ["GNUPGHOME"] = original_gnupghome
     else:
@@ -437,7 +314,6 @@ def setup_gpg_key(gpg_env):
 
     subprocess.run(["gpg", "--import", example_key], check=True)
 
-    # always trust this key - for testing only!
     ownertrust = b"D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C:6\n"
 
     subprocess.run(
@@ -460,7 +336,6 @@ def local_http_server(request, httpserver):
 
 @pytest.fixture
 def gpg_env(gnupg_home):
-    from kapitan import cached
     from kapitan.refs.secrets.gpg import gpg_obj
 
     cached.gpg_obj = None

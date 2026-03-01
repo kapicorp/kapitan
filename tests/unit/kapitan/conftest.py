@@ -8,6 +8,8 @@ from argparse import Namespace
 import pytest
 
 from kapitan import cached
+from tests.support.paths import KAPITAN_LINT_FIXTURE
+from tests.support.projects import prepare_isolated_project
 
 
 @pytest.fixture
@@ -39,3 +41,14 @@ def restore_cached_state():
     state = cached.as_dict()
     yield
     cached.from_dict(state)
+
+
+@pytest.fixture
+def isolated_lint_project(tmp_path, monkeypatch):
+    """
+    Create an isolated copy of the lint fixture project for test execution.
+    Returns the path to the isolated copy.
+    """
+    return prepare_isolated_project(
+        tmp_path, monkeypatch, KAPITAN_LINT_FIXTURE, "lint_project"
+    )
