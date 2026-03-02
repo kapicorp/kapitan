@@ -10,7 +10,6 @@ from pathlib import Path
 from kapitan.inputs.copy import Copy
 from kapitan.inventory.model.input_types import KapitanInputTypeCopyConfig
 from kapitan.utils import directory_hash
-from tests.support.helpers import run_kapitan_in_project
 
 
 def _bootstrap_copy_workspace(base_path: Path, file_content: str):
@@ -66,28 +65,35 @@ def test_copy_missing_path_folder(input_compile_workspace, sample_pod_manifest):
     copy_compiler.compile_file(config, str(test_file_missing_path), str(compile_path))
 
 
-def _validate_files_were_copied(base_path: Path) -> None:
-    original_filepath = base_path / "components" / "busybox" / "pod.yml"
-    copied_filepath = base_path / "compiled" / "busybox" / "copy" / "pod.yml"
+def _validate_files_were_copied(project_root: Path, compiled_root: Path) -> None:
+    original_filepath = project_root / "components" / "busybox" / "pod.yml"
+    copied_filepath = compiled_root / "busybox" / "copy" / "pod.yml"
     assert filecmp.cmp(str(original_filepath), str(copied_filepath))
 
-    original_filepath = base_path / "copy_target"
-    copied_filepath = base_path / "compiled" / "busybox" / "copy" / "copy_target"
+    original_filepath = project_root / "copy_target"
+    copied_filepath = compiled_root / "busybox" / "copy" / "copy_target"
     assert filecmp.cmp(str(original_filepath), str(copied_filepath))
 
-    original_filepath = base_path / "copy_target"
-    copied_filepath = base_path / "compiled" / "busybox" / "copy_target"
+    original_filepath = project_root / "copy_target"
+    copied_filepath = compiled_root / "busybox" / "copy_target"
     assert filecmp.cmp(str(original_filepath), str(copied_filepath))
 
 
-def test_compiled_copy_target(isolated_kubernetes_inventory):
-    run_kapitan_in_project(isolated_kubernetes_inventory, ["compile", "-t", "busybox"])
-    _validate_files_were_copied(Path(isolated_kubernetes_inventory))
+def test_compiled_copy_target(isolated_kubernetes_inventory, kapitan_runner, tmp_path):
+    project_root = Path(isolated_kubernetes_inventory)
+    kapitan_runner(
+        project_root,
+        ["compile", "--output-path", str(tmp_path), "-t", "busybox"],
+    )
+    _validate_files_were_copied(project_root, tmp_path / "compiled")
 
 
-def test_compiled_copy_all_targets(isolated_kubernetes_inventory):
-    run_kapitan_in_project(isolated_kubernetes_inventory, ["compile"])
-    _validate_files_were_copied(Path(isolated_kubernetes_inventory))
+def test_compiled_copy_all_targets(
+    isolated_kubernetes_inventory, kapitan_runner, tmp_path
+):
+    project_root = Path(isolated_kubernetes_inventory)
+    kapitan_runner(project_root, ["compile", "--output-path", str(tmp_path)])
+    _validate_files_were_copied(project_root, tmp_path / "compiled")
 
 
 def test_copy_overwrites_existing_destination_file(

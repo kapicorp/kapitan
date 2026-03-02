@@ -6,22 +6,19 @@
 import random
 import string
 import subprocess
+from pathlib import Path
 
 import pytest
 
 from kapitan.inputs.external import External
 from kapitan.inventory.model.input_types import KapitanInputTypeExternalConfig
-from tests.support.helpers import (
-    CompileTestHelper,
-    assert_compiled_output_exists,
-    run_kapitan_in_project,
-)
+from tests.support.helpers import assert_compiled_output_exists
 
 
-def test_compile_external_target(isolated_test_resources, tmp_path):
-    helper = CompileTestHelper(isolated_test_resources)
-    run_kapitan_in_project(
-        helper.isolated_path,
+def test_compile_external_target(isolated_test_resources, kapitan_runner, tmp_path):
+    project_root = Path(isolated_test_resources)
+    kapitan_runner(
+        project_root,
         ["compile", "--output-path", str(tmp_path), "-t", "external-test"],
     )
     assert assert_compiled_output_exists(tmp_path, "external-test/test.md").is_file()

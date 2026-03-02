@@ -6,7 +6,6 @@
 import hashlib
 import io
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -112,19 +111,25 @@ def test_cache_lock_contention_returns_none(cache_env):
     assert cache.set(inputs_hash, output_obj) is None
 
 
-def test_set_propagates_file_exists_error(cache_env):
+def test_set_propagates_file_exists_error(cache_env, monkeypatch):
     cache = InputCache("test_input")
 
-    with patch("pathlib.Path.rename", side_effect=FileExistsError):
-        with pytest.raises(FileExistsError):
-            cache.set("abcdef123456", {"a": 1, "b": 2})
+    def _raise_file_exists(_self, _target):
+        raise FileExistsError
+
+    monkeypatch.setattr(Path, "rename", _raise_file_exists)
+    with pytest.raises(FileExistsError):
+        cache.set("abcdef123456", {"a": 1, "b": 2})
 
 
-def test_get_handles_file_not_found_during_read(cache_env):
+def test_get_handles_file_not_found_during_read(cache_env, monkeypatch):
     cache = InputCache("test_input")
 
-    with patch("builtins.open", side_effect=FileNotFoundError):
-        assert cache.get("abcdef123456") is None
+    def _raise_file_not_found(*_args, **_kwargs):
+        raise FileNotFoundError
+
+    monkeypatch.setattr("builtins.open", _raise_file_not_found)
+    assert cache.get("abcdef123456") is None
 
 
 def test_different_input_types_use_separate_directories(cache_env):

@@ -7,8 +7,6 @@ from pathlib import Path
 
 import pytest
 
-from tests.support.helpers import run_kapitan_in_project
-
 
 def test_refs_cli_base64_write_and_reveal_file(refs_cli, refs_path, tmp_path):
     secret_file = tmp_path / "secret.txt"
@@ -72,9 +70,11 @@ def test_refs_cli_gpg_write_and_reveal_file(
     assert "gpg secret value" in stdout
 
 
-def test_lint_cli_fails_on_real_fixture_warnings(isolated_test_resources):
+def test_lint_cli_fails_on_real_fixture_warnings(
+    isolated_test_resources, kapitan_runner
+):
     with pytest.raises(SystemExit) as excinfo:
-        run_kapitan_in_project(
+        kapitan_runner(
             isolated_test_resources,
             [
                 "lint",

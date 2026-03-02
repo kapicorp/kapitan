@@ -15,6 +15,7 @@ from tests.support.runtime import cached_args_defaults
 
 
 pytest_plugins = (
+    "tests.support.fixtures.cli",
     "tests.support.fixtures.projects",
     "tests.support.fixtures.refs",
     "tests.support.fixtures.secrets",
@@ -98,17 +99,15 @@ def reset_cached_runtime():
 
 
 @pytest.fixture
-def local_http_server(request, httpserver):
+def local_http_server(httpserver):
     """
-    Expose pytest-httpserver to unittest.TestCase classes.
+    Expose pytest-httpserver as a regular pytest fixture.
     """
-    if request.cls is not None:
-        request.cls.httpserver = httpserver
     return httpserver
 
 
 @pytest.fixture
-def seeded_git_repo(git_repo, request):
+def seeded_git_repo(git_repo):
     repo = git_repo.api
     repo_path = Path(repo.working_tree_dir)
 
@@ -127,9 +126,5 @@ def seeded_git_repo(git_repo, request):
         repo.index.commit("initial commit")
 
     repo.git.branch("-M", "master")
-
-    instance = getattr(request, "instance", None)
-    if instance is not None:
-        instance.seeded_git_repo = repo_path
 
     return repo_path

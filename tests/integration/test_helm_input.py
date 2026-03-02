@@ -12,12 +12,7 @@ import yaml
 from kapitan.inputs.helm import Helm, HelmChart, write_helm_values_file
 from kapitan.inputs.kadet import BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
-from tests.support.helpers import (
-    CompileTestHelper,
-    assert_compiled_output_exists,
-    read_yaml_file,
-    run_kapitan_in_project,
-)
+from tests.support.helpers import assert_compiled_output_exists, read_yaml_file
 
 
 pytestmark = pytest.mark.requires_helm
@@ -27,12 +22,12 @@ if shutil.which("helm") is None:
 
 
 @pytest.fixture
-def helm_env(isolated_helm_project):
-    return CompileTestHelper(isolated_helm_project)
+def helm_project_root(isolated_helm_project):
+    return Path(isolated_helm_project)
 
 
-def test_render_chart(helm_env, tmp_path):
-    chart_path = helm_env.isolated_path / "charts" / "acs-engine-autoscaler"
+def test_render_chart(helm_project_root, tmp_path):
+    chart_path = helm_project_root / "charts" / "acs-engine-autoscaler"
     helm_params = {"name": "acs-engine-autoscaler"}
     helm_config = KapitanInputTypeHelmConfig(
         input_paths=[str(chart_path)],
@@ -53,7 +48,7 @@ def test_render_chart(helm_env, tmp_path):
     assert (tmp_path / "acs-engine-autoscaler/templates/deployment.yaml").is_file()
 
 
-def test_error_invalid_chart_dir(helm_env, tmp_path):
+def test_error_invalid_chart_dir(tmp_path):
     chart_path = "./non-existent"
     helm_params = {"name": "mychart"}
     helm_config = KapitanInputTypeHelmConfig(
@@ -72,9 +67,9 @@ def test_error_invalid_chart_dir(helm_env, tmp_path):
     assert "not found" in error_message
 
 
-def test_compile_chart(helm_env, tmp_path):
-    run_kapitan_in_project(
-        helm_env.isolated_path,
+def test_compile_chart(helm_project_root, kapitan_runner, tmp_path):
+    kapitan_runner(
+        helm_project_root,
         ["compile", "--output-path", str(tmp_path), "-t", "acs-engine-autoscaler"],
     )
     assert (
@@ -83,18 +78,18 @@ def test_compile_chart(helm_env, tmp_path):
     ).is_file()
 
 
-def test_compile_subcharts(helm_env, tmp_path):
-    run_kapitan_in_project(
-        helm_env.isolated_path,
+def test_compile_subcharts(helm_project_root, kapitan_runner, tmp_path):
+    kapitan_runner(
+        helm_project_root,
         ["compile", "--output-path", str(tmp_path), "-t", "istio"],
     )
     assert (tmp_path / "compiled/istio/istio/charts").is_dir()
     assert (tmp_path / "compiled/istio/istio/templates").is_dir()
 
 
-def test_compile_multiple_targets(helm_env, tmp_path):
-    run_kapitan_in_project(
-        helm_env.isolated_path,
+def test_compile_multiple_targets(helm_project_root, kapitan_runner, tmp_path):
+    kapitan_runner(
+        helm_project_root,
         [
             "compile",
             "--output-path",
@@ -116,18 +111,20 @@ def test_compile_multiple_targets(helm_env, tmp_path):
     ).is_file()
 
 
-def test_compile_multiple_charts_per_target(helm_env, tmp_path):
-    run_kapitan_in_project(
-        helm_env.isolated_path,
+def test_compile_multiple_charts_per_target(
+    helm_project_root, kapitan_runner, tmp_path
+):
+    kapitan_runner(
+        helm_project_root,
         ["compile", "--output-path", str(tmp_path), "-t", "nginx-istio"],
     )
     assert (tmp_path / "compiled/nginx-istio/istio/templates").is_dir()
     assert (tmp_path / "compiled/nginx-istio/nginx-ingress/templates").is_dir()
 
 
-def test_compile_with_helm_values(helm_env, tmp_path):
-    run_kapitan_in_project(
-        helm_env.isolated_path,
+def test_compile_with_helm_values(helm_project_root, kapitan_runner, tmp_path):
+    kapitan_runner(
+        helm_project_root,
         ["compile", "--output-path", str(tmp_path), "-t", "nginx-ingress"],
     )
     controller_deployment_file = assert_compiled_output_exists(
@@ -139,9 +136,9 @@ def test_compile_with_helm_values(helm_env, tmp_path):
     assert name == "release-name-nginx-ingress-my-controller"
 
 
-def test_compile_with_helm_values_files(helm_env, tmp_path):
-    run_kapitan_in_project(
-        helm_env.isolated_path,
+def test_compile_with_helm_values_files(helm_project_root, kapitan_runner, tmp_path):
+    kapitan_runner(
+        helm_project_root,
         [
             "compile",
             "--output-path",
@@ -167,7 +164,7 @@ def test_compile_with_helm_values_files(helm_env, tmp_path):
     assert prd_manifest["metadata"]["name"] == "prometheus-prd-server"
 
 
-def test_compile_with_helm_params(helm_env, tmp_path):
+def test_compile_with_helm_params(helm_project_root, kapitan_runner, tmp_path):
     argv = [
         "compile",
         "--output-path",
@@ -176,17 +173,14 @@ def test_compile_with_helm_params(helm_env, tmp_path):
         "nginx-ingress-helm-params",
     ]
     with (
-        helm_env.isolated_path
-        / "inventory"
-        / "targets"
-        / "nginx-ingress-helm-params.yml"
+        helm_project_root / "inventory" / "targets" / "nginx-ingress-helm-params.yml"
     ).open(encoding="utf-8") as fp:
         manifest = yaml.safe_load(fp.read())
         helm_params = manifest["parameters"]["kapitan"]["compile"][0]["helm_params"]
         release_name = helm_params["name"]
         namespace = helm_params["namespace"]
 
-    run_kapitan_in_project(helm_env.isolated_path, argv)
+    kapitan_runner(helm_project_root, argv)
     controller_deployment_file = assert_compiled_output_exists(
         tmp_path,
         "nginx-ingress-helm-params/nginx-ingress/templates/controller-deployment.yaml",
@@ -200,9 +194,11 @@ def test_compile_with_helm_params(helm_env, tmp_path):
 
 
 @pytest.mark.usefixtures("setup_gpg_key")
-def test_compile_with_refs(helm_env, tmp_path, gnupg_home, gpg_env):
-    run_kapitan_in_project(
-        helm_env.isolated_path,
+def test_compile_with_refs(
+    helm_project_root, kapitan_runner, tmp_path, gnupg_home, gpg_env
+):
+    kapitan_runner(
+        helm_project_root,
         ["compile", "--output-path", str(tmp_path), "-t", "nginx-ingress", "--reveal"],
     )
     controller_deployment_file = assert_compiled_output_exists(
@@ -220,17 +216,17 @@ def test_compile_with_refs(helm_env, tmp_path, gnupg_home, gpg_env):
     assert "--election-id=super_secret_ID" in args
 
 
-def test_compile_kadet_helm_chart(helm_env):
-    chart = HelmChart(chart_dir=str(helm_env.isolated_path / "charts" / "prometheus"))
+def test_compile_kadet_helm_chart(helm_project_root):
+    chart = HelmChart(chart_dir=str(helm_project_root / "charts" / "prometheus"))
 
     assert len(chart.root.keys()) > 0
     for resource_name in chart.root:
         assert isinstance(chart.root[resource_name], BaseObj)
 
 
-def test_numeric_string_values_preserved(helm_env, tmp_path):
-    run_kapitan_in_project(
-        helm_env.isolated_path,
+def test_numeric_string_values_preserved(helm_project_root, kapitan_runner, tmp_path):
+    kapitan_runner(
+        helm_project_root,
         ["compile", "--output-path", str(tmp_path), "-t", "helm-string-values"],
     )
 

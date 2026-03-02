@@ -42,13 +42,8 @@ def isolated_kubernetes_inventory(tmp_path):
         "kubernetes",
         clean_compiled=True,
     )
-    compiled_path = isolated_path / "compiled"
     assert EXAMPLE_KUBERNETES_ROOT not in isolated_path.parents
     assert tmp_path in isolated_path.parents
-    if compiled_path.exists():
-        from shutil import rmtree
-
-        rmtree(compiled_path)
     return isolated_path
 
 

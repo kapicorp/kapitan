@@ -12,10 +12,14 @@ from tests.support.runtime import cached_args_defaults
 
 
 def copy_project_tree(
-    tmp_path: Path, source_path: str | Path, destination_name: str
+    tmp_path: Path,
+    source_path: str | Path,
+    destination_name: str,
+    *,
+    ignore=None,
 ) -> Path:
     destination = tmp_path / destination_name
-    shutil.copytree(source_path, destination)
+    shutil.copytree(source_path, destination, ignore=ignore)
     return destination
 
 
@@ -26,13 +30,14 @@ def prepare_isolated_project(
     *,
     clean_compiled: bool = False,
 ) -> Path:
-    isolated_path = copy_project_tree(tmp_path, source_path, destination_name)
+    ignore = shutil.ignore_patterns("compiled") if clean_compiled else None
+    isolated_path = copy_project_tree(
+        tmp_path,
+        source_path,
+        destination_name,
+        ignore=ignore,
+    )
     reset_cache()
     cached.args = cached_args_defaults()
-
-    if clean_compiled:
-        compiled_path = isolated_path / "compiled"
-        if compiled_path.exists():
-            shutil.rmtree(compiled_path)
 
     return isolated_path

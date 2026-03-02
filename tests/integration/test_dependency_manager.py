@@ -26,7 +26,6 @@ from kapitan.inventory.model.dependencies import (
     KapitanDependencyGitConfig,
     KapitanDependencyHelmConfig,
 )
-from tests.support.helpers import run_kapitan_in_project
 from tests.support.paths import HTTP_SOURCES_ROOT
 
 
@@ -269,7 +268,7 @@ def test_fetch_dependencies_unpack_parallel(
 
 @pytest.mark.usefixtures("seeded_git_repo")
 def test_compile_fetch(
-    isolated_helm_project, local_http_server, seeded_git_repo, tmp_path
+    isolated_helm_project, local_http_server, seeded_git_repo, tmp_path, kapitan_runner
 ):
     temp_dir = Path(isolated_helm_project)
 
@@ -317,7 +316,7 @@ def test_compile_fetch(
 
     temp = tmp_path / "out"
     temp.mkdir()
-    run_kapitan_in_project(
+    kapitan_runner(
         temp_dir,
         [
             "compile",

@@ -11,7 +11,6 @@ from kapitan.inventory.model.input_types import (
     KapitanInputTypeCopyConfig,
     KapitanInputTypeRemoveConfig,
 )
-from tests.support.helpers import run_kapitan_in_project
 
 
 search_path = ""
@@ -73,16 +72,22 @@ def test_remove_folder_folder(input_compile_workspace, sample_pod_manifest):
     assert not compile_path.exists()
 
 
-def _validate_files_were_removed(base_path: Path):
-    original_filepath = base_path / "copy_target"
+def _validate_files_were_removed(project_root: Path, compiled_root: Path):
+    original_filepath = project_root / "copy_target"
     assert original_filepath.exists()
-    removed_file = base_path / "compiled" / "removal" / "copy_target"
+    removed_file = compiled_root / "removal" / "copy_target"
     assert not removed_file.exists()
 
 
-def test_compiled_remove_target(isolated_kubernetes_inventory):
-    run_kapitan_in_project(isolated_kubernetes_inventory, ["compile", "-t", "removal"])
-    _validate_files_were_removed(Path(isolated_kubernetes_inventory))
+def test_compiled_remove_target(
+    isolated_kubernetes_inventory, kapitan_runner, tmp_path
+):
+    project_root = Path(isolated_kubernetes_inventory)
+    kapitan_runner(
+        project_root,
+        ["compile", "--output-path", str(tmp_path), "-t", "removal"],
+    )
+    _validate_files_were_removed(project_root, tmp_path / "compiled")
 
 
 def test_remove_file_logs_oserror_and_continues(

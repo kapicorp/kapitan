@@ -7,7 +7,6 @@ import base64
 import contextlib
 import os
 from types import SimpleNamespace
-from unittest.mock import patch
 
 import pytest
 
@@ -318,10 +317,9 @@ def test_cli_secret_ref_reveal_gpg_ref(
     assert stdout == test_secret_content
 
 
-@patch.object(VaultSecret, "_decrypt")
 @pytest.mark.requires_vault
 def test_cli_secret_write_vault(
-    mock_reveal, refs_cli, vault_server, refs_path, tmp_path
+    refs_cli, vault_server, refs_path, tmp_path, monkeypatch
 ):
     test_secret_content = "secret_value"
     test_secret_file = write_text_file(tmp_path / "secret.txt", test_secret_content)
@@ -350,7 +348,9 @@ def test_cli_secret_write_vault(
         tmp_path / "tag.txt", "revealing: ?{vaultkv:test_secret}"
     )
 
-    mock_reveal.return_value = test_secret_content
+    monkeypatch.setattr(
+        VaultSecret, "_decrypt", lambda *_args, **_kwargs: test_secret_content
+    )
     stdout = refs_cli.reveal_file(test_tag_file, refs_path)
     assert stdout == f"revealing: {test_secret_content}"
 

@@ -3,11 +3,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 import subprocess
 import tempfile
 from pathlib import Path
-from shutil import rmtree
 
 import pytest
 
@@ -16,25 +14,16 @@ from tests.support.paths import EXAMPLE_KUBERNETES_ROOT
 
 
 @pytest.fixture
-def gnupg_home():
+def gnupg_home(monkeypatch):
     """
     Create an isolated GNUPGHOME for GPG tests.
-    Sets and restores the GNUPGHOME environment variable.
+    Use a short temp path because gpg-agent socket paths are length-sensitive.
     """
-    gnupg_dir = Path(tempfile.mkdtemp(prefix="kapitan_gpg_")) / "gnupg"
-    gnupg_dir.mkdir(mode=0o700)
-
-    original_gnupghome = os.environ.get("GNUPGHOME")
-    os.environ["GNUPGHOME"] = str(gnupg_dir)
-
-    yield str(gnupg_dir)
-
-    if original_gnupghome:
-        os.environ["GNUPGHOME"] = original_gnupghome
-    else:
-        os.environ.pop("GNUPGHOME", None)
-
-    rmtree(gnupg_dir.parent, ignore_errors=True)
+    with tempfile.TemporaryDirectory(prefix="kgpg_") as temp_dir:
+        gnupg_dir = Path(temp_dir) / "gnupg"
+        gnupg_dir.mkdir(mode=0o700)
+        monkeypatch.setenv("GNUPGHOME", str(gnupg_dir))
+        yield str(gnupg_dir)
 
 
 @pytest.fixture

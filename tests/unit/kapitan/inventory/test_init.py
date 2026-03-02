@@ -32,7 +32,7 @@ def _assert_targets_resolvable(inv, target_names: list[str]) -> None:
 @pytest.mark.parametrize(
     "backend_id", [InventoryBackends.RECLASS, InventoryBackends.RECLASS_RS]
 )
-def test_compose_target_name(kubernetes_inventory_copy, backend_id):
+def test_compose_target_name(kubernetes_inventory_copy, backend_id, tmp_path):
     inventory_backend = get_inventory_backend(backend_id)
     inventory_path = Path(kubernetes_inventory_copy) / "inventory"
     targets_path = inventory_path / "targets"
@@ -47,11 +47,10 @@ def test_compose_target_name(kubernetes_inventory_copy, backend_id):
     _assert_targets_resolvable(inv, example_target_names)
 
     # create compose_target_name setup from a snapshot to avoid nested copies
-    snapshot_path = inventory_path / ".targets_snapshot"
+    snapshot_path = tmp_path / "targets_snapshot"
     shutil.copytree(targets_path, snapshot_path)
     shutil.copytree(snapshot_path, inventory_path / "targets" / "env1")
     shutil.copytree(snapshot_path, inventory_path / "targets" / "env2")
-    shutil.rmtree(snapshot_path)
 
     composed_target_names = []
     for name in example_target_names:
