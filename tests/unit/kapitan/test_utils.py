@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import builtins
-import glob
 import importlib.util
 import io
 import os
@@ -68,7 +67,7 @@ def test_copy_tree_copies_directory_and_preserves_content_hash(tmp_path):
     from regressions.
     """
     dst = tmp_path / "copied"
-    original = set(glob.iglob(f"{TEST_KUBERNETES_PATH}/*", recursive=True))
+    original = set(TEST_KUBERNETES_PATH.glob("*"))
     copied = copy_tree(str(TEST_KUBERNETES_PATH), str(dst))
     assert len(copied) == len(original)
 
@@ -109,7 +108,7 @@ def test_copy_dir_missing_dst(tmp_path):
     from regressions.
     """
     dst = tmp_path / "subdir"
-    original = set(glob.iglob(f"{TEST_KUBERNETES_PATH}/*", recursive=True))
+    original = set(TEST_KUBERNETES_PATH.glob("*"))
     copied = copy_tree(str(TEST_KUBERNETES_PATH), str(dst))
     assert len(copied) == len(original)
 
@@ -259,10 +258,9 @@ def test_compare_versions(dot_kapitan_version, current_version, expected):
     assert compare_versions(dot_kapitan_version, current_version) == expected
 
 
-def _write_dot_kapitan(base_path, config):
-    dot_path = os.path.join(base_path, ".kapitan")
-    with open(dot_path, "w", encoding="utf-8") as handle:
-        yaml.safe_dump(config, handle)
+def _write_dot_kapitan(base_path: Path, config):
+    dot_path = Path(base_path) / ".kapitan"
+    dot_path.write_text(yaml.safe_dump(config), encoding="utf-8")
 
 
 @pytest.fixture
