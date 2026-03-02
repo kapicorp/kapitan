@@ -26,9 +26,12 @@ def reset_cached_args():
     """
     Reset cached globals and args to avoid backend leakage between tests.
     """
-    reset_cache()
-    cached.args = cached_args_defaults()
+    _reset_cached_runtime()
     yield
+    _reset_cached_runtime()
+
+
+def _reset_cached_runtime():
     reset_cache()
     cached.args = cached_args_defaults()
 
@@ -74,23 +77,24 @@ def graceful_multiprocessing_pool_exit():
 
 
 @pytest.fixture(autouse=True)
-def reset_environment():
+def restore_environment():
     """
-    Automatically reset the environment before and after each test.
-    This ensures tests don't affect each other.
+    Restore environment variables around each test.
     """
-    original_dir = os.getcwd()
     original_env = os.environ.copy()
-    cached.args = cached_args_defaults()
-
     yield
-
-    # Restore original state
-    os.chdir(original_dir)
     os.environ.clear()
     os.environ.update(original_env)
-    reset_cache()
-    cached.args = cached_args_defaults()
+
+
+@pytest.fixture(autouse=True)
+def reset_cached_runtime():
+    """
+    Reset cached globals around each test.
+    """
+    _reset_cached_runtime()
+    yield
+    _reset_cached_runtime()
 
 
 @pytest.fixture
