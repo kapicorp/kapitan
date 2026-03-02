@@ -5,7 +5,7 @@
 
 import filecmp
 import hashlib
-import os
+from pathlib import Path
 
 from kapitan.cli import main as kapitan
 from kapitan.inputs.copy import Copy
@@ -13,116 +13,114 @@ from kapitan.inventory.model.input_types import KapitanInputTypeCopyConfig
 from kapitan.utils import directory_hash
 
 
-def _dirs_bootstrap_helper(base_path: str, file_content: str):
-    file_path = os.path.join(base_path, "input")
-    compile_path = os.path.join(base_path, "output")
-    os.makedirs(file_path, exist_ok=True)
-    os.makedirs(compile_path, exist_ok=True)
-    test_file_path = os.path.join(file_path, "test_copy_input")
-    with open(test_file_path, "w", encoding="utf-8") as handle:
-        handle.write(file_content)
+def _bootstrap_copy_workspace(base_path: Path, file_content: str):
+    file_path = base_path / "input"
+    compile_path = base_path / "output"
+    file_path.mkdir(exist_ok=True)
+    compile_path.mkdir(exist_ok=True)
+    test_file_path = file_path / "test_copy_input"
+    test_file_path.write_text(file_content, encoding="utf-8")
     return file_path, compile_path, test_file_path
 
 
 def test_copy_file_folder(isolated_compile_dir, sample_pod_manifest):
-    file_path, compile_path, test_file_path = _dirs_bootstrap_helper(
-        os.getcwd(), sample_pod_manifest
+    file_path, compile_path, test_file_path = _bootstrap_copy_workspace(
+        isolated_compile_dir, sample_pod_manifest
     )
-    test_file_compiled_path = os.path.join(compile_path, "test_copy_input")
-    copy_compiler = Copy(compile_path, "", "", "test", None)
+    test_file_compiled_path = compile_path / "test_copy_input"
+    copy_compiler = Copy(str(compile_path), "", "", "test", None)
     config = KapitanInputTypeCopyConfig(
-        input_paths=[test_file_path], output_path=compile_path
+        input_paths=[str(test_file_path)], output_path=str(compile_path)
     )
-    copy_compiler.compile_file(config, test_file_path, compile_path)
+    copy_compiler.compile_file(config, str(test_file_path), str(compile_path))
     test_file_hash = hashlib.sha1(sample_pod_manifest.encode()).digest()
-    with open(test_file_compiled_path, encoding="utf-8") as handle:
-        test_file_compiled_hash = hashlib.sha1(handle.read().encode()).digest()
-        assert test_file_hash == test_file_compiled_hash
+    test_file_compiled_hash = hashlib.sha1(
+        test_file_compiled_path.read_text(encoding="utf-8").encode()
+    ).digest()
+    assert test_file_hash == test_file_compiled_hash
 
 
 def test_copy_folder_folder(isolated_compile_dir, sample_pod_manifest):
-    file_path, compile_path, _ = _dirs_bootstrap_helper(
-        os.getcwd(), sample_pod_manifest
+    file_path, compile_path, _ = _bootstrap_copy_workspace(
+        isolated_compile_dir, sample_pod_manifest
     )
-    copy_compiler = Copy(compile_path, "", "", "test", None)
+    copy_compiler = Copy(str(compile_path), "", "", "test", None)
     config = KapitanInputTypeCopyConfig(
-        input_paths=[file_path], output_path=compile_path
+        input_paths=[str(file_path)], output_path=str(compile_path)
     )
-    copy_compiler.compile_file(config, file_path, compile_path)
-    file_path_hash = directory_hash(file_path)
-    compile_path_hash = directory_hash(compile_path)
+    copy_compiler.compile_file(config, str(file_path), str(compile_path))
+    file_path_hash = directory_hash(str(file_path))
+    compile_path_hash = directory_hash(str(compile_path))
     assert file_path_hash == compile_path_hash
 
 
 def test_copy_missing_path_folder(isolated_compile_dir, sample_pod_manifest):
-    file_path, compile_path, test_file_path = _dirs_bootstrap_helper(
-        os.getcwd(), sample_pod_manifest
+    file_path, compile_path, test_file_path = _bootstrap_copy_workspace(
+        isolated_compile_dir, sample_pod_manifest
     )
-    copy_compiler = Copy(compile_path, "", "", "test", None)
-    test_file_missing_path = os.path.join(file_path, "test_copy_input_missing")
+    copy_compiler = Copy(str(compile_path), "", "", "test", None)
+    test_file_missing_path = file_path / "test_copy_input_missing"
     config = KapitanInputTypeCopyConfig(
-        input_paths=[test_file_path], output_path=compile_path
+        input_paths=[str(test_file_path)], output_path=str(compile_path)
     )
-    copy_compiler.compile_file(config, test_file_missing_path, compile_path)
+    copy_compiler.compile_file(config, str(test_file_missing_path), str(compile_path))
 
 
-def _validate_files_were_copied(base_path: str) -> None:
-    original_filepath = os.path.join(base_path, "components", "busybox", "pod.yml")
-    copied_filepath = os.path.join(base_path, "compiled", "busybox", "copy", "pod.yml")
-    assert filecmp.cmp(original_filepath, copied_filepath)
+def _validate_files_were_copied(base_path: Path) -> None:
+    original_filepath = base_path / "components" / "busybox" / "pod.yml"
+    copied_filepath = base_path / "compiled" / "busybox" / "copy" / "pod.yml"
+    assert filecmp.cmp(str(original_filepath), str(copied_filepath))
 
-    original_filepath = os.path.join(base_path, "copy_target")
-    copied_filepath = os.path.join(
-        base_path, "compiled", "busybox", "copy", "copy_target"
-    )
-    assert filecmp.cmp(original_filepath, copied_filepath)
+    original_filepath = base_path / "copy_target"
+    copied_filepath = base_path / "compiled" / "busybox" / "copy" / "copy_target"
+    assert filecmp.cmp(str(original_filepath), str(copied_filepath))
 
-    original_filepath = os.path.join(base_path, "copy_target")
-    copied_filepath = os.path.join(base_path, "compiled", "busybox", "copy_target")
-    assert filecmp.cmp(original_filepath, copied_filepath)
+    original_filepath = base_path / "copy_target"
+    copied_filepath = base_path / "compiled" / "busybox" / "copy_target"
+    assert filecmp.cmp(str(original_filepath), str(copied_filepath))
 
 
 def test_compiled_copy_target(isolated_kubernetes_inventory):
     kapitan("compile", "-t", "busybox")
-    _validate_files_were_copied(os.getcwd())
+    _validate_files_were_copied(Path(isolated_kubernetes_inventory))
 
 
 def test_compiled_copy_all_targets(isolated_kubernetes_inventory):
     kapitan("compile")
-    _validate_files_were_copied(os.getcwd())
+    _validate_files_were_copied(Path(isolated_kubernetes_inventory))
 
 
 def test_copy_overwrites_existing_destination_file(
     isolated_compile_dir, sample_pod_manifest
 ):
-    file_path, compile_path, test_file_path = _dirs_bootstrap_helper(
-        os.getcwd(), sample_pod_manifest
+    file_path, compile_path, test_file_path = _bootstrap_copy_workspace(
+        isolated_compile_dir, sample_pod_manifest
     )
-    destination_file = os.path.join(compile_path, "existing.txt")
-    with open(destination_file, "w", encoding="utf-8") as handle:
-        handle.write("stale")
+    destination_file = compile_path / "existing.txt"
+    destination_file.write_text("stale", encoding="utf-8")
 
-    copy_compiler = Copy(compile_path, "", "", "test", None)
+    copy_compiler = Copy(str(compile_path), "", "", "test", None)
     config = KapitanInputTypeCopyConfig(
-        input_paths=[test_file_path], output_path=compile_path
+        input_paths=[str(test_file_path)], output_path=str(compile_path)
     )
-    copy_compiler.compile_file(config, test_file_path, destination_file)
+    copy_compiler.compile_file(config, str(test_file_path), str(destination_file))
 
-    with open(destination_file, encoding="utf-8") as handle:
-        assert handle.read() == sample_pod_manifest
+    assert destination_file.read_text(encoding="utf-8") == sample_pod_manifest
 
 
 def test_copy_missing_path_with_ignore_missing_true(
     isolated_compile_dir, sample_pod_manifest
 ):
-    file_path, compile_path, _ = _dirs_bootstrap_helper(
-        os.getcwd(), sample_pod_manifest
+    file_path, compile_path, _ = _bootstrap_copy_workspace(
+        isolated_compile_dir, sample_pod_manifest
     )
-    missing_path = os.path.join(file_path, "does-not-exist")
-    copy_compiler = Copy(compile_path, "", "", "test", None)
+    missing_path = file_path / "does-not-exist"
+    copy_compiler = Copy(str(compile_path), "", "", "test", None)
     config = KapitanInputTypeCopyConfig(
-        input_paths=[missing_path], output_path=compile_path, ignore_missing=True
+        input_paths=[str(missing_path)],
+        output_path=str(compile_path),
+        ignore_missing=True,
     )
 
-    copy_compiler.compile_file(config, missing_path, compile_path)
-    assert os.path.isdir(compile_path)
+    copy_compiler.compile_file(config, str(missing_path), str(compile_path))
+    assert compile_path.is_dir()
