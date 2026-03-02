@@ -11,13 +11,18 @@ import pytest
 
 from kapitan.inputs.external import External
 from kapitan.inventory.model.input_types import KapitanInputTypeExternalConfig
-from tests.support.helpers import CompileTestHelper, assert_compiled_output_exists
+from tests.support.helpers import (
+    CompileTestHelper,
+    assert_compiled_output_exists,
+    run_kapitan_in_project,
+)
 
 
 def test_compile_external_target(isolated_test_resources, tmp_path):
     helper = CompileTestHelper(isolated_test_resources)
-    helper.compile_with_args(
-        ["compile", "--output-path", str(tmp_path), "-t", "external-test"]
+    run_kapitan_in_project(
+        helper.isolated_path,
+        ["compile", "--output-path", str(tmp_path), "-t", "external-test"],
     )
     assert assert_compiled_output_exists(tmp_path, "external-test/test.md").is_file()
 

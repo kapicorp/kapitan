@@ -15,7 +15,12 @@ import yaml
 
 from kapitan.cli import main as kapitan
 from kapitan.inventory import InventoryBackends
-from tests.support.helpers import CompileTestHelper, assert_compiled_output_exists
+from tests.support.helpers import (
+    CompileTestHelper,
+    assert_compiled_output_exists,
+    compile_targets_in_project,
+    run_kapitan_in_project,
+)
 from tests.support.paths import (
     DOCKER_COMPILE_GOLDEN,
     KUBERNETES_COMPILE_GOLDEN,
@@ -28,12 +33,7 @@ logger = logging.getLogger(__name__)
 
 def _compile_targets(helper: CompileTestHelper, targets, extra_args=None):
     shutil.rmtree(helper.isolated_path / "compiled", ignore_errors=True)
-    args = ["compile"]
-    if targets:
-        args.extend(["-t", *targets])
-    if extra_args:
-        args.extend(extra_args)
-    helper.compile_with_args(args)
+    compile_targets_in_project(helper.isolated_path, targets, extra_args)
 
 
 def _assert_text_content_matches(compiled_file: Path, expected_file: Path) -> None:
@@ -187,7 +187,9 @@ def inventory_backend_args(request, isolated_kubernetes_inventory):
 
 def test_compile_kubernetes(inventory_backend_args, isolated_kubernetes_inventory):
     helper = CompileTestHelper(isolated_kubernetes_inventory)
-    helper.compile_with_args(["compile", "-c", *inventory_backend_args])
+    run_kapitan_in_project(
+        helper.isolated_path, ["compile", "-c", *inventory_backend_args]
+    )
 
     reference_dir = KUBERNETES_COMPILE_GOLDEN
     comparisons = [
@@ -213,8 +215,9 @@ def test_compile_not_enough_args(isolated_kubernetes_inventory, monkeypatch):
 
 def test_compile_specific_target(inventory_backend_args, isolated_kubernetes_inventory):
     helper = CompileTestHelper(isolated_kubernetes_inventory)
-    helper.compile_with_args(
-        ["compile", "-t", "minikube-mysql", *inventory_backend_args]
+    run_kapitan_in_project(
+        helper.isolated_path,
+        ["compile", "-t", "minikube-mysql", *inventory_backend_args],
     )
 
     project_root = Path(isolated_kubernetes_inventory)
@@ -226,7 +229,10 @@ def test_compile_target_with_label(
     inventory_backend_args, isolated_kubernetes_inventory
 ):
     helper = CompileTestHelper(isolated_kubernetes_inventory)
-    helper.compile_with_args(["compile", "-l", "type=kadet", *inventory_backend_args])
+    run_kapitan_in_project(
+        helper.isolated_path,
+        ["compile", "-l", "type=kadet", *inventory_backend_args],
+    )
 
     project_root = Path(isolated_kubernetes_inventory)
     assert (project_root / "compiled/minikube-nginx-kadet").exists()
@@ -237,7 +243,10 @@ def test_compile_copy_input_target(
     inventory_backend_args, isolated_kubernetes_inventory
 ):
     helper = CompileTestHelper(isolated_kubernetes_inventory)
-    helper.compile_with_args(["compile", "-t", "busybox", *inventory_backend_args])
+    run_kapitan_in_project(
+        helper.isolated_path,
+        ["compile", "-t", "busybox", *inventory_backend_args],
+    )
 
     assert_compiled_output_exists(isolated_kubernetes_inventory, "busybox/copy_target")
     assert_compiled_output_exists(
@@ -249,7 +258,10 @@ def test_compile_remove_input_target(
     inventory_backend_args, isolated_kubernetes_inventory
 ):
     helper = CompileTestHelper(isolated_kubernetes_inventory)
-    helper.compile_with_args(["compile", "-t", "removal", *inventory_backend_args])
+    run_kapitan_in_project(
+        helper.isolated_path,
+        ["compile", "-t", "removal", *inventory_backend_args],
+    )
 
     assert not (
         Path(isolated_kubernetes_inventory) / "compiled/removal/copy_target"
@@ -258,7 +270,10 @@ def test_compile_remove_input_target(
 
 def test_compile_jsonnet_env(inventory_backend_args, isolated_kubernetes_inventory):
     helper = CompileTestHelper(isolated_kubernetes_inventory)
-    helper.compile_with_args(["compile", "-t", "jsonnet-env", *inventory_backend_args])
+    run_kapitan_in_project(
+        helper.isolated_path,
+        ["compile", "-t", "jsonnet-env", *inventory_backend_args],
+    )
 
     env_path = (
         Path(isolated_kubernetes_inventory) / "compiled/jsonnet-env/jsonnet-env/env.yml"
@@ -278,7 +293,7 @@ def test_compile_jsonnet_env(inventory_backend_args, isolated_kubernetes_invento
 
 def test_compile_terraform(isolated_terraform_inventory):
     helper = CompileTestHelper(isolated_terraform_inventory)
-    helper.compile_with_args(["compile"])
+    run_kapitan_in_project(helper.isolated_path, ["compile"])
 
     reference_dir = TERRAFORM_COMPILE_GOLDEN
     comparisons = [
@@ -296,7 +311,7 @@ def test_compile_terraform(isolated_terraform_inventory):
 
 def test_compile_docker(isolated_docker_inventory):
     helper = CompileTestHelper(isolated_docker_inventory)
-    helper.compile_with_args(["compile"])
+    run_kapitan_in_project(helper.isolated_path, ["compile"])
 
     reference_dir = DOCKER_COMPILE_GOLDEN
     comparisons = [

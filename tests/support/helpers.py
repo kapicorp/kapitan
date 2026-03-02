@@ -16,7 +16,7 @@ from kapitan.utils import directory_hash
 
 
 class CompileTestHelper:
-    """Helper class for compilation tests."""
+    """Utilities for inspecting compiled test output."""
 
     def __init__(self, isolated_path: str | Path):
         """
@@ -26,43 +26,6 @@ class CompileTestHelper:
             isolated_path: Path to isolated test directory
         """
         self.isolated_path = Path(isolated_path)
-
-    def compile_targets(
-        self,
-        targets: Optional[List[str]] = None,
-        extra_args: Optional[List[str]] = None,
-    ) -> None:
-        """
-        Compile specified targets or all targets.
-
-        Args:
-            targets: List of target names to compile (None for all)
-            extra_args: Additional command line arguments
-        """
-        reset_cache()
-
-        args = ["compile"]
-
-        if targets:
-            for target in targets:
-                args.extend(["-t", target])
-
-        if extra_args:
-            args.extend(extra_args)
-
-        with contextlib.chdir(self.isolated_path):
-            kapitan(*args)
-
-    def compile_with_args(self, argv: List[str]) -> None:
-        """
-        Compile with custom arguments.
-
-        Args:
-            argv: Command arguments for kapitan (without the program name)
-        """
-        reset_cache()
-        with contextlib.chdir(self.isolated_path):
-            kapitan(*argv)
 
     def get_compiled_output(self, relative_path: str) -> str:
         """
@@ -104,6 +67,35 @@ class CompileTestHelper:
         compiled_hash = directory_hash(str(compiled_dir))
         expected_hash = directory_hash(str(expected_dir))
         return compiled_hash == expected_hash
+
+
+def run_kapitan_in_project(project_root: str | Path, argv: List[str]) -> None:
+    """
+    Run Kapitan CLI from an explicit project root.
+    """
+    reset_cache()
+    with contextlib.chdir(Path(project_root)):
+        kapitan(*argv)
+
+
+def compile_targets_in_project(
+    project_root: str | Path,
+    targets: Optional[List[str]] = None,
+    extra_args: Optional[List[str]] = None,
+) -> None:
+    """
+    Run `kapitan compile` from an explicit project root.
+    """
+    args = ["compile"]
+
+    if targets:
+        for target in targets:
+            args.extend(["-t", target])
+
+    if extra_args:
+        args.extend(extra_args)
+
+    run_kapitan_in_project(project_root, args)
 
 
 def write_text_file(path: str | Path, content: str) -> Path:

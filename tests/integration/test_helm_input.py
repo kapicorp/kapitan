@@ -16,6 +16,7 @@ from tests.support.helpers import (
     CompileTestHelper,
     assert_compiled_output_exists,
     read_yaml_file,
+    run_kapitan_in_project,
 )
 
 
@@ -27,8 +28,7 @@ if shutil.which("helm") is None:
 
 @pytest.fixture
 def helm_env(isolated_helm_project):
-    helper = CompileTestHelper(isolated_helm_project)
-    return helper
+    return CompileTestHelper(isolated_helm_project)
 
 
 def test_render_chart(helm_env, tmp_path):
@@ -71,8 +71,9 @@ def test_error_invalid_chart_dir(helm_env, tmp_path):
 
 
 def test_compile_chart(helm_env, tmp_path):
-    helm_env.compile_with_args(
-        ["compile", "--output-path", str(tmp_path), "-t", "acs-engine-autoscaler"]
+    run_kapitan_in_project(
+        helm_env.isolated_path,
+        ["compile", "--output-path", str(tmp_path), "-t", "acs-engine-autoscaler"],
     )
     assert (
         tmp_path
@@ -81,15 +82,17 @@ def test_compile_chart(helm_env, tmp_path):
 
 
 def test_compile_subcharts(helm_env, tmp_path):
-    helm_env.compile_with_args(
-        ["compile", "--output-path", str(tmp_path), "-t", "istio"]
+    run_kapitan_in_project(
+        helm_env.isolated_path,
+        ["compile", "--output-path", str(tmp_path), "-t", "istio"],
     )
     assert (tmp_path / "compiled/istio/istio/charts").is_dir()
     assert (tmp_path / "compiled/istio/istio/templates").is_dir()
 
 
 def test_compile_multiple_targets(helm_env, tmp_path):
-    helm_env.compile_with_args(
+    run_kapitan_in_project(
+        helm_env.isolated_path,
         [
             "compile",
             "--output-path",
@@ -99,7 +102,7 @@ def test_compile_multiple_targets(helm_env, tmp_path):
             "nginx-ingress",
             "-p",
             "2",
-        ]
+        ],
     )
     assert (
         tmp_path
@@ -112,16 +115,18 @@ def test_compile_multiple_targets(helm_env, tmp_path):
 
 
 def test_compile_multiple_charts_per_target(helm_env, tmp_path):
-    helm_env.compile_with_args(
-        ["compile", "--output-path", str(tmp_path), "-t", "nginx-istio"]
+    run_kapitan_in_project(
+        helm_env.isolated_path,
+        ["compile", "--output-path", str(tmp_path), "-t", "nginx-istio"],
     )
     assert (tmp_path / "compiled/nginx-istio/istio/templates").is_dir()
     assert (tmp_path / "compiled/nginx-istio/nginx-ingress/templates").is_dir()
 
 
 def test_compile_with_helm_values(helm_env, tmp_path):
-    helm_env.compile_with_args(
-        ["compile", "--output-path", str(tmp_path), "-t", "nginx-ingress"]
+    run_kapitan_in_project(
+        helm_env.isolated_path,
+        ["compile", "--output-path", str(tmp_path), "-t", "nginx-ingress"],
     )
     controller_deployment_file = assert_compiled_output_exists(
         tmp_path,
@@ -133,7 +138,8 @@ def test_compile_with_helm_values(helm_env, tmp_path):
 
 
 def test_compile_with_helm_values_files(helm_env, tmp_path):
-    helm_env.compile_with_args(
+    run_kapitan_in_project(
+        helm_env.isolated_path,
         [
             "compile",
             "--output-path",
@@ -141,7 +147,7 @@ def test_compile_with_helm_values_files(helm_env, tmp_path):
             "-t",
             "monitoring-dev",
             "monitoring-prd",
-        ]
+        ],
     )
     dev_server_deployment_file = assert_compiled_output_exists(
         tmp_path,
@@ -175,7 +181,7 @@ def test_compile_with_helm_params(helm_env, tmp_path):
         release_name = helm_params["name"]
         namespace = helm_params["namespace"]
 
-    helm_env.compile_with_args(argv)
+    run_kapitan_in_project(helm_env.isolated_path, argv)
     controller_deployment_file = assert_compiled_output_exists(
         tmp_path,
         "nginx-ingress-helm-params/nginx-ingress/templates/controller-deployment.yaml",
@@ -190,8 +196,9 @@ def test_compile_with_helm_params(helm_env, tmp_path):
 
 @pytest.mark.usefixtures("setup_gpg_key")
 def test_compile_with_refs(helm_env, tmp_path, gnupg_home, gpg_env):
-    helm_env.compile_with_args(
-        ["compile", "--output-path", str(tmp_path), "-t", "nginx-ingress", "--reveal"]
+    run_kapitan_in_project(
+        helm_env.isolated_path,
+        ["compile", "--output-path", str(tmp_path), "-t", "nginx-ingress", "--reveal"],
     )
     controller_deployment_file = assert_compiled_output_exists(
         tmp_path,
@@ -217,8 +224,9 @@ def test_compile_kadet_helm_chart(helm_env):
 
 
 def test_numeric_string_values_preserved(helm_env, tmp_path):
-    helm_env.compile_with_args(
-        ["compile", "--output-path", str(tmp_path), "-t", "helm-string-values"]
+    run_kapitan_in_project(
+        helm_env.isolated_path,
+        ["compile", "--output-path", str(tmp_path), "-t", "helm-string-values"],
     )
 
     configmap_file = assert_compiled_output_exists(
