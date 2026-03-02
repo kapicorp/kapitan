@@ -18,8 +18,8 @@ search_path = ""
 ref_controller = ""
 
 
-def test_remove_file_folder(isolated_compile_dir, sample_pod_manifest):
-    base_path = isolated_compile_dir
+def test_remove_file_folder(input_compile_workspace, sample_pod_manifest):
+    base_path = input_compile_workspace
     compile_path = base_path / "compiled"
     file_path = base_path / "input"
     test_file_path = file_path / "test_copy_input"
@@ -47,8 +47,8 @@ def test_remove_file_folder(isolated_compile_dir, sample_pod_manifest):
     assert not test_file_compiled_path.exists()
 
 
-def test_remove_folder_folder(isolated_compile_dir, sample_pod_manifest):
-    base_path = isolated_compile_dir
+def test_remove_folder_folder(input_compile_workspace, sample_pod_manifest):
+    base_path = input_compile_workspace
     compile_path = base_path / "compiled"
     file_path = base_path / "input"
     test_file_path = file_path / "test_copy_input"

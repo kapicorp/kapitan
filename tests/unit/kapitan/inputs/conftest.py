@@ -13,17 +13,15 @@ from tests.support.runtime import cached_args_defaults
 
 
 @pytest.fixture
-def isolated_compile_dir(tmp_path, monkeypatch):
+def input_compile_workspace(tmp_path):
     """
-    Create an isolated compilation directory with its own compiled/ output.
-    Automatically resets cache and returns to original directory after test.
+    Create an isolated compilation workspace without changing the process cwd.
     """
     compile_root = tmp_path / "compile_project"
     compile_root.mkdir()
 
     reset_cache()
     cached.args = cached_args_defaults()
-    monkeypatch.chdir(compile_root)
 
     yield compile_root
 

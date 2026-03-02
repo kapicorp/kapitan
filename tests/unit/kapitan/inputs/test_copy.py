@@ -23,9 +23,9 @@ def _bootstrap_copy_workspace(base_path: Path, file_content: str):
     return file_path, compile_path, test_file_path
 
 
-def test_copy_file_folder(isolated_compile_dir, sample_pod_manifest):
+def test_copy_file_folder(input_compile_workspace, sample_pod_manifest):
     file_path, compile_path, test_file_path = _bootstrap_copy_workspace(
-        isolated_compile_dir, sample_pod_manifest
+        input_compile_workspace, sample_pod_manifest
     )
     test_file_compiled_path = compile_path / "test_copy_input"
     copy_compiler = Copy(str(compile_path), "", "", "test", None)
@@ -40,9 +40,9 @@ def test_copy_file_folder(isolated_compile_dir, sample_pod_manifest):
     assert test_file_hash == test_file_compiled_hash
 
 
-def test_copy_folder_folder(isolated_compile_dir, sample_pod_manifest):
+def test_copy_folder_folder(input_compile_workspace, sample_pod_manifest):
     file_path, compile_path, _ = _bootstrap_copy_workspace(
-        isolated_compile_dir, sample_pod_manifest
+        input_compile_workspace, sample_pod_manifest
     )
     copy_compiler = Copy(str(compile_path), "", "", "test", None)
     config = KapitanInputTypeCopyConfig(
@@ -54,9 +54,9 @@ def test_copy_folder_folder(isolated_compile_dir, sample_pod_manifest):
     assert file_path_hash == compile_path_hash
 
 
-def test_copy_missing_path_folder(isolated_compile_dir, sample_pod_manifest):
+def test_copy_missing_path_folder(input_compile_workspace, sample_pod_manifest):
     file_path, compile_path, test_file_path = _bootstrap_copy_workspace(
-        isolated_compile_dir, sample_pod_manifest
+        input_compile_workspace, sample_pod_manifest
     )
     copy_compiler = Copy(str(compile_path), "", "", "test", None)
     test_file_missing_path = file_path / "test_copy_input_missing"
@@ -91,10 +91,10 @@ def test_compiled_copy_all_targets(isolated_kubernetes_inventory):
 
 
 def test_copy_overwrites_existing_destination_file(
-    isolated_compile_dir, sample_pod_manifest
+    input_compile_workspace, sample_pod_manifest
 ):
     file_path, compile_path, test_file_path = _bootstrap_copy_workspace(
-        isolated_compile_dir, sample_pod_manifest
+        input_compile_workspace, sample_pod_manifest
     )
     destination_file = compile_path / "existing.txt"
     destination_file.write_text("stale", encoding="utf-8")
@@ -109,10 +109,10 @@ def test_copy_overwrites_existing_destination_file(
 
 
 def test_copy_missing_path_with_ignore_missing_true(
-    isolated_compile_dir, sample_pod_manifest
+    input_compile_workspace, sample_pod_manifest
 ):
     file_path, compile_path, _ = _bootstrap_copy_workspace(
-        isolated_compile_dir, sample_pod_manifest
+        input_compile_workspace, sample_pod_manifest
     )
     missing_path = file_path / "does-not-exist"
     copy_compiler = Copy(str(compile_path), "", "", "test", None)
