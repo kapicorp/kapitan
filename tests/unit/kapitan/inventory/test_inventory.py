@@ -84,6 +84,16 @@ def test_inventory_get_parameters_for_multiple(tmp_path):
         inv.get_parameters(["prod"])
 
 
+def test_inventory_get_parameters_for_single_target(tmp_path):
+    inv_path = tmp_path / "inventory"
+    targets_path = inv_path / "targets"
+    targets_path.mkdir(parents=True)
+    _write_target(str(targets_path), "prod", content="parameters:\n  foo: bar\n")
+
+    inv = _Inventory(inventory_path=str(inv_path))
+    assert inv.get_parameters("prod") == inv.get_target("prod").parameters
+
+
 def test_inventory_initialise_is_idempotent(tmp_path):
     inv_path = tmp_path / "inventory"
     targets_path = inv_path / "targets"

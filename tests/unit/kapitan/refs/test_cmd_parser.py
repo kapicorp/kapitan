@@ -1201,6 +1201,46 @@ def test_secret_update_validate_matching_keys_skip_update_branches(
     assert refs[azkms_tag].updated is False
 
 
+def test_secret_update_validate_matching_gpg_recipients_skip_mismatch_branch(
+    monkeypatch, cmd_parser_args, cmd_parser_inventory, patch_cmd_parser_inventory
+):
+    class _GPGSecretState:
+        def __init__(self, recipients):
+            self.recipients = [{"fingerprint": f} for f in recipients]
+
+    monkeypatch.setattr(
+        "kapitan.refs.cmd_parser.lookup_fingerprints",
+        lambda recipients: [recipient["fingerprint"] for recipient in recipients],
+    )
+
+    token = "?{gpg:target/secret}"
+    inventory = cmd_parser_inventory(
+        secrets=_secrets_config(
+            gpg=SimpleNamespace(
+                key="unused",
+                recipients=[
+                    {"fingerprint": "AAAA"},
+                    {"fingerprint": "BBBB"},
+                ],
+            )
+        ),
+        target_name="target",
+    )
+    patch_cmd_parser_inventory(inventory, {"target": [token]})
+
+    with pytest.raises(SystemExit) as excinfo:
+        secret_update_validate(
+            cmd_parser_args(
+                inventory_path="/tmp/inventory",
+                refs_path="/tmp/refs",
+                validate_targets=True,
+            ),
+            _FakeRefController({token: _GPGSecretState(["AAAA", "BBBB"])}),
+        )
+
+    assert excinfo.value.code == 0
+
+
 def test_ref_write_handles_unmatched_reference_type_fallthrough(
     monkeypatch, cmd_parser_args, cmd_parser_secret_file, ref_controller
 ):
