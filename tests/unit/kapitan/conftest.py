@@ -44,11 +44,9 @@ def restore_cached_state():
 
 
 @pytest.fixture
-def isolated_lint_project(tmp_path, monkeypatch):
+def isolated_lint_project(tmp_path):
     """
     Create an isolated copy of the lint fixture project for test execution.
     Returns the path to the isolated copy.
     """
-    return prepare_isolated_project(
-        tmp_path, monkeypatch, KAPITAN_LINT_FIXTURE, "lint_project"
-    )
+    return prepare_isolated_project(tmp_path, KAPITAN_LINT_FIXTURE, "lint_project")

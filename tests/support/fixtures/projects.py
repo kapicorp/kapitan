@@ -18,27 +18,26 @@ def _attach_fixture(request, name, value):
 
 
 @pytest.fixture
-def isolated_test_resources(tmp_path, monkeypatch, request):
+def isolated_test_resources(tmp_path, request):
     """
     Create an isolated copy of the compile fixture project for test execution.
     Returns the path to the isolated copy.
     """
     isolated_path = prepare_isolated_project(
-        tmp_path, monkeypatch, KAPITAN_COMPILE_INTEGRATION, "compile_project"
+        tmp_path, KAPITAN_COMPILE_INTEGRATION, "compile_project"
     )
     _attach_fixture(request, "isolated_test_resources", isolated_path)
     return isolated_path
 
 
 @pytest.fixture
-def isolated_kubernetes_inventory(tmp_path, monkeypatch):
+def isolated_kubernetes_inventory(tmp_path):
     """
     Create an isolated copy of the kubernetes example for test execution.
     Returns the path to the isolated copy.
     """
     isolated_path = prepare_isolated_project(
         tmp_path,
-        monkeypatch,
         EXAMPLE_KUBERNETES_ROOT,
         "kubernetes",
         clean_compiled=True,

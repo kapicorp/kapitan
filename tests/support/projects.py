@@ -21,7 +21,6 @@ def copy_project_tree(
 
 def prepare_isolated_project(
     tmp_path: Path,
-    monkeypatch,
     source_path: str | Path,
     destination_name: str,
     *,
@@ -30,7 +29,6 @@ def prepare_isolated_project(
     isolated_path = copy_project_tree(tmp_path, source_path, destination_name)
     reset_cache()
     cached.args = cached_args_defaults()
-    monkeypatch.chdir(isolated_path)
 
     if clean_compiled:
         compiled_path = isolated_path / "compiled"

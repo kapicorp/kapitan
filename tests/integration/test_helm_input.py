@@ -32,14 +32,16 @@ def helm_env(isolated_helm_project):
 
 
 def test_render_chart(helm_env, tmp_path):
-    chart_path = "charts/acs-engine-autoscaler"
+    chart_path = helm_env.isolated_path / "charts" / "acs-engine-autoscaler"
     helm_params = {"name": "acs-engine-autoscaler"}
     helm_config = KapitanInputTypeHelmConfig(
-        input_paths=[chart_path], helm_params=helm_params, output_path=str(tmp_path)
+        input_paths=[str(chart_path)],
+        helm_params=helm_params,
+        output_path=str(tmp_path),
     )
     helm = Helm(None, None, None, None, None)
     _, error_message = helm.render_chart(
-        chart_path,
+        str(chart_path),
         str(tmp_path),
         helm_config.helm_path,
         helm_config.helm_params,
@@ -173,9 +175,12 @@ def test_compile_with_helm_params(helm_env, tmp_path):
         "-t",
         "nginx-ingress-helm-params",
     ]
-    with open(
-        "inventory/targets/nginx-ingress-helm-params.yml", encoding="utf-8"
-    ) as fp:
+    with (
+        helm_env.isolated_path
+        / "inventory"
+        / "targets"
+        / "nginx-ingress-helm-params.yml"
+    ).open(encoding="utf-8") as fp:
         manifest = yaml.safe_load(fp.read())
         helm_params = manifest["parameters"]["kapitan"]["compile"][0]["helm_params"]
         release_name = helm_params["name"]
@@ -216,7 +221,7 @@ def test_compile_with_refs(helm_env, tmp_path, gnupg_home, gpg_env):
 
 
 def test_compile_kadet_helm_chart(helm_env):
-    chart = HelmChart(chart_dir="charts/prometheus/")
+    chart = HelmChart(chart_dir=str(helm_env.isolated_path / "charts" / "prometheus"))
 
     assert len(chart.root.keys()) > 0
     for resource_name in chart.root:

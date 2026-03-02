@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from kapitan.cli import main as kapitan
+from tests.support.helpers import run_kapitan_in_project
 
 
 def test_refs_cli_base64_write_and_reveal_file(refs_cli, refs_path, tmp_path):
@@ -74,16 +74,19 @@ def test_refs_cli_gpg_write_and_reveal_file(
 
 def test_lint_cli_fails_on_real_fixture_warnings(isolated_test_resources):
     with pytest.raises(SystemExit) as excinfo:
-        kapitan(
-            "lint",
-            "--fail-on-warning",
-            "--search-secrets",
-            "--inventory-path",
-            "inventory",
-            "--refs-path",
-            "refs",
-            "--compiled-path",
-            "compiled",
+        run_kapitan_in_project(
+            isolated_test_resources,
+            [
+                "lint",
+                "--fail-on-warning",
+                "--search-secrets",
+                "--inventory-path",
+                "inventory",
+                "--refs-path",
+                "refs",
+                "--compiled-path",
+                "compiled",
+            ],
         )
 
     assert excinfo.value.code == 1

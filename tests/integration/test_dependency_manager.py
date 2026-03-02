@@ -12,7 +12,6 @@ from pathlib import Path
 
 import pytest
 
-from kapitan.cli import main as kapitan
 from kapitan.dependency_manager.base import (
     HelmSource,
     fetch_dependencies,
@@ -27,6 +26,7 @@ from kapitan.inventory.model.dependencies import (
     KapitanDependencyGitConfig,
     KapitanDependencyHelmConfig,
 )
+from tests.support.helpers import run_kapitan_in_project
 from tests.support.paths import HTTP_SOURCES_ROOT
 
 
@@ -317,14 +317,17 @@ def test_compile_fetch(
 
     temp = tmp_path / "out"
     temp.mkdir()
-    kapitan(
-        "compile",
-        "--fetch",
-        "--output-path",
-        str(temp),
-        "-t",
-        "nginx",
-        "monitoring-dev",
+    run_kapitan_in_project(
+        temp_dir,
+        [
+            "compile",
+            "--fetch",
+            "--output-path",
+            str(temp),
+            "-t",
+            "nginx",
+            "monitoring-dev",
+        ],
     )
 
     assert (temp / "components" / "tests").is_dir()

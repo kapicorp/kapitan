@@ -5,13 +5,13 @@
 
 from pathlib import Path
 
-from kapitan.cli import main as kapitan
 from kapitan.inputs.copy import Copy
 from kapitan.inputs.remove import Remove
 from kapitan.inventory.model.input_types import (
     KapitanInputTypeCopyConfig,
     KapitanInputTypeRemoveConfig,
 )
+from tests.support.helpers import run_kapitan_in_project
 
 
 search_path = ""
@@ -81,7 +81,7 @@ def _validate_files_were_removed(base_path: Path):
 
 
 def test_compiled_remove_target(isolated_kubernetes_inventory):
-    kapitan("compile", "-t", "removal")
+    run_kapitan_in_project(isolated_kubernetes_inventory, ["compile", "-t", "removal"])
     _validate_files_were_removed(Path(isolated_kubernetes_inventory))
 
 

@@ -7,10 +7,10 @@ import filecmp
 import hashlib
 from pathlib import Path
 
-from kapitan.cli import main as kapitan
 from kapitan.inputs.copy import Copy
 from kapitan.inventory.model.input_types import KapitanInputTypeCopyConfig
 from kapitan.utils import directory_hash
+from tests.support.helpers import run_kapitan_in_project
 
 
 def _bootstrap_copy_workspace(base_path: Path, file_content: str):
@@ -81,12 +81,12 @@ def _validate_files_were_copied(base_path: Path) -> None:
 
 
 def test_compiled_copy_target(isolated_kubernetes_inventory):
-    kapitan("compile", "-t", "busybox")
+    run_kapitan_in_project(isolated_kubernetes_inventory, ["compile", "-t", "busybox"])
     _validate_files_were_copied(Path(isolated_kubernetes_inventory))
 
 
 def test_compiled_copy_all_targets(isolated_kubernetes_inventory):
-    kapitan("compile")
+    run_kapitan_in_project(isolated_kubernetes_inventory, ["compile"])
     _validate_files_were_copied(Path(isolated_kubernetes_inventory))
 
 
