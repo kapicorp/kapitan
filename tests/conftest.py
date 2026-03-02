@@ -11,12 +11,11 @@ import pytest
 
 from kapitan import cached
 from kapitan.cached import reset_cache
-from tests.support.paths import EXAMPLE_KUBERNETES_ROOT, KAPITAN_COMPILE_INTEGRATION
-from tests.support.projects import copy_project_tree, prepare_isolated_project
 from tests.support.runtime import cached_args_defaults
 
 
 pytest_plugins = (
+    "tests.support.fixtures.projects",
     "tests.support.fixtures.refs",
     "tests.support.fixtures.secrets",
 )
@@ -32,72 +31,6 @@ def reset_cached_args():
     yield
     reset_cache()
     cached.args = cached_args_defaults()
-
-
-def _attach_fixture(request, name, value):
-    instance = getattr(request, "instance", None)
-    if instance is not None:
-        setattr(instance, name, value)
-
-
-@pytest.fixture
-def isolated_test_resources(tmp_path, monkeypatch, request):
-    """
-    Create an isolated copy of the compile fixture project for test execution.
-    Returns the path to the isolated copy.
-    """
-    isolated_path = prepare_isolated_project(
-        tmp_path, monkeypatch, KAPITAN_COMPILE_INTEGRATION, "compile_project"
-    )
-    _attach_fixture(request, "isolated_test_resources", isolated_path)
-    return isolated_path
-
-
-@pytest.fixture
-def isolated_kubernetes_inventory(tmp_path, monkeypatch):
-    """
-    Create an isolated copy of the kubernetes example for test execution.
-    Returns the path to the isolated copy.
-    """
-    isolated_path = prepare_isolated_project(
-        tmp_path,
-        monkeypatch,
-        EXAMPLE_KUBERNETES_ROOT,
-        "kubernetes",
-        clean_compiled=True,
-    )
-    compiled_path = isolated_path / "compiled"
-    # Safety check: ensure we're not in the actual examples directory
-    assert EXAMPLE_KUBERNETES_ROOT not in isolated_path.parents
-    assert tmp_path in isolated_path.parents
-    if compiled_path.exists():
-        from shutil import rmtree
-
-        rmtree(compiled_path)
-    return isolated_path
-
-
-@pytest.fixture
-def kubernetes_inventory_copy(tmp_path):
-    """
-    Create a writable copy of the kubernetes example without changing cwd.
-    Returns the path to the isolated copy.
-    """
-    return copy_project_tree(tmp_path, EXAMPLE_KUBERNETES_ROOT, "kubernetes")
-
-
-@pytest.fixture
-def migrated_omegaconf_inventory(kubernetes_inventory_copy):
-    """
-    Return a migrated omegaconf inventory path under a writable copy.
-    """
-    from kapitan.inventory.backends.omegaconf import migrate
-    from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
-
-    inventory_path = Path(kubernetes_inventory_copy) / "inventory"
-    migrate(str(inventory_path))
-    register_resolvers()
-    return inventory_path
 
 
 # Pytest configuration
@@ -191,6 +124,8 @@ def seeded_git_repo(git_repo, request):
 
     repo.git.branch("-M", "master")
 
-    _attach_fixture(request, "seeded_git_repo", repo_path)
+    instance = getattr(request, "instance", None)
+    if instance is not None:
+        instance.seeded_git_repo = repo_path
 
     return repo_path
