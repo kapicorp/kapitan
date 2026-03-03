@@ -4,11 +4,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import hashlib
+import io
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
+from kapitan.defaults import KADET_COMPONENT_MODULE_PREFIX
 from kapitan.errors import CompileError
 from kapitan.inputs.cache import InputCache
 
@@ -146,3 +148,30 @@ def test_dump_and_load_output_round_trip(cache_env, tmp_path):
         loaded_obj = cache.load_output(fp)
 
     assert loaded_obj == output_obj
+
+
+def test_load_output_ignores_missing_kadet_component_module(cache_env, monkeypatch):
+    cache = InputCache("test_input")
+    exc = ModuleNotFoundError("missing kadet component")
+    exc.name = f"{KADET_COMPONENT_MODULE_PREFIX}component"
+
+    def _raise_missing_module(_fp):
+        raise exc
+
+    monkeypatch.setattr("kapitan.inputs.cache.pickle.load", _raise_missing_module)
+
+    assert cache.load_output(io.BytesIO(b"cache")) is None
+
+
+def test_load_output_raises_for_non_kadet_missing_module(cache_env, monkeypatch):
+    cache = InputCache("test_input")
+    exc = ModuleNotFoundError("missing dependency")
+    exc.name = "cachetools"
+
+    def _raise_missing_module(_fp):
+        raise exc
+
+    monkeypatch.setattr("kapitan.inputs.cache.pickle.load", _raise_missing_module)
+
+    with pytest.raises(ModuleNotFoundError):
+        cache.load_output(io.BytesIO(b"cache"))

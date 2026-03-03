@@ -221,6 +221,18 @@ def test_inventory_function_uses_search_paths(monkeypatch, tmp_path):
     assert result["name"] == "target"
 
 
+def test_inventory_function_defaults_search_paths_and_returns_inventory(
+    monkeypatch, tmp_path
+):
+    inv = SimpleNamespace(inventory={"target": {"parameters": {}}})
+    monkeypatch.setattr("kapitan.resources.get_inventory", lambda _path: inv)
+
+    inventory_dir = tmp_path / "inventory"
+    inventory_dir.mkdir()
+
+    assert inventory_func(inventory_path=str(inventory_dir)) == inv.inventory
+
+
 def test_jinja2_render_file_success_and_error(tmp_path):
     template = tmp_path / "template.j2"
     template.write_text("hello {{ name }}", encoding="utf-8")

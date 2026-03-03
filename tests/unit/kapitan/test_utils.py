@@ -494,6 +494,27 @@ def test_safe_copy_file_and_tree(tmp_path):
     assert (dst / ".hidden").exists() is False
 
 
+def test_safe_copy_file_and_tree_cover_copy_paths(tmp_path):
+    src = tmp_path / "src"
+    nested = src / "nested"
+    nested.mkdir(parents=True)
+    (src / "root.txt").write_text("root", encoding="utf-8")
+    (nested / "child.txt").write_text("child", encoding="utf-8")
+
+    copied_path, copied = safe_copy_file(
+        str(src / "root.txt"), str(tmp_path / "copied-root.txt")
+    )
+    assert copied_path == str(tmp_path / "copied-root.txt")
+    assert copied == 1
+
+    dst = tmp_path / "tree"
+    outputs = safe_copy_tree(str(src), str(dst))
+    assert sorted(Path(path).relative_to(dst).as_posix() for path in outputs) == [
+        "nested/child.txt",
+        "root.txt",
+    ]
+
+
 def test_compare_versions_and_check_version(monkeypatch, tmp_path, capsys):
     """Test compare versions and check version.
 
@@ -803,8 +824,8 @@ def test_render_jinja2_wraps_directory_render_errors(tmp_path):
     """Test render jinja2 wraps directory render errors.
 
     Exercises `kapitan/utils.py` for the "render jinja2 wraps directory render
-    errors" path using temporary filesystem fixtures, then validates the expected
-    error-handling contract.
+    errors" path using temporary filesystem fixtures, then validates the
+    expected error-handling contract.
 
     It targets shared filesystem/network/version helper utilities. This prevents
     invalid input or dependency failures from being silently accepted and keeps
@@ -820,9 +841,9 @@ def test_render_jinja2_wraps_directory_render_errors(tmp_path):
 def test_utils_module_falls_back_to_strenum_and_yaml_safeloader(monkeypatch):
     """Test utils module falls back to strenum and YAML safe loader.
 
-    Exercises `kapitan/utils.py` for import fallback branches when `enum.StrEnum`
-    and `yaml.CSafeLoader` are unavailable, then validates the expected fallback
-    selection contract.
+    Exercises `kapitan/utils.py` for import fallback branches when
+    `enum.StrEnum` and `yaml.CSafeLoader` are unavailable, then validates the
+    expected fallback selection contract.
 
     It targets shared filesystem/network/version helper utilities. This protects
     stable behavior for downstream callers and guards normal execution paths
@@ -983,8 +1004,8 @@ def test_check_version_covers_unexpected_compare_result_branch(monkeypatch):
     """Test check version covers unexpected compare result branch.
 
     Exercises `kapitan/utils.py` for the branch where `compare_versions` returns
-    a non-standard value in `check_version`, then validates the expected
-    error-handling contract.
+    a non-standard value in `check_version`, then validates the expected error-
+    handling contract.
 
     It targets shared filesystem/network/version helper utilities. This keeps
     branch behavior deterministic under monkeypatched or abnormal comparison

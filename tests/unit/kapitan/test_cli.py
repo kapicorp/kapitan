@@ -557,3 +557,38 @@ def test_main_sets_logging_level_for_verbose_and_quiet(
 
     assert cli_module.main("dummy-command") == 0
     assert captured["level"] == expected_level
+
+
+def test_main_prints_help_and_exits_when_no_effective_argv(monkeypatch):
+    printed = {"value": False}
+
+    class _FakeParser:
+        def parse_args(self, _argv):
+            return SimpleNamespace(
+                mp_method="spawn",
+                func=lambda _args: None,
+                pattern="",
+                target_name="",
+                verbose=False,
+                quiet=False,
+            )
+
+        def error(self, message):
+            raise RuntimeError(message)
+
+        def print_help(self):
+            printed["value"] = True
+
+    monkeypatch.setattr(cli_module, "build_parser", lambda: _FakeParser())
+    monkeypatch.setattr(
+        cli_module.multiprocessing,
+        "set_start_method",
+        lambda _method: None,
+    )
+    monkeypatch.setattr(cli_module.sys, "argv", ["kapitan"])
+
+    with pytest.raises(SystemExit) as excinfo:
+        cli_module.main()
+
+    assert excinfo.value.code == 1
+    assert printed["value"] is True
