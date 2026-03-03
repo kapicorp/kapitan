@@ -27,6 +27,10 @@ class MockInputType(InputType):
         """Mock compile_file that records the path"""
         self.compiled_paths.append(input_path)
 
+    def inputs_hash(self, *inputs, **kwargs):
+        """Mock inputs_hash - not needed for compile_obj tests"""
+        return ""
+
 
 class TestCompileObjEdgeCases:
     """Tests for critical edge cases in compile_obj method"""
@@ -34,7 +38,8 @@ class TestCompileObjEdgeCases:
     def test_deduplication_overlapping_search_paths(self, temp_dir):
         """Verify files aren't compiled multiple times when search paths overlap"""
         test_file = os.path.join(temp_dir, "config.yaml")
-        open(test_file, "w").close()
+        with open(test_file, "w"):
+            pass
 
         compile_path = os.path.join(temp_dir, "compiled")
         os.makedirs(compile_path, exist_ok=True)
@@ -92,7 +97,8 @@ class TestCompileObjEdgeCases:
     def test_mixed_found_and_missing_paths_ignore_true(self, temp_dir):
         """Verify partial matches work correctly - compile found, skip missing"""
         test_file = os.path.join(temp_dir, "exists.yaml")
-        open(test_file, "w").close()
+        with open(test_file, "w"):
+            pass
 
         compile_path = os.path.join(temp_dir, "compiled")
         os.makedirs(compile_path, exist_ok=True)
@@ -116,8 +122,10 @@ class TestCompileObjEdgeCases:
         # Create two valid files
         file1 = os.path.join(temp_dir, "file1.yaml")
         file2 = os.path.join(temp_dir, "file2.yaml")
-        open(file1, "w").close()
-        open(file2, "w").close()
+        with open(file1, "w"):
+            pass
+        with open(file2, "w"):
+            pass
 
         compile_path = os.path.join(temp_dir, "compiled")
         os.makedirs(compile_path, exist_ok=True)
