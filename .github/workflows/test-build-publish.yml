@@ -6,10 +6,7 @@ env:
   DEFAULT_PYTHON_VERSION: '3.11'
   PYTHON_VERSIONS: '["3.11", "3.12", "3.13", "3.14"]'
   MISE_LOCKED: '1'
-  # Each platform entry includes the docker platform and the corresponding GitHub runner
-  # Update UBUNTU_VERSION below to change all runners at once
-  UBUNTU_VERSION: '24.04'
-  PLATFORMS: '[{"platform": "linux/amd64", "runner": "ubuntu-24.04"}, {"platform": "linux/arm64", "runner": "ubuntu-24.04-arm"}]'
+  DEFAULT_RUNNER: 'ubuntu-24.04'
 
 concurrency:
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
@@ -40,7 +37,8 @@ on:
 jobs:
   setup:
     name: setup build matrix
-    # NOTE: Update this runner and UBUNTU_VERSION together when changing Ubuntu version
+    # NOTE: GitHub Actions does not allow env context in job-level runs-on,
+    # so keep this runner in sync with env.DEFAULT_RUNNER above.
     runs-on: ubuntu-24.04
     outputs:
       python-versions: ${{ steps.set-matrix.outputs.python-versions }}
@@ -52,8 +50,9 @@ jobs:
       - id: set-matrix
         run: |
           # All outputs in a single grouped redirect
+          PLATFORMS='[{"platform": "linux/amd64", "runner": "'"${{ env.DEFAULT_RUNNER }}"'"}, {"platform": "linux/arm64", "runner": "'"${{ env.DEFAULT_RUNNER }}"'-arm"}]'
           {
-            echo "runner=ubuntu-${{ env.UBUNTU_VERSION }}"
+            echo "runner=${{ env.DEFAULT_RUNNER }}"
             echo "default-python-version=${{ env.DEFAULT_PYTHON_VERSION }}"
             echo "default-image-name=kapitan"
 
@@ -63,7 +62,7 @@ jobs:
             echo 'EOF'
 
             echo 'platforms<<EOF'
-            echo '${{ env.PLATFORMS }}'
+            echo "${PLATFORMS}"
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 

@@ -21,6 +21,7 @@ Main CI/CD workflow that:
 - ✅ Coverage tracking with branch coverage enabled
 - ✅ Test performance metrics and slowest test identification
 - ✅ GitHub Actions summaries with coverage badges
+- ✅ Build-matrix runner labels are derived from the default Ubuntu runner setting
 
 ### 2. Documentation (`documentation.yml`)
 Builds and publishes documentation to GitHub Pages.
