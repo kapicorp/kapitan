@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, Optional, Union
+from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -17,21 +17,21 @@ class KapitanDependencyBaseConfig(BaseModel):
     type: KapitanDependencyTypes
     source: str
     output_path: str
-    force_fetch: Optional[bool] = False
+    force_fetch: bool | None = False
 
 
 class KapitanDependencyHelmConfig(KapitanDependencyBaseConfig):
     type: Literal[KapitanDependencyTypes.HELM] = KapitanDependencyTypes.HELM
     chart_name: str
-    version: Optional[str] = None
-    helm_path: Optional[str] = None
+    version: str | None = None
+    helm_path: str | None = None
 
 
 class KapitanDependencyGitConfig(KapitanDependencyBaseConfig):
     type: Literal[KapitanDependencyTypes.GIT] = KapitanDependencyTypes.GIT
-    ref: Optional[str] = "master"
-    subdir: Optional[str] = None
-    submodules: Optional[bool] = False
+    ref: str | None = "master"
+    subdir: str | None = None
+    submodules: bool | None = False
 
 
 class KapitanDependencyHttpsConfig(KapitanDependencyBaseConfig):
