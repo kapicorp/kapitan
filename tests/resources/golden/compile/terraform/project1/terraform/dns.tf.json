@@ -1,0 +1,46 @@
+{
+  "resource": {
+    "google_dns_managed_zone": {
+      "googlecom": {
+        "description": "DNS zone for google.com",
+        "dns_name": "google.com.",
+        "name": "googlecom"
+      },
+      "googlecouk": {
+        "description": "DNS zone for google.co.uk",
+        "dns_name": "google.co.uk.",
+        "name": "googlecouk"
+      }
+    },
+    "google_dns_record_set": {
+      "googlecom_images_A": {
+        "managed_zone": "googlecom",
+        "name": "images",
+        "rrdatas": [
+          "3.3.3.3"
+        ],
+        "ttl": 60,
+        "type": "A"
+      },
+      "googlecom_www_A": {
+        "managed_zone": "googlecom",
+        "name": "www",
+        "rrdatas": [
+          "1.1.1.1",
+          "2.2.2.2"
+        ],
+        "ttl": 300,
+        "type": "A"
+      },
+      "googlecouk_www_A": {
+        "managed_zone": "googlecouk",
+        "name": "www",
+        "rrdatas": [
+          "4.4.4.4"
+        ],
+        "ttl": 300,
+        "type": "A"
+      }
+    }
+  }
+}

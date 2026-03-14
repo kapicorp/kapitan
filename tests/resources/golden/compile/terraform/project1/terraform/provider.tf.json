@@ -1,0 +1,20 @@
+{
+  "provider": {
+    "google": {
+      "project": "project1",
+      "region": "europe-west2",
+      "version": "1.16.2",
+      "zone": "europe-west2-a"
+    }
+  },
+  "terraform": {
+    "backend": {
+      "gcs": {
+        "bucket": "my_centralized_tf_bucket",
+        "prefix": "/project1/",
+        "project": "centralized_gcloud_project"
+      }
+    },
+    "required_version": ">= 0.11.7"
+  }
+}

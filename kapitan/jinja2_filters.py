@@ -20,8 +20,9 @@ import toml
 import yaml
 from six import string_types
 
-from kapitan import cached, defaults, utils
+from kapitan import cached, defaults
 from kapitan.errors import CompileError
+from kapitan.utils.hashing import sha256_string
 
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ def _jinja_error_info(trace_data):
 
 def load_jinja2_filters(env):
     """Load Jinja2 custom filters into env"""
-    env.filters["sha256"] = utils.sha256_string
+    env.filters["sha256"] = sha256_string
     env.filters["b64encode"] = base64_encode
     env.filters["b64decode"] = base64_decode
     env.filters["yaml"] = to_yaml

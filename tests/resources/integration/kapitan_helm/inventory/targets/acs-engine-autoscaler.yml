@@ -1,0 +1,10 @@
+parameters:
+  kapitan:
+    vars:
+      target: acs-engine-autoscaler
+      namespace: temp
+    compile:
+      - output_path: .
+        input_type: helm
+        input_paths:
+          - charts/acs-engine-autoscaler

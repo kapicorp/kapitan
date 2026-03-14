@@ -1,0 +1,18 @@
+parameters:
+  kapitan:
+    vars:
+      target: nginx-ingress-helm-params
+      namespace: temp
+    compile:
+      - output_path: .
+        input_type: helm
+        input_paths:
+          - charts/nginx-ingress
+        helm_values:
+          controller:
+            name: my-controller
+            image:
+              repository: custom_repo
+        helm_params:
+          name: my-first-release-name
+          namespace: my-first-namespace

@@ -1,0 +1,12 @@
+parameters:
+  input: $?{gpg:targets/nginx-ingress/electionID||randomstr|base64}
+  kapitan:
+    vars:
+      target: reveal-output
+    compile:
+      - name: generate-toml-jsonnet
+        input_type: jsonnet
+        output_path: .
+        output_type: json
+        input_paths:
+          - components/input-to-output/main.jsonnet

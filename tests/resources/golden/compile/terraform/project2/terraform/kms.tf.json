@@ -1,0 +1,32 @@
+{
+  "resource": {
+    "google_kms_crypto_key": {
+      "kapitan": {
+        "depends_on": [
+          "google_project_service.enable_kms_service"
+        ],
+        "key_ring": "${google_kms_key_ring.kapitan.self_link}",
+        "name": "project2",
+        "rotation_period": "15780000s"
+      }
+    },
+    "google_kms_key_ring": {
+      "kapitan": {
+        "depends_on": [
+          "google_project_service.enable_kms_service"
+        ],
+        "location": "europe-west2",
+        "name": "kapitan"
+      }
+    },
+    "google_project_service": {
+      "enable_kms_service": {
+        "depends_on": [
+          "google_project.project2"
+        ],
+        "disable_on_destroy": true,
+        "service": "cloudkms.googleapis.com"
+      }
+    }
+  }
+}

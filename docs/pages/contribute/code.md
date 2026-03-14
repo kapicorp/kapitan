@@ -17,7 +17,7 @@ targeting master branch. All submissions, including submissions by project membe
 
 ### Setup
 
-We build Kapitan using `uv` and provide a comprehensive Makefile for development tasks.
+We build Kapitan using `uv` (for Python deps) and `mise` (for external toolchain), and provide a comprehensive Makefile for development tasks.
 
 #### Quick Start
 
@@ -29,38 +29,33 @@ make setup
 ```
 
 This command will:
-- Install `uv` package manager
+- Install pinned toolchain via `mise` (`uv`, Helm, Kustomize, CUE)
 - Install all Python dependencies (including dev, test, docs, and optional extras)
-- Install external tools (kustomize and CUE)
+- Configure pre-commit hooks
 
 #### Manual Setup
 
 If you prefer to set up components individually:
 
-1. **Install `uv`**
+1. **Install `mise`**
+
+    Follow the official installation instructions for your platform and shell:
+    <https://mise.jdx.dev/getting-started.html#installing-mise-cli>
+
+2. **Install Toolchain**
 
     ```bash
-    make install_uv
+    make install_tools
     # or manually:
-    curl -LsSf https://astral.sh/uv/install.sh | sh
+    mise install --locked
     ```
 
-2. **Install Python Dependencies**
+3. **Install Python Dependencies**
 
     ```bash
     make install
     # or manually:
-    uv sync --locked --all-extras --dev
-    ```
-
-3. **Install External Tools** (required for some tests)
-
-    ```bash
-    make install_external_tools
-    # This installs:
-    # - Helm (Kubernetes package manager)
-    # - Kustomize (Kubernetes manifest management)
-    # - CUE (data validation and configuration)
+    mise exec -- uv sync --locked --all-extras --dev
     ```
 
 4. **Initialize Git Submodules**
@@ -74,7 +69,7 @@ If you prefer to set up components individually:
 5. **Run Kapitan with your compiled code**
 
     ```bash
-    uv run kapitan <your command>
+    mise exec -- uv run kapitan <your command>
     ```
 
 #### Makefile Commands Overview
@@ -84,28 +79,28 @@ Run `make help` or simply `make` to see all available commands:
 **Setup Commands:**
 - `make setup` - Complete development environment setup (recommended for first-time setup)
 - `make install` - Install Python dependencies
-- `make install_uv` - Install `uv` package manager
-- `make install_external_tools` - Install Helm, Kustomize, and CUE
+- `make install_tools` - Install all pinned tools from `mise.toml`
 - `make install_pre_commit` - Configure git pre-commit hooks
 
 **Development Commands:**
 - `make format` - Format code with ruff
 - `make lint` - Run code quality checks on source code
-- `make lint-tests` - Run code quality checks on tests
-- `make lint-all` - Run code quality checks on everything
+- `make lint_tests` - Run code quality checks on tests
+- `make lint_all` - Run code quality checks on everything
 - `make fix` - Fix auto-fixable linting issues in source
-- `make fix-tests` - Fix auto-fixable linting issues in tests
+- `make fix_tests` - Fix auto-fixable linting issues in tests
 
 **Testing Commands:**
-- `make test` - Run comprehensive test suite
-- `make test_quick` - Run quick tests without Docker
-- `make test_python` - Run only Python unit tests
-- `make test_coverage` - Run tests with coverage reporting
-- `make build_docker` - Build Docker image
-- `make test_docker` - Build and test Docker image
+- `make tests_unit` - Run unit tests only, excluding `requires_network`
+- `make tests_integration` - Run integration tests only, excluding `requires_network`
+- `make tests` - Run the full Python test suite, excluding `requires_network`
+- `make tests_network` - Run network-dependent tests explicitly
+- `make test` - Run the full validation suite
+- `make coverage_report` - Show the current coverage report
+- `make build_docker` - Build and test the Docker image
 
 **Documentation Commands:**
-- `make docs_serve` - Serve documentation locally at http://localhost:8000
+- `make docs_serve` - Serve documentation locally at `DOCS_DEV_ADDR` (default `localhost:8000`)
 - `make docs_deploy` - Deploy documentation to GitHub Pages
 
 **Other Commands:**
@@ -124,12 +119,13 @@ brew install gcc@5
 ### Testing
 
 We provide several testing commands with different scopes to support various development workflows.
+For suite layout, markers, and coverage expectations, see `tests/README.md`.
 
 #### Quick Development Workflow
 
 For rapid development iteration:
 ```bash
-make test_quick  # Runs lint + Python tests + format check
+make tests_unit  # Fast feedback for unit-only changes
 ```
 
 #### Comprehensive Testing
@@ -141,32 +137,38 @@ make test  # Full test suite including Docker tests
 
 #### Individual Test Commands
 
-- `make test_python` - Run only Python unit tests
-- `make test_coverage` - Run tests with coverage reporting (minimum 65% required)
-- `make test_docker` - Build and test Docker image
-- `make lint-all` - Check both source and test code quality
+- `make tests_unit` - Run unit tests only, excluding `requires_network`
+- `make tests_integration` - Run integration tests only, excluding `requires_network`
+- `make tests` - Run the full Python test suite, excluding `requires_network`
+- `make tests_network` - Run network-dependent tests explicitly
+- `make coverage_report` - Show the current coverage report
+- `make build_docker` - Build and test the Docker image
+- `make lint_all` - Check both source and test code quality
 - `make check_format` - Verify code formatting
 
 #### Testing Guidelines
 
-1. If you modify anything in the `examples/` folder, make sure you replicate the compiled result in `tests/test_kubernetes_compiled`.
+1. If you modify anything in the `examples/` folder, make sure you replicate the compiled result in `tests/resources/golden/compile/kubernetes`.
 
 2. When adding new features:
-   - Run `make test_coverage` to ensure test coverage remains at current or better levels
+   - Run `make tests` and `make coverage_report` to ensure test coverage remains at current or better levels
    - Run `make format` to apply code formatting
 
 3. To test your changes with your local Kapitan version:
    ```bash
-   uv run kapitan <your command>
+   mise exec -- uv run kapitan <your command>
    # or set an alias:
-   alias kapitan='uv run kapitan'
+   alias kapitan='mise exec -- uv run kapitan'
    ```
 
 4. To run specific test files:
    ```bash
-   uv run pytest tests/test_vault_transit.py
-   # or using unittest:
-   uv run python -m unittest tests/test_vault_transit.py
+   mise exec -- uv run pytest --no-cov tests/unit/kapitan/refs/secrets/test_vaulttransit.py
+   ```
+
+5. To reproduce a failure from a specific randomized test order:
+   ```bash
+   PYTEST_RANDOM_SEED=123456 make tests
    ```
 
 ### Code Style
@@ -177,14 +179,14 @@ We use [Ruff](https://github.com/astral-sh/ruff) for both linting and formatting
 
 **Checking Code:**
 - `make lint` - Check source code for quality issues
-- `make lint-tests` - Check test files for quality issues
-- `make lint-all` - Check everything (source + tests)
+- `make lint_tests` - Check test files for quality issues
+- `make lint_all` - Check everything (source + tests)
 - `make check_format` - Verify code formatting
 
 **Fixing Code:**
 - `make format` - Format code with ruff formatter
 - `make fix` - Auto-fix linting issues in source code
-- `make fix-tests` - Auto-fix linting issues in tests
+- `make fix_tests` - Auto-fix linting issues in tests
 
 #### Pre-commit Hooks
 
@@ -196,12 +198,12 @@ If you didn't use `make setup`, you can configure pre-commit hooks manually:
 ```bash
 make install_pre_commit
 # or directly:
-uv run pre-commit install
+mise exec -- uv run pre-commit install
 ```
 
 **Usage:**
 - Hooks run automatically on `git commit`
-- To run manually: `pre-commit run --all-files`
+- To run manually: `mise exec -- uv run pre-commit run --all-files`
 - To skip hooks temporarily: `git commit --no-verify`
 
 The pre-commit configuration includes:

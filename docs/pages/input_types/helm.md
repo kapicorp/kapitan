@@ -29,7 +29,7 @@ parameters:
 
 `helm_values_files` is an array containing the paths to [helm values files](https://helm.sh/docs/chart_template_guide/values_files/) used as input for the chart. This has exactly the same effect as specifying `--file my_custom_values.yml` for the `helm template` command where `my_custom_values.yml` is a helm values file.
 If the same keys exist in `helm_values` and in multiple specified `helm_values_files`, the last indexed file in the `helm_values_files` will take precedence followed by the preceding `helm_values_files` and at the bottom the `helm_values` defined in teh compile block.
-There is an example in the tests. The `monitoring-dev`(kapitan/tests/test_resources/inventory/targets/monitoring-dev.yml) and `monitoring-prd`(kapitan/tests/test_resources/inventory/targets/monitoring-prd.yml) targets  both use the `monitoring`(tests/test_resources/inventory/classes/component/monitoring.yml) component.
+There is an example in the tests. The `monitoring-dev`(kapitan/tests/resources/integration/kapitan_helm/inventory/targets/monitoring-dev.yml) and `monitoring-prd`(kapitan/tests/resources/integration/kapitan_helm/inventory/targets/monitoring-prd.yml) targets both use the `monitoring`(tests/resources/integration/kapitan_helm/inventory/classes/component/monitoring.yml) component.
 This component has helm chart input and takes a `common.yml` helm_values file which is "shared" by any target that uses the component and it also takes a dynamically defined file based on a kapitan variable defined in the target.
 
 `helm_path` can be use to provide the helm binary name or path.

@@ -1,0 +1,22 @@
+parameters:
+  kapitan:
+    dependencies:
+      - type: helm
+        output_path: charts/prometheus
+        source: https://github.com/BurdenBear/kube-charts-mirror/raw/master/docs/
+        version: 11.3.0
+        chart_name: prometheus
+    compile:
+      - input_type: helm
+        output_path: .
+        input_paths:
+          - charts/prometheus
+        helm_values:
+          alertmanager:
+            enabled: false
+        helm_values_files:
+          - helm_values_files/prometheus/common.yml
+          - helm_values_files/prometheus/${kapitan:vars:env}.yml
+        helm_params:
+          namespace: infra-prometheus
+          name_template: prometheus

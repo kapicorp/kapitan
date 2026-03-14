@@ -1,0 +1,9 @@
+parameters:
+  kapitan:
+    vars:
+      target: istio
+    compile:
+      - input_type: helm
+        output_path: .
+        input_paths:
+          - charts/istio

@@ -1,0 +1,27 @@
+parameters:
+  host_port: 8080
+  container_port: 80
+  server_name: localhost
+  website: $(pwd)/compiled/${kapitan:vars:target}/manifests/html
+  root: /usr/share/nginx/html
+  charset: koi8-r
+
+  kapitan:
+    vars:
+      target: nginx
+    compile:
+      - output_path: manifests
+        input_type: jinja2
+        input_paths:
+         - templates/nginx.conf
+
+    dependencies:
+      - type: git
+        output_path: components/tests
+        ref: master
+        subdir: tests
+        source: https://github.com/kapicorp/kapitan.git
+      - type: http
+        output_path: components/kapitan-repository
+        source: https://github.com/kapicorp/kapitan/archive/master.zip
+        unpack: true

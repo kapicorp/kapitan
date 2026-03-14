@@ -1,0 +1,10 @@
+classes:
+  - test-objects
+
+parameters:
+  my_plainref: ?{plain:my_plainref}
+  target_name: test-objects
+  kapitan:
+    vars:
+      target: ${target_name}
+      namespace: ${target_name}

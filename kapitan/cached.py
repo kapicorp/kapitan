@@ -13,6 +13,7 @@ objects that need to be shared across Kapitan's execution.
 """
 
 from argparse import Namespace
+from contextlib import suppress
 from typing import Any
 
 
@@ -43,6 +44,7 @@ def reset_cache():
     global \
         inv, \
         global_inv, \
+        inventory_global_kadet, \
         inv_cache, \
         gpg_obj, \
         gkms_obj, \
@@ -51,10 +53,12 @@ def reset_cache():
         dot_kapitan, \
         ref_controller_obj, \
         revealer_obj, \
-        inv_sources
+        inv_sources, \
+        kapitan_input_kadet
 
     inv = {}
     global_inv = {}
+    inventory_global_kadet = {}
     inv_cache = {}
     inv_sources = set()
     gpg_obj = None
@@ -64,6 +68,13 @@ def reset_cache():
     dot_kapitan = {}
     ref_controller_obj = None
     revealer_obj = None
+    kapitan_input_kadet = None
+
+    with suppress(ImportError, AttributeError):
+        from kapitan.inputs import kadet as kadet_module
+
+        kadet_module.inventory_global.cache_clear()
+        kadet_module.inventory_digest.cache_clear()
 
 
 def from_dict(cache_dict: dict[str, Any]) -> None:

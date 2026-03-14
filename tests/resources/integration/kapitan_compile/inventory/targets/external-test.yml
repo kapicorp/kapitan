@@ -1,0 +1,13 @@
+parameters:
+  kapitan:
+    vars:
+      target: external-test
+    compile:
+      - input_type: external
+        output_path: .
+        input_paths:
+          - script.sh
+        args:
+          - \${compiled_target_dir} # this will not be interpolated by reclass but by the External input
+        env_vars:
+          FILE_NAME: "test.md"
