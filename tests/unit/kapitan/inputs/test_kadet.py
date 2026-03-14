@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
 import builtins
+import multiprocessing
 import os
 from types import SimpleNamespace
 
 import pytest
 
 from kapitan import cached
+from kapitan.cached import reset_cache
 from kapitan.errors import CompileError
 from kapitan.inputs import kadet as kadet_module
 from kapitan.inputs.kadet import (
@@ -165,11 +167,85 @@ def test_inventory_frozen_and_digest_return_cached_inventory(restore_cached_stat
         digest = inventory_digest("target-a")
     finally:
         kadet_module.current_target.reset(token)
+        cached.inventory_global_kadet = {}
         kadet_module.inventory_global.cache_clear()
         kadet_module.inventory_digest.cache_clear()
 
     assert frozen_inventory is not None
     assert isinstance(digest, bytes)
+
+
+def test_reset_cache_clears_kadet_runtime_state():
+    cached.global_inv = {"target-a": {"parameters": {"value": 1}}}
+    cached.inventory_global_kadet = None
+    cached.kapitan_input_kadet = SimpleNamespace(kv_cache={"x": "y"})
+    kadet_module.inventory_global.cache_clear()
+    kadet_module.inventory_digest.cache_clear()
+
+    token = kadet_module.current_target.set("target-a")
+    try:
+        inventory_frozen()
+        inventory_digest("target-a")
+    finally:
+        kadet_module.current_target.reset(token)
+
+    reset_cache()
+
+    assert cached.inventory_global_kadet == {}
+    assert cached.kapitan_input_kadet is None
+    assert kadet_module.inventory_global.cache_info().currsize == 0
+    assert kadet_module.inventory_digest.cache_info().currsize == 0
+
+
+@pytest.mark.skipif(
+    "fork" not in multiprocessing.get_all_start_methods(),
+    reason="requires fork start method",
+)
+def test_reset_cache_prevents_forked_kadet_inventory_leak():
+    cached.global_inv = {"target-a": {"parameters": {"value": 1}}}
+    cached.inventory_global_kadet = None
+    kadet_module.inventory_global.cache_clear()
+    kadet_module.inventory_digest.cache_clear()
+
+    token = kadet_module.current_target.set("target-a")
+    try:
+        inventory_frozen()
+        inventory_digest("target-a")
+    finally:
+        kadet_module.current_target.reset(token)
+
+    reset_cache()
+
+    def _child(result_queue):
+        child_target = "minikube-nginx-kadet"
+        child_inventory = {"parameters": {"value": 2}}
+
+        cached.global_inv = {child_target: child_inventory}
+
+        token = kadet_module.current_target.set(child_target)
+        try:
+            try:
+                inventory_obj = kadet_module.inventory()
+            except Exception as exc:  # pragma: no cover - exercised via assertion
+                result_queue.put((False, type(exc).__name__, str(exc)))
+            else:
+                result_queue.put((True, inventory_obj["parameters"]["value"]))
+        finally:
+            kadet_module.current_target.reset(token)
+
+    ctx = multiprocessing.get_context("fork")
+    result_queue = ctx.Queue()
+    process = ctx.Process(target=_child, args=(result_queue,))
+    process.start()
+    process.join()
+
+    assert process.exitcode == 0
+    result = result_queue.get(timeout=5)
+    result_queue.close()
+    result_queue.join_thread()
+
+    assert result[0] is True
+    assert result[1] == 2
 
 
 def test_module_from_path_and_loader_error_paths(tmp_path, monkeypatch):
