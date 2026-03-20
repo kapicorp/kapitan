@@ -19,6 +19,7 @@ import kadet
 from kadet import BaseModel, BaseObj, Dict
 
 from kapitan import cached
+from kapitan.defaults import KADET_COMPONENT_MODULE_PREFIX
 from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType
 from kapitan.inputs.cache import InputCache
@@ -71,7 +72,9 @@ def module_from_path(path, check_name=None):
 
     module_name = os.path.basename(os.path.normpath(path))
     init_path = os.path.join(path, "__init__.py")
-    spec = spec_from_file_location(f"kadet_component_{module_name}", init_path)
+    spec = spec_from_file_location(
+        f"{KADET_COMPONENT_MODULE_PREFIX}{module_name}", init_path
+    )
     mod = module_from_spec(spec)
 
     if spec is None:

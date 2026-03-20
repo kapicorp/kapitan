@@ -5,6 +5,7 @@ import pickle
 from pathlib import Path
 from typing import Tuple
 
+from kapitan.defaults import KADET_COMPONENT_MODULE_PREFIX
 from kapitan.errors import CompileError
 
 
@@ -97,4 +98,13 @@ class InputCache:
         return pickle.dump(output_obj, fp)
 
     def load_output(self, fp):
-        return pickle.load(fp)
+        try:
+            return pickle.load(fp)
+        except ModuleNotFoundError as e:
+            # It is safe to ignore exception for kadet modules (prefixed with KADET_COMPONENT_MODULE_PREFIX)
+            # since they are lazy loaded at runtime.
+            # This is most likely to happen when using kapicorp/generators
+            if e.name.startswith(KADET_COMPONENT_MODULE_PREFIX):
+                pass
+            else:
+                raise
