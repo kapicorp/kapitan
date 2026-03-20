@@ -1,0 +1,12 @@
+---
+parameters:
+  generators:
+    manifest:
+      default_config:
+        type: deployment
+        service_account:
+          create: true
+        labels:
+          "manifests.kapicorp.com/generated": "true"
+          "app.kubernetes.io/part-of": ${target_name}
+          "app.kubernetes.io/managed-by": "kapitan"

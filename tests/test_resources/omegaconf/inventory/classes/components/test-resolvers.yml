@@ -1,0 +1,84 @@
+---
+# Test file for omegaconf resolvers
+# Tests: custom resolvers, relpath, parentkey, if/ifelse
+
+parameters:
+  # Test omegaconf remove functionality
+  omegaconf:
+    remove:
+      - base_component
+
+  # -----------------------------------------------
+  # Base component to be used with merge
+  # -----------------------------------------------
+  base_component:
+    component_name: \${parentkey:}  # Deferred resolver - resolves to key name when merged
+    namespace: ${namespace}
+    labels:
+      app: ${relpath:base_component.component_name}
+      env: ${environment}
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  # -----------------------------------------------
+  # Test custom resolvers (get_suffix, get_substr)
+  # -----------------------------------------------
+  resolver_test:
+    target_suffix: ${get_suffix:${target_name}}  # Should extract "resolvers" from "test-resolvers"
+    target_substr: ${get_substr:${target_name}}  # Should extract "test"
+
+  # -----------------------------------------------
+  # Test if/ifelse conditionals
+  # -----------------------------------------------
+  conditional_test:
+    # When feature_enabled is true, use "enabled_value", otherwise null
+    enabled_feature: ${if:${feature_enabled},enabled_value}
+    # When feature_disabled is false, this should be null/omitted
+    disabled_feature: ${if:${feature_disabled},disabled_value}
+    # Test ifelse: if equal, use first, otherwise second
+    env_check: ${ifelse:${equal:${environment},dev},development_mode,production_mode}
+
+  # -----------------------------------------------
+  # Test relpath resolver with nested structures
+  # -----------------------------------------------
+  nested_config:
+    database:
+      host: db.${cluster}.local
+      port: 5432
+    cache:
+      host: redis.${cluster}.local
+      port: 6379
+    # Reference values using relpath
+    connection_string: postgresql://${relpath:nested_config.database.host}:${relpath:nested_config.database.port}/mydb
+
+  # -----------------------------------------------
+  # Components using merge and parentkey
+  # -----------------------------------------------
+  components:
+    web-frontend: ${merge:${base_component}, ${web_frontend_overrides}}
+    api-backend: ${merge:${base_component}, ${api_backend_overrides}}
+
+  web_frontend_overrides:
+    replicas: 2
+    resources:
+      requests:
+        memory: 256Mi
+
+  api_backend_overrides:
+    replicas: 3
+    resources:
+      limits:
+        cpu: "1"
+        memory: 1Gi
+
+  # -----------------------------------------------
+  # KAPITAN COMPILE (minimal, just to validate inventory)
+  # -----------------------------------------------
+  kapitan:
+    compile: []
