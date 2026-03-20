@@ -87,13 +87,13 @@ class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
         return super().tearDown()
 
 
-TEST_RESOURCES_OC_INVENTORY = os.path.join(
-    TEST_PWD, "tests/test_resources_oc/inventory"
+TEST_RESOURCES_OMEGACONF_INVENTORY = os.path.join(
+    TEST_PWD, "tests/test_resources/omegaconf/inventory"
 )
 
 
 class InventoryTargetTestOmegaConfOC(unittest.TestCase):
-    """Test inventory with test_resources_oc using omegaconf backend (deferred resolvers)."""
+    """Test inventory with test_resources/omegaconf using omegaconf backend (deferred resolvers)."""
 
     def setUp(self) -> None:
         from omegaconf import OmegaConf
@@ -101,7 +101,7 @@ class InventoryTargetTestOmegaConfOC(unittest.TestCase):
         from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
 
         self.backend_id = InventoryBackends.OMEGACONF
-        self.inventory_path = TEST_RESOURCES_OC_INVENTORY
+        self.inventory_path = TEST_RESOURCES_OMEGACONF_INVENTORY
 
         # Register resolvers
         register_resolvers(self.inventory_path)

@@ -259,20 +259,20 @@ class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
 
 
 class CompileTestResourcesOCOmegaconf(unittest.TestCase):
-    """Test compile with test_resources_oc inventory using omegaconf backend.
+    """Test compile with test_resources/omegaconf inventory using omegaconf backend.
 
     Note: Omegaconf inventory resolution tests are in test_omegaconf.py.
     This class only tests that compilation works with omegaconf backend.
     """
 
-    inventory_path = os.path.join(TEST_PWD, "tests/test_resources_oc")
+    inventory_path = os.path.join(TEST_PWD, "tests/test_resources/omegaconf")
     extraArgv = ["--inventory-backend=omegaconf"]
 
     def setUp(self):
         reset_cache()
         os.chdir(self.inventory_path)
         shutil.rmtree("compiled", ignore_errors=True)
-        # Register custom resolvers from test_resources_oc
+        # Register custom resolvers from test_resources/omegaconf
         import sys
 
         from omegaconf import OmegaConf

@@ -24,7 +24,9 @@ logger = logging.getLogger(__name__)
 
 TEST_PWD = os.getcwd()
 TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")
-TEST_OMEGACONF_INVENTORY = os.path.join(TEST_PWD, "tests/test_resources_oc/inventory")
+TEST_OMEGACONF_INVENTORY = os.path.join(
+    TEST_PWD, "tests/test_resources/omegaconf/inventory"
+)
 
 
 class InventoryTestOmegaConfKubernetes(unittest.TestCase):
@@ -87,7 +89,7 @@ class InventoryTestOmegaConfKubernetes(unittest.TestCase):
 
 
 class InventoryTestOmegaConfOC(unittest.TestCase):
-    """Test OmegaConf inventory backend with test_resources_oc inventory (deferred resolvers)"""
+    """Test OmegaConf inventory backend with test_resources/omegaconf inventory (deferred resolvers)"""
 
     @staticmethod
     def register_custom_resolvers():
