@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings
@@ -20,25 +20,23 @@ class KapitanReferenceGPGConfig(KapitanReferenceBaseConfig):
 # Note that this will break if both alias choices are set for a field (either through envvar or
 # initializer).
 class KapitanReferenceVaultEnv(BaseSettings):
-    addr: Optional[str] = Field(
-        None, validation_alias=AliasChoices("addr", "VAULT_ADDR")
-    )
-    skip_verify: Optional[bool] = Field(
+    addr: str | None = Field(None, validation_alias=AliasChoices("addr", "VAULT_ADDR"))
+    skip_verify: bool | None = Field(
         True, validation_alias=AliasChoices("skip_verify", "VAULT_SKIP_VERIFY")
     )
-    client_key: Optional[str] = Field(
+    client_key: str | None = Field(
         None, validation_alias=AliasChoices("client_key", "VAULT_CLIENT_KEY")
     )
-    client_cert: Optional[str] = Field(
+    client_cert: str | None = Field(
         None, validation_alias=AliasChoices("client_cert", "VAULT_CLIENT_CERT")
     )
-    cacert: Optional[str] = Field(
+    cacert: str | None = Field(
         None, validation_alias=AliasChoices("cacert", "VAULT_CACERT")
     )
-    capath: Optional[str] = Field(
+    capath: str | None = Field(
         None, validation_alias=AliasChoices("capath", "VAULT_CAPATH")
     )
-    namespace: Optional[str] = Field(
+    namespace: str | None = Field(
         None, validation_alias=AliasChoices("namespace", "VAULT_NAMESPACE")
     )
 
@@ -51,25 +49,25 @@ class VaultEngineTypes(StrEnum):
 
 class KapitanReferenceVaultCommon(KapitanReferenceVaultEnv):
     model_config = ConfigDict(use_enum_values=True)
-    engine: Optional[VaultEngineTypes] = None
-    auth: Optional[str] = None
-    crypto_key: Optional[str] = None
-    always_latest: Optional[bool] = False
-    mount: Optional[str] = None
-    key: Optional[str] = None
+    engine: VaultEngineTypes | None = None
+    auth: str | None = None
+    crypto_key: str | None = None
+    always_latest: bool | None = False
+    mount: str | None = None
+    key: str | None = None
 
 
 class KapitanReferenceVaultKVConfig(KapitanReferenceVaultCommon):
     engine: Literal[VaultEngineTypes.KV, VaultEngineTypes.KV_V2] = (
         VaultEngineTypes.KV_V2
     )
-    mount: Optional[str] = "secret"
+    mount: str | None = "secret"
 
 
 class KapitanReferenceVaultTransitConfig(KapitanReferenceVaultCommon):
     engine: Literal[VaultEngineTypes.TRANSIT] = VaultEngineTypes.TRANSIT
-    key: Optional[str] = None
-    mount: Optional[str] = "transit"
+    key: str | None = None
+    mount: str | None = "transit"
 
 
 class KapitanReferenceAWKMSConfig(KapitanReferenceBaseConfig):
@@ -86,9 +84,9 @@ class KapitanReferenceAZKMSConfig(KapitanReferenceBaseConfig):
 
 class KapitanReferenceConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    gpg: Optional[KapitanReferenceGPGConfig] = None
-    awskms: Optional[KapitanReferenceAWKMSConfig] = None
-    vaultkv: Optional[KapitanReferenceVaultKVConfig] = None
-    gkms: Optional[KapitanReferenceGKMSConfig] = None
-    vaulttransit: Optional[KapitanReferenceVaultTransitConfig] = None
-    azkms: Optional[KapitanReferenceAZKMSConfig] = None
+    gpg: KapitanReferenceGPGConfig | None = None
+    awskms: KapitanReferenceAWKMSConfig | None = None
+    vaultkv: KapitanReferenceVaultKVConfig | None = None
+    gkms: KapitanReferenceGKMSConfig | None = None
+    vaulttransit: KapitanReferenceVaultTransitConfig | None = None
+    azkms: KapitanReferenceAZKMSConfig | None = None
