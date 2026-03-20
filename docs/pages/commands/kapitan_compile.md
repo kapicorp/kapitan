@@ -194,9 +194,8 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
           --embed-refs          embed ref contents
           --inventory-path INVENTORY_PATH
                                 set inventory path, default is "./inventory"
-          --cache, -c           enable compilation caching to .kapitan_cache and
-                                dependency caching to .dependency_cache, default is
-                                False
+          --cache, -c           enable compilation caching to $XDG_CACHE_HOME/kapitan,
+                                default is False [this is EXPERIMENTAL]
           --cache-paths PATH [PATH ...]
                                 cache additional paths to .kapitan_cache, default is
                                 []
