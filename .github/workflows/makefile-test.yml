@@ -2,6 +2,9 @@
 name: Development Environment Setup Test
 run-name: Testing development setup for ${{ github.actor }} on branch ${{ github.ref_name }}
 
+env:
+  MISE_LOCKED: '1'
+
 concurrency:
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
   cancel-in-progress: true
@@ -16,6 +19,8 @@ on:
       - '.github/workflows/makefile-test.yml'
       - 'pyproject.toml'
       - 'uv.lock'
+      - 'mise.toml'
+      - 'mise.lock'
       - 'ruff.toml'
       - '.pre-commit-config.yaml'
   
@@ -25,6 +30,8 @@ on:
       - '.github/workflows/makefile-test.yml'
       - 'pyproject.toml'
       - 'uv.lock'
+      - 'mise.toml'
+      - 'mise.lock'
       - 'ruff.toml'
       - '.pre-commit-config.yaml'
 
@@ -43,22 +50,22 @@ jobs:
         with:
           python-version-file: pyproject.toml
 
-      - name: Test make install_uv
-        run: |
-          make install_uv
-          uv --version
+      - name: Set up mise
+        uses: jdx/mise-action@6d1e696aa24c1aa1bcc1adea0212707c71ab78a8 # v3.6.1
+        with:
+          install: false
 
       - name: Test make install
         run: |
           make install
-          uv run python -c "import kapitan; print('Kapitan imported successfully')"
+          mise exec -- uv run python -c "import kapitan; print('Kapitan imported successfully')"
 
-      - name: Test make install_external_tools
+      - name: Test make install_tools
         run: |
-          make install_external_tools
-          helm version --short
-          kustomize version
-          cue version
+          make install_tools
+          mise exec -- helm version --short
+          mise exec -- kustomize version
+          mise exec -- cue version
 
       - name: Test make install_pre_commit
         run: |
@@ -70,9 +77,9 @@ jobs:
           # Remove .git/hooks to test fresh setup
           rm -f .git/hooks/pre-commit
           make setup
-          uv --version
-          kustomize version
-          cue version
+          mise exec -- uv --version
+          mise exec -- kustomize version
+          mise exec -- cue version
           test -f .git/hooks/pre-commit || (echo "Pre-commit hook not installed" && exit 1)
 
   test-utility-commands:
@@ -89,11 +96,13 @@ jobs:
         with:
           python-version-file: pyproject.toml
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+      - name: Set up mise
+        uses: jdx/mise-action@6d1e696aa24c1aa1bcc1adea0212707c71ab78a8 # v3.6.1
+        with:
+          install: false
 
       - name: Install dependencies
-        run: uv sync --locked --all-extras --dev
+        run: make install
 
       - name: Test make clean
         run: |
