@@ -3192,10 +3192,16 @@ parameters:
 </div>
 <div class="tabbed-block">
 <div class="admonition quote">
-<p>Derives the public key from a revealed private key</p>
+<p>Derives the public key from a revealed private key. Both keys can be created in a single compile - if the private key doesn't exist yet, it will be automatically created when the public key reference is compiled.</p>
 </div>
-<div class="highlight"><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">?{${backend}:targets/${target_name}/private_key||rsa}</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Both references can be defined together; during a single compile Kapitan will create the private key</span>
+<span class="c1"># before deriving the public key, as long as the private key path matches the one used in the public key reference.</span>
+<span class="l l-Scalar l-Scalar-Plain">?{${backend}:targets/${target_name}/private_key||rsa}</span>
 <span class="l l-Scalar l-Scalar-Plain">?{${backend}:targets/${target_name}/public_key||reveal:targets/${target_name}/private_key|publickey}</span>
+
+<span class="l l-Scalar l-Scalar-Plain"># Also works with Ed25519 keys</span>
+<span class="l l-Scalar l-Scalar-Plain">?{${backend}:targets/${target_name}/ed25519_private||ed25519}</span>
+<span class="l l-Scalar l-Scalar-Plain">?{${backend}:targets/${target_name}/ed25519_public||reveal:targets/${target_name}/ed25519_private|publickey}</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
