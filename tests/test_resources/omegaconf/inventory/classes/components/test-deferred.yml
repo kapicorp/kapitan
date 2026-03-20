@@ -1,0 +1,62 @@
+---
+# Test file for deferred resolver functionality
+# Tests: \${parentkey:}, \${if:}, deferred evaluation, _root_ context access
+
+parameters:
+  # -----------------------------------------------
+  # Test deferred parentkey resolver
+  # When a base object is merged into a key, \${parentkey:} resolves to that key's name
+  # -----------------------------------------------
+  omegaconf:
+    remove:
+      - deployment_template
+
+  deployment_template:
+    name: \${parentkey:}  # Deferred - will resolve to the key name when merged
+    namespace: ${namespace}
+    full_name: \${parentkey:}-${cluster}  # Deferred, combined with immediate
+    labels:
+      app.kubernetes.io/name: \${parentkey:}
+      app.kubernetes.io/instance: ${target_name}
+
+  # When merged, parentkey should resolve to the component name
+  deployments:
+    web-app: ${merge:${deployment_template}, ${web_app_overrides}}
+    api-service: ${merge:${deployment_template}, ${api_service_overrides}}
+    worker-job: ${merge:${deployment_template}, ${worker_job_overrides}}
+
+  web_app_overrides:
+    replicas: 2
+
+  api_service_overrides:
+    replicas: 3
+
+  worker_job_overrides:
+    replicas: 1
+
+  # -----------------------------------------------
+  # Test custom resolver with _root_ access
+  # The vaultkv resolver uses _root_ to access target_name
+  # -----------------------------------------------
+  secrets:
+    db_password: ${vaultkv:database,password}
+    api_key: ${vaultkv:api,secret_key}
+
+  # -----------------------------------------------
+  # Test uppercase custom resolver
+  # -----------------------------------------------
+  uppercase_test:
+    env_upper: ${upper:${environment}}  # Should be "PROD"
+    cluster_upper: ${upper:${cluster}}  # Should be "DEFERRED-TEST"
+
+  # -----------------------------------------------
+  # Test capitalize custom resolver (camelCase style)
+  # -----------------------------------------------
+  capitalize_test:
+    camel_name: ${capitalize:${target_name}}  # Should be "testDeferred"
+
+  # -----------------------------------------------
+  # KAPITAN COMPILE (minimal, just to validate inventory)
+  # -----------------------------------------------
+  kapitan:
+    compile: []
