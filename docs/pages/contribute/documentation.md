@@ -17,17 +17,24 @@ Find something odd? Let us know or change it yourself: you can edit pages of thi
 
 ## Update documentation [![Build and deploy documentation](https://github.com/kapicorp/kapitan/actions/workflows/documentation.yml/badge.svg)](https://github.com/kapicorp/kapitan/actions/workflows/documentation.yml)
 
-We use [mkdocs](https://www.mkdocs.org/) to generate our gh-pages from `.md` files under docs/ folder.
+We use [mkdocs](https://www.mkdocs.org/) to build the site content and
+[mike](https://github.com/jimporter/mike) to manage versioned documentation on
+`gh-pages`.
 
 Updating our gh-pages is therefore a two-step process.
 
 ### Update the markdown
 
-Submit a PR for our master branch that updates the `.md` file(s). Test how the changes would look like when deployed to gh-pages by serving it on localhost:
+Submit a PR for our master branch that updates the `.md` file(s). Test how the
+changes look locally before sending the PR:
 
-1. Edit the `strict` property in `mkdocs.yml` and set it to `false`.
-2. `make local_serve_documentation`
-3. Now the documentation site should be available at [`localhost:8000`](http://127.0.0.1:8000).
+1. Run `make docs_serve`
+2. Open [`http://localhost:8000`](http://localhost:8000)
+3. If port `8000` is already in use, override it:
+
+   ```bash
+   make docs_serve DOCS_DEV_ADDR=localhost:8001
+   ```
 
 ### Submit a PR
 
