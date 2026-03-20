@@ -35,9 +35,11 @@ revealer_obj: Any = None
 args: Namespace = Namespace()  # args won't need resetting
 inv_sources: set[str] = set()
 
+# Kadet caches
+kapitan_input_kadet = None
 
-def reset_cache() -> None:
-    """Reset all cache variables to their initial state."""
+
+def reset_cache():
     global \
         inv, \
         global_inv, \
