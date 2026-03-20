@@ -357,25 +357,18 @@ class HelmInputTest(unittest.TestCase):
             f"Helm (Go YAML) from parsing it as an integer. Current YAML content:\n{content}",
         )
 
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
+    def test_compile_filters_null_documents(self):
+        """Integration test: compile_file must not write null YAML documents.
 
-    def test_compile_helm_filters_empty_documents(self):
-        """Test that empty YAML documents from conditional helm templates are filtered out.
+        The 'helm-conditional-templates' target disables the Deployment template
+        (deployment.enabled: false), causing Helm to emit an empty document for
+        deployment.yaml.  After compilation the output file must contain only the
+        two enabled resources (ConfigMap and Service) and no null entries.
 
-        When helm charts have conditional templates (e.g., {{- if .Values.feature.enabled }}),
-        disabled features produce empty YAML documents. These should be filtered out and not
-        appear as consecutive '---' separators in the compiled output.
+        Regression for https://github.com/kapicorp/kapitan/issues/1396
         """
         temp = tempfile.mkdtemp()
-        kapitan(
-            "compile",
-            "--output-path",
-            temp,
-            "-t",
-            "helm-conditional-templates",
-        )
+        kapitan("compile", "--output-path", temp, "-t", "helm-conditional-templates")
 
         output_file = os.path.join(
             temp,
@@ -384,43 +377,77 @@ class HelmInputTest(unittest.TestCase):
             "conditional-chart",
             "all.yaml",
         )
-
         self.assertTrue(os.path.isfile(output_file))
 
         with open(output_file) as fp:
-            content = fp.read()
+            docs = [doc for doc in yaml.safe_load_all(fp) if doc is not None]
 
-        # Check that there are no consecutive --- separators (empty documents)
-        self.assertNotIn("---\n---", content)
-
-        # Verify valid documents are still present
-        documents = list(yaml.safe_load_all(content))
-        # Filter out None values that might still be parsed
-        valid_documents = [doc for doc in documents if doc is not None]
-
-        # Should have exactly 2 valid documents (configmap and service, not the disabled deployment)
-        self.assertEqual(len(valid_documents), 2)
-
-        # Verify the expected resources are present
-        kinds = {doc.get("kind") for doc in valid_documents}
+        kinds = {doc["kind"] for doc in docs}
         self.assertIn("ConfigMap", kinds)
         self.assertIn("Service", kinds)
-        self.assertNotIn("Deployment", kinds)  # Deployment should be disabled
+        self.assertNotIn("Deployment", kinds)
 
-    def test_null_documents_filtered_from_helm_output(self):
-        """Regression test for https://github.com/kapicorp/kapitan/issues/1396
+        # No null documents should have been written
+        with open(output_file) as fp:
+            all_docs = list(yaml.safe_load_all(fp))
+        self.assertNotIn(None, all_docs)
 
-        Helm charts with a comment before the first `---` separator produce null
-        YAML documents that kubectl rejects with:
-          "error converting YAML to JSON: yaml: did not find expected node content"
+    def test_helm_chart_load_chart_filters_null_documents(self):
+        """Unit test: HelmChart.load_chart must filter null YAML documents.
 
-        The fix filters out None documents when loading Helm-rendered YAML files.
+        When the rendered chart string contains null documents (consecutive '---'
+        separators), load_chart must skip them so that HelmChart.new() only
+        processes real Kubernetes objects.
+
+        Regression for https://github.com/kapicorp/kapitan/issues/1396
         """
-        import io
+        # Disable the Deployment so Helm produces a null document for it
+        chart = HelmChart(
+            chart_dir="charts/conditional-chart/",
+            helm_params={"name": "test"},
+            helm_values={
+                "deployment": {"enabled": False},
+                "configmap": {"enabled": True},
+                "service": {"enabled": True},
+            },
+        )
 
-        # Simulate Helm output: a comment before the first `---` yields a null document
-        helm_output = (
-            "# This is a comment\n"
+        # All entries in root must be real objects — no None keys or values
+        self.assertGreater(len(chart.root), 0)
+        for key, value in chart.root.items():
+            self.assertIsNotNone(key)
+            self.assertIsInstance(value, BaseObj)
+
+        kinds = {obj.root["kind"] for obj in chart.root.values()}
+        self.assertIn("ConfigMap", kinds)
+        self.assertIn("Service", kinds)
+        self.assertNotIn("Deployment", kinds)
+
+    def test_null_yaml_documents_filtered(self):
+        """
+        Regression test for https://github.com/kapicorp/kapitan/issues/1396
+
+        Helm produces null YAML documents when a chart template begins with a comment
+        before the first '---'. This is because Helm prepends '---\\n# Source: ...\\n'
+        to each template's output; if the template itself also starts with '---',
+        the rendered stream becomes:
+
+            ---
+            # Source: chart/templates/file.yaml
+            ---
+            apiVersion: v1
+            ...
+
+        Python's yaml.safe_load_all parses the first '---'/'---' pair as a null
+        document (None), which when written back to YAML produces '---\\n...' that
+        kubectl rejects with "error converting YAML to JSON: yaml: did not find
+        expected node content".
+
+        The fix filters out None values from the parsed document list.
+        """
+        helm_output_with_null_doc = (
+            "---\n"
+            "# Source: chart/templates/serviceaccount.yaml\n"
             "---\n"
             "apiVersion: v1\n"
             "kind: ServiceAccount\n"
@@ -428,17 +455,24 @@ class HelmInputTest(unittest.TestCase):
             "  name: example\n"
         )
 
-        # Without the fix, loading produces [None, {...}]
-        all_docs = list(yaml.safe_load_all(io.StringIO(helm_output)))
-        self.assertIn(None, all_docs, "Expected a null document before the fix")
+        # Confirm that without filtering, a null document is present
+        all_docs = list(yaml.safe_load_all(helm_output_with_null_doc))
+        self.assertIn(
+            None, all_docs, "Test setup: raw parse should include a null document"
+        )
 
-        # With the fix applied (filtering None), only valid documents remain
+        # Apply the fix: filter out null documents
         filtered_docs = [
             doc
-            for doc in yaml.safe_load_all(io.StringIO(helm_output))
+            for doc in yaml.safe_load_all(helm_output_with_null_doc)
             if doc is not None
         ]
-        self.assertNotIn(None, filtered_docs)
+
         self.assertEqual(len(filtered_docs), 1)
+        self.assertNotIn(None, filtered_docs)
         self.assertEqual(filtered_docs[0]["apiVersion"], "v1")
         self.assertEqual(filtered_docs[0]["kind"], "ServiceAccount")
+
+    def tearDown(self):
+        os.chdir(TEST_PWD)
+        reset_cache()
