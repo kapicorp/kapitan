@@ -92,7 +92,7 @@ def prune_empty(d):
     Remove empty lists and empty dictionaries from d
     (similar to jsonnet std.prune but faster)
     """
-    if not isinstance(d, (dict, list)):
+    if not isinstance(d, dict | list):
         return d
 
     if isinstance(d, list):

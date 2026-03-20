@@ -228,7 +228,7 @@ def merge_strategic(data):
     - If encountering a list of dicts each with a 'name' key, merge them by name.
     - Process nested dictionaries and lists recursively.
     """
-    if not isinstance(data, (list, dict)):
+    if not isinstance(data, list | dict):
         return data
 
     if isinstance(data, list):

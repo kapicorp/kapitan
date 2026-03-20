@@ -1,0 +1,20 @@
+parameters:
+  # Test values for numeric string handling
+  test_numeric_string: "03190301"  # String with leading zero
+  test_octal_like: "0755"  # Valid octal-looking string
+  test_all_zeros: "00000000"  # String of all zeros
+  
+  kapitan:
+    vars:
+      target: helm-string-values
+      namespace: default
+    compile:
+      - output_path: .
+        input_type: helm
+        input_paths:
+          - charts/string-values-test
+        helm_values:
+          numeric_string: ${test_numeric_string}
+          normal_string: "hello world"
+        helm_params:
+          name: string-test

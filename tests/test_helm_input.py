@@ -8,17 +8,20 @@
 "helm input tests"
 
 import os
-import sys
 import tempfile
 import unittest
 
+import pytest
 import yaml
 
 from kapitan.cached import reset_cache
-from kapitan.cli import main
-from kapitan.inputs.helm import Helm, HelmChart
+from kapitan.cli import main as kapitan
+from kapitan.inputs.helm import Helm, HelmChart, write_helm_values_file
 from kapitan.inputs.kadet import BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
+
+
+TEST_PWD = os.getcwd()
 
 
 class HelmInputTest(unittest.TestCase):
@@ -77,15 +80,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_chart(self):
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
-            "compile",
-            "--output-path",
-            temp,
-            "-t",
-            "acs-engine-autoscaler",
-        ]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "acs-engine-autoscaler")
         self.assertTrue(
             os.path.isfile(
                 os.path.join(
@@ -101,8 +96,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_subcharts(self):
         temp = tempfile.mkdtemp()
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "istio"]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "istio")
         self.assertTrue(
             os.path.isdir(os.path.join(temp, "compiled", "istio", "istio", "charts"))
         )
@@ -112,8 +106,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_multiple_targets(self):
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "compile",
             "--output-path",
             temp,
@@ -122,8 +115,7 @@ class HelmInputTest(unittest.TestCase):
             "nginx-ingress",
             "-p",
             "2",
-        ]
-        main()
+        )
         self.assertTrue(
             os.path.isfile(
                 os.path.join(
@@ -151,8 +143,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_multiple_charts_per_target(self):
         temp = tempfile.mkdtemp()
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx-istio"]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "nginx-istio")
         self.assertTrue(
             os.path.isdir(
                 os.path.join(temp, "compiled", "nginx-istio", "istio", "templates")
@@ -168,8 +159,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_with_helm_values(self):
         temp = tempfile.mkdtemp()
-        sys.argv = ["kapitan", "compile", "--output-path", temp, "-t", "nginx-ingress"]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "nginx-ingress")
         controller_deployment_file = os.path.join(
             temp,
             "compiled",
@@ -186,16 +176,14 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_with_helm_values_files(self):
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "compile",
             "--output-path",
             temp,
             "-t",
             "monitoring-dev",
             "monitoring-prd",
-        ]
-        main()
+        )
         dev_server_deployment_file = os.path.join(
             temp,
             "compiled",
@@ -227,8 +215,7 @@ class HelmInputTest(unittest.TestCase):
 
     def test_compile_with_helm_params(self):
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
+        argv = [
             "compile",
             "--output-path",
             temp,
@@ -241,7 +228,7 @@ class HelmInputTest(unittest.TestCase):
             release_name = helm_params["name"]
             namespace = helm_params["namespace"]
 
-        main()
+        kapitan(*argv)
         controller_deployment_file = os.path.join(
             temp,
             "compiled",
@@ -263,18 +250,10 @@ class HelmInputTest(unittest.TestCase):
                 ),
             )
 
+    @pytest.mark.usefixtures("setup_gpg_key")
     def test_compile_with_refs(self):
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
-            "compile",
-            "--output-path",
-            temp,
-            "-t",
-            "nginx-ingress",
-            "--reveal",
-        ]
-        main()
+        kapitan("compile", "--output-path", temp, "-t", "nginx-ingress", "--reveal")
         controller_deployment_file = os.path.join(
             temp,
             "compiled",
@@ -305,8 +284,81 @@ class HelmInputTest(unittest.TestCase):
         for resource_name in chart.root:
             self.assertIsInstance(chart.root[resource_name], BaseObj)
 
+    def test_numeric_string_values_preserved(self):
+        """
+        Test that numeric-looking strings with leading zeros are preserved.
+
+        This tests the bug reported in https://github.com/kapicorp/kapitan/issues/1370
+        where string values like "03190301" are converted to scientific notation
+        (3.190301e+06) because they pass through YAML without proper quoting.
+        """
+        temp = tempfile.mkdtemp()
+        kapitan("compile", "--output-path", temp, "-t", "helm-string-values")
+
+        configmap_file = os.path.join(
+            temp,
+            "compiled",
+            "helm-string-values",
+            "string-values-test",
+            "templates",
+            "configmap.yaml",
+        )
+        self.assertTrue(os.path.isfile(configmap_file))
+
+        with open(configmap_file) as fp:
+            manifest = yaml.safe_load(fp.read())
+            # The numeric string "03190301" should be preserved exactly
+            # Currently fails: value becomes "3.190301e+06" (scientific notation)
+            numeric_value = manifest["data"]["NUMERIC_STRING"]
+            self.assertEqual(
+                numeric_value,
+                "03190301",
+                f"Numeric string was not preserved. Got '{numeric_value}' instead of '03190301'. "
+                "This indicates the string was converted to a number and displayed in scientific notation.",
+            )
+
+    def test_write_helm_values_file_preserves_numeric_strings(self):
+        """
+        Unit test for write_helm_values_file to verify that numeric-looking strings
+        are written with proper quoting to preserve their string type when read by
+        Helm's Go YAML parser (which uses YAML 1.1 rules).
+
+        Related to https://github.com/kapicorp/kapitan/issues/1370
+
+        The issue: Python's yaml.safe_dump writes "03190301" unquoted because Python's
+        YAML parser knows it's not a valid octal (contains 8 and 9). However, Helm's
+        Go YAML parser interprets unquoted "03190301" as an integer 3190301, which
+        then gets displayed in scientific notation for large values.
+
+        The fix requires setting helm_values_quote_strings: true in the compile config.
+        """
+        # Test values with numeric-looking strings
+        helm_values = {
+            "leading_zero": "03190301",  # Leading zero string - causes the bug
+            "octal_like": "0755",  # Octal-looking string
+            "all_zeros": "00000000",  # All zeros string
+            "normal_string": "hello",  # Normal string for comparison
+            "actual_number": 12345,  # Actual number
+        }
+
+        values_file = write_helm_values_file(helm_values)
+
+        # Read the file content to check how it's written
+        with open(values_file) as fp:
+            content = fp.read()
+
+        # The key check: verify that numeric-looking strings are QUOTED in the YAML output
+        # This is what matters for Helm's Go YAML parser
+
+        # Check that leading_zero string is quoted (single or double quotes)
+        self.assertTrue(
+            "'03190301'" in content or '"03190301"' in content,
+            f"Leading zero string '03190301' should be quoted in YAML output to prevent "
+            f"Helm (Go YAML) from parsing it as an integer. Current YAML content:\n{content}",
+        )
+
     def tearDown(self):
-        os.chdir("../../")
+        os.chdir(TEST_PWD)
         reset_cache()
 
     def test_compile_helm_filters_empty_documents(self):
@@ -317,15 +369,13 @@ class HelmInputTest(unittest.TestCase):
         appear as consecutive '---' separators in the compiled output.
         """
         temp = tempfile.mkdtemp()
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "compile",
             "--output-path",
             temp,
             "-t",
             "helm-conditional-templates",
-        ]
-        main()
+        )
 
         output_file = os.path.join(
             temp,
@@ -356,3 +406,39 @@ class HelmInputTest(unittest.TestCase):
         self.assertIn("ConfigMap", kinds)
         self.assertIn("Service", kinds)
         self.assertNotIn("Deployment", kinds)  # Deployment should be disabled
+
+    def test_null_documents_filtered_from_helm_output(self):
+        """Regression test for https://github.com/kapicorp/kapitan/issues/1396
+
+        Helm charts with a comment before the first `---` separator produce null
+        YAML documents that kubectl rejects with:
+          "error converting YAML to JSON: yaml: did not find expected node content"
+
+        The fix filters out None documents when loading Helm-rendered YAML files.
+        """
+        import io
+
+        # Simulate Helm output: a comment before the first `---` yields a null document
+        helm_output = (
+            "# This is a comment\n"
+            "---\n"
+            "apiVersion: v1\n"
+            "kind: ServiceAccount\n"
+            "metadata:\n"
+            "  name: example\n"
+        )
+
+        # Without the fix, loading produces [None, {...}]
+        all_docs = list(yaml.safe_load_all(io.StringIO(helm_output)))
+        self.assertIn(None, all_docs, "Expected a null document before the fix")
+
+        # With the fix applied (filtering None), only valid documents remain
+        filtered_docs = [
+            doc
+            for doc in yaml.safe_load_all(io.StringIO(helm_output))
+            if doc is not None
+        ]
+        self.assertNotIn(None, filtered_docs)
+        self.assertEqual(len(filtered_docs), 1)
+        self.assertEqual(filtered_docs[0]["apiVersion"], "v1")
+        self.assertEqual(filtered_docs[0]["kind"], "ServiceAccount")

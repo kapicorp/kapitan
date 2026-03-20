@@ -11,6 +11,7 @@ from time import sleep
 
 import docker
 import hvac
+from hvac.exceptions import InvalidRequest
 
 from kapitan.errors import KapitanError
 
@@ -30,29 +31,36 @@ class VaultServer:
         self.vault_url = None
         self.root_token = None
         self.vault_client = None
+        self.dev_root_token = "root"
         self.docker_client = docker.from_env()
         self.vault_container = self.setup_container()
         self.setup_vault()
 
     def setup_container(self):
         env = {
-            "VAULT_LOCAL_CONFIG": '{"backend": {"file": {"path": "/vault/file"}}, "disable_mlock" : "true" , "listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":"true"}}}'
+            "SKIP_SETCAP": "1",
+            "VAULT_DEV_ROOT_TOKEN_ID": self.dev_root_token,
+            "VAULT_DEV_LISTEN_ADDRESS": "0.0.0.0:8200",
         }
         vault_container = self.docker_client.containers.run(
             image="hashicorp/vault",
-            cap_add=["IPC_LOCK"],
             ports={"8200/tcp": ("127.0.0.1", None)},
             environment=env,
             detach=True,
-            auto_remove=True,
-            command="server",
+            auto_remove=False,
+            command="server -dev",
         )
 
         # make sure the container is up & running before testing
 
         while vault_container.status != "running":
-            sleep(5)
+            sleep(2)
             vault_container.reload()
+            if vault_container.status in ("exited", "dead"):
+                logs = vault_container.logs(tail=50).decode("utf-8", errors="replace")
+                raise VaultServerError(
+                    f"Vault container exited early: {vault_container.status}\n{logs}"
+                )
 
         port = vault_container.attrs["NetworkSettings"]["Ports"]["8200/tcp"][0][
             "HostPort"
@@ -68,15 +76,29 @@ class VaultServer:
 
     def setup_vault(self):
         vault_status = {}
-        while vault_status.get("initialized", False) == False:
+        while not vault_status.get("initialized", False):
             sleep(2)
             try:
-                vault_status = self.initialise_vault()
+                vault_client = hvac.Client(url=self.vault_url)
+                vault_status = vault_client.sys.read_health_status(method="GET")
+                vault_client.adapter.close()
                 logger.info(f"status is {vault_status}")
             except Exception as e:
                 logger.info(f"Exception is {e}")
                 logger.info(f"status is {vault_status}")
+                continue
 
+            if not vault_status.get("initialized", False):
+                try:
+                    vault_status = self.initialise_vault()
+                    logger.info(f"status is {vault_status}")
+                except Exception as e:
+                    logger.info(f"Exception is {e}")
+                    logger.info(f"status is {vault_status}")
+                    continue
+
+        if not self.root_token:
+            self.root_token = self.dev_root_token
         self.set_backend_path()
         self.set_vault_attributes()
 
@@ -94,7 +116,13 @@ class VaultServer:
     def set_backend_path(self):
         logger.info("Setting backend path")
         self.vault_client = hvac.Client(url=self.vault_url, token=self.root_token)
-        self.vault_client.sys.enable_secrets_engine(backend_type="kv-v2", path="secret")
+        try:
+            self.vault_client.sys.enable_secrets_engine(
+                backend_type="kv-v2", path="secret"
+            )
+        except InvalidRequest as exc:
+            if "path is already in use" not in str(exc):
+                raise
 
     def get_policy(self):
         test_policy = """
@@ -134,6 +162,7 @@ class VaultServer:
         self.vault_client.adapter.close()
 
         self.vault_container.stop()
+        self.vault_container.remove()
         self.docker_client.close()
 
 

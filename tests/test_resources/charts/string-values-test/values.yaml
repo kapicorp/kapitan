@@ -1,0 +1,3 @@
+# Default values for string-values-test
+numeric_string: "00000000"
+normal_string: "hello"

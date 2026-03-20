@@ -268,7 +268,6 @@ def build_parser():
         action="store_true",
         default=from_dot_kapitan("compile", "embed-refs", False),
     )
-
     compile_parser.add_argument(
         "--inventory-path",
         default=from_dot_kapitan("compile", "inventory-path", "./inventory"),
@@ -283,18 +282,9 @@ def build_parser():
     compile_parser.add_argument(
         "--cache",
         "-c",
-        help="enable compilation caching to .kapitan_cache\
-        and dependency caching to .dependency_cache, default is False",
+        help="enable compilation caching to $XDG_CACHE_HOME/kapitan, default is False [this is EXPERIMENTAL]",
         action="store_true",
         default=from_dot_kapitan("compile", "cache", False),
-    )
-    compile_parser.add_argument(
-        "--cache-paths",
-        type=str,
-        nargs="+",
-        default=from_dot_kapitan("compile", "cache-paths", []),
-        metavar="PATH",
-        help="cache additional paths to .kapitan_cache, default is []",
     )
     compile_parser.add_argument(
         "--ignore-version-check",
@@ -652,11 +642,11 @@ def build_parser():
     return parser
 
 
-def main():
+def main(*argv):
     """main function for command line usage"""
 
     parser = build_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv or None)
 
     # main() is explicitly called multiple times in tests
     # and will raise RuntimeError
@@ -672,7 +662,8 @@ def main():
 
     logger.debug("Running with args: %s", args)
 
-    if len(sys.argv) < 2:
+    effective_argv = argv if argv else sys.argv[1:]
+    if not effective_argv:
         parser.print_help()
         sys.exit(1)
 

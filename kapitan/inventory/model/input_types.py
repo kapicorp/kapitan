@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import Annotated, Any, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -32,21 +32,21 @@ class OutputType(StrEnum):
 
 class KapitanInputTypeBaseConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    name: Optional[str] = Field(default=None)
+    name: str | None = Field(default=None)
     input_type: InputTypes
     input_paths: list[str]
     output_path: str
     input_params: dict = {}
-    continue_on_compile_error: Optional[bool] = False
+    continue_on_compile_error: bool | None = False
 
     output_type: OutputType = OutputType.YAML
-    ignore_missing: Optional[bool] = False
-    prune: Optional[bool] = True
+    ignore_missing: bool | None = False
+    prune: bool | None = True
 
 
 class KapitanInputTypeJsonnetConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.JSONNET] = InputTypes.JSONNET
-    prune: Optional[bool] = False
+    prune: bool | None = False
 
 
 class KapitanInputTypeExternalConfig(KapitanInputTypeBaseConfig):
@@ -62,21 +62,21 @@ class KapitanInputTypeCopyConfig(KapitanInputTypeBaseConfig):
 
 class KapitanInputTypeJinja2Config(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.JINJA2] = InputTypes.JINJA2
-    output_type: Optional[OutputType] = OutputType.PLAIN
-    ignore_missing: Optional[bool] = True
-    suffix_remove: Optional[bool] = False
-    suffix_stripped: Optional[str] = ".j2"
+    output_type: OutputType | None = OutputType.PLAIN
+    ignore_missing: bool | None = True
+    suffix_remove: bool | None = False
+    suffix_stripped: str | None = ".j2"
 
 
 class KapitanInputTypeHelmConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.HELM] = InputTypes.HELM
     output_type: OutputType = OutputType.AUTO
-    prune: Optional[bool] = False
+    prune: bool | None = False
     helm_params: dict = {}
-    helm_values: Optional[dict] = {}
-    helm_values_files: Optional[list[str]] = []
-    helm_path: Optional[str] = None
-    kube_version: Optional[str] = None
+    helm_values: dict | None = {}
+    helm_values_files: list[str] | None = []
+    helm_path: str | None = None
+    kube_version: str | None = None
 
     @field_validator("output_type")
     @classmethod
@@ -91,37 +91,37 @@ class KapitanInputTypeHelmConfig(KapitanInputTypeBaseConfig):
 class KapitanInputTypeKadetConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.KADET] = InputTypes.KADET
     output_type: OutputType = OutputType.YAML
-    input_value: Optional[dict] = None
-    prune: Optional[bool] = False
+    input_value: dict | None = None
+    prune: bool | None = False
 
 
 class KapitanInputTypeRemoveConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.REMOVE] = InputTypes.REMOVE
-    output_path: Optional[str] = None
+    output_path: str | None = None
 
 
 class KapitanInputTypeKustomizeConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.KUSTOMIZE] = InputTypes.KUSTOMIZE
     output_type: OutputType = OutputType.YAML
-    namespace: Optional[str] = None
-    prune: Optional[bool] = False
-    patches: Optional[dict[str, Any]] = {}
-    patches_strategic: Optional[dict[str, Any]] = {}
-    patches_json: Optional[dict[str, Any]] = {}
+    namespace: str | None = None
+    prune: bool | None = False
+    patches: dict[str, Any] | None = {}
+    patches_strategic: dict[str, Any] | None = {}
+    patches_json: dict[str, Any] | None = {}
 
 
 class KapitanInputTypeCuelangConfig(KapitanInputTypeBaseConfig):
     input_type: Literal[InputTypes.CUELANG] = InputTypes.CUELANG
     output_type: OutputType = OutputType.YAML
     # optional value to pass to the CUE input
-    input: Optional[dict[str, Any]] = None
+    input: dict[str, Any] | None = None
     # optional CUE path in which the input is injected. By default, the input
     # is injected at the root.
-    input_fill_path: Optional[str] = None
+    input_fill_path: str | None = None
     # optional CUE path (e.g. metadata.name) that we want to yield in the output.
     # By default, the whole output is yielded
-    output_yield_path: Optional[str] = None
-    output_filename: Optional[str] = "output.yaml"
+    output_yield_path: str | None = None
+    output_filename: str | None = "output.yaml"
 
 
 CompileInputTypeConfig = Annotated[

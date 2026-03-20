@@ -249,6 +249,19 @@ def render_chart(
     return ("", error_message)
 
 
+def _helm_str_representer(dumper, data):
+    """Quote strings that could be misinterpreted by Helm's Go YAML parser.
+
+    Fixes https://github.com/kapicorp/kapitan/issues/1370 where strings like
+    "03190301" are converted to scientific notation (3.190301e+06).
+    """
+    style = None
+    # Quote digit-only strings starting with 0 or large numeric strings
+    if data and len(data) > 1 and data.isdigit() and (data[0] == "0" or len(data) > 6):
+        style = "'"
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
+
+
 def remove_null_values(obj):
     """Recursively remove keys with null values from dictionaries."""
     if isinstance(obj, dict):

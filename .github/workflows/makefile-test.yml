@@ -15,7 +15,7 @@ on:
       - 'Makefile'
       - '.github/workflows/makefile-test.yml'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - 'ruff.toml'
       - '.pre-commit-config.yaml'
   
@@ -24,7 +24,7 @@ on:
       - 'Makefile'
       - '.github/workflows/makefile-test.yml'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - 'ruff.toml'
       - '.pre-commit-config.yaml'
 
@@ -34,24 +34,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
-          python-version: '3.11'
+          python-version-file: pyproject.toml
 
-      - name: Test make install_poetry
+      - name: Test make install_uv
         run: |
-          make install_poetry
-          poetry --version
+          make install_uv
+          uv --version
 
       - name: Test make install
         run: |
           make install
-          poetry run python -c "import kapitan; print('Kapitan imported successfully')"
+          uv run python -c "import kapitan; print('Kapitan imported successfully')"
 
       - name: Test make install_external_tools
         run: |
@@ -70,7 +70,7 @@ jobs:
           # Remove .git/hooks to test fresh setup
           rm -f .git/hooks/pre-commit
           make setup
-          poetry --version
+          uv --version
           kustomize version
           cue version
           test -f .git/hooks/pre-commit || (echo "Pre-commit hook not installed" && exit 1)
@@ -80,20 +80,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
-          python-version: '3.11'
+          python-version-file: pyproject.toml
 
-      - name: Install Poetry
-        run: pipx install poetry
+      - name: Set up uv
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
 
       - name: Install dependencies
-        run: poetry install --with dev --with test --with docs --extras "gojsonnet reclass-rs omegaconf"
+        run: uv sync --locked --all-extras --dev
 
       - name: Test make clean
         run: |

@@ -38,8 +38,8 @@ exclude = [
 line-length = 88
 indent-width = 4
 
-# Assume Python 3.9
-target-version = "py39"
+# Assume Python 3.10
+target-version = "py310"
 
 # Allow unsafe fixes when using --fix
 unsafe-fixes = false
@@ -130,7 +130,7 @@ ignore = [
     "PT012",   # pytest.raises() should contain a single simple statement - can be clearer with multiple statements
     
     # Code modernization (can be done gradually)
-    "UP006",   # Use native types instead of typing module (Dict -> dict, Type -> type) - needs Python 3.9+ for some features
+    "UP006",   # Use native types instead of typing module (Dict -> dict, Type -> type) - gradual migration
     "UP008",   # Use super() without arguments - stylistic preference
     "UP022",   # Replace stdout/stderr with capture_output - not always equivalent
     "UP031",   # Use format specifiers instead of % formatting - large refactor needed

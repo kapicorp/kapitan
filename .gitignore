@@ -31,5 +31,15 @@ tags
 .kapitan
 .tool-versions
 
-# Unit test / coverage reports
+# Unit test / linter / coverage reports
+test-results.json
 .coverage
+.coverage.*
+.coverage_*
+coverage.xml
+coverage.json
+/htmlcov/
+junit.xml
+
+# Python venv
+.venv

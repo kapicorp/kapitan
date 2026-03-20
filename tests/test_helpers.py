@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from kapitan.cached import reset_cache
-from kapitan.cli import main
+from kapitan.cli import main as kapitan
 from kapitan.utils import directory_hash
 
 
@@ -53,7 +53,7 @@ class CompileTestHelper:
         """
         reset_cache()
 
-        args = ["kapitan", "compile"]
+        args = ["compile"]
 
         if targets:
             for target in targets:
@@ -62,19 +62,17 @@ class CompileTestHelper:
         if extra_args:
             args.extend(extra_args)
 
-        sys.argv = args
-        main()
+        kapitan(*args)
 
     def compile_with_args(self, argv: List[str]) -> None:
         """
         Compile with custom arguments.
 
         Args:
-            argv: Complete argv list including 'kapitan'
+            argv: Command arguments for kapitan (without the program name)
         """
         reset_cache()
-        sys.argv = argv
-        main()
+        kapitan(*argv)
 
     def get_compiled_output(self, relative_path: str) -> str:
         """
@@ -272,17 +270,16 @@ def run_kapitan_command(args: List[str]) -> tuple[int, str, str]:
     """
     Run a kapitan command and capture output.
 
-    Args:
-        args: Command arguments (including 'kapitan')
+        Args:
+            args: Command arguments for kapitan (without the program name)
 
     Returns:
         Tuple of (exit_code, stdout, stderr)
     """
     with capture_output() as (stdout, stderr):
-        sys.argv = args
         exit_code = 0
         try:
-            main()
+            kapitan(*args)
         except SystemExit as e:
             exit_code = e.code if e.code is not None else 0
 

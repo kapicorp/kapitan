@@ -359,7 +359,7 @@ You can assign values to your reference using the command line. Both reading fro
         !!! note "Setting default value only"
             The `env` backend works in a slightly different ways, as it allows you to reference environment variables at runtime.
 
-            For example, for a reference called **`{?env:targets/envs_defaults/mysql_port_${target_name}}`**, **Kapitan** would look for an environment variable called **`KAPITAN_ENV_mysql_port_${TARGET_NAME}`**.
+            For example, for a reference called **`{?env:targets/envs_defaults/mysql_port_${target_name}}`**, **Kapitan** would look for an environment variable called **`KAPITAN_VAR_mysql_port_${TARGET_NAME}`**.
 
             If that variable cannot be found in the **Kapitan** environment, the default will be taken from the **`refs/targets/envs_defaults/mysql_port_${TARGET_NAME}`** file instead.
 
@@ -480,10 +480,16 @@ For instance, to automatically initialise a reference with a ***random string***
         ```
     === "publickey"
         !!! quote ""
-            Derives the public key from a revealed private key
+            Derives the public key from a revealed private key. Both keys can be created in a single compile - if the private key doesn't exist yet, it will be automatically created when the public key reference is compiled.
         ```yaml
+        # Both references can be defined together; during a single compile Kapitan will create the private key
+        # before deriving the public key, as long as the private key path matches the one used in the public key reference.
         ?{${backend}:targets/${target_name}/private_key||rsa}
         ?{${backend}:targets/${target_name}/public_key||reveal:targets/${target_name}/private_key|publickey}
+        
+        # Also works with Ed25519 keys
+        ?{${backend}:targets/${target_name}/ed25519_private||ed25519}
+        ?{${backend}:targets/${target_name}/ed25519_public||reveal:targets/${target_name}/ed25519_private|publickey}
         ```
     === "rsapublic"
         !!! quote ""

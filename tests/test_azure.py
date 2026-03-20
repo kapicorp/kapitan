@@ -3,12 +3,11 @@
 import contextlib
 import io
 import os
-import sys
 import tempfile
 import unittest
 
 from kapitan import cached
-from kapitan.cli import main
+from kapitan.cli import main as kapitan
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.azkms import AzureKMSSecret
 
@@ -64,8 +63,7 @@ class AzureKMSTest(unittest.TestCase):
         with open(test_secret_file, "w") as fp:
             fp.write(test_secret_content)
 
-        sys.argv = [
-            "kapitan",
+        kapitan(
             "refs",
             "--write",
             "azkms:test_secret",
@@ -75,15 +73,12 @@ class AzureKMSTest(unittest.TestCase):
             REFS_HOME,
             "--key",
             "mock",
-        ]
-
-        main()
+        )
         test_tag_content = "revealing: ?{azkms:test_secret}"
         test_tag_file = tempfile.mktemp()
         with open(test_tag_file, "w") as fp:
             fp.write(test_tag_content)
-        sys.argv = [
-            "kapitan",
+        argv = [
             "refs",
             "--reveal",
             "-f",
@@ -94,7 +89,7 @@ class AzureKMSTest(unittest.TestCase):
 
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
-            main()
+            kapitan(*argv)
         self.assertEqual(f"revealing: {test_secret_content}", stdout.getvalue())
 
         os.remove(test_tag_file)
