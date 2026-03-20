@@ -24,3 +24,6 @@ DEFAULT_JINJA2_FILTERS_PATH: str = os.path.join("lib", "jinja2_filters.py")
 # Copier template defaults
 COPIER_TEMPLATE_REPOSITORY: str = "https://github.com/kapicorp/kapitan-reference.git"
 COPIER_TEMPLATE_REF: str = "copier"
+
+# kadet component prefix for kadet modules loaded at runtime
+KADET_COMPONENT_MODULE_PREFIX = "kadet_component_"
