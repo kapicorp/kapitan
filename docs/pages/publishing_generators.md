@@ -77,15 +77,6 @@ active development.
 
 ---
 
-## GitHub Actions — automated publishing
-
-The oras project maintains an official GitHub Actions integration. Follow the
-[oras GitHub Action guide](https://oras.land/docs/how_to_guides/pushing_and_pulling_in_CI) for
-up-to-date setup instructions, then use the same `oras push` command from the section above as your
-push step.
-
----
-
 ## Consuming the published artifact
 
 Once pushed, reference the image in any target's inventory:
