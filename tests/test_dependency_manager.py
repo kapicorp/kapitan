@@ -516,6 +516,26 @@ class OciFetchDependencyTest(unittest.TestCase):
             self.assertFalse((Path(out_dir) / "terraform").exists())
 
     @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_invalid_subpath_raises_oci_fetching_error(self, MockClient):
+        """When subpath does not exist in the artifact, OCIFetchingError is raised."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir, subpath="nonexistent")
+
+            def fake_pull(target, outdir, allowed_media_type):
+                # Pull succeeds but artifact contains no "nonexistent" subdirectory
+                Path(outdir).mkdir(parents=True, exist_ok=True)
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            with self.assertRaises(OCIFetchingError):
+                fetch_oci_dependency(
+                    (dep.source, [dep]), save_dir=save_dir, force=False
+                )
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
     def test_insecure_flag_forwarded(self, MockClient):
         """insecure=True is passed through to OrasClient."""
         with (

@@ -403,6 +403,10 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
     for dep in deps:
         # Copy either the full artifact or only the declared subdirectory
         src = os.path.join(target_dir, dep.subpath) if dep.subpath else target_dir
+        if dep.subpath and not os.path.isdir(src):
+            raise OCIFetchingError(
+                f"{item_type} {source}: subpath '{dep.subpath}' not found in pulled artifact"
+            )
         if force:
             copied = copy_tree(src, dep.output_path)
         else:
