@@ -7,6 +7,7 @@ Supported dependencies types are:
 - [git](#defining-dependencies)
 - [http](#defining-dependencies)
 - [helm](#defining-dependencies)
+- [oci](#defining-dependencies)
 
 
 ## Usage
@@ -213,4 +214,62 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
             helm_params:
               namespace: monitoring
               name: prometheus
+    ```
+
+=== "oci"
+
+    ### Syntax
+
+    ```yaml
+    parameters:
+      kapitan:
+        dependencies:
+        - type: oci
+          output_path: path/to/dir # mkdocs (1)!
+          source: <registry>/<repository>:<tag> # mkdocs (2)!
+          subpath: relative/path/inside/artifact # mkdocs (3)!
+          media_type: application/vnd.kapitan.generator # mkdocs (4)!
+          insecure: false # mkdocs (5)!
+    ```
+
+    1. Directory where the pulled artifact contents will be written.
+    2. OCI reference in the form `registry/repo:tag` or `registry/repo@sha256:<digest>` for pinned pulls.
+    3. Optional sub-directory inside the unpacked artifact to copy instead of the entire artifact root.
+    4. Optional media type filter passed to the OCI client when pulling layers.
+    5. Set to `true` to allow pulling from an HTTP (non-TLS) registry. Defaults to `false`.
+
+    !!! note
+
+        This dependency type requires the optional `oras` Python package. Install it with:
+        ```shell
+        pip install kapitan[oci]
+        ```
+
+    ### Example
+
+    Fetching a Kapitan generator bundle published to GHCR and making it available as a Kadet component:
+
+    ```yaml
+    parameters:
+      kapitan:
+        vars:
+          target: my-service
+        dependencies:
+        - type: oci
+          source: ghcr.io/kapicorp/generators:1.2.0
+          output_path: components/generators
+          subpath: generators/kubectl
+        compile:
+        - input_type: kadet
+          input_paths:
+          - components/generators
+          output_path: .
+    ```
+
+    You can also pin to an immutable digest to guarantee reproducible builds:
+
+    ```yaml
+    - type: oci
+      source: ghcr.io/kapicorp/generators@sha256:abc123...
+      output_path: components/generators
     ```
