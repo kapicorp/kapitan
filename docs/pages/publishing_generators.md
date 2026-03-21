@@ -5,9 +5,8 @@ bundles from any OCI-compliant registry. This page walks through the other half 
 how to package your own generators and publish them so teams or projects can consume them by
 reference.
 
-The toolchain used here is [**uv**](https://docs.astral.sh/uv/) for running the push script and
-[**oras**](https://oras.land/) (Python library) for talking to the registry. No extra binaries are
-required.
+Publishing uses the [**oras**](https://oras.land/) CLI — a small, standalone binary purpose-built
+for pushing and pulling arbitrary files to OCI registries.
 
 ---
 
@@ -31,116 +30,58 @@ input type.
 
 ## Prerequisites
 
-- **uv** installed (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
-- Write access to an OCI registry (GHCR, Docker Hub, a private Harbor instance, etc.)
-- Your registry credentials available as environment variables or via `docker login`
+Install the `oras` CLI once:
 
-No other global installs are needed — the push script below declares its own dependencies via
-[PEP 723 inline metadata](https://peps.python.org/pep-0723/) and `uv run` handles the rest.
+=== "Homebrew (macOS / Linux)"
 
----
+    ```shell
+    brew install oras
+    ```
 
-## Directory layout
+=== "Direct download (Linux)"
 
-For this example we'll publish a minimal Kadet generator for a Kubernetes `Deployment`:
+    ```shell
+    VERSION=1.2.2
+    curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
+    tar -zxf oras_${VERSION}_linux_amd64.tar.gz oras
+    sudo mv oras /usr/local/bin/
+    ```
 
-```
-my-generator/
-├── __init__.py
-└── lib/
-    └── workloads.py
-push.py                ← the publish script (lives outside the bundle)
-```
+=== "Windows (winget)"
 
----
+    ```shell
+    winget install oras
+    ```
 
-## Writing the push script
-
-Save the following as `push.py` next to your generator directory. Edit the `TARGET` variable for
-your registry and repository.
-
-```python
-# /// script
-# requires-python = ">=3.10"
-# dependencies = ["oras>=0.2.0"]
-# ///
-"""
-Push a Kapitan generator bundle to an OCI registry.
-
-Usage:
-    uv run push.py <tag>
-
-Example:
-    uv run push.py 1.2.0
-"""
-
-import sys
-import os
-import oras.client
-
-REGISTRY = "ghcr.io"
-REPOSITORY = "kapicorp/generators"
-BUNDLE_DIR = "my-generator"              # directory to package and push
-MEDIA_TYPE = "application/vnd.kapitan.generator.layer.v1.tar+gzip"  # (1)!
-
-
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: uv run push.py <tag>")
-        sys.exit(1)
-
-    tag = sys.argv[1]
-    target = f"{REGISTRY}/{REPOSITORY}:{tag}"
-
-    client = oras.client.OrasClient(hostname=REGISTRY)
-    client.auth.load_configs()           # reads ~/.docker/config.json  (2)!
-
-    print(f"Pushing {BUNDLE_DIR!r} → {target}")
-    response = client.push(
-        target=target,
-        files=[f"{BUNDLE_DIR}:{MEDIA_TYPE}"],  # (3)!
-        manifest_annotations={"org.opencontainers.image.title": REPOSITORY},
-        disable_path_validation=True,
-    )
-    print(f"Pushed: {response.status_code}")
-
-
-if __name__ == "__main__":
-    main()
-```
-
-1. Setting a custom media type lets consumers filter for this layer specifically via the `media_type`
-   field in the Kapitan inventory. You can use any string; this is the convention for Kapitan
-   generators.
-2. `load_configs()` picks up credentials stored by `docker login` or set via the `ORAS_TOKEN`
-   environment variable.
-3. The `"path:media_type"` syntax annotates the layer. The directory is automatically compressed to
-   a `.tar.gz` blob before upload.
+You also need write access to an OCI registry (GHCR, Docker Hub, a private Harbor instance, etc.)
+and your credentials available via `docker login` or environment variables.
 
 ---
 
-## Pushing a new version
+## Pushing a generator
+
+Authenticate with your registry, then push the directory in a single command:
 
 ```shell
-# Authenticate once (GHCR example — substitute your registry)
+# Authenticate (GHCR example)
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
 # Push version 1.2.0
-uv run push.py 1.2.0
+oras push ghcr.io/kapicorp/generators:1.2.0 \
+  my-generator:application/vnd.kapitan.generator.layer.v1.tar+gzip # (1)!
 ```
 
-After a successful push, record the immutable digest for reproducible deployments:
+1. The `path:media_type` syntax tags the layer with a custom media type. Kapitan consumers can then
+   use the `media_type` field in their inventory to filter for exactly this layer. The convention for
+   Kapitan generators is `application/vnd.kapitan.generator.layer.v1.tar+gzip`, but any string is
+   valid. `oras` automatically compresses directories to `.tar.gz` before upload.
 
-```shell
-# Retrieve the digest (requires the oras CLI or skopeo; shown with skopeo)
-skopeo inspect docker://ghcr.io/kapicorp/generators:1.2.0 | python3 -m json.tool | grep Digest
+After a successful push, record the immutable digest shown in the output for reproducible deployments:
+
 ```
-
-!!! note
-
-    If you are iterating locally and don't have `skopeo`, the digest is printed in the ORAS client
-    response body. You can also find it on the registry's web UI (GHCR, Docker Hub, Harbor all
-    expose it in the image detail page).
+Pushed [registry] ghcr.io/kapicorp/generators:1.2.0
+Digest: sha256:abc123...
+```
 
 ---
 
@@ -176,19 +117,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - uses: oras-project/setup-oras@v1
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Push generator bundle
-        run: uv run push.py "${GITHUB_REF_NAME#v}"   # strips leading 'v' from the tag
+        run: |
+          oras push ghcr.io/kapicorp/generators:${GITHUB_REF_NAME#v} \
+            my-generator:application/vnd.kapitan.generator.layer.v1.tar+gzip
 ```
 
 ---
 
-## Consuming the published artifact
+
 
 Once pushed, reference the image in any target's inventory:
 
