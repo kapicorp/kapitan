@@ -586,7 +586,7 @@ class OciDependencyWiringTest(unittest.TestCase):
     def test_oci_deps_are_dispatched(self, mock_fetch_oci):
         """fetch_dependencies routes type:oci items to fetch_oci_dependency."""
         # Use ThreadPool instead of multiprocessing.Pool: threads share memory so
-        # MagicMock objects don't need to be pickled across process boundaries.
+        # mock objects don't need to be pickled across process boundaries.
         from multiprocessing.pool import ThreadPool
 
         with (
