@@ -30,28 +30,7 @@ input type.
 
 ## Prerequisites
 
-Install the `oras` CLI once:
-
-=== "Homebrew (macOS / Linux)"
-
-    ```shell
-    brew install oras
-    ```
-
-=== "Direct download (Linux)"
-
-    ```shell
-    VERSION=1.2.2
-    curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
-    tar -zxf oras_${VERSION}_linux_amd64.tar.gz oras
-    sudo mv oras /usr/local/bin/
-    ```
-
-=== "Windows (winget)"
-
-    ```shell
-    winget install oras
-    ```
+Install the `oras` CLI by following the [official installation guide](https://oras.land/docs/installation).
 
 You also need write access to an OCI registry (GHCR, Docker Hub, a private Harbor instance, etc.)
 and your credentials available via `docker login` or environment variables.
@@ -130,7 +109,7 @@ jobs:
 
 ---
 
-
+## Consuming the published artifact
 
 Once pushed, reference the image in any target's inventory:
 
