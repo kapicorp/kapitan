@@ -5,12 +5,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import hashlib
 import io
 import multiprocessing
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -22,12 +24,14 @@ from kapitan.dependency_manager.base import (
     fetch_git_source,
     fetch_helm_chart,
     fetch_http_source,
+    fetch_oci_dependency,
 )
-from kapitan.errors import HelmFetchingError
+from kapitan.errors import HelmFetchingError, OCIFetchingError
 from kapitan.inventory.model import KapitanInventorySettings
 from kapitan.inventory.model.dependencies import (
     KapitanDependencyGitConfig,
     KapitanDependencyHelmConfig,
+    KapitanDependencyOciConfig,
 )
 
 
@@ -339,3 +343,359 @@ class DependencyManagerTest(unittest.TestCase):
         self.assertTrue((temp / "components" / "tests").is_dir())
         self.assertTrue((temp / "components" / "kapitan-repository").is_dir())
         self.assertTrue((temp / "charts" / "prometheus").is_dir())
+
+
+class OciDependencyModelTest(unittest.TestCase):
+    """Tests for the KapitanDependencyOciConfig Pydantic model."""
+
+    def test_minimal_config(self):
+        """A source and output_path are sufficient; all OCI-specific fields default to None/False."""
+        dep = KapitanDependencyOciConfig(
+            type="oci",
+            source="ghcr.io/kapicorp/generators:1.2.0",
+            output_path="components/generators",
+        )
+        self.assertEqual(dep.type, "oci")
+        self.assertEqual(dep.source, "ghcr.io/kapicorp/generators:1.2.0")
+        self.assertEqual(dep.output_path, "components/generators")
+        self.assertIsNone(dep.subpath)
+        self.assertIsNone(dep.media_type)
+        self.assertFalse(dep.insecure)
+        self.assertTrue(dep.tls_verify)
+        self.assertFalse(dep.force_fetch)
+
+    def test_full_config(self):
+        """All optional fields are accepted."""
+        dep = KapitanDependencyOciConfig(
+            type="oci",
+            source="ghcr.io/kapicorp/generators:1.2.0",
+            output_path="components/generators",
+            subpath="kubernetes/",
+            media_type="application/vnd.kapitan.generator.layer.v1.tar+gzip",
+            insecure=True,
+            force_fetch=True,
+        )
+        self.assertEqual(dep.subpath, "kubernetes/")
+        self.assertEqual(
+            dep.media_type, "application/vnd.kapitan.generator.layer.v1.tar+gzip"
+        )
+        self.assertTrue(dep.insecure)
+        self.assertTrue(dep.force_fetch)
+
+    def test_oci_included_in_dependency_union(self):
+        """KapitanInventorySettings accepts type: oci in its dependencies list."""
+        settings = KapitanInventorySettings(
+            dependencies=[
+                {
+                    "type": "oci",
+                    "source": "ghcr.io/kapicorp/generators:1.2.0",
+                    "output_path": "components/generators",
+                }
+            ]
+        )
+        dep = settings.dependencies[0]
+        self.assertIsInstance(dep, KapitanDependencyOciConfig)
+
+
+class OciFetchDependencyTest(unittest.TestCase):
+    """Tests for fetch_oci_dependency() — all network calls are mocked."""
+
+    def _make_dep(
+        self,
+        source="ghcr.io/kapicorp/generators:1.2.0",
+        output_path=None,
+        subpath=None,
+        media_type=None,
+        insecure=False,
+        tls_verify=True,
+    ):
+        return KapitanDependencyOciConfig(
+            type="oci",
+            source=source,
+            output_path=output_path or tempfile.mkdtemp(),
+            subpath=subpath,
+            media_type=media_type,
+            insecure=insecure,
+            tls_verify=tls_verify,
+        )
+
+    def _seed_cache(self, target_dir: Path):
+        """Write a stub generator into target_dir to simulate a cached pull."""
+        target_dir.mkdir(parents=True, exist_ok=True)
+        (target_dir / "__init__.py").write_text("def main(): return {}")
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_successful_pull(self, MockClient):
+        """Files are pulled from the registry and copied to output_path."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir)
+
+            # Simulate oras writing a file into target_dir during pull
+            def fake_pull(target, outdir, allowed_media_type):
+                Path(outdir).mkdir(parents=True, exist_ok=True)
+                (Path(outdir) / "__init__.py").write_text("def main(): return {}")
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=False)
+
+            MockClient.return_value.pull.assert_called_once()
+            self.assertTrue((Path(out_dir) / "__init__.py").is_file())
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_cache_hit_skips_pull(self, MockClient):
+        """A second fetch with the same source reuses the cached directory."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir)
+
+            # Pre-populate the cache directory for this source
+            cache_key = hashlib.sha256(dep.source.encode()).hexdigest()[:8]
+            cached = Path(save_dir) / f"oci_{cache_key}"
+            self._seed_cache(cached)
+
+            fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=False)
+
+            MockClient.return_value.pull.assert_not_called()
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_force_clears_stale_cache(self, MockClient):
+        """force=True re-pulls and removes the old cache dir, so stale files don't persist."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir)
+
+            # Seed cache with a stale file that won't appear in the fresh pull
+            cache_key = hashlib.sha256(dep.source.encode()).hexdigest()[:8]
+            cached = Path(save_dir) / f"oci_{cache_key}"
+            self._seed_cache(cached)
+            (cached / "stale_file.py").write_text("# old")
+
+            def fake_pull(target, outdir, allowed_media_type):
+                # Fresh pull only writes __init__.py — no stale_file.py
+                Path(outdir).mkdir(parents=True, exist_ok=True)
+                (Path(outdir) / "__init__.py").write_text("def main(): return {}")
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=True)
+
+            # Stale file must not appear in output (cache was wiped before re-pull)
+            self.assertFalse((Path(out_dir) / "stale_file.py").exists())
+            self.assertTrue((Path(out_dir) / "__init__.py").is_file())
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_subpath_is_extracted(self, MockClient):
+        """When subpath is set, only that subdirectory is copied to output_path."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir, subpath="kubernetes")
+
+            def fake_pull(target, outdir, allowed_media_type):
+                subdir = Path(outdir) / "kubernetes"
+                subdir.mkdir(parents=True, exist_ok=True)
+                (subdir / "__init__.py").write_text("def main(): return {}")
+                # A sibling directory that should NOT appear in output_path
+                other = Path(outdir) / "terraform"
+                other.mkdir(parents=True, exist_ok=True)
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=False)
+
+            self.assertTrue((Path(out_dir) / "__init__.py").is_file())
+            self.assertFalse((Path(out_dir) / "terraform").exists())
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_insecure_flag_forwarded(self, MockClient):
+        """insecure=True is passed through to OrasClient."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir, insecure=True)
+
+            def fake_pull(target, outdir, allowed_media_type):
+                Path(outdir).mkdir(parents=True, exist_ok=True)
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=False)
+
+            MockClient.assert_called_once_with(insecure=True, tls_verify=True)
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_tls_verify_forwarded(self, MockClient):
+        """tls_verify is passed through to OrasClient (bool or CA-bundle path)."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(
+                output_path=out_dir, tls_verify="/etc/ssl/certs/my-ca.crt"
+            )
+
+            def fake_pull(target, outdir, allowed_media_type):
+                Path(outdir).mkdir(parents=True, exist_ok=True)
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=False)
+
+            MockClient.assert_called_once_with(
+                insecure=False, tls_verify="/etc/ssl/certs/my-ca.crt"
+            )
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_pull_failure_raises_oci_fetching_error(self, MockClient):
+        """A registry error is wrapped in OCIFetchingError."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir)
+            MockClient.return_value.pull.side_effect = Exception("connection refused")
+
+            with self.assertRaises(OCIFetchingError):
+                fetch_oci_dependency(
+                    (dep.source, [dep]), save_dir=save_dir, force=False
+                )
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_multiple_deps_same_source(self, MockClient):
+        """Two deps with the same source share a single pull (the dep_mapping pattern)."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out1,
+            tempfile.TemporaryDirectory() as out2,
+        ):
+            source = "ghcr.io/kapicorp/generators:1.2.0"
+            deps = [
+                self._make_dep(source=source, output_path=out1),
+                self._make_dep(source=source, output_path=out2),
+            ]
+
+            def fake_pull(target, outdir, allowed_media_type):
+                Path(outdir).mkdir(parents=True, exist_ok=True)
+                (Path(outdir) / "__init__.py").write_text("def main(): return {}")
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((source, deps), save_dir=save_dir, force=False)
+
+            # Pull happens once; both output paths are populated
+            MockClient.return_value.pull.assert_called_once()
+            self.assertTrue((Path(out1) / "__init__.py").is_file())
+            self.assertTrue((Path(out2) / "__init__.py").is_file())
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_conflicting_connection_settings_raises_error(self, MockClient):
+        """Deps sharing a source but with different insecure/tls_verify raise OCIFetchingError."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out1,
+            tempfile.TemporaryDirectory() as out2,
+        ):
+            source = "ghcr.io/kapicorp/generators:1.2.0"
+            deps = [
+                self._make_dep(source=source, output_path=out1, insecure=False),
+                self._make_dep(source=source, output_path=out2, insecure=True),
+            ]
+            with self.assertRaises(OCIFetchingError):
+                fetch_oci_dependency((source, deps), save_dir=save_dir, force=False)
+            MockClient.return_value.pull.assert_not_called()
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_media_types_are_unioned_across_deps(self, MockClient):
+        """When deps share a source but request different media_types, both are pulled together."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out1,
+            tempfile.TemporaryDirectory() as out2,
+        ):
+            source = "ghcr.io/kapicorp/generators:1.2.0"
+            type_a = "application/vnd.kapitan.layer.kubectl.v1.tar+gzip"
+            type_b = "application/vnd.kapitan.layer.terraform.v1.tar+gzip"
+            deps = [
+                self._make_dep(source=source, output_path=out1, media_type=type_a),
+                self._make_dep(source=source, output_path=out2, media_type=type_b),
+            ]
+
+            def fake_pull(target, outdir, allowed_media_type):
+                Path(outdir).mkdir(parents=True, exist_ok=True)
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((source, deps), save_dir=save_dir, force=False)
+
+            _, call_kwargs = MockClient.return_value.pull.call_args
+            pulled_types = set(call_kwargs["allowed_media_type"])
+            self.assertEqual(pulled_types, {type_a, type_b})
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_media_type_none_pulls_all_layers(self, MockClient):
+        """If any dep omits media_type (None), all layers are pulled (media_types=None)."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out1,
+            tempfile.TemporaryDirectory() as out2,
+        ):
+            source = "ghcr.io/kapicorp/generators:1.2.0"
+            deps = [
+                self._make_dep(
+                    source=source,
+                    output_path=out1,
+                    media_type="application/vnd.kapitan.layer.v1.tar+gzip",
+                ),
+                self._make_dep(source=source, output_path=out2, media_type=None),
+            ]
+
+            def fake_pull(target, outdir, allowed_media_type):
+                Path(outdir).mkdir(parents=True, exist_ok=True)
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((source, deps), save_dir=save_dir, force=False)
+
+            _, call_kwargs = MockClient.return_value.pull.call_args
+            self.assertIsNone(call_kwargs["allowed_media_type"])
+
+
+class OciDependencyWiringTest(unittest.TestCase):
+    """Tests that fetch_dependencies() dispatches OCI deps to fetch_oci_dependency()."""
+
+    @patch("kapitan.dependency_manager.base.fetch_oci_dependency")
+    def test_oci_deps_are_dispatched(self, mock_fetch_oci):
+        """fetch_dependencies routes type:oci items to fetch_oci_dependency."""
+        # Use ThreadPool instead of multiprocessing.Pool: threads share memory so
+        # mock objects don't need to be pickled across process boundaries.
+        from multiprocessing.pool import ThreadPool
+
+        with (
+            tempfile.TemporaryDirectory() as output_path,
+            tempfile.TemporaryDirectory() as save_dir,
+        ):
+            settings = KapitanInventorySettings(
+                dependencies=[
+                    {
+                        "type": "oci",
+                        "source": "ghcr.io/kapicorp/generators:1.2.0",
+                        "output_path": "components/generators",
+                    }
+                ]
+            )
+            with ThreadPool(1) as pool:
+                fetch_dependencies(
+                    output_path, [settings], save_dir, force=False, pool=pool
+                )
+
+            mock_fetch_oci.assert_called_once()

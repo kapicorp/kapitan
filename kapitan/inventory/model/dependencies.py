@@ -10,6 +10,7 @@ class KapitanDependencyTypes(StrEnum):
     HTTP = "http"
     HTTPS = "https"
     GIT = "git"
+    OCI = "oci"
 
 
 class KapitanDependencyBaseConfig(BaseModel):
@@ -39,11 +40,22 @@ class KapitanDependencyHttpsConfig(KapitanDependencyBaseConfig):
     unpack: bool = False
 
 
+class KapitanDependencyOciConfig(KapitanDependencyBaseConfig):
+    """Pull an artifact from an OCI-compliant registry."""
+
+    type: Literal[KapitanDependencyTypes.OCI] = KapitanDependencyTypes.OCI
+    subpath: str | None = None
+    media_type: str | None = None
+    insecure: bool = False
+    tls_verify: bool | str = True
+
+
 DependencyTypeConfig = Annotated[
     Union[
         KapitanDependencyHelmConfig,
         KapitanDependencyHttpsConfig,
         KapitanDependencyGitConfig,
+        KapitanDependencyOciConfig,
     ],
     Field(discriminator="type"),
 ]
