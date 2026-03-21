@@ -237,7 +237,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
     2. OCI reference in the form `registry/repo:tag` or `registry/repo@sha256:<digest>` for pinned pulls.
     3. Optional sub-directory inside the unpacked artifact to copy instead of the entire artifact root.
     4. Optional media type filter passed to the OCI client when pulling layers.
-    5. Set to `true` to allow pulling from an HTTP (non-TLS) registry. Defaults to `false`. Note: this is distinct from TLS certificate verification — use `tls_verify` for self-signed certificates.
+    5. Set to `true` to allow pulling from an HTTP (non-TLS) registry. Defaults to `false`. Note: this is distinct from TLS certificate verification use `tls_verify` for self-signed certificates.
     6. Controls TLS certificate verification. Set to `false` to skip verification (e.g. self-signed certs in dev), or provide a path to a custom CA bundle as a string (e.g. `"/etc/ssl/certs/my-ca.crt"`). Defaults to `true`.
 
     !!! note
@@ -246,6 +246,9 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
         ```shell
         pip install kapitan[oci]
         ```
+
+        For a full guide on packaging and publishing your own generator bundles, see
+        [Publishing generators as OCI artifacts](publishing_generators.md).
 
     ### Example
 
