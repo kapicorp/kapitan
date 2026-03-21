@@ -5,7 +5,7 @@ bundles from any OCI-compliant registry. This page walks through the other half 
 how to package your own generators and publish them so teams or projects can consume them by
 reference.
 
-Publishing uses the [**oras**](https://oras.land/) CLI — a small, standalone binary purpose-built
+Publishing uses the [**oras**](https://oras.land/) CLI a small, standalone binary purpose-built
 for pushing and pulling arbitrary files to OCI registries.
 
 ---
@@ -17,7 +17,7 @@ before compilation. For a **Kadet** generator it typically looks like this:
 
 ```
 my-generator/
-├── __init__.py        # entry point — must define main()
+├── __init__.py        # entry point must define main()
 └── lib/               # any helper modules
     └── utils.py
 ```
@@ -46,14 +46,22 @@ Authenticate with your registry, then push the directory in a single command:
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
 # Push version 1.2.0
-oras push ghcr.io/kapicorp/generators:1.2.0 \
-  my-generator:application/vnd.kapitan.generator.layer.v1.tar+gzip # (1)!
+oras push ghcr.io/kapicorp/generators:1.2.0 my-generator/
 ```
 
-1. The `path:media_type` syntax tags the layer with a custom media type. Kapitan consumers can then
-   use the `media_type` field in their inventory to filter for exactly this layer. The convention for
-   Kapitan generators is `application/vnd.kapitan.generator.layer.v1.tar+gzip`, but any string is
-   valid. `oras` automatically compresses directories to `.tar.gz` before upload.
+oras automatically compresses the directory to `.tar.gz` before upload.
+
+!!! tip "Filtering by media type"
+    If you publish multiple different artifact types under the same image (e.g. a generator bundle
+    alongside a schema file) you can annotate each layer with a custom media type:
+
+    ```shell
+    oras push ghcr.io/kapicorp/generators:1.2.0 \
+      my-generator/:application/vnd.kapitan.generator.layer.v1.tar+gzip
+    ```
+
+    Consumers can then set `media_type: application/vnd.kapitan.generator.layer.v1.tar+gzip` in
+    their inventory to pull only that layer. For single-artifact images this is unnecessary.
 
 After a successful push, record the immutable digest shown in the output for reproducible deployments:
 
@@ -96,5 +104,5 @@ parameters:
       output_path: .
 ```
 
-See [External dependencies — OCI](external_dependencies.md#defining-dependencies) for the full
+See [External dependencies OCI](external_dependencies.md#defining-dependencies) for the full
 reference of available fields.

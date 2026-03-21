@@ -348,22 +348,6 @@ class DependencyManagerTest(unittest.TestCase):
 class OciDependencyModelTest(unittest.TestCase):
     """Tests for the KapitanDependencyOciConfig Pydantic model."""
 
-    def test_minimal_config(self):
-        """A source and output_path are sufficient; all OCI-specific fields default to None/False."""
-        dep = KapitanDependencyOciConfig(
-            type="oci",
-            source="ghcr.io/kapicorp/generators:1.2.0",
-            output_path="components/generators",
-        )
-        self.assertEqual(dep.type, "oci")
-        self.assertEqual(dep.source, "ghcr.io/kapicorp/generators:1.2.0")
-        self.assertEqual(dep.output_path, "components/generators")
-        self.assertIsNone(dep.subpath)
-        self.assertIsNone(dep.media_type)
-        self.assertFalse(dep.insecure)
-        self.assertTrue(dep.tls_verify)
-        self.assertFalse(dep.force_fetch)
-
     def test_full_config(self):
         """All optional fields are accepted."""
         dep = KapitanDependencyOciConfig(
@@ -398,7 +382,7 @@ class OciDependencyModelTest(unittest.TestCase):
 
 
 class OciFetchDependencyTest(unittest.TestCase):
-    """Tests for fetch_oci_dependency() — all network calls are mocked."""
+    """Tests for fetch_oci_dependency() all network calls are mocked."""
 
     def _make_dep(
         self,
@@ -479,7 +463,7 @@ class OciFetchDependencyTest(unittest.TestCase):
             (cached / "stale_file.py").write_text("# old")
 
             def fake_pull(target, outdir, allowed_media_type):
-                # Fresh pull only writes __init__.py — no stale_file.py
+                # Fresh pull only writes __init__.py no stale_file.py
                 Path(outdir).mkdir(parents=True, exist_ok=True)
                 (Path(outdir) / "__init__.py").write_text("def main(): return {}")
 

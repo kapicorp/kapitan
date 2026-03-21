@@ -374,8 +374,8 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
         ):
             raise OCIFetchingError(
                 f"{item_type} {source}: multiple dependencies share the same source but "
-                f"declare conflicting insecure/tls_verify settings. All dependencies for "
-                f"the same source must use identical connection settings."
+                f"declare conflicting connection settings. All dependencies for "
+                f"the same source must use identical insecure and tls_verify settings."
             )
         # Union media_type filters: if any dep requests everything (None), pull all layers;
         # otherwise collect the distinct types so each dep gets the layers it needs.
@@ -387,6 +387,10 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
             client = oras.client.OrasClient(
                 insecure=first.insecure, tls_verify=first.tls_verify
             )
+            username = os.environ.get("OCI_USERNAME")
+            password = os.environ.get("OCI_PASSWORD")
+            if username and password:
+                client.auth.set_basic_auth(username, password)
             client.pull(
                 target=source,
                 outdir=target_dir,
@@ -401,7 +405,10 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
         logger.debug("Using cached %s %s", item_type, target_dir)
 
     for dep in deps:
-        # Copy either the full artifact or only the declared subdirectory
+        # Copy either the full artifact or only the declared subdirectory.
+        # NOTE: subpath validation happens after the pull because we don't inspect the
+        # manifest before fetching. A typo in subpath wastes a pull but avoids the
+        # complexity of a pre-pull manifest walk.
         src = os.path.join(target_dir, dep.subpath) if dep.subpath else target_dir
         if dep.subpath and not os.path.isdir(src):
             raise OCIFetchingError(

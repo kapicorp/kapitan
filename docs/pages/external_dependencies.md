@@ -228,7 +228,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
           output_path: path/to/dir # mkdocs (1)!
           source: <registry>/<repository>:<tag> # mkdocs (2)!
           subpath: relative/path/inside/artifact # mkdocs (3)!
-          media_type: application/vnd.kapitan.generator # mkdocs (4)!
+          media_type: application/vnd.kapitan.generator.layer.v1.tar+gzip # mkdocs (4)!
           insecure: false # mkdocs (5)!
           tls_verify: true # mkdocs (6)!
     ```
@@ -249,6 +249,32 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
 
         For a full guide on packaging and publishing your own generator bundles, see
         [Publishing generators as OCI artifacts](publishing_generators.md).
+
+    ### Authentication
+
+    Credentials are never stored in the inventory. Kapitan supports two authentication approaches:
+
+    **Docker credential store (recommended)** run `docker login` or `oras login` before compiling.
+    Kapitan will pick up the stored credentials automatically:
+
+    ```shell
+    # GitHub Container Registry
+    echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
+
+    # Generic registry
+    oras login registry.example.com -u <username> -p <password>
+    ```
+
+    **Environment variables** set `OCI_USERNAME` and `OCI_PASSWORD` in the environment.
+    Kapitan will call `login` on the registry automatically before pulling:
+
+    ```shell
+    export OCI_USERNAME=myuser
+    export OCI_PASSWORD=$GITHUB_TOKEN
+    kapitan compile
+    ```
+
+    This is the preferred approach for CI/CD pipelines where credentials are injected as secrets.
 
     ### Example
 
