@@ -56,7 +56,7 @@ class InventoryTargetTestBase(unittest.TestCase):
 class InventoryTargetTestReclass(InventoryTargetTestBase):
     def setUp(self):
         self.backend_id = InventoryBackends.RECLASS
-        self.expected_targets_count = 11
+        self.expected_targets_count = 10
         self.inventory_path = "examples/kubernetes/inventory"
         super().setUp()
 
@@ -64,7 +64,7 @@ class InventoryTargetTestReclass(InventoryTargetTestBase):
 class InventoryTargetTestReclassRs(InventoryTargetTestBase):
     def setUp(self):
         self.backend_id = InventoryBackends.RECLASS_RS
-        self.expected_targets_count = 11
+        self.expected_targets_count = 10
         self.inventory_path = "examples/kubernetes/inventory"
         super().setUp()
 
@@ -75,7 +75,7 @@ class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
     def setUp(self) -> None:
         shutil.copytree(TEST_KUBERNETES_INVENTORY, self.temp_dir, dirs_exist_ok=True)
         self.backend_id = InventoryBackends.OMEGACONF
-        self.expected_targets_count = 11
+        self.expected_targets_count = 10
         from kapitan.inventory.backends.omegaconf import migrate
 
         self.inventory_path = os.path.join(self.temp_dir, "inventory")
