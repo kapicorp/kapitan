@@ -11,9 +11,20 @@ from functools import partial
 from mimetypes import MimeTypes
 from shutil import copyfile, rmtree
 
+
+try:
+    import oras.client
+except ImportError:
+    oras = None
+
 from git import GitCommandError, Repo
 
-from kapitan.errors import GitFetchingError, GitSubdirNotFoundError, HelmFetchingError
+from kapitan.errors import (
+    GitFetchingError,
+    GitSubdirNotFoundError,
+    HelmFetchingError,
+    OCIFetchingError,
+)
 from kapitan.helm_cli import helm_cli
 from kapitan.inventory.model.dependencies import KapitanDependencyTypes
 from kapitan.utils import (
@@ -43,6 +54,7 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
     git_deps = defaultdict(list)
     http_deps = defaultdict(list)
     helm_deps = defaultdict(list)
+    oci_deps = defaultdict(list)
 
     # this dict is to make sure no duplicated output_paths exist per source
     deps_output_paths = defaultdict(set)
@@ -81,6 +93,8 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
                     helm_deps[
                         HelmSource(source_uri, item.chart_name, version, item.helm_path)
                     ].append(item)
+                elif dependency_type == KapitanDependencyTypes.OCI:
+                    oci_deps[source_uri].append(item)
                 else:
                     logger.warning("%s is not a valid source type", dependency_type)
 
@@ -94,9 +108,11 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
     git_worker = partial(fetch_git_dependency, save_dir=save_dir, force=force)
     http_worker = partial(fetch_http_dependency, save_dir=save_dir, force=force)
     helm_worker = partial(fetch_helm_chart, save_dir=save_dir, force=force)
+    oci_worker = partial(fetch_oci_dependency, save_dir=save_dir, force=force)
     [p.get() for p in pool.imap_unordered(http_worker, http_deps.items()) if p]
     [p.get() for p in pool.imap_unordered(git_worker, git_deps.items()) if p]
     [p.get() for p in pool.imap_unordered(helm_worker, helm_deps.items()) if p]
+    [p.get() for p in pool.imap_unordered(oci_worker, oci_deps.items()) if p]
 
 
 def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
@@ -323,3 +339,55 @@ def exists_in_cache(item_path):
     if not os.path.exists(dep_cache_path):
         return False
     return os.path.basename(item_path) in os.listdir(dep_cache_path)
+
+
+def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependency"):
+    """
+    Pulls an OCI artifact from a registry into save_dir, then copies it (or a
+    declared subpath within it) into each dependency's output_path.
+
+    Requires the optional 'oras' package: pip install kapitan[oci]
+    """
+    if oras is None:
+        raise ImportError(
+            "The 'oras' package is required for OCI dependencies. "
+            "Install it with: pip install kapitan[oci]"
+        )
+
+    source, deps = dep_mapping
+
+    # Derive a stable local cache directory from the full source reference,
+    # including any digest, so tag@sha256:… and tag alone cache separately.
+    cache_key = hashlib.sha256(source.encode()).hexdigest()[:8]
+    target_dir = os.path.join(save_dir, f"oci_{cache_key}")
+
+    if not exists_in_cache(target_dir) or force:
+        logger.debug("%s %s: fetching now", item_type, source)
+        try:
+            client = oras.client.OrasClient(
+                insecure=deps[0].insecure if deps else False
+            )
+            client.pull(
+                target=source,
+                outdir=target_dir,
+                media_types=[deps[0].media_type]
+                if deps and deps[0].media_type
+                else None,
+            )
+            logger.debug("%s %s: successfully fetched", item_type, source)
+        except Exception as e:
+            raise OCIFetchingError(
+                f"{item_type} {source}: fetching unsuccessful\n{e}"
+            ) from e
+    else:
+        logger.debug("Using cached %s %s", item_type, target_dir)
+
+    for dep in deps:
+        # Copy either the full artifact or only the declared subdirectory
+        src = os.path.join(target_dir, dep.subpath) if dep.subpath else target_dir
+        if force:
+            copied = copy_tree(src, dep.output_path)
+        else:
+            copied = safe_copy_tree(src, dep.output_path)
+        if copied:
+            logger.info("%s %s: saved to %s", item_type, source, dep.output_path)
