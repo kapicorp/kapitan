@@ -1,0 +1,5 @@
+apiVersion: v2
+name: conditional-chart
+description: A test chart with conditional templates to verify empty document filtering
+version: 0.1.0
+appVersion: "1.0"
