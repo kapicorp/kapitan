@@ -45,6 +45,7 @@ class KapitanDependencyOciConfig(KapitanDependencyBaseConfig):
     subpath: str | None = None
     media_type: str | None = None
     insecure: bool = False
+    tls_verify: bool | str = True
 
 
 DependencyTypeConfig = Annotated[

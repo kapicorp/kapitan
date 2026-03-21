@@ -365,7 +365,8 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
         logger.debug("%s %s: fetching now", item_type, source)
         try:
             client = oras.client.OrasClient(
-                insecure=deps[0].insecure if deps else False
+                insecure=deps[0].insecure if deps else False,
+                tls_verify=deps[0].tls_verify if deps else True,
             )
             client.pull(
                 target=source,

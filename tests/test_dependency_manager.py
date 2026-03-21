@@ -360,6 +360,7 @@ class OciDependencyModelTest(unittest.TestCase):
         self.assertIsNone(dep.subpath)
         self.assertIsNone(dep.media_type)
         self.assertFalse(dep.insecure)
+        self.assertTrue(dep.tls_verify)
         self.assertFalse(dep.force_fetch)
 
     def test_digest_pinned_source(self):
@@ -389,6 +390,26 @@ class OciDependencyModelTest(unittest.TestCase):
         self.assertTrue(dep.insecure)
         self.assertTrue(dep.force_fetch)
 
+    def test_tls_verify_false(self):
+        """tls_verify=False disables certificate verification (e.g. self-signed)."""
+        dep = KapitanDependencyOciConfig(
+            type="oci",
+            source="ghcr.io/kapicorp/generators:1.2.0",
+            output_path="components/generators",
+            tls_verify=False,
+        )
+        self.assertFalse(dep.tls_verify)
+
+    def test_tls_verify_ca_bundle(self):
+        """tls_verify accepts a CA bundle path string."""
+        dep = KapitanDependencyOciConfig(
+            type="oci",
+            source="ghcr.io/kapicorp/generators:1.2.0",
+            output_path="components/generators",
+            tls_verify="/etc/ssl/certs/my-ca.crt",
+        )
+        self.assertEqual(dep.tls_verify, "/etc/ssl/certs/my-ca.crt")
+
     def test_oci_included_in_dependency_union(self):
         """KapitanInventorySettings accepts type: oci in its dependencies list."""
         settings = KapitanInventorySettings(
@@ -414,6 +435,7 @@ class OciFetchDependencyTest(unittest.TestCase):
         subpath=None,
         media_type=None,
         insecure=False,
+        tls_verify=True,
     ):
         return KapitanDependencyOciConfig(
             type="oci",
@@ -422,6 +444,7 @@ class OciFetchDependencyTest(unittest.TestCase):
             subpath=subpath,
             media_type=media_type,
             insecure=insecure,
+            tls_verify=tls_verify,
         )
 
     def _seed_cache(self, target_dir: Path):
@@ -536,7 +559,29 @@ class OciFetchDependencyTest(unittest.TestCase):
 
             fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=False)
 
-            MockClient.assert_called_once_with(insecure=True)
+            MockClient.assert_called_once_with(insecure=True, tls_verify=True)
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_tls_verify_forwarded(self, MockClient):
+        """tls_verify is passed through to OrasClient (bool or CA-bundle path)."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(
+                output_path=out_dir, tls_verify="/etc/ssl/certs/my-ca.crt"
+            )
+
+            def fake_pull(target, outdir, media_types):
+                Path(outdir).mkdir(parents=True, exist_ok=True)
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=False)
+
+            MockClient.assert_called_once_with(
+                insecure=False, tls_verify="/etc/ssl/certs/my-ca.crt"
+            )
 
     @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
     def test_pull_failure_raises_oci_fetching_error(self, MockClient):
