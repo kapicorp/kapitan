@@ -79,33 +79,10 @@ active development.
 
 ## GitHub Actions — automated publishing
 
-A minimal workflow that publishes on every version tag:
-
-```yaml
-name: Publish generator
-
-on:
-  push:
-    tags: ["v*"]
-
-jobs:
-  push:
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: oras-project/setup-oras@v1
-
-      - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-
-      - name: Push generator bundle
-        run: |
-          oras push ghcr.io/kapicorp/generators:${GITHUB_REF_NAME#v} \
-            my-generator:application/vnd.kapitan.generator.layer.v1.tar+gzip
-```
+The oras project maintains an official GitHub Actions integration. Follow the
+[oras GitHub Action guide](https://oras.land/docs/how_to_guides/pushing_and_pulling_in_CI) for
+up-to-date setup instructions, then use the same `oras push` command from the section above as your
+push step.
 
 ---
 
