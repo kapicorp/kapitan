@@ -49,4 +49,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_COMMITTER_NAME: mike-mkdocs-bot
           GIT_COMMITTER_EMAIL: admins@kapicorp
-        run: uv run mike deploy --push dev master
+        run: |
+          uv run mike deploy --push dev master
+          uv run mike set-default --push master

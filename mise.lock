@@ -1,0 +1,35 @@
+[[tools.cue]]
+version = "0.15.4"
+backend = "aqua:cue-lang/cue"
+"platforms.linux-arm64" = { checksum = "sha256:f5a47ef6a6566849543b0ea84a7058c690bbb1492a1c101a6d62feaf59f8112e", url = "https://github.com/cue-lang/cue/releases/download/v0.15.4/cue_v0.15.4_linux_arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:4709f0d3e9988b82192a205953fefdbb3637317a1cef63d84fe65b7b92ef95a3", url = "https://github.com/cue-lang/cue/releases/download/v0.15.4/cue_v0.15.4_linux_amd64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:2d324ba027447a7dab2e980f3ccfb7e15a3dd9096258b9f69205153e4c5b46cd", url = "https://github.com/cue-lang/cue/releases/download/v0.15.4/cue_v0.15.4_darwin_arm64.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:e64e6a9f30609ed619a203334a6404c46a9fb7685a86424f74c3c52a55ebfa1c", url = "https://github.com/cue-lang/cue/releases/download/v0.15.4/cue_v0.15.4_darwin_amd64.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:d42e26a0fb09219fc1735326fb2188dadf7c8deab136698a55d793c0c15a6aaa", url = "https://github.com/cue-lang/cue/releases/download/v0.15.4/cue_v0.15.4_windows_amd64.zip"}
+
+[[tools.helm]]
+version = "3.19.5"
+backend = "aqua:helm/helm"
+"platforms.linux-arm64" = { checksum = "sha256:ce02147ffee6d993bf8ae97a44a22e9e1daf0b69d2d5b69a0c8cf6706445ccf5", url = "https://get.helm.sh/helm-v3.19.5-linux-arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:a0a5e8c592ed3f376ac110715eff214730c7422f9a44d96cf98117d2b8b0e6c0", url = "https://get.helm.sh/helm-v3.19.5-linux-amd64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:195e24e587f423f15a78feebab04583ceee68323598575a0e8b3b11b43fd26fe", url = "https://get.helm.sh/helm-v3.19.5-darwin-arm64.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:57f4a847c349382b7cc742a6434ef25f88f0928a113d8cf49084b464878ef0b9", url = "https://get.helm.sh/helm-v3.19.5-darwin-amd64.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:fee9632f0503debf0153f99e832b4dcb7c862c78b2f809e73eea0095d91ea51c", url = "https://get.helm.sh/helm-v3.19.5-windows-amd64.tar.gz"}
+
+[[tools.kustomize]]
+version = "5.8.1"
+backend = "aqua:kubernetes-sigs/kustomize"
+"platforms.linux-arm64" = { checksum = "sha256:0953ea3e476f66d6ddfcd911d750f5167b9365aa9491b2326398e289fef2c142", url = "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.8.1/kustomize_v5.8.1_linux_arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:029a7f0f4e1932c52a0476cf02a0fd855c0bb85694b82c338fc648dcb53a819d", url = "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.8.1/kustomize_v5.8.1_linux_amd64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:8886f8a78474e608cc81234f729fda188a9767da23e28925802f00ece2bab288", url = "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.8.1/kustomize_v5.8.1_darwin_arm64.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:ee7cf0c1e3592aa7bb66ba82b359933a95e7f2e0b36e5f53ed0a4535b017f2f8", url = "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.8.1/kustomize_v5.8.1_darwin_amd64.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:8ec7f5e815e526d4622c06df0a7793d8cfb6eb1c74f816b46166097fef8b26c6", url = "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.8.1/kustomize_v5.8.1_windows_amd64.zip"}
+
+[[tools.uv]]
+version = "0.9.18"
+backend = "aqua:astral-sh/uv"
+"platforms.linux-arm64" = { checksum = "sha256:b710ceb9889276cbd7ce04e2ca06b5bd3e288da465bd38f7dd17955c4e703a65", url = "https://github.com/astral-sh/uv/releases/download/0.9.18/uv-aarch64-unknown-linux-musl.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:a55ae2d0d53c8f6541bb4d6afc95857ff33a97de8f1d23e9d09acdcb865c4a00", url = "https://github.com/astral-sh/uv/releases/download/0.9.18/uv-x86_64-unknown-linux-musl.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:dc3bee4abbb3bac267a3985a23ea7617d19d41ff381dbaf560ba415ad65af68f", url = "https://github.com/astral-sh/uv/releases/download/0.9.18/uv-aarch64-apple-darwin.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:f86836c637333c65bbc7902acc9c49888eef9fbd15dccbc1946b10e30b041073", url = "https://github.com/astral-sh/uv/releases/download/0.9.18/uv-x86_64-apple-darwin.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:28cbe5d30907a774bfe27a517a39b494ec6f7d3816bda8bbf6f9645490449182", url = "https://github.com/astral-sh/uv/releases/download/0.9.18/uv-x86_64-pc-windows-msvc.zip"}

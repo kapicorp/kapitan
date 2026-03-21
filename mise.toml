@@ -1,0 +1,6 @@
+[tools]
+# Keep Helm on v3 until Helm v4 behavior is explicitly validated in tests/CI.
+helm = "3.19.5"
+kustomize = "5.8.1"
+cue = "0.15.4"
+uv = "0.9.18"
