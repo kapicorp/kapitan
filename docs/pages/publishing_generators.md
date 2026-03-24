@@ -5,7 +5,7 @@ bundles from any OCI-compliant registry. This page walks through the other half 
 how to package your own generators and publish them so teams or projects can consume them by
 reference.
 
-Publishing uses the [**oras**](https://oras.land/) CLI a small, standalone binary purpose-built
+Publishing uses the [**oras**](https://oras.land/) CLI, a small, standalone binary purpose-built
 for pushing and pulling arbitrary files to OCI registries.
 
 ---
