@@ -227,7 +227,7 @@ jobs:
 
       # Build, test locally, then push if not a PR
       - name: Build Kapitan image
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           platforms: ${{ matrix.platform.platform }}
           push: false
@@ -247,7 +247,7 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         if: env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           platforms: ${{ matrix.platform.platform }}
           push: true
