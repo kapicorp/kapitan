@@ -38,6 +38,9 @@ class Helm(InputType):
         """Render templates in input_path/templates and write to compile_path.
         input_path must be a directory containing a helm chart.
 
+        Null YAML documents produced by Helm (e.g. when a chart template starts
+        with a comment before the first '---') are filtered out before writing.
+
         kwargs:
             reveal: default False, set to reveal refs on compile
             target_name: default None, set to current target being compiled
@@ -84,7 +87,10 @@ class Helm(InputType):
                 with open(full_file_name, encoding="utf-8") as f:
                     file_path = os.path.join(compile_path, rel_file_name)
                     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                    item_value = list(yaml.safe_load_all(f))
+                    # Filter out null documents — see compile_file docstring.
+                    item_value = [
+                        doc for doc in yaml.safe_load_all(f) if doc is not None
+                    ]
                     self.to_file(config, file_path, item_value)
 
     def render_chart(self, *args, **kwargs):
@@ -276,4 +282,6 @@ class HelmChart(BaseModel):
         if error_message:
             raise HelmTemplateError(error_message)
 
-        return yaml.safe_load_all(output)
+        # Filter out null documents produced by Helm when templates start with
+        # a comment before '---'. See: https://github.com/kapicorp/kapitan/issues/1396
+        return (doc for doc in yaml.safe_load_all(output) if doc is not None)

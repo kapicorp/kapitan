@@ -1,0 +1,360 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: open-webui-pipelines
+    app.kubernetes.io/instance: minikube-open-webui-helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: pipelines
+    app.kubernetes.io/version: alpha
+    helm.sh/chart: pipelines-0.10.0
+  name: open-webui-pipelines
+  namespace: minikube-open-webui-helm
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/instance: minikube-open-webui-helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: tika
+    app.kubernetes.io/version: 3.2.2.0-full
+    helm.sh/chart: tika-3.2.2
+  name: minikube-open-webui-helm-tika
+  namespace: minikube-open-webui-helm
+---
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/component: open-webui
+    app.kubernetes.io/instance: minikube-open-webui-helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: open-webui
+    app.kubernetes.io/version: 0.6.41
+    helm.sh/chart: open-webui-8.19.0
+  name: existing-sa
+  namespace: minikube-open-webui-helm
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app.kubernetes.io/component: open-webui-pipelines
+    app.kubernetes.io/instance: minikube-open-webui-helm
+  name: open-webui-pipelines
+  namespace: minikube-open-webui-helm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app.kubernetes.io/component: open-webui
+    app.kubernetes.io/instance: minikube-open-webui-helm
+  name: open-webui
+  namespace: minikube-open-webui-helm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: open-webui-pipelines
+    app.kubernetes.io/instance: minikube-open-webui-helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: pipelines
+    app.kubernetes.io/version: alpha
+    helm.sh/chart: pipelines-0.10.0
+  name: open-webui-pipelines
+  namespace: minikube-open-webui-helm
+spec:
+  ports:
+    - name: http
+      port: 9099
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/component: open-webui-pipelines
+    app.kubernetes.io/instance: minikube-open-webui-helm
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/instance: minikube-open-webui-helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: tika
+    app.kubernetes.io/version: 3.2.2.0-full
+    helm.sh/chart: tika-3.2.2
+  name: minikube-open-webui-helm-tika
+  namespace: minikube-open-webui-helm
+spec:
+  ports:
+    - name: http
+      port: 9998
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/instance: minikube-open-webui-helm
+    app.kubernetes.io/name: tika
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: open-webui
+    app.kubernetes.io/instance: minikube-open-webui-helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: open-webui
+    app.kubernetes.io/version: 0.6.41
+    helm.sh/chart: open-webui-8.19.0
+  name: open-webui
+  namespace: minikube-open-webui-helm
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/component: open-webui
+    app.kubernetes.io/instance: minikube-open-webui-helm
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: open-webui-pipelines
+    app.kubernetes.io/instance: minikube-open-webui-helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: pipelines
+    app.kubernetes.io/version: alpha
+    helm.sh/chart: pipelines-0.10.0
+  name: open-webui-pipelines
+  namespace: minikube-open-webui-helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: open-webui-pipelines
+      app.kubernetes.io/instance: minikube-open-webui-helm
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: open-webui-pipelines
+        app.kubernetes.io/instance: minikube-open-webui-helm
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: pipelines
+        app.kubernetes.io/version: alpha
+        helm.sh/chart: pipelines-0.10.0
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - image: ghcr.io/open-webui/pipelines:main
+          imagePullPolicy: Always
+          name: pipelines
+          ports:
+            - containerPort: 9099
+              name: http
+          tty: true
+          volumeMounts:
+            - mountPath: /app/pipelines
+              name: data
+      enableServiceLinks: false
+      serviceAccountName: open-webui-pipelines
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: open-webui-pipelines
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: minikube-open-webui-helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: tika
+    app.kubernetes.io/version: 3.2.2.0-full
+    helm.sh/chart: tika-3.2.2
+  name: minikube-open-webui-helm-tika
+  namespace: minikube-open-webui-helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: minikube-open-webui-helm
+      app.kubernetes.io/name: tika
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: minikube-open-webui-helm
+        app.kubernetes.io/name: tika
+    spec:
+      containers:
+        - image: apache/tika:3.2.2.0-full
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /
+              port: 9998
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 30
+          name: tika
+          ports:
+            - containerPort: 9998
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /
+              port: 9998
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 30
+          resources:
+            limits:
+              cpu: '2'
+              memory: 2000Mi
+            requests:
+              cpu: '1'
+              memory: 1500Mi
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 35002
+            runAsNonRoot: true
+            runAsUser: 35002
+          volumeMounts:
+            - mountPath: /tmp
+              name: sec-ctx-vol
+      securityContext: {}
+      serviceAccountName: minikube-open-webui-helm-tika
+      volumes:
+        - emptyDir: {}
+          name: sec-ctx-vol
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/component: open-webui
+    app.kubernetes.io/instance: minikube-open-webui-helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: open-webui
+    app.kubernetes.io/version: 0.6.41
+    helm.sh/chart: open-webui-8.19.0
+  name: open-webui
+  namespace: minikube-open-webui-helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: open-webui
+      app.kubernetes.io/instance: minikube-open-webui-helm
+  serviceName: open-webui
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: open-webui
+        app.kubernetes.io/instance: minikube-open-webui-helm
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: open-webui
+        app.kubernetes.io/version: 0.6.41
+        helm.sh/chart: open-webui-8.19.0
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - env:
+            - name: WEBUI_URL
+              value: https://chat.example.com
+            - name: ENABLE_OLLAMA_API
+              value: 'False'
+            - name: OPENAI_API_BASE_URLS
+              value: http://open-webui-pipelines.minikube-open-webui-helm.svc.cluster.local:9099;https://api.openai.com/v1
+            - name: CONTENT_EXTRACTION_ENGINE
+              value: Tika
+            - name: TIKA_SERVER_URL
+              value: http://open-webui-tika:9998
+          image: ghcr.io/open-webui/open-webui:0.6.41
+          imagePullPolicy: IfNotPresent
+          name: open-webui
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          tty: true
+          volumeMounts:
+            - mountPath: /app/backend/data
+              name: data
+      enableServiceLinks: false
+      initContainers:
+        - command:
+            - sh
+            - -c
+            - cp -R -n /app/backend/data/* /tmp/app-data/
+          image: ghcr.io/open-webui/open-webui:0.6.41
+          imagePullPolicy: IfNotPresent
+          name: copy-app-data
+          volumeMounts:
+            - mountPath: /tmp/app-data
+              name: data
+      serviceAccountName: existing-sa
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: open-webui
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app.kubernetes.io/component: open-webui
+    app.kubernetes.io/instance: minikube-open-webui-helm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: open-webui
+    app.kubernetes.io/version: 0.6.41
+    helm.sh/chart: open-webui-8.19.0
+  name: open-webui
+  namespace: minikube-open-webui-helm
+spec:
+  rules:
+    - host: chat.example.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: open-webui
+                port:
+                  name: http
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - chat.example.com
+      secretName: minikube-open-webui-helm-tls

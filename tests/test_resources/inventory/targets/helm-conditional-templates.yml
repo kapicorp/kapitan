@@ -1,0 +1,22 @@
+classes:
+  - common
+
+parameters:
+  target_name: helm-conditional-templates
+  kapitan:
+    compile:
+      - input_type: helm
+        input_paths:
+          - charts/conditional-chart
+        output_path: conditional-chart
+        helm_params:
+          name: conditional-chart
+          output_file: all.yaml
+        helm_values:
+          # Disable the deployment to create empty template output
+          deployment:
+            enabled: false
+          configmap:
+            enabled: true
+          service:
+            enabled: true
