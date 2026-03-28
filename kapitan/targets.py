@@ -100,7 +100,10 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
             compile_path = os.path.join(output_path, "compiled")
 
             if not target_objs:
-                raise CompileError("Error: no targets found")
+                logger.info(
+                    "No targets with compile configuration found. Skipping compilation."
+                )
+                return
 
             # fetch dependencies
             if fetch:
@@ -140,29 +143,33 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
             # so p is only not None when raising an exception
             [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
-            os.makedirs(compile_path, exist_ok=True)
+            # Only copy compiled outputs if there were targets to compile
+            if target_objs and os.path.exists(temp_compile_path):
+                os.makedirs(compile_path, exist_ok=True)
 
-            # if '-t' is set on compile or only a few changed, only override selected targets
-            if len(target_objs) < len(discovered_targets):
-                for target in target_objs:
-                    path = target.target_full_path
-                    compile_path_target = os.path.join(compile_path, path)
-                    temp_path_target = os.path.join(temp_compile_path, path)
+                # if '-t' is set on compile or only a few changed, only override selected targets
+                if len(target_objs) < len(discovered_targets):
+                    for target in target_objs:
+                        path = target.target_full_path
+                        compile_path_target = os.path.join(compile_path, path)
+                        temp_path_target = os.path.join(temp_compile_path, path)
 
-                    os.makedirs(compile_path_target, exist_ok=True)
+                        os.makedirs(compile_path_target, exist_ok=True)
 
-                    shutil.rmtree(compile_path_target)
-                    shutil.copytree(temp_path_target, compile_path_target)
-                    logger.debug(
-                        "Copied %s into %s", temp_path_target, compile_path_target
-                    )
-            # otherwise override all targets
-            else:
-                shutil.rmtree(compile_path)
-                shutil.copytree(temp_compile_path, compile_path)
-                logger.debug("Copied %s into %s", temp_compile_path, compile_path)
+                        shutil.rmtree(compile_path_target)
+                        shutil.copytree(temp_path_target, compile_path_target)
+                        logger.debug(
+                            "Copied %s into %s", temp_path_target, compile_path_target
+                        )
+                # otherwise override all targets
+                else:
+                    shutil.rmtree(compile_path)
+                    shutil.copytree(temp_compile_path, compile_path)
+                    logger.debug("Copied %s into %s", temp_compile_path, compile_path)
+
             logger.info(
-                f"Compiled {len(targets)} targets in %.2fs", time.time() - compile_start
+                f"Compiled {len(target_objs)} targets in %.2fs",
+                time.time() - compile_start,
             )
         except ReclassException as e:
             if isinstance(e, NotFoundError):
@@ -212,9 +219,21 @@ def load_target_inventory(inventory, requested_targets, ignore_class_not_found=F
             kapitan_target_configs = target.parameters.kapitan
             # check if parameters.kapitan is empty
             if not kapitan_target_configs:
-                raise InventoryError(
-                    f"InventoryError: {target_name}: parameters.kapitan has no assignment"
+                logger.debug(
+                    f"load_target_inventory: target {target_name} has no kapitan configuration, skipping"
                 )
+                continue
+
+            # check if parameters.kapitan.compile exists and is not empty
+            if (
+                not hasattr(kapitan_target_configs, "compile")
+                or not kapitan_target_configs.compile
+            ):
+                logger.debug(
+                    f"load_target_inventory: target {target_name} has no kapitan.compile configuration, skipping"
+                )
+                continue
+
             kapitan_target_configs.target_full_path = inventory.targets[
                 target_name
             ].name.replace(".", "/")
