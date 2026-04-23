@@ -93,7 +93,7 @@ kapitan = "kapitan.cli:main"
 
 [dependency-groups]
 test = [
-    "pytest>=8.2.0,<9",
+    "pytest>=8.2.0,<10",
     "coverage>=7.6.1,<8",
     "pytest-httpserver>=1.0.9,<2",
     "pytest-md>=0.2.0,<0.3",
