@@ -361,3 +361,31 @@ def seeded_git_repo(git_repo, request):
     _attach_fixture(request, "seeded_git_repo", repo_path)
 
     return repo_path
+
+
+@pytest.fixture
+def tagged_git_repo(git_repo, request):
+    """A git repo with two commits where v1.0.0 is tagged on the first commit."""
+    repo = git_repo.api
+    repo_path = Path(repo.working_tree_dir)
+
+    readme = repo_path / "README.md"
+    readme.write_text("version 1\n", encoding="utf-8")
+
+    repo.index.add(["README.md"])
+    tagged_commit = repo.index.commit("initial commit")
+    repo.git.branch("-M", "master")
+
+    tag_name = "v1.0.0"
+    repo.create_tag(tag_name, ref=tagged_commit)
+
+    # Second commit on master so HEAD differs from the tagged commit
+    readme.write_text("version 2\n", encoding="utf-8")
+    repo.index.add(["README.md"])
+    repo.index.commit("second commit")
+
+    _attach_fixture(request, "tagged_git_repo", repo_path)
+    _attach_fixture(request, "tagged_commit_sha", tagged_commit.hexsha)
+    _attach_fixture(request, "git_tag_name", tag_name)
+
+    return repo_path
