@@ -80,3 +80,7 @@ class KustomizeTemplateError(KapitanError):
 
 class CuelangTemplateError(KapitanError):
     """Raised when cuelang template fails."""
+
+
+class OCIFetchingError(KapitanError):
+    """Raised when fetching an OCI artifact fails."""
