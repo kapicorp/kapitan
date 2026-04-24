@@ -286,8 +286,8 @@ class InventoryTestOmegaConfOC(unittest.TestCase):
             "omegaconf.remove should contain base_component for removal during compile",
         )
 
-    def test_literal_resolver_produces_backslash_dollar_syntax(self):
-        """Test that ${literal:content} produces \\${content} as a literal string."""
+    def test_escape_resolver_produces_dollar_syntax(self):
+        """Test that ${escape:content} produces ${content} as a literal string."""
         target_name = "test-resolvers"
         target_path = "test-resolvers.yml"
 
@@ -299,14 +299,14 @@ class InventoryTestOmegaConfOC(unittest.TestCase):
         params = target.parameters.model_dump(by_alias=True)
 
         self.assertEqual(
-            params["literal_test"]["terraform_ref"],
-            r"\${google_service_account.cluster.email}",
-            "${literal:} should produce \\${content} without omegaconf resolving it",
+            params["escape_test"]["terraform_ref"],
+            "${google_service_account.cluster.email}",
+            "${escape:} should produce ${content} without omegaconf resolving it",
         )
         self.assertEqual(
-            params["literal_test"]["shell_var"],
-            r"\${HOME}",
-            "${literal:} should preserve shell variable syntax literally",
+            params["escape_test"]["shell_var"],
+            "${HOME}",
+            "${escape:} should preserve shell variable syntax literally",
         )
 
 

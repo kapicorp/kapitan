@@ -78,11 +78,11 @@ parameters:
         memory: 1Gi
 
   # -----------------------------------------------
-  # Test literal resolver - produces \${content} without resolving
+  # Test escape resolver - produces ${content} without resolving
   # -----------------------------------------------
-  literal_test:
-    terraform_ref: ${literal:google_service_account.cluster.email}
-    shell_var: ${literal:HOME}
+  escape_test:
+    terraform_ref: ${escape:google_service_account.cluster.email}
+    shell_var: ${escape:HOME}
 
   # -----------------------------------------------
   # KAPITAN COMPILE (minimal, just to validate inventory)
