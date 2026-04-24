@@ -78,6 +78,18 @@ parameters:
         memory: 1Gi
 
   # -----------------------------------------------
+  # Test escape resolver - produces ${content} without resolving
+  # -----------------------------------------------
+  escape_test:
+    terraform_ref: ${escape:google_service_account.cluster.email}
+    shell_var: ${escape:HOME}
+    # ${escape:} mid-string: surrounding text must be preserved
+    greeting: "Hello ${escape:USER}, welcome to ${cluster}"
+    # ${escape:} content matches a real inventory key — must NOT be re-resolved
+    real_key: ${environment}
+    escaped_key: ${escape:environment}
+
+  # -----------------------------------------------
   # KAPITAN COMPILE (minimal, just to validate inventory)
   # -----------------------------------------------
   kapitan:
