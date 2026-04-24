@@ -286,6 +286,29 @@ class InventoryTestOmegaConfOC(unittest.TestCase):
             "omegaconf.remove should contain base_component for removal during compile",
         )
 
+    def test_literal_resolver_produces_backslash_dollar_syntax(self):
+        """Test that ${literal:content} produces \\${content} as a literal string."""
+        target_name = "test-resolvers"
+        target_path = "test-resolvers.yml"
+
+        inventory = self.inventory_backend
+        target = inventory.target_class(name=target_name, path=target_path)
+        inventory.targets.update({target_name: target})
+        inventory.load_target(target)
+
+        params = target.parameters.model_dump(by_alias=True)
+
+        self.assertEqual(
+            params["literal_test"]["terraform_ref"],
+            r"\${google_service_account.cluster.email}",
+            "${literal:} should produce \\${content} without omegaconf resolving it",
+        )
+        self.assertEqual(
+            params["literal_test"]["shell_var"],
+            r"\${HOME}",
+            "${literal:} should preserve shell variable syntax literally",
+        )
+
 
 class InventoryTestOmegaConfMergeResolver(unittest.TestCase):
     """Test OmegaConf merge resolver functionality"""

@@ -78,6 +78,13 @@ parameters:
         memory: 1Gi
 
   # -----------------------------------------------
+  # Test literal resolver - produces \${content} without resolving
+  # -----------------------------------------------
+  literal_test:
+    terraform_ref: ${literal:google_service_account.cluster.email}
+    shell_var: ${literal:HOME}
+
+  # -----------------------------------------------
   # KAPITAN COMPILE (minimal, just to validate inventory)
   # -----------------------------------------------
   kapitan:

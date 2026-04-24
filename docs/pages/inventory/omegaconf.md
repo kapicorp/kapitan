@@ -178,6 +178,7 @@ deployments:
 | Resolver | Description | Example |
 |----------|-------------|---------|
 | `escape` | Create an interpolation for next resolution pass | `${escape:some.path}` → `${some.path}` |
+| `literal` | Emit a literal `\${content}` string (never resolved) | `${literal:HOME}` → `\${HOME}` |
 | `default` | Chain of fallback values using oc.select | `${default:key1, key2, fallback}` |
 | `write` | Write resolved content to another inventory location | `${write:destination.path, source.path}` |
 | `from_file` | Read content from a file | `${from_file:path/to/file.txt}` |

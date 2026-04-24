@@ -19,26 +19,53 @@ from omegaconf import Container, ListMergeMode, Node, OmegaConf
 
 logger = logging.getLogger(__name__)
 
-# Marker used by the literal resolver to protect interpolation syntax
+# Markers used by user-defined resolvers to emit ${content} in the final output
 LITERAL_MARKER_PREFIX = "__KAPITAN_LITERAL__"
 LITERAL_MARKER_SUFFIX = "__KAPITAN_LITERAL_END__"
+
+# Markers used by the built-in ${literal:} resolver to emit \${content} in the final output
+LITERAL_BACKSLASH_MARKER_PREFIX = "__KAPITAN_LITERAL_BACKSLASH__"
+LITERAL_BACKSLASH_MARKER_SUFFIX = "__KAPITAN_LITERAL_BACKSLASH_END__"
+
+# Combined pattern — single pass over strings in process_literals.
+# Named groups: `bs_content` captures the payload of a backslash-literal marker (\${...}),
+# `plain_content` captures the payload of a plain literal marker (${...}).
+_COMBINED_LITERAL_PATTERN = re.compile(
+    rf"(?:{re.escape(LITERAL_BACKSLASH_MARKER_PREFIX)}(?P<bs_content>.+?){re.escape(LITERAL_BACKSLASH_MARKER_SUFFIX)})"
+    rf"|(?:{re.escape(LITERAL_MARKER_PREFIX)}(?P<plain_content>.+?){re.escape(LITERAL_MARKER_SUFFIX)})"
+)
+
+# Keep individual compiled patterns for external callers that import them directly
 LITERAL_PATTERN = re.compile(
     rf"{re.escape(LITERAL_MARKER_PREFIX)}(.+?){re.escape(LITERAL_MARKER_SUFFIX)}"
 )
+LITERAL_BACKSLASH_PATTERN = re.compile(
+    rf"{re.escape(LITERAL_BACKSLASH_MARKER_PREFIX)}(.+?){re.escape(LITERAL_BACKSLASH_MARKER_SUFFIX)}"
+)
+
+
+def _replace_literal(m: re.Match) -> str:
+    """Replace a matched literal marker with its final interpolation syntax.
+
+    Backslash-literal markers become \\${content}; plain markers become ${content}.
+    """
+    if m.group("bs_content") is not None:
+        return r"\${" + m.group("bs_content") + "}"
+    return "${" + m.group("plain_content") + "}"
 
 
 def process_literals(obj):
     """Recursively process literal markers in the resolved config.
 
     Converts __KAPITAN_LITERAL__content__KAPITAN_LITERAL_END__ back to ${content}.
+    Converts __KAPITAN_LITERAL_BACKSLASH__content__KAPITAN_LITERAL_BACKSLASH_END__ back to \\${content}.
     """
     if isinstance(obj, dict):
         return {k: process_literals(v) for k, v in obj.items()}
     if isinstance(obj, list):
         return [process_literals(item) for item in obj]
     if isinstance(obj, str):
-        # Replace all literal markers with actual interpolation syntax
-        return LITERAL_PATTERN.sub(r"${\1}", obj)
+        return _COMBINED_LITERAL_PATTERN.sub(_replace_literal, obj)
     return obj
 
 
@@ -69,6 +96,13 @@ def access_key_with_dots(*key: str, _root_: Container):
 def escape_interpolation(content: str):
     """resolver function that escapes an interpolation for the next resolving step"""
     return f"${{{content}}}"
+
+
+def literal_interpolation(content: str):
+    """resolver function that emits \\${content} as a literal string in the final output"""
+    return (
+        f"{LITERAL_BACKSLASH_MARKER_PREFIX}{content}{LITERAL_BACKSLASH_MARKER_SUFFIX}"
+    )
 
 
 def merge(*args):
@@ -250,6 +284,7 @@ def register_resolvers(inventory_path: str = None) -> None:
     # yaml object utility functions
     OmegaConf.register_new_resolver("access", access_key_with_dots, replace=replace)
     OmegaConf.register_new_resolver("escape", escape_interpolation, replace=replace)
+    OmegaConf.register_new_resolver("literal", literal_interpolation, replace=replace)
     OmegaConf.register_new_resolver("merge", merge, replace=replace)
     OmegaConf.register_new_resolver("dict", to_dict, replace=replace)
     OmegaConf.register_new_resolver("list", to_list, replace=replace)
