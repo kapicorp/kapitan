@@ -339,3 +339,72 @@ class DependencyManagerTest(unittest.TestCase):
         self.assertTrue((temp / "components" / "tests").is_dir())
         self.assertTrue((temp / "components" / "kapitan-repository").is_dir())
         self.assertTrue((temp / "charts" / "prometheus").is_dir())
+
+
+@pytest.mark.usefixtures("isolated_test_resources", "tagged_git_repo")
+class GitRefPinningFetchTest(unittest.TestCase):
+    """Integration tests verifying ref= accepts branches, tags, and commit SHAs."""
+
+    def test_fetch_git_ref_as_tag(self):
+        """fetch_git_dependency with ref=<tag> copies files from the tagged commit."""
+        save_dir = Path(self.isolated_test_resources)
+        source = str(self.tagged_git_repo)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp)
+            dep = [
+                KapitanDependencyGitConfig(
+                    type="git",
+                    source=source,
+                    output_path=str(output_dir),
+                    ref=self.git_tag_name,
+                )
+            ]
+            fetch_git_dependency((source, dep), str(save_dir), force=False)
+
+            readme = output_dir / "README.md"
+            self.assertTrue(readme.is_file())
+            self.assertEqual(readme.read_text(encoding="utf-8"), "version 1\n")
+
+    def test_fetch_git_ref_as_commit_sha(self):
+        """fetch_git_dependency with ref=<sha> copies files from that exact commit."""
+        save_dir = Path(self.isolated_test_resources)
+        source = str(self.tagged_git_repo)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp)
+            dep = [
+                KapitanDependencyGitConfig(
+                    type="git",
+                    source=source,
+                    output_path=str(output_dir),
+                    ref=self.tagged_commit_sha,
+                )
+            ]
+            fetch_git_dependency((source, dep), str(save_dir), force=False)
+
+            readme = output_dir / "README.md"
+            self.assertTrue(readme.is_file())
+            self.assertEqual(readme.read_text(encoding="utf-8"), "version 1\n")
+
+    def test_fetch_git_ref_none_stays_on_head(self):
+        """fetch_git_dependency with ref=None stays on the cloned HEAD without error."""
+        save_dir = Path(self.isolated_test_resources)
+        source = str(self.tagged_git_repo)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp)
+            dep = [
+                KapitanDependencyGitConfig(
+                    type="git",
+                    source=source,
+                    output_path=str(output_dir),
+                    ref=None,
+                )
+            ]
+            fetch_git_dependency((source, dep), str(save_dir), force=False)
+
+            readme = output_dir / "README.md"
+            self.assertTrue(readme.is_file())
+            # HEAD is the second commit ("version 2"), not the tagged one
+            self.assertEqual(readme.read_text(encoding="utf-8"), "version 2\n")

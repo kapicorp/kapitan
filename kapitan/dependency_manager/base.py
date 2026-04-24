@@ -102,8 +102,9 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
 def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
     """
     fetches a git repository at source into save_dir, and copy the repository into
-    output_path stored in dep_mapping. ref is used to checkout if exists, fetches master branch by default.
-    only subdir is copied into output_path if specified.
+    output_path stored in dep_mapping. ref is checked out if specified (branch, tag, or
+    commit SHA); if omitted, the cloned HEAD is used. only subdir is copied into
+    output_path if specified.
     """
     source, deps = dep_mapping
     # to avoid collisions between basename(source)
@@ -113,11 +114,12 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
         fetch_git_source(source, cached_repo_path, item_type)
     else:
         logger.debug("Using cached %s %s", item_type, cached_repo_path)
+    repo = Repo(cached_repo_path)
     for dep in deps:
-        repo = Repo(cached_repo_path)
         output_path = dep.output_path
         copy_src_path = cached_repo_path
-        repo.git.checkout(dep.ref)
+        if dep.ref:
+            repo.git.checkout(dep.ref)
 
         # initialising submodules
         if dep.submodules:
@@ -319,7 +321,4 @@ def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
 
 
 def exists_in_cache(item_path):
-    dep_cache_path = os.path.dirname(item_path)
-    if not os.path.exists(dep_cache_path):
-        return False
-    return os.path.basename(item_path) in os.listdir(dep_cache_path)
+    return os.path.exists(item_path)

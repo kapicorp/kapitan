@@ -83,13 +83,13 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
           output_path: path/to/dir
           source: git_url # mkdocs (1)!
           subdir: relative/path/from/repo/root (optional) # mkdocs (2)!
-          ref: tag, commit, branch etc. (optional) # mkdocs (3)!
+          ref: branch, tag, or commit SHA (optional) # mkdocs (3)!
           submodules: true/false (optional) # mkdocs (4)!
     ```
 
     1. Git types can fetch external `git` repositories through either HTTP/HTTPS or SSH URLs.
     2. Optional supports for cloning just a sub-directory
-    3. Optional support for accessing them in specific commits and branches (refs).
+    3. `ref` accepts any git-resolvable value: a branch name (e.g. `main`), a tag (e.g. `v1.2.0`), or a full/short commit SHA. Defaults to `master`.
     4. Optional support to disable fetching the submodules of a repo.
 
     !!! note
