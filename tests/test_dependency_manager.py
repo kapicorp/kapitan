@@ -408,3 +408,35 @@ class GitRefPinningFetchTest(unittest.TestCase):
             self.assertTrue(readme.is_file())
             # HEAD is the second commit ("version 2"), not the tagged one
             self.assertEqual(readme.read_text(encoding="utf-8"), "version 2\n")
+
+    def test_ref_none_after_pinned_ref_resets_to_head(self):
+        """ref=None after a pinned ref in the same dep list must not inherit the prior checkout."""
+        save_dir = Path(self.isolated_test_resources)
+        source = str(self.tagged_git_repo)
+
+        with (
+            tempfile.TemporaryDirectory() as tmp1,
+            tempfile.TemporaryDirectory() as tmp2,
+        ):
+            output_pinned = Path(tmp1)
+            output_head = Path(tmp2)
+            deps = [
+                KapitanDependencyGitConfig(
+                    type="git",
+                    source=source,
+                    output_path=str(output_pinned),
+                    ref=self.git_tag_name,
+                ),
+                KapitanDependencyGitConfig(
+                    type="git",
+                    source=source,
+                    output_path=str(output_head),
+                    ref=None,
+                ),
+            ]
+            fetch_git_dependency((source, deps), str(save_dir), force=False)
+
+            # Second dep must be at HEAD ("version 2"), not carried over from v1.0.0
+            self.assertEqual(
+                (output_head / "README.md").read_text(encoding="utf-8"), "version 2\n"
+            )

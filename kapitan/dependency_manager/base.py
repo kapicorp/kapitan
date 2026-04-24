@@ -103,8 +103,8 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
     """
     fetches a git repository at source into save_dir, and copy the repository into
     output_path stored in dep_mapping. ref is checked out if specified (branch, tag, or
-    commit SHA); if omitted, the cloned HEAD is used. only subdir is copied into
-    output_path if specified.
+    commit SHA); if omitted, the remote's default branch (origin/HEAD) is used. only
+    subdir is copied into output_path if specified.
     """
     source, deps = dep_mapping
     # to avoid collisions between basename(source)
@@ -118,8 +118,7 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
     for dep in deps:
         output_path = dep.output_path
         copy_src_path = cached_repo_path
-        if dep.ref:
-            repo.git.checkout(dep.ref)
+        repo.git.checkout(dep.ref if dep.ref else "origin/HEAD")
 
         # initialising submodules
         if dep.submodules:
