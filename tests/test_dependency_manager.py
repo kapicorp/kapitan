@@ -384,6 +384,12 @@ class OciDependencyModelTest(unittest.TestCase):
 class OciFetchDependencyTest(unittest.TestCase):
     """Tests for fetch_oci_dependency() all network calls are mocked."""
 
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
     def _make_dep(
         self,
         source="ghcr.io/kapicorp/generators:1.2.0",
@@ -393,10 +399,12 @@ class OciFetchDependencyTest(unittest.TestCase):
         insecure=False,
         tls_verify=True,
     ):
+        if output_path is None:
+            output_path = tempfile.mkdtemp(dir=self._tmp.name)
         return KapitanDependencyOciConfig(
             type="oci",
             source=source,
-            output_path=output_path or tempfile.mkdtemp(),
+            output_path=output_path,
             subpath=subpath,
             media_type=media_type,
             insecure=insecure,

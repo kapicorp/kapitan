@@ -1046,6 +1046,7 @@ docs = [
 test = [
     { name = "coverage" },
     { name = "docker" },
+    { name = "oras" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-emoji" },
@@ -1115,6 +1116,7 @@ docs = [
 test = [
     { name = "coverage", specifier = ">=7.6.1,<8" },
     { name = "docker", specifier = ">=7.0.0,<8" },
+    { name = "oras", specifier = ">=0.2.0" },
     { name = "pytest", specifier = ">=8.2.0,<10" },
     { name = "pytest-cov", specifier = ">=3,<8" },
     { name = "pytest-emoji", specifier = ">=0.2.0,<0.3" },

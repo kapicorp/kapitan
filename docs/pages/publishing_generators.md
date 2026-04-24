@@ -104,5 +104,14 @@ parameters:
       output_path: .
 ```
 
+Then compile with `--fetch`:
+
+```shell
+kapitan compile --fetch
+```
+
+`--fetch` only pulls if the artifact is not already cached locally — subsequent runs are instant.
+Use `--force-fetch` to invalidate the cache and re-pull regardless.
+
 See [External dependencies OCI](external_dependencies.md#defining-dependencies) for the full
 reference of available fields.
