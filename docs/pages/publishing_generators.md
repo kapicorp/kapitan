@@ -56,9 +56,9 @@ oras automatically compresses the directory to `.tar.gz` before upload.
 
 !!! warning "Run `oras push` from inside the generator directory"
     oras preserves the exact path you specify at push time. If you push
-    `system/generators/talos/` from a parent directory, oras recreates that
+    `system/generators/mygenerator/` from a parent directory, oras recreates that
     full path on pull — your files land at
-    `output_path/system/generators/talos/` instead of `output_path/`.
+    `output_path/system/generators/mygenerator/` instead of `output_path/`.
 
     **Always `cd` into the directory you want to publish and push `.`**, or
     specify `subpath: <the-pushed-path>` in the consumer inventory to tell

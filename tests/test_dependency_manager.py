@@ -507,6 +507,38 @@ class OciFetchDependencyTest(unittest.TestCase):
             self.assertFalse((Path(out_dir) / "terraform").exists())
 
     @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_tar_blob_is_extracted_automatically(self, MockClient):
+        """oras saves layers as tar blobs; they must be extracted before subpath is resolved."""
+        import io
+        import tarfile
+
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir, subpath="system/generators/talos")
+
+            def fake_pull(target, outdir, allowed_media_type):
+                # Replicate oras behaviour: save a tar+gz blob at the layer's title path.
+                blob_dir = Path(outdir) / "system" / "generators"
+                blob_dir.mkdir(parents=True, exist_ok=True)
+                blob_path = blob_dir / "talos"
+
+                buf = io.BytesIO()
+                with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+                    content = b"def main(): return {}"
+                    info = tarfile.TarInfo(name="system/generators/talos/__init__.py")
+                    info.size = len(content)
+                    tar.addfile(info, io.BytesIO(content))
+                blob_path.write_bytes(buf.getvalue())
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=False)
+
+            self.assertTrue((Path(out_dir) / "__init__.py").is_file())
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
     def test_conflicting_connection_settings_raises_error(self, MockClient):
         """Deps sharing a source but with different insecure/tls_verify raise OCIFetchingError."""
         with (
@@ -575,7 +607,7 @@ class OciFetchDependencyTest(unittest.TestCase):
 
             def fake_pull(target, outdir, allowed_media_type):
                 # Simulate oras preserving push-time path: all content nested.
-                nested = Path(outdir) / "system" / "generators" / "talos"
+                nested = Path(outdir) / "system" / "generators" / "mygenerator"
                 nested.mkdir(parents=True, exist_ok=True)
                 (nested / "__init__.py").write_text("def main(): return {}")
 

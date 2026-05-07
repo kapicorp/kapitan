@@ -6,6 +6,8 @@ import hashlib
 import logging
 import multiprocessing
 import os
+import sys
+import tarfile
 from collections import defaultdict, namedtuple
 from functools import partial
 from mimetypes import MimeTypes
@@ -359,6 +361,35 @@ def exists_in_cache(item_path):
     return os.path.basename(item_path) in os.listdir(dep_cache_path)
 
 
+def _extract_tar_blobs(target_dir: str) -> None:
+    """Walk target_dir and extract any tar archive files found there.
+
+    oras-py saves each OCI layer as a raw blob file, preserving the layer's
+    manifest title as its on-disk path (e.g. ``system/generators/mygenerator``).
+    When the layer is a tar+gzip archive the saved file IS the tarball rather
+    than its extracted contents. This helper detects those blobs and extracts
+    them so that the directory tree matches what was originally pushed.
+    """
+    blobs = []
+    for dirpath, _dirs, filenames in os.walk(target_dir):
+        for fname in filenames:
+            candidate = os.path.join(dirpath, fname)
+            try:
+                if tarfile.is_tarfile(candidate):
+                    blobs.append(candidate)
+            except Exception:
+                pass
+
+    for blob_path in blobs:
+        logger.debug("Extracting OCI tar blob %s into %s", blob_path, target_dir)
+        with tarfile.open(blob_path, "r:*") as tar:
+            os.unlink(blob_path)
+            if sys.version_info >= (3, 12):
+                tar.extractall(target_dir, filter="data")
+            else:
+                tar.extractall(target_dir)
+
+
 def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependency"):
     """
     Pulls an OCI artifact from a registry into save_dir, then copies it (or a declared subpath
@@ -414,6 +445,7 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
                 outdir=target_dir,
                 allowed_media_type=allowed_media_type,
             )
+            _extract_tar_blobs(target_dir)
             logger.debug("%s %s: successfully fetched", item_type, source)
             # Log the top-level entries in the pulled artifact so users can
             # identify the correct 'subpath' when the artifact has nested dirs.
