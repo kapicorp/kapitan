@@ -5,6 +5,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import hashlib
 import io
 import multiprocessing
 import tempfile
@@ -516,18 +517,22 @@ class OciFetchDependencyTest(unittest.TestCase):
             tempfile.TemporaryDirectory() as save_dir,
             tempfile.TemporaryDirectory() as out_dir,
         ):
-            dep = self._make_dep(output_path=out_dir, subpath="system/generators/talos")
+            dep = self._make_dep(
+                output_path=out_dir, subpath="system/generators/mygenerator"
+            )
 
             def fake_pull(target, outdir, allowed_media_type):
                 # Replicate oras behaviour: save a tar+gz blob at the layer's title path.
                 blob_dir = Path(outdir) / "system" / "generators"
                 blob_dir.mkdir(parents=True, exist_ok=True)
-                blob_path = blob_dir / "talos"
+                blob_path = blob_dir / "mygenerator"
 
                 buf = io.BytesIO()
                 with tarfile.open(fileobj=buf, mode="w:gz") as tar:
                     content = b"def main(): return {}"
-                    info = tarfile.TarInfo(name="system/generators/talos/__init__.py")
+                    info = tarfile.TarInfo(
+                        name="system/generators/mygenerator/__init__.py"
+                    )
                     info.size = len(content)
                     tar.addfile(info, io.BytesIO(content))
                 blob_path.write_bytes(buf.getvalue())
@@ -535,6 +540,44 @@ class OciFetchDependencyTest(unittest.TestCase):
             MockClient.return_value.pull.side_effect = fake_pull
 
             fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=False)
+
+            self.assertTrue((Path(out_dir) / "__init__.py").is_file())
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_tar_blob_extracted_from_stale_cache(self, MockClient):
+        """Tar blobs in an existing cache (pre-extraction fix) are extracted on the next use."""
+        import io
+        import tarfile as tarfile_mod
+
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(
+                output_path=out_dir, subpath="system/generators/mygenerator"
+            )
+            source = dep.source
+
+            # Manually populate the cache as older kapitan would have: raw blob, not extracted.
+            cache_key = hashlib.sha256(source.encode()).hexdigest()[:8]
+            target_dir = Path(save_dir) / f"oci_{cache_key}"
+            blob_dir = target_dir / "system" / "generators"
+            blob_dir.mkdir(parents=True, exist_ok=True)
+            blob_path = blob_dir / "mygenerator"
+
+            buf = io.BytesIO()
+            with tarfile_mod.open(fileobj=buf, mode="w:gz") as tar:
+                content = b"def main(): return {}"
+                info = tarfile_mod.TarInfo(
+                    name="system/generators/mygenerator/__init__.py"
+                )
+                info.size = len(content)
+                tar.addfile(info, io.BytesIO(content))
+            blob_path.write_bytes(buf.getvalue())
+
+            # No pull needed; cache already exists — extraction must still happen.
+            fetch_oci_dependency((source, [dep]), save_dir=save_dir, force=False)
+            MockClient.return_value.pull.assert_not_called()
 
             self.assertTrue((Path(out_dir) / "__init__.py").is_file())
 

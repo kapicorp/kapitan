@@ -135,23 +135,23 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
 
     # Resolve the default branch once so that dep.ref=None always means the
     # original HEAD, not whatever a prior dep checkout left the repo at.
-    _init_repo = Repo(cached_repo_path)
+    init_repo = Repo(cached_repo_path)
     try:
-        _default_branch = _init_repo.active_branch.name
+        default_branch = init_repo.active_branch.name
     except TypeError:
         # Detached HEAD (e.g. left from a prior forced fetch); try symbolic remote HEAD.
         try:
-            _default_branch = _init_repo.git.symbolic_ref(
+            default_branch = init_repo.git.symbolic_ref(
                 "refs/remotes/origin/HEAD"
             ).split("/")[-1]
         except Exception:
-            _default_branch = None
+            default_branch = None
 
     for dep in deps:
         repo = Repo(cached_repo_path)
         output_path = dep.output_path
         copy_src_path = cached_repo_path
-        ref = dep.ref if dep.ref is not None else _default_branch
+        ref = dep.ref if dep.ref is not None else default_branch
         if ref is not None:
             repo.git.checkout(ref)
 
@@ -378,7 +378,7 @@ def _extract_tar_blobs(target_dir: str) -> None:
                 if tarfile.is_tarfile(candidate):
                     blobs.append(candidate)
             except Exception:
-                pass
+                logger.debug("Skipping %s: not a readable tar archive", candidate)
 
     for blob_path in blobs:
         logger.debug("Extracting OCI tar blob %s into %s", blob_path, target_dir)
@@ -445,7 +445,6 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
                 outdir=target_dir,
                 allowed_media_type=allowed_media_type,
             )
-            _extract_tar_blobs(target_dir)
             logger.debug("%s %s: successfully fetched", item_type, source)
             # Log the top-level entries in the pulled artifact so users can
             # identify the correct 'subpath' when the artifact has nested dirs.
@@ -464,6 +463,15 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
             ) from e
     else:
         logger.debug("Using cached %s %s", item_type, target_dir)
+
+    # Extract tar blobs every time — idempotent (no blobs = no-op) and handles
+    # caches populated by older kapitan versions before blob extraction was added.
+    try:
+        _extract_tar_blobs(target_dir)
+    except Exception as e:
+        raise OCIFetchingError(
+            f"{item_type} {source}: failed to extract tar blobs from pulled artifact\n{e}"
+        ) from e
 
     for dep in deps:
         # Copy either the full artifact or only the declared subdirectory.
