@@ -45,13 +45,27 @@ Authenticate with your registry, then push the directory in a single command:
 # Authenticate (GHCR example)
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
-# Push version 1.2.0
+# Push version 1.2.0 — run from INSIDE the generator directory
+cd my-generator
 oras push ghcr.io/kapicorp/generators:1.2.0 \
   --config /dev/null:application/vnd.oci.image.config.v1+json \
-  my-generator/
+  .
 ```
 
 oras automatically compresses the directory to `.tar.gz` before upload.
+
+!!! warning "Run `oras push` from inside the generator directory"
+    oras preserves the exact path you specify at push time. If you push
+    `system/generators/talos/` from a parent directory, oras recreates that
+    full path on pull — your files land at
+    `output_path/system/generators/talos/` instead of `output_path/`.
+
+    **Always `cd` into the directory you want to publish and push `.`**, or
+    specify `subpath: <the-pushed-path>` in the consumer inventory to tell
+    Kapitan which subdirectory to extract.
+
+    Kapitan logs the artifact root contents at `INFO` level on every pull so
+    you can immediately see what paths are inside the image.
 
 !!! warning "Registry compatibility: always supply `--config`"
     Without `--config`, oras defaults to the deprecated
@@ -65,9 +79,10 @@ oras automatically compresses the directory to `.tar.gz` before upload.
     alongside a schema file) you can annotate each layer with a custom media type:
 
     ```shell
+    cd my-generator
     oras push ghcr.io/kapicorp/generators:1.2.0 \
       --config /dev/null:application/vnd.oci.image.config.v1+json \
-      my-generator/:application/vnd.oci.image.layer.v1.tar+gzip
+      .:application/vnd.oci.image.layer.v1.tar+gzip
     ```
 
     Consumers can then set `media_type: application/vnd.oci.image.layer.v1.tar+gzip` in
@@ -106,12 +121,22 @@ parameters:
     - type: oci
       source: ghcr.io/kapicorp/generators:1.2.0
       output_path: components/generators
-      subpath: my-generator        # optional: copy only this sub-directory
+      # No subpath needed when the artifact was pushed from inside the directory
     compile:
     - input_type: kadet
       input_paths:
       - components/generators
       output_path: .
+```
+
+If you pushed from a parent directory (e.g. `oras push ... my-generator/`), add
+`subpath: my-generator` to tell Kapitan which subdirectory to extract:
+
+```yaml
+    - type: oci
+      source: ghcr.io/kapicorp/generators:1.2.0
+      output_path: components/generators
+      subpath: my-generator
 ```
 
 Then compile with `--fetch`:

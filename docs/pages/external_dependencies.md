@@ -234,7 +234,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
 
     1. Directory where the pulled artifact contents will be written.
     2. OCI reference in the form `registry/repo:tag` or `registry/repo@sha256:<digest>` for pinned pulls.
-    3. Optional sub-directory inside the unpacked artifact to copy instead of the entire artifact root.
+    3. Optional sub-directory inside the pulled artifact to copy instead of the entire artifact root. Required when the artifact was pushed from a parent directory (oras preserves push-time paths).
     4. Set to `true` to allow pulling from an HTTP (non-TLS) registry. Defaults to `false`. Note: this is distinct from TLS certificate verification use `tls_verify` for self-signed certificates.
     5. Controls TLS certificate verification. Set to `false` to skip verification (e.g. self-signed certs in dev), or provide a path to a custom CA bundle as a string (e.g. `"/etc/ssl/certs/my-ca.crt"`). Defaults to `true`.
 

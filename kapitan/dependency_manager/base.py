@@ -9,6 +9,7 @@ import os
 from collections import defaultdict, namedtuple
 from functools import partial
 from mimetypes import MimeTypes
+from pathlib import Path
 from shutil import copyfile, rmtree
 
 
@@ -414,6 +415,17 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
                 allowed_media_type=allowed_media_type,
             )
             logger.debug("%s %s: successfully fetched", item_type, source)
+            # Log the top-level entries in the pulled artifact so users can
+            # identify the correct 'subpath' when the artifact has nested dirs.
+            top_entries = sorted(p.name for p in Path(target_dir).iterdir())
+            if top_entries:
+                logger.debug(
+                    "%s %s: artifact root contains: [%s]. "
+                    "Set 'subpath' in the dependency if content is nested.",
+                    item_type,
+                    source,
+                    ", ".join(top_entries),
+                )
         except Exception as e:
             raise OCIFetchingError(
                 f"{item_type} {source}: fetching unsuccessful\n{e}"
