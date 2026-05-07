@@ -46,10 +46,19 @@ Authenticate with your registry, then push the directory in a single command:
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
 # Push version 1.2.0
-oras push ghcr.io/kapicorp/generators:1.2.0 my-generator/
+oras push ghcr.io/kapicorp/generators:1.2.0 \
+  --config /dev/null:application/vnd.oci.image.config.v1+json \
+  my-generator/
 ```
 
 oras automatically compresses the directory to `.tar.gz` before upload.
+
+!!! warning "Registry compatibility: always supply `--config`"
+    Without `--config`, oras defaults to the deprecated
+    `application/vnd.oci.artifact.manifest.v1+json` format. Several registries — including
+    **GitLab Container Registry** — reject that format.
+    Passing `--config /dev/null:application/vnd.oci.image.config.v1+json` instructs oras to
+    use the standard OCI *image* manifest, which is accepted by all compliant registries.
 
 !!! tip "Filtering by media type"
     If you publish multiple different artifact types under the same image (e.g. a generator bundle
@@ -57,6 +66,7 @@ oras automatically compresses the directory to `.tar.gz` before upload.
 
     ```shell
     oras push ghcr.io/kapicorp/generators:1.2.0 \
+      --config /dev/null:application/vnd.oci.image.config.v1+json \
       my-generator/:application/vnd.kapitan.generator.layer.v1.tar+gzip
     ```
 
