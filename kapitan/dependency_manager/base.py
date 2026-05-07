@@ -129,11 +129,28 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
         fetch_git_source(source, cached_repo_path, item_type)
     else:
         logger.debug("Using cached %s %s", item_type, cached_repo_path)
+
+    # Resolve the default branch once so that dep.ref=None always means the
+    # original HEAD, not whatever a prior dep checkout left the repo at.
+    _init_repo = Repo(cached_repo_path)
+    try:
+        _default_branch = _init_repo.active_branch.name
+    except TypeError:
+        # Detached HEAD (e.g. left from a prior forced fetch); try symbolic remote HEAD.
+        try:
+            _default_branch = _init_repo.git.symbolic_ref(
+                "refs/remotes/origin/HEAD"
+            ).split("/")[-1]
+        except Exception:
+            _default_branch = None
+
     for dep in deps:
         repo = Repo(cached_repo_path)
         output_path = dep.output_path
         copy_src_path = cached_repo_path
-        repo.git.checkout(dep.ref)
+        ref = dep.ref if dep.ref is not None else _default_branch
+        if ref is not None:
+            repo.git.checkout(ref)
 
         # initialising submodules
         if dep.submodules:
@@ -410,10 +427,22 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
         # manifest before fetching. A typo in subpath wastes a pull but avoids the
         # complexity of a pre-pull manifest walk.
         src = os.path.join(target_dir, dep.subpath) if dep.subpath else target_dir
-        if dep.subpath and not os.path.isdir(src):
-            raise OCIFetchingError(
-                f"{item_type} {source}: subpath '{dep.subpath}' not found in pulled artifact"
-            )
+        if dep.subpath:
+            # Guard against path traversal (e.g. subpath="../../etc/passwd").
+            real_target = os.path.realpath(target_dir)
+            real_src = os.path.realpath(src)
+            if (
+                not real_src.startswith(real_target + os.sep)
+                and real_src != real_target
+            ):
+                raise OCIFetchingError(
+                    f"{item_type} {source}: subpath '{dep.subpath}' resolves outside "
+                    f"the artifact directory"
+                )
+            if not os.path.isdir(src):
+                raise OCIFetchingError(
+                    f"{item_type} {source}: subpath '{dep.subpath}' not found in pulled artifact"
+                )
         if force:
             copied = copy_tree(src, dep.output_path)
         else:

@@ -67,10 +67,10 @@ oras automatically compresses the directory to `.tar.gz` before upload.
     ```shell
     oras push ghcr.io/kapicorp/generators:1.2.0 \
       --config /dev/null:application/vnd.oci.image.config.v1+json \
-      my-generator/:application/vnd.kapitan.generator.layer.v1.tar+gzip
+      my-generator/:application/vnd.oci.image.layer.v1.tar+gzip
     ```
 
-    Consumers can then set `media_type: application/vnd.kapitan.generator.layer.v1.tar+gzip` in
+    Consumers can then set `media_type: application/vnd.oci.image.layer.v1.tar+gzip` in
     their inventory to pull only that layer. For single-artifact images this is unnecessary.
 
 After a successful push, record the immutable digest shown in the output for reproducible deployments:

@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from kapitan.utils import StrEnum
 
@@ -48,6 +48,29 @@ class KapitanDependencyOciConfig(KapitanDependencyBaseConfig):
     media_type: str | None = None
     insecure: bool = False
     tls_verify: bool | str = True
+
+    @field_validator("source")
+    @classmethod
+    def source_must_not_have_url_scheme(cls, v: str) -> str:
+        for prefix in ("https://", "http://", "oci://"):
+            if v.startswith(prefix):
+                raise ValueError(
+                    f"OCI source must be a bare registry reference "
+                    f"(e.g. 'ghcr.io/org/repo:tag'), not a URL. "
+                    f"Remove the '{prefix}' prefix."
+                )
+        return v
+
+    @field_validator("media_type")
+    @classmethod
+    def media_type_must_be_valid_mime(cls, v: str | None) -> str | None:
+        if v is not None and "/" not in v:
+            raise ValueError(
+                f"media_type '{v}' is not a valid MIME type. "
+                f"Expected format: 'type/subtype' "
+                f"(e.g. 'application/vnd.oci.image.layer.v1.tar+gzip')."
+            )
+        return v
 
 
 DependencyTypeConfig = Annotated[

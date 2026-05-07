@@ -361,3 +361,35 @@ def seeded_git_repo(git_repo, request):
     _attach_fixture(request, "seeded_git_repo", repo_path)
 
     return repo_path
+
+
+@pytest.fixture
+def tagged_git_repo(git_repo, request):
+    """A bare-minimum git repo with two commits and a tag on the first.
+
+    Attaches three attributes to the test instance:
+    - ``tagged_git_repo``: path to the repo working tree
+    - ``git_tag_name``: the tag name (``"v1.0.0"``)
+    - ``tagged_commit_sha``: the full SHA of the tagged commit
+    """
+    repo = git_repo.api
+    repo_path = Path(repo.working_tree_dir)
+
+    readme = repo_path / "README.md"
+
+    # First commit — this is what the tag points at
+    readme.write_text("version 1\n", encoding="utf-8")
+    repo.index.add(["README.md"])
+    first_commit = repo.index.commit("version 1")
+    repo.create_tag("v1.0.0", ref=first_commit)
+
+    # Second commit — this becomes HEAD
+    readme.write_text("version 2\n", encoding="utf-8")
+    repo.index.add(["README.md"])
+    repo.index.commit("version 2")
+
+    _attach_fixture(request, "tagged_git_repo", repo_path)
+    _attach_fixture(request, "git_tag_name", "v1.0.0")
+    _attach_fixture(request, "tagged_commit_sha", first_commit.hexsha)
+
+    return repo_path
