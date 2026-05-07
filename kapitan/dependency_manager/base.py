@@ -419,7 +419,7 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
             # identify the correct 'subpath' when the artifact has nested dirs.
             top_entries = sorted(p.name for p in Path(target_dir).iterdir())
             if top_entries:
-                logger.debug(
+                logger.info(
                     "%s %s: artifact root contains: [%s]. "
                     "Set 'subpath' in the dependency if content is nested.",
                     item_type,
@@ -461,3 +461,26 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
             copied = safe_copy_tree(src, dep.output_path)
         if copied:
             logger.info("%s %s: saved to %s", item_type, source, dep.output_path)
+
+        # Warn when output_path has only subdirectories (no files) and no subpath
+        # was configured. This is the classic symptom of an oras artifact pushed
+        # from a parent directory: oras preserves push-time paths, so all content
+        # lands one or more levels deep instead of directly under output_path.
+        if not dep.subpath and os.path.isdir(dep.output_path):
+            children = [
+                p for p in Path(dep.output_path).iterdir() if not p.name.startswith(".")
+            ]
+            has_files = any(p.is_file() for p in children)
+            only_dirs = [p for p in children if p.is_dir()]
+            if only_dirs and not has_files:
+                logger.warning(
+                    "%s %s: output_path '%s' contains only subdirectories: [%s]. "
+                    "The artifact may have been pushed with nested paths — set 'subpath' "
+                    "to the directory that contains your content "
+                    "(e.g. subpath: %s).",
+                    item_type,
+                    source,
+                    dep.output_path,
+                    ", ".join(sorted(p.name for p in only_dirs)),
+                    sorted(p.name for p in only_dirs)[0],
+                )
