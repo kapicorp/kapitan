@@ -191,6 +191,7 @@ jobs:
           images: |
             name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
           tags: |
+            type=raw,value=latest,enable=${{ github.event_name == 'release' && steps.suffix.outputs.is-default == 'true' }},suffix=${{ steps.suffix.outputs.platform-suffix }}
             type=ref,event=branch,suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
             type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
             type=semver,pattern={{major}}.{{minor}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
@@ -303,7 +304,7 @@ jobs:
             name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.suffix.outputs.is-default == 'true' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'release' && steps.suffix.outputs.is-default == 'true' }}
             type=ref,event=branch,suffix=${{ steps.suffix.outputs.python-suffix }}
             type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.python-suffix }}
             type=semver,pattern={{major}}.{{minor}},suffix=${{ steps.suffix.outputs.python-suffix }}

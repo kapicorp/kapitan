@@ -19,9 +19,10 @@ from omegaconf import Container, ListMergeMode, Node, OmegaConf
 
 logger = logging.getLogger(__name__)
 
-# Marker used by the literal resolver to protect interpolation syntax
+# Markers used by ${escape:} to emit ${content} as a literal string in the final output
 LITERAL_MARKER_PREFIX = "__KAPITAN_LITERAL__"
 LITERAL_MARKER_SUFFIX = "__KAPITAN_LITERAL_END__"
+
 LITERAL_PATTERN = re.compile(
     rf"{re.escape(LITERAL_MARKER_PREFIX)}(.+?){re.escape(LITERAL_MARKER_SUFFIX)}"
 )
@@ -37,7 +38,6 @@ def process_literals(obj):
     if isinstance(obj, list):
         return [process_literals(item) for item in obj]
     if isinstance(obj, str):
-        # Replace all literal markers with actual interpolation syntax
         return LITERAL_PATTERN.sub(r"${\1}", obj)
     return obj
 
@@ -67,8 +67,8 @@ def access_key_with_dots(*key: str, _root_: Container):
 
 
 def escape_interpolation(content: str):
-    """resolver function that escapes an interpolation for the next resolving step"""
-    return f"${{{content}}}"
+    """resolver function that emits ${content} as a literal string in the final output"""
+    return f"{LITERAL_MARKER_PREFIX}{content}{LITERAL_MARKER_SUFFIX}"
 
 
 def merge(*args):

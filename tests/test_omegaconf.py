@@ -286,6 +286,50 @@ class InventoryTestOmegaConfOC(unittest.TestCase):
             "omegaconf.remove should contain base_component for removal during compile",
         )
 
+    def test_escape_resolver_produces_dollar_syntax(self):
+        """Test that ${escape:content} produces ${content} as a literal string."""
+        target_name = "test-resolvers"
+        target_path = "test-resolvers.yml"
+
+        inventory = self.inventory_backend
+        target = inventory.target_class(name=target_name, path=target_path)
+        inventory.targets.update({target_name: target})
+        inventory.load_target(target)
+
+        params = target.parameters.model_dump(by_alias=True)
+        escape_test = params["escape_test"]
+
+        # Standalone values become ${content}
+        self.assertEqual(
+            escape_test["terraform_ref"],
+            "${google_service_account.cluster.email}",
+            "${escape:} should produce ${content} without omegaconf resolving it",
+        )
+        self.assertEqual(
+            escape_test["shell_var"],
+            "${HOME}",
+            "${escape:} should preserve shell variable syntax literally",
+        )
+
+        # Embedded mid-string: surrounding text and other interpolations are unaffected
+        self.assertEqual(
+            escape_test["greeting"],
+            "Hello ${USER}, welcome to resolvers-test",
+            "${escape:} embedded in a string should only escape its own content",
+        )
+
+        # Content that matches a real inventory key must NOT be resolved
+        self.assertNotEqual(
+            escape_test["escaped_key"],
+            escape_test["real_key"],
+            "${escape:environment} must not resolve the 'environment' key",
+        )
+        self.assertEqual(
+            escape_test["escaped_key"],
+            "${environment}",
+            "${escape:environment} should produce the literal string '${environment}'",
+        )
+
 
 class InventoryTestOmegaConfMergeResolver(unittest.TestCase):
     """Test OmegaConf merge resolver functionality"""
