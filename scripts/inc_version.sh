@@ -6,9 +6,10 @@ echomsg() {
   echo "--- ${1} ---"
 }
 
-export LAST_COMMIT_MSG="$(git log -1 --oneline)"
+LAST_COMMIT_MSG="$(git log -1 --oneline)"
+export LAST_COMMIT_MSG
 
-if ! $(echo "$LAST_COMMIT_MSG" | grep -qE "kapicorp/release-v([0-9]+.[0-9]{2}.[0-9]+)+" ); then
+if ! echo "$LAST_COMMIT_MSG" | grep -qE "kapicorp/release-v([0-9]+.[0-9]{2}.[0-9]+)+"; then
   echomsg "Not a release, skipping version incrementing"
   exit 0;
 fi
