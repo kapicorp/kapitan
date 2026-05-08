@@ -12,12 +12,13 @@ SBOM_FILE="${1:?Usage: $0 <sbom_file>}"
 
 python3 -c "
 import json, sys
-with open('${SBOM_FILE}') as f:
+sbom_file = sys.argv[1]
+with open(sbom_file) as f:
     data = json.load(f)
 bom_format = data.get('bomFormat', '<missing>')
 if bom_format != 'CycloneDX':
     print(f'ERROR: unexpected bomFormat: {bom_format}', file=sys.stderr)
     sys.exit(1)
 component_count = len(data.get('components', []))
-print(f'SBOM validation: OK (file=${SBOM_FILE}, bomFormat={bom_format}, components={component_count})')
-"
+print(f'SBOM validation: OK (file={sbom_file}, bomFormat={bom_format}, components={component_count})')
+" "${SBOM_FILE}"

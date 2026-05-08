@@ -275,7 +275,7 @@ jobs:
               --no-dev --no-group test --no-group docs \
               --all-extras --no-editable \
               --format requirements-txt --no-hashes | \
-            grep -Ev '^\s*(#|\.\s*$|$)' | \
+            grep -Ev '^[[:space:]]*(#|\.[[:space:]]*$|$)' | \
             uvx --from 'cyclonedx-bom>=4,<5' cyclonedx-py requirements \
               --mc-type application \
               --of JSON \

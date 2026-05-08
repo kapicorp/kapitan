@@ -23,7 +23,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "=== Generating SBOM for kapitan ${VERSION} ==="
 
 REQUIREMENTS_FILE="$(mktemp /tmp/kapitan-requirements-XXXXXX.txt)"
-trap 'rm -f "${REQUIREMENTS_FILE}"' EXIT
+TMP_RAW="$(mktemp /tmp/kapitan-requirements-raw-XXXXXX.txt)"
+trap 'rm -f "${REQUIREMENTS_FILE}" "${TMP_RAW}"' EXIT
 
 # Export production deps + all optional extras.
 # --no-dev:           exclude the 'dev' dependency group
@@ -31,8 +32,6 @@ trap 'rm -f "${REQUIREMENTS_FILE}"' EXIT
 # --no-group docs:    exclude the 'docs' dependency group
 # --all-extras:       include gojsonnet/omegaconf/reclass-rs (PEP 621 extras)
 # --no-editable:      strip the editable self-reference (-e .)
-TMP_RAW="$(mktemp /tmp/kapitan-requirements-raw-XXXXXX.txt)"
-trap 'rm -f "${REQUIREMENTS_FILE}" "${TMP_RAW}"' EXIT
 
 uv export \
     --no-dev \
@@ -47,7 +46,7 @@ uv export \
 # Strip comments, blank lines, and the bare '.' self-reference (left behind
 # by `uv export --no-editable`) so cyclonedx-py does not warn about an
 # unpinned 'unknown' component for the project itself.
-grep -Ev '^\s*(#|\.\s*$|$)' "${TMP_RAW}" > "${REQUIREMENTS_FILE}"
+grep -Ev '^[[:space:]]*(#|\.[[:space:]]*$|$)' "${TMP_RAW}" > "${REQUIREMENTS_FILE}"
 
 echo "Exported $(wc -l < "${REQUIREMENTS_FILE}") dependency lines"
 
