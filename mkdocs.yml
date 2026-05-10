@@ -3,6 +3,9 @@
 site_name: "Kapitan: Keep your ship together"
 site_url: "https://kapitan.dev/"
 strict: true
+validation:
+  links:
+    not_found: ignore  # example links in code blocks (jinja.md compiled-result) are not real doc pages
 plugins:
   - blog:
       archive: false

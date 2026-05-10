@@ -25,6 +25,51 @@ classes:
 - applications.sock-shop
 ```
 
+### Wildcard class patterns
+
+Class entries may also be glob patterns that expand to the matching set of
+classes discovered under `inventory/classes/`. This avoids having to list
+each class individually when the set is large or grows over time
+(see [issue #1084](https://github.com/kapicorp/kapitan/issues/1084)).
+
+```yaml
+classes:
+  - "*"          # all classes (top-level and nested)
+  - clusters.*   # all classes under inventory/classes/clusters/
+  - dev-*        # all classes whose basename starts with dev-
+```
+
+Supported glob characters are `*`, `?`, `[` and `]` (standard
+[`fnmatch`](https://docs.python.org/3/library/fnmatch.html) syntax).
+
+Pattern semantics:
+
+* A pattern that contains a `.` is matched against the **full** dotted class
+  name (e.g. `clusters.*` matches `clusters.prod` and `clusters.dev` but not
+  `common`).
+* A pattern with no `.` is matched against the **basename segment** (the
+  part after the last `.`), so `dev-*` matches both `dev-common` and
+  `apps.dev-api`.
+
+Other behavior:
+
+* Both `.yml` and `.yaml` files are discovered.
+* Hidden files/directories (names starting with `.`) and non-YAML files are
+  ignored when expanding patterns.
+* Each pattern expands to a **lexicographically sorted** list of matches at
+  the position of the pattern in the `classes:` list, giving deterministic
+  output.
+* Duplicates (across exact entries and pattern expansions) are removed,
+  preserving the first occurrence — this matches the order in which a user
+  would expect classes to be merged.
+* A pattern that matches **no** classes raises an inventory error, unless
+  `--ignore-class-not-found` is set, in which case the unmatched pattern is
+  silently dropped (mirroring the behavior of exact missing class names).
+
+Wildcard expansion happens before reclass resolves inheritance, and works
+both in target files and in nested class files.
+
+
 ## Definition
 
 Let's take a look at the `common` class which appears in the example above:
