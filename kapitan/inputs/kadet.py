@@ -144,7 +144,7 @@ class Kadet(InputType):
             logger.debug("Kadet main args: %s", kadet_arg_spec.args)
 
             if len(kadet_arg_spec.args) > 1:
-                raise ValueError(
+                raise CompileError(
                     f"Kadet {spec.name} main parameters not equal to 1 or 0"
                 )
 

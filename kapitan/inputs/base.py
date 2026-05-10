@@ -162,7 +162,7 @@ class InputType:
             elif output_type == OutputType.TOML:
                 fp.write_toml(file_content)
             else:
-                raise ValueError(
+                raise CompileError(
                     f"Output type defined in inventory for {config} not supported: {output_type}: {OutputType}"
                 )
 

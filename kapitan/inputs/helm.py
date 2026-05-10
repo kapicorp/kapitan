@@ -120,27 +120,29 @@ def render_chart(
     # Validate and process helm parameters
     for param, value in helm_params.items():
         if len(param) == 1:
-            raise ValueError(
+            raise HelmTemplateError(
                 f"invalid helm flag: '{param}'. helm_params supports only long flag names"
             )
 
         if "-" in param:
-            raise ValueError(f"helm flag names must use '_' and not '-': {param}")
+            raise HelmTemplateError(
+                f"helm flag names must use '_' and not '-': {param}"
+            )
 
         param = param.replace("_", "-")
 
         if param in ("set", "set-file", "set-string"):
-            raise ValueError(
+            raise HelmTemplateError(
                 f"helm '{param}' flag is not supported. Use 'helm_values' to specify template values"
             )
 
         if param == "values":
-            raise ValueError(
+            raise HelmTemplateError(
                 f"helm '{param}' flag is not supported. Use 'helm_values_files' to specify template values files"
             )
 
         if param in HELM_DENIED_FLAGS:
-            raise ValueError(f"helm flag '{param}' is not supported.")
+            raise HelmTemplateError(f"helm flag '{param}' is not supported.")
 
         # Set helm flags
         helm_flags[f"--{param}"] = value

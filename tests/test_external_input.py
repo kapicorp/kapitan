@@ -16,6 +16,7 @@ import unittest
 
 from kapitan.cached import reset_cache
 from kapitan.cli import main as kapitan
+from kapitan.errors import ExternalInputError
 from kapitan.inputs.external import External
 from kapitan.inventory.model.input_types import KapitanInputTypeExternalConfig
 
@@ -70,7 +71,7 @@ class ExternalInputTest(unittest.TestCase):
             args=[name, r"\${compiled_target_dir}"],
         )
 
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(ExternalInputError) as e:
             external_compiler.compile_file(
                 config, external_script_file_path, compile_path
             )

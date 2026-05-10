@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 
+from kapitan.errors import ExternalInputError
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeExternalConfig
 
@@ -103,8 +104,11 @@ class External(InputType):
 
             logger.debug("External stdout: %s.", external_result.stdout)
             if external_result.returncode != 0:
-                raise ValueError(
-                    f"Executing external input with command '{args}' and env vars '{env_vars}' failed: {external_result.stderr}"
+                raise ExternalInputError(
+                    f"Executing external input with command '{args}' and env vars '{env_vars}' failed: {external_result.stderr}",
+                    command=str(args),
+                    returncode=external_result.returncode,
+                    stderr=external_result.stderr,
                 )
 
         except OSError as e:

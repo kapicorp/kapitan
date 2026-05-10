@@ -52,11 +52,11 @@ class AWSKMSSecret(Base64Ref):
         try:
             target_name = ref_params.kwargs["target_name"]
             if target_name is None:
-                raise ValueError("target_name not set")
+                raise RefError("target_name not set")
 
             target_inv = cached.inv.get_parameters(target_name)
             if target_inv is None:
-                raise ValueError("target_inv not set")
+                raise RefError("target_inv not set")
 
             key = target_inv.kapitan.secrets.awskms.key
             return cls(data, key, **ref_params.kwargs)
