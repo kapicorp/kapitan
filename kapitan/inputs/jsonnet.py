@@ -9,7 +9,7 @@ import json
 import logging
 import os
 
-from kapitan.errors import CompileError
+from kapitan.errors import CompileError, MissingOptionalDependencyError
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeJsonnetConfig
 from kapitan.resources import resource_callbacks, search_imports
@@ -42,9 +42,9 @@ def select_jsonnet_runtime(use_go):
             import _jsonnet as _gojsonnet
 
     except ImportError as exc:
-        raise ImportError(
-            "Jsonnet is not installed or running on an unsupported architecture. "
-            "See https://kapitan.dev/compile/#jsonnet for installation instructions."
+        extra = "gojsonnet" if use_go else "jsonnet"
+        raise MissingOptionalDependencyError(
+            f"{'Go' if use_go else 'Python'} Jsonnet runtime", extra
         ) from exc
     else:
         return _gojsonnet

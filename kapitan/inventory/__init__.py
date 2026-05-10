@@ -1,3 +1,4 @@
+from kapitan.errors import MissingOptionalDependencyError
 from kapitan.utils import StrEnum
 
 from .inventory import Inventory, InventoryError, InventoryTarget
@@ -27,7 +28,12 @@ def load_reclass_rs_backend():
     """
     Enable the reclass-rs inventory backend.
     """
-    from .backends.reclass_rs import ReclassRsInventory
+    try:
+        from .backends.reclass_rs import ReclassRsInventory
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
+            "reclass-rs inventory backend", "reclass-rs"
+        ) from exc
 
     return ReclassRsInventory
 
@@ -36,7 +42,12 @@ def load_omegaconf_backend():
     """
     Enable the omegaconf inventory backend.
     """
-    from .backends.omegaconf import OmegaConfInventory
+    try:
+        from .backends.omegaconf import OmegaConfInventory
+    except ImportError as exc:
+        raise MissingOptionalDependencyError(
+            "omegaconf inventory backend", "omegaconf"
+        ) from exc
 
     return OmegaConfInventory
 

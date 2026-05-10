@@ -161,3 +161,18 @@ class KustomizeTemplateError(BackendError):
 
 class CuelangTemplateError(BackendError):
     """Raised when cuelang template rendering fails."""
+
+
+class MissingOptionalDependencyError(KapitanError):
+    """Raised when a feature requires an optional dependency that is not installed.
+
+    The message always names the pip install extra so the user knows exactly what to run.
+    """
+
+    def __init__(self, feature: str, extra: str):
+        super().__init__(
+            f"{feature} requires the '{extra}' optional dependency. "
+            f"Install it with: pip install 'kapitan[{extra}]'"
+        )
+        self.feature = feature
+        self.extra = extra
