@@ -8,11 +8,9 @@
 import base64
 import logging
 from binascii import Error as b_error
-from sys import exit
 
 from hvac.exceptions import Forbidden, InvalidPath
 
-from kapitan import cached
 from kapitan.inventory.model.references import KapitanReferenceVaultTransitConfig
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
@@ -62,7 +60,13 @@ class VaultTransit(Base64Ref):
             if target_name is None:
                 raise RefError("target_name not set")
 
-            target_inv = cached.inv.get_parameters(target_name)
+            target_inv = ref_params.kwargs.get("target_inv")
+            if target_inv is None:
+                from kapitan import (
+                    cached,  # backwards-compat: resolve via process cache
+                )
+
+                target_inv = cached.inv.get_parameters(target_name)
 
             ref_params.kwargs["vault_params"] = target_inv.kapitan.secrets.vaulttransit
 
@@ -83,8 +87,8 @@ class VaultTransit(Base64Ref):
         # can't use super().reveal() as we want bytes
         try:
             ref_data = base64.b64decode(self.data, validate=True)
-        except b_error:
-            exit("non-alphabet characters in the data")
+        except b_error as exc:
+            raise RefError("non-alphabet characters in the reference data") from exc
 
         return self._decrypt(ref_data)
 

@@ -11,7 +11,6 @@ import time
 
 import gnupg
 
-from kapitan import cached
 from kapitan.errors import KapitanError
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
@@ -29,15 +28,19 @@ GPG_KWARGS = {}
 # pass custom fingerprints within from_params()
 GPG_TARGET_FINGERPRINTS = {}
 
+# module-level client cache (replaces cached.gpg_obj)
+_gpg_client = None
+
 
 class GPGError(Exception):
     """Generic GPG errors"""
 
 
 def gpg_obj(*args, **kwargs):
-    if not cached.gpg_obj:
-        cached.gpg_obj = gnupg.GPG(*args, **kwargs)
-    return cached.gpg_obj
+    global _gpg_client
+    if not _gpg_client:
+        _gpg_client = gnupg.GPG(*args, **kwargs)
+    return _gpg_client
 
 
 class GPGSecret(Base64Ref):
@@ -80,7 +83,13 @@ class GPGSecret(Base64Ref):
             if target_name is None:
                 raise RefError("target_name not set")
 
-            target_inv = cached.inv.get_parameters(target_name)
+            target_inv = ref_params.kwargs.get("target_inv")
+            if target_inv is None:
+                from kapitan import (
+                    cached,  # backwards-compat: resolve via process cache
+                )
+
+                target_inv = cached.inv.get_parameters(target_name)
 
             if not target_inv.kapitan.secrets:
                 raise KapitanError(

@@ -8,7 +8,6 @@ from azure.identity import DefaultAzureCredential
 from azure.keyvault.keys import KeyClient
 from azure.keyvault.keys.crypto import CryptographyClient, EncryptionAlgorithm
 
-from kapitan import cached
 from kapitan.errors import KapitanError
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
@@ -24,12 +23,17 @@ class AzureKMSError(KapitanError):
     """
 
 
+# module-level client cache (replaces cached.azkms_obj)
+_azkms_client = None
+
+
 def azkms_obj(key_id):
     """
     Return Azure Key Vault Object
     """
+    global _azkms_client
     # e.g of key_id https://kapitanbackend.vault.azure.net/keys/myKey/deadbeef
-    if not cached.azkms_obj:
+    if not _azkms_client:
         url = urlparse(key_id)
         # ['', 'keys', 'myKey', 'deadbeef'] or ['kapitanbackend.vault.azure.net', 'keys', 'myKey', 'deadbeef']
         # depending on if key_id is prefixed with https://
@@ -46,9 +50,9 @@ def azkms_obj(key_id):
             vault_url=f"https://{key_vault_uri}", credential=credential
         )
         key = key_client.get_key(key_name, key_version)
-        cached.azkms_obj = CryptographyClient(key, credential)
+        _azkms_client = CryptographyClient(key, credential)
 
-    return cached.azkms_obj
+    return _azkms_client
 
 
 class AzureKMSSecret(Base64Ref):
@@ -80,7 +84,13 @@ class AzureKMSSecret(Base64Ref):
             if target_name is None:
                 raise RefError("target_name not set")
 
-            target_inv = cached.inv.get_parameters(target_name)
+            target_inv = ref_params.kwargs.get("target_inv")
+            if target_inv is None:
+                from kapitan import (
+                    cached,  # backwards-compat: resolve via process cache
+                )
+
+                target_inv = cached.inv.get_parameters(target_name)
 
             key = target_inv.kapitan.secrets.azkms.key
             return cls(data, key, **ref_params.kwargs)

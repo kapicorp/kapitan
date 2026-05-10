@@ -11,7 +11,6 @@ import warnings
 
 import googleapiclient.discovery as gcloud
 
-from kapitan import cached
 from kapitan.errors import KapitanError
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
@@ -30,14 +29,19 @@ class GoogleKMSError(KapitanError):
     """Generic Google KMS errors"""
 
 
+# module-level client cache (replaces cached.gkms_obj)
+_gkms_client = None
+
+
 def gkms_obj():
-    if not cached.gkms_obj:
+    global _gkms_client
+    if not _gkms_client:
         # If --verbose is set, show requests from googleapiclient (which are actually logging.INFO)
         if logger.getEffectiveLevel() > logging.DEBUG:
             logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
         kms_client = gcloud.build("cloudkms", "v1", cache_discovery=False)
-        cached.gkms_obj = kms_client.projects().locations().keyRings().cryptoKeys()
-    return cached.gkms_obj
+        _gkms_client = kms_client.projects().locations().keyRings().cryptoKeys()
+    return _gkms_client
 
 
 class GoogleKMSSecret(Base64Ref):
@@ -68,7 +72,13 @@ class GoogleKMSSecret(Base64Ref):
             if target_name is None:
                 raise RefError("target_name not set")
 
-            target_inv = cached.inv.get_parameters(target_name)
+            target_inv = ref_params.kwargs.get("target_inv")
+            if target_inv is None:
+                from kapitan import (
+                    cached,  # backwards-compat: resolve via process cache
+                )
+
+                target_inv = cached.inv.get_parameters(target_name)
 
             key = target_inv.kapitan.secrets.gkms.key
             return cls(data, key, **ref_params.kwargs)

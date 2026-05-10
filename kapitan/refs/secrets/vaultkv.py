@@ -10,7 +10,6 @@ import logging
 
 from hvac.exceptions import Forbidden, InvalidPath
 
-from kapitan import cached
 from kapitan.inventory.model.references import (
     KapitanReferenceVaultKVConfig,
     VaultEngineTypes,
@@ -77,7 +76,13 @@ class VaultSecret(Base64Ref):
             if target_name is None:
                 raise RefError("target_name not set")
 
-            target_inv = cached.inv.get_parameters(target_name)
+            target_inv = ref_params.kwargs.get("target_inv")
+            if target_inv is None:
+                from kapitan import (
+                    cached,  # backwards-compat: resolve via process cache
+                )
+
+                target_inv = cached.inv.get_parameters(target_name)
 
             try:
                 vault_params = target_inv.kapitan.secrets.vaultkv

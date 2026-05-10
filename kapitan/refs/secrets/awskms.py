@@ -9,7 +9,6 @@ import base64
 
 import boto3
 
-from kapitan import cached
 from kapitan.errors import KapitanError
 from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import RefError
@@ -20,10 +19,15 @@ class AWSKMSError(KapitanError):
     """Generic AWS KMS errors"""
 
 
+# module-level client cache (replaces cached.awskms_obj)
+_awskms_client = None
+
+
 def awskms_obj():
-    if not cached.awskms_obj:
-        cached.awskms_obj = boto3.session.Session().client("kms")
-    return cached.awskms_obj
+    global _awskms_client
+    if not _awskms_client:
+        _awskms_client = boto3.session.Session().client("kms")
+    return _awskms_client
 
 
 class AWSKMSSecret(Base64Ref):
@@ -54,7 +58,14 @@ class AWSKMSSecret(Base64Ref):
             if target_name is None:
                 raise RefError("target_name not set")
 
-            target_inv = cached.inv.get_parameters(target_name)
+            target_inv = ref_params.kwargs.get("target_inv")
+            if target_inv is None:
+                from kapitan import (
+                    cached,  # backwards-compat: resolve via process cache
+                )
+
+                target_inv = cached.inv.get_parameters(target_name)
+
             if target_inv is None:
                 raise RefError("target_inv not set")
 

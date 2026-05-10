@@ -103,7 +103,7 @@ ignore = [
     "ANN",     # flake8-annotations - type annotations (optional)
     "COM",     # flake8-commas - trailing commas (handled by formatter)
     "N",       # pep8-naming - naming conventions (can be project-specific)
-    "S",       # flake8-bandit - security (may have false positives)
+    # "S" rules are enabled for kapitan/refs/** via per-file-ignores negation pattern below
     "BLE",     # flake8-blind-except - blind exceptions (sometimes needed)
     "FBT",     # flake8-boolean-trap - boolean arguments
     "A",       # flake8-builtins - builtin shadowing (sometimes necessary)
@@ -209,6 +209,12 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 pyupgrade.keep-runtime-typing = true
 
 [lint.per-file-ignores]
+# Enable S (bandit/security) rules only for kapitan/refs/** — the negation pattern
+# ignores S everywhere EXCEPT files matching kapitan/refs/**/*.py.
+"!kapitan/refs/**/*.py" = ["S"]
+# Within refs, silence false positives: S101=assert, S105=hardcoded-password-string (regex patterns)
+"kapitan/refs/**/*.py" = ["S101", "S105"]
+
 # Ignore specific rules in test files
 "tests/**/*.py" = [
     "S101",    # Use of assert
