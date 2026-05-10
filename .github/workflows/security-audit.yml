@@ -1,0 +1,93 @@
+---
+name: Security Audit
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - 'mkdocs.yml'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'mkdocs.yml'
+  release:
+    types: [created]
+  schedule:
+    # Weekly scan every Monday at 06:00 UTC
+    - cron: '0 6 * * 1'
+
+jobs:
+  pip-audit:
+    name: pip-audit dependency scan
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+
+      # Export locked requirements so pip-audit operates on what is actually
+      # installed in production (not just what is listed in pyproject.toml).
+      - name: Export locked requirements
+        run: |
+          uv export \
+            --locked \
+            --all-extras \
+            --no-hashes \
+            --format=requirements-txt \
+            --output-file=/tmp/requirements-audit.txt
+
+      # Run pip-audit; fail the job on any unfixed vulnerability.
+      # Remove "--fix" intentionally — we want CI to surface CVEs, not silently
+      # upgrade them without a PR.
+      - name: Run pip-audit
+        run: |
+          uvx pip-audit \
+            --requirement /tmp/requirements-audit.txt \
+            --progress-spinner=off
+
+  python-sbom:
+    name: generate Python package SBOM
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write  # required for uploading release assets
+      id-token: write  # required by anchore/sbom-action for provenance
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+
+      # Install the package so anchore/sbom-action can enumerate installed files.
+      - name: Install kapitan (all extras)
+        run: uv sync --locked --all-extras
+
+      # Generate an SPDX JSON SBOM covering the Python source tree.
+      # The action also uploads the artifact to the workflow run automatically.
+      - name: Generate SBOM (SPDX JSON)
+        uses: anchore/sbom-action@v0.18.0
+        with:
+          path: .
+          format: spdx-json
+          output-file: kapitan-sbom.spdx.json
+          artifact-name: kapitan-python-sbom.spdx.json
+          upload-artifact: true
+
+      # On release events, attach the SBOM to the GitHub release as a download.
+      - name: Attach SBOM to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
+        with:
+          files: kapitan-sbom.spdx.json

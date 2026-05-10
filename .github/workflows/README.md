@@ -7,12 +7,13 @@ This directory contains GitHub Actions workflows for the Kapitan project.
 ### 1. Test, Build and Publish (`test-build-publish.yml`)
 Main CI/CD workflow that:
 - Runs pre-commit checks with cached environments
-- Executes tests on Python 3.10, 3.11, 3.12, 3.13 and 3.14 **in parallel** using pytest-xdist
+- Executes tests on Python 3.11, 3.12, 3.13 and 3.14 **in parallel** using pytest-xdist
 - Generates comprehensive test coverage reports (XML, JSON, HTML)
 - Provides detailed test metrics and performance analysis
 - Posts coverage comments on pull requests
 - Builds Docker images for linux/amd64 and linux/arm64
-- Publishes Docker images to DockerHub (on master/main branch)
+- Publishes Docker images to DockerHub (on master/main branch and releases)
+- Attaches per-Python-version Docker image SBOMs to GitHub releases
 - Uploads coverage to Codecov
 
 **Key Features:**
@@ -21,18 +22,42 @@ Main CI/CD workflow that:
 - ✅ Coverage tracking with branch coverage enabled
 - ✅ Test performance metrics and slowest test identification
 - ✅ GitHub Actions summaries with coverage badges
+- ✅ SBOM attached to every release (SPDX JSON, one per Python version)
 
-### 2. Documentation (`documentation.yml`)
-Builds and publishes documentation to GitHub Pages.
+### 2. Security Audit (`security-audit.yml`)
+Supply-chain security workflow that runs on every PR, every push to main/master, every release, and weekly:
+- **`pip-audit`**: scans the locked `uv.lock` dependency graph for known CVEs; fails the job on any unfixed vulnerability
+- **`python-sbom`**: generates an SPDX JSON SBOM for the Python package using `anchore/sbom-action`; attaches the SBOM to GitHub releases as a download artifact
 
-### 3. Python Package Publishing (`python-pip-publish.yml`)
-Publishes Python packages to PyPI on release.
+**Key Features:**
+- ✅ Audits the exact locked dependency graph (not just declared ranges)
+- ✅ SBOM uploaded as workflow artifact on every run
+- ✅ SBOM attached to GitHub releases automatically
+- ✅ Weekly scheduled scans catch newly-published CVEs between releases
 
-### 4. PEX Build and Upload (`pex-build-upload.yml`)
-Builds standalone PEX executables for distribution.
+### 3. Documentation (`documentation.yml`)
+Builds and publishes documentation to GitHub Pages using MkDocs + mike for versioned docs.
 
-### 5. Housekeeping (`housekeeping.yml`)
-Automated maintenance tasks like dependency updates.
+### 4. Python Package Publishing (`python-pypi-publish.yml`)
+Publishes Python packages to PyPI on release using `uv build` + Twine.
+
+### 5. PEX Build and Upload (`pex-build-upload.yml`)
+Builds standalone PEX executables for distribution and attaches them to GitHub releases.
+
+### 6. Development Environment Setup Test (`makefile-test.yml`)
+Validates that all `make` setup targets (`install_uv`, `install`, `install_external_tools`, `install_pre_commit`, `setup`) work correctly. Triggers only when Makefile, pyproject.toml, uv.lock, or related config files change.
+
+### 7. Housekeeping (`housekeeping.yml`)
+Daily automated maintenance: marks GitHub issues as stale after 1 year of inactivity.
+
+## Digest Pinning
+
+All GitHub Actions `uses:` references in this directory are pinned to a commit SHA (with the version tag in a comment, e.g. `# v6.0.2`). Dockerfile base images are similarly pinned to a specific version tag.
+
+Automated updates are managed by **Renovate** (`.github/renovate.json`):
+- GitHub Actions digests are grouped into a single "GitHub Actions" PR
+- Dockerfile base images are grouped into a single "Dockerfile base images" PR
+- Python dependency updates from `uv.lock` appear as "Python dependencies (uv)" PRs
 
 ## Test Coverage
 
@@ -48,6 +73,7 @@ The project uses comprehensive coverage tracking integrated into the main workfl
 - **Overall Coverage**: Target 70% for the project
 - **Patch Coverage**: Target 80% for new/modified code
 - **Branch Coverage**: Enabled for comprehensive testing
+
 - **Parallel Coverage**: Properly configured for pytest-xdist with `COVERAGE_CORE=sysmon`
 
 ### Coverage Reports

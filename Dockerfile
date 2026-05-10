@@ -40,8 +40,10 @@ COPY ./kapitan ./kapitan
 
 RUN uv pip install .[gojsonnet,omegaconf,reclass-rs]
 
+# Pin to the same Go release downloaded in python-builder (go1.24.2).
+# Renovate will update this digest automatically.
 ARG PYTHON_VERSION=3.11
-FROM golang:1 AS go-builder
+FROM golang:1.24.2 AS go-builder
 RUN GOBIN=$(pwd)/ go install cuelang.org/go/cmd/cue@latest
 
 # Final image with virtualenv built in previous step
