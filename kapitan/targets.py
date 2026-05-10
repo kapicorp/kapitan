@@ -27,6 +27,27 @@ from kapitan.resources import get_inventory
 logger = logging.getLogger(__name__)
 
 
+def _compile_target_or_error(
+    target_config, search_paths, compile_path, ref_controller, args, globals_cached=None
+):
+    """Wraps compile_target to return (target_name, exc) on failure, None on success.
+
+    Must be a module-level function so multiprocessing can pickle it.
+    """
+    try:
+        compile_target(
+            target_config,
+            search_paths=search_paths,
+            compile_path=compile_path,
+            ref_controller=ref_controller,
+            args=args,
+            globals_cached=globals_cached,
+        )
+        return None
+    except Exception as exc:
+        return (target_config.vars.target, exc)
+
+
 def compile_targets(inventory_path, search_paths, ref_controller, args):
     """
     Searches and loads target files, and runs compile_target() on a
@@ -132,8 +153,13 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                     )
 
             compile_start = time.time()
+
+            # Sort targets so pool dispatch order is deterministic regardless of
+            # inventory dict ordering or filesystem traversal order.
+            target_objs.sort(key=lambda t: t.target_full_path)
+
             worker = partial(
-                compile_target,
+                _compile_target_or_error,
                 search_paths=search_paths,
                 compile_path=temp_compile_path,
                 ref_controller=ref_controller,
@@ -141,9 +167,16 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                 args=args,
             )
 
-            # compile_target() returns None on success
-            # so p is only not None when raising an exception
-            [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+            # Use imap (ordered) so results arrive in deterministic target order.
+            # Collect every failure instead of stopping at the first one so that
+            # users see all broken targets in a single error message.
+            failures = [r for r in pool.imap(worker, target_objs) if r is not None]
+
+            if failures:
+                lines = "\n".join(f"  {name}: {exc}" for name, exc in failures)
+                raise CompileError(
+                    f"Errors compiling {len(failures)} target(s):\n{lines}"
+                )
 
             os.makedirs(compile_path, exist_ok=True)
 

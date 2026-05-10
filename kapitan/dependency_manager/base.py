@@ -94,9 +94,10 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
     git_worker = partial(fetch_git_dependency, save_dir=save_dir, force=force)
     http_worker = partial(fetch_http_dependency, save_dir=save_dir, force=force)
     helm_worker = partial(fetch_helm_chart, save_dir=save_dir, force=force)
-    [p.get() for p in pool.imap_unordered(http_worker, http_deps.items()) if p]
-    [p.get() for p in pool.imap_unordered(git_worker, git_deps.items()) if p]
-    [p.get() for p in pool.imap_unordered(helm_worker, helm_deps.items()) if p]
+    # Use imap (ordered) with sorted inputs so fetch order is deterministic.
+    [p for p in pool.imap(http_worker, sorted(http_deps.items())) if p]
+    [p for p in pool.imap(git_worker, sorted(git_deps.items())) if p]
+    [p for p in pool.imap(helm_worker, sorted(helm_deps.items())) if p]
 
 
 def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
