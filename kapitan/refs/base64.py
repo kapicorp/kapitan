@@ -45,7 +45,7 @@ class Base64Ref(PlainRef):
         decoded = base64.b64decode(self.data)
         try:
             return decoded.decode()
-        except:
+        except Exception:
             return self.data
 
     def compile_embedded(self):

@@ -34,32 +34,31 @@ class Copy(InputType):
 
         ignore_missing = config.ignore_missing
 
-        try:
-            if os.path.exists(input_path):
-                logger.debug("Copying '%s' to '%s'.", input_path, compile_path)
-                if os.path.isfile(input_path):
-                    if os.path.isfile(compile_path):
-                        # overwrite existing file
-                        shutil.copy2(input_path, compile_path)
-                    else:
-                        # create destination directory if it doesn't exist
-                        os.makedirs(compile_path, exist_ok=True)
-                        # copy file to destination directory
-                        shutil.copy2(
-                            input_path,
-                            os.path.join(compile_path, os.path.basename(input_path)),
-                        )
-                else:
-                    # Resolve relative paths to avoid issues with copy_tree
-                    compile_path = os.path.abspath(
-                        compile_path
-                    )  # Resolve relative paths
-                    copy_tree(input_path, compile_path)
-            elif not ignore_missing:
-                # Raise exception if input path does not exist and ignore_missing is False
+        if not os.path.exists(input_path):
+            if not ignore_missing:
                 raise OSError(
                     f"Path {input_path} does not exist and `ignore_missing` is {ignore_missing}"
                 )
+            return
+
+        try:
+            logger.debug("Copying '%s' to '%s'.", input_path, compile_path)
+            if os.path.isfile(input_path):
+                if os.path.isfile(compile_path):
+                    # overwrite existing file
+                    shutil.copy2(input_path, compile_path)
+                else:
+                    # create destination directory if it doesn't exist
+                    os.makedirs(compile_path, exist_ok=True)
+                    # copy file to destination directory
+                    shutil.copy2(
+                        input_path,
+                        os.path.join(compile_path, os.path.basename(input_path)),
+                    )
+            else:
+                # Resolve relative paths to avoid issues with copy_tree
+                compile_path = os.path.abspath(compile_path)  # Resolve relative paths
+                copy_tree(input_path, compile_path)
         except OSError as e:
             # Log exception and re-raise
             logger.exception("Input dir not copied. Error: %s", e)

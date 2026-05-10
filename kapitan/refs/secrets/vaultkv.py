@@ -82,10 +82,10 @@ class VaultSecret(Base64Ref):
             try:
                 vault_params = target_inv.kapitan.secrets.vaultkv
                 ref_params.kwargs["vault_params"] = vault_params
-            except KeyError:
+            except KeyError as e:
                 raise RefError(
                     "Could not create VaultSecret: vaultkv parameters missing"
-                )
+                ) from e
 
         # set mount, path and key as ref params, read from token
         token = ref_params.kwargs.get("token")
@@ -173,11 +173,11 @@ class VaultSecret(Base64Ref):
                 path=self.path, secret=secrets, mount_point=self.mount
             )
             client.adapter.close()
-        except Forbidden:
+        except Forbidden as e:
             raise VaultError(
                 "Permission Denied. "
                 f"make sure the token is authorised to access '{self.path}' on Vault"
-            )
+            ) from e
 
         # set the data to path:key
         data = f"{self.path}:{self.key}".encode()
@@ -226,15 +226,15 @@ class VaultSecret(Base64Ref):
                 )
                 return_data = response["data"]["data"][secret_key]
             client.adapter.close()
-        except Forbidden:
+        except Forbidden as e:
             raise VaultError(
                 "Permission Denied. "
                 f"make sure the token is authorised to access '{secret_path}' on Vault"
-            )
-        except InvalidPath:
-            raise VaultError(f"path '{secret_path}' does not exist on Vault")
-        except KeyError:
-            raise VaultError(f"key '{secret_key}' does not exist on Vault")
+            ) from e
+        except InvalidPath as e:
+            raise VaultError(f"path '{secret_path}' does not exist on Vault") from e
+        except KeyError as e:
+            raise VaultError(f"key '{secret_key}' does not exist on Vault") from e
         finally:
             client.adapter.close()
 

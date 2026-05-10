@@ -90,8 +90,8 @@ class GPGSecret(Base64Ref):
             recipients = target_inv.kapitan.secrets.gpg.recipients
 
             return cls(data, recipients, **ref_params.kwargs)
-        except KeyError:
-            raise RefError("Could not create GPGSecret: target_name missing")
+        except KeyError as e:
+            raise RefError("Could not create GPGSecret: target_name missing") from e
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):

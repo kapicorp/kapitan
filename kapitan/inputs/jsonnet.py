@@ -38,17 +38,16 @@ def select_jsonnet_runtime(use_go):
     try:
         if use_go:
             import _gojsonnet
-
-            return _gojsonnet
-        import _jsonnet
-
-        return _jsonnet
+        else:
+            import _jsonnet as _gojsonnet
 
     except ImportError as exc:
         raise ImportError(
             "Jsonnet is not installed or running on an unsupported architecture. "
             "See https://kapitan.dev/compile/#jsonnet for installation instructions."
         ) from exc
+    else:
+        return _gojsonnet
 
 
 class Jsonnet(InputType):

@@ -72,8 +72,10 @@ class GoogleKMSSecret(Base64Ref):
 
             key = target_inv.kapitan.secrets.gkms.key
             return cls(data, key, **ref_params.kwargs)
-        except KeyError:
-            raise RefError("Could not create GoogleKMSSecret: target_name missing")
+        except KeyError as e:
+            raise RefError(
+                "Could not create GoogleKMSSecret: target_name missing"
+            ) from e
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -135,7 +137,7 @@ class GoogleKMSSecret(Base64Ref):
             self.key = key
 
         except Exception as e:
-            raise GoogleKMSError(e)
+            raise GoogleKMSError(e) from e
 
     def _decrypt(self, data):
         """decrypt data"""
@@ -155,7 +157,7 @@ class GoogleKMSSecret(Base64Ref):
             return plaintext.decode()
 
         except Exception as e:
-            raise GoogleKMSError(e)
+            raise GoogleKMSError(e) from e
 
     def dump(self):
         """

@@ -75,7 +75,9 @@ def load_module_from_path(env, path):
                 logger.debug("custom filter loaded from %s", path)
                 env.filters[function] = getattr(custom_filter_module, function)
     except Exception as e:
-        raise OSError(f"jinja2 failed to render, could not load filter at {path}: {e}")
+        raise OSError(
+            f"jinja2 failed to render, could not load filter at {path}: {e}"
+        ) from e
         logger.debug("failed to find custom filter from path %s", path)
 
 
@@ -141,8 +143,8 @@ def strftime(string_format, second=None):
     if second is not None:
         try:
             second = int(second)
-        except Exception:
-            raise CompileError(f"Invalid value for epoch value ({second})")
+        except Exception as e:
+            raise CompileError(f"Invalid value for epoch value ({second})") from e
     return time.strftime(string_format, time.localtime(second))
 
 

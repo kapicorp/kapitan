@@ -43,4 +43,4 @@ class ReclassRsInventory(Inventory):
 
         except ValueError as e:
             logger.error(f"Reclass-rs error: {e}")
-            raise InventoryError(f"{e}")
+            raise InventoryError(f"{e}") from e

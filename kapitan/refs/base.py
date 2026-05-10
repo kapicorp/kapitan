@@ -96,10 +96,10 @@ class PlainRef:
                     if self.encoding == "base64"
                     else value
                 )
-            except KeyError:
+            except KeyError as e:
                 raise RefError(
                     f"PlainRef: cannot access sub-variable key {self.embedded_subvar_path}"
-                )
+                ) from e
         else:
             return self.data
 
@@ -195,9 +195,10 @@ class PlainRefBackend:
     def __contains__(self, ref_path):
         try:
             self.__getitem__(ref_path)
-            return True
         except KeyError:
             return False
+        else:
+            return True
 
     def __iter__(self):
         for full_path in list_all_paths(self.path):
@@ -317,10 +318,10 @@ class Revealer:
                     return self._get_value_in_yaml_path(
                         revealed_yaml, ref.embedded_subvar_path
                     )
-                except KeyError:
+                except KeyError as e:
                     raise RefError(
                         f"Revealer: cannot access {tag} sub-variable key {ref.embedded_subvar_path}"
-                    )
+                    ) from e
 
             # else this is just a ref
             else:
@@ -356,10 +357,10 @@ class Revealer:
                     if ref.encoding == "base64"
                     else value
                 )
-            except KeyError:
+            except KeyError as e:
                 raise RefError(
                     f"Revealer: cannot access {tag} sub-variable key {subvar_path}"
-                )
+                ) from e
 
     @lru_cache(maxsize=256)
     def _reveal_tag_without_subvar(self, tag_without_subvar):
@@ -394,8 +395,8 @@ class Revealer:
                 ref = self.ref_controller[tag]
                 return ref.compile()
             # if refs don't exist:
-            except KeyError:
-                raise RefError(f"Could not find ref backend for tag: {tag}")
+            except KeyError as e:
+                raise RefError(f"Could not find ref backend for tag: {tag}") from e
 
         return compile_replace_match
 
@@ -601,7 +602,7 @@ class RefController:
         try:
             yield
         except RefBackendError as e:
-            raise RefBackendError(f"{e}\n  for key {ref_key}")
+            raise RefBackendError(f"{e}\n  for key {ref_key}") from e
 
     def __init__(self, path, **kwargs):
         """
@@ -621,7 +622,7 @@ class RefController:
         "imports and registers backend according to type_name"
         try:
             return self.backends[type_name]
-        except KeyError:
+        except KeyError as e:
             ref_kwargs = {"embed_refs": self.embed_refs}
             if type_name == KapitanReferencesTypes.PLAIN:
                 from kapitan.refs.base import PlainRefBackend
@@ -664,7 +665,7 @@ class RefController:
 
                 self.register_backend(AzureKMSBackend(self.path, **ref_kwargs))
             else:
-                raise RefBackendError(f"no backend for ref type: {type_name}")
+                raise RefBackendError(f"no backend for ref type: {type_name}") from e
         return self.backends[type_name]
 
     def tag_type(self, tag):
@@ -807,14 +808,14 @@ class RefController:
                 try:
                     # call function with parameters and set generated secret to ctx.data
                     eval_func(func_name, ctx, *func_params)
-                except KeyError:
+                except KeyError as e:
                     raise RefError(
                         f"{func_name}: unknown ref function used. Choose one of: {[key for key in get_func_lookup()]}"
-                    )
-                except TypeError:
+                    ) from e
+                except TypeError as e:
                     raise RefError(
                         f"{func_params}: too many arguments for function {func_name}"
-                    )
+                    ) from e
 
         return ctx
 
@@ -839,12 +840,12 @@ class RefController:
                     ref = self._get_from_token(token)
                     if ref:
                         return ref
-                except KeyError:
+                except KeyError as e:
                     # if func is set and ref doesnt exist,
                     # raise RefFromFuncError to indicate new ref needs to be created
                     raise RefFromFuncError(
                         f"{token}: does not exist and must be created from function: {func_str}"
-                    )
+                    ) from e
 
         raise KeyError(f"{tag}: ref not found")
 

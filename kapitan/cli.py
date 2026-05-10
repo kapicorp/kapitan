@@ -81,7 +81,7 @@ def trigger_compile(args):
             ref_controller=ref_controller,
             args=args,
         )
-    except:
+    except Exception:
         sys.exit(1)
 
 

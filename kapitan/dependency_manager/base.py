@@ -158,7 +158,7 @@ def fetch_git_source(source, save_dir, item_type):
         logger.error(e)
         raise GitFetchingError(
             f"{item_type} {source}: fetching unsuccessful\n{e.stderr}"
-        )
+        ) from e
 
 
 def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):

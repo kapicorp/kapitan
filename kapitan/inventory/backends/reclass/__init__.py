@@ -63,7 +63,7 @@ class ReclassInventory(Inventory):
                 logger.error("Inventory reclass error: inventory not found")
             else:
                 logger.error(f"Inventory reclass error: {e.message}")
-            raise InventoryError(e.message)
+            raise InventoryError(e.message) from e
 
 
 def get_reclass_config(
