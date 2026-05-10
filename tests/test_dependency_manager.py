@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import io
+import logging
 import multiprocessing
 import tempfile
 import unittest
@@ -14,6 +15,7 @@ from pathlib import Path
 
 import pytest
 
+import kapitan.dependency_manager.base as dm_base
 from kapitan.cli import main as kapitan
 from kapitan.dependency_manager.base import (
     HelmSource,
@@ -349,3 +351,81 @@ class DependencyManagerTest(unittest.TestCase):
             self.assertTrue((temp / "components" / "tests").is_dir())
             self.assertTrue((temp / "components" / "kapitan-repository").is_dir())
             self.assertTrue((temp / "charts" / "prometheus").is_dir())
+
+
+# ---------------------------------------------------------------------------
+# observability and bounded retries
+# ---------------------------------------------------------------------------
+
+
+def test_http_fetch_retries_on_transient_error(httpserver, tmp_path, monkeypatch):
+    """fetch_http_source retries on 503 and eventually succeeds."""
+    monkeypatch.setattr(dm_base, "_FETCH_RETRIES", 3)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MIN", 0)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MAX", 0)
+
+    content = b"ok after retries"
+    # First two requests return 503; third returns 200.
+    httpserver.expect_ordered_request("/retried.bin").respond_with_data(
+        "service unavailable", status=503, content_type="text/plain"
+    )
+    httpserver.expect_ordered_request("/retried.bin").respond_with_data(
+        "service unavailable", status=503, content_type="text/plain"
+    )
+    httpserver.expect_ordered_request("/retried.bin").respond_with_data(
+        content, status=200, content_type="application/octet-stream"
+    )
+
+    save_path = tmp_path / "retried.bin"
+    fetch_http_source(httpserver.url_for("/retried.bin"), str(save_path), "Dependency")
+
+    assert save_path.read_bytes() == content
+    httpserver.check_assertions()
+
+
+def test_http_fetch_exhausts_retries_and_raises(httpserver, tmp_path, monkeypatch):
+    """fetch_http_source raises after all retry attempts are consumed."""
+    import requests as req
+
+    monkeypatch.setattr(dm_base, "_FETCH_RETRIES", 2)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MIN", 0)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MAX", 0)
+
+    httpserver.expect_ordered_request("/always503.bin").respond_with_data(
+        "service unavailable", status=503, content_type="text/plain"
+    )
+    httpserver.expect_ordered_request("/always503.bin").respond_with_data(
+        "service unavailable", status=503, content_type="text/plain"
+    )
+
+    save_path = tmp_path / "always503.bin"
+    with pytest.raises(req.exceptions.HTTPError):
+        fetch_http_source(
+            httpserver.url_for("/always503.bin"), str(save_path), "Dependency"
+        )
+
+
+def test_http_fetch_structured_log(httpserver, tmp_path, monkeypatch, caplog):
+    """fetch_http_source emits a structured log record with the expected fields."""
+    monkeypatch.setattr(dm_base, "_FETCH_RETRIES", 1)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MIN", 0)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MAX", 0)
+
+    content = b"structured log payload"
+    httpserver.expect_request("/data.bin").respond_with_data(
+        content, status=200, content_type="application/octet-stream"
+    )
+
+    save_path = tmp_path / "data.bin"
+    with caplog.at_level(logging.DEBUG, logger="kapitan.dependency_manager.base"):
+        fetch_http_source(httpserver.url_for("/data.bin"), str(save_path), "Dependency")
+
+    fetch_records = [
+        rec for rec in caplog.records if getattr(rec, "type", None) == "http"
+    ]
+    assert len(fetch_records) == 1, "expected exactly one structured http fetch record"
+    rec = fetch_records[0]
+    assert rec.source == httpserver.url_for("/data.bin")
+    assert rec.duration_ms >= 0
+    assert rec.bytes == len(content)
+    assert rec.outcome == "success"

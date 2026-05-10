@@ -6,11 +6,14 @@ import hashlib
 import logging
 import multiprocessing
 import os
+import time
 from collections import defaultdict, namedtuple
 from functools import partial
 from mimetypes import MimeTypes
 from shutil import copyfile, rmtree
 
+import requests
+import tenacity
 from git import GitCommandError, Repo
 
 from kapitan.errors import GitFetchingError, GitSubdirNotFoundError, HelmFetchingError
@@ -27,6 +30,48 @@ from kapitan.utils import (
 
 
 logger = logging.getLogger(__name__)
+
+# Retry / timeout configuration.  Override via environment variables.
+_FETCH_RETRIES = int(os.environ.get("KAPITAN_FETCH_RETRIES", "3"))
+_FETCH_WAIT_MIN = float(os.environ.get("KAPITAN_FETCH_WAIT_MIN", "0.5"))
+_FETCH_WAIT_MAX = float(os.environ.get("KAPITAN_FETCH_WAIT_MAX", "10"))
+
+# Git errors whose stderr text suggests a transient network condition.
+_TRANSIENT_GIT_PATTERNS = (
+    "connection reset",
+    "connection timed out",
+    "timed out",
+    "connection refused",
+    "temporarily unavailable",
+    "remote end hung up",
+)
+
+
+def _is_transient_http_exc(exc):
+    """Return True for HTTP exceptions that are worth retrying."""
+    if isinstance(
+        exc, requests.exceptions.ConnectionError | requests.exceptions.Timeout
+    ):
+        return True
+    if isinstance(exc, requests.exceptions.HTTPError):
+        response = exc.response
+        return response is not None and response.status_code in (
+            429,
+            500,
+            502,
+            503,
+            504,
+        )
+    return False
+
+
+def _is_transient_git_exc(exc):
+    """Return True for GitCommandErrors that look like transient network failures."""
+    if not isinstance(exc, GitCommandError):
+        return False
+    stderr = (exc.stderr or "").lower()
+    return any(pattern in stderr for pattern in _TRANSIENT_GIT_PATTERNS)
+
 
 HelmSource = namedtuple("HelmSource", ["repo", "chart_name", "version", "helm_path"])
 
@@ -151,15 +196,43 @@ def fetch_git_source(source, save_dir, item_type):
         rmtree(save_dir)
         logger.debug("Removed %s", save_dir)
     logger.debug("%s %s: fetching now", item_type, source)
+
+    start = time.monotonic()
+    outcome = "failure"
     try:
-        Repo.clone_from(source, save_dir)
+        for attempt in tenacity.Retrying(
+            stop=tenacity.stop_after_attempt(_FETCH_RETRIES),
+            wait=tenacity.wait_exponential(
+                multiplier=0.5, min=_FETCH_WAIT_MIN, max=_FETCH_WAIT_MAX
+            ),
+            retry=tenacity.retry_if_exception(_is_transient_git_exc),
+            reraise=True,
+        ):
+            with attempt:
+                Repo.clone_from(source, save_dir)
+        outcome = "success"
         logger.debug("%s %s: successfully fetched", item_type, source)
         logger.debug("Git clone cached to %s", save_dir)
     except GitCommandError as e:
         logger.error(e)
         raise GitFetchingError(
-            f"{item_type} {source}: fetching unsuccessful\n{e.stderr}"
+            f"{item_type} {source}: fetching unsuccessful\n{e.stderr}",
+            source=source,
         ) from e
+    finally:
+        duration_ms = int((time.monotonic() - start) * 1000)
+        logger.debug(
+            "%s %s: git fetch completed",
+            item_type,
+            source,
+            extra={
+                "source": source,
+                "type": "git",
+                "duration_ms": duration_ms,
+                "bytes": 0,
+                "outcome": outcome,
+            },
+        )
 
 
 def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
@@ -224,8 +297,38 @@ def fetch_http_source(source, save_path, item_type):
         os.remove(save_path)
         logger.debug("Removed %s", save_path)
     logger.debug("%s %s: fetching now", item_type, source)
-    content, content_type = make_request(source)
-    logger.debug("%s %s: successfully fetched", item_type, source)
+
+    start = time.monotonic()
+    content = None
+    content_type = None
+    outcome = "failure"
+    try:
+        for attempt in tenacity.Retrying(
+            stop=tenacity.stop_after_attempt(_FETCH_RETRIES),
+            wait=tenacity.wait_exponential(
+                multiplier=0.5, min=_FETCH_WAIT_MIN, max=_FETCH_WAIT_MAX
+            ),
+            retry=tenacity.retry_if_exception(_is_transient_http_exc),
+            reraise=True,
+        ):
+            with attempt:
+                content, content_type = make_request(source)
+        outcome = "success"
+    finally:
+        duration_ms = int((time.monotonic() - start) * 1000)
+        byte_count = len(content) if content is not None else 0
+        logger.debug(
+            "%s %s: fetch completed",
+            item_type,
+            source,
+            extra={
+                "source": source,
+                "type": "http",
+                "duration_ms": duration_ms,
+                "bytes": byte_count,
+                "outcome": outcome,
+            },
+        )
     if content is not None:
         with open(save_path, "wb") as f:
             f.write(content)

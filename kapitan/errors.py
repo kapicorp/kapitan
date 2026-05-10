@@ -146,6 +146,10 @@ class GitSubdirNotFoundError(BackendError):
 class GitFetchingError(BackendError):
     """Raised when a git repository cannot be fetched (not found or permission error)."""
 
+    def __init__(self, message="", *, source=None):
+        super().__init__(message)
+        self.source = source
+
 
 class RequestUnsuccessfulError(BackendError):
     """Raised when an HTTP request returns a non-success status."""
