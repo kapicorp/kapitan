@@ -20,7 +20,8 @@ from kapitan.refs.env import DEFAULT_ENV_REF_VAR_PREFIX, EnvRef
 from kapitan.utils import get_entropy
 
 
-REFS_HOME = tempfile.mkdtemp()
+_REFS_HOME_TD = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+REFS_HOME = _REFS_HOME_TD.name
 REF_CONTROLLER = RefController(REFS_HOME)
 REVEALER = Revealer(REF_CONTROLLER)
 REF_CONTROLLER_EMBEDDED = RefController(REFS_HOME, embed_refs=True)
@@ -444,8 +445,8 @@ class Base64RefsTest(unittest.TestCase):
         self.assertEqual(len(revealed), 64)
         try:
             int(revealed, 16)  # sha256 should convert to hex
-        except ValueError:
-            raise Exception("ref is not sha256 hash")
+        except ValueError as exc:
+            raise AssertionError("ref is not sha256 hash") from exc
 
     # TODO write tests for RefController errors (lookups, etc..)
 

@@ -13,7 +13,6 @@ Provides common functionality for test isolation and execution.
 import contextlib
 import io
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -115,60 +114,6 @@ class CompileTestHelper:
         compiled_hash = directory_hash(compiled_dir)
         expected_hash = directory_hash(expected_dir)
         return compiled_hash == expected_hash
-
-
-class IsolatedTestEnvironment:
-    """
-    Context manager for creating isolated test environments.
-    """
-
-    def __init__(self, base_path: str, copy_base: bool = True):
-        """
-        Initialize isolated environment.
-
-        Args:
-            base_path: Base path to use or copy
-            copy_base: Whether to copy base_path to temp location
-        """
-        self.base_path = base_path
-        self.copy_base = copy_base
-        self.temp_dir = None
-        self.work_dir = None
-        self.original_dir = os.getcwd()
-
-    def __enter__(self):
-        """Enter the isolated environment."""
-        reset_cache()
-
-        if self.copy_base:
-            self.temp_dir = tempfile.mkdtemp(prefix="kapitan_test_")
-            self.work_dir = os.path.join(self.temp_dir, "work")
-            shutil.copytree(self.base_path, self.work_dir)
-        else:
-            self.work_dir = self.base_path
-
-        os.chdir(self.work_dir)
-
-        # Clean any existing compiled directory
-        compiled_path = os.path.join(self.work_dir, "compiled")
-        if os.path.exists(compiled_path):
-            shutil.rmtree(compiled_path)
-
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Exit the isolated environment and cleanup."""
-        os.chdir(self.original_dir)
-
-        if self.temp_dir:
-            shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-        reset_cache()
-
-    @property
-    def path(self) -> str:
-        """Get the working directory path."""
-        return self.work_dir
 
 
 def setup_gpg_key(key_path: str, gnupg_home: Optional[str] = None) -> None:

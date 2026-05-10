@@ -9,6 +9,7 @@
 
 import contextlib
 import glob
+import importlib.util
 import io
 import logging
 import os
@@ -32,12 +33,21 @@ TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")
 TEST_DOCKER_PATH = os.path.join(os.getcwd(), "examples/docker/")
 TEST_TERRAFORM_PATH = os.path.join(os.getcwd(), "examples/terraform/")
 TEST_KUBERNETES_PATH = os.path.join(os.getcwd(), "examples/kubernetes/")
+TEST_KUBERNETES_COMPILED_PATH = os.path.join(
+    os.getcwd(), "tests/test_kubernetes_compiled"
+)
+TEST_TERRAFORM_COMPILED_PATH = os.path.join(
+    os.getcwd(), "tests/test_terraform_compiled"
+)
+TEST_DOCKER_COMPILED_PATH = os.path.join(os.getcwd(), "tests/test_docker_compiled")
 
 
+@pytest.mark.usefixtures("isolated_test_resources")
 class CompileTestResourcesTestObjs(unittest.TestCase):
     def setUp(self):
         reset_cache()
-        os.chdir(TEST_RESOURCES_PATH)
+        kapitan("compile", "-t", "test-objects")
+        kapitan("compile", "-t", "reveal-output")
 
     def test_compile_no_reveal(self):
         # check if the --no-reveal flag takes precedence over --reveal when passed together
@@ -61,15 +71,12 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
             with open(g) as f:
                 self.assertTrue("?{plain:" not in f.read())
 
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
 
-
+@pytest.mark.usefixtures("isolated_test_resources")
 class CompileTestResourcesTestKadet(unittest.TestCase):
     def setUp(self):
-        os.chdir(TEST_RESOURCES_PATH)
         reset_cache()
+        kapitan("compile", "-t", "kadet-test")
 
     def test_compile(self):
         kapitan("compile", "-t", "kadet-test")
@@ -94,27 +101,20 @@ class CompileTestResourcesTestKadet(unittest.TestCase):
                 self.assertEqual(team_name, "SRE")
 
     def tearDown(self):
-        os.chdir(TEST_PWD)
         reset_cache()
 
 
+@pytest.mark.usefixtures("isolated_test_resources")
 class FailCompileTestResourcesTestKadet(unittest.TestCase):
-    def setUp(self):
-        os.chdir(TEST_RESOURCES_PATH)
-        reset_cache()
-
     def test_compile(self):
         kapitan("compile", "-t", "fail-compile")
 
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
 
-
+@pytest.mark.usefixtures("isolated_test_resources")
 class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
     def setUp(self):
-        os.chdir(TEST_RESOURCES_PATH)
         reset_cache()
+        kapitan("compile", "-t", "jinja2-input-params")
 
     def test_compile(self):
         kapitan("compile", "-t", "jinja2-input-params")
@@ -139,14 +139,14 @@ class CompileTestResourcesTestJinja2InputParams(unittest.TestCase):
                 self.assertEqual(name, "test2")
 
     def tearDown(self):
-        os.chdir(TEST_PWD)
         reset_cache()
 
 
+@pytest.mark.usefixtures("isolated_test_resources")
 class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
     def setUp(self):
-        os.chdir(TEST_RESOURCES_PATH)
         reset_cache()
+        kapitan("compile", "-t", "jinja2-postfix-strip")
 
     def test_compile(self):
         kapitan("compile", "-t", "jinja2-postfix-strip")
@@ -165,10 +165,6 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
         self.assertListEqual(
             os.listdir("compiled/jinja2-postfix-strip/stripped"), ["stub.txt"]
         )
-
-    def tearDown(self):
-        os.chdir(TEST_PWD)
-        reset_cache()
 
 
 @pytest.mark.usefixtures("isolated_kubernetes_inventory")
@@ -231,7 +227,6 @@ class CompileKubernetesTest(unittest.TestCase):
             self.assertEqual(env["exports"], {})
 
     def tearDown(self):
-        os.chdir(TEST_PWD)
         reset_cache()
 
 
@@ -258,6 +253,7 @@ class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
         pass
 
 
+@pytest.mark.usefixtures("isolated_omegaconf_inventory")
 class CompileTestResourcesOCOmegaconf(unittest.TestCase):
     """Test compile with test_resources/omegaconf inventory using omegaconf backend.
 
@@ -265,27 +261,26 @@ class CompileTestResourcesOCOmegaconf(unittest.TestCase):
     This class only tests that compilation works with omegaconf backend.
     """
 
-    inventory_path = os.path.join(TEST_PWD, "tests/test_resources/omegaconf")
     extraArgv = ["--inventory-backend=omegaconf"]
 
     def setUp(self):
         reset_cache()
-        os.chdir(self.inventory_path)
         shutil.rmtree("compiled", ignore_errors=True)
-        # Register custom resolvers from test_resources/omegaconf
-        import sys
-
+        # Register custom resolvers from the isolated omegaconf inventory
         from omegaconf import OmegaConf
 
         from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
 
-        inv_path = os.path.join(self.inventory_path, "inventory")
+        inv_path = os.path.join(os.getcwd(), "inventory")
         register_resolvers(inv_path)
-        if inv_path not in sys.path:
-            sys.path.insert(0, inv_path)
-        from resolvers import pass_resolvers
-
-        for name, func in pass_resolvers().items():
+        resolvers_spec = importlib.util.spec_from_file_location(
+            "resolvers", os.path.join(inv_path, "resolvers.py")
+        )
+        assert resolvers_spec is not None
+        assert resolvers_spec.loader is not None
+        resolvers_module = importlib.util.module_from_spec(resolvers_spec)
+        resolvers_spec.loader.exec_module(resolvers_module)
+        for name, func in resolvers_module.pass_resolvers().items():
             if not OmegaConf.has_resolver(name):
                 OmegaConf.register_new_resolver(name, func)
 
@@ -298,7 +293,7 @@ class CompileTestResourcesOCOmegaconf(unittest.TestCase):
         kapitan("compile", "-t", "test-resolvers", *self.extraArgv)
 
         # Target should compile successfully (even with empty compile list)
-        compiled_dir = os.path.join(self.inventory_path, "compiled/test-resolvers")
+        compiled_dir = os.path.join(os.getcwd(), "compiled/test-resolvers")
         self.assertTrue(
             os.path.exists(compiled_dir),
             f"Expected compiled directory {compiled_dir} to exist",
@@ -306,51 +301,38 @@ class CompileTestResourcesOCOmegaconf(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree("compiled", ignore_errors=True)
-        os.chdir(TEST_PWD)
         reset_cache()
 
 
+@pytest.mark.usefixtures("isolated_terraform_inventory")
 class CompileTerraformTest(unittest.TestCase):
-    def setUp(self):
-        os.chdir(TEST_TERRAFORM_PATH)
-
     def test_compile(self):
         kapitan("compile")
-        compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
-        test_compiled_dir_hash = directory_hash(
-            os.getcwd() + "/../../tests/test_terraform_compiled"
-        )
+        compiled_dir_hash = directory_hash(os.path.join(os.getcwd(), "compiled"))
+        test_compiled_dir_hash = directory_hash(TEST_TERRAFORM_COMPILED_PATH)
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def tearDown(self):
-        os.chdir(TEST_PWD)
         reset_cache()
 
 
+@pytest.mark.usefixtures("isolated_docker_inventory")
 class PlainOutputTest(unittest.TestCase):
-    def setUp(self):
-        os.chdir(TEST_DOCKER_PATH)
-
     def test_compile(self):
         kapitan("compile")
-        compiled_dir_hash = directory_hash(os.getcwd() + "/compiled")
-        test_compiled_dir_hash = directory_hash(
-            os.getcwd() + "/../../tests/test_docker_compiled"
-        )
+        compiled_dir_hash = directory_hash(os.path.join(os.getcwd(), "compiled"))
+        test_compiled_dir_hash = directory_hash(TEST_DOCKER_COMPILED_PATH)
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def tearDown(self):
-        os.chdir(TEST_PWD)
         reset_cache()
 
 
+@pytest.mark.usefixtures("isolated_test_resources")
 class TomlOutputTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        os.chdir(TEST_RESOURCES_PATH)
-        kapitan("compile", "-t", "toml-output")
-
     def setUp(self):
+        reset_cache()
+        kapitan("compile", "-t", "toml-output")
         target_file_path = os.path.join(
             os.getcwd(), "inventory/targets/toml-output.yml"
         )
@@ -380,7 +362,5 @@ class TomlOutputTest(unittest.TestCase):
 
         self.assertDictEqual(output, expected)
 
-    @classmethod
-    def tearDownClass(cls):
-        os.chdir(TEST_PWD)
+    def tearDown(self):
         reset_cache()

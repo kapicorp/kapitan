@@ -14,11 +14,9 @@ import multiprocessing.pool as mp
 import os
 import shutil
 import subprocess
-import tempfile
 from argparse import Namespace
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
@@ -32,14 +30,24 @@ TEST_RESOURCES_PATH = os.path.join(TEST_PWD, "tests/test_resources")
 TEST_DOCKER_PATH = os.path.join(TEST_PWD, "examples/docker/")
 TEST_TERRAFORM_PATH = os.path.join(TEST_PWD, "examples/terraform/")
 TEST_KUBERNETES_PATH = os.path.join(TEST_PWD, "examples/kubernetes/")
+TEST_OMEGACONF_PATH = os.path.join(TEST_PWD, "tests/test_resources/omegaconf")
+
+
+@contextmanager
+def pushd(path: str):
+    """Change to *path* for the duration of the block, then restore the previous directory."""
+    original = os.getcwd()
+    os.chdir(path)
+    try:
+        yield path
+    finally:
+        os.chdir(original)
 
 
 @pytest.fixture
-def temp_dir():
-    """Create a temporary directory that is automatically cleaned up."""
-    temp_path = tempfile.mkdtemp(prefix="kapitan_test_")
-    yield temp_path
-    shutil.rmtree(temp_path, ignore_errors=True)
+def temp_dir(tmp_path):
+    """Provide a temporary directory that is automatically cleaned up by pytest."""
+    return str(tmp_path)
 
 
 @pytest.fixture
@@ -66,17 +74,10 @@ def isolated_compile_dir(temp_dir):
     Create an isolated compilation directory with its own compiled/ output.
     Automatically resets cache and returns to original directory after test.
     """
-    original_dir = os.getcwd()
     reset_cache()
     cached.args = Namespace()
-
-    # Create the isolated directory
-    os.chdir(temp_dir)
-
-    yield temp_dir
-
-    # Cleanup
-    os.chdir(original_dir)
+    with pushd(temp_dir):
+        yield temp_dir
     reset_cache()
     cached.args = Namespace()
 
@@ -89,16 +90,11 @@ def isolated_test_resources(temp_dir, request):
     """
     isolated_path = os.path.join(temp_dir, "test_resources")
     shutil.copytree(TEST_RESOURCES_PATH, isolated_path)
-
-    original_dir = os.getcwd()
     reset_cache()
     cached.args = Namespace()
-    os.chdir(isolated_path)
-
     _attach_fixture(request, "isolated_test_resources", isolated_path)
-    yield isolated_path
-
-    os.chdir(original_dir)
+    with pushd(isolated_path):
+        yield isolated_path
     reset_cache()
     cached.args = Namespace()
 
@@ -111,23 +107,16 @@ def isolated_kubernetes_inventory(temp_dir):
     """
     isolated_path = os.path.join(temp_dir, "kubernetes")
     shutil.copytree(TEST_KUBERNETES_PATH, isolated_path)
-
-    original_dir = os.getcwd()
     reset_cache()
     cached.args = Namespace()
-    os.chdir(isolated_path)
-
-    # Clean any existing compiled directory in the ISOLATED copy only
-    compiled_path = os.path.join(isolated_path, "compiled")
     # Safety check: ensure we're not in the actual examples directory
     assert "examples/kubernetes" not in isolated_path
     assert temp_dir in isolated_path
+    compiled_path = os.path.join(isolated_path, "compiled")
     if os.path.exists(compiled_path):
         shutil.rmtree(compiled_path)
-
-    yield isolated_path
-
-    os.chdir(original_dir)
+    with pushd(isolated_path):
+        yield isolated_path
     reset_cache()
     cached.args = Namespace()
 
@@ -140,19 +129,13 @@ def isolated_terraform_inventory(temp_dir):
     """
     isolated_path = os.path.join(temp_dir, "terraform")
     shutil.copytree(TEST_TERRAFORM_PATH, isolated_path)
-
-    original_dir = os.getcwd()
     reset_cache()
     cached.args = Namespace()
-    os.chdir(isolated_path)
-
     # Safety check: ensure we're not in the actual examples directory
     assert "examples/terraform" not in isolated_path
     assert temp_dir in isolated_path
-
-    yield isolated_path
-
-    os.chdir(original_dir)
+    with pushd(isolated_path):
+        yield isolated_path
     reset_cache()
     cached.args = Namespace()
 
@@ -165,64 +148,31 @@ def isolated_docker_inventory(temp_dir):
     """
     isolated_path = os.path.join(temp_dir, "docker")
     shutil.copytree(TEST_DOCKER_PATH, isolated_path)
-
-    original_dir = os.getcwd()
     reset_cache()
     cached.args = Namespace()
-    os.chdir(isolated_path)
-
     # Safety check: ensure we're not in the actual examples directory
     assert "examples/docker" not in isolated_path
     assert temp_dir in isolated_path
-
-    yield isolated_path
-
-    os.chdir(original_dir)
-    reset_cache()
-    cached.args = Namespace()
-
-
-@contextmanager
-def isolated_compile_context(base_path: str, target_subdir: Optional[str] = None):
-    """
-    Context manager for isolated compilation.
-
-    Args:
-        base_path: Base path to copy for isolation
-        target_subdir: Optional subdirectory to change to after copying
-
-    Yields:
-        Path to the isolated directory
-    """
-    temp_path = tempfile.mkdtemp(prefix="kapitan_compile_")
-    isolated_path = os.path.join(temp_path, "test_env")
-    shutil.copytree(base_path, isolated_path)
-
-    original_dir = os.getcwd()
-    reset_cache()
-    cached.args = Namespace()
-
-    # Change to target directory
-    if target_subdir:
-        work_dir = os.path.join(isolated_path, target_subdir)
-    else:
-        work_dir = isolated_path
-    os.chdir(work_dir)
-
-    # Clean any existing compiled directory in the ISOLATED copy only
-    compiled_path = os.path.join(work_dir, "compiled")
-    # Safety check: ensure we're not in the actual examples directory
-    assert "examples/" not in work_dir or temp_path in work_dir
-    if os.path.exists(compiled_path):
-        shutil.rmtree(compiled_path)
-
-    try:
+    with pushd(isolated_path):
         yield isolated_path
-    finally:
-        os.chdir(original_dir)
-        shutil.rmtree(temp_path, ignore_errors=True)
-        reset_cache()
-        cached.args = Namespace()
+    reset_cache()
+    cached.args = Namespace()
+
+
+@pytest.fixture
+def isolated_omegaconf_inventory(temp_dir):
+    """
+    Create an isolated copy of the omegaconf test inventory for test execution.
+    Returns the path to the isolated copy.
+    """
+    isolated_path = os.path.join(temp_dir, "omegaconf")
+    shutil.copytree(TEST_OMEGACONF_PATH, isolated_path)
+    reset_cache()
+    cached.args = Namespace()
+    with pushd(isolated_path):
+        yield isolated_path
+    reset_cache()
+    cached.args = Namespace()
 
 
 @pytest.fixture
@@ -313,8 +263,9 @@ def reset_environment():
 
 @pytest.fixture
 def setup_gpg_key():
-    example_key = "examples/kubernetes/refs/example@kapitan.dev.key"
-    example_key = os.path.join(os.getcwd(), example_key)
+    example_key = os.path.join(
+        TEST_PWD, "examples/kubernetes/refs/example@kapitan.dev.key"
+    )
 
     subprocess.run(["gpg", "--import", example_key], check=True)
 

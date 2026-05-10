@@ -1,7 +1,6 @@
-import os
-import tempfile
 import unittest
 
+import pytest
 import yaml
 
 from kapitan.cached import reset_cache
@@ -9,17 +8,16 @@ from kapitan.inventory import InventoryBackends
 from kapitan.utils import from_dot_kapitan
 
 
+@pytest.mark.usefixtures("isolated_compile_dir")
 class FromDotKapitanTest(unittest.TestCase):
     "Test loading flags from .kapitan"
 
     def _setup_dot_kapitan(self, config):
-        with open(self.work_dir.name + "/.kapitan", "w", encoding="utf-8") as f:
+        with open(".kapitan", "w", encoding="utf-8") as f:
             yaml.safe_dump(config, f)
 
     def setUp(self):
-        self.orig_dir = os.getcwd()
-        self.work_dir = tempfile.TemporaryDirectory()
-        os.chdir(self.work_dir.name)
+        reset_cache()
 
     def test_no_file(self):
         assert (
@@ -76,6 +74,4 @@ class FromDotKapitanTest(unittest.TestCase):
         )
 
     def tearDown(self):
-        self.work_dir.cleanup()
-        os.chdir(self.orig_dir)
         reset_cache()

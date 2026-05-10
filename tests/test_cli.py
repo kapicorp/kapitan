@@ -22,12 +22,14 @@ from kapitan.refs.secrets.vaultkv import VaultSecret
 from tests.vault_server import VaultServer
 
 
-REFS_PATH = tempfile.mkdtemp()
+_REFS_PATH_TD = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+REFS_PATH = _REFS_PATH_TD.name
 
 # set GNUPGHOME if only running this test
 # otherwise it will reuse the value from test_gpg.py
 if os.environ.get("GNUPGHOME", None) is None:
-    GNUPGHOME = tempfile.mkdtemp()
+    _GNUPGHOME_TD = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+    GNUPGHOME = _GNUPGHOME_TD.name
     os.environ["GNUPGHOME"] = GNUPGHOME
 
 
@@ -275,42 +277,42 @@ class CliFuncsTest(unittest.TestCase):
             )
 
         # create nested dir structure with unrevealed manifests
-        unrevealed_dir = tempfile.mkdtemp()
-        ref_content = """---\nref_value_{}: {}\n"""
+        with tempfile.TemporaryDirectory() as unrevealed_dir:
+            ref_content = """---\nref_value_{}: {}\n"""
 
-        some_dir = os.path.join(unrevealed_dir, "some/dir")
-        some_dir_other = os.path.join(unrevealed_dir, "some/dir/another")
-        some_dir_another = os.path.join(unrevealed_dir, "some/dir/another/dir")
-        os.makedirs(some_dir)
-        os.makedirs(some_dir_other)
-        os.makedirs(some_dir_another)
+            some_dir = os.path.join(unrevealed_dir, "some/dir")
+            some_dir_other = os.path.join(unrevealed_dir, "some/dir/another")
+            some_dir_another = os.path.join(unrevealed_dir, "some/dir/another/dir")
+            os.makedirs(some_dir)
+            os.makedirs(some_dir_other)
+            os.makedirs(some_dir_another)
 
-        # write manifests in nested dirs
-        expected_output = ""
-        for dir_path in enumerate((some_dir, some_dir_other, some_dir_another), 1):
-            count, path = dir_path
-            manifest_path = os.path.join(path, f"{count}.yml")
-            with open(manifest_path, "w") as f:
-                ref = f"?{{base64:test_ref_{count}}}"
-                f.write(ref_content.format(count, ref))
+            # write manifests in nested dirs
+            expected_output = ""
+            for dir_path in enumerate((some_dir, some_dir_other, some_dir_another), 1):
+                count, path = dir_path
+                manifest_path = os.path.join(path, f"{count}.yml")
+                with open(manifest_path, "w") as f:
+                    ref = f"?{{base64:test_ref_{count}}}"
+                    f.write(ref_content.format(count, ref))
 
-            # set expected revealed output
-            expected_ref_rev = f"I am ref{count}!"
-            expected_output += ref_content.format(count, expected_ref_rev)
+                # set expected revealed output
+                expected_ref_rev = f"I am ref{count}!"
+                expected_output += ref_content.format(count, expected_ref_rev)
 
-        argv = [
-            "refs",
-            "--reveal",
-            "-f",
-            some_dir,
-            "--refs-path",
-            REFS_PATH,
-        ]
-        # set stdout as string
-        stdout = io.StringIO()
-        with contextlib.redirect_stdout(stdout):
-            kapitan(*argv)
-        self.assertEqual(expected_output, stdout.getvalue())
+            argv = [
+                "refs",
+                "--reveal",
+                "-f",
+                some_dir,
+                "--refs-path",
+                REFS_PATH,
+            ]
+            # set stdout as string
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                kapitan(*argv)
+            self.assertEqual(expected_output, stdout.getvalue())
 
     def test_cli_secret_validate_targets(self):
         """

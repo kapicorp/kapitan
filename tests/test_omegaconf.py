@@ -32,16 +32,17 @@ TEST_OMEGACONF_INVENTORY = os.path.join(
 class InventoryTestOmegaConfKubernetes(unittest.TestCase):
     """Test OmegaConf inventory backend with examples/kubernetes inventory"""
 
-    temp_dir = tempfile.mkdtemp()
-
     def setUp(self) -> None:
-        shutil.copytree(TEST_KUBERNETES_INVENTORY, self.temp_dir, dirs_exist_ok=True)
+        self._temp_td = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+        shutil.copytree(
+            TEST_KUBERNETES_INVENTORY, self._temp_td.name, dirs_exist_ok=True
+        )
         inventory_backend = get_inventory_backend("omegaconf")
-        self.inventory_path = self.temp_dir
+        self.inventory_path = self._temp_td.name
         self.extraArgv = ["--inventory-backend=omegaconf"]
         from kapitan.inventory.backends.omegaconf import migrate
 
-        inventory_path = os.path.join(self.temp_dir, "inventory")
+        inventory_path = os.path.join(self._temp_td.name, "inventory")
         migrate(inventory_path)
         register_resolvers(inventory_path)
         self.inventory_backend = inventory_backend(
@@ -84,7 +85,7 @@ class InventoryTestOmegaConfKubernetes(unittest.TestCase):
         self.assertEqual(target.parameters.kubectl["insecure_skip_tls_verify"], False)
 
     def tearDown(self) -> None:
-        shutil.rmtree(self.temp_dir)
+        self._temp_td.cleanup()
         return super().tearDown()
 
 

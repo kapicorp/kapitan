@@ -8,7 +8,6 @@
 """Tests for Kustomize input type."""
 
 import os
-import shutil
 import tempfile
 import unittest
 
@@ -23,7 +22,8 @@ class KustomizeInputTest(unittest.TestCase):
 
     def setUp(self):
         """Set up test environment."""
-        self.compile_path = tempfile.mkdtemp()
+        self._compile_td = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+        self.compile_path = self._compile_td.name
         self.search_paths = []
         self.ref_controller = None
         self.target_name = "test-target"
@@ -38,13 +38,12 @@ class KustomizeInputTest(unittest.TestCase):
 
     def tearDown(self):
         """Clean up test environment."""
-        shutil.rmtree(self.compile_path)
+        self._compile_td.cleanup()
 
     def test_compile_file_with_patches(self):
         """Test compiling a Kustomize overlay with patches."""
         # Create a temporary directory for the test
-        temp_dir = tempfile.mkdtemp()
-        try:
+        with tempfile.TemporaryDirectory() as temp_dir:
             # Create a basic kustomization.yaml
             kustomization = {
                 "resources": ["deployment.yaml"],
@@ -130,14 +129,10 @@ class KustomizeInputTest(unittest.TestCase):
                     "nginx:1.19",
                 )
 
-        finally:
-            shutil.rmtree(temp_dir)
-
     def test_compile_file_with_namespace(self):
         """Test compiling a Kustomize overlay with namespace."""
         # Create a temporary directory for the test
-        temp_dir = tempfile.mkdtemp()
-        try:
+        with tempfile.TemporaryDirectory() as temp_dir:
             # Create a basic kustomization.yaml
             kustomization = {
                 "resources": ["deployment.yaml"],
@@ -191,14 +186,10 @@ class KustomizeInputTest(unittest.TestCase):
                     "test-namespace",
                 )
 
-        finally:
-            shutil.rmtree(temp_dir)
-
     def test_compile_file_with_invalid_input(self):
         """Test compiling a Kustomize overlay with invalid input."""
         # Create a temporary directory for the test
-        temp_dir = tempfile.mkdtemp()
-        try:
+        with tempfile.TemporaryDirectory() as temp_dir:
             # Create an invalid kustomization.yaml
             kustomization = {
                 "resources": ["nonexistent.yaml"],
@@ -217,14 +208,10 @@ class KustomizeInputTest(unittest.TestCase):
             with self.assertRaises(Exception):
                 self.kustomize.compile_file(config, temp_dir, self.compile_path)
 
-        finally:
-            shutil.rmtree(temp_dir)
-
     def test_compile_file_with_invalid_patch(self):
         """Test compiling a Kustomize overlay with invalid patch."""
         # Create a temporary directory for the test
-        temp_dir = tempfile.mkdtemp()
-        try:
+        with tempfile.TemporaryDirectory() as temp_dir:
             # Create a basic kustomization.yaml
             kustomization = {
                 "resources": ["deployment.yaml"],
@@ -306,9 +293,6 @@ class KustomizeInputTest(unittest.TestCase):
                     output["spec"]["template"]["spec"]["containers"][0]["image"],
                     "nginx:latest",
                 )
-
-        finally:
-            shutil.rmtree(temp_dir)
 
 
 if __name__ == "__main__":

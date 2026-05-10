@@ -16,7 +16,8 @@ class CuelangInputTest(unittest.TestCase):
 
     def setUp(self):
         """Set up the test environment."""
-        self.compile_path = tempfile.mkdtemp()
+        self._compile_td = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+        self.compile_path = self._compile_td.name
         self.search_paths = []
         self.ref_controller = None
         self.target_name = "test_target"
@@ -31,13 +32,11 @@ class CuelangInputTest(unittest.TestCase):
 
     def tearDown(self):
         """Clean up the test environment."""
-        shutil.rmtree(self.compile_path, ignore_errors=True)
+        self._compile_td.cleanup()
 
     def test_compile_file(self):
         """Compile a CUE-Lang template."""
-        temp_dir = tempfile.mkdtemp()
-
-        try:
+        with tempfile.TemporaryDirectory() as temp_dir:
             shutil.copytree("tests/test_cue/module1", temp_dir, dirs_exist_ok=True)
 
             config = KapitanInputTypeCuelangConfig(
@@ -69,8 +68,6 @@ class CuelangInputTest(unittest.TestCase):
                 self.assertEqual(
                     output, {"result": 5}, "Output does not match expected result."
                 )
-        finally:
-            shutil.rmtree(temp_dir)
 
 
 if __name__ == "__main__":

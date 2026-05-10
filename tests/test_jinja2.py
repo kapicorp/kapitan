@@ -152,12 +152,15 @@ class Jinja2FiltersTest(unittest.TestCase):
         """
         creates ?{base64:some_value} and runs reveal_maybe|b64encode jinja2 filters
         """
-        with tempfile.NamedTemporaryFile() as f:
+        with (
+            tempfile.NamedTemporaryFile() as f,
+            tempfile.TemporaryDirectory() as refs_dir,
+        ):
             f.write(b"{{ my_ref_tag_var|reveal_maybe|b64encode }}")
             f.seek(0)
 
             # reveal_maybe uses cached, so inject namespace
-            cached.args = argparse.Namespace(reveal=True, refs_path=tempfile.mkdtemp())
+            cached.args = argparse.Namespace(reveal=True, refs_path=refs_dir)
             cached.ref_controller_obj = RefController(cached.args.refs_path)
             cached.revealer_obj = Revealer(cached.ref_controller_obj)
 
@@ -172,12 +175,15 @@ class Jinja2FiltersTest(unittest.TestCase):
         """
         creates ?{base64:some_value} and runs reveal_maybe jinja2 filters without --reveal flag
         """
-        with tempfile.NamedTemporaryFile() as f:
+        with (
+            tempfile.NamedTemporaryFile() as f,
+            tempfile.TemporaryDirectory() as refs_dir,
+        ):
             f.write(b"{{ my_ref_tag_var|reveal_maybe }}")
             f.seek(0)
 
             # reveal_maybe uses cached, so inject namespace
-            cached.args = argparse.Namespace(reveal=False, refs_path=tempfile.mkdtemp())
+            cached.args = argparse.Namespace(reveal=False, refs_path=refs_dir)
             cached.ref_controller_obj = RefController(cached.args.refs_path)
             cached.revealer_obj = Revealer(cached.ref_controller_obj)
 
@@ -193,12 +199,15 @@ class Jinja2FiltersTest(unittest.TestCase):
         """
         runs reveal_maybe jinja2 filter on data without ref tags
         """
-        with tempfile.NamedTemporaryFile() as f:
+        with (
+            tempfile.NamedTemporaryFile() as f,
+            tempfile.TemporaryDirectory() as refs_dir,
+        ):
             f.write(b"{{ my_var|reveal_maybe }}")
             f.seek(0)
 
             # reveal_maybe uses cached, so inject namespace
-            cached.args = argparse.Namespace(reveal=True, refs_path=tempfile.mkdtemp())
+            cached.args = argparse.Namespace(reveal=True, refs_path=refs_dir)
             cached.ref_controller_obj = RefController(cached.args.refs_path)
             cached.revealer_obj = Revealer(cached.ref_controller_obj)
 

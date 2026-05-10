@@ -70,20 +70,21 @@ class InventoryTargetTestReclassRs(InventoryTargetTestBase):
 
 
 class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
-    temp_dir = tempfile.mkdtemp()
-
     def setUp(self) -> None:
-        shutil.copytree(TEST_KUBERNETES_INVENTORY, self.temp_dir, dirs_exist_ok=True)
+        self._temp_td = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+        shutil.copytree(
+            TEST_KUBERNETES_INVENTORY, self._temp_td.name, dirs_exist_ok=True
+        )
         self.backend_id = InventoryBackends.OMEGACONF
         self.expected_targets_count = 10
         from kapitan.inventory.backends.omegaconf import migrate
 
-        self.inventory_path = os.path.join(self.temp_dir, "inventory")
+        self.inventory_path = os.path.join(self._temp_td.name, "inventory")
         migrate(self.inventory_path)
         super().setUp()
 
     def tearDown(self) -> None:
-        shutil.rmtree(self.temp_dir)
+        self._temp_td.cleanup()
         return super().tearDown()
 
 

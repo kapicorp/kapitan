@@ -25,7 +25,8 @@ from kapitan.refs.secrets.gpg import (
 
 
 # set GNUPGHOME for test_cli
-GNUPGHOME = tempfile.mkdtemp()
+_GNUPGHOME_TD = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+GNUPGHOME = _GNUPGHOME_TD.name
 os.environ["GNUPGHOME"] = GNUPGHOME
 
 gpg_obj(gnupghome=GNUPGHOME)
@@ -43,7 +44,8 @@ KEY2 = cached.gpg_obj.gen_key(
 GPG_TARGET_FINGERPRINTS["KEY"] = KEY.fingerprint
 GPG_KWARGS["passphrase"] = "testphrase"
 
-REFS_HOME = tempfile.mkdtemp()
+_REFS_HOME_TD = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+REFS_HOME = _REFS_HOME_TD.name
 REF_CONTROLLER = RefController(REFS_HOME)
 REVEALER = Revealer(REF_CONTROLLER)
 REF_CONTROLLER_EMBEDDED = RefController(REFS_HOME, embed_refs=True)
@@ -132,8 +134,8 @@ class GPGSecretsTest(unittest.TestCase):
             serialization.load_pem_private_key(
                 revealed.encode(), password=None, backend=default_backend()
             )
-        except ValueError:
-            raise Exception("Failed to decode ed25519 private key")
+        except ValueError as exc:
+            raise AssertionError("Failed to decode ed25519 private key") from exc
 
         REVEALER._reveal_tag_without_subvar.cache_clear()
         tag = "?{gpg:secret/ed25519||ed25519}"
@@ -144,8 +146,8 @@ class GPGSecretsTest(unittest.TestCase):
             private_key = serialization.load_pem_private_key(
                 revealed.encode(), password=None, backend=default_backend()
             )
-        except ValueError:
-            raise Exception("Failed to decode ed25519 private key")
+        except ValueError as exc:
+            raise AssertionError("Failed to decode ed25519 private key") from exc
 
         # Test 'publickey' with previous private key as the parameter
         tag_ed25519public = (
@@ -175,8 +177,8 @@ class GPGSecretsTest(unittest.TestCase):
             serialization.load_pem_private_key(
                 revealed.encode(), password=None, backend=default_backend()
             )
-        except ValueError:
-            raise Exception("Failed to decode RSA private key")
+        except ValueError as exc:
+            raise AssertionError("Failed to decode RSA private key") from exc
 
         REVEALER._reveal_tag_without_subvar.cache_clear()
         # Test with parameter key_size=2048
@@ -188,8 +190,8 @@ class GPGSecretsTest(unittest.TestCase):
             private_key = serialization.load_pem_private_key(
                 revealed.encode(), password=None, backend=default_backend()
             )
-        except ValueError:
-            raise Exception("Failed to decode RSA private key")
+        except ValueError as exc:
+            raise AssertionError("Failed to decode RSA private key") from exc
 
         self.assertEqual(private_key.key_size, 2048)
 

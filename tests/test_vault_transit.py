@@ -15,7 +15,8 @@ from tests.vault_server import VaultTransitServer
 logger = logging.getLogger(__name__)
 
 # Create temporary folder
-REFS_PATH = tempfile.mkdtemp()
+_REFS_PATH_TD = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+REFS_PATH = _REFS_PATH_TD.name
 REF_CONTROLLER = RefController(REFS_PATH)
 REVEALER = Revealer(REF_CONTROLLER)
 

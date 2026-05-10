@@ -12,7 +12,8 @@ from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.azkms import AzureKMSSecret
 
 
-REFS_HOME = tempfile.mkdtemp()
+_REFS_HOME_TD = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+REFS_HOME = _REFS_HOME_TD.name
 REF_CONTROLLER = RefController(REFS_HOME)
 REVEALER = Revealer(REF_CONTROLLER)
 REF_CONTROLLER_EMBEDDED = RefController(REFS_HOME, embed_refs=True)

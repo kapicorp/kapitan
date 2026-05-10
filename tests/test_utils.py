@@ -28,7 +28,8 @@ class CopyTreeTest(unittest.TestCase):
     "Test copy_tree function"
 
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
+        self._temp_td = tempfile.TemporaryDirectory(prefix="kapitan_test_")
+        self.temp_dir = self._temp_td.name
 
     def test_copy_dir(self):
         original = set(glob.iglob(f"{TEST_KUBERNETES_PATH}/*", recursive=True))
@@ -106,4 +107,4 @@ class CopyTreeTest(unittest.TestCase):
             self.assertEqual(f.read(), "Test2\n")
 
     def tearDown(self):
-        shutil.rmtree(self.temp_dir)
+        self._temp_td.cleanup()
