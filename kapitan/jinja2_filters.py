@@ -75,8 +75,10 @@ def load_module_from_path(env, path):
                 logger.debug("custom filter loaded from %s", path)
                 env.filters[function] = getattr(custom_filter_module, function)
     except Exception as e:
-        raise OSError(f"jinja2 failed to render, could not load filter at {path}: {e}")
         logger.debug("failed to find custom filter from path %s", path)
+        raise OSError(
+            f"jinja2 failed to render, could not load filter at {path}: {e}"
+        ) from e
 
 
 def load_jinja2_filters_from_file(env, jinja2_filters):
@@ -132,8 +134,11 @@ def to_bool(a):
     return False
 
 
-def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
-    return datetime.datetime.strptime(string, format)
+def to_datetime(string, format="%Y-%m-%d %H:%M:%S", tz=None):
+    dt = datetime.datetime.strptime(string, format)  # noqa: DTZ007 - naive by default; pass tz= for timezone-aware output
+    if tz is not None:
+        dt = dt.replace(tzinfo=tz)
+    return dt
 
 
 def strftime(string_format, second=None):
@@ -141,8 +146,8 @@ def strftime(string_format, second=None):
     if second is not None:
         try:
             second = int(second)
-        except Exception:
-            raise CompileError(f"Invalid value for epoch value ({second})")
+        except (ValueError, TypeError) as e:
+            raise CompileError(f"Invalid value for epoch value ({second})") from e
     return time.strftime(string_format, time.localtime(second))
 
 

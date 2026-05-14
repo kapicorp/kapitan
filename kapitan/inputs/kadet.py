@@ -97,9 +97,10 @@ def load_from_search_paths(module_name):
             _path = os.path.join(path, module_name)
             mod, spec = module_from_path(_path, check_name=module_name)
             spec.loader.exec_module(mod)
-            return mod
         except (ModuleNotFoundError, FileNotFoundError):
             pass
+        else:
+            return mod
     raise ModuleNotFoundError(f"Could not load module name {module_name}")
 
 

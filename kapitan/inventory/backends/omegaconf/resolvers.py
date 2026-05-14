@@ -315,5 +315,5 @@ def register_user_resolvers(user_resolver_file: str) -> None:
     for name, func in funcs.items():
         try:
             OmegaConf.register_new_resolver(name, func, replace=True)
-        except:
+        except Exception:
             logger.warning(f"Could not load resolver {name}")

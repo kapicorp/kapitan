@@ -84,17 +84,18 @@ class Kustomize(InputType):
         Raises:
             KustomizeTemplateError: If kustomize build fails
         """
+
+        # Get the absolute path to the input directory
+        abs_input_path = os.path.abspath(input_path)
+        if not os.path.isdir(abs_input_path):
+            raise KustomizeTemplateError(
+                f"Input path {input_path} must be a directory containing a kustomization.yaml file"
+            )
+
         try:
             # Create a temporary directory for our kustomization
             temp_dir = tempfile.mkdtemp()
             kustomization_path = os.path.join(temp_dir, "kustomization.yaml")
-
-            # Get the absolute path to the input directory
-            abs_input_path = os.path.abspath(input_path)
-            if not os.path.isdir(abs_input_path):
-                raise KustomizeTemplateError(
-                    f"Input path {input_path} must be a directory containing a kustomization.yaml file"
-                )
 
             # Copy the input directory to the temporary directory
             input_dir_name = os.path.basename(abs_input_path)
@@ -147,11 +148,15 @@ class Kustomize(InputType):
                 result = subprocess.run(
                     cmd, stdout=f, stderr=subprocess.PIPE, text=True, check=False
                 )
-                if result.returncode != 0:
-                    raise KustomizeTemplateError(
-                        f"Kustomize build failed: {result.stderr}"
-                    )
+        except Exception as e:
+            raise KustomizeTemplateError(
+                f"Failed to compile Kustomize overlay: {e!s}"
+            ) from e
 
+        if result.returncode != 0:
+            raise KustomizeTemplateError(f"Kustomize build failed: {result.stderr}")
+
+        try:
             # Read and process the output
             with open(output_file) as f:
                 for doc in yaml.safe_load_all(f):
@@ -167,6 +172,7 @@ class Kustomize(InputType):
                         output_path = os.path.join(compile_path, filename)
                         with open(output_path, "w") as out:
                             yaml.dump(doc, out, default_flow_style=False)
-
         except Exception as e:
-            raise KustomizeTemplateError(f"Failed to compile Kustomize overlay: {e!s}")
+            raise KustomizeTemplateError(
+                f"Failed to compile Kustomize overlay: {e!s}"
+            ) from e

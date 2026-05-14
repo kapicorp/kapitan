@@ -61,7 +61,9 @@ class AWSKMSSecret(Base64Ref):
             key = target_inv.kapitan.secrets.awskms.key
             return cls(data, key, **ref_params.kwargs)
         except KeyError:
-            raise RefError("Could not create AWSKMSSecret: target_name missing")
+            raise RefError(
+                "Could not create AWSKMSSecret: target_name missing"
+            ) from None
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -118,7 +120,7 @@ class AWSKMSSecret(Base64Ref):
             self.key = key
 
         except Exception as e:
-            raise AWSKMSError(e)
+            raise AWSKMSError(e) from e
 
     def _decrypt(self, data):
         """decrypt data"""
@@ -134,7 +136,7 @@ class AWSKMSSecret(Base64Ref):
             return plaintext.decode()
 
         except Exception as e:
-            raise AWSKMSError(e)
+            raise AWSKMSError(e) from e
 
     def dump(self):
         """
