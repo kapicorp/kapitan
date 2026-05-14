@@ -92,7 +92,14 @@ class InputCache:
 
     @staticmethod
     def hash_file_digest(fp):
-        return hashlib.file_digest(fp, "blake2b")
+        # hashlib.file_digest is only available from Python 3.11.
+        try:
+            return hashlib.file_digest(fp, "blake2b")
+        except AttributeError:
+            h = hashlib.blake2b(digest_size=64)
+            while chunk := fp.read(8192):
+                h.update(chunk)
+            return h
 
     def dump_output(self, output_obj, fp):
         return pickle.dump(output_obj, fp)

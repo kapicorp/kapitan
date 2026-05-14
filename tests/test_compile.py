@@ -8,6 +8,7 @@
 "compile tests"
 
 import contextlib
+import filecmp
 import glob
 import io
 import logging
@@ -32,6 +33,33 @@ TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")
 TEST_DOCKER_PATH = os.path.join(os.getcwd(), "examples/docker/")
 TEST_TERRAFORM_PATH = os.path.join(os.getcwd(), "examples/terraform/")
 TEST_KUBERNETES_PATH = os.path.join(os.getcwd(), "examples/kubernetes/")
+
+
+def _diff_directories(dir1, dir2):
+    """Return a list of (rel_path, dir1_path, dir2_path) for files that differ.
+
+    Missing files are represented as None in the corresponding slot.
+    """
+    diff = []
+    files1 = {}
+    files2 = {}
+    for root, _, files in os.walk(dir1):
+        for name in files:
+            rel = os.path.relpath(os.path.join(root, name), dir1)
+            files1[rel] = os.path.join(root, name)
+    for root, _, files in os.walk(dir2):
+        for name in files:
+            rel = os.path.relpath(os.path.join(root, name), dir2)
+            files2[rel] = os.path.join(root, name)
+    all_files = set(files1.keys()) | set(files2.keys())
+    for rel in sorted(all_files):
+        if rel not in files1:
+            diff.append((rel, None, files2[rel]))
+        elif rel not in files2:
+            diff.append((rel, files1[rel], None))
+        elif not filecmp.cmp(files1[rel], files2[rel], shallow=False):
+            diff.append((rel, files1[rel], files2[rel]))
+    return diff
 
 
 class CompileTestResourcesTestObjs(unittest.TestCase):
@@ -171,6 +199,7 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
         reset_cache()
 
 
+@pytest.mark.slow
 @pytest.mark.usefixtures("isolated_kubernetes_inventory")
 class CompileKubernetesTest(unittest.TestCase):
     extraArgv = []
@@ -186,6 +215,45 @@ class CompileKubernetesTest(unittest.TestCase):
         reference_dir = os.path.join(TEST_PWD, "tests/test_kubernetes_compiled")
         compiled_dir_hash = directory_hash(compile_dir)
         test_compiled_dir_hash = directory_hash(reference_dir)
+        if compiled_dir_hash != test_compiled_dir_hash:
+            diffs = _diff_directories(compile_dir, reference_dir)
+            msg_lines = [
+                f"Compiled directory hash mismatch: {compiled_dir_hash} != {test_compiled_dir_hash}",
+                "Differences found:",
+            ]
+            for rel, compiled_path, ref_path in diffs:
+                if compiled_path is None:
+                    msg_lines.append(f"  MISSING in compiled: {rel}")
+                elif ref_path is None:
+                    msg_lines.append(f"  MISSING in reference: {rel}")
+                else:
+                    msg_lines.append(f"  DIFFER: {rel}")
+                    try:
+                        with (
+                            open(compiled_path, encoding="utf-8") as f1,
+                            open(ref_path, encoding="utf-8") as f2,
+                        ):
+                            compiled_text = f1.read().splitlines(keepends=True)
+                            ref_text = f2.read().splitlines(keepends=True)
+                        import difflib
+
+                        diff = list(
+                            difflib.unified_diff(
+                                ref_text,
+                                compiled_text,
+                                fromfile=f"reference/{rel}",
+                                tofile=f"compiled/{rel}",
+                            )
+                        )
+                        if diff:
+                            msg_lines.extend(diff[:40])
+                            if len(diff) > 40:
+                                msg_lines.append(
+                                    f"  ... ({len(diff) - 40} more diff lines)"
+                                )
+                    except Exception as e:
+                        msg_lines.append(f"    Could not diff text: {e}")
+            self.fail("\n".join(msg_lines))
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def test_compile_not_enough_args(self):
@@ -240,26 +308,71 @@ class CompileKubernetesTest(unittest.TestCase):
         """
         reset_cache()
 
-        with open("inventory/targets/all-glob.yml") as f:
-            target = yaml.safe_load(f)
+        target_path = "inventory/targets/all-glob.yml"
+        with open(target_path) as f:
+            original_text = f.read()
+        target = yaml.safe_load(original_text)
 
         # Replace the exact class with a wildcard that resolves to the same class.
         target["classes"] = ["common", "component.namespace", "cluster.min*"]
 
-        with open("inventory/targets/all-glob.yml", "w") as f:
-            yaml.dump(target, f)
+        try:
+            with open(target_path, "w") as f:
+                yaml.dump(target, f)
 
-        kapitan(
-            "compile", "-t", "all-glob", "--enable-class-wildcards", *self.extraArgv
-        )
+            kapitan(
+                "compile", "-t", "all-glob", "--enable-class-wildcards", *self.extraArgv
+            )
 
-        compile_dir = os.path.join(os.getcwd(), "compiled/all-glob")
-        reference_dir = os.path.join(
-            TEST_PWD, "tests/test_kubernetes_compiled/all-glob"
-        )
-        compiled_dir_hash = directory_hash(compile_dir)
-        test_compiled_dir_hash = directory_hash(reference_dir)
-        self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
+            compile_dir = os.path.join(os.getcwd(), "compiled/all-glob")
+            reference_dir = os.path.join(
+                TEST_PWD, "tests/test_kubernetes_compiled/all-glob"
+            )
+            compiled_dir_hash = directory_hash(compile_dir)
+            test_compiled_dir_hash = directory_hash(reference_dir)
+            if compiled_dir_hash != test_compiled_dir_hash:
+                diffs = _diff_directories(compile_dir, reference_dir)
+                msg_lines = [
+                    f"Compiled directory hash mismatch: {compiled_dir_hash} != {test_compiled_dir_hash}",
+                    "Differences found:",
+                ]
+                for rel, compiled_path, ref_path in diffs:
+                    if compiled_path is None:
+                        msg_lines.append(f"  MISSING in compiled: {rel}")
+                    elif ref_path is None:
+                        msg_lines.append(f"  MISSING in reference: {rel}")
+                    else:
+                        msg_lines.append(f"  DIFFER: {rel}")
+                        try:
+                            with (
+                                open(compiled_path, encoding="utf-8") as f1,
+                                open(ref_path, encoding="utf-8") as f2,
+                            ):
+                                compiled_text = f1.read().splitlines(keepends=True)
+                                ref_text = f2.read().splitlines(keepends=True)
+                            import difflib
+
+                            diff = list(
+                                difflib.unified_diff(
+                                    ref_text,
+                                    compiled_text,
+                                    fromfile=f"reference/{rel}",
+                                    tofile=f"compiled/{rel}",
+                                )
+                            )
+                            if diff:
+                                msg_lines.extend(diff[:40])
+                                if len(diff) > 40:
+                                    msg_lines.append(
+                                        f"  ... ({len(diff) - 40} more diff lines)"
+                                    )
+                        except Exception as e:
+                            msg_lines.append(f"    Could not diff text: {e}")
+                self.fail("\n".join(msg_lines))
+            self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
+        finally:
+            with open(target_path, "w") as f:
+                f.write(original_text)
 
     def tearDown(self):
         os.chdir(TEST_PWD)
