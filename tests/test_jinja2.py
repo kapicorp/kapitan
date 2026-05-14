@@ -9,6 +9,7 @@
 
 import argparse
 import base64
+import datetime
 import tempfile
 import time
 import unittest
@@ -93,8 +94,6 @@ class Jinja2FiltersTest(unittest.TestCase):
 
     def test_to_datetime_with_timezone(self):
         with tempfile.NamedTemporaryFile() as f:
-            import datetime
-
             f.write(b"{{ text|to_datetime(tz=utc) }}")
             f.seek(0)
             context = {"text": "2019-03-07 13:37:00", "utc": datetime.timezone.utc}

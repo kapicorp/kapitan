@@ -147,7 +147,7 @@ class AzureKMSSecret(Base64Ref):
             self.key = key
 
         except Exception as e:
-            raise AzureKMSError(e) from e
+            raise AzureKMSError(str(e)) from e
 
     def _decrypt(self, data, key):
         """decrypt data"""
@@ -163,7 +163,7 @@ class AzureKMSSecret(Base64Ref):
             return plaintext.decode()
 
         except Exception as e:
-            raise AzureKMSError(e) from e
+            raise AzureKMSError(str(e)) from e
 
     def dump(self):
         """

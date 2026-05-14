@@ -137,7 +137,7 @@ class GoogleKMSSecret(Base64Ref):
             self.key = key
 
         except Exception as e:
-            raise GoogleKMSError(e) from e
+            raise GoogleKMSError(str(e)) from e
 
     def _decrypt(self, data):
         """decrypt data"""
@@ -157,7 +157,7 @@ class GoogleKMSSecret(Base64Ref):
             return plaintext.decode()
 
         except Exception as e:
-            raise GoogleKMSError(e) from e
+            raise GoogleKMSError(str(e)) from e
 
     def dump(self):
         """

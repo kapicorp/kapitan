@@ -120,7 +120,7 @@ class AWSKMSSecret(Base64Ref):
             self.key = key
 
         except Exception as e:
-            raise AWSKMSError(e) from e
+            raise AWSKMSError(str(e)) from e
 
     def _decrypt(self, data):
         """decrypt data"""
@@ -136,7 +136,7 @@ class AWSKMSSecret(Base64Ref):
             return plaintext.decode()
 
         except Exception as e:
-            raise AWSKMSError(e) from e
+            raise AWSKMSError(str(e)) from e
 
     def dump(self):
         """

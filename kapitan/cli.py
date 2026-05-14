@@ -81,7 +81,8 @@ def trigger_compile(args):
             ref_controller=ref_controller,
             args=args,
         )
-    except Exception:
+    except Exception as e:
+        logger.debug("Compile failed: %s", e, exc_info=True)
         sys.exit(1)
 
 

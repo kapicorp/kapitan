@@ -92,6 +92,7 @@ class Kustomize(InputType):
                 f"Input path {input_path} must be a directory containing a kustomization.yaml file"
             )
 
+        result = None
         try:
             # Create a temporary directory for our kustomization
             temp_dir = tempfile.mkdtemp()
