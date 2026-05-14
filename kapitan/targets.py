@@ -282,6 +282,22 @@ def compile_target(
     if globals_cached and not cached.inv:
         cached.from_dict(globals_cached)
 
+    # Sync target_full_path to the cached inventory for the current target.
+    # Pool workers may be forked before load_target_inventory() sets this field,
+    # leaving cached.inv with target_full_path="" for all targets. target_config
+    # is always pickled after load_target_inventory() runs, so it carries the
+    # correct path even when the forked cached.inv does not.
+    if (
+        cached.inv
+        and hasattr(cached.inv, "targets")
+        and target_name in cached.inv.targets
+    ):
+        inv_target = cached.inv.targets[target_name]
+        if inv_target.parameters and inv_target.parameters.kapitan is not None:
+            inv_target.parameters.kapitan.target_full_path = (
+                target_config.target_full_path
+            )
+
     for compile_config in compile_configs:
         try:
             input_type = compile_config.input_type
