@@ -230,6 +230,37 @@ class CompileKubernetesTest(unittest.TestCase):
             self.assertEqual(env["parameters"]["c"], "ccccc")
             self.assertEqual(env["exports"], {})
 
+    def test_compile_wildcard_classes(self):
+        """Compile target with wildcard class patterns using --enable-class-wildcards.
+
+        Replaces the exact class ``cluster.minikube`` in ``all-glob.yml`` with
+        the wildcard ``cluster.min*``.  Because only ``cluster.minikube``
+        matches that pattern, the expanded class list is identical and the
+        compiled output should match the reference exactly.
+        """
+        reset_cache()
+
+        with open("inventory/targets/all-glob.yml") as f:
+            target = yaml.safe_load(f)
+
+        # Replace the exact class with a wildcard that resolves to the same class.
+        target["classes"] = ["common", "component.namespace", "cluster.min*"]
+
+        with open("inventory/targets/all-glob.yml", "w") as f:
+            yaml.dump(target, f)
+
+        kapitan(
+            "compile", "-t", "all-glob", "--enable-class-wildcards", *self.extraArgv
+        )
+
+        compile_dir = os.path.join(os.getcwd(), "compiled/all-glob")
+        reference_dir = os.path.join(
+            TEST_PWD, "tests/test_kubernetes_compiled/all-glob"
+        )
+        compiled_dir_hash = directory_hash(compile_dir)
+        test_compiled_dir_hash = directory_hash(reference_dir)
+        self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
+
     def tearDown(self):
         os.chdir(TEST_PWD)
         reset_cache()

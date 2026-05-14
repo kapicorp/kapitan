@@ -2,7 +2,8 @@
 classes:
   - common
   - component.namespace
-  - cluster.*  # expands to: cluster.common, cluster.minikube
+
+  - cluster.minikube
 
 parameters:
   target_name: all-glob

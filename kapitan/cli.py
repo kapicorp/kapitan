@@ -126,6 +126,21 @@ def build_parser():
         ),
     )
 
+    inventory_backend_parser.add_argument(
+        "--enable-class-wildcards",
+        action="store_true",
+        default=from_dot_kapitan("inventory_backend", "enable-class-wildcards", False),
+        help=(
+            "Enable glob pattern expansion in classes: lists (default: off). "
+            "Patterns such as clusters.*, dev-* and * are expanded to all matching "
+            "class names discovered under inventory/classes/. "
+            "This flag is intentionally opt-in: inventories that contain literal "
+            "glob metacharacters in class names (e.g. config[html]) or Reclass "
+            "references that include ? would be incorrectly treated as patterns "
+            "if expansion were always on."
+        ),
+    )
+
     eval_parser = subparser.add_parser(
         "eval", aliases=["e"], help="evaluate jsonnet file"
     )
