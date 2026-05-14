@@ -83,9 +83,10 @@ def jsonschema_validate(obj, schema_obj):
         jsonschema.validate(
             _obj, _schema_obj, format_checker=jsonschema.FormatChecker()
         )
-        return {"valid": True, "reason": ""}
     except jsonschema.ValidationError as e:
         return {"valid": False, "reason": "" + str(e)}
+    else:
+        return {"valid": True, "reason": ""}
 
 
 def yaml_dump(obj):

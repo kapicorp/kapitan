@@ -84,17 +84,22 @@ class Kustomize(InputType):
         Raises:
             KustomizeTemplateError: If kustomize build fails
         """
+
+        def _require_success(result):
+            if result.returncode != 0:
+                raise KustomizeTemplateError(f"Kustomize build failed: {result.stderr}")
+
+        # Get the absolute path to the input directory
+        abs_input_path = os.path.abspath(input_path)
+        if not os.path.isdir(abs_input_path):
+            raise KustomizeTemplateError(
+                f"Input path {input_path} must be a directory containing a kustomization.yaml file"
+            )
+
         try:
             # Create a temporary directory for our kustomization
             temp_dir = tempfile.mkdtemp()
             kustomization_path = os.path.join(temp_dir, "kustomization.yaml")
-
-            # Get the absolute path to the input directory
-            abs_input_path = os.path.abspath(input_path)
-            if not os.path.isdir(abs_input_path):
-                raise KustomizeTemplateError(
-                    f"Input path {input_path} must be a directory containing a kustomization.yaml file"
-                )
 
             # Copy the input directory to the temporary directory
             input_dir_name = os.path.basename(abs_input_path)
@@ -147,10 +152,7 @@ class Kustomize(InputType):
                 result = subprocess.run(
                     cmd, stdout=f, stderr=subprocess.PIPE, text=True, check=False
                 )
-                if result.returncode != 0:
-                    raise KustomizeTemplateError(
-                        f"Kustomize build failed: {result.stderr}"
-                    )
+            _require_success(result)
 
             # Read and process the output
             with open(output_file) as f:

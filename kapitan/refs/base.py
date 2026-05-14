@@ -195,9 +195,10 @@ class PlainRefBackend:
     def __contains__(self, ref_path):
         try:
             self.__getitem__(ref_path)
-            return True
         except KeyError:
             return False
+        else:
+            return True
 
     def __iter__(self):
         for full_path in list_all_paths(self.path):

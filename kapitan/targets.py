@@ -72,6 +72,10 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)"
     )
 
+    def _require_targets(target_objs):
+        if not target_objs:
+            raise CompileError("Error: no targets found")
+
     with multiprocessing.Pool(parallelism) as pool:
         try:
             fetching_start = time.time()
@@ -99,8 +103,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
             output_path = args.output_path
             compile_path = os.path.join(output_path, "compiled")
 
-            if not target_objs:
-                raise CompileError("Error: no targets found")
+            _require_targets(target_objs)
 
             # fetch dependencies
             if fetch:

@@ -34,6 +34,10 @@ class Copy(InputType):
 
         ignore_missing = config.ignore_missing
 
+        if not os.path.exists(input_path) and not ignore_missing:
+            raise OSError(
+                f"Path {input_path} does not exist and `ignore_missing` is {ignore_missing}"
+            )
         try:
             if os.path.exists(input_path):
                 logger.debug("Copying '%s' to '%s'.", input_path, compile_path)
@@ -55,11 +59,6 @@ class Copy(InputType):
                         compile_path
                     )  # Resolve relative paths
                     copy_tree(input_path, compile_path)
-            elif not ignore_missing:
-                # Raise exception if input path does not exist and ignore_missing is False
-                raise OSError(
-                    f"Path {input_path} does not exist and `ignore_missing` is {ignore_missing}"
-                )
         except OSError as e:
             # Log exception and re-raise
             logger.exception("Input dir not copied. Error: %s", e)

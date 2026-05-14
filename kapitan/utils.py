@@ -442,9 +442,8 @@ def unpack_downloaded_file(file_path, output_path, content_type):
             content_type = "application/zip"
 
     if content_type == "application/x-tar":
-        tar = tarfile.open(file_path)
-        tar.extractall(path=output_path)
-        tar.close()
+        with tarfile.open(file_path) as tar:
+            tar.extractall(path=output_path)
         is_unpacked = True
     elif content_type == "application/zip":
         zfile = ZipFile(file_path)
@@ -459,9 +458,8 @@ def unpack_downloaded_file(file_path, output_path, content_type):
         "application/x-compressed-tar",
     ]:
         if re.search(r"(\.tar\.gz|\.tgz)$", file_path):
-            tar = tarfile.open(file_path)
-            tar.extractall(path=output_path)
-            tar.close()
+            with tarfile.open(file_path) as tar:
+                tar.extractall(path=output_path)
             is_unpacked = True
         else:
             extension = re.findall(r"\..*$", file_path)[0]
