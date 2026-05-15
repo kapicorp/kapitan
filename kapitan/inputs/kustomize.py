@@ -107,7 +107,7 @@ class Kustomize(InputType):
                 temp_input_dir, "kustomization.yaml"
             )
             if os.path.exists(original_kustomization_path):
-                with open(original_kustomization_path) as f:
+                with open(original_kustomization_path, encoding="utf-8") as f:
                     original_kustomization = yaml.safe_load(f) or {}
 
             # Create our kustomization with patches
@@ -122,7 +122,7 @@ class Kustomize(InputType):
                 kustomization["patches"] = []
                 for name, patch in config.patches.items():
                     patch_file = os.path.join(temp_dir, f"{name}.yaml")
-                    with open(patch_file, "w") as f:
+                    with open(patch_file, "w", encoding="utf-8") as f:
                         yaml.dump(patch["patch"], f, default_flow_style=False)
                     kustomization["patches"].append(
                         {
@@ -132,7 +132,7 @@ class Kustomize(InputType):
                     )
 
             # Write the kustomization file
-            with open(kustomization_path, "w") as f:
+            with open(kustomization_path, "w", encoding="utf-8") as f:
                 yaml.dump(kustomization, f, default_flow_style=False)
 
             # Build the kustomize command
@@ -140,10 +140,10 @@ class Kustomize(InputType):
 
             # Create temporary directory for output
             output_dir = tempfile.mkdtemp()
-            output_file = os.path.join(output_dir, "output.yaml")
+            temp_output_file = os.path.join(output_dir, "output.yaml")
 
             # Run kustomize build
-            with open(output_file, "w") as f:
+            with open(temp_output_file, "w", encoding="utf-8") as f:
                 result = subprocess.run(
                     cmd, stdout=f, stderr=subprocess.PIPE, text=True, check=False
                 )
@@ -153,20 +153,50 @@ class Kustomize(InputType):
                     )
 
             # Read and process the output
-            with open(output_file) as f:
-                for doc in yaml.safe_load_all(f):
-                    if doc:
-                        # Generate a unique filename based on kind and name
-                        kind = doc.get("kind", "").lower()
-                        name = doc.get("metadata", {}).get("name", "").lower()
-                        filename = (
-                            f"{name}-{kind}.yaml" if name and kind else "output.yaml"
-                        )
+            with open(temp_output_file, encoding="utf-8") as f:
+                rendered_output = f.read()
 
-                        # Write the document to the output file
-                        output_path = os.path.join(compile_path, filename)
-                        with open(output_path, "w") as out:
-                            yaml.dump(doc, out, default_flow_style=False)
+            if config.output_file:
+                output_path = os.path.join(compile_path, config.output_file)
+                self._write_output_file(output_path, compile_path, rendered_output)
+                return
 
+            for doc in yaml.safe_load_all(rendered_output):
+                if doc:
+                    # Generate a unique filename based on kind and name
+                    kind = doc.get("kind", "").lower()
+                    name = doc.get("metadata", {}).get("name", "").lower()
+                    filename = f"{name}-{kind}.yaml" if name and kind else "output.yaml"
+
+                    # Write the document to the output file
+                    output_path = os.path.join(compile_path, filename)
+                    with open(output_path, "w", encoding="utf-8") as out:
+                        yaml.dump(doc, out, default_flow_style=False)
+
+        except KustomizeTemplateError:
+            raise
         except Exception as e:
             raise KustomizeTemplateError(f"Failed to compile Kustomize overlay: {e!s}")
+
+    def _write_output_file(
+        self, output_path: str, compile_path: str, content: str
+    ) -> None:
+        """Write raw kustomize output to a file, guarding against path traversal.
+
+        Args:
+            output_path: Absolute or relative path where output should be written
+            compile_path: Base compile path that output must stay within
+            content: Raw content to write
+
+        Raises:
+            KustomizeTemplateError: If output_file resolves outside compile_path
+        """
+        normalized_output = os.path.abspath(output_path)
+        normalized_compile = os.path.abspath(compile_path)
+        if not normalized_output.startswith(normalized_compile + os.sep):
+            raise KustomizeTemplateError(
+                f"output_file must resolve inside output_path: {output_path}"
+            )
+        os.makedirs(os.path.dirname(normalized_output), exist_ok=True)
+        with open(normalized_output, "w", encoding="utf-8") as out:
+            out.write(content)
