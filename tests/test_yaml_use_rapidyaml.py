@@ -74,7 +74,7 @@ class TestRymlDump:
         """Mapping keys are emitted in sorted order for deterministic output."""
         buf = io.StringIO()
         yaml_ryml.dump({"zebra": 1, "apple": 2, "mango": 3}, buf)
-        lines = [l for l in buf.getvalue().splitlines() if l.strip()]
+        lines = [line for line in buf.getvalue().splitlines() if line.strip()]
         assert lines == ["apple: 2", "mango: 3", "zebra: 1"]
 
     def test_determinism_across_shuffled_insertion_orders(self):
@@ -82,8 +82,12 @@ class TestRymlDump:
         import random
 
         canonical = {
-            "zoo": 0, "apple": 1, "banana": 2, "mango": 3,
-            "cherry": 4, "date": 5,
+            "zoo": 0,
+            "apple": 1,
+            "banana": 2,
+            "mango": 3,
+            "cherry": 4,
+            "date": 5,
         }
         keys = list(canonical)
         outputs = set()
@@ -241,10 +245,12 @@ class TestStartupWarning:
     def _run_trigger(self, args):
         from kapitan import cli
 
-        with patch("kapitan.cli.check_version"), \
-             patch("kapitan.cli.compile_targets"), \
-             patch("kapitan.cli.RefController", return_value=MagicMock()), \
-             patch("kapitan.cli.Revealer", return_value=MagicMock()):
+        with (
+            patch("kapitan.cli.check_version"),
+            patch("kapitan.cli.compile_targets"),
+            patch("kapitan.cli.RefController", return_value=MagicMock()),
+            patch("kapitan.cli.Revealer", return_value=MagicMock()),
+        ):
             cli.trigger_compile(args)
 
     def _base_args(self, **overrides):
@@ -270,15 +276,19 @@ class TestStartupWarning:
         assert not any("rapidyaml" in r.message for r in caplog.records)
 
     def test_no_warning_when_flag_on_and_installed(self, caplog):
-        with patch.object(yaml_ryml, "HAS_RYML", True), \
-             caplog.at_level(logging.WARNING, logger="kapitan.cli"):
+        with (
+            patch.object(yaml_ryml, "HAS_RYML", True),
+            caplog.at_level(logging.WARNING, logger="kapitan.cli"),
+        ):
             self._run_trigger(self._base_args(yaml_use_rapidyaml=True))
         assert not any("rapidyaml" in r.message for r in caplog.records)
 
     def test_warning_logged_when_rapidyaml_missing(self, caplog):
         """Flag on + package missing => one-time WARNING at startup."""
-        with patch.object(yaml_ryml, "HAS_RYML", False), \
-             caplog.at_level(logging.WARNING, logger="kapitan.cli"):
+        with (
+            patch.object(yaml_ryml, "HAS_RYML", False),
+            caplog.at_level(logging.WARNING, logger="kapitan.cli"),
+        ):
             self._run_trigger(self._base_args(yaml_use_rapidyaml=True))
 
         matching = [r for r in caplog.records if "rapidyaml" in r.message]
