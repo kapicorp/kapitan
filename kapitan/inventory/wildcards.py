@@ -241,7 +241,7 @@ def _files_with_wildcards(inventory_path: str) -> list[str]:
                     continue
                 if not any(c in text for c in GLOB_METACHARACTERS):
                     continue
-                data = _safe_load_yaml(path)
+                data = _safe_load_yaml(text)
                 if not isinstance(data, dict):
                     continue
                 classes = data.get("classes")
@@ -277,7 +277,7 @@ def _fix_relative_symlinks(src_root: str, dest_root: str):
                 continue
             # Does the relative target resolve from the new location?
             dest_resolved = os.path.normpath(
-                os.path.join(os.path.dirname(dest_link), target)
+                os.path.join(dirpath, target)
             )
             if os.path.exists(dest_resolved):
                 continue

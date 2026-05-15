@@ -67,6 +67,8 @@ Supported glob characters are `*`, `?`, `[` and `]` (standard
   are passed through to the backend unchanged, even if they contain a
   glob metacharacter such as `?`. The wildcard expander cannot resolve
   such references; the backend handles them after class inheritance.
+  Notably, this also means that pattern expansion isn't supported in
+  class includes that use Reclass references.
 
 **Exact-match precedence:**
 
