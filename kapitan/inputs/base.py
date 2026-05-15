@@ -7,7 +7,6 @@
 
 import abc
 import glob
-import itertools
 import json
 import logging
 import os
@@ -21,9 +20,24 @@ from kapitan.errors import CompileError, KapitanError
 from kapitan.inventory.model.input_types import CompileInputTypeConfig, OutputType
 from kapitan.refs.base import Revealer
 from kapitan.utils import PrettyDumper, prune_empty
+from kapitan.yaml_ryml import HAS_RYML
+from kapitan.yaml_ryml import dump as ryml_dump
 
 
 logger = logging.getLogger(__name__)
+
+# Process-wide memo of directories already ensured to exist. Without it every
+# ``compile_input_path`` call issues a fresh ``os.makedirs(..., exist_ok=True)``
+# which still costs at least one ``stat()`` syscall.
+_ENSURED_DIRS: set = set()
+
+
+def _ensure_dir(path: str) -> None:
+    """``os.makedirs(path, exist_ok=True)`` with an in-process memo."""
+    if path in _ENSURED_DIRS:
+        return
+    os.makedirs(path, exist_ok=True)
+    _ENSURED_DIRS.add(path)
 
 
 class InputType:
@@ -76,11 +90,39 @@ class InputType:
             - Compile each unique file found
 
         """
+        # ``target_compile_path`` only depends on ``(compile_path,
+        # target_name, output_path)`` — all fixed for the duration of this
+        # call. Compute it (and ensure the directory exists) exactly once
+        # here, instead of per-file inside ``compile_input_path``.
+        target_compile_path = os.path.join(
+            self.compile_path,
+            self.target_name.replace(".", "/"),
+            comp_obj.output_path,
+        )
+        _ensure_dir(target_compile_path)
+
+        # Note: kapitan already parallelises at the *target* level via
+        # ``multiprocessing.Pool`` in ``compile_targets``. Adding a nested
+        # ThreadPool here would over-subscribe CPU and require auditing every
+        # ``InputType`` subclass for thread-safety (kadet/jinja2/jsonnet hold
+        # mutable globals). We rely on per-target parallelism for scaling.
         for input_path in comp_obj.input_paths:
-            globbed_paths = [
-                glob.glob(os.path.join(path, input_path)) for path in self.search_paths
-            ]
-            expanded_paths = set(itertools.chain.from_iterable(globbed_paths))
+            # Fast path: when ``input_path`` contains no glob metacharacters
+            # (the common case for plain file references) skip ``glob.glob``
+            # entirely — a single ``os.path.lexists`` per search path is much
+            # cheaper than building glob iterators.
+            if glob.has_magic(input_path):
+                expanded_paths: set[str] = set()
+                for search_path in self.search_paths:
+                    expanded_paths.update(
+                        glob.glob(os.path.join(search_path, input_path))
+                    )
+            else:
+                expanded_paths = set()
+                for search_path in self.search_paths:
+                    candidate = os.path.join(search_path, input_path)
+                    if os.path.lexists(candidate):
+                        expanded_paths.add(candidate)
 
             if not expanded_paths and not comp_obj.ignore_missing:
                 raise CompileError(
@@ -89,7 +131,7 @@ class InputType:
                 )
 
             for expanded_path in expanded_paths:
-                self.compile_input_path(comp_obj, expanded_path)
+                self.compile_input_path(comp_obj, expanded_path, target_compile_path)
 
     def to_file(self, config: CompileInputTypeConfig, file_path, file_content):
         """Write compiled content to file, handling different output types and revealing refs if needed.
@@ -166,38 +208,42 @@ class InputType:
                     f"Output type defined in inventory for {config} not supported: {output_type}: {OutputType}"
                 )
 
-    def compile_input_path(self, comp_obj: CompileInputTypeConfig, input_path: str):
+    def compile_input_path(
+        self,
+        comp_obj: CompileInputTypeConfig,
+        input_path: str,
+        target_compile_path: str | None = None,
+    ):
         """Compile a single input path and write the result to the output directory.
-
-        Creates the output directory if it doesn't exist.
 
         Args:
             comp_obj: CompileInputTypeConfig object.
             input_path: Path to the input file.
+            target_compile_path: Pre-computed output directory. When called
+                from `compile_obj` this is supplied (and the directory
+                already ensured), avoiding redundant ``os.path.join`` and
+                ``os.makedirs`` calls per file. When called directly (e.g.
+                from tests or external callers), it is derived on demand
+                here for backwards compatibility.
+
         Raises:
             CompileError: If compilation fails.
-
         """
-        target_name = self.target_name
-        output_path = comp_obj.output_path
-
         logger.debug("Compiling %s", input_path)
 
-        try:
+        if target_compile_path is None:
             target_compile_path = os.path.join(
-                self.compile_path, target_name.replace(".", "/"), output_path
+                self.compile_path,
+                self.target_name.replace(".", "/"),
+                comp_obj.output_path,
             )
-            os.makedirs(target_compile_path, exist_ok=True)
+            _ensure_dir(target_compile_path)
 
-            self.compile_file(
-                comp_obj,
-                input_path,
-                target_compile_path,
-            )
-
+        try:
+            self.compile_file(comp_obj, input_path, target_compile_path)
         except KapitanError as e:
             raise CompileError(
-                f"{e}\nCompile error: failed to compile target: {target_name}"
+                f"{e}\nCompile error: failed to compile target: {self.target_name}"
             ) from e
 
     @abc.abstractmethod
@@ -265,51 +311,61 @@ class CompilingFile:
         Args:
             obj: Object to write.
 
-        Uses PrettyDumper to handle multiline strings according to style selection.
+        Uses either rapidyaml (when ``--yaml-use-rapidyaml`` is enabled and
+        the package is available) or PyYAML's ``PrettyDumper``. The
+        rapidyaml path produces byte-identical output for the common
+        Kubernetes-manifest case and is several times faster on large
+        manifests; see :mod:`kapitan.yaml_ryml` for details.
         """
-        indent = self.kwargs.get("indent", 2)
-        reveal = self.kwargs.get("reveal", False)
-        target_name = self.kwargs.get("target_name", None)
+        kwargs = self.kwargs
+        reveal = kwargs.get("reveal", False)
+        target_name = kwargs.get("target_name", None)
 
-        # TODO(ademaria): make it configurable per input type
+        # TODO(ademaria): make this configurable per input type.
         style_selection = cached.inv[target_name]["parameters"].get(
             "multiline_string_style", None
         )
-
         if not style_selection:
-            if hasattr(cached.args, "multiline_string_style"):
-                style_selection = cached.args.multiline_string_style
-            elif hasattr(cached.args, "yaml_multiline_string_style"):
-                style_selection = cached.args.yaml_multiline_string_style
-
-        dumper = PrettyDumper.get_dumper_for_style(style_selection)
+            style_selection = getattr(
+                cached.args,
+                "multiline_string_style",
+                getattr(cached.args, "yaml_multiline_string_style", None),
+            )
 
         if reveal:
             obj = self.revealer.reveal_obj(obj)
         else:
             obj = self.revealer.compile_obj(obj, target_name=target_name)
 
-        if obj:
-            if isinstance(obj, Mapping):
-                yaml.dump(
-                    obj,
-                    stream=self.fp,
-                    indent=indent,
-                    Dumper=dumper,
-                    default_flow_style=False,
-                )
-            else:
-                yaml.dump_all(
-                    obj,
-                    stream=self.fp,
-                    indent=indent,
-                    Dumper=dumper,
-                    default_flow_style=False,
-                )
-
-            logger.debug("Wrote %s", self.fp.name)
-        else:
+        if not obj:
             logger.debug("%s is Empty, skipped writing output", self.fp.name)
+            return
+
+        use_ryml = HAS_RYML and getattr(cached.args, "yaml_use_rapidyaml", False)
+
+        if use_ryml:
+            # ryml is a string-tree emitter and does its own indent / flow
+            # decisions; ``indent`` from PyYAML is not applicable.
+            ryml_dump(
+                obj,
+                self.fp,
+                multiline_style=style_selection,
+                dump_null_as_empty=getattr(
+                    cached.args, "yaml_dump_null_as_empty", False
+                ),
+                multi_doc=not isinstance(obj, Mapping),
+            )
+        else:
+            dumper = PrettyDumper.get_dumper_for_style(style_selection)
+            dump = yaml.dump if isinstance(obj, Mapping) else yaml.dump_all
+            dump(
+                obj,
+                stream=self.fp,
+                indent=kwargs.get("indent", 2),
+                Dumper=dumper,
+                default_flow_style=False,
+            )
+        logger.debug("Wrote %s", self.fp.name)
 
     def write_json(self, obj: object):
         """Recursively compile or reveal refs and convert obj to JSON and write to file.
@@ -328,7 +384,10 @@ class CompilingFile:
             obj = self.revealer.compile_obj(obj, target_name=target_name)
 
         if obj:
-            json.dump(obj, self.fp, indent=indent)
+            # ``sort_keys=True`` matches PyYAML's default sorting behaviour
+            # for ``write_yaml`` so JSON output is deterministic regardless
+            # of Python dict insertion order.
+            json.dump(obj, self.fp, indent=indent, sort_keys=True)
             logger.debug("Wrote %s", self.fp.name)
         else:
             logger.debug("%s is Empty, skipped writing output", self.fp.name)
