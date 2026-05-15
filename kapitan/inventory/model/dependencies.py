@@ -29,7 +29,7 @@ class KapitanDependencyHelmConfig(KapitanDependencyBaseConfig):
 
 class KapitanDependencyGitConfig(KapitanDependencyBaseConfig):
     type: Literal[KapitanDependencyTypes.GIT] = KapitanDependencyTypes.GIT
-    ref: str | None = "master"
+    ref: str | None = None
     subdir: str | None = None
     submodules: bool | None = False
 
