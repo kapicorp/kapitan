@@ -112,17 +112,33 @@ jobs:
       - name: Install external tools
         if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
+          set -euo pipefail
+
+          retry_curl() {
+            local max_attempts=5
+            local attempt=1
+            while [ $attempt -le $max_attempts ]; do
+              if curl -fsSL --retry 3 --retry-delay 2 "$@"; then
+                return 0
+              fi
+              echo "curl failed (attempt $attempt/$max_attempts), retrying in 5s..."
+              sleep 5
+              attempt=$((attempt + 1))
+            done
+            return 1
+          }
+
           # Install Helm
-          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          retry_curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
           # Install Kustomize
-          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          retry_curl "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
           sudo mv kustomize /usr/local/bin/
 
           # Install CUE
-          CUE_VERSION=$(curl -s "https://api.github.com/repos/cue-lang/cue/releases/latest" | jq -r '.tag_name')
+          CUE_VERSION=$(retry_curl "https://api.github.com/repos/cue-lang/cue/releases/latest" | jq -r '.tag_name')
           ARCH=$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
-          curl -fsSL "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_${ARCH}.tar.gz" | sudo tar xz -C /usr/local/bin cue
+          retry_curl "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_${ARCH}.tar.gz" | sudo tar xz -C /usr/local/bin cue
 
       - name: Verify external tools
         run: |
