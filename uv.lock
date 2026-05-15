@@ -1018,6 +1018,9 @@ dependencies = [
 gojsonnet = [
     { name = "gojsonnet" },
 ]
+oci = [
+    { name = "oras" },
+]
 omegaconf = [
     { name = "omegaconf" },
 ]
@@ -1043,6 +1046,7 @@ docs = [
 test = [
     { name = "coverage" },
     { name = "docker" },
+    { name = "oras" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-emoji" },
@@ -1077,6 +1081,7 @@ requires-dist = [
     { name = "kadet", specifier = ">=0.3.0,<0.4" },
     { name = "kapicorp-reclass", specifier = ">=2.0.0" },
     { name = "omegaconf", marker = "extra == 'omegaconf'", specifier = ">=2.4.0.dev3,<3" },
+    { name = "oras", marker = "extra == 'oci'", specifier = ">=0.2.0" },
     { name = "packaging", specifier = ">=23,<26" },
     { name = "pydantic", specifier = ">=2.8.2,<3" },
     { name = "pydantic-settings", specifier = ">=2.4.0,<3" },
@@ -1091,7 +1096,7 @@ requires-dist = [
     { name = "typing-extensions", specifier = ">=4.0.0,<5" },
     { name = "yamllint", specifier = ">=1.29.0,<2" },
 ]
-provides-extras = ["gojsonnet", "omegaconf", "reclass-rs"]
+provides-extras = ["gojsonnet", "oci", "omegaconf", "reclass-rs"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1111,6 +1116,7 @@ docs = [
 test = [
     { name = "coverage", specifier = ">=7.6.1,<8" },
     { name = "docker", specifier = ">=7.0.0,<8" },
+    { name = "oras", specifier = ">=0.2.0" },
     { name = "pytest", specifier = ">=8.2.0,<10" },
     { name = "pytest-cov", specifier = ">=3,<8" },
     { name = "pytest-emoji", specifier = ">=0.2.0,<0.3" },
@@ -1388,6 +1394,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/12/f2/b871f4f2ab312bbd3b7c1cdd51d11c15eeaa6de283a2ce63ecd9a93773fd/omegaconf-2.4.0.dev4.tar.gz", hash = "sha256:182217fa60b0a145b63a6308ad259bb653d652398069732fda271dfc4466d2a2", size = 3441086, upload-time = "2025-10-30T17:55:33.755Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e5/5d/6cd8c6beda0541fc87bc0a942bcc4ad9605439ac3ae8b73c3538af8f68ee/omegaconf-2.4.0.dev4-py3-none-any.whl", hash = "sha256:367bafc0f0367d379933a35800d320eaf5cbe22fac9d60ba8dd7e15a29e9aca7", size = 224869, upload-time = "2025-10-30T17:55:32.115Z" },
+]
+
+[[package]]
+name = "oras"
+version = "0.2.42"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jsonschema" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8a/f9/e9226863b61d3e83d166e7a70a045fdacbb966dd7e7ecef81fed32cf67af/oras-0.2.42.tar.gz", hash = "sha256:51d17088e5dffdeb585dd930bdccb4329762bef4af3f18600392ebae525a9231", size = 58767, upload-time = "2026-03-09T22:31:23.216Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/03/3c/04dce40fe03276a5aaed0e2b49e59e385147f4e750e6960c477284cf5880/oras-0.2.42-py3-none-any.whl", hash = "sha256:d1e2184d42ce99258bd0ad56d932b0f4fce289bccf1b5094436a29579f385728", size = 71832, upload-time = "2026-03-09T22:31:22.145Z" },
 ]
 
 [[package]]

@@ -82,6 +82,7 @@ dependencies = [
 gojsonnet = ["gojsonnet>=0.21.0,<0.22"]
 omegaconf = ["omegaconf>=2.4.0.dev3,<3"]
 reclass-rs = ["reclass-rs>=0.10.1,<0.11.0"]
+oci = ["oras>=0.2.0"]
 
 [project.urls]
 Homepage = "https://kapitan.dev"
@@ -105,6 +106,7 @@ test = [
     "pytest-json-report>=1.5.0",
     "pytest-xdist>=3.8.0",
     "docker>=7.0.0,<8",
+    "oras>=0.2.0",
 ]
 dev = [
     # Tool configurations moved to ruff.toml for consistency
