@@ -23,6 +23,7 @@ from kapitan import __file__ as kapitan_install_path
 from kapitan import cached
 from kapitan.errors import CompileError, InventoryError
 from kapitan.inventory import Inventory, get_inventory_backend
+from kapitan.topics import topics
 from kapitan.utils import (
     PrettyDumper,
     StrEnum,
@@ -56,6 +57,7 @@ def resource_callbacks(search_paths):
             partial(jinja2_render_file, search_paths),
         ),
         "inventory": (("target", "inv_path"), partial(inventory, search_paths)),
+        "topics": (("name",), topics),
         "file_read": (("name",), partial(read_file, search_paths)),
         "file_exists": (("name",), partial(file_exists, search_paths)),
         "dir_files_list": (("name",), partial(dir_files_list, search_paths)),

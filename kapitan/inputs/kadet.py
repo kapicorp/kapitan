@@ -46,6 +46,20 @@ def inventory(lazy=False):
     return inventory_global(lazy)[current_target.get()]
 
 
+def topics(name=None, lazy=False):
+    """Kadet-flavoured wrapper around :func:`kapitan.topics.topics`.
+
+    Returns the same data as the core ``topics()`` function but wrapped in a
+    ``kadet.Dict`` to enable attribute-style access::
+
+        for target, params in topics("colours").parameters.targets.items():
+            ...
+    """
+    from kapitan.topics import topics as _topics
+
+    return Dict(_topics(name), default_box=lazy)
+
+
 def inventory_frozen():
     return kadet.Box(data=inventory().dump(), frozen_box=True)
 
