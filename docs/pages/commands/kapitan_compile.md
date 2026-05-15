@@ -155,7 +155,7 @@ library), enabled with `--yaml-use-rapidyaml`.
     ```
 
     On a realistic Kubernetes Deployment manifest the rapidyaml emitter is
-    around **6× faster** than the default PyYAML emitter.
+    around **6x faster** than the default PyYAML emitter.
 
 !!! note
 
