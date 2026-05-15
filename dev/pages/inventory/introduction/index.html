@@ -1496,6 +1496,8 @@
       
         
       
+        
+      
     
     
     
@@ -1582,6 +1584,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2414,7 +2444,7 @@
 </span> <strong>What is the inventory?</strong></h1>
 <p>The <strong>Inventory</strong> is a core component of Kapitan: this section aims to explain how it works and how to best take advantage of it.</p>
 <p>The <strong>Inventory</strong> is a hierarchical <code>YAML</code> based structure which you use to capture anything that you want to make available to <strong>Kapitan</strong>, so that it can be passed on to its templating engines.</p>
-<div class="highlight"><pre><span></span><code>inventory/
+<p><code>inventory/
 ├── classes/
 │   ├── common/
 │   │   └── base.yml        # Foundational configurations
@@ -2424,42 +2454,41 @@
 │       └── production.yml  # Environment-specific configurations
 └── targets/
     └── production/
-        └── web.yml         # Specific deployment configurations
-</code></pre></div>
+        └── web.yml         # Specific deployment configurations</code></p>
 <p>The <strong>Kapitan</strong> inventory is divided between <a href="../targets/"><strong>targets</strong></a> and <a href="../classes/"><strong>classes</strong></a>.</p>
 <p>Both classes and targets are yaml file with the same structure</p>
-<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my.other.class</span>
-
-<span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
-<span class="w">  </span><span class="nt">key2</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">subkey</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
-</code></pre></div>
+<p>```yaml
+classes:
+  - common
+  - my.other.class</p>
+<p>parameters:
+  key: value
+  key2:
+    subkey: value
+```</p>
 <p><a href="../classes/"><strong>Classes</strong></a> are found by default under the <a href="../classes/"><code>inventory/classes</code></a> directory and define common settings and data that you define once and can be included in other files. This promotes consistency and reduces duplication.</p>
 <p>Classes are identified with a name that maps to the directory structure they are nested under.
 In this example, the <code>kapicorp.common</code> class represented by the file <code>classes/kapicorp/common.yml</code></p>
-<div class="highlight"><pre><span></span><code># classes/kapicorp/common.yml
-classes:
-  - common
-
-parameters:
+<p>```</p>
+<h1 id="classeskapicorpcommonyml">classes/kapicorp/common.yml</h1>
+<p>classes:
+  - common</p>
+<p>parameters:
   namespace: ${target_name}
   base_docker_repository: quay.io/kapicorp
   base_domain: kapicorp.com
-</code></pre></div>
+```</p>
 <p><a href="../targets/"><strong>Targets</strong></a> are found by default under the <a href="../targets/"><code>inventory/targets</code></a> directory and represent the different environments or components you want to manage. Each target is a YAML file that defines a set of configurations.</p>
 <p>For example, you might have targets for <strong><code>production</code></strong>, <strong><code>staging</code></strong>, and <strong><code>development</code></strong> environments.</p>
-<div class="highlight"><pre><span></span><code># targets/production.yml
-classes:
+<p>```</p>
+<h1 id="targetsproductionyml">targets/production.yml</h1>
+<p>classes:
   - kapicorp.common
   - components.web
-  - environments.production
-
-parameters:
+  - environments.production</p>
+<p>parameters:
   target_name: web
-</code></pre></div>
+```</p>
 <p>By combining <a href="../targets/"><strong>target</strong></a> and <a href="../classes/"><strong>classes</strong></a>, the <strong>Inventory</strong> becomes the SSOT for your whole configuration, and learning how to use it will unleash the real power of <strong>Kapitan</strong>.</p>
 
               </article>

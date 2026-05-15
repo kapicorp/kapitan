@@ -1577,6 +1577,8 @@
       
         
       
+        
+      
     
     
     
@@ -1663,6 +1665,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2497,14 +2527,14 @@
 <p>Note: unlike jinja2 templates, one jsonnet template can output multiple files (one per object declared in the file).</p>
 <h2 id="accessing-the-inventory">Accessing the inventory</h2>
 <p>Typical jsonnet files would start as follows:</p>
-<div class="highlight"><pre><span></span><code><span class="n">local</span> <span class="n">kap</span> <span class="o">=</span> <span class="kn">import</span><span class="w"> </span><span class="s2">&quot;lib/kapitan.libjsonnet&quot;</span><span class="p">;</span> <span class="c1">#(1)!</span>
-<span class="n">local</span> <span class="n">inv</span> <span class="o">=</span> <span class="n">kap</span><span class="o">.</span><span class="n">inventory</span><span class="p">();</span> <span class="c1">#(2)!</span>
-<span class="n">local</span> <span class="n">p</span> <span class="o">=</span> <span class="n">inv</span><span class="o">.</span><span class="n">parameters</span><span class="p">;</span> <span class="c1">#(3)!</span>
-
-<span class="p">{</span>
-    <span class="s2">&quot;data_java_opts&quot;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">elasticsearch</span><span class="o">.</span><span class="n">roles</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">java_opts</span><span class="p">,</span> <span class="c1">#(4)!</span>
-<span class="p">}</span>
-</code></pre></div>
+<p>```python
+local kap = import "lib/kapitan.libjsonnet"; #(1)!
+local inv = kap.inventory(); #(2)!
+local p = inv.parameters; #(3)!</p>
+<p>{
+    "data_java_opts": p.elasticsearch.roles.data.java_opts, #(4)!
+}
+```</p>
 <ol>
 <li>Import the <strong>Kapitan</strong> inventory library.</li>
 <li>Assign the content of the full inventory for this specific target to the <code>inv</code> variable.</li>
@@ -2515,12 +2545,12 @@
 If your jsonnet is not a dictionary, but is a valid json(net) object, then the output filename will be the same as the input filename. E.g. <code>'my_string'</code> is inside <code>templates/input_file.jsonnet</code> so the generated output file will be named <code>input_file.json</code> for example and will contain <code>"my_string"</code>.</p>
 <h2 id="jinja2-templating">Jinja2 templating</h2>
 <p><strong>Kapitan</strong> allows you to compile a Jinja template from within Jsonnet:</p>
-<div class="highlight"><pre><span></span><code><span class="err">local</span><span class="w"> </span><span class="err">kap</span><span class="w"> </span><span class="err">=</span><span class="w"> </span><span class="err">impor</span><span class="kc">t</span><span class="w"> </span><span class="s2">&quot;lib/kapitan.libjsonnet&quot;</span><span class="err">;</span>
-
-<span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;jon_snow&quot;</span><span class="p">:</span><span class="w"> </span><span class="err">kap.ji</span><span class="kc">n</span><span class="err">ja</span><span class="mi">2</span><span class="err">_</span><span class="kc">te</span><span class="err">mpla</span><span class="kc">te</span><span class="err">(</span><span class="s2">&quot;templates/got.j2&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">is_dead</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span><span class="err">)</span><span class="p">,</span>
-<span class="p">}</span>
-</code></pre></div>
+<p>```json
+local kap = import "lib/kapitan.libjsonnet";</p>
+<p>{
+    "jon_snow": kap.jinja2_template("templates/got.j2", { is_dead: false }),
+}
+```</p>
 <h2 id="callback-functions">Callback functions</h2>
 <p>In addition, importing <code>kapitan.libjsonnet</code> makes available the following native_callback functions gluing reclass to jsonnet (amongst others):</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:7"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><input id="__tabbed_1_5" name="__tabbed_1" type="radio" /><input id="__tabbed_1_6" name="__tabbed_1" type="radio" /><input id="__tabbed_1_7" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">inventory</label><label for="__tabbed_1_2">jinja2_template</label><label for="__tabbed_1_3">yaml</label><label for="__tabbed_1_4">file I/O</label><label for="__tabbed_1_5">sha256_string</label><label for="__tabbed_1_6">gzip_b64</label><label for="__tabbed_1_7">jsonschema</label></div>
@@ -2606,40 +2636,37 @@ If your jsonnet is not a dictionary, but is a valid json(net) object, then the o
 </div>
 <h2 id="jsonschema-validation">Jsonschema validation</h2>
 <p>Given the follow example inventory:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">mysql</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10G</span>
-<span class="w">  </span><span class="nt">storage_class</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standard</span>
-<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mysql:latest</span>
-</code></pre></div>
+<p><code>yaml
+mysql:
+  storage: 10G
+  storage_class: standard
+  image: mysql:latest</code></p>
 <p>The yaml inventory structure can be validated with the new <code>jsonschema()</code> function:</p>
-<div class="highlight"><pre><span></span><code><span class="err">local</span><span class="w"> </span><span class="err">schema</span><span class="w"> </span><span class="err">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kc">t</span><span class="err">ype</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;object&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="err">proper</span><span class="kc">t</span><span class="err">ies</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="err">s</span><span class="kc">t</span><span class="err">orage</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kc">t</span><span class="err">ype</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">pa</span><span class="kc">ttern</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;^[0-9]+[MGT]{1}$&quot;</span><span class="p">},</span>
-<span class="w">        </span><span class="err">image</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kc">t</span><span class="err">ype</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="w"> </span><span class="p">},</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="p">}</span><span class="err">;</span>
-<span class="c1">// run jsonschema validation</span>
-<span class="err">local</span><span class="w"> </span><span class="err">valida</span><span class="kc">t</span><span class="err">io</span><span class="kc">n</span><span class="w"> </span><span class="err">=</span><span class="w"> </span><span class="err">kap.jso</span><span class="kc">ns</span><span class="err">chema(i</span><span class="kc">n</span><span class="err">v.parame</span><span class="kc">ters</span><span class="err">.mysql</span><span class="p">,</span><span class="w"> </span><span class="err">schema);</span>
-<span class="c1">// assert valid, otherwise error with validation.reason</span>
-<span class="err">asser</span><span class="kc">t</span><span class="w"> </span><span class="err">valida</span><span class="kc">t</span><span class="err">io</span><span class="kc">n</span><span class="err">.valid</span><span class="p">:</span><span class="w"> </span><span class="err">valida</span><span class="kc">t</span><span class="err">io</span><span class="kc">n</span><span class="err">.reaso</span><span class="kc">n</span><span class="err">;</span>
-</code></pre></div>
+<p><code>json
+local schema = {
+    type: "object",
+    properties: {
+        storage: { type: "string", pattern: "^[0-9]+[MGT]{1}$"},
+        image: { type: "string" },
+    }
+};
+// run jsonschema validation
+local validation = kap.jsonschema(inv.parameters.mysql, schema);
+// assert valid, otherwise error with validation.reason
+assert validation.valid: validation.reason;</code></p>
 <p>If <code>validation.valid</code> is not true, it will then fail compilation and display <code>validation.reason</code>.</p>
 <div class="admonition example">
 <p class="admonition-title">Fails validation because <code>storage</code> has an invalid pattern (<code>10Z</code>)</p>
-<div class="highlight"><pre><span></span><code>Jsonnet<span class="w"> </span>error:<span class="w"> </span>failed<span class="w"> </span>to<span class="w"> </span>compile<span class="w"> </span>/code/components/mysql/main.jsonnet:
-RUNTIME<span class="w"> </span>ERROR:<span class="w"> </span><span class="s1">&#39;10Z&#39;</span><span class="w"> </span>does<span class="w"> </span>not<span class="w"> </span>match<span class="w"> </span><span class="s1">&#39;^[0-9]+[MGT]{1}$&#39;</span>
-
-Failed<span class="w"> </span>validating<span class="w"> </span><span class="s1">&#39;pattern&#39;</span><span class="w"> </span><span class="k">in</span><span class="w"> </span>schema<span class="o">[</span><span class="s1">&#39;properties&#39;</span><span class="o">][</span><span class="s1">&#39;storage&#39;</span><span class="o">]</span>:
-<span class="w">    </span><span class="o">{</span><span class="s1">&#39;pattern&#39;</span>:<span class="w"> </span><span class="s1">&#39;^[0-9]+[MGT]{1}$&#39;</span>,<span class="w"> </span><span class="s1">&#39;type&#39;</span>:<span class="w"> </span><span class="s1">&#39;string&#39;</span><span class="o">}</span>
-
-On<span class="w"> </span>instance<span class="o">[</span><span class="s1">&#39;storage&#39;</span><span class="o">]</span>:
-<span class="w">    </span><span class="s1">&#39;10Z&#39;</span>
-
-/code/mysql/main.jsonnet:<span class="o">(</span><span class="m">19</span>:1<span class="o">)</span>-<span class="o">(</span><span class="m">43</span>:2<span class="o">)</span>
-
-Compile<span class="w"> </span>error:<span class="w"> </span>failed<span class="w"> </span>to<span class="w"> </span>compile<span class="w"> </span>target:<span class="w"> </span>minikube-mysql
-</code></pre></div>
+<p>```shell
+Jsonnet error: failed to compile /code/components/mysql/main.jsonnet:
+RUNTIME ERROR: '10Z' does not match '^[0-9]+[MGT]{1}$'</p>
+<p>Failed validating 'pattern' in schema['properties']['storage']:
+    {'pattern': '^[0-9]+[MGT]{1}$', 'type': 'string'}</p>
+<p>On instance['storage']:
+    '10Z'</p>
+<p>/code/mysql/main.jsonnet:(19:1)-(43:2)</p>
+<p>Compile error: failed to compile target: minikube-mysql
+```</p>
 </div>
 
               </article>

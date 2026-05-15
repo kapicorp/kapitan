@@ -1496,6 +1496,8 @@
       
         
       
+        
+      
     
     
     
@@ -1582,6 +1584,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2416,14 +2446,14 @@
 For Copy, <code>input_paths</code> can be either a file or a directory: in case of a directory, all the templates in the directory will be copied and outputted to <code>output_path</code>.</p>
 <p><em>Supported output types</em>: N/A (no need to specify <code>output_type</code>)</p>
 <p>Example</p>
-<div class="highlight"><pre><span></span><code><span class="w"> </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">copy</span>
-<span class="w">        </span><span class="nt">ignore_missing</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">  </span><span class="c1"># Do not error if path is missing. Defaults to False</span>
-<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
-<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">resources/state/${target_name}/.terraform.lock.hcl</span>
-<span class="w">        </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">terraform/</span>
-</code></pre></div>
+<p><code>yaml
+ kapitan:
+    compile:
+      - input_type: copy
+        ignore_missing: true  # Do not error if path is missing. Defaults to False
+        input_paths:
+          - resources/state/${target_name}/.terraform.lock.hcl
+        output_path: terraform/</code></p>
 
               </article>
             </div>

@@ -1486,6 +1486,8 @@
       
         
       
+        
+      
     
     
     
@@ -1697,6 +1699,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2537,15 +2567,15 @@
 <p>Git types can fetch external inventories available via HTTP/HTTPS or SSH URLs. This is useful for fetching repositories or their sub-directories, as well as accessing them in specific commits and branches (refs).</p>
 <p><strong>Note</strong>: git types require git binary on your system.</p>
 <h3 id="definition">Definition</h3>
-<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">inventory</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">git</span>
-<span class="w">      </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">path/to/dir</span>
-<span class="w">      </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">git_url</span>
-<span class="w">      </span><span class="nt">subdir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">relative/path/from/repo/root (optional)</span>
-<span class="w">      </span><span class="nt">ref</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tag, commit, branch etc. (optional)</span>
-</code></pre></div>
+<p><code>yaml
+parameters:
+  kapitan:
+    inventory:
+    - type: git
+      output_path: path/to/dir
+      source: git_url
+      subdir: relative/path/from/repo/root (optional)
+      ref: tag, commit, branch etc. (optional)</code></p>
 <h3 id="example">Example</h3>
 <p>Lets say we want to fetch a class from our kapitan repository, specifically
 <code>kapicorp/kapitan/tree/master/examples/docker/inventory/classes/dockerfiles.yml</code>.</p>
@@ -2557,96 +2587,95 @@
 </div>
 <div class="admonition example">
 <p class="admonition-title"><code>targets/docker.yml</code></p>
-<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dockerfiles</span>
-<span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">vars</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker</span>
-<span class="w">    </span><span class="nt">inventory</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">git</span>
-<span class="w">        </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/kapicorp/kapitan</span>
-<span class="w">        </span><span class="nt">subdir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">examples/docker/inventory/classes/</span>
-<span class="w">        </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">classes/</span>
-<span class="w">    </span><span class="nt">dependencies</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">git</span>
-<span class="w">        </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/kapicorp/kapitan</span>
-<span class="w">        </span><span class="nt">subdir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">examples/docker/components</span>
-<span class="w">        </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components/</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">git</span>
-<span class="w">        </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/kapicorp/kapitan</span>
-<span class="w">        </span><span class="nt">subdir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">examples/docker/templates</span>
-<span class="w">        </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">templates/</span>
-<span class="w">  </span><span class="nt">dockerfiles</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
-<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">amazoncorretto:11</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
-<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">amazoncorretto:8</span>
-</code></pre></div>
+<p><code>yaml
+classes:
+  - dockerfiles
+parameters:
+  kapitan:
+    vars:
+      target: docker
+    inventory:
+      - type: git
+        source: https://github.com/kapicorp/kapitan
+        subdir: examples/docker/inventory/classes/
+        output_path: classes/
+    dependencies:
+      - type: git
+        source: https://github.com/kapicorp/kapitan
+        subdir: examples/docker/components
+        output_path: components/
+      - type: git
+        source: https://github.com/kapicorp/kapitan
+        subdir: examples/docker/templates
+        output_path: templates/
+  dockerfiles:
+  - name: web
+    image: amazoncorretto:11
+  - name: worker
+    image: amazoncorretto:8</code></p>
 </div>
 <div class="admonition example">
-<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile<span class="w"> </span>--fetch
-</code></pre></div>
+<p><code>shell
+kapitan compile --fetch</code></p>
 </div>
 <details class="example">
 <summary>click to expand output</summary>
-<div class="highlight"><pre><span></span><code><span class="o">[</span>WARNING<span class="o">]</span><span class="w"> </span>Reclass<span class="w"> </span>class<span class="w"> </span>not<span class="w"> </span>found:<span class="w"> </span><span class="s1">&#39;dockerfiles&#39;</span>.<span class="w"> </span>Skipped!
-<span class="o">[</span>WARNING<span class="o">]</span><span class="w"> </span>Reclass<span class="w"> </span>class<span class="w"> </span>not<span class="w"> </span>found:<span class="w"> </span><span class="s1">&#39;dockerfiles&#39;</span>.<span class="w"> </span>Skipped!
-Inventory<span class="w"> </span>https://github.com/kapicorp/kapitan:<span class="w"> </span>fetching<span class="w"> </span>now
-Inventory<span class="w"> </span>https://github.com/kapicorp/kapitan:<span class="w"> </span>successfully<span class="w"> </span>fetched
-Inventory<span class="w"> </span>https://github.com/kapicorp/kapitan:<span class="w"> </span>saved<span class="w"> </span>to<span class="w"> </span>inventory/classes
-Dependency<span class="w"> </span>https://github.com/kapicorp/kapitan:<span class="w"> </span>saved<span class="w"> </span>to<span class="w"> </span>components
-Dependency<span class="w"> </span>https://github.com/kapicorp/kapitan:<span class="w"> </span>saved<span class="w"> </span>to<span class="w"> </span>templates
-Compiled<span class="w"> </span>docker<span class="w"> </span><span class="o">(</span><span class="m">0</span>.11s<span class="o">)</span>
-</code></pre></div>
+<p><code>shell
+[WARNING] Reclass class not found: 'dockerfiles'. Skipped!
+[WARNING] Reclass class not found: 'dockerfiles'. Skipped!
+Inventory https://github.com/kapicorp/kapitan: fetching now
+Inventory https://github.com/kapicorp/kapitan: successfully fetched
+Inventory https://github.com/kapicorp/kapitan: saved to inventory/classes
+Dependency https://github.com/kapicorp/kapitan: saved to components
+Dependency https://github.com/kapicorp/kapitan: saved to templates
+Compiled docker (0.11s)</code></p>
 </details>
 </div>
 <h2 id="http-type">http type</h2>
 <p><code>http[s]</code> types can fetch external inventories available at <code>http://</code> or <code>https://</code> URL.</p>
 <h3 id="definition_1">Definition</h3>
-<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">inventory</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http | https</span>
-<span class="w">      </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">full/path/to/file.yml</span>
-<span class="w">      </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http[s]://&lt;url&gt;</span>
-<span class="w">      </span><span class="nt">unpack</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True | False</span><span class="w"> </span><span class="c1"># False by default</span>
-</code></pre></div>
+<p><code>yaml
+parameters:
+  kapitan:
+    inventory:
+    - type: http | https
+      output_path: full/path/to/file.yml
+      source: http[s]://&lt;url&gt;
+      unpack: True | False # False by default</code></p>
 <h3 id="example_1">Example</h3>
 <div class="admonition example">
 <div class="admonition example">
 <p class="admonition-title"><code>targets/mysql-generator-fetch.yml</code></p>
-<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kapitan.generators.kubernetes</span>
-<span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">inventory</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https</span>
-<span class="w">        </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml</span>
-<span class="w">        </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">classes/kapitan/generators/kubernetes.yml</span>
-<span class="w">  </span><span class="nt">components</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">mysql</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mysql</span>
-</code></pre></div>
+<p><code>yaml
+classes:
+  - common
+  - kapitan.generators.kubernetes
+parameters:
+  kapitan:
+    inventory:
+      - type: https
+        source: https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml
+        output_path: classes/kapitan/generators/kubernetes.yml
+  components:
+    mysql:
+      image: mysql</code></p>
 </div>
 <div class="admonition example">
-<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile<span class="w"> </span>--fetch
-</code></pre></div>
+<p><code>shell
+kapitan compile --fetch</code></p>
 </div>
 <details class="example">
 <summary>click to expand output</summary>
-<div class="highlight"><pre><span></span><code>./kapitan<span class="w"> </span>compile<span class="w"> </span>-t<span class="w"> </span>mysql-generator-fetch<span class="w"> </span>--fetch
-Inventory<span class="w"> </span>https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml:<span class="w"> </span>fetching<span class="w"> </span>now
-Inventory<span class="w"> </span>https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml:<span class="w"> </span>successfully<span class="w"> </span>fetched
-Inventory<span class="w"> </span>https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml:<span class="w"> </span>saved<span class="w"> </span>to<span class="w"> </span>inventory/classes/kapitan/generators/kubernetes.yml
-
-...
+<p>```shell
+./kapitan compile -t mysql-generator-fetch --fetch
+Inventory <a href="https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml">https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml</a>: fetching now
+Inventory <a href="https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml">https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml</a>: successfully fetched
+Inventory <a href="https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml">https://raw.githubusercontent.com/kapicorp/kapitan-reference/master/inventory/classes/kapitan/generators/kubernetes.yml</a>: saved to inventory/classes/kapitan/generators/kubernetes.yml</p>
+<p>...
 cut
-...
-
-Compiled<span class="w"> </span>mysql-generator-fetch<span class="w"> </span><span class="o">(</span><span class="m">0</span>.06s<span class="o">)</span>
-</code></pre></div>
+...</p>
+<p>Compiled mysql-generator-fetch (0.06s)
+```</p>
 </details>
 </div>
 

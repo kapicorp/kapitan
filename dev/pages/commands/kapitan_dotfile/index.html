@@ -1484,6 +1484,8 @@
       
         
       
+        
+      
     
     
     
@@ -1570,6 +1572,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2497,39 +2527,39 @@
 </div>
 <h3 id="version"><code>version</code></h3>
 <p>To enforce the <strong>Kapitan</strong> version used for compilation (for consistency and safety), you can add <code>version</code> to <code>.kapitan</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.30.0</span>
-
-<span class="nn">...</span>
-</code></pre></div>
+<p>```yaml
+version: 0.30.0</p>
+<p>...
+```</p>
 <p>This constrain can be relaxed to allow minor versions to be also accepted:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.30</span><span class="w"> </span><span class="c1"># Allows any 0.30.x release to run</span>
-
-<span class="nn">...</span>
-</code></pre></div>
+<p>```yaml
+version: 0.30 # Allows any 0.30.x release to run</p>
+<p>...
+```</p>
 <h3 id="command-line-flags">Command line flags</h3>
 <p>You can also permanently define all command line flags in the <code>.kapitan</code> config file. For example:</p>
-<div class="highlight"><pre><span></span><code><span class="nn">...</span>
-
-<span class="nt">compile</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">indent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
-<span class="w">  </span><span class="nt">parallelism</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
-</code></pre></div>
+<p>```yaml
+...</p>
+<p>compile:
+  indent: 4
+  parallelism: 8
+```</p>
 <p>would be equivalent to running:</p>
-<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile<span class="w"> </span>--indent<span class="w"> </span><span class="m">4</span><span class="w"> </span>--parallelism<span class="w"> </span><span class="m">8</span>
-</code></pre></div>
+<p><code>shell
+kapitan compile --indent 4 --parallelism 8</code></p>
 <p>For flags which are shared by multiple commands, you can either selectively define them for single commmands in a section with the same name as the command, or you can set any flags in section <code>global</code>, in which case they're applied for all commands.
 If you set a flag in both the <code>global</code> section and a command's section, the value from the command's section takes precedence over the value from the global section.</p>
 <p>As an example, you can configure the <code>inventory-path</code> in the <code>global</code> section of the <strong>Kapitan</strong> dotfile to make sure it's persisted across all <strong>Kapitan</strong> runs.</p>
-<div class="highlight"><pre><span></span><code><span class="nn">...</span>
-
-<span class="nt">global</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">inventory-path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./some_path</span>
-</code></pre></div>
+<p>```yaml
+...</p>
+<p>global:
+  inventory-path: ./some_path
+```</p>
 <p>which would be equivalent to running any command with <code>--inventory-path=./some_path</code>.</p>
 <p>Another flag that you may want to set in the <code>global</code> section is <code>inventory-backend</code> to select a non-default inventory backend implementation.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">global</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">inventory-backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">reclass</span>
-</code></pre></div>
+<p><code>yaml
+global:
+  inventory-backend: reclass</code></p>
 <p>which would be equivalent to always running <strong>Kapitan</strong> with <code>--inventory-backend=reclass</code>.</p>
 <p>Please note that the <code>inventory-backend</code> flag currently can't be set through the command-specific sections of the <strong>Kapitan</strong> config file.</p>
 <p>For additional entries in the <code>.kapitan</code> please search for <code>from_dot_kapitan</code> in the Kapitan source code.</p>

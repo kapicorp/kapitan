@@ -1544,6 +1544,8 @@
       
         
       
+        
+      
     
     
     
@@ -1630,6 +1632,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2466,30 +2496,30 @@
 <p>Defines a class to add the <code>customer</code> label to selected targets</p>
 <div class="admonition example">
 <p class="admonition-title"><code>inventory/classes/type/customer_project.yml</code></p>
-<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">customer_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${target_name}</span><span class="w"> </span><span class="c1"># Defaults to the target_name</span>
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">customer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${customer_name}</span>
-</code></pre></div>
+<p><code>yaml
+parameters:
+  customer_name: ${target_name} # Defaults to the target_name
+  kapitan:
+    labels:
+      customer: ${customer_name}</code></p>
 </div>
 <p>Apply the class to the target for customer <code>acme</code></p>
 <div class="admonition example">
 <p class="admonition-title"><code>inventory/targets/customers/acme.yml</code></p>
-<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
-<span class="nn">...</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">type.customer_project</span>
-
-<span class="nt">parameters</span><span class="p">:</span>
-<span class="nn">...</span>
-</code></pre></div>
+<p>```yaml
+classes:
+...
+- type.customer_project</p>
+<p>parameters:
+...
+```</p>
 </div>
 <p>You can now selectively compile targets for customer <code>acme</code> using the following (see see <a href="../../commands/kapitan_compile/#using-labels"><strong>Labels</strong></a> for more details )</p>
 <div class="admonition example">
-<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile<span class="w"> </span>-l<span class="w"> </span><span class="nv">customer</span><span class="o">=</span>acme
-Compiled<span class="w"> </span>acme<span class="w"> </span><span class="o">(</span><span class="m">0</span>.06s<span class="o">)</span>
-Compiled<span class="w"> </span>acme-documentation<span class="w"> </span><span class="o">(</span><span class="m">0</span>.09s<span class="o">)</span>
-</code></pre></div>
+<p><code>shell
+kapitan compile -l customer=acme
+Compiled acme (0.06s)
+Compiled acme-documentation (0.09s)</code></p>
 </div>
 </div>
 

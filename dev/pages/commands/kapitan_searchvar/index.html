@@ -1484,6 +1484,8 @@
       
         
       
+        
+      
     
     
     
@@ -1570,6 +1572,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2463,36 +2493,36 @@
 <h2 id="kapitan-searchvar"><code>kapitan searchvar</code></h2>
 <p>Shows all inventory files where a variable is declared:</p>
 <div class="admonition example">
-<div class="highlight"><pre><span></span><code>./kapitan<span class="w"> </span>searchvar<span class="w"> </span>parameters.components.*.image
-</code></pre></div>
+<p><code>shell
+./kapitan searchvar parameters.components.*.image</code></p>
 <details class="example">
 <summary>click to expand output</summary>
-<div class="highlight"><pre><span></span><code>./inventory/classes/components/vault.yml<span class="w">                     </span><span class="si">${</span><span class="nv">vault</span><span class="p">:</span><span class="nv">image</span><span class="si">}</span>
-./inventory/classes/components/logstash.yml<span class="w">                  </span>eu.gcr.io/antha-images/logstash:7.5.1
-./inventory/classes/components/gke-pvm-killer.yml<span class="w">            </span>estafette/estafette-gke-preemptible-killer:1.2.5
-./inventory/classes/components/mysql.yml<span class="w">                     </span>mysql:5.7.28
-./inventory/classes/components/postgres-proxy.yml<span class="w">            </span>gcr.io/cloudsql-docker/gce-proxy:1.16
-./inventory/classes/components/echo-server.yml<span class="w">               </span>jmalloc/echo-server
-./inventory/classes/components/trivy.yml<span class="w">                     </span><span class="si">${</span><span class="nv">trivy</span><span class="p">:</span><span class="nv">image</span><span class="si">}</span>
-./inventory/classes/components/filebeat.yml<span class="w">                  </span><span class="si">${</span><span class="nv">filebeat</span><span class="p">:</span><span class="nv">image</span><span class="si">}</span>:<span class="si">${</span><span class="nv">filebeat</span><span class="p">:</span><span class="nv">version</span><span class="si">}</span>
-./inventory/classes/components/pritunl/pritunl-mongo.yml<span class="w">     </span>docker.io/bitnami/mongodb:4.2.6-debian-10-r23
-./inventory/classes/components/pritunl/pritunl.yml<span class="w">           </span>alledm/pritunl
-./inventory/classes/components/weaveworks/user-db.yml<span class="w">        </span>weaveworksdemos/user-db:0.3.0
-./inventory/classes/components/weaveworks/catalogue.yml<span class="w">      </span>weaveworksdemos/catalogue:0.3.5
-./inventory/classes/components/weaveworks/user.yml<span class="w">           </span>weaveworksdemos/user:0.4.7
-./inventory/classes/components/weaveworks/session-db.yml<span class="w">     </span>redis:alpine
-./inventory/classes/components/weaveworks/catalogue-db.yml<span class="w">   </span>weaveworksdemos/catalogue-db:0.3.0
-./inventory/classes/components/weaveworks/carts-db.yml<span class="w">       </span>mongo
-./inventory/classes/components/weaveworks/orders-db.yml<span class="w">      </span>mongo
-./inventory/classes/components/weaveworks/orders.yml<span class="w">         </span>weaveworksdemos/orders:0.4.7
-./inventory/classes/components/weaveworks/shipping.yml<span class="w">       </span>weaveworksdemos/shipping:0.4.8
-./inventory/classes/components/weaveworks/queue-master.yml<span class="w">   </span>weaveworksdemos/queue-master:0.3.1
-./inventory/classes/components/weaveworks/rabbitmq.yml<span class="w">       </span>rabbitmq:3.6.8-management
-./inventory/classes/components/weaveworks/payment.yml<span class="w">        </span>weaveworksdemos/payment:0.4.3
-./inventory/classes/components/weaveworks/front-end.yml<span class="w">      </span>weaveworksdemos/front-end:0.3.12
-./inventory/classes/components/weaveworks/carts.yml<span class="w">          </span>weaveworksdemos/carts:0.4.8
-./inventory/classes/components/kapicorp/tesoro.yml<span class="w">           </span>kapicorp/tesoro
-</code></pre></div>
+<p><code>shell
+./inventory/classes/components/vault.yml                     ${vault:image}
+./inventory/classes/components/logstash.yml                  eu.gcr.io/antha-images/logstash:7.5.1
+./inventory/classes/components/gke-pvm-killer.yml            estafette/estafette-gke-preemptible-killer:1.2.5
+./inventory/classes/components/mysql.yml                     mysql:5.7.28
+./inventory/classes/components/postgres-proxy.yml            gcr.io/cloudsql-docker/gce-proxy:1.16
+./inventory/classes/components/echo-server.yml               jmalloc/echo-server
+./inventory/classes/components/trivy.yml                     ${trivy:image}
+./inventory/classes/components/filebeat.yml                  ${filebeat:image}:${filebeat:version}
+./inventory/classes/components/pritunl/pritunl-mongo.yml     docker.io/bitnami/mongodb:4.2.6-debian-10-r23
+./inventory/classes/components/pritunl/pritunl.yml           alledm/pritunl
+./inventory/classes/components/weaveworks/user-db.yml        weaveworksdemos/user-db:0.3.0
+./inventory/classes/components/weaveworks/catalogue.yml      weaveworksdemos/catalogue:0.3.5
+./inventory/classes/components/weaveworks/user.yml           weaveworksdemos/user:0.4.7
+./inventory/classes/components/weaveworks/session-db.yml     redis:alpine
+./inventory/classes/components/weaveworks/catalogue-db.yml   weaveworksdemos/catalogue-db:0.3.0
+./inventory/classes/components/weaveworks/carts-db.yml       mongo
+./inventory/classes/components/weaveworks/orders-db.yml      mongo
+./inventory/classes/components/weaveworks/orders.yml         weaveworksdemos/orders:0.4.7
+./inventory/classes/components/weaveworks/shipping.yml       weaveworksdemos/shipping:0.4.8
+./inventory/classes/components/weaveworks/queue-master.yml   weaveworksdemos/queue-master:0.3.1
+./inventory/classes/components/weaveworks/rabbitmq.yml       rabbitmq:3.6.8-management
+./inventory/classes/components/weaveworks/payment.yml        weaveworksdemos/payment:0.4.3
+./inventory/classes/components/weaveworks/front-end.yml      weaveworksdemos/front-end:0.3.12
+./inventory/classes/components/weaveworks/carts.yml          weaveworksdemos/carts:0.4.8
+./inventory/classes/components/kapicorp/tesoro.yml           kapicorp/tesoro</code></p>
 </details>
 </div>
 

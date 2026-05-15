@@ -1335,28 +1335,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1544,28 +1522,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1736,6 +1692,8 @@
       
         
       
+        
+      
     
     
     
@@ -1822,6 +1780,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2654,18 +2640,18 @@
 <p>The CUE Lang input type allows you to use <a href="https://cuelang.org/">CUE</a> to manage, validate, and generate manifests within Kapitan.</p>
 <h2 id="configuration">Configuration</h2>
 <p>The CLUE Lang input type supports the following configuration options:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">compile</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cute</span>
-<span class="w">      </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cuelang</span>
-<span class="w">      </span><span class="nt">input_fill_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;input:&quot;</span><span class="w"> </span><span class="c1"># Optional: the CUE path in which to inject the input value (default at root)</span>
-<span class="w">                                </span><span class="c1"># Note: the &#39;:&#39; is not a typo, run `cue help flags` for more information</span>
-<span class="w">      </span><span class="nt">yield_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">output</span><span class="w"> </span><span class="c1"># Optional: the CUE field path to yield in the output (default is the whole CUE output)</span>
-<span class="w">      </span><span class="nt">input_paths</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">templates/cue</span>
-<span class="w">      </span><span class="nt">input</span><span class="p">:</span><span class="w"> </span><span class="c1"># Optional: the input value</span>
-<span class="w">        </span><span class="nt">some_input</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-</code></pre></div>
+<p><code>yaml
+kapitan:
+  compile:
+    - output_path: cute
+      input_type: cuelang
+      input_fill_path: "input:" # Optional: the CUE path in which to inject the input value (default at root)
+                                # Note: the ':' is not a typo, run `cue help flags` for more information
+      yield_path: output # Optional: the CUE field path to yield in the output (default is the whole CUE output)
+      input_paths:
+        - templates/cue
+      input: # Optional: the input value
+        some_input: true</code></p>
 <h3 id="configuration-options">Configuration Options</h3>
 <table>
 <thead>
@@ -2715,37 +2701,38 @@
 The module takes a numerator and denominator, and calculates the result.</p>
 </blockquote>
 <p><code>templates/cue/main.cue</code>:
-<div class="highlight"><pre><span></span><code>package main
-
-numerator: int
-denominator: int &amp; != 0
-
-result: numerator / denominator
-</code></pre></div></p>
+```cue
+package main</p>
+<p>numerator: int
+denominator: int &amp; != 0</p>
+<p>result: numerator / denominator
+```</p>
 <p>The following is a valid configuration for the CUE input type:
-<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/cue-example.yaml</span>
-<span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cute</span>
-<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cuelang</span>
-<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
-<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">templates/cue</span>
-<span class="w">        </span><span class="nt">input</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">numerator</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
-<span class="w">          </span><span class="nt">denominator</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-</code></pre></div></p>
+```yaml</p>
+<h1 id="inventorytargetscue-exampleyaml">inventory/targets/cue-example.yaml</h1>
+<p>parameters:
+  kapitan:
+    compile:
+      - output_path: cute
+        input_type: cuelang
+        input_paths:
+          - templates/cue
+        input:
+          numerator: 10
+          denominator: 2
+```</p>
 <p>The output will be:
-<div class="highlight"><pre><span></span><code><span class="c1"># cute/main.yaml</span>
-<span class="nt">numerator</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
-<span class="nt">denominator</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-<span class="nt">result</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
-</code></pre></div></p>
+```yaml</p>
+<h1 id="cutemainyaml">cute/main.yaml</h1>
+<p>numerator: 10
+denominator: 2
+result: 5
+```</p>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <p>If you encounter issues with the CUE Lang input type, you may try compiling the CUE module manually using the <code>cue export</code> command and checking for errors.
 You can use the <code>-l</code> flag to pass the input value directly to the CUE module:
-<div class="highlight"><pre><span></span><code>cue<span class="w"> </span><span class="nb">export</span><span class="w"> </span>templates/cue/main.cue<span class="w"> </span>-l<span class="w"> </span>input.yaml<span class="w"> </span><span class="c1"># put numerator and denominator in input.yaml&#39;</span>
-</code></pre></div></p>
+<code>bash
+cue export templates/cue/main.cue -l input.yaml # put numerator and denominator in input.yaml'</code></p>
 <h2 id="related">Related</h2>
 <ul>
 <li><a href="https://cuelang.org/docs/">CUE Lang Documentation</a></li>

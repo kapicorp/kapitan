@@ -1479,6 +1479,8 @@
       
         
       
+        
+      
     
     
     
@@ -1565,6 +1567,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2325,190 +2355,13 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#manual-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manual Setup
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#makefile-commands-overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Makefile Commands Overview
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Testing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#quick-development-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Development Workflow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#comprehensive-testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Comprehensive Testing
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#individual-test-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Individual Test Commands
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#testing-guidelines" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing Guidelines
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#code-style" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code Style
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Code Style">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#code-quality-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Code Quality Commands
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pre-commit-hooks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-commit Hooks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ruff-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Ruff Configuration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#release-process" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Release process
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#packaging-extra-resources-in-python-package" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Packaging extra resources in python package
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#leave-a-comment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Leave a comment
-      
-    </span>
-  </a>
   
 </li>
       
@@ -2681,9 +2534,10 @@ targeting master branch. All submissions, including submissions by project membe
 <p>We build Kapitan using <code>uv</code> and provide a comprehensive Makefile for development tasks.</p>
 <h4 id="quick-start">Quick Start</h4>
 <p>The easiest way to set up your development environment is using our Makefile:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Complete development environment setup</span>
-make<span class="w"> </span>setup
-</code></pre></div>
+<p>```bash</p>
+<h1 id="complete-development-environment-setup">Complete development environment setup</h1>
+<p>make setup
+```</p>
 <p>This command will:
 - Install <code>uv</code> package manager
 - Install all Python dependencies (including dev, test, docs, and optional extras)
@@ -2693,37 +2547,40 @@ make<span class="w"> </span>setup
 <ol>
 <li>
 <p><strong>Install <code>uv</code></strong></p>
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>install_uv
-<span class="c1"># or manually:</span>
-curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
-</code></pre></div>
+<p>```bash
+make install_uv</p>
+<h1 id="or-manually">or manually:</h1>
+<p>curl -LsSf <a href="https://astral.sh/uv/install.sh">https://astral.sh/uv/install.sh</a> | sh
+```</p>
 </li>
 <li>
 <p><strong>Install Python Dependencies</strong></p>
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>install
-<span class="c1"># or manually:</span>
-uv<span class="w"> </span>sync<span class="w"> </span>--locked<span class="w"> </span>--all-extras<span class="w"> </span>--dev
-</code></pre></div>
+<p>```bash
+make install</p>
+<h1 id="or-manually_1">or manually:</h1>
+<p>uv sync --locked --all-extras --dev
+```</p>
 </li>
 <li>
 <p><strong>Install External Tools</strong> (required for some tests)</p>
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>install_external_tools
-<span class="c1"># This installs:</span>
-<span class="c1"># - Helm (Kubernetes package manager)</span>
-<span class="c1"># - Kustomize (Kubernetes manifest management)</span>
-<span class="c1"># - CUE (data validation and configuration)</span>
-</code></pre></div>
+<p>```bash
+make install_external_tools</p>
+<h1 id="this-installs">This installs:</h1>
+<h1 id="-helm-kubernetes-package-manager">- Helm (Kubernetes package manager)</h1>
+<h1 id="-kustomize-kubernetes-manifest-management">- Kustomize (Kubernetes manifest management)</h1>
+<h1 id="-cue-data-validation-and-configuration">- CUE (data validation and configuration)</h1>
+<p>```</p>
 </li>
 <li>
 <p><strong>Initialize Git Submodules</strong></p>
 <p>Because we use a pinned version of reclass as a submodule:</p>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>submodule<span class="w"> </span>update<span class="w"> </span>--init
-</code></pre></div>
+<p><code>bash
+git submodule update --init</code></p>
 </li>
 <li>
 <p><strong>Run Kapitan with your compiled code</strong></p>
-<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>kapitan<span class="w"> </span>&lt;your<span class="w"> </span>command&gt;
-</code></pre></div>
+<p><code>bash
+uv run kapitan &lt;your command&gt;</code></p>
 </li>
 </ol>
 <h4 id="makefile-commands-overview">Makefile Commands Overview</h4>
@@ -2757,18 +2614,18 @@ uv<span class="w"> </span>sync<span class="w"> </span>--locked<span class="w"> <
 - <code>make release version=X.Y.Z</code> - Create a new release</p>
 <h4 id="troubleshooting">Troubleshooting</h4>
 <p>On macOS, ensure gcc is installed:</p>
-<div class="highlight"><pre><span></span><code>brew<span class="w"> </span>install<span class="w"> </span>gcc@5
-</code></pre></div>
+<p><code>bash
+brew install gcc@5</code></p>
 <h3 id="testing">Testing</h3>
 <p>We provide several testing commands with different scopes to support various development workflows.</p>
 <h4 id="quick-development-workflow">Quick Development Workflow</h4>
 <p>For rapid development iteration:
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>test_quick<span class="w">  </span><span class="c1"># Runs lint + Python tests + format check</span>
-</code></pre></div></p>
+<code>bash
+make test_quick  # Runs lint + Python tests + format check</code></p>
 <h4 id="comprehensive-testing">Comprehensive Testing</h4>
 <p>Before submitting a PR:
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span><span class="nb">test</span><span class="w">  </span><span class="c1"># Full test suite including Docker tests</span>
-</code></pre></div></p>
+<code>bash
+make test  # Full test suite including Docker tests</code></p>
 <h4 id="individual-test-commands">Individual Test Commands</h4>
 <ul>
 <li><code>make test_python</code> - Run only Python unit tests</li>
@@ -2791,17 +2648,17 @@ uv<span class="w"> </span>sync<span class="w"> </span>--locked<span class="w"> <
 </li>
 <li>
 <p>To test your changes with your local Kapitan version:
-   <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>kapitan<span class="w"> </span>&lt;your<span class="w"> </span>command&gt;
-<span class="c1"># or set an alias:</span>
-<span class="nb">alias</span><span class="w"> </span><span class="nv">kapitan</span><span class="o">=</span><span class="s1">&#39;uv run kapitan&#39;</span>
-</code></pre></div></p>
+   <code>bash
+   uv run kapitan &lt;your command&gt;
+   # or set an alias:
+   alias kapitan='uv run kapitan'</code></p>
 </li>
 <li>
 <p>To run specific test files:
-   <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/test_vault_transit.py
-<span class="c1"># or using unittest:</span>
-uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>unittest<span class="w"> </span>tests/test_vault_transit.py
-</code></pre></div></p>
+   <code>bash
+   uv run pytest tests/test_vault_transit.py
+   # or using unittest:
+   uv run python -m unittest tests/test_vault_transit.py</code></p>
 </li>
 </ol>
 <h3 id="code-style">Code Style</h3>
@@ -2820,10 +2677,11 @@ uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </sp
 <p>We use pre-commit hooks to automatically check code quality before commits. These are automatically configured when you run <code>make setup</code>.</p>
 <p><strong>Manual Setup:</strong>
 If you didn't use <code>make setup</code>, you can configure pre-commit hooks manually:</p>
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>install_pre_commit
-<span class="c1"># or directly:</span>
-uv<span class="w"> </span>run<span class="w"> </span>pre-commit<span class="w"> </span>install
-</code></pre></div>
+<p>```bash
+make install_pre_commit</p>
+<h1 id="or-directly">or directly:</h1>
+<p>uv run pre-commit install
+```</p>
 <p><strong>Usage:</strong>
 - Hooks run automatically on <code>git commit</code>
 - To run manually: <code>pre-commit run --all-files</code>

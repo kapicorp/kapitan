@@ -1699,6 +1699,8 @@
       
         
       
+        
+      
     
     
     
@@ -1785,6 +1787,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pages/publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2620,10 +2650,10 @@
 <h3 id="examples-repository">Examples repository</h3>
 <p><a href="https://github.com/kapicorp/kapitan-reference">kapicorp/kapitan-reference</a> repository is meant show you many working examples of things you can do with Kapitan.
 You can use this to get familiar with <strong>Kapitan</strong></p>
-<div class="highlight"><pre><span></span><code>$ git clone git@github.com:kapicorp/kapitan-reference.git kapitan-templates
-$ cd kapitan-templates
-
-$ ./kapitan compile
+<p>```
+$ git clone <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#103;&#105;&#116;&#64;&#103;&#105;&#116;&#104;&#117;&#98;&#46;&#99;&#111;&#109;">&#103;&#105;&#116;&#64;&#103;&#105;&#116;&#104;&#117;&#98;&#46;&#99;&#111;&#109;</a>:kapicorp/kapitan-reference.git kapitan-templates
+$ cd kapitan-templates</p>
+<p>$ ./kapitan compile
 Compiled postgres-proxy (1.51s)
 Compiled tesoro (1.70s)
 Compiled echo-server (1.64s)
@@ -2636,39 +2666,39 @@ Compiled global (0.76s)
 Compiled examples (2.60s)
 Compiled pritunl (2.03s)
 Compiled sock-shop (4.36s)
-</code></pre></div>
+```</p>
 <h3 id="minimal-repository">Minimal repository</h3>
 <blockquote>
 <p>Using <a href="https://cruft.github.io/cruft/">cruft</a> based cookiecutter</p>
 </blockquote>
-<div class="highlight"><pre><span></span><code>pip3<span class="w"> </span>install<span class="w"> </span>cruft
-</code></pre></div>
-<div class="highlight"><pre><span></span><code>cruft<span class="w"> </span>create<span class="w"> </span>http://github.com/kapicorp/kapitan-reference<span class="w"> </span>--checkout<span class="w"> </span>cookiecutter<span class="w"> </span>--no-input
-Dependency<span class="w"> </span>https://github.com/kapicorp/generators.git:<span class="w"> </span>saved<span class="w"> </span>to<span class="w"> </span>system/lib
-Dependency<span class="w"> </span>https://github.com/kapicorp/generators.git:<span class="w"> </span>saved<span class="w"> </span>to<span class="w"> </span>system/generators/kubernetes
-Dependency<span class="w"> </span>https://github.com/kapicorp/generators.git:<span class="w"> </span>saved<span class="w"> </span>to<span class="w"> </span>system/generators/terraform
-Rendered<span class="w"> </span>inventory<span class="w"> </span><span class="o">(</span><span class="m">1</span>.74s<span class="o">)</span>
-Compiled<span class="w"> </span>echo-server<span class="w"> </span><span class="o">(</span><span class="m">0</span>.14s<span class="o">)</span>
-</code></pre></div>
+<p><code>shell
+pip3 install cruft</code></p>
+<p><code>shell
+cruft create http://github.com/kapicorp/kapitan-reference --checkout cookiecutter --no-input
+Dependency https://github.com/kapicorp/generators.git: saved to system/lib
+Dependency https://github.com/kapicorp/generators.git: saved to system/generators/kubernetes
+Dependency https://github.com/kapicorp/generators.git: saved to system/generators/terraform
+Rendered inventory (1.74s)
+Compiled echo-server (0.14s)</code></p>
 <h2 id="running-kapitan">running <strong>Kapitan</strong></h2>
 <div class="admonition success">
 <p class="admonition-title">recommended</p>
 <h3 id="kapitan-wrapper-script"><code>kapitan</code> wrapper script</h3>
 <p>If you use the provided repository, we already package a <code>kapitan</code> shell script that wraps the docker command to run <strong>Kapitan</strong></p>
-<div class="highlight"><pre><span></span><code>$<span class="w"> </span>./kapitan<span class="w"> </span>compile
-Compiled<span class="w"> </span>postgres-proxy<span class="w"> </span><span class="o">(</span><span class="m">1</span>.51s<span class="o">)</span>
-Compiled<span class="w"> </span>tesoro<span class="w"> </span><span class="o">(</span><span class="m">1</span>.70s<span class="o">)</span>
-Compiled<span class="w"> </span>echo-server<span class="w"> </span><span class="o">(</span><span class="m">1</span>.64s<span class="o">)</span>
-Compiled<span class="w"> </span>mysql<span class="w"> </span><span class="o">(</span><span class="m">1</span>.67s<span class="o">)</span>
-Compiled<span class="w"> </span>gke-pvm-killer<span class="w"> </span><span class="o">(</span><span class="m">1</span>.17s<span class="o">)</span>
-Compiled<span class="w"> </span>prod-sockshop<span class="w"> </span><span class="o">(</span><span class="m">4</span>.74s<span class="o">)</span>
-Compiled<span class="w"> </span>dev-sockshop<span class="w"> </span><span class="o">(</span><span class="m">4</span>.74s<span class="o">)</span>
-Compiled<span class="w"> </span>tutorial<span class="w"> </span><span class="o">(</span><span class="m">1</span>.68s<span class="o">)</span>
-Compiled<span class="w"> </span>global<span class="w"> </span><span class="o">(</span><span class="m">0</span>.76s<span class="o">)</span>
-Compiled<span class="w"> </span>examples<span class="w"> </span><span class="o">(</span><span class="m">2</span>.60s<span class="o">)</span>
-Compiled<span class="w"> </span>pritunl<span class="w"> </span><span class="o">(</span><span class="m">2</span>.03s<span class="o">)</span>
-Compiled<span class="w"> </span>sock-shop<span class="w"> </span><span class="o">(</span><span class="m">4</span>.36s<span class="o">)</span>
-</code></pre></div>
+<p><code>shell
+$ ./kapitan compile
+Compiled postgres-proxy (1.51s)
+Compiled tesoro (1.70s)
+Compiled echo-server (1.64s)
+Compiled mysql (1.67s)
+Compiled gke-pvm-killer (1.17s)
+Compiled prod-sockshop (4.74s)
+Compiled dev-sockshop (4.74s)
+Compiled tutorial (1.68s)
+Compiled global (0.76s)
+Compiled examples (2.60s)
+Compiled pritunl (2.03s)
+Compiled sock-shop (4.36s)</code></p>
 </div>
 <h2 id="other-installation-methods">Other installation methods</h2>
 <h3 id="docker">Docker</h3>
@@ -2682,14 +2712,14 @@ Compiled<span class="w"> </span>sock-shop<span class="w"> </span><span class="o"
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Linux</label><label for="__tabbed_1_2">Mac</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="nb">alias</span><span class="w"> </span><span class="nv">kapitan</span><span class="o">=</span><span class="s2">&quot;docker run -t --rm -u </span><span class="k">$(</span>id<span class="w"> </span>-u<span class="k">)</span><span class="s2"> -v </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">:/src:delegated kapicorp/kapitan&quot;</span>
-kapitan<span class="w"> </span>-h
-</code></pre></div>
+<p><code>shell
+alias kapitan="docker run -t --rm -u $(id -u) -v $(pwd):/src:delegated kapicorp/kapitan"
+kapitan -h</code></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><span class="nb">alias</span><span class="w"> </span><span class="nv">kapitan</span><span class="o">=</span><span class="s2">&quot;docker run -t --rm -v </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">:/src:delegated kapicorp/kapitan&quot;</span>
-kapitan<span class="w"> </span>-h
-</code></pre></div>
+<p><code>shell
+alias kapitan="docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan"
+kapitan -h</code></p>
 </div>
 </div>
 </div>
@@ -2701,12 +2731,12 @@ kapitan<span class="w"> </span>-h
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Linux</label><label for="__tabbed_2_2">Mac</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>python3.8-dev<span class="w"> </span>python3-pip<span class="w"> </span>python3-yaml
-</code></pre></div>
+<p><code>shell
+sudo apt-get update &amp;&amp; sudo apt-get install -y python3.8-dev python3-pip python3-yaml</code></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>brew<span class="w"> </span>install<span class="w"> </span>python3<span class="w"> </span>libyaml
-</code></pre></div>
+<p><code>shell
+brew install python3 libyaml</code></p>
 </div>
 </div>
 </div>
@@ -2719,23 +2749,23 @@ kapitan<span class="w"> </span>-h
 <div class="admonition note">
 <p><code>kapitan</code> will be installed in <code>$HOME/.local/lib/python3.7/bin</code></p>
 </div>
-<div class="highlight"><pre><span></span><code>pip3<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--upgrade<span class="w"> </span>kapitan
-</code></pre></div>
+<p><code>shell
+pip3 install --user --upgrade kapitan</code></p>
 </div>
 <div class="tabbed-block">
 <div class="admonition note">
 <p><code>kapitan</code> will be installed in <code>$HOME/Library/Python/3.7/bin</code></p>
 </div>
-<div class="highlight"><pre><span></span><code>pip3<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--upgrade<span class="w"> </span>kapitan
-</code></pre></div>
+<p><code>shell
+pip3 install --user --upgrade kapitan</code></p>
 </div>
 </div>
 </div>
 <h5 id="system-wide">System-wide</h5>
 <div class="admonition attention">
 <p class="admonition-title">not recommended</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>pip3<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>kapitan
-</code></pre></div>
+<p><code>shell
+sudo pip3 install --upgrade kapitan</code></p>
 </div>
 
               </article>

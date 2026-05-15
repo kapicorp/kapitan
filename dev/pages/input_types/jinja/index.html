@@ -1588,6 +1588,8 @@
       
         
       
+        
+      
     
     
     
@@ -1674,6 +1676,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2510,16 +2540,18 @@
 <p>Here's some configuration from the nginx example</p>
 <div class="admonition note">
 <p class="admonition-title">examples/kubernetes/inventory/classes/component/nginx-common.yml</p>
-<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">templates</span><span class="p">:</span><span class="w"> </span><span class="c1">#(1)!</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docs/nginx/README.md</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components/nginx-deploy.sh</span>
+<p>```yaml</p>
+<pre><code>templates: #(1)!
+  - docs/nginx/README.md
+  - components/nginx-deploy.sh
 
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span><span class="w"> </span><span class="c1">#(2)!</span>
-<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jinja2</span>
-<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${templates}</span><span class="w"> </span><span class="c1">#(3)!</span>
-</code></pre></div>
+kapitan:
+  compile:
+    - output_path: . #(2)!
+      input_type: jinja2
+      input_paths: ${templates} #(3)!
+</code></pre>
+<p>```</p>
 <ol>
 <li>We define a list with all the templates we want to compile with this input type</li>
 <li>Then input type will render the files a the root of the target compiled folder e.g. <code>compiled/${target_name}</code></li>
@@ -2539,25 +2571,25 @@
 <div class="admonition example">
 <div class="admonition note">
 <p class="admonition-title">examples/kubernetes/docs/nginx/README.md</p>
-<div class="highlight"><pre><span></span><code><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">set i = inventory.parameters %</span><span class="p p-Indicator">}</span>
-
-<span class="c1"># Welcome to the README!</span>
-
-<span class="l l-Scalar l-Scalar-Plain">Target *{{ i.target_name }}* is running</span><span class="p p-Indicator">:</span>
-
-<span class="err">*</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">i.nginx.replicas</span><span class="w"> </span><span class="p p-Indicator">}}</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">replicas of *nginx* running nginx image {{ i.nginx.image }}</span>
-<span class="err">*</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">on cluster {{ i.cluster.name }}</span>
-</code></pre></div>
+<p _="%" i="i" set="set">```yaml</p>
+<p># Welcome to the README!</p>
+<p>Target <em>{{ i.target_name }}</em> is running:</p>
+<ul>
+<li>{{ i.nginx.replicas }} replicas of <em>nginx</em> running nginx image {{ i.nginx.image }}</li>
+<li>on cluster {{ i.cluster.name }}</li>
+</ul>
+<p>```</p>
 </div>
 <div class="admonition example">
 <p class="admonition-title">Compiled result</p>
-<div class="highlight"><pre><span></span><code><span class="gh"># Welcome to the README!</span>
-
-Target <span class="ge">*minikube-nginx-jsonnet*</span> is running:
-
-<span class="k">*</span><span class="w"> </span>1 replicas of <span class="ge">*nginx*</span> running nginx image nginx:1:15.8
-<span class="k">*</span><span class="w"> </span>on cluster minikube
-</code></pre></div>
+<p>```markdown</p>
+<p># Welcome to the README!</p>
+<p>Target <em>minikube-nginx-jsonnet</em> is running:</p>
+<ul>
+<li>1 replicas of <em>nginx</em> running nginx image nginx:1:15.8</li>
+<li>on cluster minikube
+  ```</li>
+</ul>
 </div>
 </div>
 <h2 id="scripts">Scripts</h2>
@@ -2566,21 +2598,19 @@ Target <span class="ge">*minikube-nginx-jsonnet*</span> is running:
 <div class="admonition example">
 <div class="admonition note">
 <p class="admonition-title">examples/kubernetes/components/nginx-deploy.sh</p>
-<div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash -e</span>
-<span class="nv">DIR</span><span class="o">=</span><span class="k">$(</span>dirname<span class="w"> </span><span class="si">${</span><span class="nv">BASH_SOURCE</span><span class="p">[0]</span><span class="si">}</span><span class="k">)</span>
-<span class="o">{</span>%<span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>inventory.parameters<span class="w"> </span>%<span class="o">}</span><span class="w"> </span><span class="c1">#(1)!</span>
-
-<span class="nv">KUBECTL</span><span class="o">=</span><span class="s2">&quot;kubectl -n {{i.namespace}}&quot;</span><span class="w"> </span><span class="c1">#(2)!</span>
-
-<span class="c1"># Create namespace before anything else</span>
-<span class="si">${</span><span class="nv">KUBECTL</span><span class="si">}</span><span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="si">${</span><span class="nv">DIR</span><span class="si">}</span>/pre-deploy/namespace.yml
-
-<span class="k">for</span><span class="w"> </span>SECTION<span class="w"> </span><span class="k">in</span><span class="w"> </span>manifests
-<span class="k">do</span>
-<span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;## run kubectl apply for </span><span class="si">${</span><span class="nv">SECTION</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="w">  </span><span class="si">${</span><span class="nv">KUBECTL</span><span class="si">}</span><span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="si">${</span><span class="nv">DIR</span><span class="si">}</span>/<span class="si">${</span><span class="nv">SECTION</span><span class="si">}</span>/<span class="w"> </span><span class="p">|</span><span class="w"> </span>column<span class="w"> </span>-t
-<span class="k">done</span>
-</code></pre></div>
+<p>```shell
+  #!/bin/bash -e
+  DIR=$(dirname ${BASH_SOURCE[0]})
+  {% set i = inventory.parameters %} #(1)!</p>
+<p>KUBECTL="kubectl -n {{i.namespace}}" #(2)!</p>
+<p># Create namespace before anything else
+  ${KUBECTL} apply -f ${DIR}/pre-deploy/namespace.yml</p>
+<p>for SECTION in manifests
+  do
+    echo "## run kubectl apply for ${SECTION}"
+    ${KUBECTL} apply -f <span SECTION="SECTION" class="arithmatex"><span class="MathJax_Preview">{DIR}/</span><script type="math/tex">{DIR}/</script></span>/ | column -t
+  done</p>
+<p>```</p>
 <ol>
 <li>We import the <code>inventory</code> as a Jinja variable</li>
 <li>We use to set the <code>namespace</code> explicitly</li>
@@ -2588,21 +2618,19 @@ Target <span class="ge">*minikube-nginx-jsonnet*</span> is running:
 </div>
 <div class="admonition example">
 <p class="admonition-title">Compiled result</p>
-<div class="highlight"><pre><span></span><code><span class="ch">#!/bin/bash -e</span>
-<span class="nv">DIR</span><span class="o">=</span><span class="k">$(</span>dirname<span class="w"> </span><span class="si">${</span><span class="nv">BASH_SOURCE</span><span class="p">[0]</span><span class="si">}</span><span class="k">)</span>
-<span class="w"> </span><span class="c1">#(1)!</span>
-
-<span class="hll"><span class="nv">KUBECTL</span><span class="o">=</span><span class="s2">&quot;kubectl -n minikube-nginx-jsonnet&quot;</span><span class="w"> </span><span class="c1">#(2)!</span>
-</span>
-<span class="c1"># Create namespace before anything else</span>
-<span class="si">${</span><span class="nv">KUBECTL</span><span class="si">}</span><span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="si">${</span><span class="nv">DIR</span><span class="si">}</span>/pre-deploy/namespace.yml
-
-<span class="k">for</span><span class="w"> </span>SECTION<span class="w"> </span><span class="k">in</span><span class="w"> </span>manifests
-<span class="k">do</span>
-<span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;## run kubectl apply for </span><span class="si">${</span><span class="nv">SECTION</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="w">  </span><span class="si">${</span><span class="nv">KUBECTL</span><span class="si">}</span><span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="si">${</span><span class="nv">DIR</span><span class="si">}</span>/<span class="si">${</span><span class="nv">SECTION</span><span class="si">}</span>/<span class="w"> </span><span class="p">|</span><span class="w"> </span>column<span class="w"> </span>-t
-<span class="k">done</span>
-</code></pre></div>
+<p>```shell hl_lines="5"
+  #!/bin/bash -e
+  DIR=$(dirname ${BASH_SOURCE[0]})
+   #(1)!</p>
+<p>KUBECTL="kubectl -n minikube-nginx-jsonnet" #(2)!</p>
+<p># Create namespace before anything else
+  ${KUBECTL} apply -f ${DIR}/pre-deploy/namespace.yml</p>
+<p>for SECTION in manifests
+  do
+    echo "## run kubectl apply for ${SECTION}"
+    ${KUBECTL} apply -f <span SECTION="SECTION" class="arithmatex"><span class="MathJax_Preview">{DIR}/</span><script type="math/tex">{DIR}/</script></span>/ | column -t
+  done
+  ```</p>
 <ol>
 <li>The script is now a "canned script" and ready to be used for this specif target.</li>
 <li>You can see that the namespace has been replaced with the target's one.</li>
@@ -2619,36 +2647,37 @@ Target <span class="ge">*minikube-nginx-jsonnet*</span> is running:
 <div class="admonition example">
 <p class="admonition-title">Use of <code>inventory_global</code></p>
 <p><code>inventory_global</code> can be used to generate a "<strong>global</strong>" <strong><code>README.md</code></strong> that contains a link to all generated targets.
-<div class="highlight"><pre><span></span><code><span class="x">| *Target*                                                               |</span>
-<span class="x">|------------------------------------------------------------------------|</span>
-<span class="cp">{%</span> <span class="k">for</span> <span class="nv">target</span> <span class="k">in</span> <span class="nv">inventory_global</span> <span class="o">|</span> <span class="nf">sort</span><span class="o">()</span> <span class="cp">%}</span>
-<span class="cp">{%</span> <span class="k">set</span> <span class="nv">p</span> <span class="o">=</span> <span class="nv">inventory_global</span><span class="o">[</span><span class="nv">target</span><span class="o">]</span><span class="nv">.parameters</span> <span class="cp">%}</span>
-<span class="x">|[</span><span class="cp">{{</span><span class="nv">target</span><span class="cp">}}</span><span class="x">](../</span><span class="cp">{{</span><span class="nv">target</span><span class="cp">}}</span><span class="x">/docs/README.md)                              |</span>
-<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
-</code></pre></div></p>
+<code>jinja
+| *Target*                                                               |
+|------------------------------------------------------------------------|
+{% for target in inventory_global | sort() %}
+{% set p = inventory_global[target].parameters %}
+|[{{target}}](../{{target}}/docs/README.md)                              |
+{% endfor %}</code></p>
 <div class="admonition quote">
 <p class="admonition-title">Compiled result</p>
-<div class="highlight"><pre><span></span><code>| <span class="ge">*Target*</span>                                                               |
+<p>```markdown
+| <em>Target</em>                                                               |
 |------------------------------------------------------------------------|
-| [<span class="nt">argocd</span>](<span class="na">../argocd/docs/README.md</span>)                                     |
-| [<span class="nt">dev-sockshop</span>](<span class="na">../dev-sockshop/docs/README.md</span>)                         |
-| [<span class="nt">echo-server</span>](<span class="na">../echo-server/docs/README.md</span>)                           |
-| [<span class="nt">examples</span>](<span class="na">../examples/docs/README.md</span>)                                 |
-| [<span class="nt">gke-pvm-killer</span>](<span class="na">../gke-pvm-killer/docs/README.md</span>)                     |
-| [<span class="nt">global</span>](<span class="na">../global/docs/README.md</span>)                                     |
-| [<span class="nt">guestbook-argocd</span>](<span class="na">../guestbook-argocd/docs/README.md</span>)                 |
-| [<span class="nt">kapicorp-demo-march</span>](<span class="na">../kapicorp-demo-march/docs/README.md</span>)           |
-| [<span class="nt">kapicorp-project-123</span>](<span class="na">../kapicorp-project-123/docs/README.md</span>)         |
-| [<span class="nt">kapicorp-terraform-admin</span>](<span class="na">../kapicorp-terraform-admin/docs/README.md</span>) |
-| [<span class="nt">mysql</span>](<span class="na">../mysql/docs/README.md</span>)                                       |
-| [<span class="nt">postgres-proxy</span>](<span class="na">../postgres-proxy/docs/README.md</span>)                     |
-| [<span class="nt">pritunl</span>](<span class="na">../pritunl/docs/README.md</span>)                                   |
-| [<span class="nt">prod-sockshop</span>](<span class="na">../prod-sockshop/docs/README.md</span>)                       |
-| [<span class="nt">sock-shop</span>](<span class="na">../sock-shop/docs/README.md</span>)                               |
-| [<span class="nt">tesoro</span>](<span class="na">../tesoro/docs/README.md</span>)                                     |
-| [<span class="nt">tutorial</span>](<span class="na">../tutorial/docs/README.md</span>)                                 |
-| [<span class="nt">vault</span>](<span class="na">../vault/docs/README.md</span>)                                       |
-</code></pre></div>
+| [argocd]<span class="arithmatex"><span class="MathJax_Preview">../argocd/docs/README.md</span><script type="math/tex">../argocd/docs/README.md</script></span>                                     |
+| [dev-sockshop]<span class="arithmatex"><span class="MathJax_Preview">../dev-sockshop/docs/README.md</span><script type="math/tex">../dev-sockshop/docs/README.md</script></span>                         |
+| [echo-server]<span class="arithmatex"><span class="MathJax_Preview">../echo-server/docs/README.md</span><script type="math/tex">../echo-server/docs/README.md</script></span>                           |
+| [examples]<span class="arithmatex"><span class="MathJax_Preview">../examples/docs/README.md</span><script type="math/tex">../examples/docs/README.md</script></span>                                 |
+| [gke-pvm-killer]<span class="arithmatex"><span class="MathJax_Preview">../gke-pvm-killer/docs/README.md</span><script type="math/tex">../gke-pvm-killer/docs/README.md</script></span>                     |
+| [global]<span class="arithmatex"><span class="MathJax_Preview">../global/docs/README.md</span><script type="math/tex">../global/docs/README.md</script></span>                                     |
+| [guestbook-argocd]<span class="arithmatex"><span class="MathJax_Preview">../guestbook-argocd/docs/README.md</span><script type="math/tex">../guestbook-argocd/docs/README.md</script></span>                 |
+| [kapicorp-demo-march]<span class="arithmatex"><span class="MathJax_Preview">../kapicorp-demo-march/docs/README.md</span><script type="math/tex">../kapicorp-demo-march/docs/README.md</script></span>           |
+| [kapicorp-project-123]<span class="arithmatex"><span class="MathJax_Preview">../kapicorp-project-123/docs/README.md</span><script type="math/tex">../kapicorp-project-123/docs/README.md</script></span>         |
+| [kapicorp-terraform-admin]<span class="arithmatex"><span class="MathJax_Preview">../kapicorp-terraform-admin/docs/README.md</span><script type="math/tex">../kapicorp-terraform-admin/docs/README.md</script></span> |
+| [mysql]<span class="arithmatex"><span class="MathJax_Preview">../mysql/docs/README.md</span><script type="math/tex">../mysql/docs/README.md</script></span>                                       |
+| [postgres-proxy]<span class="arithmatex"><span class="MathJax_Preview">../postgres-proxy/docs/README.md</span><script type="math/tex">../postgres-proxy/docs/README.md</script></span>                     |
+| [pritunl]<span class="arithmatex"><span class="MathJax_Preview">../pritunl/docs/README.md</span><script type="math/tex">../pritunl/docs/README.md</script></span>                                   |
+| [prod-sockshop]<span class="arithmatex"><span class="MathJax_Preview">../prod-sockshop/docs/README.md</span><script type="math/tex">../prod-sockshop/docs/README.md</script></span>                       |
+| [sock-shop]<span class="arithmatex"><span class="MathJax_Preview">../sock-shop/docs/README.md</span><script type="math/tex">../sock-shop/docs/README.md</script></span>                               |
+| [tesoro]<span class="arithmatex"><span class="MathJax_Preview">../tesoro/docs/README.md</span><script type="math/tex">../tesoro/docs/README.md</script></span>                                     |
+| [tutorial]<span class="arithmatex"><span class="MathJax_Preview">../tutorial/docs/README.md</span><script type="math/tex">../tutorial/docs/README.md</script></span>                                 |
+| [vault]<span class="arithmatex"><span class="MathJax_Preview">../vault/docs/README.md</span><script type="math/tex">../vault/docs/README.md</script></span>                                       |</p>
+<p>```</p>
 </div>
 </div>
 <h2 id="jinja2-custom-filters">Jinja2 custom filters</h2>

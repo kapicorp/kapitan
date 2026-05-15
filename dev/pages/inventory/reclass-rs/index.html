@@ -1607,6 +1607,8 @@
       
         
       
+        
+      
     
     
     
@@ -1693,6 +1695,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2530,45 +2560,45 @@ If some of the Reclass features or options that you're using are missing in recl
 <h2 id="installation">Installation</h2>
 <p>The <code>reclass-rs</code> Python package is an optional dependency of Kapitan.
 You can install it as follows:</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>kapitan<span class="o">[</span>reclass-rs<span class="o">]</span>
-</code></pre></div>
+<p><code>shell
+pip install kapitan[reclass-rs]</code></p>
 <h2 id="usage">Usage</h2>
 <p>To use the reclass-rs inventory backend, you need to pass <code>--inventory-backend=reclass-rs</code> on the command line.
 If you want to permanently switch to the reclass-rs inventory backend, you can select the inventory backend in the <a href="../../commands/kapitan_dotfile/">.kapitan config file</a>:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">global</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">inventory-backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">reclass-rs</span>
-</code></pre></div>
+<p><code>yaml
+global:
+  inventory-backend: reclass-rs</code></p>
 <h2 id="performance-comparison">Performance comparison</h2>
 <p>For the performance comparison, a real Kapitan inventory which makes heavy use of parameter interpolation in class includes was rendered with both Reclass and reclass-rs.
 The example inventory that was used for the performance comparison contains 325 classes and 56 targets.
 The example inventory renders to a total of 25MB of YAML.</p>
 <h3 id="reclass">Reclass</h3>
-<div class="highlight"><pre><span></span><code>$ time kapitan inventory -v --inventory-backend=reclass &gt; inv.yml
+<p>```
+$ time kapitan inventory -v --inventory-backend=reclass &gt; inv.yml
 [ ... some output omitted ... ]
 kapitan.resources DEBUG    Using reclass as inventory backend
 kapitan.inventory.backends.reclass DEBUG    Inventory reclass: No config file found. Using reclass inventory config defaults
-kapitan.inventory.backends.reclass DEBUG    Inventory rendering with reclass took 0:01:06.037057
-
-real    1m23.840s
+kapitan.inventory.backends.reclass DEBUG    Inventory rendering with reclass took 0:01:06.037057</p>
+<p>real    1m23.840s
 user    1m23.520s
 sys     0m0.287s
-</code></pre></div>
+```</p>
 <p>Reclass takes 1 minute and 6 seconds to render the example inventory.
 The rest of the runtime (roughly 18 seconds) is spent in writing the resulting 25MB of YAML to the output file.</p>
 <h3 id="reclass-rs">reclass-rs</h3>
-<div class="highlight"><pre><span></span><code>$ time kapitan inventory -v --inventory-backend=reclass-rs &gt; inv-rs.yml
+<p>```
+$ time kapitan inventory -v --inventory-backend=reclass-rs &gt; inv-rs.yml
 [ ... some output omitted ... ]
 kapitan.resources DEBUG    Using reclass-rs as inventory backend
 kapitan.inventory.backends.reclass DEBUG    Inventory reclass: No config file found. Using reclass inventory config defaults
-reclass-config.yml entry &#39;storage_type=yaml_fs&#39; not implemented yet, ignoring...
-reclass-config.yml entry &#39;inventory_base_uri=./inventory&#39; not implemented yet, ignoring...
-reclass-config.yml entry &#39;allow_none_override=true&#39; not implemented yet, ignoring...
-kapitan.inventory.backends.reclass_rs DEBUG    Inventory rendering with reclass-rs took 0:00:01.717107
-
-real    0m19.921s
+reclass-config.yml entry 'storage_type=yaml_fs' not implemented yet, ignoring...
+reclass-config.yml entry 'inventory_base_uri=./inventory' not implemented yet, ignoring...
+reclass-config.yml entry 'allow_none_override=true' not implemented yet, ignoring...
+kapitan.inventory.backends.reclass_rs DEBUG    Inventory rendering with reclass-rs took 0:00:01.717107</p>
+<p>real    0m19.921s
 user    0m35.586s
 sys     0m1.066s
-</code></pre></div>
+```</p>
 <p>reclass-rs takes 1.7 seconds to render the example inventory.
 The rest of the runtime (roughly 18 seconds) is spent in writing the resulting 25MB of YAML to the output file.</p>
 

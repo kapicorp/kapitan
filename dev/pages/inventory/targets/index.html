@@ -862,28 +862,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#compiling-targets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Compiling targets
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#target-directory-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Target directory structure
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1566,6 +1544,8 @@
       
         
       
+        
+      
     
     
     
@@ -1652,6 +1632,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2487,27 +2495,27 @@
 <p>For instance, you might have separate targets for <strong><code>production</code></strong>, <strong><code>staging</code></strong>, and <strong><code>development</code></strong> environments, each with its own unique configurations.</p>
 <h2 id="defining-targets">Defining targets</h2>
 <p>Targets are defined as YAML files within the <code>inventory/targets/</code> directory of your Kapitan project. Each target file typically includes:</p>
-<div class="highlight"><pre><span></span><code>classes:
+<p>```
+classes:
     # A list of classes to inherit configurations from.
     # This allows you to reuse common settings and avoid repetition
-    -
-
-parameters:
+    -</p>
+<p>parameters:
     # file parameters that override or extend the parameters inherited from previously loaded classes
-</code></pre></div>
+```</p>
 <p>Example:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/production/web.yml</span>
-<span class="nt">classes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components.nginx</span>
-
-<span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">environment</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">production</span>
-<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${environment} environment</span>
-<span class="w">  </span><span class="nt">nginx</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${environment}</span>
-</code></pre></div>
+<p>```yaml</p>
+<h1 id="inventorytargetsproductionwebyml">inventory/targets/production/web.yml</h1>
+<p>classes:
+  - common
+  - components.nginx</p>
+<p>parameters:
+  environment: production
+  description: ${environment} environment
+  nginx:
+    replicas: 3
+  namespace: ${environment}
+```</p>
 <p>In this example, the <code>production.web</code> target:</p>
 <ul>
 <li>Inherits configurations from the common and components.nginx classes.</li>
@@ -2529,12 +2537,12 @@ parameters:
 <p>They can be organized into subdirectories to create a more structured and hierarchical inventory. This is particularly useful for managing large and complex projects.</p>
 <p>When targets are organized in subdirectories, Kapitan uses the full path from the <code>targets/</code> directory to create the target name. This name is then used to identify the target during compilation and in the generated output.</p>
 <p>Example for target <code>clusters.production.my-cluster</code></p>
-<div class="highlight"><pre><span></span><code>inventory/
-└──<span class="w"> </span>targets/
-<span class="w">    </span>└──<span class="w"> </span>clusters/
-<span class="w">        </span>└──<span class="w"> </span>production/
-<span class="w">            </span>└──<span class="w"> </span>my-cluster.yml
-</code></pre></div>
+<p><code>shell
+inventory/
+└── targets/
+    └── clusters/
+        └── production/
+            └── my-cluster.yml</code></p>
 <p>In this example, the <code>my-cluster.yml</code> target file is located within the <code>clusters/production/</code> subdirectory, and can be identified with <code>clusters.production.my-cluster</code>.</p>
 
               </article>

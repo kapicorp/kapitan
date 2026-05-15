@@ -1572,6 +1572,8 @@
       
         
       
+        
+      
     
     
     
@@ -1658,6 +1660,34 @@
     
   
     External dependencies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publishing_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publishing generators
   
 
     
@@ -2500,25 +2530,25 @@ They are organised hierarchically in subfolders, and the way they can be importe
 <li>replace <code>/</code> with <code>.</code></li>
 </ul>
 <p>For example, this will import the class <code>inventory/classes/applications/sock-shop.yaml</code></p>
-<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">applications.sock-shop</span>
-</code></pre></div>
+<p><code>yaml
+classes:
+- applications.sock-shop</code></p>
 <h2 id="definition">Definition</h2>
 <p>Let's take a look at the <code>common</code> class which appears in the example above:</p>
 <p>As explained, because the <strong><code>common.yaml</code></strong> is directly under the <strong><code>inventory/classes</code></strong> subdirectory, it can be imported directly into a target with:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
-</code></pre></div>
+<p><code>yaml
+classes:
+- common</code></p>
 <p>If we open the file, we find another familiar yaml fragment.</p>
 <div class="admonition example">
 <p class="admonition-title"><code>inventory/classes/common.yml</code></p>
-<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
-<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kapitan.common</span>
-
-<span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
-<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${_reclass_:name:short}</span>
-</code></pre></div>
+<p>```yaml
+classes:
+- kapitan.common</p>
+<p>parameters:
+  namespace: ${target_name}
+  target_name: ${<em>reclass</em>:name:short}
+```</p>
 </div>
 <p>Notice that this class includes an import definition for another class, <code>kapitan.common</code>. We've already learned this means that kapitan will import a file on disk called <code>inventory/classes/kapitan/common.yml</code></p>
 <p>You can also see that in the <code>parameters</code> section we now encounter a new syntax which unlocks another powerful inventory feature: <em>parameters interpolation</em>!</p>
