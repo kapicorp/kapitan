@@ -83,6 +83,9 @@ gojsonnet = ["gojsonnet>=0.21.0,<0.22"]
 omegaconf = ["omegaconf>=2.4.0.dev3,<3"]
 reclass-rs = ["reclass-rs>=0.10.1,<0.11.0"]
 oci = ["oras>=0.2.0"]
+# Enables the rapidyaml (ryml) C++ YAML emitter via --yaml-use-rapidyaml.
+# Several times faster than PyYAML on large manifests; safe to omit.
+rapidyaml = ["rapidyaml>=0.12,<1"]
 
 [project.urls]
 Homepage = "https://kapitan.dev"
