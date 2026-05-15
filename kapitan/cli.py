@@ -34,9 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 def print_deprecated_secrets_msg(args):
-    logger.error(
-        "Secrets have been renamed to refs, please refer to: '$ kapitan refs --help'"
-    )
+    logger.error("Secrets have been renamed to refs, please refer to: '$ kapitan refs --help'")
     sys.exit(1)
 
 
@@ -136,9 +134,7 @@ def build_parser():
         ),
     )
 
-    eval_parser = subparser.add_parser(
-        "eval", aliases=["e"], help="evaluate jsonnet file"
-    )
+    eval_parser = subparser.add_parser("eval", aliases=["e"], help="evaluate jsonnet file")
     eval_parser.add_argument("jsonnet_file", type=str)
     eval_parser.set_defaults(func=trigger_eval, name="eval")
 
@@ -188,9 +184,7 @@ def build_parser():
         "--jinja2-filters",
         "-J2F",
         type=str,
-        default=from_dot_kapitan(
-            "compile", "jinja2-filters", defaults.DEFAULT_JINJA2_FILTERS_PATH
-        ),
+        default=from_dot_kapitan("compile", "jinja2-filters", defaults.DEFAULT_JINJA2_FILTERS_PATH),
         metavar="FPATH",
         help="load custom jinja2 filters from any file, default is to put\
                                 them inside lib/jinja2_filters.py",
@@ -340,8 +334,8 @@ def build_parser():
         action="store_true",
         help=(
             "use the rapidyaml emitter, "
-            "fallback to PyYaml if 'rapidyaml' not installed,"
-            "default is False."
+            "fallback to PyYaml if rapidyaml not installed, "
+            "default is False"
         ),
     )
 
@@ -420,9 +414,7 @@ def build_parser():
         choices=["literal", "folded", "double-quotes"],
         metavar="STYLE",
         action="store",
-        default=from_dot_kapitan(
-            "inventory", "multiline-string-style", "double-quotes"
-        ),
+        default=from_dot_kapitan("inventory", "multiline-string-style", "double-quotes"),
         help="set multiline string style to STYLE, default is 'double-quotes'",
     )
 
@@ -529,9 +521,7 @@ def build_parser():
         help='read file or directory, set "-" for stdin',
         metavar="FILENAME",
     )
-    refs_parser.add_argument(
-        "--target-name", "-t", help="grab recipients from target name"
-    )
+    refs_parser.add_argument("--target-name", "-t", help="grab recipients from target name")
     refs_parser.add_argument(
         "--inventory-path",
         default=from_dot_kapitan("refs", "inventory-path", "./inventory"),
@@ -590,9 +580,7 @@ def build_parser():
         default=from_dot_kapitan("refs", "verbose", False),
     )
 
-    lint_parser = subparser.add_parser(
-        "lint", aliases=["l"], help="linter for inventory and refs"
-    )
+    lint_parser = subparser.add_parser("lint", aliases=["l"], help="linter for inventory and refs")
     lint_parser.set_defaults(func=start_lint, name="lint")
 
     lint_parser.add_argument(
@@ -650,9 +638,7 @@ def build_parser():
 
     init_parser.add_argument(
         "--template_git_url",
-        default=from_dot_kapitan(
-            "init", "template_git_url ", defaults.COPIER_TEMPLATE_REPOSITORY
-        ),
+        default=from_dot_kapitan("init", "template_git_url ", defaults.COPIER_TEMPLATE_REPOSITORY),
         help=f"Cruft template_git_url, default is {defaults.COPIER_TEMPLATE_REPOSITORY}",
     )
     init_parser.add_argument(
