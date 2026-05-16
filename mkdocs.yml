@@ -2,6 +2,24 @@
 # pip install mkdocs mkdocs-material pymdown-extensions
 site_name: "Kapitan: Keep your ship together"
 site_url: "https://kapitan.dev/"
+site_description: "Kapitan is an open source configuration management tool for Kubernetes, Terraform, and infrastructure. Generate, organize, validate, and manage configuration across environments."
+
+# SEO and versioning strategy
+# ---------------------------
+# Canonical URLs are generated automatically from site_url. Each page
+# canonicalizes to its own URL, which is correct for both the unversioned
+# root and versioned paths managed by mike.
+#
+# Versioned docs (/0.x/, /latest/, /dev/):
+# - Each version is legitimate content and canonicalizes to itself.
+# - /latest/ is an alias that always points to the current stable version.
+# - /dev/ represents the in-development state and may be indexed, but
+#   search engines will typically rank /latest/ higher due to internal
+#   linking and user behavior.
+# - Old versions are not blocked because users running older releases need
+#   access to matching documentation.
+# - robots.txt (in docs/robots.txt) allows all paths and references the
+#   generated sitemap.xml.
 strict: true
 plugins:
   - blog:
