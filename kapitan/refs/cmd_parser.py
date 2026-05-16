@@ -28,6 +28,13 @@ from kapitan.utils import fatal_error, search_target_token_paths
 logger = logging.getLogger(__name__)
 
 
+def _validate_token_name(token_name):
+    if token_name.count(":") != 1:
+        raise KapitanError(
+            f"Invalid token name: {token_name}. Token names must be in the format <type>:<path>, e.g. gpg:my/secret"
+        )
+
+
 def handle_refs_command(args):
     ref_controller = RefController(args.refs_path)
 
@@ -79,6 +86,8 @@ def ref_write(args, ref_controller):
             raise KapitanError(
                 f"parameters.kapitan.secrets not defined in {args.target_name}"
             )
+
+    _validate_token_name(token_name)
 
     type_name, token_path = token_name.split(":")
 
@@ -263,6 +272,8 @@ def secret_update(args, ref_controller):
             raise KapitanError(
                 f"parameters.kapitan.secrets not defined in {args.target_name}"
             )
+
+    _validate_token_name(token_name)
 
     type_name, token_path = token_name.split(":")
 
