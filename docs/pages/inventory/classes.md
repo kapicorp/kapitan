@@ -51,4 +51,13 @@ If we open the file, we find another familiar yaml fragment.
 
 Notice that this class includes an import definition for another class, `kapitan.common`. We've already learned this means that kapitan will import a file on disk called `inventory/classes/kapitan/common.yml`
 
-You can also see that in the `parameters` section we now encounter a new syntax which unlocks another powerful inventory feature: *parameters interpolation*!
+You can also see that in the `parameters` section we now encounter a new syntax which unlocks another powerful inventory feature: [parameter interpolation](parameters_interpolation.md)!
+
+---
+
+## Next steps
+
+- Learn how to define environments and deployments with [Kapitan inventory targets](targets.md).
+- Understand how to reference values across classes and targets with [parameter interpolation](parameters_interpolation.md).
+- Explore [advanced inventory features](advanced.md) such as wildcard classes and inventory backends.
+- See how classes power [input types](../input_types/introduction.md) like [Jsonnet](../input_types/jsonnet.md) and [Jinja](../input_types/jinja.md).

@@ -791,3 +791,11 @@ For example, to reveal the secret stored at `path/to/secret_inside_kapitan`
     ```
 
 *Note:* Cryptographic algorithm used for encryption is *rsa-oaep-256*.
+
+---
+
+## Next steps
+
+- Learn how to model your configuration with the [Kapitan inventory](pages/inventory/introduction.md).
+- See how references are used during [compilation](pages/input_types/introduction.md).
+- Explore the [`kapitan compile`](pages/commands/kapitan_compile.md) and [`kapitan refs`](pages/commands/kapitan_inventory.md) CLI commands.
