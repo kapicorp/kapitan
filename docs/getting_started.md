@@ -103,7 +103,7 @@ Compiled echo-server (0.14s)
 === "Linux"
 
     ```shell
-    sudo apt-get update && sudo apt-get install -y python3.8-dev python3-pip python3-yaml
+    sudo apt-get update && sudo apt-get install -y python3-dev python3-pip python3-yaml
     ```
 
 === "Mac"
@@ -121,7 +121,7 @@ Compiled echo-server (0.14s)
 === "Linux"
 
     !!! note ""
-        `kapitan` will be installed in `$HOME/.local/lib/python3.7/bin`
+        `kapitan` will be installed in `$HOME/.local/lib/python3.x/bin`
 
     ```shell
     pip3 install --user --upgrade kapitan
@@ -130,7 +130,7 @@ Compiled echo-server (0.14s)
 === "Mac"
 
     !!! note ""
-        `kapitan` will be installed in `$HOME/Library/Python/3.7/bin`
+        `kapitan` will be installed in `$HOME/Library/Python/3.x/bin`
 
     ```shell
     pip3 install --user --upgrade kapitan
