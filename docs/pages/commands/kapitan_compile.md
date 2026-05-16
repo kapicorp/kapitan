@@ -139,6 +139,39 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
         +  MYSQL_ROOT_PASSWORD_SHA256: ?{gpg:eyJkYXRhI [[ CUT ]] eXBlIjogImdwZyJ9:embedded}
         ```
 
+## Fast YAML emission with rapidyaml
+
+For YAML-heavy compiles (large Helm-style component trees, big Kubernetes
+manifests, hundreds of targets, etc.) the YAML emitter itself can become a
+meaningful share of total compile time. Kapitan ships an *opt-in* fast
+path backed by [rapidyaml](https://github.com/biojppm/rapidyaml) (a C++ YAML
+library), enabled with `--yaml-use-rapidyaml`.
+
+!!! example ""
+
+    ```shell
+    pip install kapitan[rapidyaml]
+    kapitan compile --yaml-use-rapidyaml
+    ```
+
+    On a realistic Kubernetes Deployment manifest the rapidyaml emitter is
+    around **6x faster** than the default PyYAML emitter.
+
+!!! note
+
+    * Compiled output is **deterministic** and **semantically equivalent**
+      to the default PyYAML output: mapping keys are still sorted
+      alphabetically and every scalar round-trips to the same Python
+      object.
+    * Cosmetic differences are possible (e.g. rapidyaml may single-quote a
+      few scalars that PyYAML leaves plain, like `image: 'mysql:latest'`).
+      Existing fixtures comparing exact bytes may need regenerating.
+    * If the `rapidyaml` package is not installed, the flag is ignored
+      with a one-time startup warning and PyYAML is used.
+    * Documents containing ASCII control characters automatically fall
+      back to PyYAML for that single document (rapidyaml does not escape
+      them in double-quoted scalars).
+
 ## help
 
 !!! example ""
@@ -163,6 +196,7 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
                        [--compose-target-name] [--schemas-path SCHEMAS_PATH]
                        [--yaml-multiline-string-style STYLE]
                        [--yaml-dump-null-as-empty]
+                       [--yaml-use-rapidyaml]
                        [--targets TARGET [TARGET ...] | --labels
                        [key=value ...]]
 
@@ -212,6 +246,8 @@ The `--embed-refs` flags tells **Kapitan** to embed these references on compile,
           --yaml-dump-null-as-empty
                                 dumps all none-type entries as empty, default is
                                 dumping as 'null'
+          --yaml-use-rapidyaml  use the rapidyaml emitter, fallback to PyYaml
+                                if rapidyaml not installed, default is False.
           --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
                                 targets to compile, default is all
           --labels [key=value ...], -l [key=value ...]

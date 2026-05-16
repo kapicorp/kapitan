@@ -101,6 +101,7 @@ nav:
       - Advanced Kapitan:
         - Remote repositories: pages/remote_repositories.md
         - External dependencies: pages/external_dependencies.md
+        - Publishing generators: pages/publishing_generators.md
       - CLI reference:
           - compile: pages/commands/kapitan_compile.md
           - inventory: pages/commands/kapitan_inventory.md
