@@ -113,6 +113,7 @@ nav:
     - pages/blog/index.md
   - Support:
       - Ask for support: support.md
+      - Troubleshooting: pages/troubleshooting.md
       - Related Projects: related.md
   - Contribute:
       - Sponsor Us: pages/contribute/sponsor.md
