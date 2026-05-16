@@ -18,6 +18,7 @@ import sys
 import yaml
 
 from kapitan import cached, defaults, setup_logging
+from kapitan.errors import KapitanError
 from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import select_jsonnet_runtime
 from kapitan.inventory import AVAILABLE_BACKENDS, InventoryBackends
@@ -91,7 +92,10 @@ def trigger_compile(args):
             ref_controller=ref_controller,
             args=args,
         )
-    except:
+    except KapitanError as e:
+        logger.error("%s", e)
+        sys.exit(1)
+    except Exception:
         sys.exit(1)
 
 

@@ -42,5 +42,5 @@ class ReclassRsInventory(Inventory):
                 self.targets[target_name].exports = nodeinfo.exports
 
         except ValueError as e:
-            logger.error(f"Reclass-rs error: {e}")
-            raise InventoryError(f"{e}")
+            logger.error("Reclass-rs error: %s", e)
+            raise InventoryError(f"{e}") from e

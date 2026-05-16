@@ -390,7 +390,8 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
             compose_target_name=compose_target_name,
             ignore_class_not_found=ignore_class_not_found,
         )
-    except InventoryError:
+    except InventoryError as e:
+        logger.error("Inventory error: %s", e)
         sys.exit(1)
 
     cached.inv = inventory_backend

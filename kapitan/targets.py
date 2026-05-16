@@ -15,7 +15,7 @@ import tempfile
 import time
 from functools import partial
 
-from reclass.errors import NotFoundError, ReclassException
+from reclass.errors import ReclassException
 
 from kapitan import cached
 from kapitan.dependency_manager.base import fetch_dependencies
@@ -165,11 +165,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                 f"Compiled {len(targets)} targets in %.2fs", time.time() - compile_start
             )
         except ReclassException as e:
-            if isinstance(e, NotFoundError):
-                logger.error("Inventory reclass error: inventory not found")
-            else:
-                logger.error("Inventory reclass error: %s", e.message)
-            raise InventoryError(e.message)
+            raise InventoryError(e.message) from e
         except Exception as e:
             # if compile worker fails, terminate immediately
             pool.terminate()
@@ -183,7 +179,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                 logger.exception(e)
             else:
                 logger.error(e)
-            raise CompileError(f"Error compiling targets: {e}")
+            raise CompileError(f"Error compiling targets: {e}") from e
 
         finally:
             shutil.rmtree(temp_path)
