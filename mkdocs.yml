@@ -75,6 +75,9 @@ nav:
   - Getting started: getting_started.md
   - Documentation:
       - Core Concepts: pages/core_concepts.md
+      - Kubernetes Configuration Management: pages/kubernetes_configuration_management.md
+      - Kapitan vs Helm vs Kustomize: pages/kapitan_vs_helm_kustomize.md
+      - Examples: pages/kapitan_examples.md
       - Inventory:
         - Introduction: pages/inventory/introduction.md
         - Targets: pages/inventory/targets.md
