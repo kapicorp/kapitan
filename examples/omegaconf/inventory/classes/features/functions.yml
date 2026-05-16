@@ -1,0 +1,60 @@
+---
+parameters:
+  # Test list resolver: convert dict to list of single-key dicts
+  list_input:
+    item1: first
+    item2: second
+  list_result: ${list:${list_input}}
+
+  # Test yaml resolver: dump nested structure to YAML string
+  yaml_source:
+    level1:
+      level2: nested_value
+  yaml_result: ${yaml:yaml_source}
+
+  # Test default resolver: provide fallback when key is missing
+  default_result: ${default:missing_key,fallback_value}
+
+  # Test access resolver: access a key with dots in the name
+  "dotted.key": accessed_value
+  access_result: ${access:dotted.key}
+
+  # Test boolean algebra resolvers
+  bool_and: ${and:true,true,false}
+  bool_or: ${or:false,true,false}
+  bool_not: ${not:true}
+  bool_equal: ${equal:${environment},dev}
+
+  # Test fullkey and key resolvers (evaluated in nested context)
+  key_test:
+    full_name: ${fullkey:}
+    simple_name: ${key:}
+
+  # Test write resolver: write resolved content to another location
+  write_source:
+    copied: true
+    nested:
+      value: written_value
+  write_result: ${write:written_target,write_source}
+
+  # After write, this should be populated
+  written_target:
+    placeholder: before_write
+
+  # Test nested function composition
+  nested_func: ${upper:${concat:hello,world}}
+
+  # Test parentkey in non-deferred context
+  parentkey_test:
+    name: ${parentkey:}
+
+  # Test if with non-string condition
+  if_numeric: ${if:${replicas},has_replicas}
+
+  # Test dict-like merge result behavior
+  dict_merge_result:
+    a: 1
+    b: 2
+
+  kapitan:
+    compile: []

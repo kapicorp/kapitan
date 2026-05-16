@@ -1,0 +1,8 @@
+---
+classes:
+  - common
+  - features.interpolation
+
+parameters:
+  kapitan:
+    compile: []

@@ -1,0 +1,11 @@
+---
+# Rendered by reclass example
+app_name: {{ inventory.parameters.app_name }}
+environment: {{ inventory.parameters.environment }}
+namespace: {{ inventory.parameters.namespace }}
+config_log_level: {{ inventory.parameters.config.log_level | default('unknown') }}
+config_retries: {{ inventory.parameters.config.retries | default(0) }}
+{% if inventory.parameters.db_host is defined %}
+db_host: {{ inventory.parameters.db_host }}
+db_port: {{ inventory.parameters.db_port }}
+{% endif %}

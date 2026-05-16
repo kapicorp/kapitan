@@ -1,0 +1,13 @@
+---
+parameters:
+  # Standard interpolation
+  interpolated: ${app_name}
+
+  # Nested interpolation (interpolation result used inside another interpolation)
+  nested_interpolated: ${base_url}
+
+  # Escaped interpolation (preserved as literal string)
+  escaped_value: \${app_name}
+
+  # Parameter path reference
+  ref_value: ${config:log_level}

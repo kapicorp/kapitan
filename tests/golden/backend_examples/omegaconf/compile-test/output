@@ -1,0 +1,7 @@
+---
+# Rendered by omegaconf example
+app_name: omegaconf-test
+environment: dev
+namespace: default
+interpolated: omegaconf-test
+merged_service_port: 8080

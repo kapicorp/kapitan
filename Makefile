@@ -129,6 +129,13 @@ test_coverage: test_python
 	@echo "===== Running Coverage Report ====="
 	uv run coverage report
 
+# Regenerate golden compiled snapshots for backend examples
+.PHONY: refresh-backend-goldens
+refresh-backend-goldens:
+	@echo "===== Refreshing Backend Example Golden Snapshots ====="
+	uv run python scripts/refresh_backend_goldens.py
+	@echo "Golden snapshots refreshed. Review git diff before committing."
+
 # Build Docker image
 .PHONY: build_docker
 build_docker:

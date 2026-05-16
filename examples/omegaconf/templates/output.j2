@@ -1,0 +1,9 @@
+---
+# Rendered by omegaconf example
+app_name: {{ inventory.parameters.app_name }}
+environment: {{ inventory.parameters.environment }}
+namespace: {{ inventory.parameters.namespace }}
+interpolated: {{ inventory.parameters.interpolated | default('unknown') }}
+{% if inventory.parameters.merged_service is defined %}
+merged_service_port: {{ inventory.parameters.merged_service.port | default(0) }}
+{% endif %}

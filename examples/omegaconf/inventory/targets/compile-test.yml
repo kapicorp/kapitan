@@ -1,0 +1,15 @@
+---
+classes:
+  - common
+  - features.interpolation
+  - features.merge
+
+parameters:
+  kapitan:
+    compile:
+      - input_type: jinja2
+        input_paths:
+          - templates/output.j2
+        output_path: .
+        output_type: yaml
+        suffix_remove: true
