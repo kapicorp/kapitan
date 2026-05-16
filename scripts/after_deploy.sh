@@ -7,7 +7,7 @@ notify_slack() {
     return 0
   fi
 
-  curl -s --retry 3 --retry-delay 3 -X POST --data-urlencode 'payload={"text": "'"$1"'"}' ${SLACK_WEBHOOK} > /dev/null
+  curl -s --retry 3 --retry-delay 3 -X POST --data-urlencode 'payload={"text": "'"$1"'"}' "${SLACK_WEBHOOK}" > /dev/null
 }
 
 notify_hangouts() {
@@ -15,7 +15,7 @@ notify_hangouts() {
     return 0
   fi
 
-  curl -s --retry 3 --retry-delay 3 -H 'Content-Type: application/json' -X POST -d '{"text": "'"$1"'"}' ${HANGOUTS_WEBHOOK} > /dev/null
+  curl -s --retry 3 --retry-delay 3 -H 'Content-Type: application/json' -X POST -d '{"text": "'"$1"'"}' "${HANGOUTS_WEBHOOK}" > /dev/null
 }
 
 LATEST_TAG=$(git describe --abbrev=0 --tags)

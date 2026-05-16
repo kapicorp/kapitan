@@ -16,6 +16,9 @@ jobs:
     # For workflow_dispatch: always run (manual trigger).
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     permissions:
+      # Required for softprops/action-gh-release to upload PEX + checksum
+      # assets to the GitHub release page. Only actually used when the tag
+      # upload condition below evaluates to true (release tags only).
       contents: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -71,10 +74,10 @@ jobs:
 
       - name: Generate PEX checksum
         run: |
-          (cd dist && sha256sum kapitan.linux-x86_64.pex) > dist/SHA256SUMS.pex
+          (cd dist && sha256sum kapitan.linux-x86_64.pex) > dist/kapitan.linux-x86_64.pex.sha256
           echo "PEX checksum:"
-          cat dist/SHA256SUMS.pex
-          (cd dist && sha256sum -c SHA256SUMS.pex)
+          cat dist/kapitan.linux-x86_64.pex.sha256
+          (cd dist && sha256sum -c kapitan.linux-x86_64.pex.sha256)
 
       - name: Add linux-x86_64 pex to assets
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
@@ -85,4 +88,4 @@ jobs:
           tag_name: ${{ steps.tag.outputs.name }}
           files: |
             dist/kapitan.linux-x86_64.pex
-            dist/SHA256SUMS.pex
+            dist/kapitan.linux-x86_64.pex.sha256

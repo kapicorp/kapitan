@@ -14,6 +14,9 @@ jobs:
   pypi-publish:
     runs-on: ubuntu-latest
     permissions:
+      # Required for softprops/action-gh-release to upload SBOM + checksum
+      # assets to the GitHub release page. Only actually used when the
+      # "Upload release artifacts" step runs (release events only).
       contents: write
       # NOTE:
       # Remove user/password and uncomment id-token permission once Trusted

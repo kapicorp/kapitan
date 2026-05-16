@@ -38,7 +38,7 @@ git commit -m "Version increment $VERSION"
 git tag -a "v$VERSION" -m "Version increment $VERSION"
 
 git remote remove origin
-git remote add origin https://${GH_TOKEN}@github.com/kapicorp/kapitan.git
+git remote add origin "https://${GH_TOKEN}@github.com/kapicorp/kapitan.git"
 
 echomsg "Push new commit and tag v$VERSION"
 git push origin --tags HEAD:master
