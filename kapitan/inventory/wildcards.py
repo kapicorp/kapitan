@@ -200,11 +200,10 @@ def expand_class_patterns(
 # ---------------------------------------------------------------------------
 
 
-def _safe_load_yaml(path: str):
+def _safe_load_yaml_text(text: str):
     try:
-        with open(path, encoding="utf-8") as fh:
-            return yaml.safe_load(fh) or {}
-    except (OSError, yaml.YAMLError):
+        return yaml.safe_load(text) or {}
+    except yaml.YAMLError:
         return None
 
 
@@ -241,7 +240,7 @@ def _files_with_wildcards(inventory_path: str) -> list[str]:
                     continue
                 if not any(c in text for c in GLOB_METACHARACTERS):
                     continue
-                data = _safe_load_yaml(text)
+                data = _safe_load_yaml_text(text)
                 if not isinstance(data, dict):
                     continue
                 classes = data.get("classes")
@@ -276,14 +275,15 @@ def _fix_relative_symlinks(src_root: str, dest_root: str):
             if os.path.isabs(target):
                 continue
             # Does the relative target resolve from the new location?
-            dest_resolved = os.path.normpath(
-                os.path.join(dirpath, target)
-            )
+            dest_resolved = os.path.normpath(os.path.join(dirpath, target))
             if os.path.exists(dest_resolved):
                 continue
             # Try to resolve from the corresponding original location.
             rel_dir = os.path.relpath(dirpath, dest_root)
             src_link = os.path.join(src_root, rel_dir, name)
+            # Defensive: these should never be hit because the dest symlink
+            # was already verified to be a relative symlink above, and
+            # shutil.copytree(..., symlinks=True) preserves the link type.
             if not os.path.islink(src_link):
                 continue
             src_target = os.readlink(src_link)
@@ -338,15 +338,11 @@ def materialize_expanded_inventory(
     # Fix relative symlinks that now point outside the temp tree.
     _fix_relative_symlinks(inventory_path, dest)
 
-    logger.debug(
-        f"Materialized inventory with wildcard class expansion at {dest} "
-        f"(rewrote {len(files_to_expand)} file(s))"
-    )
-
     for src in files_to_expand:
         rel = os.path.relpath(src, inventory_path)
         out_path = os.path.join(dest, rel)
-        data = _safe_load_yaml(out_path)
+        with open(out_path, encoding="utf-8") as fh:
+            data = _safe_load_yaml_text(fh.read())
         if not isinstance(data, dict):
             continue
         original = data.get("classes") or []
@@ -355,5 +351,10 @@ def materialize_expanded_inventory(
         )
         with open(out_path, "w", encoding="utf-8") as fh:
             yaml.safe_dump(data, fh, sort_keys=False)
+
+    logger.debug(
+        f"Materialized inventory with wildcard class expansion at {dest} "
+        f"(rewrote {len(files_to_expand)} file(s))"
+    )
 
     return dest
