@@ -1,19 +1,41 @@
 {% extends "base.html" %}
 
+{% block htmltitle %}
+  {% if page.is_homepage and page.meta and page.meta.title %}
+    <title>{{ page.meta.title }}</title>
+  {% elif page.meta and page.meta.title %}
+    {% set full = page.meta.title ~ " – " ~ config.site_name %}
+    <title>{{ page.meta.title if (full | length) > 60 else full }}</title>
+  {% elif page.title and not page.is_homepage %}
+    {% set full = page.title | striptags ~ " – " ~ config.site_name %}
+    <title>{{ page.title | striptags if (full | length) > 60 else full }}</title>
+  {% else %}
+    <title>{{ config.site_name }}</title>
+  {% endif %}
+{% endblock %}
+
 {% block extrahead %}
   {{ super() }}
 
+  {# Resource hints for external domains #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+  <link rel="dns-prefetch" href="https://www.youtube.com">
+
+  {% set page_title = (page.meta or {}).get('title') or page.title or config.site_name %}
+  {% set page_url = page.canonical_url or config.site_url %}
+
   {# Open Graph #}
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="{{ (page.meta or {}).get('title', page.title) }}" />
+  <meta property="og:title" content="{{ page_title }}" />
   <meta property="og:description" content="{{ (page.meta or {}).get('description', config.site_description) }}" />
-  <meta property="og:url" content="{{ page.canonical_url }}" />
+  <meta property="og:url" content="{{ page_url }}" />
   <meta property="og:image" content="{{ config.site_url }}images/kapitan_logo.png" />
   <meta property="og:site_name" content="{{ config.site_name }}" />
 
   {# Twitter Cards #}
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="{{ (page.meta or {}).get('title', page.title) }}" />
+  <meta name="twitter:title" content="{{ page_title }}" />
   <meta name="twitter:description" content="{{ (page.meta or {}).get('description', config.site_description) }}" />
   <meta name="twitter:image" content="{{ config.site_url }}images/kapitan_logo.png" />
 
@@ -72,6 +94,15 @@
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WPN4JBMH"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
+  <script>
+    document.querySelectorAll('.md-nav__link, .md-tabs__link').forEach(function(link) {
+      var href = link.getAttribute('href') || '';
+      if (href.indexOf('http://') === 0 || href.indexOf('https://') === 0) {
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener');
+      }
+    });
+  </script>
 {% endblock %}
 
 {% block content %}
@@ -79,7 +110,8 @@
   {% if page.edit_url %}
   <a
       href="{{ page.edit_url }}"
-      title="{{ lang.t('edit.link.title') }}"
+      title="Edit this page"
+      aria-label="Edit this page"
       class="md-content__button md-icon"
   >
       {% include ".icons/material/pencil.svg" %}

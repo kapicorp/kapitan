@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Core Concepts: Inventory, Targets, Classes, and Input Types"
+title: "Kapitan Core Concepts"
 description: "Learn how Kapitan organizes configuration with inventory, targets, classes, and input types to generate Kubernetes, Terraform, and infrastructure manifests."
 ---
 
