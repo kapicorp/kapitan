@@ -59,7 +59,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         targets = search_targets(inventory, targets, labels)
 
     except CompileError as e:
-        raise CompileError(f"Error searching targets: {e}")
+        raise CompileError(f"Error searching targets: {e}") from e
 
     if len(targets) == 0:
         raise CompileError(
@@ -72,35 +72,36 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)"
     )
 
+    # check if --fetch or --force-fetch is enabled
+    force_fetch = args.force_fetch
+    fetch = args.fetch or force_fetch
+
+    # deprecated --force flag
+    if args.force:
+        logger.info(
+            "DeprecationWarning: --force is deprecated. Use --force-fetch instead of --force --fetch"
+        )
+        force_fetch = True
+
+    if fetch:
+        # skip classes that are not yet available
+        target_objs = load_target_inventory(
+            inventory, targets, ignore_class_not_found=True
+        )
+    else:
+        # ignore_class_not_found = False by default
+        target_objs = load_target_inventory(inventory, targets)
+
+    if not target_objs:
+        raise CompileError("Error: no targets found")
+
+    # append "compiled" to output_path so we can safely overwrite it
+    output_path = args.output_path
+    compile_path = os.path.join(output_path, "compiled")
+
     with multiprocessing.Pool(parallelism) as pool:
         try:
             fetching_start = time.time()
-            # check if --fetch or --force-fetch is enabled
-            force_fetch = args.force_fetch
-            fetch = args.fetch or force_fetch
-
-            # deprecated --force flag
-            if args.force:
-                logger.info(
-                    "DeprecationWarning: --force is deprecated. Use --force-fetch instead of --force --fetch"
-                )
-                force_fetch = True
-
-            if fetch:
-                # skip classes that are not yet available
-                target_objs = load_target_inventory(
-                    inventory, targets, ignore_class_not_found=True
-                )
-            else:
-                # ignore_class_not_found = False by default
-                target_objs = load_target_inventory(inventory, targets)
-
-            # append "compiled" to output_path so we can safely overwrite it
-            output_path = args.output_path
-            compile_path = os.path.join(output_path, "compiled")
-
-            if not target_objs:
-                raise CompileError("Error: no targets found")
 
             # fetch dependencies
             if fetch:
@@ -169,7 +170,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                 logger.error("Inventory reclass error: inventory not found")
             else:
                 logger.error("Inventory reclass error: %s", e.message)
-            raise InventoryError(e.message)
+            raise InventoryError(e.message) from e
         except Exception as e:
             # if compile worker fails, terminate immediately
             pool.terminate()
@@ -183,7 +184,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                 logger.exception(e)
             else:
                 logger.error(e)
-            raise CompileError(f"Error compiling targets: {e}")
+            raise CompileError(f"Error compiling targets: {e}") from e
 
         finally:
             shutil.rmtree(temp_path)
@@ -237,10 +238,10 @@ def search_targets(inventory, targets, labels):
 
     try:
         labels_dict = dict(label.split("=") for label in labels)
-    except ValueError:
+    except ValueError as e:
         raise CompileError(
             "Compile error: Failed to parse labels, should be formatted like: kapitan compile -l env=prod app=example"
-        )
+        ) from e
 
     targets_found = []
     # It should come back already rendered

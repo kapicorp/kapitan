@@ -13,6 +13,11 @@ class KapitanEssentialVars(BaseModel):
 
 
 class KapitanInventorySettings(BaseModel):
+    # ``extra="allow"`` lets targets declare additional kapitan settings (such
+    # as ``topics``) without polluting the dumped inventory with empty default
+    # fields for targets that opt out.
+    model_config = ConfigDict(extra="allow")
+
     compile: list[CompileInputTypeConfig] = []
     vars: KapitanEssentialVars = KapitanEssentialVars()
     labels: dict[str, str] = {}

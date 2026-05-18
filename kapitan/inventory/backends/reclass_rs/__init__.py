@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 import reclass_rs
 from kapitan.errors import InventoryError
@@ -30,9 +30,9 @@ class ReclassRsInventory(Inventory):
     ):
         try:
             r = self._make_reclass_rs(ignore_class_not_found)
-            start = datetime.now()
+            start = datetime.now(timezone.utc)
             inv = r.inventory()
-            elapsed = datetime.now() - start
+            elapsed = datetime.now(timezone.utc) - start
             logger.debug(f"Inventory rendering with reclass-rs took {elapsed}")
 
             for target_name, nodeinfo in inv.nodes.items():
@@ -43,4 +43,4 @@ class ReclassRsInventory(Inventory):
 
         except ValueError as e:
             logger.error(f"Reclass-rs error: {e}")
-            raise InventoryError(f"{e}")
+            raise InventoryError(f"{e}") from e

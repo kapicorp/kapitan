@@ -77,6 +77,42 @@ class Inventory(ABC):
             for target in self.targets.values()
         }
 
+    @functools.cached_property
+    def topics(self) -> dict:
+        """
+        Aggregate ``kapitan.topics`` declarations across all targets.
+
+        Returns a mapping ``topic_name -> {"parameters": {"targets": {target_name: parameters}}}``
+        suitable for consumption via the ``topics("<name>")`` helper in kadet
+        components.
+
+        A target opts into a topic by declaring::
+
+            parameters:
+              kapitan:
+                topics:
+                  <topic_name>:
+                    parameters:
+                      <key>: <value>
+
+        Topic parameters from each participating target are collected under
+        ``parameters.targets.<target_name>`` of the resulting topic entry.
+        """
+        topics: dict[str, dict[str, dict]] = {}
+        for target in self.targets.values():
+            target_topics = getattr(target.parameters.kapitan, "topics", None) or {}
+            for topic_name, topic_values in target_topics.items():
+                # support both pydantic model and raw dict
+                topic_params = getattr(topic_values, "parameters", None)
+                if topic_params is None and isinstance(topic_values, dict):
+                    topic_params = topic_values.get("parameters", {})
+                topics.setdefault(topic_name, {})[target.name] = topic_params or {}
+
+        return {
+            name: {"parameters": {"targets": targets}}
+            for name, targets in topics.items()
+        }
+
     def __initialise(self, ignore_class_not_found) -> bool:
         """
         look for targets at '<inventory_path>/targets/' and initialise them.

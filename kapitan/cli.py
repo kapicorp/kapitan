@@ -91,7 +91,8 @@ def trigger_compile(args):
             ref_controller=ref_controller,
             args=args,
         )
-    except:
+    except Exception as e:
+        logger.debug("Compile failed: %s", e, exc_info=True)
         sys.exit(1)
 
 
@@ -429,6 +430,14 @@ def build_parser():
         help="Indentation spaces for inventory output, default is 2",
     )
     inventory_parser.add_argument(
+        "--topics",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="NAME",
+        help="show aggregated topics instead of target inventory",
+    )
+    inventory_parser.add_argument(
         "--multiline-string-style",
         "-L",
         type=str,
@@ -693,8 +702,9 @@ def main(*argv):
         getattr(args, "func", None) == generate_inventory
         and args.pattern
         and args.target_name == ""
+        and getattr(args, "topics", None) is None
     ):
-        parser.error("--pattern requires --target_name")
+        parser.error("--pattern requires --target_name or --topics")
 
     logger.debug("Running with args: %s", args)
 
