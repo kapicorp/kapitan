@@ -1,4 +1,9 @@
-# :kapitan-logo: **Input Type | Helm**
+---
+title: "Kapitan Helm Input Type: Render Helm Charts Without Tiller"
+description: "Render Helm charts inside Kapitan without the Helm executable or Tiller. Override values, fetch dependencies, and output Kubernetes manifests."
+---
+
+# :kapitan-logo: **Kapitan Helm Input Type**
 
 This is a Python binding to `helm template` command for users with helm charts. This does not require the helm executable, and the templates are rendered without the Tiller server.
 
