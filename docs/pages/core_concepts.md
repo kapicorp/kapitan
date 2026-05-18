@@ -1,3 +1,8 @@
+---
+title: "Kapitan Core Concepts: Inventory, Targets, Classes, and Input Types"
+description: "Learn how Kapitan organizes configuration with inventory, targets, classes, and input types to generate Kubernetes, Terraform, and infrastructure manifests."
+---
+
 # :kapitan-logo: **Kapitan Core Concepts**
 
 **Kapitan** essentially allows you to organise your data with the **`inventory`**, and uses it to configure and run multiple [**`Input Types`**](input_types/introduction.md) which generate files.
@@ -156,3 +161,11 @@ parameters:
     headquarters: London
     timezone: Europe/London
 ```
+
+---
+
+## Next steps
+
+- Dive deeper into the [Kapitan inventory](inventory/introduction.md): how [targets](inventory/targets.md), [classes](inventory/classes.md), and [parameter interpolation](inventory/parameters_interpolation.md) model your configuration.
+- Choose an [input type](input_types/introduction.md) for your use case: [Jsonnet](input_types/jsonnet.md), [Jinja](input_types/jinja.md), [Kadet](input_types/kadet.md), [Helm](input_types/helm.md), [Kustomize](input_types/kustomize.md), or [CUE](input_types/cuelang.md).
+- Learn how to manage secrets and dynamic values with [Kapitan References](../references.md).
