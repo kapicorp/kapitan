@@ -1,5 +1,10 @@
 
-# :kapitan-logo: **Targets**
+---
+title: "Kapitan Inventory Targets: Defining Environments and Deployments"
+description: "Learn how to define Kapitan targets for production, staging, and development. Organize targets hierarchically and compile environment-specific configuration."
+---
+
+# :kapitan-logo: **Kapitan Inventory Targets**
 
 In the world of Kapitan, a target represents a specific environment or deployment scenario where you want to apply your configurations.
 

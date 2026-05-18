@@ -1,4 +1,68 @@
 {% extends "base.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="{{ (page.meta or {}).get('title', page.title) }}" />
+  <meta property="og:description" content="{{ (page.meta or {}).get('description', config.site_description) }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{ page.canonical_url }}" />
+  <meta property="og:image" content="{{ config.site_url }}images/kapitan_logo.png" />
+  <meta property="og:site_name" content="{{ config.site_name }}" />
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="{{ (page.meta or {}).get('title', page.title) }}" />
+  <meta name="twitter:description" content="{{ (page.meta or {}).get('description', config.site_description) }}" />
+  <meta name="twitter:image" content="{{ config.site_url }}images/kapitan_logo.png" />
+
+  {% if page.is_homepage %}
+  <!-- JSON-LD structured data for homepage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "{{ config.site_url }}",
+        "url": "{{ config.site_url }}",
+        "name": "{{ config.site_name }}",
+        "description": "{{ config.site_description }}",
+        "publisher": {
+          "@id": "{{ config.site_url }}#organization"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": "{{ config.site_url }}#organization",
+        "name": "KapiCorp",
+        "url": "{{ config.site_url }}",
+        "sameAs": [
+          "https://github.com/kapicorp",
+          "https://twitter.com/kapitandev"
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "{{ config.site_url }}#kapitan",
+        "name": "Kapitan",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Linux, macOS, Windows",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "url": "{{ config.site_url }}",
+        "sameAs": "https://github.com/kapicorp/kapitan"
+      }
+    ]
+  }
+  </script>
+  {% endif %}
+{% endblock %}
+
 {% block scripts %}
   {{ super() }}
    <!-- Google Tag Manager (noscript) -->
