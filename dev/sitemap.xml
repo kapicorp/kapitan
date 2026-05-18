@@ -33,11 +33,19 @@
          <lastmod>2026-05-18</lastmod>
     </url>
     <url>
+         <loc>https://kapitan.dev/dev/pages/argocd/</loc>
+         <lastmod>2026-05-18</lastmod>
+    </url>
+    <url>
          <loc>https://kapitan.dev/dev/pages/core_concepts/</loc>
          <lastmod>2026-05-18</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/external_dependencies/</loc>
+         <lastmod>2026-05-18</lastmod>
+    </url>
+    <url>
+         <loc>https://kapitan.dev/dev/pages/fluxcd/</loc>
          <lastmod>2026-05-18</lastmod>
     </url>
     <url>
