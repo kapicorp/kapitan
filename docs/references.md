@@ -1,3 +1,8 @@
+---
+title: "Kapitan References: Secrets Management and External Values"
+description: "Kapitan References manage secrets and dynamic values with support for GPG, AWS KMS, GCP KMS, Azure Key Vault, HashiCorp Vault, and more."
+---
+
 # :kapitan-logo: **Kapitan References** (formally ***Secrets***)
 
 One of the motivations behing Kapitan's design is that we believe that everything about your setup should be tracked, and Kapitan takes this to the extreme. Sometimes, however, we have to manage values that we do not think they belong to the **Inventory**: perhaps they are either too variable (for instance, a *Git commit sha* that changes with every build) or too sensitive, like a password or a generic secret, and then they should always be encrypted.
@@ -791,3 +796,11 @@ For example, to reveal the secret stored at `path/to/secret_inside_kapitan`
     ```
 
 *Note:* Cryptographic algorithm used for encryption is *rsa-oaep-256*.
+
+---
+
+## Next steps
+
+- Learn how to model your configuration with the [Kapitan inventory](pages/inventory/introduction.md).
+- See how references are used during [compilation](pages/input_types/introduction.md).
+- Explore the [`kapitan compile`](pages/commands/kapitan_compile.md) and [`kapitan refs`](pages/commands/kapitan_inventory.md) CLI commands.
