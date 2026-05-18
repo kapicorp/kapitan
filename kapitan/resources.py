@@ -327,7 +327,17 @@ def generate_inventory(args):
     try:
         inv = get_inventory(args.inventory_path)
 
-        if args.target_name:
+        # ``--topics`` is mutually informative with ``--target-name``: if a
+        # topic name is provided we dump that single topic; otherwise we dump
+        # the full topics mapping. Topic data is plain dicts (see
+        # ``kapitan.topics``) so it flows through the existing yaml dumping.
+        topics_arg = getattr(args, "topics", None)
+        if topics_arg is not None:
+            inv = topics(topics_arg) if topics_arg else topics()
+            if args.pattern:
+                pattern = args.pattern.split(".")
+                inv = deep_get(inv, pattern)
+        elif args.target_name:
             inv = inv.inventory[args.target_name]
             if args.pattern:
                 pattern = args.pattern.split(".")

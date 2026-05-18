@@ -119,3 +119,26 @@ target-2:
 Topics are inventory-backend agnostic and only collect what each target
 explicitly opts into, avoiding cryptic query expressions and full inventory
 scans.
+
+### Inspecting topics from the CLI
+
+The `inventory` subcommand has a `--topics` flag for inspecting the aggregated
+view without compiling anything.
+
+!!! example "List all topics"
+    ```shell
+    kapitan inventory --topics
+    ```
+
+!!! example "Show a single topic"
+    ```shell
+    kapitan inventory --topics colours
+    ```
+
+`--topics` combines with `--pattern` to drill into the result and with `--flat`
+to produce flat keys:
+
+```shell
+kapitan inventory --topics colours --pattern parameters.targets
+kapitan inventory --topics --flat
+```
