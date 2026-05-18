@@ -1,0 +1,9 @@
+---
+# Shared configuration for all test targets
+classes:
+  - common
+  - defaults
+  - kapitan.common
+
+parameters:
+  product: test

@@ -1,3 +1,8 @@
+---
+title: "Kapitan References: Secrets Management and External Values"
+description: "Kapitan References manage secrets and dynamic values with support for GPG, AWS KMS, GCP KMS, Azure Key Vault, HashiCorp Vault, and more."
+---
+
 # :kapitan-logo: **Kapitan References** (formally ***Secrets***)
 
 One of the motivations behing Kapitan's design is that we believe that everything about your setup should be tracked, and Kapitan takes this to the extreme. Sometimes, however, we have to manage values that we do not think they belong to the **Inventory**: perhaps they are either too variable (for instance, a *Git commit sha* that changes with every build) or too sensitive, like a password or a generic secret, and then they should always be encrypted.
@@ -480,10 +485,16 @@ For instance, to automatically initialise a reference with a ***random string***
         ```
     === "publickey"
         !!! quote ""
-            Derives the public key from a revealed private key
+            Derives the public key from a revealed private key. Both keys can be created in a single compile - if the private key doesn't exist yet, it will be automatically created when the public key reference is compiled.
         ```yaml
+        # Both references can be defined together; during a single compile Kapitan will create the private key
+        # before deriving the public key, as long as the private key path matches the one used in the public key reference.
         ?{${backend}:targets/${target_name}/private_key||rsa}
         ?{${backend}:targets/${target_name}/public_key||reveal:targets/${target_name}/private_key|publickey}
+        
+        # Also works with Ed25519 keys
+        ?{${backend}:targets/${target_name}/ed25519_private||ed25519}
+        ?{${backend}:targets/${target_name}/ed25519_public||reveal:targets/${target_name}/ed25519_private|publickey}
         ```
     === "rsapublic"
         !!! quote ""

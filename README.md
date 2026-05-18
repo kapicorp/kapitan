@@ -1,4 +1,4 @@
-# Kapitan: advanced configuration management tool
+# Kapitan: Configuration Management for Kubernetes, Terraform, and Infrastructure
 
 [![Test, Build and Publish docker image](https://github.com/kapicorp/kapitan/actions/workflows/test-build-publish.yml/badge.svg?branch=master&event=push)](https://github.com/kapicorp/kapitan/actions/workflows/test-build-publish.yml)
 ![Python Version](https://img.shields.io/pypi/pyversions/kapitan)
@@ -7,17 +7,19 @@
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
 
-<img src="docs/images/kapitan_logo.png" width="25">
+<img src="docs/images/kapitan_logo.png" width="25" alt="Kapitan logo">
 
+**Kapitan** is an open source configuration management tool for **Kubernetes**, **Terraform**, and complex infrastructure systems. It helps teams generate, organize, reuse, and validate configuration across environments using an **inventory-driven model**, templates (**Jsonnet**, **Jinja2**, **Kadet**), and integrations with **Helm**, **Kustomize**, **CUE**, and external references.
 
-**`Kapitan`** aims to be your *one-stop tool* to help you manage the ever growing complexity of your configurations.
+Kapitan provides native **secrets management** (GPG, AWS KMS, GCP KMS, Azure Key Vault, HashiCorp Vault) and is designed for **Platform Engineering** and **GitOps** workflows.
 
-Join the community [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3)
+- **Documentation**: <https://kapitan.dev>
+- **Community**: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3) on Kubernetes Slack
+- **Quick Start**: <https://kapitan.dev/getting_started/>
 
-## [**Official site**](https://kapitan.dev) <https://kapitan.dev>
+## What is Kapitan?
 
-
-## [**Quick Start**](https://kapitan.dev/getting_started/#quickstart)
+Kapitan lets you model infrastructure configuration with reusable **inventory classes** and **targets**, then compile that data into manifests, scripts, documentation, and Terraform resources. Instead of copying values across Helm values files, Kustomize overlays, and Terraform variables, you define everything once in the Kapitan inventory and let each input type generate the files it needs.
 
 ## Install Kapitan
 

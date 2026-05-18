@@ -600,3 +600,345 @@ class Base64RefsTest(unittest.TestCase):
         REVEALER._reveal_tag_without_subvar.cache_clear()
         revealed = REVEALER.reveal_raw_file(file_with_tags)
         self.assertEqual(revealed, "dXNlcjEyMzpteXNlY3JldHBhc3N3b3Jk")
+
+    def test_ref_dependency_ordering_rsa_keypair(self):
+        """
+        Test that RSA private and public key can be generated in a single compile.
+
+        This tests the fix for https://github.com/kapicorp/kapitan/issues/749
+        where attempting to create both keys in one compile would fail with:
+        "|reveal function error: ... does not exist"
+
+        The fix enables on-demand creation of dependencies in the reveal() function.
+        """
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        # Simulate the exact scenario from the issue:
+        # 1. Private key with ||rsa function
+        # 2. Public key with ||reveal:path/to/privkey|publickey function
+        # The public key depends on the private key existing first.
+        test_obj = {
+            "ssh_keys": {
+                "private_key": "?{base64:test/keypair/private||rsa:2048}",
+                "public_key": "?{base64:test/keypair/public||reveal:test/keypair/private|publickey}",
+            }
+        }
+
+        # This should work without errors - compile_obj processes dictionary items
+        # in order, so the private key is created before the public key is revealed
+        REVEALER.compile_obj(test_obj)
+
+        # Verify both references were created
+        priv_tag = "?{base64:test/keypair/private||rsa:2048}"
+        pub_tag = "?{base64:test/keypair/public||reveal:test/keypair/private|publickey}"
+
+        priv_ref = REF_CONTROLLER[priv_tag]
+        pub_ref = REF_CONTROLLER[pub_tag]
+
+        # Verify the private key is valid RSA with correct key size
+        priv_revealed = priv_ref.reveal()
+        private_key = serialization.load_pem_private_key(
+            priv_revealed.encode(), password=None, backend=default_backend()
+        )
+        self.assertEqual(private_key.key_size, 2048)
+
+        # Verify the public key is valid and correctly derived from the private key
+        pub_revealed = pub_ref.reveal()
+        public_key = serialization.load_pem_public_key(
+            pub_revealed.encode(), backend=default_backend()
+        )
+        # Verify it's an RSA public key
+        self.assertIsInstance(public_key, rsa.RSAPublicKey)
+
+        # Verify public key matches private key by comparing PEM representations
+        expected_public = private_key.public_key()
+        expected_pub_pem = expected_public.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode()
+        self.assertEqual(pub_revealed, expected_pub_pem)
+
+    def test_ref_dependency_ordering_rsa_keypair_reverse(self):
+        """
+        Test RSA keypair generation with public key defined BEFORE private key.
+
+        This verifies that the dependency ordering is truly independent of definition order.
+        """
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        # Define public key BEFORE private key (reverse order)
+        test_obj = {
+            "ssh_keys": {
+                "public_key": "?{base64:test/keypair_rev/public||reveal:test/keypair_rev/private|publickey}",
+                "private_key": "?{base64:test/keypair_rev/private||rsa:2048}",
+            }
+        }
+
+        # This should work regardless of definition order
+        REVEALER.compile_obj(test_obj)
+
+        # Verify both references were created
+        priv_tag = "?{base64:test/keypair_rev/private||rsa:2048}"
+        pub_tag = "?{base64:test/keypair_rev/public||reveal:test/keypair_rev/private|publickey}"
+
+        priv_ref = REF_CONTROLLER[priv_tag]
+        pub_ref = REF_CONTROLLER[pub_tag]
+
+        # Verify the keys are valid and match
+        priv_revealed = priv_ref.reveal()
+        private_key = serialization.load_pem_private_key(
+            priv_revealed.encode(), password=None, backend=default_backend()
+        )
+        self.assertEqual(private_key.key_size, 2048)
+
+        pub_revealed = pub_ref.reveal()
+        public_key = serialization.load_pem_public_key(
+            pub_revealed.encode(), backend=default_backend()
+        )
+        self.assertIsInstance(public_key, rsa.RSAPublicKey)
+
+        # Verify public key matches private key
+        expected_public = private_key.public_key()
+        expected_pub_pem = expected_public.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode()
+        self.assertEqual(pub_revealed, expected_pub_pem)
+
+    def test_ref_dependency_ordering_ed25519_keypair(self):
+        """
+        Test that Ed25519 private and public key can be generated in a single compile.
+
+        This tests the same dependency ordering fix as test_ref_dependency_ordering_rsa_keypair
+        but with Ed25519 keys instead of RSA.
+        """
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import ed25519
+
+        # Create Ed25519 keypair with dependency
+        # 1. Private key with ||ed25519 function
+        # 2. Public key with ||reveal:path/to/privkey|publickey function
+        test_obj = {
+            "signing_keys": {
+                "private_key": "?{base64:test/ed25519/private||ed25519}",
+                "public_key": "?{base64:test/ed25519/public||reveal:test/ed25519/private|publickey}",
+            }
+        }
+
+        # This should work without errors - compile_obj processes in order
+        REVEALER.compile_obj(test_obj)
+
+        # Verify both references were created
+        priv_tag = "?{base64:test/ed25519/private||ed25519}"
+        pub_tag = "?{base64:test/ed25519/public||reveal:test/ed25519/private|publickey}"
+
+        priv_ref = REF_CONTROLLER[priv_tag]
+        pub_ref = REF_CONTROLLER[pub_tag]
+
+        # Verify the private key is valid Ed25519
+        priv_revealed = priv_ref.reveal()
+        private_key = serialization.load_pem_private_key(
+            priv_revealed.encode(), password=None, backend=default_backend()
+        )
+        self.assertIsInstance(private_key, ed25519.Ed25519PrivateKey)
+
+        # Verify the public key is valid and correctly derived from the private key
+        pub_revealed = pub_ref.reveal()
+        public_key = serialization.load_pem_public_key(
+            pub_revealed.encode(), backend=default_backend()
+        )
+        self.assertIsInstance(public_key, ed25519.Ed25519PublicKey)
+
+        # Verify public key matches private key by comparing PEM representations
+        expected_public = private_key.public_key()
+        expected_pub_pem = expected_public.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode()
+        self.assertEqual(pub_revealed, expected_pub_pem)
+
+    def test_ref_dependency_ordering_ed25519_keypair_reverse(self):
+        """
+        Test Ed25519 keypair with public key defined BEFORE private key.
+
+        This verifies that the dependency ordering is truly independent of definition order.
+        """
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import ed25519
+
+        # Define public key BEFORE private key (reverse order)
+        test_obj = {
+            "signing_keys": {
+                "public_key": "?{base64:test/ed25519_rev/public||reveal:test/ed25519_rev/private|publickey}",
+                "private_key": "?{base64:test/ed25519_rev/private||ed25519}",
+            }
+        }
+
+        # This should work regardless of definition order
+        REVEALER.compile_obj(test_obj)
+
+        # Verify both references were created
+        priv_tag = "?{base64:test/ed25519_rev/private||ed25519}"
+        pub_tag = "?{base64:test/ed25519_rev/public||reveal:test/ed25519_rev/private|publickey}"
+
+        priv_ref = REF_CONTROLLER[priv_tag]
+        pub_ref = REF_CONTROLLER[pub_tag]
+
+        # Verify the keys are valid and match
+        priv_revealed = priv_ref.reveal()
+        private_key = serialization.load_pem_private_key(
+            priv_revealed.encode(), password=None, backend=default_backend()
+        )
+        self.assertIsInstance(private_key, ed25519.Ed25519PrivateKey)
+
+        pub_revealed = pub_ref.reveal()
+        public_key = serialization.load_pem_public_key(
+            pub_revealed.encode(), backend=default_backend()
+        )
+        self.assertIsInstance(public_key, ed25519.Ed25519PublicKey)
+
+        # Verify public key matches private key
+        expected_public = private_key.public_key()
+        expected_pub_pem = expected_public.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode()
+        self.assertEqual(pub_revealed, expected_pub_pem)
+
+    def test_ref_dependency_ordering_multiple_dependencies(self):
+        """
+        Test that multi-level dependency chains are resolved correctly.
+
+        This verifies that the recursive on-demand creation works through
+        multiple levels: base -> derived1 -> derived2
+        Each level depends on the previous one being created first.
+        """
+        import hashlib
+
+        # Create a 3-level dependency chain:
+        # base: random string (no dependencies)
+        # derived1: sha256(reveal(base)) - depends on base
+        # derived2: sha256(reveal(derived1)) - depends on derived1, which depends on base
+        test_obj = {
+            "secrets": {
+                "base": "?{base64:test/chain/base||random:str:16}",
+                "derived1": "?{base64:test/chain/derived1||reveal:test/chain/base|sha256}",
+                "derived2": "?{base64:test/chain/derived2||reveal:test/chain/derived1|sha256}",
+            }
+        }
+
+        # All dependencies should be created during compilation
+        REVEALER.compile_obj(test_obj)
+
+        # Verify all three references were created
+        base_ref = REF_CONTROLLER["?{base64:test/chain/base||random:str:16}"]
+        derived1_ref = REF_CONTROLLER[
+            "?{base64:test/chain/derived1||reveal:test/chain/base|sha256}"
+        ]
+        derived2_ref = REF_CONTROLLER[
+            "?{base64:test/chain/derived2||reveal:test/chain/derived1|sha256}"
+        ]
+
+        # Verify the dependency chain is correctly resolved
+        base_val = base_ref.reveal()
+        derived1_val = derived1_ref.reveal()
+        derived2_val = derived2_ref.reveal()
+
+        # derived1 should be sha256(":base_val") - kapitan sha256 uses salt format
+        expected_derived1 = hashlib.sha256(f":{base_val}".encode()).hexdigest()
+        self.assertEqual(derived1_val, expected_derived1)
+
+        # derived2 should be sha256(":derived1_val")
+        expected_derived2 = hashlib.sha256(f":{derived1_val}".encode()).hexdigest()
+        self.assertEqual(derived2_val, expected_derived2)
+
+    def test_ref_dependency_ordering_multiple_dependencies_reverse(self):
+        """
+        Test multi-level dependency chain with REVERSE definition order.
+
+        This verifies that dependencies are resolved regardless of definition order:
+        derived2 -> derived1 -> base (reverse of dependency chain)
+        """
+        import hashlib
+
+        # Define in REVERSE order: derived2 first, then derived1, then base
+        test_obj = {
+            "secrets": {
+                "derived2": "?{base64:test/chain_rev/derived2||reveal:test/chain_rev/derived1|sha256}",
+                "derived1": "?{base64:test/chain_rev/derived1||reveal:test/chain_rev/base|sha256}",
+                "base": "?{base64:test/chain_rev/base||random:str:16}",
+            }
+        }
+
+        # All dependencies should be created regardless of definition order
+        REVEALER.compile_obj(test_obj)
+
+        # Verify all three references were created
+        base_ref = REF_CONTROLLER["?{base64:test/chain_rev/base||random:str:16}"]
+        derived1_ref = REF_CONTROLLER[
+            "?{base64:test/chain_rev/derived1||reveal:test/chain_rev/base|sha256}"
+        ]
+        derived2_ref = REF_CONTROLLER[
+            "?{base64:test/chain_rev/derived2||reveal:test/chain_rev/derived1|sha256}"
+        ]
+
+        # Verify the dependency chain is correctly resolved
+        base_val = base_ref.reveal()
+        derived1_val = derived1_ref.reveal()
+        derived2_val = derived2_ref.reveal()
+
+        # derived1 should be sha256(":base_val")
+        expected_derived1 = hashlib.sha256(f":{base_val}".encode()).hexdigest()
+        self.assertEqual(derived1_val, expected_derived1)
+
+        # derived2 should be sha256(":derived1_val")
+        expected_derived2 = hashlib.sha256(f":{derived1_val}".encode()).hexdigest()
+        self.assertEqual(derived2_val, expected_derived2)
+
+    def test_ref_dependency_ordering_complex_object(self):
+        """
+        Test dependency ordering with nested objects and lists
+        """
+        test_obj = {
+            "level1": {
+                "keys": [
+                    {
+                        "private": "?{base64:test/complex/key1||rsa:2048}",
+                        "public": "?{base64:test/complex/pub1||reveal:test/complex/key1|publickey}",
+                    },
+                    {
+                        "private": "?{base64:test/complex/key2||rsa:2048}",
+                        "public": "?{base64:test/complex/pub2||reveal:test/complex/key2|publickey}",
+                    },
+                ],
+                "level2": {
+                    "base_secret": "?{base64:test/complex/base||random:str}",
+                    "derived": "?{base64:test/complex/derived||reveal:test/complex/base|sha256}",
+                },
+            }
+        }
+
+        # Should compile without errors
+        REVEALER.compile_obj(test_obj)
+
+        # Verify all refs were created
+        key1_priv = REF_CONTROLLER["?{base64:test/complex/key1||rsa:2048}"]
+        key1_pub = REF_CONTROLLER[
+            "?{base64:test/complex/pub1||reveal:test/complex/key1|publickey}"
+        ]
+        key2_priv = REF_CONTROLLER["?{base64:test/complex/key2||rsa:2048}"]
+        key2_pub = REF_CONTROLLER[
+            "?{base64:test/complex/pub2||reveal:test/complex/key2|publickey}"
+        ]
+
+        # Verify they exist
+        self.assertIsNotNone(key1_priv)
+        self.assertIsNotNone(key1_pub)
+        self.assertIsNotNone(key2_priv)
+        self.assertIsNotNone(key2_pub)

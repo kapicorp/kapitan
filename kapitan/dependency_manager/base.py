@@ -6,14 +6,28 @@ import hashlib
 import logging
 import multiprocessing
 import os
+import sys
+import tarfile
 from collections import defaultdict, namedtuple
 from functools import partial
 from mimetypes import MimeTypes
+from pathlib import Path
 from shutil import copyfile, rmtree
+
+
+try:
+    import oras.client
+except ImportError:
+    oras = None
 
 from git import GitCommandError, Repo
 
-from kapitan.errors import GitFetchingError, GitSubdirNotFoundError, HelmFetchingError
+from kapitan.errors import (
+    GitFetchingError,
+    GitSubdirNotFoundError,
+    HelmFetchingError,
+    OCIFetchingError,
+)
 from kapitan.helm_cli import helm_cli
 from kapitan.inventory.model.dependencies import KapitanDependencyTypes
 from kapitan.utils import (
@@ -43,6 +57,7 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
     git_deps = defaultdict(list)
     http_deps = defaultdict(list)
     helm_deps = defaultdict(list)
+    oci_deps = defaultdict(list)
 
     # this dict is to make sure no duplicated output_paths exist per source
     deps_output_paths = defaultdict(set)
@@ -81,6 +96,8 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
                     helm_deps[
                         HelmSource(source_uri, item.chart_name, version, item.helm_path)
                     ].append(item)
+                elif dependency_type == KapitanDependencyTypes.OCI:
+                    oci_deps[source_uri].append(item)
                 else:
                     logger.warning("%s is not a valid source type", dependency_type)
 
@@ -94,16 +111,19 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
     git_worker = partial(fetch_git_dependency, save_dir=save_dir, force=force)
     http_worker = partial(fetch_http_dependency, save_dir=save_dir, force=force)
     helm_worker = partial(fetch_helm_chart, save_dir=save_dir, force=force)
+    oci_worker = partial(fetch_oci_dependency, save_dir=save_dir, force=force)
     [p.get() for p in pool.imap_unordered(http_worker, http_deps.items()) if p]
     [p.get() for p in pool.imap_unordered(git_worker, git_deps.items()) if p]
     [p.get() for p in pool.imap_unordered(helm_worker, helm_deps.items()) if p]
+    [p.get() for p in pool.imap_unordered(oci_worker, oci_deps.items()) if p]
 
 
 def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
     """
     fetches a git repository at source into save_dir, and copy the repository into
-    output_path stored in dep_mapping. ref is used to checkout if exists, fetches master branch by default.
-    only subdir is copied into output_path if specified.
+    output_path stored in dep_mapping. ref is checked out if specified (branch, tag, or
+    commit SHA); if omitted, the remote's default branch (origin/HEAD) is used. only
+    subdir is copied into output_path if specified.
     """
     source, deps = dep_mapping
     # to avoid collisions between basename(source)
@@ -113,11 +133,26 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
         fetch_git_source(source, cached_repo_path, item_type)
     else:
         logger.debug("Using cached %s %s", item_type, cached_repo_path)
+    # Resolve the default branch once so that dep.ref=None always means the
+    # original HEAD, not whatever a prior dep checkout left the repo at.
+    repo = Repo(cached_repo_path)
+    try:
+        default_branch = repo.active_branch.name
+    except TypeError:
+        # Detached HEAD (e.g. left from a prior forced fetch); try symbolic remote HEAD.
+        try:
+            default_branch = repo.git.symbolic_ref("refs/remotes/origin/HEAD").split(
+                "/"
+            )[-1]
+        except Exception:
+            default_branch = None
+
     for dep in deps:
-        repo = Repo(cached_repo_path)
         output_path = dep.output_path
         copy_src_path = cached_repo_path
-        repo.git.checkout(dep.ref)
+        ref = dep.ref if dep.ref is not None else default_branch
+        if ref is not None:
+            repo.git.checkout(ref)
 
         # initialising submodules
         if dep.submodules:
@@ -319,7 +354,169 @@ def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
 
 
 def exists_in_cache(item_path):
-    dep_cache_path = os.path.dirname(item_path)
-    if not os.path.exists(dep_cache_path):
-        return False
-    return os.path.basename(item_path) in os.listdir(dep_cache_path)
+    return os.path.exists(item_path)
+
+
+def _extract_tar_blobs(target_dir: str) -> None:
+    """Walk target_dir and extract any tar archive files found there.
+
+    oras-py saves each OCI layer as a raw blob file, preserving the layer's
+    manifest title as its on-disk path (e.g. ``system/generators/mygenerator``).
+    When the layer is a tar+gzip archive the saved file IS the tarball rather
+    than its extracted contents. This helper detects those blobs and extracts
+    them so that the directory tree matches what was originally pushed.
+    """
+    blobs = []
+    for dirpath, _dirs, filenames in os.walk(target_dir):
+        for fname in filenames:
+            candidate = os.path.join(dirpath, fname)
+            try:
+                if tarfile.is_tarfile(candidate):
+                    blobs.append(candidate)
+            except Exception:
+                logger.debug("Skipping %s: not a readable tar archive", candidate)
+
+    for blob_path in blobs:
+        logger.debug("Extracting OCI tar blob %s into %s", blob_path, target_dir)
+        with tarfile.open(blob_path, "r:*") as tar:
+            os.unlink(blob_path)
+            if sys.version_info >= (3, 12):
+                tar.extractall(target_dir, filter="data")
+            else:
+                tar.extractall(target_dir)
+
+
+def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependency"):
+    """
+    Pulls an OCI artifact from a registry into save_dir, then copies it (or a declared subpath
+    within it) into each dependency's output_path. The artifact is cached by source reference so
+    multiple dependencies sharing the same source trigger only one pull. Connection settings
+    (insecure, tls_verify) must be identical across all deps for the same source; media_type
+    filters are unioned so a single pull retrieves all required layers.
+    """
+    if oras is None:
+        raise ImportError(
+            "The 'oras' package is required for OCI dependencies. "
+            "Install it with: pip install kapitan[oci]"
+        )
+
+    source, deps = dep_mapping
+
+    # Derive a stable local cache directory from the full source reference,
+    # including any digest, so tag@sha256:… and tag alone cache separately.
+    cache_key = hashlib.sha256(source.encode()).hexdigest()[:8]
+    target_dir = os.path.join(save_dir, f"oci_{cache_key}")
+
+    if not exists_in_cache(target_dir) or force:
+        if force and os.path.exists(target_dir):
+            rmtree(target_dir)
+            logger.debug("Removed cached %s %s", item_type, target_dir)
+        logger.debug("%s %s: fetching now", item_type, source)
+        first = deps[0]
+        if len(deps) > 1 and any(
+            dep.insecure != first.insecure or dep.tls_verify != first.tls_verify
+            for dep in deps[1:]
+        ):
+            raise OCIFetchingError(
+                f"{item_type} {source}: multiple dependencies share the same source but "
+                f"declare conflicting connection settings. All dependencies for "
+                f"the same source must use identical insecure and tls_verify settings."
+            )
+        # Union media_type filters: if any dep requests everything (None), pull all layers;
+        # otherwise collect the distinct types so each dep gets the layers it needs.
+        if any(dep.media_type is None for dep in deps):
+            allowed_media_type = None
+        else:
+            allowed_media_type = list({dep.media_type for dep in deps})
+        try:
+            client = oras.client.OrasClient(
+                insecure=first.insecure, tls_verify=first.tls_verify
+            )
+            username = os.environ.get("OCI_USERNAME")
+            password = os.environ.get("OCI_PASSWORD")
+            if username and password:
+                client.auth.set_basic_auth(username, password)
+            client.pull(
+                target=source,
+                outdir=target_dir,
+                allowed_media_type=allowed_media_type,
+            )
+            logger.debug("%s %s: successfully fetched", item_type, source)
+            # Log the top-level entries in the pulled artifact so users can
+            # identify the correct 'subpath' when the artifact has nested dirs.
+            top_entries = sorted(p.name for p in Path(target_dir).iterdir())
+            if top_entries:
+                logger.info(
+                    "%s %s: artifact root contains: [%s]. "
+                    "Set 'subpath' in the dependency if content is nested.",
+                    item_type,
+                    source,
+                    ", ".join(top_entries),
+                )
+        except Exception as e:
+            raise OCIFetchingError(
+                f"{item_type} {source}: fetching unsuccessful\n{e}"
+            ) from e
+    else:
+        logger.debug("Using cached %s %s", item_type, target_dir)
+
+    # Extract tar blobs every time — idempotent (no blobs = no-op) and handles
+    # caches populated by older kapitan versions before blob extraction was added.
+    try:
+        _extract_tar_blobs(target_dir)
+    except Exception as e:
+        raise OCIFetchingError(
+            f"{item_type} {source}: failed to extract tar blobs from pulled artifact\n{e}"
+        ) from e
+
+    for dep in deps:
+        # Copy either the full artifact or only the declared subdirectory.
+        # NOTE: subpath validation happens after the pull because we don't inspect the
+        # manifest before fetching. A typo in subpath wastes a pull but avoids the
+        # complexity of a pre-pull manifest walk.
+        src = os.path.join(target_dir, dep.subpath) if dep.subpath else target_dir
+        if dep.subpath:
+            # Guard against path traversal (e.g. subpath="../../etc/passwd").
+            real_target = os.path.realpath(target_dir)
+            real_src = os.path.realpath(src)
+            if (
+                not real_src.startswith(real_target + os.sep)
+                and real_src != real_target
+            ):
+                raise OCIFetchingError(
+                    f"{item_type} {source}: subpath '{dep.subpath}' resolves outside "
+                    f"the artifact directory"
+                )
+            if not os.path.isdir(src):
+                raise OCIFetchingError(
+                    f"{item_type} {source}: subpath '{dep.subpath}' not found in pulled artifact"
+                )
+        if force:
+            copied = copy_tree(src, dep.output_path)
+        else:
+            copied = safe_copy_tree(src, dep.output_path)
+        if copied:
+            logger.info("%s %s: saved to %s", item_type, source, dep.output_path)
+
+        # Warn when output_path has only subdirectories (no files) and no subpath
+        # was configured. This is the classic symptom of an oras artifact pushed
+        # from a parent directory: oras preserves push-time paths, so all content
+        # lands one or more levels deep instead of directly under output_path.
+        if not dep.subpath and os.path.isdir(dep.output_path):
+            children = [
+                p for p in Path(dep.output_path).iterdir() if not p.name.startswith(".")
+            ]
+            has_files = any(p.is_file() for p in children)
+            only_dirs = [p for p in children if p.is_dir()]
+            if only_dirs and not has_files:
+                logger.warning(
+                    "%s %s: output_path '%s' contains only subdirectories: [%s]. "
+                    "The artifact may have been pushed with nested paths — set 'subpath' "
+                    "to the directory that contains your content "
+                    "(e.g. subpath: %s).",
+                    item_type,
+                    source,
+                    dep.output_path,
+                    ", ".join(sorted(p.name for p in only_dirs)),
+                    sorted(p.name for p in only_dirs)[0],
+                )

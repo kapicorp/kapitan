@@ -72,8 +72,8 @@ jobs:
     needs: [setup]
     runs-on: ${{ needs.setup.outputs.runner }}
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
 
   test:
@@ -86,11 +86,11 @@ jobs:
         python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
       - name: Checkout kapitan recursively
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: recursive
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -128,7 +128,7 @@ jobs:
         python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
       - name: Checkout kapitan recursively
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: recursive
 
@@ -136,7 +136,7 @@ jobs:
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Login to DockerHub
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         if: env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
@@ -162,11 +162,12 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
           images: |
             name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
           tags: |
+            type=raw,value=latest,enable=${{ github.event_name == 'release' && steps.suffix.outputs.is-default == 'true' }},suffix=${{ steps.suffix.outputs.platform-suffix }}
             type=ref,event=branch,suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
             type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
             type=semver,pattern={{major}}.{{minor}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
@@ -178,7 +179,7 @@ jobs:
       - name: Docker meta (py-suffixed tags for default version)
         id: meta-py
         if: steps.suffix.outputs.is-default == 'true'
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
           images: |
             name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
@@ -250,7 +251,7 @@ jobs:
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Login to DockerHub
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         if: env.DOCKERHUB_USERNAME != ''
@@ -272,14 +273,14 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
           # list of Docker images to use as base name for tags
           images: |
             name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && steps.suffix.outputs.is-default == 'true' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'release' && steps.suffix.outputs.is-default == 'true' }}
             type=ref,event=branch,suffix=${{ steps.suffix.outputs.python-suffix }}
             type=semver,pattern={{version}},suffix=${{ steps.suffix.outputs.python-suffix }}
             type=semver,pattern={{major}}.{{minor}},suffix=${{ steps.suffix.outputs.python-suffix }}
@@ -289,7 +290,7 @@ jobs:
       - name: Docker meta (py-suffixed tags for default version)
         id: meta-py
         if: steps.suffix.outputs.is-default == 'true'
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
           images: |
             name=${{ vars.DOCKERHUB_REPOSITORY }}/${{ needs.setup.outputs.default-image-name }}
