@@ -1,4 +1,9 @@
-# Classes
+---
+title: "Kapitan Inventory Classes: Reusable Configuration Fragments"
+description: "Learn how Kapitan classes let you compose reusable YAML configuration fragments and import them into targets and other classes."
+---
+
+# :kapitan-logo: **Kapitan Inventory Classes**
 
 ## Usage
 

@@ -1,3 +1,8 @@
+---
+title: "Kapitan — Configuration Management for Kubernetes, Terraform, and Infrastructure"
+description: "Kapitan is an open source configuration management tool for Kubernetes, Terraform, and complex infrastructure. Generate, organize, and reuse configuration across environments."
+---
+
 # :kapitan-logo: **Kapitan: Keep your ship together**
 
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/kapicorp?style=for-the-badge)

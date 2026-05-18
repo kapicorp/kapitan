@@ -1,3 +1,8 @@
+---
+title: "Kapitan Inventory Explained: Targets, Classes, and Parameters"
+description: "Learn how Kapitan inventory uses targets, classes, and parameters to model reusable infrastructure configuration across environments."
+---
+
 # :kapitan-logo: **What is the inventory?**
 
 The **Inventory** is a core component of Kapitan: this section aims to explain how it works and how to best take advantage of it.

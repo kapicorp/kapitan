@@ -1,5 +1,7 @@
 ---
 comments: true
+title: "Kapitan FAQ: Common Questions About Inventory, Compile, and Secrets"
+description: "Find answers to frequently asked questions about Kapitan inventory, targets, classes, compilation, references, secrets, and supported input types."
 ---
 
 # :kapitan-logo: **Kapitan FAQ**
