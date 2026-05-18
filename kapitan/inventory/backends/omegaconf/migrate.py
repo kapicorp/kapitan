@@ -34,7 +34,7 @@ def migrate_dir(path: str):
             try:
                 migrate_file(file)
             except Exception as e:
-                InventoryError(f"{file}: error with migration: {e}")
+                raise InventoryError(f"{file}: error with migration: {e}") from e
 
 
 def migrate_file(file: str):
