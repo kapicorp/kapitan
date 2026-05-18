@@ -77,6 +77,7 @@ nav:
   - Getting started: getting_started.md
   - Documentation:
       - Core Concepts: pages/core_concepts.md
+      - Glossary: pages/glossary.md
       - Inventory:
         - Introduction: pages/inventory/introduction.md
         - Targets: pages/inventory/targets.md
@@ -114,6 +115,7 @@ nav:
     - pages/blog/index.md
   - Support:
       - Ask for support: support.md
+      - Troubleshooting: pages/troubleshooting.md
       - Related Projects: related.md
   - Contribute:
       - Sponsor Us: pages/contribute/sponsor.md
