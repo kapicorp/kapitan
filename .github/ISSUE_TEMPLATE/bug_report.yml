@@ -65,8 +65,11 @@ body:
         Which version of kapitan are you running?
         If you are using an older version of kapitan, please try it against the master branch or the latest stable version.
       options:
-        - v0.31.0 (stable)
+        - v0.35.1 (latest)
+        - v0.35.0
+        - v0.34.x
         - master
+        - older
       multiple: true
     validations:
       required: true
@@ -76,7 +79,7 @@ body:
     attributes:
       label: Version (Python)
       description: |
-        Which version of Python are you using? Kapitan officially supports versions 3.10 - 3.13
+        Which version of Python are you using? Kapitan officially supports versions 3.10 - 3.13.
         If you are using an older version of python, please check if the bug still exists with a newer (supported) version.
       options:
         - "3.13"
@@ -87,6 +90,19 @@ body:
       multiple: true
     validations:
       required: true
+  # inventory backend
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Inventory backend
+      description: Which inventory backend are you using?
+      options:
+        - reclass (default)
+        - reclass-rs
+        - omegaconf
+        - other / unknown
+    validations:
+      required: false
   # python virtual environment
   - type: checkboxes
     id: python-venv
@@ -102,8 +118,8 @@ body:
     id: os-information
     attributes:
       label: OS information
-      description: Which operation system do you use?
-      placeholder: Type in your operation system...
+      description: Which operating system do you use?
+      placeholder: e.g. Ubuntu 22.04, macOS 14, Fedora 40...
   # logs
   - type: textarea
     id: logs

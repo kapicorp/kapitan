@@ -83,9 +83,10 @@ def jsonschema_validate(obj, schema_obj):
         jsonschema.validate(
             _obj, _schema_obj, format_checker=jsonschema.FormatChecker()
         )
-        return {"valid": True, "reason": ""}
     except jsonschema.ValidationError as e:
         return {"valid": False, "reason": "" + str(e)}
+    else:
+        return {"valid": True, "reason": ""}
 
 
 def yaml_dump(obj):
@@ -128,7 +129,9 @@ def jinja2_render_file(search_paths, name, ctx):
             try:
                 return render_jinja2_file(_full_path, ctx, search_paths=search_paths)
             except Exception as e:
-                raise CompileError(f"Jsonnet jinja2 failed to render {_full_path}: {e}")
+                raise CompileError(
+                    f"Jsonnet jinja2 failed to render {_full_path}: {e}"
+                ) from e
 
     raise OSError(f"jinja2 failed to render, could not find file: {_full_path}")
 
@@ -144,7 +147,9 @@ def yaml_load(search_paths, name):
                 with open(_full_path) as f:
                     return json.dumps(yaml.safe_load(f.read()))
             except Exception as e:
-                raise CompileError(f"Parse yaml failed to parse {_full_path}: {e}")
+                raise CompileError(
+                    f"Parse yaml failed to parse {_full_path}: {e}"
+                ) from e
 
     raise OSError(f"could not find any input yaml file: {_full_path}")
 
@@ -161,7 +166,9 @@ def yaml_load_stream(search_paths, name):
                     _obj = yaml.load_all(f.read(), Loader=yaml.SafeLoader)
                     return json.dumps(list(_obj))
             except Exception as e:
-                raise CompileError(f"Parse yaml failed to parse {_full_path}: {e}")
+                raise CompileError(
+                    f"Parse yaml failed to parse {_full_path}: {e}"
+                ) from e
 
     raise OSError(f"could not find any input yaml file: {_full_path}")
 
@@ -383,6 +390,13 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
     )
     backend = get_inventory_backend(backend_id)
 
+    # migrate inventory to selected inventory backend BEFORE instantiating,
+    # because the constructor renders the inventory which would fail on
+    # un-migrated syntax.
+    if hasattr(cached.args, "migrate") and cached.args.migrate:
+        migrator = backend(inventory_path=inventory_path, initialise=False)
+        migrator.migrate()
+
     logger.debug(f"Using {backend.__name__} as inventory backend")
     try:
         inventory_backend = backend(
@@ -395,9 +409,5 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
 
     cached.inv = inventory_backend
     cached.global_inv = cached.inv.inventory
-
-    # migrate inventory to selected inventory backend
-    if hasattr(cached.args, "migrate") and cached.args.migrate:
-        inventory_backend.migrate()
 
     return cached.inv
