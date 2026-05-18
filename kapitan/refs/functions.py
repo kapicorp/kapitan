@@ -235,10 +235,10 @@ def random(ctx, type="str", nchars="", special_chars=string.punctuation):
         # check input for nchars
         try:
             nchars = int(nchars)
-        except ValueError:
+        except ValueError as e:
             raise RefError(
                 f"Ref error: eval_func: {nchars} cannot be converted into integer."
-            )
+            ) from e
 
     # check if any special characters are specified without using type special
     if type != "special" and special_chars != string.punctuation:
