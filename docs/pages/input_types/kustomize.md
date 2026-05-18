@@ -1,3 +1,8 @@
+---
+title: "Kapitan Kustomize Input Type"
+description: "Use Kustomize within Kapitan to patch and customize Kubernetes manifests across environments."
+---
+
 # Kustomize Input Type
 
 The Kustomize input type allows you to use [Kustomize](https://kustomize.io/) to manage and customize Kubernetes manifests within Kapitan. This input type is particularly useful when you need to:
