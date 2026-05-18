@@ -877,6 +877,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parameters Interpolation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -893,6 +911,36 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -2477,7 +2525,15 @@ parameters:
       location: ${cluster.location}
 ```</p>
 <p>Here in this case <code>application.location</code> refers to a value <code>location</code> which has been defined elsewhere, perhaps (but not necessarily) in the <code>project.production</code> class.</p>
-<p>Also notice that the class name (<code>project.production</code>) is not in any ways influencing the name or the structed of the yaml it imports into the file</p>
+<p>Also notice that the class name (<code>project.production</code>) is not in any ways influencing the name or the structed of the yaml it imports into the file.</p>
+<hr />
+<h2 id="next-steps">Next steps</h2>
+<ul>
+<li>Review the <a href="../introduction/">Kapitan inventory introduction</a> to understand how targets and classes form the configuration hierarchy.</li>
+<li>Learn how to define environments with <a href="../targets/">Kapitan inventory targets</a>.</li>
+<li>Compose reusable fragments with <a href="../classes/">Kapitan inventory classes</a>.</li>
+<li>Explore <a href="../advanced/">advanced inventory features</a> such as inventory backends and wildcard classes.</li>
+</ul>
 
               </article>
             </div>
