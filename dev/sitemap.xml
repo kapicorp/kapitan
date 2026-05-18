@@ -53,6 +53,18 @@
          <lastmod>2026-05-18</lastmod>
     </url>
     <url>
+         <loc>https://kapitan.dev/dev/pages/kapitan_examples/</loc>
+         <lastmod>2026-05-18</lastmod>
+    </url>
+    <url>
+         <loc>https://kapitan.dev/dev/pages/kapitan_vs_helm_kustomize/</loc>
+         <lastmod>2026-05-18</lastmod>
+    </url>
+    <url>
+         <loc>https://kapitan.dev/dev/pages/kubernetes_configuration_management/</loc>
+         <lastmod>2026-05-18</lastmod>
+    </url>
+    <url>
          <loc>https://kapitan.dev/dev/pages/publishing_generators/</loc>
          <lastmod>2026-05-18</lastmod>
     </url>
