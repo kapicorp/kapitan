@@ -142,3 +142,10 @@ to produce flat keys:
 kapitan inventory --topics colours --pattern parameters.targets
 kapitan inventory --topics --flat
 ```
+---
+
+## Next steps
+
+- Review the [inventory introduction](introduction.md) for a refresher on targets and classes.
+- Learn about [inventory backends](backends.md) such as reclass-rs and OmegaConf.
+- Explore the [`kapitan compile` CLI reference](../commands/kapitan_compile.md#using-labels) for more label options.
