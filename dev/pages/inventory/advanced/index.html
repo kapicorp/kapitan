@@ -1087,6 +1087,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Topics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Topics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inspecting-topics-from-the-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inspecting topics from the CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2731,6 +2759,95 @@ Compiled acme (0.06s)
 Compiled acme-documentation (0.09s)</code></p>
 </div>
 </div>
+<h2 id="topics">Topics</h2>
+<p>Topics let targets expose a subset of their parameters so that other targets can
+aggregate and consume them, without resorting to backend-specific features like
+reclass exports or expensive <code>inventory_global()</code> scans.</p>
+<p>A target opts into a topic by declaring parameters under
+<code>parameters.kapitan.topics.&lt;topic_name&gt;.parameters</code>:</p>
+<div class="admonition example">
+<p class="admonition-title"><code>inventory/targets/target-1.yml</code></p>
+<p><code>yaml
+parameters:
+  colour: red
+  kapitan:
+    topics:
+      colours:
+        parameters:
+          colour: ${colour}</code></p>
+</div>
+<div class="admonition example">
+<p class="admonition-title"><code>inventory/targets/target-2.yml</code></p>
+<p><code>yaml
+parameters:
+  colour: blue
+  kapitan:
+    topics:
+      colours:
+        parameters:
+          colour: ${colour}</code></p>
+</div>
+<p>Kapitan aggregates participating targets into a single topic view of the shape
+<code>{parameters: {targets: {&lt;target_name&gt;: &lt;topic_parameters&gt;}}}</code>. The <code>topics()</code>
+function is available to every input type (kadet, jinja2, jsonnet). Call it
+without arguments to get the full mapping of all topics, or with a name to get
+a single topic.</p>
+<div class="admonition example">
+<p class="admonition-title">kadet (<code>components/painter/__init__.py</code>)</p>
+<p>```python
+from kapitan.inputs.kadet import topics</p>
+<p>def main():
+    target_colours = {}
+    for target, parameters in topics("colours").parameters.targets.items():
+        target_colours[target] = {"colour": parameters.colour}
+    return target_colours
+```</p>
+</div>
+<div class="admonition example">
+<p class="admonition-title">jinja2 (<code>components/painter.j2</code>)</p>
+<p><code>jinja
+{% for target, parameters in topics("colours").parameters.targets.items() %}
+{{ target }}:
+  colour: {{ parameters.colour }}
+{% endfor %}</code></p>
+</div>
+<div class="admonition example">
+<p class="admonition-title">jsonnet (<code>components/painter.jsonnet</code>)</p>
+<p><code>jsonnet
+local kap = import "lib/kapitan.libjsonnet";
+{
+  [target]: { colour: params.parameters.colour }
+  for target in std.objectFields(kap.topics("colours").parameters.targets)
+  for params in [kap.topics("colours").parameters.targets[target]]
+}</code></p>
+</div>
+<p>This compiles into:</p>
+<p><code>yaml
+target-1:
+  colour: red
+target-2:
+  colour: blue</code></p>
+<p>Topics are inventory-backend agnostic and only collect what each target
+explicitly opts into, avoiding cryptic query expressions and full inventory
+scans.</p>
+<h3 id="inspecting-topics-from-the-cli">Inspecting topics from the CLI</h3>
+<p>The <code>inventory</code> subcommand has a <code>--topics</code> flag for inspecting the aggregated
+view without compiling anything.</p>
+<div class="admonition example">
+<p class="admonition-title">List all topics</p>
+<p><code>shell
+kapitan inventory --topics</code></p>
+</div>
+<div class="admonition example">
+<p class="admonition-title">Show a single topic</p>
+<p><code>shell
+kapitan inventory --topics colours</code></p>
+</div>
+<p><code>--topics</code> combines with <code>--pattern</code> to drill into the result and with <code>--flat</code>
+to produce flat keys:</p>
+<p><code>shell
+kapitan inventory --topics colours --pattern parameters.targets
+kapitan inventory --topics --flat</code></p>
 <hr />
 <h2 id="next-steps">Next steps</h2>
 <ul>
