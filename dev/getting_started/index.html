@@ -816,6 +816,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#pre-release-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-release versions
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2754,6 +2765,24 @@ pip3 install --user --upgrade kapitan</code></p>
 <p class="admonition-title">not recommended</p>
 <p><code>shell
 sudo pip3 install --upgrade kapitan</code></p>
+</div>
+<h4 id="pre-release-versions">Pre-release versions</h4>
+<p>Every merge to <code>master</code> is automatically published to PyPI as a PEP 440 pre-release. To install the latest development build:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:3"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><input id="__tabbed_4_3" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">pip</label><label for="__tabbed_4_2">uv</label><label for="__tabbed_4_3">poetry</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><code>shell
+pip3 install --user --upgrade --pre kapitan</code></p>
+</div>
+<div class="tabbed-block">
+<p><code>shell
+uv tool install --upgrade --prerelease allow kapitan</code></p>
+</div>
+<div class="tabbed-block">
+<p><code>shell
+poetry add --allow-prereleases kapitan</code></p>
+</div>
+</div>
 </div>
 
               </article>
