@@ -144,3 +144,25 @@ Compiled echo-server (0.14s)
     ```shell
     sudo pip3 install --upgrade kapitan
     ```
+
+#### Pre-release versions
+
+Every merge to `master` is automatically published to PyPI as a PEP 440 pre-release. To install the latest development build:
+
+=== "pip"
+
+    ```shell
+    pip3 install --user --upgrade --pre kapitan
+    ```
+
+=== "uv"
+
+    ```shell
+    uv tool install --upgrade --prerelease allow kapitan
+    ```
+
+=== "poetry"
+
+    ```shell
+    poetry add --allow-prereleases kapitan
+    ```
