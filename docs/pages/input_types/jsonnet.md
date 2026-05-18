@@ -1,4 +1,9 @@
-# :kapitan-logo: **Input Type | Jsonnet**
+---
+title: "Kapitan with Jsonnet: Generate Kubernetes and Infrastructure Config"
+description: "Use Jsonnet with Kapitan to generate Kubernetes manifests and infrastructure configuration. Access inventory data, validate with JSON Schema, and output YAML or JSON."
+---
+
+# :kapitan-logo: **Kapitan with Jsonnet**
 
 Jsonnet is a superset of json format that includes features such as conditionals, variables and imports. Refer to [jsonnet docs](https://jsonnet.org/learning/tutorial.html) to understand how it works.
 

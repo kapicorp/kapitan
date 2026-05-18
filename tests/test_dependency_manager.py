@@ -5,14 +5,17 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import hashlib
 import io
 import multiprocessing
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
+from pydantic import ValidationError
 
 from kapitan.cli import main as kapitan
 from kapitan.dependency_manager.base import (
@@ -22,12 +25,14 @@ from kapitan.dependency_manager.base import (
     fetch_git_source,
     fetch_helm_chart,
     fetch_http_source,
+    fetch_oci_dependency,
 )
-from kapitan.errors import HelmFetchingError
+from kapitan.errors import HelmFetchingError, OCIFetchingError
 from kapitan.inventory.model import KapitanInventorySettings
 from kapitan.inventory.model.dependencies import (
     KapitanDependencyGitConfig,
     KapitanDependencyHelmConfig,
+    KapitanDependencyOciConfig,
 )
 
 
@@ -339,3 +344,326 @@ class DependencyManagerTest(unittest.TestCase):
         self.assertTrue((temp / "components" / "tests").is_dir())
         self.assertTrue((temp / "components" / "kapitan-repository").is_dir())
         self.assertTrue((temp / "charts" / "prometheus").is_dir())
+
+
+@pytest.mark.usefixtures("isolated_test_resources", "tagged_git_repo")
+class GitRefPinningFetchTest(unittest.TestCase):
+    """Integration tests verifying ref= accepts branches, tags, and commit SHAs."""
+
+    def test_fetch_git_ref_as_tag(self):
+        """fetch_git_dependency with ref=<tag> copies files from the tagged commit."""
+        save_dir = Path(self.isolated_test_resources)
+        source = str(self.tagged_git_repo)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp)
+            dep = [
+                KapitanDependencyGitConfig(
+                    type="git",
+                    source=source,
+                    output_path=str(output_dir),
+                    ref=self.git_tag_name,
+                )
+            ]
+            fetch_git_dependency((source, dep), str(save_dir), force=False)
+
+            readme = output_dir / "README.md"
+            self.assertTrue(readme.is_file())
+            self.assertEqual(readme.read_text(encoding="utf-8"), "version 1\n")
+
+    def test_fetch_git_ref_as_commit_sha(self):
+        """fetch_git_dependency with ref=<sha> copies files from that exact commit."""
+        save_dir = Path(self.isolated_test_resources)
+        source = str(self.tagged_git_repo)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp)
+            dep = [
+                KapitanDependencyGitConfig(
+                    type="git",
+                    source=source,
+                    output_path=str(output_dir),
+                    ref=self.tagged_commit_sha,
+                )
+            ]
+            fetch_git_dependency((source, dep), str(save_dir), force=False)
+
+            readme = output_dir / "README.md"
+            self.assertTrue(readme.is_file())
+            self.assertEqual(readme.read_text(encoding="utf-8"), "version 1\n")
+
+    def test_fetch_git_ref_none_stays_on_head(self):
+        """fetch_git_dependency with ref=None stays on the cloned HEAD without error."""
+        save_dir = Path(self.isolated_test_resources)
+        source = str(self.tagged_git_repo)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp)
+            dep = [
+                KapitanDependencyGitConfig(
+                    type="git",
+                    source=source,
+                    output_path=str(output_dir),
+                    ref=None,
+                )
+            ]
+            fetch_git_dependency((source, dep), str(save_dir), force=False)
+
+            readme = output_dir / "README.md"
+            self.assertTrue(readme.is_file())
+            # HEAD is the second commit ("version 2"), not the tagged one
+            self.assertEqual(readme.read_text(encoding="utf-8"), "version 2\n")
+
+    def test_ref_none_after_pinned_ref_resets_to_head(self):
+        """ref=None after a pinned ref in the same dep list must not inherit the prior checkout."""
+        save_dir = Path(self.isolated_test_resources)
+        source = str(self.tagged_git_repo)
+
+        with (
+            tempfile.TemporaryDirectory() as tmp1,
+            tempfile.TemporaryDirectory() as tmp2,
+        ):
+            output_pinned = Path(tmp1)
+            output_head = Path(tmp2)
+            deps = [
+                KapitanDependencyGitConfig(
+                    type="git",
+                    source=source,
+                    output_path=str(output_pinned),
+                    ref=self.git_tag_name,
+                ),
+                KapitanDependencyGitConfig(
+                    type="git",
+                    source=source,
+                    output_path=str(output_head),
+                    ref=None,
+                ),
+            ]
+            fetch_git_dependency((source, deps), str(save_dir), force=False)
+
+            # Second dep must be at HEAD ("version 2"), not carried over from v1.0.0
+            self.assertEqual(
+                (output_head / "README.md").read_text(encoding="utf-8"), "version 2\n"
+            )
+
+
+class OciFetchDependencyTest(unittest.TestCase):
+    """Tests for fetch_oci_dependency() — all network calls are mocked."""
+
+    def _make_dep(
+        self,
+        output_path,
+        source="ghcr.io/kapicorp/generators:1.2.0",
+        subpath=None,
+        media_type=None,
+        insecure=False,
+        tls_verify=True,
+    ):
+        return KapitanDependencyOciConfig(
+            type="oci",
+            source=source,
+            output_path=output_path,
+            subpath=subpath,
+            media_type=media_type,
+            insecure=insecure,
+            tls_verify=tls_verify,
+        )
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_pull_failure_raises_oci_fetching_error(self, MockClient):
+        """A registry error is wrapped in OCIFetchingError."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir)
+            MockClient.return_value.pull.side_effect = Exception("connection refused")
+
+            with self.assertRaises(OCIFetchingError):
+                fetch_oci_dependency(
+                    (dep.source, [dep]), save_dir=save_dir, force=False
+                )
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_subpath_is_extracted(self, MockClient):
+        """When subpath is set, only that subdirectory is copied to output_path."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir, subpath="kubernetes")
+
+            def fake_pull(target, outdir, allowed_media_type):
+                subdir = Path(outdir) / "kubernetes"
+                subdir.mkdir(parents=True, exist_ok=True)
+                (subdir / "__init__.py").write_text("def main(): return {}")
+                other = Path(outdir) / "terraform"
+                other.mkdir(parents=True, exist_ok=True)
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=False)
+
+            self.assertTrue((Path(out_dir) / "__init__.py").is_file())
+            self.assertFalse((Path(out_dir) / "terraform").exists())
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_tar_blob_is_extracted_automatically(self, MockClient):
+        """oras saves layers as tar blobs; they must be extracted before subpath is resolved."""
+        import io
+        import tarfile
+
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(
+                output_path=out_dir, subpath="system/generators/mygenerator"
+            )
+
+            def fake_pull(target, outdir, allowed_media_type):
+                # Replicate oras behaviour: save a tar+gz blob at the layer's title path.
+                blob_dir = Path(outdir) / "system" / "generators"
+                blob_dir.mkdir(parents=True, exist_ok=True)
+                blob_path = blob_dir / "mygenerator"
+
+                buf = io.BytesIO()
+                with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+                    content = b"def main(): return {}"
+                    info = tarfile.TarInfo(
+                        name="system/generators/mygenerator/__init__.py"
+                    )
+                    info.size = len(content)
+                    tar.addfile(info, io.BytesIO(content))
+                blob_path.write_bytes(buf.getvalue())
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            fetch_oci_dependency((dep.source, [dep]), save_dir=save_dir, force=False)
+
+            self.assertTrue((Path(out_dir) / "__init__.py").is_file())
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_tar_blob_extracted_from_stale_cache(self, MockClient):
+        """Tar blobs in an existing cache (pre-extraction fix) are extracted on the next use."""
+        import io
+        import tarfile as tarfile_mod
+
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(
+                output_path=out_dir, subpath="system/generators/mygenerator"
+            )
+            source = dep.source
+
+            # Manually populate the cache as older kapitan would have: raw blob, not extracted.
+            cache_key = hashlib.sha256(source.encode()).hexdigest()[:8]
+            target_dir = Path(save_dir) / f"oci_{cache_key}"
+            blob_dir = target_dir / "system" / "generators"
+            blob_dir.mkdir(parents=True, exist_ok=True)
+            blob_path = blob_dir / "mygenerator"
+
+            buf = io.BytesIO()
+            with tarfile_mod.open(fileobj=buf, mode="w:gz") as tar:
+                content = b"def main(): return {}"
+                info = tarfile_mod.TarInfo(
+                    name="system/generators/mygenerator/__init__.py"
+                )
+                info.size = len(content)
+                tar.addfile(info, io.BytesIO(content))
+            blob_path.write_bytes(buf.getvalue())
+
+            # No pull needed; cache already exists — extraction must still happen.
+            fetch_oci_dependency((source, [dep]), save_dir=save_dir, force=False)
+            MockClient.return_value.pull.assert_not_called()
+
+            self.assertTrue((Path(out_dir) / "__init__.py").is_file())
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_conflicting_connection_settings_raises_error(self, MockClient):
+        """Deps sharing a source but with different insecure/tls_verify raise OCIFetchingError."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out1,
+            tempfile.TemporaryDirectory() as out2,
+        ):
+            source = "ghcr.io/kapicorp/generators:1.2.0"
+            deps = [
+                self._make_dep(source=source, output_path=out1, insecure=False),
+                self._make_dep(source=source, output_path=out2, insecure=True),
+            ]
+            with self.assertRaises(OCIFetchingError):
+                fetch_oci_dependency((source, deps), save_dir=save_dir, force=False)
+            MockClient.return_value.pull.assert_not_called()
+
+    def test_url_scheme_in_source_raises_validation_error(self):
+        """OCI source with a URL scheme prefix is rejected at model construction time."""
+        for prefix in ("https://", "http://", "oci://"):
+            with self.subTest(prefix=prefix):
+                with self.assertRaises(ValidationError):
+                    KapitanDependencyOciConfig(
+                        type="oci",
+                        source=f"{prefix}ghcr.io/kapicorp/generators:1.2.0",
+                        output_path="/tmp/out",
+                    )
+
+    def test_invalid_media_type_raises_validation_error(self):
+        """media_type without a slash is rejected at model construction time."""
+        with self.assertRaises(ValidationError):
+            KapitanDependencyOciConfig(
+                type="oci",
+                source="ghcr.io/kapicorp/generators:1.2.0",
+                output_path="/tmp/out",
+                media_type="notamimetype",
+            )
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_subpath_traversal_raises_oci_fetching_error(self, MockClient):
+        """subpath with '../' that escapes the cache directory raises OCIFetchingError."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir, subpath="../../etc")
+
+            def fake_pull(target, outdir, allowed_media_type):
+                Path(outdir).mkdir(parents=True, exist_ok=True)
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            with self.assertRaises(OCIFetchingError) as ctx:
+                fetch_oci_dependency(
+                    (dep.source, [dep]), save_dir=save_dir, force=False
+                )
+            self.assertIn("resolves outside", str(ctx.exception))
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_nested_artifact_without_subpath_emits_warning(self, MockClient):
+        """When output_path has only subdirs (no files) and no subpath is set, warn."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir)
+
+            def fake_pull(target, outdir, allowed_media_type):
+                # Simulate oras preserving push-time path: all content nested.
+                nested = Path(outdir) / "system" / "generators" / "mygenerator"
+                nested.mkdir(parents=True, exist_ok=True)
+                (nested / "__init__.py").write_text("def main(): return {}")
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            with self.assertLogs(
+                "kapitan.dependency_manager.base", level="WARNING"
+            ) as log:
+                fetch_oci_dependency(
+                    (dep.source, [dep]), save_dir=save_dir, force=False
+                )
+
+            warning_text = "\n".join(log.output)
+            self.assertIn("only subdirectories", warning_text)
+            self.assertIn("subpath", warning_text)
+            self.assertIn("system", warning_text)

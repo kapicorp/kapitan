@@ -1,0 +1,11 @@
+---
+classes:
+  - kapitan.generators.kubernetes.defaults
+  - kapitan.generators.kubernetes.manifests
+
+parameters:
+  kapitan:
+    vars:
+      target: ${target_name}
+
+  target_name: ${_kapitan_.name.short}

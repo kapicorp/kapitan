@@ -2,6 +2,7 @@
 # pip install mkdocs mkdocs-material pymdown-extensions
 site_name: "Kapitan: Keep your ship together"
 site_url: "https://kapitan.dev/"
+site_description: "Kapitan is an open source configuration management tool for Kubernetes, Terraform, and complex infrastructure. Generate, organize, and reuse configuration across environments."
 strict: true
 plugins:
   - blog:
@@ -10,6 +11,7 @@ plugins:
       post_url_date_format: dd/MM/yyyy
   - search
   - markdown-exec
+  - meta
 
 theme:
   name: material
@@ -92,7 +94,6 @@ nav:
           - CueLang: pages/input_types/cuelang.md
           - Helm: pages/input_types/helm.md
           - Kustomize: pages/input_types/kustomize.md
-          - Cuelang: pages/input_types/cuelang.md
           - Jsonnet: pages/input_types/jsonnet.md
           - External: pages/input_types/external.md
           - Copy: pages/input_types/copy.md
@@ -101,6 +102,7 @@ nav:
       - Advanced Kapitan:
         - Remote repositories: pages/remote_repositories.md
         - External dependencies: pages/external_dependencies.md
+        - Publishing generators: pages/publishing_generators.md
       - CLI reference:
           - compile: pages/commands/kapitan_compile.md
           - inventory: pages/commands/kapitan_inventory.md

@@ -1,0 +1,112 @@
+---
+# Test file for merge resolver functionality
+# Tests: deep merge, multiple merge, override behavior
+
+parameters:
+  # Test omegaconf remove functionality - base objects should not be in output
+  omegaconf:
+    remove:
+      - service_defaults
+      - deployment_defaults
+      - monitoring_defaults
+
+  # -----------------------------------------------
+  # Base configurations for merging
+  # -----------------------------------------------
+  service_defaults:
+    type: ClusterIP
+    port: 80
+    protocol: TCP
+    labels:
+      managed-by: kapitan
+
+  deployment_defaults:
+    replicas: 1
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+    pod_annotations:
+      prometheus.io/scrape: "true"
+
+  monitoring_defaults:
+    enabled: true
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # -----------------------------------------------
+  # Test simple two-way merge
+  # -----------------------------------------------
+  service_custom_port:
+    port: 8080
+    target_port: 8080
+
+  merged_service: ${merge:${service_defaults}, ${service_custom_port}}
+  # Expected result:
+  # type: ClusterIP (from defaults)
+  # port: 8080 (overridden)
+  # target_port: 8080 (added)
+  # protocol: TCP (from defaults)
+  # labels: {managed-by: kapitan} (from defaults)
+
+  # -----------------------------------------------
+  # Test three-way merge
+  # -----------------------------------------------
+  deployment_custom:
+    replicas: 3
+
+  deployment_annotations:
+    pod_annotations:
+      custom.io/annotation: "test-value"
+
+  merged_deployment: ${merge:${deployment_defaults}, ${deployment_custom}, ${deployment_annotations}}
+  # Expected: replicas=3, strategy from defaults, merged annotations
+
+  # -----------------------------------------------
+  # Test deep merge with nested objects
+  # -----------------------------------------------
+  nested_base:
+    level1:
+      level2:
+        value_a: base_a
+        value_b: base_b
+      other: base_other
+
+  nested_override:
+    level1:
+      level2:
+        value_b: override_b
+        value_c: new_c
+
+  merged_nested: ${merge:${nested_base}, ${nested_override}}
+  # Expected deep merge:
+  # level1.level2.value_a: base_a (preserved)
+  # level1.level2.value_b: override_b (overridden)
+  # level1.level2.value_c: new_c (added)
+  # level1.other: base_other (preserved)
+
+  # -----------------------------------------------
+  # Test merge with lists (lists are concatenated, not replaced)
+  # -----------------------------------------------
+  list_base:
+    items:
+      - item1
+      - item2
+    config:
+      key: value
+
+  list_override:
+    items:
+      - item3
+      - item4
+      - item5
+
+  merged_lists: ${merge:${list_base}, ${list_override}}
+  # Expected: items=[item1, item2, item3, item4, item5] (concatenated), config.key=value (preserved)
+
+  # -----------------------------------------------
+  # KAPITAN COMPILE (minimal, just to validate inventory)
+  # -----------------------------------------------
+  kapitan:
+    compile: []

@@ -1,0 +1,20 @@
+parameters:
+  registry: docker.io
+
+  storageclass: gp2-enc
+  ingressclass: nginx
+  ingressclass_monitoring: nginx-monitoring
+  domain: example.com
+  internal_domain: infra.${cluster}
+  cloud_provider: aws
+  prometheus_labels:
+    release: kube-prometheus-stack
+
+  http_proxy: http://proxy.example.com:8080
+  https_proxy: http://proxy.example.com:8080
+  no_proxy: .example.com,.svc,.default,.local,.cluster.local,localhost,127.0.0.0/8,172.20.0.0/16
+
+  container:
+    registry: ???
+    base_image: ${registry}
+    pull_policy: Always

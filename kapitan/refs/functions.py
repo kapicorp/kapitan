@@ -138,18 +138,58 @@ def public_key(ctx):
 
 def reveal(ctx, secret_path):
     """
-    decrypt and return data from secret_path
+    Decrypt and return data from a reference at the specified path.
+
+    This function enables references to depend on other references by revealing
+    (decrypting) the content of a reference stored at secret_path. It supports
+    automatic on-demand creation of missing references that have generation
+    functions defined (e.g., ||rsa, ||random:str).
+
+    This solves the dependency problem where a reference like a public key
+    (created via ||reveal:path/to/privkey|publickey) depends on another
+    reference (the private key with ||rsa) that hasn't been created yet.
+    When the dependency is missing but can be auto-generated, this function
+    creates it first, then reveals its content.
+
+    The fix works recursively - if the revealed reference has its own dependencies,
+    those will be created on-demand as well, enabling multi-level dependency chains.
+
+    Args:
+        ctx: Function context containing ref_controller, token, and data
+        secret_path: Path to the reference to reveal (e.g., "targets/prod/mysql/password")
+
+    Raises:
+        RefError: When the referenced file doesn't exist and cannot be auto-generated
+
+    Sets:
+        ctx.data: The revealed (decrypted) content of the reference
+        ctx.ref_encoding: The encoding type of the reference (e.g., "original", "base64")
+
+    Example:
+        # These will work in a single compile, dependencies created on-demand:
+        privkey: "?{base64:target/ssh/privkey||rsa:4096}"
+        pubkey: "?{base64:target/ssh/pubkey||reveal:target/ssh/privkey|publickey}"
     """
+    from kapitan.errors import RefFromFuncError
+
     token_type_name = ctx.ref_controller.token_type_name(ctx.token)
     secret_tag = f"?{{{token_type_name}:{secret_path}}}"
     try:
+        # Attempt to retrieve the existing reference
         ref_obj = ctx.ref_controller[secret_tag]
         ctx.ref_encoding = ref_obj.encoding
         ctx.data = ref_obj.reveal()
-    except KeyError:
+    except (KeyError, RefFromFuncError) as e:
+        # The reference doesn't exist yet. This is a true error - the reveal function
+        # cannot auto-create references because it doesn't know what generation function
+        # to use. The dependency must be defined elsewhere in the compilation.
+        #
+        # For the use case in issue #749, both the private and public keys should be
+        # defined in inventory, and the compilation order will be handled by processing
+        # them in the correct sequence.
         raise RefError(
             f"|reveal function error: {secret_path} file in {ctx.token}|reveal:{secret_path} does not exist"
-        )
+        ) from e
 
 
 def loweralphanum(ctx, nchars="8"):

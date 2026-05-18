@@ -1,0 +1,8 @@
+---
+classes:
+  - test-common
+  - components.test-deferred
+
+parameters:
+  cluster: deferred-test
+  environment: prod
