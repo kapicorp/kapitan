@@ -1,3 +1,8 @@
+---
+title: "Kapitan Core Concepts: Inventory, Targets, Classes, and Input Types"
+description: "Learn how Kapitan organizes configuration with inventory, targets, classes, and input types to generate Kubernetes, Terraform, and infrastructure manifests."
+---
+
 # :kapitan-logo: **Kapitan Core Concepts**
 
 **Kapitan** essentially allows you to organise your data with the **`inventory`**, and uses it to configure and run multiple [**`Input Types`**](input_types/introduction.md) which generate files.

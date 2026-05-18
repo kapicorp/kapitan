@@ -1,4 +1,4 @@
-# Kapitan
+# Kapitan: Configuration Management for Kubernetes, Terraform, and Infrastructure
 
 [![Test, Build and Publish docker image](https://github.com/kapicorp/kapitan/actions/workflows/test-build-publish.yml/badge.svg?branch=master&event=push)](https://github.com/kapicorp/kapitan/actions/workflows/test-build-publish.yml)
 [![Python Version](https://img.shields.io/pypi/pyversions/kapitan)](https://pypi.org/project/kapitan/)
@@ -8,13 +8,15 @@
 [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-<img src="docs/images/kapitan_logo.png" width="25">
+<img src="docs/images/kapitan_logo.png" width="25" alt="Kapitan logo">
 
-**Kapitan** is an open source configuration management tool for complex infrastructure systems. It helps teams generate, organize, reuse, validate, and manage Kubernetes, Terraform, and other configuration across environments using inventory, templates, Jsonnet, Jinja2, Kadet, Helm, Kustomize, CUE, and external references.
+**Kapitan** is an open source configuration management tool for **Kubernetes**, **Terraform**, and complex infrastructure systems. It helps teams generate, organize, reuse, and validate configuration across environments using an **inventory-driven model**, templates (**Jsonnet**, **Jinja2**, **Kadet**), and integrations with **Helm**, **Kustomize**, **CUE**, and external references.
+
+Kapitan provides native **secrets management** (GPG, AWS KMS, GCP KMS, Azure Key Vault, HashiCorp Vault) and is designed for **Platform Engineering** and **GitOps** workflows.
 
 - **Website**: https://kapitan.dev
 - **Documentation**: https://kapitan.dev/getting_started/
-- **Slack**: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3) on Kubernetes Slack
+- **Community**: [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3) on Kubernetes Slack
 - **Sponsor**: [GitHub Sponsors](https://github.com/sponsors/kapicorp)
 
 ---
@@ -35,6 +37,10 @@ For a minimal project from a cookiecutter template:
 pip3 install cruft
 cruft create https://github.com/kapicorp/kapitan-reference --checkout cookiecutter --no-input
 ```
+
+## What is Kapitan?
+
+Kapitan lets you model infrastructure configuration with reusable **inventory classes** and **targets**, then compile that data into manifests, scripts, documentation, and Terraform resources. Instead of copying values across Helm values files, Kustomize overlays, and Terraform variables, you define everything once in the Kapitan inventory and let each input type generate the files it needs.
 
 ## Install Kapitan
 
