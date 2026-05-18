@@ -108,7 +108,7 @@ Compiled echo-server (0.14s)
 === "Linux"
 
     ```shell
-    sudo apt-get update && sudo apt-get install -y python3.8-dev python3-pip python3-yaml
+    sudo apt-get update && sudo apt-get install -y python3-dev python3-pip python3-yaml
     ```
 
 === "Mac"
@@ -126,7 +126,7 @@ Compiled echo-server (0.14s)
 === "Linux"
 
     !!! note ""
-        `kapitan` will be installed in `$HOME/.local/lib/python3.7/bin`
+        `kapitan` will be installed in `$HOME/.local/lib/python3.x/bin`
 
     ```shell
     pip3 install --user --upgrade kapitan
@@ -135,7 +135,7 @@ Compiled echo-server (0.14s)
 === "Mac"
 
     !!! note ""
-        `kapitan` will be installed in `$HOME/Library/Python/3.7/bin`
+        `kapitan` will be installed in `$HOME/Library/Python/3.x/bin`
 
     ```shell
     pip3 install --user --upgrade kapitan
@@ -171,3 +171,12 @@ Every merge to `master` is automatically published to PyPI as a PEP 440 pre-rele
     ```shell
     poetry add --allow-prereleases kapitan
     ```
+
+---
+
+## Next steps
+
+- Learn the [Kapitan core concepts](pages/core_concepts.md): how inventory, targets, classes, and input types work together.
+- Understand the [Kapitan inventory](pages/inventory/introduction.md): targets, classes, and parameter interpolation.
+- Explore [input types](pages/input_types/introduction.md) such as [Jsonnet](pages/input_types/jsonnet.md), [Jinja](pages/input_types/jinja.md), [Kadet](pages/input_types/kadet.md), [Helm](pages/input_types/helm.md), and [Kustomize](pages/input_types/kustomize.md).
+- Manage secrets and external values with [Kapitan References](references.md).

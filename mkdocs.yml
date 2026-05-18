@@ -94,6 +94,10 @@ nav:
   - Getting started: getting_started.md
   - Documentation:
       - Core Concepts: pages/core_concepts.md
+      - Kubernetes Configuration Management: pages/kubernetes_configuration_management.md
+      - Kapitan vs Helm vs Kustomize: pages/kapitan_vs_helm_kustomize.md
+      - Examples: pages/kapitan_examples.md
+      - Glossary: pages/glossary.md
       - Inventory:
         - Introduction: pages/inventory/introduction.md
         - Targets: pages/inventory/targets.md
@@ -120,6 +124,8 @@ nav:
         - Remote repositories: pages/remote_repositories.md
         - External dependencies: pages/external_dependencies.md
         - Publishing generators: pages/publishing_generators.md
+        - ArgoCD integration: pages/argocd.md
+        - FluxCD integration: pages/fluxcd.md
       - CLI reference:
           - compile: pages/commands/kapitan_compile.md
           - inventory: pages/commands/kapitan_inventory.md
@@ -131,6 +137,7 @@ nav:
     - pages/blog/index.md
   - Support:
       - Ask for support: support.md
+      - Troubleshooting: pages/troubleshooting.md
       - Related Projects: related.md
   - Contribute:
       - Sponsor Us: pages/contribute/sponsor.md
