@@ -1,4 +1,9 @@
-# :kapitan-logo: **Kapitan Overview**
+---
+title: "Getting Started with Kapitan for Kubernetes and Infrastructure Configuration"
+description: "Install Kapitan with Docker or pip, clone a reference repository, and compile your first Kubernetes and infrastructure targets in minutes."
+---
+
+# :kapitan-logo: **Getting Started with Kapitan**
 
 ## Setup your installation
 

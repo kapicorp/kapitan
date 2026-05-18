@@ -1,4 +1,9 @@
-# :kapitan-logo: **Input Type | Kadet**
+---
+title: "Kapitan Kadet Input Type: Python-Based Configuration Generation"
+description: "Use Python and Kadet with Kapitan to generate infrastructure configuration. Define resources as classes and access the Kapitan inventory from Python code."
+---
+
+# :kapitan-logo: **Kapitan Kadet Input Type**
 
 Kadet is an extensible **input type** for **Kapitan** that enables you to generate templates using **Python**.
 

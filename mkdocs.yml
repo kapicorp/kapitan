@@ -2,6 +2,7 @@
 # pip install mkdocs mkdocs-material pymdown-extensions
 site_name: "Kapitan: Keep your ship together"
 site_url: "https://kapitan.dev/"
+site_description: "Kapitan is an open source configuration management tool for Kubernetes, Terraform, and complex infrastructure. Generate, organize, and reuse configuration across environments."
 strict: true
 plugins:
   - blog:
@@ -10,6 +11,7 @@ plugins:
       post_url_date_format: dd/MM/yyyy
   - search
   - markdown-exec
+  - meta
 
 theme:
   name: material
