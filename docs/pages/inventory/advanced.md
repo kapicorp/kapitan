@@ -40,3 +40,11 @@ For instance you could define the following:
         Compiled acme (0.06s)
         Compiled acme-documentation (0.09s)
         ```
+
+---
+
+## Next steps
+
+- Review the [inventory introduction](introduction.md) for a refresher on targets and classes.
+- Learn about [inventory backends](backends.md) such as reclass-rs and OmegaConf.
+- Explore the [`kapitan compile` CLI reference](../commands/kapitan_compile.md#using-labels) for more label options.
