@@ -395,6 +395,13 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
     )
     backend = get_inventory_backend(backend_id)
 
+    # migrate inventory to selected inventory backend BEFORE instantiating,
+    # because the constructor renders the inventory which would fail on
+    # un-migrated syntax.
+    if hasattr(cached.args, "migrate") and cached.args.migrate:
+        migrator = backend(inventory_path=inventory_path, initialise=False)
+        migrator.migrate()
+
     logger.debug(f"Using {backend.__name__} as inventory backend")
     try:
         inventory_backend = backend(
@@ -407,9 +414,5 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
 
     cached.inv = inventory_backend
     cached.global_inv = cached.inv.inventory
-
-    # migrate inventory to selected inventory backend
-    if hasattr(cached.args, "migrate") and cached.args.migrate:
-        inventory_backend.migrate()
 
     return cached.inv
