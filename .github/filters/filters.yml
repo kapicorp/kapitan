@@ -1,0 +1,16 @@
+# ------------------------------------------------
+# Path filters for test-build-publish.yml
+# ------------------------------------------------
+
+docs:
+  - 'docs/**'
+  - '.github/workflows/documentation.yml'
+  - 'mkdocs.yml'
+  - 'CNAME'
+
+code:
+  - '**'
+  - '!docs/**'
+  - '!mkdocs.yml'
+  - '!CNAME'
+  - '!.github/workflows/documentation.yml'
