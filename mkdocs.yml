@@ -2,6 +2,24 @@
 # pip install mkdocs mkdocs-material pymdown-extensions
 site_name: "Kapitan: Keep your ship together"
 site_url: "https://kapitan.dev/"
+site_description: "Kapitan is an open source configuration management tool for Kubernetes, Terraform, and infrastructure. Generate, organize, validate, and manage configuration across environments."
+
+# SEO and versioning strategy
+# ---------------------------
+# Canonical URLs are generated automatically from site_url. Each page
+# canonicalizes to its own URL, which is correct for both the unversioned
+# root and versioned paths managed by mike.
+#
+# Versioned docs (/0.x/, /latest/, /dev/):
+# - Each version is legitimate content and canonicalizes to itself.
+# - /latest/ is an alias that always points to the current stable version.
+# - /dev/ represents the in-development state and may be indexed, but
+#   search engines will typically rank /latest/ higher due to internal
+#   linking and user behavior.
+# - Old versions are not blocked because users running older releases need
+#   access to matching documentation.
+# - robots.txt (in docs/robots.txt) allows all paths and references the
+#   generated sitemap.xml.
 strict: true
 plugins:
   - blog:
@@ -10,6 +28,7 @@ plugins:
       post_url_date_format: dd/MM/yyyy
   - search
   - markdown-exec
+  - meta
 
 theme:
   name: material
@@ -75,6 +94,10 @@ nav:
   - Getting started: getting_started.md
   - Documentation:
       - Core Concepts: pages/core_concepts.md
+      - Kubernetes Configuration Management: pages/kubernetes_configuration_management.md
+      - Kapitan vs Helm vs Kustomize: pages/kapitan_vs_helm_kustomize.md
+      - Examples: pages/kapitan_examples.md
+      - Glossary: pages/glossary.md
       - Inventory:
         - Introduction: pages/inventory/introduction.md
         - Targets: pages/inventory/targets.md
@@ -92,7 +115,6 @@ nav:
           - CueLang: pages/input_types/cuelang.md
           - Helm: pages/input_types/helm.md
           - Kustomize: pages/input_types/kustomize.md
-          - Cuelang: pages/input_types/cuelang.md
           - Jsonnet: pages/input_types/jsonnet.md
           - External: pages/input_types/external.md
           - Copy: pages/input_types/copy.md
@@ -102,6 +124,8 @@ nav:
         - Remote repositories: pages/remote_repositories.md
         - External dependencies: pages/external_dependencies.md
         - Publishing generators: pages/publishing_generators.md
+        - ArgoCD integration: pages/argocd.md
+        - FluxCD integration: pages/fluxcd.md
       - CLI reference:
           - compile: pages/commands/kapitan_compile.md
           - inventory: pages/commands/kapitan_inventory.md
@@ -113,6 +137,7 @@ nav:
     - pages/blog/index.md
   - Support:
       - Ask for support: support.md
+      - Troubleshooting: pages/troubleshooting.md
       - Related Projects: related.md
   - Contribute:
       - Sponsor Us: pages/contribute/sponsor.md
