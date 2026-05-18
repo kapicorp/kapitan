@@ -199,14 +199,14 @@ def setup_gpg_key(key_path: str, gnupg_home: Optional[str] = None) -> None:
     for line in result.stdout.split("\n"):
         if line.startswith("fpr:"):
             fingerprint = line.split(":")[9]
-            trust_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
-            trust_file.write(f"{fingerprint}:6\n")
-            trust_file.close()
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as trust_file:
+                trust_file.write(f"{fingerprint}:6\n")
+                trust_file_name = trust_file.name
 
             subprocess.run(
-                ["gpg", "--import-ownertrust", trust_file.name], env=env, check=True
+                ["gpg", "--import-ownertrust", trust_file_name], env=env, check=True
             )
-            os.unlink(trust_file.name)
+            os.unlink(trust_file_name)
             break
 
 
