@@ -23,6 +23,7 @@ from kapitan import __file__ as kapitan_install_path
 from kapitan import cached
 from kapitan.errors import CompileError, InventoryError
 from kapitan.inventory import Inventory, get_inventory_backend
+from kapitan.topics import topics
 from kapitan.utils import (
     PrettyDumper,
     StrEnum,
@@ -56,6 +57,7 @@ def resource_callbacks(search_paths):
             partial(jinja2_render_file, search_paths),
         ),
         "inventory": (("target", "inv_path"), partial(inventory, search_paths)),
+        "topics": (("name",), topics),
         "file_read": (("name",), partial(read_file, search_paths)),
         "file_exists": (("name",), partial(file_exists, search_paths)),
         "dir_files_list": (("name",), partial(dir_files_list, search_paths)),
@@ -332,7 +334,17 @@ def generate_inventory(args):
     try:
         inv = get_inventory(args.inventory_path)
 
-        if args.target_name:
+        # ``--topics`` is mutually informative with ``--target-name``: if a
+        # topic name is provided we dump that single topic; otherwise we dump
+        # the full topics mapping. Topic data is plain dicts (see
+        # ``kapitan.topics``) so it flows through the existing yaml dumping.
+        topics_arg = getattr(args, "topics", None)
+        if topics_arg is not None:
+            inv = topics(topics_arg) if topics_arg else topics()
+            if args.pattern:
+                pattern = args.pattern.split(".")
+                inv = deep_get(inv, pattern)
+        elif args.target_name:
             inv = inv.inventory[args.target_name]
             if args.pattern:
                 pattern = args.pattern.split(".")

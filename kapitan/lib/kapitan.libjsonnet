@@ -8,6 +8,7 @@
   dir_files_read(name):: std.native("dir_files_read")(name),
   inventory(target=std.extVar("target"), inv_path=null):: std.native("inventory")(target, inv_path),
   inventory_global(target=null, inv_path=null):: std.native("inventory")(target, inv_path),
+  topics(name=null):: std.native("topics")(name),
   yaml_dump(obj):: std.native("yaml_dump")(std.toString(obj)),
   yaml_dump_stream(obj):: std.native("yaml_dump_stream")(std.toString(obj)),
   sha256(obj):: std.native("sha256_string")(std.toString(obj)),
