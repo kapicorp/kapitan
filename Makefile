@@ -28,7 +28,7 @@ install_external_tools: install_helm install_kustomize install_cue
 install_helm:
 	@echo "===== Installing Helm ====="
 	@which helm > /dev/null 2>&1 || ( \
-		curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash \
+		curl -fsSL --retry 3 https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash \
 	)
 	@helm version --short
 
@@ -37,7 +37,7 @@ install_helm:
 install_kustomize:
 	@echo "===== Installing Kustomize ====="
 	@which kustomize > /dev/null 2>&1 || ( \
-		curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash && \
+		curl -fsSL --retry 3 "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash && \
 		sudo mv kustomize /usr/local/bin/ \
 	)
 	@kustomize version
@@ -47,8 +47,9 @@ install_kustomize:
 install_cue:
 	@echo "===== Installing CUE Language ====="
 	@which cue > /dev/null 2>&1 || ( \
-		CUE_VERSION=$$(curl -s "https://api.github.com/repos/cue-lang/cue/releases/latest" | grep -Po '"tag_name": "\K.*?(?=")') && \
-		curl -L "https://github.com/cue-lang/cue/releases/download/$${CUE_VERSION}/cue_$${CUE_VERSION}_linux_amd64.tar.gz" | \
+		CUE_VERSION="v0.13.0" && \
+		ARCH=$$(uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/') && \
+		curl -fsSL --retry 3 "https://github.com/cue-lang/cue/releases/download/$${CUE_VERSION}/cue_$${CUE_VERSION}_linux_$${ARCH}.tar.gz" | \
 		sudo tar xz -C /usr/local/bin cue \
 	)
 	@cue version
