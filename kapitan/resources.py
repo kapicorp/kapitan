@@ -53,10 +53,10 @@ def resource_callbacks(search_paths):
 
     return {
         "jinja2_render_file": (
-            ("name", "ctx"),
+            ("name", "c"),
             partial(jinja2_render_file, search_paths),
         ),
-        "inventory": (("target", "inv_path"), partial(inventory, search_paths)),
+        "inventory": (("t", "p"), partial(inventory, search_paths)),
         "topics": (("name",), topics),
         "file_read": (("name",), partial(read_file, search_paths)),
         "file_exists": (("name",), partial(file_exists, search_paths)),
@@ -68,7 +68,7 @@ def resource_callbacks(search_paths):
         "yaml_dump_stream": (("obj",), yaml_dump_stream),
         "yaml_load": (("name",), partial(yaml_load, search_paths)),
         "yaml_load_stream": (("name",), partial(yaml_load_stream, search_paths)),
-        "jsonschema_validate": (("obj", "schema_obj"), jsonschema_validate),
+        "jsonschema_validate": (("obj", "s"), jsonschema_validate),
     }
 
 
