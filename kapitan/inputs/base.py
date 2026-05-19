@@ -337,6 +337,12 @@ class CompilingFile:
         else:
             obj = self.revealer.compile_obj(obj, target_name=target_name)
 
+        # Filter out None values from multi-document streams (e.g., empty
+        # YAML documents produced by helm template with comments before ---).
+        # https://github.com/kapicorp/kapitan/issues/1396
+        if not isinstance(obj, Mapping) and isinstance(obj, list | tuple):
+            obj = [item for item in obj if item is not None]
+
         if not obj:
             logger.debug("%s is Empty, skipped writing output", self.fp.name)
             return
