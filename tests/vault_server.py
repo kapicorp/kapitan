@@ -7,9 +7,9 @@
 
 import logging
 import os
+import unittest
 from time import sleep
 
-import docker
 import hvac
 from hvac.exceptions import InvalidRequest
 
@@ -19,14 +19,36 @@ from kapitan.errors import KapitanError
 logger = logging.getLogger(__name__)
 
 
+try:
+    import docker
+except ImportError:
+    docker = None
+
+
 class VaultServerError(KapitanError):
     """Generic vaultserver errors"""
+
+
+def _docker_available():
+    if docker is None:
+        return False
+    try:
+        client = docker.from_env()
+        client.ping()
+    except Exception:
+        return False
+    else:
+        client.close()
+        return True
 
 
 class VaultServer:
     """Opens a vault server in a container"""
 
     def __init__(self):
+        if not _docker_available():
+            raise unittest.SkipTest("Docker is not available")
+
         self.parameters = {}
         self.vault_url = None
         self.root_token = None
