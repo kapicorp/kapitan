@@ -6,7 +6,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import collections
-import functools
 import glob
 import json
 import logging
@@ -108,6 +107,9 @@ def prune_empty(d):
             }
 
 
+_SUPPORTED_MULTILINE_STYLES = {"literal": "|", "folded": ">", "double-quotes": '"'}
+
+
 class PrettyDumper(yaml.SafeDumper):
     """
     Increases indent of nested lists.
@@ -118,13 +120,46 @@ class PrettyDumper(yaml.SafeDumper):
     def increase_indent(self, flow=False, indentless=False):
         return super(PrettyDumper, self).increase_indent(flow, False)
 
+    # Cache of dumper subclasses keyed by ``style_selection`` so we don't pay
+    # the ``add_representer`` / ``functools.partial`` cost on every
+    # ``write_yaml`` call. Each subclass keeps its own ``yaml_representers``
+    # dict thanks to ``add_representer``'s copy-on-write semantics, so
+    # different styles no longer clobber each other globally.
+    _style_dumper_cache: dict = {}
+
     @classmethod
     def get_dumper_for_style(cls, style_selection="double-quotes"):
-        cls.add_representer(
-            str,
-            functools.partial(multiline_str_presenter, style_selection=style_selection),
+        cached_dumper = cls._style_dumper_cache.get(style_selection)
+        if cached_dumper is not None:
+            return cached_dumper
+
+        style_char = _SUPPORTED_MULTILINE_STYLES.get(style_selection)
+
+        # Build the str presenter with the style bound at definition time.
+        # This avoids the per-call ``functools.partial`` allocation and the
+        # ``dict.get`` lookup that the previous implementation did inside
+        # ``multiline_str_presenter`` for every string node.
+        if style_char is None:
+
+            def _str_presenter(dumper, data):
+                return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+        else:
+
+            def _str_presenter(dumper, data, _style=style_char):
+                if "\n" in data:
+                    return dumper.represent_scalar(
+                        "tag:yaml.org,2002:str", data, style=_style
+                    )
+                return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+        dumper_cls = type(
+            f"PrettyDumper_{style_selection or 'default'}",
+            (cls,),
+            {},
         )
-        return cls
+        dumper_cls.add_representer(str, _str_presenter)
+        cls._style_dumper_cache[style_selection] = dumper_cls
+        return dumper_cls
 
 
 def multiline_str_presenter(dumper, data, style_selection="double-quotes"):
@@ -132,24 +167,20 @@ def multiline_str_presenter(dumper, data, style_selection="double-quotes"):
     Configures yaml for dumping multiline strings with given style.
     By default, strings are getting dumped with style='"'.
     Ref: https://github.com/yaml/pyyaml/issues/240#issuecomment-1018712495
+
+    Kept for backwards-compatibility; ``PrettyDumper.get_dumper_for_style``
+    no longer uses it directly because it now binds the style at
+    representer-creation time and caches the resulting dumper class.
     """
-
-    supported_styles = {"literal": "|", "folded": ">", "double-quotes": '"'}
-
-    style = supported_styles.get(style_selection)
-
-    if data.count("\n") > 0:  # check for multiline string
+    style = _SUPPORTED_MULTILINE_STYLES.get(style_selection)
+    if "\n" in data:
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
 
 
 def null_presenter(dumper, data):
     """Configures yaml for omitting value from null-datatype"""
-    # get parsed args from cached.py
-    flag_value = False
-    if hasattr(cached.args, "yaml_dump_null_as_empty"):
-        flag_value = cached.args.yaml_dump_null_as_empty
-
+    flag_value = getattr(cached.args, "yaml_dump_null_as_empty", False)
     if flag_value:
         return dumper.represent_scalar("tag:yaml.org,2002:null", "")
     return dumper.represent_scalar("tag:yaml.org,2002:null", "null")
@@ -267,9 +298,9 @@ def directory_hash(directory):
                     else:
                         raise CompileError(
                             f"utils.directory_hash failed to open {file_path}: {e}"
-                        )
+                        ) from e
     except Exception as e:
-        raise CompileError(f"utils.directory_hash failed: {e}")
+        raise CompileError(f"utils.directory_hash failed: {e}") from e
 
     return hash.hexdigest()
 
@@ -442,14 +473,12 @@ def unpack_downloaded_file(file_path, output_path, content_type):
             content_type = "application/zip"
 
     if content_type == "application/x-tar":
-        tar = tarfile.open(file_path)
-        tar.extractall(path=output_path)
-        tar.close()
+        with tarfile.open(file_path) as tar:
+            tar.extractall(path=output_path)
         is_unpacked = True
     elif content_type == "application/zip":
-        zfile = ZipFile(file_path)
-        zfile.extractall(output_path)
-        zfile.close()
+        with ZipFile(file_path) as zfile:
+            zfile.extractall(output_path)
         is_unpacked = True
     elif content_type in [
         "application/gzip",
@@ -459,9 +488,8 @@ def unpack_downloaded_file(file_path, output_path, content_type):
         "application/x-compressed-tar",
     ]:
         if re.search(r"(\.tar\.gz|\.tgz)$", file_path):
-            tar = tarfile.open(file_path)
-            tar.extractall(path=output_path)
-            tar.close()
+            with tarfile.open(file_path) as tar:
+                tar.extractall(path=output_path)
             is_unpacked = True
         else:
             extension = re.findall(r"\..*$", file_path)[0]
@@ -519,7 +547,7 @@ def safe_copy_tree(src, dst):
     try:
         names = os.listdir(src)
     except OSError as e:
-        raise SafeCopyError(f"Error listing files in {src}: {e.strerror}")
+        raise SafeCopyError(f"Error listing files in {src}: {e.strerror}") from e
 
     try:
         os.makedirs(dst, exist_ok=True)
@@ -612,7 +640,9 @@ def render_jinja2_file(
     except jinja2.TemplateError as e:
         # Exception misses the line number info. Retreive it from traceback
         err_info = _jinja_error_info(traceback.extract_tb(sys.exc_info()[2]))
-        raise CompileError(f"Jinja2 TemplateError: {e}, at {err_info[0]}:{err_info[1]}")
+        raise CompileError(
+            f"Jinja2 TemplateError: {e}, at {err_info[0]}:{err_info[1]}"
+        ) from e
 
 
 def render_jinja2(
@@ -658,7 +688,9 @@ def render_jinja2(
                     "mode": file_mode(render_path),
                 }
             except Exception as e:
-                raise CompileError(f"Jinja2 error: failed to render {render_path}: {e}")
+                raise CompileError(
+                    f"Jinja2 error: failed to render {render_path}: {e}"
+                ) from e
 
     return rendered
 

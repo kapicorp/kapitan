@@ -70,7 +70,7 @@ class VaultTransit(Base64Ref):
         except KeyError:
             raise RefError(
                 "Could not create VaultSecret: vaulttransit parameters missing"
-            )
+            ) from None
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -139,13 +139,13 @@ class VaultTransit(Base64Ref):
 
             self.data = ciphertext.encode()
             self.vault_params.crypto_key = key
-        except Forbidden:
+        except Forbidden as e:
             raise VaultError(
                 "Permission Denied. "
                 f"make sure the token is authorised to access {data[0]} on Vault"
-            )
-        except InvalidPath:
-            raise VaultError(f"{data[0]} does not exist on Vault secret")
+            ) from e
+        except InvalidPath as e:
+            raise VaultError(f"{data[0]} does not exist on Vault secret") from e
         finally:
             client.adapter.close()
 
@@ -178,13 +178,13 @@ class VaultTransit(Base64Ref):
             plaintext = base64.b64decode(response["data"]["plaintext"])
 
             return plaintext.decode()
-        except Forbidden:
+        except Forbidden as e:
             raise VaultError(
                 "Permission Denied. "
                 f"make sure the token is authorised to access {data[0]} on Vault"
-            )
-        except InvalidPath:
-            raise VaultError(f"{data[0]} does not exist on Vault secret")
+            ) from e
+        except InvalidPath as e:
+            raise VaultError(f"{data[0]} does not exist on Vault secret") from e
         finally:
             client.adapter.close()
 

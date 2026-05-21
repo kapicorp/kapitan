@@ -16,8 +16,14 @@ import unittest
 
 from omegaconf import OmegaConf
 
+from kapitan import cached
+from kapitan.cached import reset_cache
+from kapitan.errors import InventoryError
 from kapitan.inventory import get_inventory_backend
+from kapitan.inventory.backends.omegaconf import OmegaConfInventory
+from kapitan.inventory.backends.omegaconf.migrate import migrate_dir, migrate_str
 from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
+from kapitan.resources import get_inventory
 
 
 logger = logging.getLogger(__name__)
@@ -284,6 +290,50 @@ class InventoryTestOmegaConfOC(unittest.TestCase):
             "base_component",
             params["omegaconf"]["remove"],
             "omegaconf.remove should contain base_component for removal during compile",
+        )
+
+    def test_escape_resolver_produces_dollar_syntax(self):
+        """Test that ${escape:content} produces ${content} as a literal string."""
+        target_name = "test-resolvers"
+        target_path = "test-resolvers.yml"
+
+        inventory = self.inventory_backend
+        target = inventory.target_class(name=target_name, path=target_path)
+        inventory.targets.update({target_name: target})
+        inventory.load_target(target)
+
+        params = target.parameters.model_dump(by_alias=True)
+        escape_test = params["escape_test"]
+
+        # Standalone values become ${content}
+        self.assertEqual(
+            escape_test["terraform_ref"],
+            "${google_service_account.cluster.email}",
+            "${escape:} should produce ${content} without omegaconf resolving it",
+        )
+        self.assertEqual(
+            escape_test["shell_var"],
+            "${HOME}",
+            "${escape:} should preserve shell variable syntax literally",
+        )
+
+        # Embedded mid-string: surrounding text and other interpolations are unaffected
+        self.assertEqual(
+            escape_test["greeting"],
+            "Hello ${USER}, welcome to resolvers-test",
+            "${escape:} embedded in a string should only escape its own content",
+        )
+
+        # Content that matches a real inventory key must NOT be resolved
+        self.assertNotEqual(
+            escape_test["escaped_key"],
+            escape_test["real_key"],
+            "${escape:environment} must not resolve the 'environment' key",
+        )
+        self.assertEqual(
+            escape_test["escaped_key"],
+            "${environment}",
+            "${escape:environment} should produce the literal string '${environment}'",
         )
 
 
@@ -576,3 +626,127 @@ class InventoryTestOmegaConfDeferredResolvers(unittest.TestCase):
 
 
 # Compile tests for omegaconf are in test_compile.py (CompileTestResourcesOCOmegaconf)
+
+
+class TestOmegaConfMigrate(unittest.TestCase):
+    """Tests for the OmegaConf migration logic."""
+
+    def test_migrate_str_converts_colon_to_dot(self):
+        """Reclass ${foo:bar} becomes OmegaConf ${foo.bar}"""
+        self.assertEqual(migrate_str("${a:b}"), "${a.b}")
+        self.assertEqual(migrate_str("${a:b:c}"), "${a.b.c}")
+
+    def test_migrate_dir_raises_on_invalid_yaml(self):
+        """Migration errors must be raised, not swallowed."""
+        temp_dir = tempfile.mkdtemp()
+        bad_file = os.path.join(temp_dir, "bad.yml")
+        with open(bad_file, "w") as f:
+            f.write("parameters:\n  foo: bar\n")
+
+        # Make the file read-only so migrate_file can't write
+        os.chmod(bad_file, 0o444)
+
+        try:
+            with self.assertRaises(InventoryError):
+                migrate_dir(temp_dir)
+        finally:
+            os.chmod(bad_file, 0o644)
+            shutil.rmtree(temp_dir)
+
+
+class TestOmegaConfClassResolution(unittest.TestCase):
+    """Tests for OmegaConf class file resolution."""
+
+    def test_resolve_class_file_path_with_yaml_extension(self):
+        """Class files with .yaml extension must be discoverable."""
+        temp_dir = tempfile.mkdtemp()
+        classes_dir = os.path.join(temp_dir, "classes")
+        targets_dir = os.path.join(temp_dir, "targets")
+        os.makedirs(classes_dir)
+        os.makedirs(targets_dir)
+
+        # Create a .yaml class file
+        with open(os.path.join(classes_dir, "common.yaml"), "w") as f:
+            f.write("parameters:\n  foo: bar\n")
+
+        # Create a target that references the class
+        with open(os.path.join(targets_dir, "test.yml"), "w") as f:
+            f.write("classes:\n  - common\n")
+
+        inventory = OmegaConfInventory(inventory_path=temp_dir, initialise=False)
+        resolved = inventory.resolve_class_file_path("common")
+        self.assertEqual(resolved, os.path.join(classes_dir, "common.yaml"))
+
+        shutil.rmtree(temp_dir)
+
+    def test_resolve_class_file_path_prefers_yml_over_yaml(self):
+        """When both .yml and .yaml exist, .yml should take precedence."""
+        temp_dir = tempfile.mkdtemp()
+        classes_dir = os.path.join(temp_dir, "classes")
+        targets_dir = os.path.join(temp_dir, "targets")
+        os.makedirs(classes_dir)
+        os.makedirs(targets_dir)
+
+        with open(os.path.join(classes_dir, "common.yml"), "w") as f:
+            f.write("parameters:\n  from: yml\n")
+        with open(os.path.join(classes_dir, "common.yaml"), "w") as f:
+            f.write("parameters:\n  from: yaml\n")
+
+        inventory = OmegaConfInventory(inventory_path=temp_dir, initialise=False)
+        resolved = inventory.resolve_class_file_path("common")
+        self.assertEqual(resolved, os.path.join(classes_dir, "common.yml"))
+
+        shutil.rmtree(temp_dir)
+
+
+class TestOmegaConfInventoryMigrationTiming(unittest.TestCase):
+    """Tests that --migrate runs before inventory initialisation."""
+
+    def setUp(self):
+        reset_cache()
+        self.temp_dir = tempfile.mkdtemp()
+        inventory_dir = os.path.join(self.temp_dir, "inventory")
+        classes_dir = os.path.join(inventory_dir, "classes")
+        targets_dir = os.path.join(inventory_dir, "targets")
+        os.makedirs(classes_dir)
+        os.makedirs(targets_dir)
+
+        # Class with reclass-style interpolation
+        with open(os.path.join(classes_dir, "common.yml"), "w") as f:
+            f.write("parameters:\n  shared:\n    name: common\n")
+
+        with open(os.path.join(classes_dir, "app.yml"), "w") as f:
+            f.write(
+                "classes:\n  - common\nparameters:\n  app:\n    ref: ${shared:name}\n"
+            )
+
+        with open(os.path.join(targets_dir, "test.yml"), "w") as f:
+            f.write("classes:\n  - app\n")
+
+        self.inventory_path = inventory_dir
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+        reset_cache()
+
+    def test_migrate_runs_before_initialisation(self):
+        """When cached.args.migrate is True, get_inventory must migrate files
+        before the backend tries to render them."""
+        from argparse import Namespace
+
+        cached.args = Namespace(
+            migrate=True,
+            inventory_backend="omegaconf",
+            compose_target_name=False,
+            compose_node_name=False,
+        )
+
+        inventory = get_inventory(self.inventory_path)
+        self.assertIsInstance(inventory, OmegaConfInventory)
+        self.assertIn("test", inventory.targets)
+
+        # Verify the file was actually migrated
+        with open(os.path.join(self.inventory_path, "classes", "app.yml")) as f:
+            content = f.read()
+        self.assertIn("${shared.name}", content)
+        self.assertNotIn("${shared:name}", content)
