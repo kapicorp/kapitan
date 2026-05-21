@@ -88,6 +88,8 @@ jobs:
     name: python ${{ matrix.python-version }} tests
     needs: [setup, check-changes]
     runs-on: ${{ needs.setup.outputs.runner }}
+    env:
+      VAULT_ADDR: http://localhost:8200
     strategy:
       fail-fast: false
       matrix:
@@ -144,6 +146,28 @@ jobs:
           helm version --short
           kustomize version
           cue version
+
+      - name: Start Vault dev server for tests
+        if: needs.check-changes.outputs.has-code-changes == 'true'
+        run: |
+          docker run -d --name vault-ci \
+            --cap-add IPC_LOCK \
+            -e SKIP_SETCAP=1 \
+            -e VAULT_DEV_ROOT_TOKEN_ID=root \
+            -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 \
+            -p 8200:8200 \
+            hashicorp/vault server -dev
+          # Wait for Vault to be ready
+          for _ in $(seq 1 30); do
+            if curl -sf http://localhost:8200/v1/sys/health | grep -q '"initialized":true'; then
+              echo "Vault is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Vault failed to start"
+          docker logs vault-ci
+          exit 1
 
       - name: Run pytest
         if: needs.check-changes.outputs.has-code-changes == 'true'

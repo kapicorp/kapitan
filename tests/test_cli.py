@@ -19,7 +19,7 @@ import pytest
 from kapitan.cli import build_parser
 from kapitan.cli import main as kapitan
 from kapitan.refs.secrets.vaultkv import VaultSecret
-from tests.vault_server import VaultServer
+from tests.vault_server import get_shared_vault_server
 
 
 REFS_PATH = tempfile.mkdtemp()
@@ -60,7 +60,7 @@ class CliFuncsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # setup vault server (running in container)
-        cls.server = VaultServer()
+        cls.server = get_shared_vault_server()
 
     @classmethod
     def tearDownClass(cls):
