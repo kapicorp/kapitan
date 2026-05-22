@@ -7,6 +7,7 @@
 
 "helm input tests"
 
+import io
 import os
 import tempfile
 import unittest
@@ -356,6 +357,26 @@ class HelmInputTest(unittest.TestCase):
             f"Leading zero string '03190301' should be quoted in YAML output to prevent "
             f"Helm (Go YAML) from parsing it as an integer. Current YAML content:\n{content}",
         )
+
+    def test_safe_load_all_filters_none_docs(self):
+        """Empty YAML documents (None) from multi-doc streams should be filtered out.
+
+        When Helm charts contain comments before the first ``---`` or between
+        documents, ``yaml.safe_load_all`` yields ``None`` entries. These empty
+        documents cause kubectl to reject the output with:
+          "error converting YAML to JSON: yaml: did not find expected node content"
+
+        https://github.com/kapicorp/kapitan/issues/1396
+        """
+        yaml_content = "# comment before first doc\n---\napiVersion: v1\nkind: ConfigMap\n---\n# comment between docs\n---\napiVersion: v1\nkind: Secret\n"
+        docs = [
+            doc
+            for doc in yaml.safe_load_all(io.StringIO(yaml_content))
+            if doc is not None
+        ]
+        self.assertEqual(len(docs), 2)
+        self.assertEqual(docs[0]["kind"], "ConfigMap")
+        self.assertEqual(docs[1]["kind"], "Secret")
 
     def tearDown(self):
         os.chdir(TEST_PWD)

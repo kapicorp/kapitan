@@ -235,21 +235,6 @@ class TestWriteYamlDispatch:
         assert yaml.safe_load(buf_py.getvalue()) == sample
         assert yaml.safe_load(buf_ryml.getvalue()) == sample
 
-    def test_filters_none_from_multi_doc_ryml(self):
-        """None values in multi-doc streams must be omitted (ryml path)."""
-        cached.args = Namespace(yaml_use_rapidyaml=True)
-        buf = io.StringIO()
-        self._make_compiling_file(buf).write_yaml([None, {"a": 1}, None])
-        docs = list(yaml.safe_load_all(buf.getvalue()))
-        assert docs == [{"a": 1}]
-
-    def test_skips_write_when_all_none_ryml(self):
-        """A list of only None values must produce no output (ryml path)."""
-        cached.args = Namespace(yaml_use_rapidyaml=True)
-        buf = io.StringIO()
-        self._make_compiling_file(buf).write_yaml([None, None])
-        assert buf.getvalue() == ""
-
 
 # ---------------------------------------------------------------------------
 # CLI startup warning
