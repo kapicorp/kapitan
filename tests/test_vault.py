@@ -17,7 +17,7 @@ import unittest
 from kapitan.inventory.model.references import KapitanReferenceVaultKVConfig
 from kapitan.refs.base import RefController, RefParams, Revealer
 from kapitan.refs.secrets.vaultkv import VaultClient, VaultError, VaultSecret
-from tests.vault_server import VaultServer
+from tests.vault_server import get_shared_vault_server
 
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class VaultSecretTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # setup vault server (running in container)
-        cls.server = VaultServer()
+        cls.server = get_shared_vault_server()
 
     @classmethod
     def tearDownClass(cls):
