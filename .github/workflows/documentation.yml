@@ -43,6 +43,10 @@ jobs:
           uv run mkdocs --version
 
       - run: uv run mkdocs build
+
+      - name: Verify rendering
+        run: uv run pytest tests/test_docs_rendering.py -v --no-cov
+
       - name: Deploy docs
         if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
         env:

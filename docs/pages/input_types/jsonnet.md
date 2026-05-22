@@ -1,5 +1,5 @@
 ---
-title: "Kapitan with Jsonnet: Generate Kubernetes and Infrastructure Config"
+title: "Kapitan with Jsonnet"
 description: "Use Jsonnet with Kapitan to generate Kubernetes manifests and infrastructure configuration. Access inventory data, validate with JSON Schema, and output YAML or JSON."
 ---
 
@@ -138,3 +138,12 @@ If `validation.valid` is not true, it will then fail compilation and display `va
 
     Compile error: failed to compile target: minikube-mysql
     ```
+
+---
+
+## Next steps
+
+- Learn how the [Kapitan inventory](../inventory/introduction.md) makes data available to Jsonnet templates.
+- Explore other [input types](introduction.md) such as [Jinja](jinja.md), [Kadet](kadet.md), and [Helm](helm.md).
+- Validate your generated output with [`kapitan validate`](../commands/kapitan_validate.md).
+- Manage secrets in Jsonnet templates with [Kapitan References](../../references.md).

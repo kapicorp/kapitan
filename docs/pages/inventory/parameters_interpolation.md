@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Inventory Parameter Interpolation and Variable References"
+title: "Kapitan Parameter Interpolation"
 description: "Learn how to use parameter interpolation in Kapitan inventory to reference values across classes, targets, and nested YAML structures."
 ---
 
@@ -68,4 +68,13 @@ classes:
 
 Here in this case `application.location` refers to a value `location` which has been defined elsewhere, perhaps (but not necessarily) in the `project.production` class.
 
-Also notice that the class name (`project.production`) is not in any ways influencing the name or the structed of the yaml it imports into the file
+Also notice that the class name (`project.production`) is not in any ways influencing the name or the structed of the yaml it imports into the file.
+
+---
+
+## Next steps
+
+- Review the [Kapitan inventory introduction](introduction.md) to understand how targets and classes form the configuration hierarchy.
+- Learn how to define environments with [Kapitan inventory targets](targets.md).
+- Compose reusable fragments with [Kapitan inventory classes](classes.md).
+- Explore [advanced inventory features](advanced.md) such as inventory backends and wildcard classes.

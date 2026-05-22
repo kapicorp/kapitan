@@ -14,7 +14,10 @@ jobs:
   pypi-publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      # Required for softprops/action-gh-release to upload SBOM + checksum
+      # assets to the GitHub release page. Only actually used when the
+      # "Upload release artifacts" step runs (release events only).
+      contents: write
       # NOTE:
       # Remove user/password and uncomment id-token permission once Trusted
       # Publishing (OIDC) is setup in pypi. See:
@@ -34,6 +37,40 @@ jobs:
         run: |
           uv build
           uvx twine check dist/*
+      - name: Extract version
+        id: version
+        run: |
+          # On release events, use the tag name (stripping any leading 'v').
+          # On workflow_dispatch, fall back to parsing the built wheel filename
+          # (kapitan is not installed in the runner Python after `uv build`).
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION=$(python3 -c "import glob, re, sys; m=re.search(r'kapitan-([^-]+)-', glob.glob('dist/kapitan-*.whl')[0]); print(m.group(1)) if m else sys.exit('no wheel found')")
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Detected version: ${VERSION}"
+      - name: Generate SBOM
+        timeout-minutes: 10
+        run: |
+          scripts/generate_sbom.sh "${{ steps.version.outputs.version }}" dist
+      - name: Generate SHA256 checksums
+        timeout-minutes: 5
+        run: |
+          scripts/generate_checksums.sh dist dist/SHA256SUMS
+      - name: Validate checksums
+        timeout-minutes: 5
+        run: |
+          (cd dist && sha256sum -c SHA256SUMS)
+      - name: Upload release artifacts
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
+        with:
+          files: |
+            dist/kapitan-*.whl
+            dist/kapitan-*.tar.gz
+            dist/kapitan-${{ steps.version.outputs.version }}.python.sbom.cdx.json
+            dist/SHA256SUMS
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:

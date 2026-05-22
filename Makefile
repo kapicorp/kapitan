@@ -171,6 +171,13 @@ docs_serve:
 	@echo "Documentation will be available at http://localhost:8000"
 	$(UV_RUN) mike serve
 
+# Verify fenced code blocks render correctly
+.PHONY: docs_check
+docs_check:
+	@echo "===== Verifying Documentation Rendering ====="
+	uv run pytest tests/test_docs_rendering.py -v --no-cov
+	@echo "Documentation rendering verified!"
+
 # Deploy documentation to GitHub Pages
 .PHONY: docs_deploy
 docs_deploy:

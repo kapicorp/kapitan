@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Input Types: Jsonnet, Jinja, Kadet, Helm, Kustomize, and CUE"
+title: "Kapitan Input Types"
 description: "Explore Kapitan input types including Jsonnet, Jinja2, Kadet, Helm, Kustomize, CUE, copy, remove, and external. Choose the right templating engine for your infrastructure."
 ---
 
@@ -156,3 +156,17 @@ Input types can be specified in the inventory under `kapitan.compile` in the fol
     ```
 
     1. (Default: global --prune)
+
+---
+
+## Next steps
+
+- Learn how the [Kapitan inventory](../inventory/introduction.md) feeds data into every input type.
+- Choose the right template engine for your use case:
+  - [Jsonnet](jsonnet.md) for structured data and Kubernetes manifests
+  - [Jinja](jinja.md) for scripts and documentation
+  - [Kadet](kadet.md) for Python-based generation
+  - [Helm](helm.md) for existing Helm charts
+  - [Kustomize](kustomize.md) for Kubernetes manifest patches
+  - [CUE](cuelang.md) for typed configuration validation
+- Manage secrets and external values with [Kapitan References](../../references.md).

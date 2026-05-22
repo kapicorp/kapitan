@@ -59,7 +59,7 @@ def update_inventory(file_path):
 
 def find_files(path):
     if not (os.path.isdir(path) and os.path.exists(path)):
-        raise Exception("path is not a directory or doesn't exist")
+        raise NotADirectoryError("path is not a directory or doesn't exist")
     for root, _, files in os.walk(path):
         for f in files:
             if not f.startswith("."):
