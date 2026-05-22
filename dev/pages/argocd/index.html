@@ -2742,67 +2742,67 @@
 </ul>
 <h3 id="cmp-plugin-config">CMP plugin config</h3>
 <p>The <code>generate</code> command should produce Kubernetes manifests from your compiled output. A typical script concatenates the generated YAML files and runs <code>kapitan refs --reveal</code> to decrypt secrets:</p>
-<p><code>bash
-rm -rf all_manifests.yml
-for f in *.yml; do
-  echo '---' &gt;&gt; all_manifests.yml
-  cat "$f" &gt;&gt; all_manifests.yml
-done
-kapitan refs --reveal --file all_manifests.yml</code></p>
+<div class="highlight"><pre><span></span><code>rm<span class="w"> </span>-rf<span class="w"> </span>all_manifests.yml
+<span class="k">for</span><span class="w"> </span>f<span class="w"> </span><span class="k">in</span><span class="w"> </span>*.yml<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;---&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>all_manifests.yml
+<span class="w">  </span>cat<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$f</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>all_manifests.yml
+<span class="k">done</span>
+kapitan<span class="w"> </span>refs<span class="w"> </span>--reveal<span class="w"> </span>--file<span class="w"> </span>all_manifests.yml
+</code></pre></div>
 <p>A minimal Helm values snippet:</p>
-<p>```yaml
-configs:
-  cmp:
-    plugins:
-      kapitan:
-        generate:
-          command: [bash, -c]
-          args:
-            - |
-              rm -rf all_manifests.yml
-              for f in *.yml; do
-                echo '---' &gt;&gt; all_manifests.yml
-                cat "$f" &gt;&gt; all_manifests.yml
-              done
-              kapitan refs --reveal --file all_manifests.yml</p>
-<p>repoServer:
-  extraContainers:
-    - name: kapitan
-      image: kapicorp/kapitan
-      command: [/var/run/argocd/argocd-cmp-server]
-      volumeMounts:
-        - mountPath: /var/run/argocd
-          name: var-files
-        - mountPath: /home/argocd/cmp-server/plugins
-          name: plugins
-        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
-          name: cmp-plugin
-          subPath: plugin.yaml
-```</p>
+<div class="highlight"><pre><span></span><code><span class="nt">configs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cmp</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">plugins</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">generate</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">bash</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">-c</span><span class="p p-Indicator">]</span>
+<span class="w">          </span><span class="nt">args</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">              </span><span class="no">rm -rf all_manifests.yml</span>
+<span class="w">              </span><span class="no">for f in *.yml; do</span>
+<span class="w">                </span><span class="no">echo &#39;---&#39; &gt;&gt; all_manifests.yml</span>
+<span class="w">                </span><span class="no">cat &quot;$f&quot; &gt;&gt; all_manifests.yml</span>
+<span class="w">              </span><span class="no">done</span>
+<span class="w">              </span><span class="no">kapitan refs --reveal --file all_manifests.yml</span>
+
+<span class="nt">repoServer</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">extraContainers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kapitan</span>
+<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kapicorp/kapitan</span>
+<span class="w">      </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">/var/run/argocd/argocd-cmp-server</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">volumeMounts</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/run/argocd</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">var-files</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/home/argocd/cmp-server/plugins</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">plugins</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">mountPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/home/argocd/cmp-server/config/plugin.yaml</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cmp-plugin</span>
+<span class="w">          </span><span class="nt">subPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">plugin.yaml</span>
+</code></pre></div>
 <p>See the <a href="https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins/">ArgoCD CMP documentation</a> for the full sidecar wiring.</p>
 <h2 id="application">Application</h2>
 <p>Create an ArgoCD Application that uses the plugin:</p>
-<p><code>yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: my-kapitan-app
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/example/kapitan-project.git
-    targetRevision: main
-    path: compiled/my-target
-    plugin:
-      name: kapitan
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: default
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">argoproj.io/v1alpha1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Application</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-kapitan-app</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">argocd</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">project</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">  </span><span class="nt">source</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">repoURL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/example/kapitan-project.git</span>
+<span class="w">    </span><span class="nt">targetRevision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">main</span>
+<span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">compiled/my-target</span>
+<span class="w">    </span><span class="nt">plugin</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kapitan</span>
+<span class="w">  </span><span class="nt">destination</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">server</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://kubernetes.default.svc</span>
+<span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">  </span><span class="nt">syncPolicy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">automated</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">prune</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">selfHeal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
 <p>Update <code>spec.source.repoURL</code> and <code>spec.source.path</code> to match your repository and compiled target output.</p>
 
               </article>

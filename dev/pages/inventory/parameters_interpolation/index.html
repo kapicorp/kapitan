@@ -2691,11 +2691,11 @@
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>as a shorthand, when we encounter deep yaml structures like the following:</p>
-<p><code>yaml
-parameters:
-  components:
-    nginx:
-      image: nginx:latest</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">components</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">nginx</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:latest</span>
+</code></pre></div>
 <p>Usually when we want to talk about the <code>image</code> subkey, we normally use either of the following:</p>
 <ul>
 <li><code>parameters.components.nginx.image</code></li>
@@ -2711,15 +2711,16 @@ parameters:
 </div>
 <p>The <a href="../introduction/"><strong>Inventory</strong></a> allows you to refer to other values defined elsewhere in the structure, using parameter interpolation.</p>
 <p>Given the example:</p>
-<p>```yaml</p>
-<p>parameters:
-  cluster:
-    location: europe</p>
-<p>application:
-    location: ${cluster:location}</p>
-<p>namespace: ${target_name}
-  target_name: dev
-```</p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cluster</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">europe</span>
+
+<span class="w">  </span><span class="nt">application</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${cluster:location}</span>
+
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
+<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dev</span>
+</code></pre></div>
 <p>Here we tell <strong>Kapitan</strong> that:</p>
 <ul>
 <li><code>namespace</code> should take the same value defined in <code>target_name</code></li>
@@ -2727,13 +2728,13 @@ parameters:
 <li><code>application.location</code> should take the same value as defined in <code>cluster.location</code></li>
 </ul>
 <p>It is important to notice that the inventory can refer to values defined in other classes, as long as they are imported by the target. So for instance with the following example</p>
-<p>```yaml</p>
-<p>classes:
-  - project.production</p>
-<p>parameters:
-    application:
-      location: ${cluster.location}
-```</p>
+<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">project.production</span>
+
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">application</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${cluster.location}</span>
+</code></pre></div>
 <p>Here in this case <code>application.location</code> refers to a value <code>location</code> which has been defined elsewhere, perhaps (but not necessarily) in the <code>project.production</code> class.</p>
 <p>Also notice that the class name (<code>project.production</code>) is not in any ways influencing the name or the structed of the yaml it imports into the file.</p>
 <hr />

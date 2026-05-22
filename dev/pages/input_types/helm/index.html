@@ -2712,25 +2712,25 @@
 </span> <strong>Kapitan Helm Input Type</strong></h1>
 <p>This is a Python binding to <code>helm template</code> command for users with helm charts. This does not require the helm executable, and the templates are rendered without the Tiller server.</p>
 <p>Unlike other input types, Helm input types support the following additional parameters under <code>kapitan.compile</code>:</p>
-<p><code>yaml
-parameters:
-  kapitan:
-    compile:
-    - output_path: &lt;output_path&gt;
-      input_type: helm
-      input_paths:
-        - &lt;chart_path&gt;
-      helm_values:
-        &lt;object_with_values_to_override&gt;
-      helm_values_files:
-        - &lt;values_file_path&gt;
-      helm_path: &lt;helm binary&gt;
-      helm_params:
-        name: &lt;chart_release_name&gt;
-        namespace: &lt;substitutes_.Release.Namespace&gt;
-        output_file: &lt;string&gt;
-        validate: true
-        …</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;output_path&gt;</span>
+<span class="w">      </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">helm</span>
+<span class="w">      </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;chart_path&gt;</span>
+<span class="w">      </span><span class="nt">helm_values</span><span class="p">:</span>
+<span class="w">        </span><span class="l l-Scalar l-Scalar-Plain">&lt;object_with_values_to_override&gt;</span>
+<span class="w">      </span><span class="nt">helm_values_files</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;values_file_path&gt;</span>
+<span class="w">      </span><span class="nt">helm_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;helm binary&gt;</span>
+<span class="w">      </span><span class="nt">helm_params</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;chart_release_name&gt;</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;substitutes_.Release.Namespace&gt;</span>
+<span class="w">        </span><span class="nt">output_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;string&gt;</span>
+<span class="w">        </span><span class="nt">validate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">        </span><span class="l l-Scalar l-Scalar-Plain">…</span>
+</code></pre></div>
 <p><code>helm_values</code> is an object containing values specified that will override the default values in the input chart. This has exactly the same effect as specifying <code>--values custom_values.yml</code> for <code>helm template</code> command where <code>custom_values.yml</code> structure mirrors that of <code>helm_values</code>.</p>
 <p><code>helm_values_files</code> is an array containing the paths to <a href="https://helm.sh/docs/chart_template_guide/values_files/">helm values files</a> used as input for the chart. This has exactly the same effect as specifying <code>--file my_custom_values.yml</code> for the <code>helm template</code> command where <code>my_custom_values.yml</code> is a helm values file.
 If the same keys exist in <code>helm_values</code> and in multiple specified <code>helm_values_files</code>, the last indexed file in the <code>helm_values_files</code> will take precedence followed by the preceding <code>helm_values_files</code> and at the bottom the <code>helm_values</code> defined in teh compile block.
@@ -2752,9 +2752,9 @@ This component has helm chart input and takes a <code>common.yml</code> helm_val
 <li><code>debug</code>: prints the helm debug output in kapitan debug log.</li>
 <li>
 <p><code>namespace</code>: note that due to the restriction on <code>helm template</code> command, specifying the namespace does not automatically add <code>metadata.namespace</code> property to the resources. Therefore, users are encouraged to explicitly specify it in all resources:</p>
-<p><code>yaml
-metadata:
-  namespace: {{ .Release.Namespace }} # or any other custom values</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">.Release.Namespace</span><span class="w"> </span><span class="p p-Indicator">}}</span><span class="w"> </span><span class="c1"># or any other custom values</span>
+</code></pre></div>
 </li>
 </ul>
 <p>See the <a href="https://helm.sh/docs/helm/helm_template/">helm doc</a> for further detail.</p>
@@ -2762,47 +2762,47 @@ metadata:
 <p>Let's use <a href="https://github.com/helm/charts/tree/master/stable/nginx-ingress">nginx-ingress</a> helm chart as the input. Using <a href="../../external_dependencies/">kapitan dependency manager</a>, this chart can be fetched via a URL as listed in <a href="https://helm.nginx.com/stable/index.yaml">https://helm.nginx.com/stable/index.yaml</a>.</p>
 <p><em>On a side note, <code>https://helm.nginx.com/stable/</code> is the chart repository URL which you would <code>helm repo add</code>, and this repository should contain <code>index.yaml</code> that lists out all the available charts and their URLs. By locating this <code>index.yaml</code> file, you can locate all the charts available in the repository.</em></p>
 <p>We can use version 0.3.3 found at <a href="https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz">https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz</a>. We can create a simple target file as <code>inventory/targets/nginx-from-chart.yml</code> whose content is as follows:</p>
-<p><code>yaml
-parameters:
-  kapitan:
-    vars:
-      target: nginx-from-chart
-    dependencies:
-    - type: https
-      source: https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz
-      unpack: True
-      output_path: components/charts
-    compile:
-      - output_path: .
-        input_type: helm
-        input_paths:
-          - components/charts/nginx-ingress
-        helm_values:
-          controller:
-            name: my-controller
-            image:
-              repository: custom_repo
-        helm_params:
-          name: my-first-release-name
-          namespace: my-first-namespace</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vars</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx-from-chart</span>
+<span class="w">    </span><span class="nt">dependencies</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https</span>
+<span class="w">      </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz</span>
+<span class="w">      </span><span class="nt">unpack</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="w">      </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components/charts</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">helm</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components/charts/nginx-ingress</span>
+<span class="w">        </span><span class="nt">helm_values</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">controller</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-controller</span>
+<span class="w">            </span><span class="nt">image</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">repository</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom_repo</span>
+<span class="w">        </span><span class="nt">helm_params</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-first-release-name</span>
+<span class="w">          </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-first-namespace</span>
+</code></pre></div>
 <p>To compile this target, run:</p>
-<p><code>shell
-$ kapitan compile --fetch
-Dependency https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz : fetching now
-Dependency https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz : successfully fetched
-Dependency https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz : extracted to components/charts
-Compiled nginx-from-chart (0.07s)</code></p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>kapitan<span class="w"> </span>compile<span class="w"> </span>--fetch
+Dependency<span class="w"> </span>https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz<span class="w"> </span>:<span class="w"> </span>fetching<span class="w"> </span>now
+Dependency<span class="w"> </span>https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz<span class="w"> </span>:<span class="w"> </span>successfully<span class="w"> </span>fetched
+Dependency<span class="w"> </span>https://helm.nginx.com/stable/nginx-ingress-0.3.3.tgz<span class="w"> </span>:<span class="w"> </span>extracted<span class="w"> </span>to<span class="w"> </span>components/charts
+Compiled<span class="w"> </span>nginx-from-chart<span class="w"> </span><span class="o">(</span><span class="m">0</span>.07s<span class="o">)</span>
+</code></pre></div>
 <p>The chart is fetched before compile, which creates <code>components/charts/nginx-ingress</code> folder that is used as the <code>input_paths</code>  for the helm input type. To confirm if the <code>helm_values</code> actually has overridden the default values, we can try:</p>
-<p><code>shell
-$ grep "my-controller" compiled/nginx-from-chart/nginx-ingress/templates/controller-deployment.yaml
-  name: my-controller
-      app: my-controller
-        app: my-controller</code></p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;my-controller&quot;</span><span class="w"> </span>compiled/nginx-from-chart/nginx-ingress/templates/controller-deployment.yaml
+<span class="w">  </span>name:<span class="w"> </span>my-controller
+<span class="w">      </span>app:<span class="w"> </span>my-controller
+<span class="w">        </span>app:<span class="w"> </span>my-controller
+</code></pre></div>
 <h4 id="building-the-binding-from-source">Building the binding from source</h4>
 <p>Run</p>
-<p><code>shell
-cd kapitan/inputs/helm
-./build.sh</code></p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>kapitan/inputs/helm
+./build.sh
+</code></pre></div>
 <p>This requires Go 1.14.</p>
 <h4 id="helm-subcharts">Helm subcharts</h4>
 <p>There is an <a href="../../external_dependencies/">external dependency manager</a> of type <code>helm</code> which enables you to specify helm

@@ -2958,14 +2958,14 @@
 <h3 id="python-version-errors">Python version errors</h3>
 <p><strong>Symptom:</strong> <code>kapitan</code> fails to install or run with syntax or import errors.</p>
 <p>Kapitan requires <strong>Python 3.10 or newer</strong>. Check your version:</p>
-<p><code>shell
-python3 --version</code></p>
+<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>--version
+</code></pre></div>
 <p>If you are using an older Python, upgrade or use the Docker image instead.</p>
 <h3 id="docker-permission-issues">Docker permission issues</h3>
 <p><strong>Symptom:</strong> Files created by the Docker container are owned by root.</p>
 <p>On Linux, add <code>-u $(id -u)</code> to your <code>docker run</code> command:</p>
-<p><code>shell
-docker run -t --rm -u $(id -u) -v $(pwd):/src:delegated kapicorp/kapitan compile</code></p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-t<span class="w"> </span>--rm<span class="w"> </span>-u<span class="w"> </span><span class="k">$(</span>id<span class="w"> </span>-u<span class="k">)</span><span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/src:delegated<span class="w"> </span>kapicorp/kapitan<span class="w"> </span>compile
+</code></pre></div>
 <h2 id="inventory-errors">Inventory errors</h2>
 <h3 id="no-inventory-targets-discovered-at-path"><code>No inventory targets discovered at path: ...</code></h3>
 <p><strong>Cause:</strong> The inventory path does not exist or does not contain any targets.</p>
@@ -2975,34 +2975,34 @@ docker run -t --rm -u $(id -u) -v $(pwd):/src:delegated kapicorp/kapitan compile
 <li>Verify that <code>inventory/targets/</code> exists and contains at least one <code>.yml</code> or <code>.yaml</code> file.</li>
 <li>If your inventory is in a non-default location, pass <code>--inventory-path</code>:</li>
 </ul>
-<p><code>shell
-kapitan compile --inventory-path ./my-inventory</code></p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile<span class="w"> </span>--inventory-path<span class="w"> </span>./my-inventory
+</code></pre></div>
 <h3 id="error-no-targets-found"><code>Error: no targets found</code></h3>
 <p><strong>Cause:</strong> You used <code>-t</code> or <code>--target</code> with a name that does not exist.</p>
 <p><strong>Resolution:</strong></p>
 <ul>
 <li>List available targets with:</li>
 </ul>
-<p><code>shell
-kapitan inventory --list-targets</code></p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>inventory<span class="w"> </span>--list-targets
+</code></pre></div>
 <ul>
 <li>Target names reflect the directory structure under <code>inventory/targets/</code>. A file at <code>inventory/targets/teams/devops/grafana.yml</code> becomes <code>teams.devops.grafana</code>.</li>
 </ul>
 <h3 id="inventoryerror-target_name-parameters-is-empty"><code>InventoryError: &lt;target_name&gt;: parameters is empty</code></h3>
 <p><strong>Cause:</strong> The target file exists but has no <code>parameters</code> section.</p>
 <p><strong>Resolution:</strong> Add a <code>parameters</code> block to the target, even if minimal:</p>
-<p><code>yaml
-parameters:
-  kapitan:
-    vars:
-      target: my-target</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vars</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-target</span>
+</code></pre></div>
 <h3 id="inventoryerror-target_name-parameterskapitan-has-no-assignment"><code>InventoryError: &lt;target_name&gt;: parameters.kapitan has no assignment</code></h3>
 <p><strong>Cause:</strong> The target is missing the <code>parameters.kapitan</code> structure that defines compile inputs.</p>
 <p><strong>Resolution:</strong> Ensure the target has a <code>kapitan</code> section with at least an empty <code>compile</code> list if there are no inputs:</p>
-<p><code>yaml
-parameters:
-  kapitan:
-    compile: []</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+</code></pre></div>
 <h3 id="class-class_name-not-found"><code>Class &lt;class_name&gt; not found</code></h3>
 <p><strong>Cause:</strong> A target or class references a class that does not exist in the inventory.</p>
 <p><strong>Resolution:</strong></p>

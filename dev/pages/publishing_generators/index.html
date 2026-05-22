@@ -1800,6 +1800,28 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tagging-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tagging strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consuming-the-published-artifact" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consuming the published artifact
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2720,10 +2742,11 @@ for pushing and pulling arbitrary files to OCI registries.</p>
 <h2 id="what-is-a-generator-bundle">What is a generator bundle?</h2>
 <p>A generator bundle is an ordinary directory that <strong>Kapitan</strong> will copy into a target's input path
 before compilation. For a <strong>Kadet</strong> generator it typically looks like this:</p>
-<p><code>my-generator/
+<div class="highlight"><pre><span></span><code>my-generator/
 ├── __init__.py        # entry point must define main()
 └── lib/               # any helper modules
-    └── utils.py</code></p>
+    └── utils.py
+</code></pre></div>
 <p>The contents are entirely up to you. Kapitan will copy the directory (or the declared <code>subpath</code>
 within it) verbatim, so the bundle can also contain <strong>Jinja2</strong> templates, static YAML, or any other
 input type.</p>
@@ -2735,15 +2758,15 @@ and your credentials available via <code>docker login</code> or environment vari
 <hr />
 <h2 id="pushing-a-generator">Pushing a generator</h2>
 <p>Authenticate with your registry, then push the directory in a single command:</p>
-<p>```shell</p>
-<h1 id="authenticate-ghcr-example">Authenticate (GHCR example)</h1>
-<p>echo "<span class="arithmatex"><span class="MathJax_Preview">GITHUB_TOKEN" | docker login ghcr.io -u "</span><script type="math/tex">GITHUB_TOKEN" | docker login ghcr.io -u "</script></span>GITHUB_ACTOR" --password-stdin</p>
-<h1 id="push-version-120-run-from-inside-the-generator-directory">Push version 1.2.0 — run from INSIDE the generator directory</h1>
-<p>cd my-generator
-oras push ghcr.io/kapicorp/generators:1.2.0 \
-  --config /dev/null:application/vnd.oci.image.config.v1+json \
-  .
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Authenticate (GHCR example)</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$GITHUB_TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span>login<span class="w"> </span>ghcr.io<span class="w"> </span>-u<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$GITHUB_ACTOR</span><span class="s2">&quot;</span><span class="w"> </span>--password-stdin
+
+<span class="c1"># Push version 1.2.0 — run from INSIDE the generator directory</span>
+<span class="nb">cd</span><span class="w"> </span>my-generator
+oras<span class="w"> </span>push<span class="w"> </span>ghcr.io/kapicorp/generators:1.2.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--config<span class="w"> </span>/dev/null:application/vnd.oci.image.config.v1+json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>.
+</code></pre></div>
 <p>oras automatically compresses the directory to <code>.tar.gz</code> before upload.</p>
 <div class="admonition warning">
 <p class="admonition-title">Run <code>oras push</code> from inside the generator directory</p>
@@ -2769,17 +2792,18 @@ use the standard OCI <em>image</em> manifest, which is accepted by all compliant
 <p class="admonition-title">Filtering by media type</p>
 <p>If you publish multiple different artifact types under the same image (e.g. a generator bundle
 alongside a schema file) you can annotate each layer with a custom media type:</p>
-<p><code>shell
-cd my-generator
-oras push ghcr.io/kapicorp/generators:1.2.0 \
-  --config /dev/null:application/vnd.oci.image.config.v1+json \
-  .:application/vnd.oci.image.layer.v1.tar+gzip</code></p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>my-generator
+oras<span class="w"> </span>push<span class="w"> </span>ghcr.io/kapicorp/generators:1.2.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--config<span class="w"> </span>/dev/null:application/vnd.oci.image.config.v1+json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>.:application/vnd.oci.image.layer.v1.tar+gzip
+</code></pre></div>
 <p>Consumers can then set <code>media_type: application/vnd.oci.image.layer.v1.tar+gzip</code> in
 their inventory to pull only that layer. For single-artifact images this is unnecessary.</p>
 </div>
 <p>After a successful push, record the immutable digest shown in the output for reproducible deployments:</p>
-<p><code>Pushed [registry] ghcr.io/kapicorp/generators:1.2.0
-Digest: sha256:abc123...</code></p>
+<div class="highlight"><pre><span></span><code>Pushed [registry] ghcr.io/kapicorp/generators:1.2.0
+Digest: sha256:abc123...
+</code></pre></div>
 <hr />
 <h2 id="tagging-strategy">Tagging strategy</h2>
 <table>
@@ -2809,29 +2833,29 @@ active development.</p>
 <hr />
 <h2 id="consuming-the-published-artifact">Consuming the published artifact</h2>
 <p>Once pushed, reference the image in any target's inventory:</p>
-<p><code>yaml
-parameters:
-  kapitan:
-    dependencies:
-    - type: oci
-      source: ghcr.io/kapicorp/generators:1.2.0
-      output_path: components/generators
-      # No subpath needed when the artifact was pushed from inside the directory
-    compile:
-    - input_type: kadet
-      input_paths:
-      - components/generators
-      output_path: .</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">dependencies</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci</span>
+<span class="w">      </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/kapicorp/generators:1.2.0</span>
+<span class="w">      </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components/generators</span>
+<span class="w">      </span><span class="c1"># No subpath needed when the artifact was pushed from inside the directory</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kadet</span>
+<span class="w">      </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components/generators</span>
+<span class="w">      </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+</code></pre></div>
 <p>If you pushed from a parent directory (e.g. <code>oras push ... my-generator/</code>), add
 <code>subpath: my-generator</code> to tell Kapitan which subdirectory to extract:</p>
-<p><code>yaml
-    - type: oci
-      source: ghcr.io/kapicorp/generators:1.2.0
-      output_path: components/generators
-      subpath: my-generator</code></p>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">oci</span>
+<span class="w">      </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/kapicorp/generators:1.2.0</span>
+<span class="w">      </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components/generators</span>
+<span class="w">      </span><span class="nt">subpath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-generator</span>
+</code></pre></div>
 <p>Then compile with <code>--fetch</code>:</p>
-<p><code>shell
-kapitan compile --fetch</code></p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile<span class="w"> </span>--fetch
+</code></pre></div>
 <p><code>--fetch</code> only pulls if the artifact is not already cached locally — subsequent runs are instant.
 Use <code>--force-fetch</code> to invalidate the cache and re-pull regardless.</p>
 <p>See <a href="../external_dependencies/#defining-dependencies">External dependencies OCI</a> for the full

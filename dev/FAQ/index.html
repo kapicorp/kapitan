@@ -2773,11 +2773,11 @@
 <p>The <a href="../pages/inventory/introduction/">inventory</a> is a hierarchical YAML structure that captures all the data you want to make available to Kapitan's templating engines. It is divided into <a href="../pages/inventory/targets/">targets</a> (environments or deployments) and <a href="../pages/inventory/classes/">classes</a> (reusable configuration fragments). Learn more in the <a href="../pages/inventory/introduction/">inventory introduction</a>.</p>
 <h2 id="how-do-i-install-kapitan">How do I install Kapitan?</h2>
 <p>The easiest way is via Docker:</p>
-<p><code>shell
-docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan -h</code></p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-t<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/src:delegated<span class="w"> </span>kapicorp/kapitan<span class="w"> </span>-h
+</code></pre></div>
 <p>Or install with pip:</p>
-<p><code>shell
-pip3 install --user --upgrade kapitan</code></p>
+<div class="highlight"><pre><span></span><code>pip3<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--upgrade<span class="w"> </span>kapitan
+</code></pre></div>
 <p>See the <a href="../getting_started/">Getting Started</a> page for full installation instructions.</p>
 <h2 id="which-input-type-should-i-use">Which input type should I use?</h2>
 <p>It depends on your use case:</p>
@@ -2794,8 +2794,8 @@ pip3 install --user --upgrade kapitan</code></p>
 <h2 id="what-is-parameter-interpolation">What is parameter interpolation?</h2>
 <p>Parameter interpolation lets you reference values defined elsewhere in the inventory using the <code>${variable:name}</code> syntax. This reduces duplication and makes configuration more maintainable. Read the <a href="../pages/inventory/parameters_interpolation/">parameter interpolation guide</a> for details.</p>
 <h2 id="how-do-i-compile-a-target">How do I compile a target?</h2>
-<p><code>shell
-kapitan compile -t &lt;target_name&gt;</code></p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile<span class="w"> </span>-t<span class="w"> </span>&lt;target_name&gt;
+</code></pre></div>
 <p>Without a target flag, Kapitan compiles all discovered targets. See the <a href="../pages/commands/kapitan_compile/"><code>kapitan compile</code> CLI reference</a> for all options.</p>
 <h2 id="where-can-i-find-examples">Where can I find examples?</h2>
 <p>The <a href="https://github.com/kapicorp/kapitan-reference">kapicorp/kapitan-reference</a> repository contains working examples for Kubernetes, Terraform, and more. You can also explore the <a href="../pages/input_types/introduction/">input type documentation</a> for small, focused examples.</p>

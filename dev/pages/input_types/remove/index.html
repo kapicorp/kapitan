@@ -2643,38 +2643,38 @@
 <p>This input type simply removes files or directories. This can be helpful if you can't control particular files
 generated during other compile inputs.</p>
 <p>For example, to remove a file named <code>copy_target</code>, specify an entry to <code>input_paths</code>, <code>compiled/${kapitan:vars:target}/copy_target</code>.</p>
-<p><code>yaml
-parameters:
-  target_name: removal
-  kapitan:
-    vars:
-      target: ${target_name}
-    compile:
-      - input_type: copy
-        input_paths:
-          - copy_target
-        output_path: .
-      # test removal of a file
-      - input_type: remove
-        input_paths:
-          - compiled/${kapitan:vars:target}/copy_target
-        output_path: .</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">removal</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vars</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">copy</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">copy_target</span>
+<span class="w">        </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+<span class="w">      </span><span class="c1"># test removal of a file</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">remove</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">compiled/${kapitan:vars:target}/copy_target</span>
+<span class="w">        </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+</code></pre></div>
 <p>As a reminder, each input block within the compile array is run sequentially for a target in Kapitan. If we reversed the order of the inputs above like so:</p>
-<p><code>yaml
-parameters:
-  target_name: removal
-  kapitan:
-    vars:
-      target: ${target_name}
-    compile:
-      - input_type: remove
-        input_paths:
-          - compiled/${kapitan:vars:target}/copy_target
-        output_path: .
-      - input_type: copy
-        input_paths:
-          - copy_target
-        output_path: .</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">removal</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vars</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">remove</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">compiled/${kapitan:vars:target}/copy_target</span>
+<span class="w">        </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">copy</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">copy_target</span>
+<span class="w">        </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+</code></pre></div>
 <p>The first input block would throw an error because the copy input command hasn't run yet to produce the file being removed by the remove input block.</p>
 <p><em>Supported output types</em>: N/A (no need to specify <code>output_type</code>)</p>
 

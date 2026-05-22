@@ -2691,27 +2691,30 @@
 <h2 id="kapitan-lint"><code>kapitan lint</code></h2>
 <p>Perform a checkup on your inventory or refs.</p>
 <div class="admonition example">
-<p><code>shell
-./kapitan lint</code></p>
+<div class="highlight"><pre><span></span><code>./kapitan<span class="w"> </span>lint
+</code></pre></div>
 <details class="example">
 <summary>click to expand output</summary>
-<p>```shell
-Running yamllint on all inventory files...</p>
-<p>.yamllint not found. Using default values
-File ./inventory/classes/components/echo-server.yml has the following issues:
-        95:29: forbidden implicit octal value "0550" (octal-values)
-File ./inventory/classes/terraform/gcp/services.yml has the following issues:
-        15:11: duplication of key "enable_compute_service" in mapping (key-duplicates)</p>
-<p>Total yamllint issues found: 2</p>
-<p>Checking for orphan classes in inventory...</p>
-<p>No usage found for the following 6 classes:
-{'components.argoproj.cd.argocd-server-oidc',
-'components.helm.cert-manager-helm',
-'components.rabbitmq-operator.rabbitmq-configuration',
-'components.rabbitmq-operator.rabbitmq-operator',
-'features.gkms-demo',
-'projects.localhost.kubernetes.katacoda'}
-```</p>
+<div class="highlight"><pre><span></span><code>Running<span class="w"> </span>yamllint<span class="w"> </span>on<span class="w"> </span>all<span class="w"> </span>inventory<span class="w"> </span>files...
+
+.yamllint<span class="w"> </span>not<span class="w"> </span>found.<span class="w"> </span>Using<span class="w"> </span>default<span class="w"> </span>values
+File<span class="w"> </span>./inventory/classes/components/echo-server.yml<span class="w"> </span>has<span class="w"> </span>the<span class="w"> </span>following<span class="w"> </span>issues:
+<span class="w">        </span><span class="m">95</span>:29:<span class="w"> </span>forbidden<span class="w"> </span>implicit<span class="w"> </span>octal<span class="w"> </span>value<span class="w"> </span><span class="s2">&quot;0550&quot;</span><span class="w"> </span><span class="o">(</span>octal-values<span class="o">)</span>
+File<span class="w"> </span>./inventory/classes/terraform/gcp/services.yml<span class="w"> </span>has<span class="w"> </span>the<span class="w"> </span>following<span class="w"> </span>issues:
+<span class="w">        </span><span class="m">15</span>:11:<span class="w"> </span>duplication<span class="w"> </span>of<span class="w"> </span>key<span class="w"> </span><span class="s2">&quot;enable_compute_service&quot;</span><span class="w"> </span><span class="k">in</span><span class="w"> </span>mapping<span class="w"> </span><span class="o">(</span>key-duplicates<span class="o">)</span>
+
+Total<span class="w"> </span>yamllint<span class="w"> </span>issues<span class="w"> </span>found:<span class="w"> </span><span class="m">2</span>
+
+Checking<span class="w"> </span><span class="k">for</span><span class="w"> </span>orphan<span class="w"> </span>classes<span class="w"> </span><span class="k">in</span><span class="w"> </span>inventory...
+
+No<span class="w"> </span>usage<span class="w"> </span>found<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>following<span class="w"> </span><span class="m">6</span><span class="w"> </span>classes:
+<span class="o">{</span><span class="s1">&#39;components.argoproj.cd.argocd-server-oidc&#39;</span>,
+<span class="s1">&#39;components.helm.cert-manager-helm&#39;</span>,
+<span class="s1">&#39;components.rabbitmq-operator.rabbitmq-configuration&#39;</span>,
+<span class="s1">&#39;components.rabbitmq-operator.rabbitmq-operator&#39;</span>,
+<span class="s1">&#39;features.gkms-demo&#39;</span>,
+<span class="s1">&#39;projects.localhost.kubernetes.katacoda&#39;</span><span class="o">}</span>
+</code></pre></div>
 </details>
 </div>
 

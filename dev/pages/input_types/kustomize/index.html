@@ -1524,8 +1524,91 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#using-patches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using Patches
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Environments
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2741,32 +2824,32 @@
 </ul>
 <h2 id="configuration">Configuration</h2>
 <p>The Kustomize input type supports the following configuration options:</p>
-<p><code>yaml
-kapitan:
-  compile:
-    - output_path: manifests
-      input_type: kustomize
-      input_paths:
-        - path/to/kustomize/overlay
-      namespace: my-namespace  # Optional: Set namespace for all resources
-      patches:  # Optional: Apply patches to resources
-        patch-name:
-          target:
-            kind: Deployment
-            name: my-deployment
-            namespace: my-namespace
-          patch:
-            apiVersion: apps/v1
-            kind: Deployment
-            metadata:
-              name: my-deployment
-              namespace: my-namespace
-            spec:
-              template:
-                spec:
-                  containers:
-                    - name: my-container
-                      image: nginx:1.19</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
+<span class="w">      </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
+<span class="w">      </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">path/to/kustomize/overlay</span>
+<span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-namespace</span><span class="w">  </span><span class="c1"># Optional: Set namespace for all resources</span>
+<span class="w">      </span><span class="nt">patches</span><span class="p">:</span><span class="w">  </span><span class="c1"># Optional: Apply patches to resources</span>
+<span class="w">        </span><span class="nt">patch-name</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">target</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-deployment</span>
+<span class="w">            </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-namespace</span>
+<span class="w">          </span><span class="nt">patch</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="w">            </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="w">            </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-deployment</span>
+<span class="w">              </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-namespace</span>
+<span class="w">            </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">                  </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">                    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-container</span>
+<span class="w">                      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:1.19</span>
+</code></pre></div>
 <h3 id="configuration-options">Configuration Options</h3>
 <table>
 <thead>
@@ -2807,95 +2890,94 @@ kapitan:
 <h2 id="examples">Examples</h2>
 <h3 id="basic-usage">Basic Usage</h3>
 <p>Here's a simple example that uses Kustomize to manage a deployment:</p>
-<p>```yaml</p>
-<h1 id="inventorytargetsmy-appyml">inventory/targets/my-app.yml</h1>
-<p>classes:
-  - common</p>
-<p>parameters:
-  target_name: my-app
-  kapitan:
-    compile:
-      - output_path: manifests
-        input_type: kustomize
-        input_paths:
-          - kubernetes/base
-        namespace: my-app
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/my-app.yml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
+<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kubernetes/base</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+</code></pre></div>
 <p>With the following directory structure:
-<code>kubernetes/
+<div class="highlight"><pre><span></span><code>kubernetes/
   base/
     kustomization.yaml
-    deployment.yaml</code></p>
-<p>```yaml</p>
-<h1 id="kubernetesbasekustomizationyaml">kubernetes/base/kustomization.yaml</h1>
-<p>resources:
-  - deployment.yaml
-```</p>
-<p>```yaml</p>
-<h1 id="kubernetesbasedeploymentyaml">kubernetes/base/deployment.yaml</h1>
-<p>apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-spec:
-  template:
-    spec:
-      containers:
-        - name: my-app
-          image: nginx:latest
-```</p>
+    deployment.yaml
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/base/kustomization.yaml</span>
+<span class="nt">resources</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deployment.yaml</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/base/deployment.yaml</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:latest</span>
+</code></pre></div>
 <h3 id="using-patches">Using Patches</h3>
 <p>Here's an example that uses patches to customize a deployment:</p>
-<p>```yaml</p>
-<h1 id="inventorytargetsmy-appyml_1">inventory/targets/my-app.yml</h1>
-<p>classes:
-  - common</p>
-<p>parameters:
-  target_name: my-app
-  kapitan:
-    compile:
-      - output_path: manifests
-        input_type: kustomize
-        input_paths:
-          - kubernetes/base
-        namespace: my-app
-        patches:
-          update-image:
-            target:
-              kind: Deployment
-              name: my-app
-              namespace: my-app
-            patch:
-              apiVersion: apps/v1
-              kind: Deployment
-              metadata:
-                name: my-app
-                namespace: my-app
-              spec:
-                template:
-                  spec:
-                    containers:
-                      - name: my-app
-                        image: nginx:1.19
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/my-app.yml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
+<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kubernetes/base</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">        </span><span class="nt">patches</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">update-image</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">target</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="w">              </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">              </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">            </span><span class="nt">patch</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="w">              </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="w">              </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">                </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">              </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">                  </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">                    </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">                      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="w">                        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:1.19</span>
+</code></pre></div>
 <h3 id="multiple-environments">Multiple Environments</h3>
 <p>You can use Kustomize overlays to manage different environments:</p>
-<p>```yaml</p>
-<h1 id="inventorytargetsmy-app-prodyml">inventory/targets/my-app-prod.yml</h1>
-<p>classes:
-  - common</p>
-<p>parameters:
-  target_name: my-app-prod
-  kapitan:
-    compile:
-      - output_path: manifests
-        input_type: kustomize
-        input_paths:
-          - kubernetes/overlays/prod
-        namespace: my-app-prod
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/my-app-prod.yml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-prod</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
+<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kubernetes/overlays/prod</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-prod</span>
+</code></pre></div>
 <p>With the following directory structure:
-<code>kubernetes/
+<div class="highlight"><pre><span></span><code>kubernetes/
   base/
     kustomization.yaml
     deployment.yaml
@@ -2903,23 +2985,22 @@ spec:
     prod/
       kustomization.yaml
       patches/
-        replicas.yaml</code></p>
-<p>```yaml</p>
-<h1 id="kubernetesoverlaysprodkustomizationyaml">kubernetes/overlays/prod/kustomization.yaml</h1>
-<p>resources:
-  - ../../base
-patches:
-  - path: patches/replicas.yaml
-```</p>
-<p>```yaml</p>
-<h1 id="kubernetesoverlaysprodpatchesreplicasyaml">kubernetes/overlays/prod/patches/replicas.yaml</h1>
-<p>apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-spec:
-  replicas: 3
-```</p>
+        replicas.yaml
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/overlays/prod/kustomization.yaml</span>
+<span class="nt">resources</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">../../base</span>
+<span class="nt">patches</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">patches/replicas.yaml</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/overlays/prod/patches/replicas.yaml</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</code></pre></div>
 <h2 id="best-practices">Best Practices</h2>
 <ol>
 <li>

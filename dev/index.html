@@ -2891,12 +2891,12 @@
 </ul>
 <h2 id="install-and-try">Install and try</h2>
 <h3 id="docker-recommended">Docker (recommended)</h3>
-<p><code>shell
-alias kapitan="docker run -t --rm -v $(pwd):/src:delegated kapicorp/kapitan"
-kapitan compile -h</code></p>
+<div class="highlight"><pre><span></span><code><span class="nb">alias</span><span class="w"> </span><span class="nv">kapitan</span><span class="o">=</span><span class="s2">&quot;docker run -t --rm -v </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">:/src:delegated kapicorp/kapitan&quot;</span>
+kapitan<span class="w"> </span>compile<span class="w"> </span>-h
+</code></pre></div>
 <h3 id="pip">Pip</h3>
-<p><code>shell
-pip3 install --user --upgrade kapitan</code></p>
+<div class="highlight"><pre><span></span><code>pip3<span class="w"> </span>install<span class="w"> </span>--user<span class="w"> </span>--upgrade<span class="w"> </span>kapitan
+</code></pre></div>
 <p>Kapitan requires Python 3.10 or newer.</p>
 <p><a href="getting_started/"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> Full installation guide</a></p>
 <h2 id="trust-and-community">Trust and community</h2>

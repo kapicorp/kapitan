@@ -846,6 +846,61 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#choosing-an-input-type-for-kubernetes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing an input type for Kubernetes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#secrets-in-kubernetes-manifests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secrets in Kubernetes manifests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gitops-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GitOps integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next steps
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2758,68 +2813,67 @@
 <h2 id="example-deploying-an-nginx-service-across-environments">Example: deploying an nginx service across environments</h2>
 <h3 id="without-kapitan">Without Kapitan</h3>
 <p>You might have:</p>
-<p><code>helm/values-dev.yaml
+<div class="highlight"><pre><span></span><code>helm/values-dev.yaml
 helm/values-staging.yaml
 helm/values-prod.yaml
 kustomize/overlays/dev/patch.yaml
 kustomize/overlays/staging/patch.yaml
 kustomize/overlays/prod/patch.yaml
-terraform/variables.tf</code></p>
+terraform/variables.tf
+</code></pre></div>
 <p>Every time you change the <code>image</code> tag or <code>replicas</code> count, you must update multiple files. If you forget one, environments drift.</p>
 <h3 id="with-kapitan">With Kapitan</h3>
 <p>You define the common data once:</p>
-<p>```yaml</p>
-<h1 id="inventoryclassescomponentsnginxyml">inventory/classes/components/nginx.yml</h1>
-<p>parameters:
-  nginx:
-    image: nginx:1.25
-    replicas: 2
-    ports:
-      - 80
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/classes/components/nginx.yml</span>
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">nginx</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:1.25</span>
+<span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+</code></pre></div>
 <p>You override per environment:</p>
-<p>```yaml</p>
-<h1 id="inventoryclassesenvironmentsproductionyml">inventory/classes/environments/production.yml</h1>
-<p>parameters:
-  nginx:
-    replicas: 5
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/classes/environments/production.yml</span>
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">nginx</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</code></pre></div>
 <p>You define the target:</p>
-<p>```yaml</p>
-<h1 id="inventorytargetsproductionwebyml">inventory/targets/production/web.yml</h1>
-<p>classes:
-  - components.nginx
-  - environments.production</p>
-<p>parameters:
-  kapitan:
-    compile:
-      - output_path: manifests
-        input_type: jinja2
-        input_paths:
-          - templates/nginx-deployment.yml.j2
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/production/web.yml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components.nginx</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environments.production</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
+<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jinja2</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">templates/nginx-deployment.yml.j2</span>
+</code></pre></div>
 <p>The Jinja template can use the inventory directly:</p>
-<p>```yaml</p>
-<h1 id="templatesnginx-deploymentymlj2">templates/nginx-deployment.yml.j2</h1>
-<p>apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx
-  namespace: {{ inventory.parameters.target_name }}
-spec:
-  replicas: {{ inventory.parameters.nginx.replicas }}
-  template:
-    spec:
-      containers:
-        - name: nginx
-          image: {{ inventory.parameters.nginx.image }}
-          ports:
-            {% for port in inventory.parameters.nginx.ports %}
-            - containerPort: {{ port }}
-            {% endfor %}
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># templates/nginx-deployment.yml.j2</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">inventory.parameters.target_name</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">inventory.parameters.nginx.replicas</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx</span>
+<span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">inventory.parameters.nginx.image</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="w">          </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">for port in inventory.parameters.nginx.ports %</span><span class="p p-Indicator">}</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">containerPort</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">port</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="w">            </span><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">endfor %</span><span class="p p-Indicator">}</span>
+</code></pre></div>
 <p>Running <code>kapitan compile -t production.web</code> produces:</p>
-<p><code>compiled/production/web/manifests/nginx-deployment.yml</code></p>
+<div class="highlight"><pre><span></span><code>compiled/production/web/manifests/nginx-deployment.yml
+</code></pre></div>
 <p>The <code>replicas</code> value is <code>5</code> because the production class overrides the component default. The <code>image</code> value is inherited from the component class. There is no duplication, and the entire configuration state is visible in one PR.</p>
 <h2 id="choosing-an-input-type-for-kubernetes">Choosing an input type for Kubernetes</h2>
 <table>
@@ -2861,10 +2915,10 @@ spec:
 <p>Many teams use more than one input type in the same project. For example, you might generate base manifests with Kadet and then patch them with Kustomize for environment-specific labels.</p>
 <h2 id="secrets-in-kubernetes-manifests">Secrets in Kubernetes manifests</h2>
 <p>Kapitan's <a href="../../references/">References</a> let you embed secrets in manifests without exposing plaintext values in the repository.</p>
-<p><code>yaml
-parameters:
-  mysql:
-    root_password: ?{gpg:targets/${target_name}/mysql/root_password}</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">mysql</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">root_password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">?{gpg:targets/${target_name}/mysql/root_password}</span>
+</code></pre></div>
 <p>At compile time, the reference tag is embedded in the manifest. You can reveal it later with <code>kapitan refs --reveal</code> or use a tool like <a href="https://github.com/kapicorp/tesoro">Tesoro</a> to decrypt it inside the cluster.</p>
 <h2 id="validation">Validation</h2>
 <p>You can validate generated manifests before applying them:</p>

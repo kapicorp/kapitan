@@ -2812,87 +2812,87 @@
 <div class="tabbed-set tabbed-alternate" data-tabs="1:5"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><input id="__tabbed_1_5" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">jinja2</label><label for="__tabbed_1_2">jsonnet</label><label for="__tabbed_1_3">kadet</label><label for="__tabbed_1_4">helm</label><label for="__tabbed_1_5">copy</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<p><code>yaml
-parameters:
-  kapitan:
-    compile:
-    - output_path: &lt;output_path_in_target_dir&gt;
-      input_type: jinja2
-      input_params: # (1)!
-      input_paths:
-        - directory/
-        - file
-        - globbed/path/*</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;output_path_in_target_dir&gt;</span>
+<span class="w">      </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jinja2</span>
+<span class="w">      </span><span class="nt">input_params</span><span class="p">:</span><span class="w"> </span><span class="c1"># (1)!</span>
+<span class="w">      </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">directory/</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">globbed/path/*</span>
+</code></pre></div>
 <ol>
 <li>a dict passed to the template</li>
 </ol>
 <p>Please see <a href="../jinja/"><strong>Jinja</strong></a></p>
 </div>
 <div class="tabbed-block">
-<p><code>yaml
-parameters:
-  kapitan:
-    compile:
-    - output_path: &lt;output_path_in_target_dir&gt;
-      input_type: jsonnet
-      prune: false # (1)!
-      input_paths:
-        - directory/
-        - file
-        - globbed/path/*
-      output_type: [`yaml` | `json`]</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;output_path_in_target_dir&gt;</span>
+<span class="w">      </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jsonnet</span>
+<span class="w">      </span><span class="nt">prune</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># (1)!</span>
+<span class="w">      </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">directory/</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">globbed/path/*</span>
+<span class="w">      </span><span class="nt">output_type</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="err">`</span><span class="nv">yaml` | `json`</span><span class="p p-Indicator">]</span>
+</code></pre></div>
 <ol>
 <li>(Default: global --prune)</li>
 </ol>
 </div>
 <div class="tabbed-block">
-<p><code>yaml
-parameters:
-  kapitan:
-    compile:
-    - output_path: &lt;output_path_in_target_dir&gt;
-      input_type: kadet
-      prune: false # (1)!
-      input_paths:
-        - directory/
-        - file
-        - globbed/path/*
-      output_type: [`yaml` | `json`]</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;output_path_in_target_dir&gt;</span>
+<span class="w">      </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kadet</span>
+<span class="w">      </span><span class="nt">prune</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># (1)!</span>
+<span class="w">      </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">directory/</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">globbed/path/*</span>
+<span class="w">      </span><span class="nt">output_type</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="err">`</span><span class="nv">yaml` | `json`</span><span class="p p-Indicator">]</span>
+</code></pre></div>
 <ol>
 <li>(Default: global --prune)</li>
 </ol>
 <p>Please see <a href="../kadet/"><strong>Kadet</strong></a></p>
 </div>
 <div class="tabbed-block">
-<p><code>yaml
-parameters:
-  kapitan:
-    compile:
-    - output_path: &lt;output_path_in_target_dir&gt;
-      input_type: helm
-      prune: false # (1)!
-      input_paths:
-        - directory/
-        - file
-        - globbed/path/*
-      output_type: &lt;output_type_specific_to_input_type&gt;</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;output_path_in_target_dir&gt;</span>
+<span class="w">      </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">helm</span>
+<span class="w">      </span><span class="nt">prune</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># (1)!</span>
+<span class="w">      </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">directory/</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">globbed/path/*</span>
+<span class="w">      </span><span class="nt">output_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;output_type_specific_to_input_type&gt;</span>
+</code></pre></div>
 <ol>
 <li>(Default: global --prune)</li>
 </ol>
 </div>
 <div class="tabbed-block">
-<p><code>yaml
-parameters:
-  kapitan:
-    compile:
-    - output_path: &lt;output_path_in_target_dir&gt;
-      input_type: copy
-      prune: false # (1)!
-      input_paths:
-        - directory/
-        - file
-        - globbed/path/*
-      output_type: &lt;output_type_specific_to_input_type&gt;</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;output_path_in_target_dir&gt;</span>
+<span class="w">      </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">copy</span>
+<span class="w">      </span><span class="nt">prune</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># (1)!</span>
+<span class="w">      </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">directory/</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">globbed/path/*</span>
+<span class="w">      </span><span class="nt">output_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;output_type_specific_to_input_type&gt;</span>
+</code></pre></div>
 <ol>
 <li>(Default: global --prune)</li>
 </ol>

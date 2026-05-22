@@ -2718,23 +2718,6 @@
   
 </li>
         
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inventoryclassescomponentskedayml" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        inventory/classes/components/keda.yml
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="inventory/classes/components/keda.yml">
-      <ul class="md-nav__list">
-        
           <li class="md-nav__item">
   <a href="#download-the-chart" class="md-nav__link">
     <span class="md-ellipsis">
@@ -2746,23 +2729,6 @@
   
 </li>
         
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inventoryclassescomponentskedayml_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        inventory/classes/components/keda.yml
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="inventory/classes/components/keda.yml">
-      <ul class="md-nav__list">
-        
           <li class="md-nav__item">
   <a href="#generate-the-chart" class="md-nav__link">
     <span class="md-ellipsis">
@@ -2773,23 +2739,6 @@
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inventoryclassescomponentskedayml_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        inventory/classes/components/keda.yml
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="inventory/classes/components/keda.yml">
-      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#compile" class="md-nav__link">
@@ -2804,6 +2753,56 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-mutations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using mutations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using mutations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bundle-mutation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bundle mutation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#patch-mutation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        patch mutation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2842,77 +2841,73 @@
 
 <h2 id="deploying-keda">Deploying KEDA</h2>
 <h3 id="define-parameters">Define parameters</h3>
-<p>```yaml</p>
-<h2 id="inventoryclassescomponentskedayml">inventory/classes/components/keda.yml</h2>
-<p>parameters:
-  keda:
-    params:
-      # Variables to reference from other places
-      application_version: 2.11.2
-      service_account_name: keda-operator
-      chart_name: keda
-      chart_version: 2.11.2
-      chart_dir: system/sources/charts/<span class="arithmatex" keda:params:chart_name="keda:params:chart_name"><span class="MathJax_Preview">{keda:params:chart_name}/</span><script type="math/tex">{keda:params:chart_name}/</script></span>/<span class="arithmatex" keda:params:application_version="keda:params:application_version"><span class="MathJax_Preview">{keda:params:chart_version}/</span><script type="math/tex">{keda:params:chart_version}/</script></span>
-      namespace: keda
-      helm_values: {}
-...
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1">## inventory/classes/components/keda.yml</span>
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">keda</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># Variables to reference from other places</span>
+<span class="w">      </span><span class="nt">application_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.11.2</span>
+<span class="w">      </span><span class="nt">service_account_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">keda-operator</span>
+<span class="w">      </span><span class="nt">chart_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">keda</span>
+<span class="w">      </span><span class="nt">chart_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.11.2</span>
+<span class="w">      </span><span class="nt">chart_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system/sources/charts/${keda:params:chart_name}/${keda:params:chart_name}/${keda:params:chart_version}/${keda:params:application_version}</span>
+<span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">keda</span>
+<span class="w">      </span><span class="nt">helm_values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="nn">...</span>
+</code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">Override Helm Values</p>
 <p>As an example we could be passing to helm an override to the default <code>values</code> parameters to make the operator deploy 2 replicas.</p>
-<p><code>yaml
-  helm_values:
-    operator:
-      replicaCount: 2</code></p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">helm_values</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">operator</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">replicaCount</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</code></pre></div>
 </div>
 <h3 id="download-the-chart">Download the chart</h3>
 <p>Kapitan supports downloading dependencies, including helm charts.</p>
 <p>When Kapitan is run with the <code>--fetch</code>, it will download the dependency if not already present.
 Use <code>--force-fetch</code> if you want to download it every time. Learn more about <a href="https://kapitan.dev/pages/external_dependencies/#defining-dependencies">External dependencies</a></p>
-<p>```yaml</p>
-<h2 id="inventoryclassescomponentskedayml_1">inventory/classes/components/keda.yml</h2>
-<p>...
-  kapitan:
-    dependencies:
-      # Tells kapitan to download the helm chart into the chart_dir directory
-      - type: helm
-        output_path: ${keda:params:chart_dir}
-        source: <a href="https://kedacore.github.io/charts">https://kedacore.github.io/charts</a>
-        version: ${keda:params:chart_version}
-        chart_name: ${keda:params:chart_name}
-...
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1">## inventory/classes/components/keda.yml</span>
+<span class="nn">...</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">dependencies</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># Tells kapitan to download the helm chart into the chart_dir directory</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">helm</span>
+<span class="w">        </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${keda:params:chart_dir}</span>
+<span class="w">        </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://kedacore.github.io/charts</span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${keda:params:chart_version}</span>
+<span class="w">        </span><span class="nt">chart_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${keda:params:chart_name}</span>
+<span class="nn">...</span>
+</code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">Parameter interpolation</p>
 <p>Notice how we are using parameter interpolation from the previously defined <code>keda.params</code> section. This will make it easier in the future to override some aspects of the configuration on a per-target base.</p>
 </div>
 <h3 id="generate-the-chart">Generate the chart</h3>
-<p>```yaml</p>
-<h2 id="inventoryclassescomponentskedayml_2">inventory/classes/components/keda.yml</h2>
-<p>...
-  charts:
-     # Configures a helm generator to compile files for the given chart
-    keda:
-      chart_dir: ${keda:params:chart_dir}
-      helm_params:
-        namespace: ${keda:params:namespace}
-        name: ${keda:params:chart_name}
-      helm_values: ${keda:params:helm_values}
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1">## inventory/classes/components/keda.yml</span>
+<span class="nn">...</span>
+<span class="w">  </span><span class="nt">charts</span><span class="p">:</span>
+<span class="w">     </span><span class="c1"># Configures a helm generator to compile files for the given chart</span>
+<span class="w">    </span><span class="nt">keda</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">chart_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${keda:params:chart_dir}</span>
+<span class="w">      </span><span class="nt">helm_params</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${keda:params:namespace}</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${keda:params:chart_name}</span>
+<span class="w">      </span><span class="nt">helm_values</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${keda:params:helm_values}</span>
+</code></pre></div>
 <h3 id="compile">Compile</h3>
 <p>Before we can see any effect, we need to attach the class to a target. We will create a simple target which looks like</p>
-<p>```yaml</p>
-<h1 id="inventorytargetstutorialskedayml">inventory/targets/tutorials/keda.yml</h1>
-<p>classes:
-- common
-- components.keda
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/tutorials/keda.yml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components.keda</span>
+</code></pre></div>
 <p>Now when we run <code>kapitan compile</code> we will see the chart being donwloaded and the manifests being produced.</p>
-<p><code>shell
-./kapitan compile -t keda --fetch
-Dependency keda: saved to system/sources/charts/keda/keda/2.11.2/2.11.2
-Rendered inventory (1.87s)
-Compiled keda (2.09s)</code></p>
+<div class="highlight"><pre><span></span><code>./kapitan<span class="w"> </span>compile<span class="w"> </span>-t<span class="w"> </span>keda<span class="w"> </span>--fetch
+Dependency<span class="w"> </span>keda:<span class="w"> </span>saved<span class="w"> </span>to<span class="w"> </span>system/sources/charts/keda/keda/2.11.2/2.11.2
+Rendered<span class="w"> </span>inventory<span class="w"> </span><span class="o">(</span><span class="m">1</span>.87s<span class="o">)</span>
+Compiled<span class="w"> </span>keda<span class="w"> </span><span class="o">(</span><span class="m">2</span>.09s<span class="o">)</span>
+</code></pre></div>
 <div class="admonition note">
 <p class="admonition-title"><code>kapitan compile</code> breakdown</p>
 <ul>
@@ -2920,30 +2915,30 @@ Compiled keda (2.09s)</code></p>
 <li><code>-t keda</code> tells kapitan to compile only the previously defined <code>keda.yml</code> target</li>
 </ul>
 </div>
-<p><code>shell
-ls -l compiled/keda/manifests/
-total 660
--rw-r--r-- 1 ademaria root 659081 Aug 29 10:25 keda-bundle.yml
--rw-r--r-- 1 ademaria root     79 Aug 29 10:25 keda-namespace.yml
--rw-r--r-- 1 ademaria root   7092 Aug 29 10:25 keda-rbac.yml
--rw-r--r-- 1 ademaria root   1783 Aug 29 10:25 keda-service.yml</code></p>
+<div class="highlight"><pre><span></span><code>ls<span class="w"> </span>-l<span class="w"> </span>compiled/keda/manifests/
+total<span class="w"> </span><span class="m">660</span>
+-rw-r--r--<span class="w"> </span><span class="m">1</span><span class="w"> </span>ademaria<span class="w"> </span>root<span class="w"> </span><span class="m">659081</span><span class="w"> </span>Aug<span class="w"> </span><span class="m">29</span><span class="w"> </span><span class="m">10</span>:25<span class="w"> </span>keda-bundle.yml
+-rw-r--r--<span class="w"> </span><span class="m">1</span><span class="w"> </span>ademaria<span class="w"> </span>root<span class="w">     </span><span class="m">79</span><span class="w"> </span>Aug<span class="w"> </span><span class="m">29</span><span class="w"> </span><span class="m">10</span>:25<span class="w"> </span>keda-namespace.yml
+-rw-r--r--<span class="w"> </span><span class="m">1</span><span class="w"> </span>ademaria<span class="w"> </span>root<span class="w">   </span><span class="m">7092</span><span class="w"> </span>Aug<span class="w"> </span><span class="m">29</span><span class="w"> </span><span class="m">10</span>:25<span class="w"> </span>keda-rbac.yml
+-rw-r--r--<span class="w"> </span><span class="m">1</span><span class="w"> </span>ademaria<span class="w"> </span>root<span class="w">   </span><span class="m">1783</span><span class="w"> </span>Aug<span class="w"> </span><span class="m">29</span><span class="w"> </span><span class="m">10</span>:25<span class="w"> </span>keda-service.yml
+</code></pre></div>
 <h2 id="using-mutations">Using mutations</h2>
 <p>Now let's do a couple of things that would not be easy to do with helm natively.</p>
 <p>You can already notice that the content of the chart is being splitted into multiple files: this is because the Generator is configured to separate different resources types into different files for convenience and consistency. The mechanism behing it is the "Mutation" of type "bundle" which tells Kapitan which file to save a resource into.</p>
 <p>Here are some example "mutation" which separates different <code>kinds</code> into different files</p>
-<p><code>yaml
-        mutations:
-          bundle:
-            - conditions:
-                kind: [Ingress]
-              filename: '{content.component_name}-ingress'
-              ...
-            - conditions:
-                kind: [HorizontalPodAutoscaler, PodDisruptionBudget, VerticalPodAutoscaler]
-              filename: '{content.component_name}-scaling'
-            - conditions:
-                kind: ['*']
-              filename: '{content.component_name}-bundle'</code></p>
+<div class="highlight"><pre><span></span><code><span class="w">        </span><span class="nt">mutations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">bundle</span><span class="p">:</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">conditions</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">Ingress</span><span class="p p-Indicator">]</span>
+<span class="w">              </span><span class="nt">filename</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;{content.component_name}-ingress&#39;</span>
+<span class="w">              </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">conditions</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">HorizontalPodAutoscaler</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">PodDisruptionBudget</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">VerticalPodAutoscaler</span><span class="p p-Indicator">]</span>
+<span class="w">              </span><span class="nt">filename</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;{content.component_name}-scaling&#39;</span>
+<span class="w">            </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">conditions</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;*&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">              </span><span class="nt">filename</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;{content.component_name}-bundle&#39;</span>
+</code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">Catch-all rule</p>
 <p>Notice the catchall rule at the end that puts everything that has not matched into the <code>bundle.yml</code> file</p>
@@ -2952,56 +2947,53 @@ total 660
 <p>Currently most of the keda related resources are bundled into the <code>-bundle.yml</code> file
 Instead, we want to separate them into their own file.</p>
 <p>Let's add this configuration:</p>
-<p>```yaml</p>
-<p>charts:
-     # Configures a helm generator to compile files for the given chart
-    keda:
-      chart_dir: ${keda:params:chart_dir}
-      ...
-      mutations:
-        bundle:
-          - conditions:
-              # CRDs need to be setup separately
-              kind: [CustomResourceDefinition]
-            filename: '{content.component_name}-crds'
-```</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">charts</span><span class="p">:</span>
+<span class="w">     </span><span class="c1"># Configures a helm generator to compile files for the given chart</span>
+<span class="w">    </span><span class="nt">keda</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">chart_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${keda:params:chart_dir}</span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">      </span><span class="nt">mutations</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">bundle</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">conditions</span><span class="p">:</span>
+<span class="w">              </span><span class="c1"># CRDs need to be setup separately</span>
+<span class="w">              </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">CustomResourceDefinition</span><span class="p p-Indicator">]</span>
+<span class="w">            </span><span class="nt">filename</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;{content.component_name}-crds&#39;</span>
+</code></pre></div>
 <p>Upon compile, you can now see that the CRD are being moved to a different file:</p>
-<p><code>shell
-ls -l compiled/keda/manifests/
-total 664
--rw-r--r-- 1 ademaria root  11405 Aug 29 10:56 keda-bundle.yml
--rw-r--r-- 1 ademaria root 647672 Aug 29 10:56 keda-crds.yml
--rw-r--r-- 1 ademaria root     79 Aug 29 10:56 keda-namespace.yml
--rw-r--r-- 1 ademaria root   7092 Aug 29 10:56 keda-rbac.yml
--rw-r--r-- 1 ademaria root   1783 Aug 29 10:56 keda-service.yml</code></p>
+<div class="highlight"><pre><span></span><code>ls<span class="w"> </span>-l<span class="w"> </span>compiled/keda/manifests/
+total<span class="w"> </span><span class="m">664</span>
+-rw-r--r--<span class="w"> </span><span class="m">1</span><span class="w"> </span>ademaria<span class="w"> </span>root<span class="w">  </span><span class="m">11405</span><span class="w"> </span>Aug<span class="w"> </span><span class="m">29</span><span class="w"> </span><span class="m">10</span>:56<span class="w"> </span>keda-bundle.yml
+-rw-r--r--<span class="w"> </span><span class="m">1</span><span class="w"> </span>ademaria<span class="w"> </span>root<span class="w"> </span><span class="m">647672</span><span class="w"> </span>Aug<span class="w"> </span><span class="m">29</span><span class="w"> </span><span class="m">10</span>:56<span class="w"> </span>keda-crds.yml
+-rw-r--r--<span class="w"> </span><span class="m">1</span><span class="w"> </span>ademaria<span class="w"> </span>root<span class="w">     </span><span class="m">79</span><span class="w"> </span>Aug<span class="w"> </span><span class="m">29</span><span class="w"> </span><span class="m">10</span>:56<span class="w"> </span>keda-namespace.yml
+-rw-r--r--<span class="w"> </span><span class="m">1</span><span class="w"> </span>ademaria<span class="w"> </span>root<span class="w">   </span><span class="m">7092</span><span class="w"> </span>Aug<span class="w"> </span><span class="m">29</span><span class="w"> </span><span class="m">10</span>:56<span class="w"> </span>keda-rbac.yml
+-rw-r--r--<span class="w"> </span><span class="m">1</span><span class="w"> </span>ademaria<span class="w"> </span>root<span class="w">   </span><span class="m">1783</span><span class="w"> </span>Aug<span class="w"> </span><span class="m">29</span><span class="w"> </span><span class="m">10</span>:56<span class="w"> </span>keda-service.yml
+</code></pre></div>
 <h3 id="patch-mutation"><code>patch</code> mutation</h3>
 <p>As we are using Argo, we want to pass a special <code>argocd.argoproj.io/sync-options</code> annotation to the CRD only so that ArgoCD can handle them properly.</p>
 <p>For this we are going to use the <code>patch</code> mutation:</p>
-<p>```yaml</p>
-<p>...
-      mutations:
-...
-        patch:
-          - conditions:
-              kind: [CustomResourceDefinition]
-            patch:
-              metadata:
-                annotations:
-                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,Replace=true
-```</p>
+<div class="highlight"><pre><span></span><code><span class="nn">...</span>
+<span class="w">      </span><span class="nt">mutations</span><span class="p">:</span>
+<span class="nn">...</span>
+<span class="w">        </span><span class="nt">patch</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">conditions</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">CustomResourceDefinition</span><span class="p p-Indicator">]</span>
+<span class="w">            </span><span class="nt">patch</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">                  </span><span class="nt">argocd.argoproj.io/sync-options</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SkipDryRunOnMissingResource=true,Replace=true</span>
+</code></pre></div>
 <p>Upon compile, you can now see that the CRDs have been modified as required:</p>
-<p>```shell</p>
-<p>diff --git a/compiled/keda/manifests/keda-crds.yml b/compiled/keda/manifests/keda-crds.yml
-index 2662bf3..9306c3a 100644
---- a/compiled/keda/manifests/keda-crds.yml
-+++ b/compiled/keda/manifests/keda-crds.yml
-@@ -2,6 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
- kind: CustomResourceDefinition
- metadata:
-   annotations:
-+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,Replace=true
-     controller-gen.kubebuilder.io/version: v0.12.0</p>
-<p>```</p>
+<div class="highlight"><pre><span></span><code>diff<span class="w"> </span>--git<span class="w"> </span>a/compiled/keda/manifests/keda-crds.yml<span class="w"> </span>b/compiled/keda/manifests/keda-crds.yml
+index<span class="w"> </span>2662bf3..9306c3a<span class="w"> </span><span class="m">100644</span>
+---<span class="w"> </span>a/compiled/keda/manifests/keda-crds.yml
++++<span class="w"> </span>b/compiled/keda/manifests/keda-crds.yml
+@@<span class="w"> </span>-2,6<span class="w"> </span>+2,7<span class="w"> </span>@@<span class="w"> </span>apiVersion:<span class="w"> </span>apiextensions.k8s.io/v1
+<span class="w"> </span>kind:<span class="w"> </span>CustomResourceDefinition
+<span class="w"> </span>metadata:
+<span class="w">   </span>annotations:
++<span class="w">    </span>argocd.argoproj.io/sync-options:<span class="w"> </span><span class="nv">SkipDryRunOnMissingResource</span><span class="o">=</span>true,Replace<span class="o">=</span><span class="nb">true</span>
+<span class="w">     </span>controller-gen.kubebuilder.io/version:<span class="w"> </span>v0.12.0
+</code></pre></div>
 <h2 id="summary">Summary</h2>
 <p>With this tutorial have explored some capabilities of Kapitan to manage and perform changes to helm charts.
 Next tutorial will show how to make use of Keda and deploy a generator for Keda resources</p>

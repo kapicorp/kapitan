@@ -897,8 +897,91 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#helm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Helm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kustomize" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kustomize
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inventory-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inventory examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Inventory examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#targets-and-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Targets and classes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#secrets-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secrets examples
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-projects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related projects
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next steps
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2739,13 +2822,13 @@
 <p>The fastest way to understand Kapitan is to see it in action. This page collects official examples, reference repositories, and small tutorials you can run locally.</p>
 <h2 id="reference-repository">Reference repository</h2>
 <p>The <a href="https://github.com/kapicorp/kapitan-reference">kapicorp/kapitan-reference</a> repository is the best place to start. It contains working examples for Kubernetes, Terraform, and mixed infrastructure setups.</p>
-<p>```shell
-git clone <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#103;&#105;&#116;&#64;&#103;&#105;&#116;&#104;&#117;&#98;&#46;&#99;&#111;&#109;">&#103;&#105;&#116;&#64;&#103;&#105;&#116;&#104;&#117;&#98;&#46;&#99;&#111;&#109;</a>:kapicorp/kapitan-reference.git kapitan-templates
-cd kapitan-templates</p>
-<p>./kapitan compile
-```</p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:kapicorp/kapitan-reference.git<span class="w"> </span>kapitan-templates
+<span class="nb">cd</span><span class="w"> </span>kapitan-templates
+
+./kapitan<span class="w"> </span>compile
+</code></pre></div>
 <p>Expected output:</p>
-<p><code>Compiled postgres-proxy (1.51s)
+<div class="highlight"><pre><span></span><code>Compiled postgres-proxy (1.51s)
 Compiled tesoro (1.70s)
 Compiled echo-server (1.64s)
 Compiled mysql (1.67s)
@@ -2756,7 +2839,8 @@ Compiled tutorial (1.68s)
 Compiled global (0.76s)
 Compiled examples (2.60s)
 Compiled pritunl (2.03s)
-Compiled sock-shop (4.36s)</code></p>
+Compiled sock-shop (4.36s)
+</code></pre></div>
 <p>The repository includes:</p>
 <ul>
 <li><strong>Kubernetes manifests</strong> generated with Jsonnet and Kadet</li>
@@ -2767,9 +2851,9 @@ Compiled sock-shop (4.36s)</code></p>
 </ul>
 <h2 id="minimal-starter-project">Minimal starter project</h2>
 <p>If you want a clean slate instead of a full reference repository, use the cookiecutter template:</p>
-<p><code>shell
-pip3 install cruft
-cruft create http://github.com/kapicorp/kapitan-reference --checkout cookiecutter --no-input</code></p>
+<div class="highlight"><pre><span></span><code>pip3<span class="w"> </span>install<span class="w"> </span>cruft
+cruft<span class="w"> </span>create<span class="w"> </span>http://github.com/kapicorp/kapitan-reference<span class="w"> </span>--checkout<span class="w"> </span>cookiecutter<span class="w"> </span>--no-input
+</code></pre></div>
 <p>This creates a minimal Kapitan project with:</p>
 <ul>
 <li>A basic inventory structure (<code>inventory/classes/</code>, <code>inventory/targets/</code>)</li>
@@ -2779,108 +2863,106 @@ cruft create http://github.com/kapicorp/kapitan-reference --checkout cookiecutte
 <h2 id="input-type-examples">Input type examples</h2>
 <h3 id="jsonnet">Jsonnet</h3>
 <p>Generate Kubernetes manifests with Jsonnet and access the Kapitan inventory:</p>
-<p>```jsonnet
-local kap = import "lib/kapitan.libjsonnet";
-local inv = kap.inventory();
-local p = inv.parameters;</p>
-<p>{
-    "deployment": {
-        apiVersion: "apps/v1",
-        kind: "Deployment",
-        metadata: {
-            name: p.target_name,
-            namespace: p.namespace,
-        },
-        spec: {
-            replicas: p.nginx.replicas,
-            template: {
-                spec: {
-                    containers: [{
-                        name: "nginx",
-                        image: p.nginx.image,
-                    }],
-                },
-            },
-        },
-    },
-}
-```</p>
+<div class="highlight"><pre><span></span><code><span class="k">local</span><span class="w"> </span><span class="nv">kap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">import</span><span class="w"> </span><span class="s">&quot;lib/kapitan.libjsonnet&quot;</span><span class="p">;</span>
+<span class="k">local</span><span class="w"> </span><span class="nv">inv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">kap</span><span class="p">.</span><span class="nf">inventory</span><span class="p">();</span>
+<span class="k">local</span><span class="w"> </span><span class="nv">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">inv</span><span class="p">.</span><span class="nv">parameters</span><span class="p">;</span>
+
+<span class="p">{</span>
+<span class="w">    </span><span class="nv">&quot;deployment&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;apps/v1&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">kind</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Deployment&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">metadata</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nv">name</span><span class="p">:</span><span class="w"> </span><span class="nv">p</span><span class="p">.</span><span class="nv">target_name</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">namespace</span><span class="p">:</span><span class="w"> </span><span class="nv">p</span><span class="p">.</span><span class="nv">namespace</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="nv">spec</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nv">replicas</span><span class="p">:</span><span class="w"> </span><span class="nv">p</span><span class="p">.</span><span class="nv">nginx</span><span class="p">.</span><span class="nv">replicas</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">template</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nv">spec</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nv">containers</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<span class="w">                        </span><span class="nv">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;nginx&quot;</span><span class="p">,</span>
+<span class="w">                        </span><span class="nv">image</span><span class="p">:</span><span class="w"> </span><span class="nv">p</span><span class="p">.</span><span class="nv">nginx</span><span class="p">.</span><span class="nv">image</span><span class="p">,</span>
+<span class="w">                    </span><span class="p">}],</span>
+<span class="w">                </span><span class="p">},</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="p">}</span>
+</code></pre></div>
 <p>See the full <a href="../input_types/jsonnet/">Jsonnet input type documentation</a>.</p>
 <h3 id="jinja">Jinja</h3>
 <p>Write plain YAML templates with Jinja2 loops and conditionals:</p>
-<p>```yaml</p>
-<h1 id="templatesconfigmapymlj2">templates/configmap.yml.j2</h1>
-<p>apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ inventory.parameters.target_name }}
-data:
-  environment: {{ inventory.parameters.environment }}
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># templates/configmap.yml.j2</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ConfigMap</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">inventory.parameters.target_name</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="nt">data</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">environment</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">inventory.parameters.environment</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+</code></pre></div>
 <p>See the full <a href="../input_types/jinja/">Jinja input type documentation</a>.</p>
 <h3 id="helm">Helm</h3>
 <p>Render an existing Helm chart with values from the Kapitan inventory:</p>
-<p><code>yaml
-parameters:
-  kapitan:
-    compile:
-      - output_path: .
-        input_type: helm
-        input_paths:
-          - components/charts/nginx-ingress
-        helm_values:
-          controller:
-            name: my-controller
-        helm_params:
-          name: my-release
-          namespace: my-namespace</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">helm</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components/charts/nginx-ingress</span>
+<span class="w">        </span><span class="nt">helm_values</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">controller</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-controller</span>
+<span class="w">        </span><span class="nt">helm_params</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-release</span>
+<span class="w">          </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-namespace</span>
+</code></pre></div>
 <p>See the full <a href="../input_types/helm/">Helm input type documentation</a>.</p>
 <h3 id="kustomize">Kustomize</h3>
 <p>Apply Kustomize patches to base manifests generated by another input type:</p>
-<p><code>yaml
-parameters:
-  kapitan:
-    compile:
-      - output_path: manifests
-        input_type: kustomize
-        input_paths:
-          - components/kustomize/overlays/production</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
+<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components/kustomize/overlays/production</span>
+</code></pre></div>
 <p>See the full <a href="../input_types/kustomize/">Kustomize input type documentation</a>.</p>
 <h2 id="inventory-examples">Inventory examples</h2>
 <h3 id="targets-and-classes">Targets and classes</h3>
-<p>```yaml</p>
-<h1 id="inventoryclassescommonyml">inventory/classes/common.yml</h1>
-<p>parameters:
-  organization: ACME
-  timezone: Europe/London
-```</p>
-<p>```yaml</p>
-<h1 id="inventoryclassesenvironmentsproductionyml">inventory/classes/environments/production.yml</h1>
-<p>classes:
-  - common</p>
-<p>parameters:
-  environment: production
-  nginx:
-    replicas: 5
-```</p>
-<p>```yaml</p>
-<h1 id="inventorytargetsproductionwebyml">inventory/targets/production/web.yml</h1>
-<p>classes:
-  - environments.production
-  - components.nginx</p>
-<p>parameters:
-  target_name: web
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/classes/common.yml</span>
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">organization</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ACME</span>
+<span class="w">  </span><span class="nt">timezone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Europe/London</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/classes/environments/production.yml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">environment</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">production</span>
+<span class="w">  </span><span class="nt">nginx</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/production/web.yml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">environments.production</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components.nginx</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+</code></pre></div>
 <p>See the <a href="../inventory/introduction/">inventory introduction</a> for the full concept.</p>
 <h2 id="secrets-examples">Secrets examples</h2>
 <p>Create an encrypted reference with GPG:</p>
-<p><code>shell
-kapitan refs --write gpg:targets/production/web/mysql/root_password -t production/web -f secret.txt</code></p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>refs<span class="w"> </span>--write<span class="w"> </span>gpg:targets/production/web/mysql/root_password<span class="w"> </span>-t<span class="w"> </span>production/web<span class="w"> </span>-f<span class="w"> </span>secret.txt
+</code></pre></div>
 <p>Use it in the inventory:</p>
-<p><code>yaml
-parameters:
-  mysql:
-    root_password: ?{gpg:targets/production/web/mysql/root_password}</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">mysql</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">root_password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">?{gpg:targets/production/web/mysql/root_password}</span>
+</code></pre></div>
 <p>See the <a href="../../references/">References documentation</a> for all backends.</p>
 <h2 id="related-projects">Related projects</h2>
 <ul>

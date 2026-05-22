@@ -2740,37 +2740,37 @@
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="admonition example">
-<p><code>shell
-kapitan validate</code></p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>validate
+</code></pre></div>
 <details class="example">
 <summary>click to expand output</summary>
-<p><code>shell
-created schema-cache-path at ./schemas
-Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_secret.yml
-Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_service_jsonnet.yml
-Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_service_simple.yml</code></p>
+<div class="highlight"><pre><span></span><code>created<span class="w"> </span>schema-cache-path<span class="w"> </span>at<span class="w"> </span>./schemas
+Validation:<span class="w"> </span>manifest<span class="w"> </span>validation<span class="w"> </span>successful<span class="w"> </span><span class="k">for</span><span class="w"> </span>./compiled/minikube-mysql/manifests/mysql_secret.yml
+Validation:<span class="w"> </span>manifest<span class="w"> </span>validation<span class="w"> </span>successful<span class="w"> </span><span class="k">for</span><span class="w"> </span>./compiled/minikube-mysql/manifests/mysql_service_jsonnet.yml
+Validation:<span class="w"> </span>manifest<span class="w"> </span>validation<span class="w"> </span>successful<span class="w"> </span><span class="k">for</span><span class="w"> </span>./compiled/minikube-mysql/manifests/mysql_service_simple.yml
+</code></pre></div>
 </details>
 </div>
 </div>
 <div class="tabbed-block">
 <div class="admonition example">
-<p><code>shell
-kapitan compile --validate</code></p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile<span class="w"> </span>--validate
+</code></pre></div>
 <details class="example">
 <summary>click to expand output</summary>
-<p><code>shell
-Rendered inventory (0.27s)
-Compiled labels (0.23s)
-Compiled removal (0.00s)
-Compiled busybox (0.24s)
-Compiled minikube-nginx-jsonnet (0.49s)
-Compiled minikube-nginx-kadet (0.25s)
-Compiled minikube-mysql (0.59s)
-Compiled minikube-es (1.17s)
-Compiled all-glob (1.55s)
-Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_secret.yml
-Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_service_jsonnet.yml
-Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_service_simple.yml</code></p>
+<div class="highlight"><pre><span></span><code>Rendered<span class="w"> </span>inventory<span class="w"> </span><span class="o">(</span><span class="m">0</span>.27s<span class="o">)</span>
+Compiled<span class="w"> </span>labels<span class="w"> </span><span class="o">(</span><span class="m">0</span>.23s<span class="o">)</span>
+Compiled<span class="w"> </span>removal<span class="w"> </span><span class="o">(</span><span class="m">0</span>.00s<span class="o">)</span>
+Compiled<span class="w"> </span>busybox<span class="w"> </span><span class="o">(</span><span class="m">0</span>.24s<span class="o">)</span>
+Compiled<span class="w"> </span>minikube-nginx-jsonnet<span class="w"> </span><span class="o">(</span><span class="m">0</span>.49s<span class="o">)</span>
+Compiled<span class="w"> </span>minikube-nginx-kadet<span class="w"> </span><span class="o">(</span><span class="m">0</span>.25s<span class="o">)</span>
+Compiled<span class="w"> </span>minikube-mysql<span class="w"> </span><span class="o">(</span><span class="m">0</span>.59s<span class="o">)</span>
+Compiled<span class="w"> </span>minikube-es<span class="w"> </span><span class="o">(</span><span class="m">1</span>.17s<span class="o">)</span>
+Compiled<span class="w"> </span>all-glob<span class="w"> </span><span class="o">(</span><span class="m">1</span>.55s<span class="o">)</span>
+Validation:<span class="w"> </span>manifest<span class="w"> </span>validation<span class="w"> </span>successful<span class="w"> </span><span class="k">for</span><span class="w"> </span>./compiled/minikube-mysql/manifests/mysql_secret.yml
+Validation:<span class="w"> </span>manifest<span class="w"> </span>validation<span class="w"> </span>successful<span class="w"> </span><span class="k">for</span><span class="w"> </span>./compiled/minikube-mysql/manifests/mysql_service_jsonnet.yml
+Validation:<span class="w"> </span>manifest<span class="w"> </span>validation<span class="w"> </span>successful<span class="w"> </span><span class="k">for</span><span class="w"> </span>./compiled/minikube-mysql/manifests/mysql_service_simple.yml
+</code></pre></div>
 </details>
 </div>
 </div>
@@ -2779,30 +2779,30 @@ Validation: manifest validation successful for ./compiled/minikube-mysql/manifes
 <div class="admonition example">
 <div class="admonition quote">
 <p class="admonition-title">example <code>.kapitan</code></p>
-<p>```yaml
-...</p>
-<p>compile:
-  validate: true
-```</p>
+<div class="highlight"><pre><span></span><code><span class="nn">...</span>
+
+<span class="nt">compile</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">validate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
 </div>
 <p>The <code>validate</code> command will now be implied for every compile run
-<code>shell
-kapitan compile</code></p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile
+</code></pre></div></p>
 <details class="example">
 <summary>click to expand output</summary>
-<p><code>shell
-Rendered inventory (0.27s)
-Compiled labels (0.23s)
-Compiled removal (0.00s)
-Compiled busybox (0.24s)
-Compiled minikube-nginx-jsonnet (0.49s)
-Compiled minikube-nginx-kadet (0.25s)
-Compiled minikube-mysql (0.59s)
-Compiled minikube-es (1.17s)
-Compiled all-glob (1.55s)
-Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_secret.yml
-Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_service_jsonnet.yml
-Validation: manifest validation successful for ./compiled/minikube-mysql/manifests/mysql_service_simple.yml</code></p>
+<div class="highlight"><pre><span></span><code>Rendered<span class="w"> </span>inventory<span class="w"> </span><span class="o">(</span><span class="m">0</span>.27s<span class="o">)</span>
+Compiled<span class="w"> </span>labels<span class="w"> </span><span class="o">(</span><span class="m">0</span>.23s<span class="o">)</span>
+Compiled<span class="w"> </span>removal<span class="w"> </span><span class="o">(</span><span class="m">0</span>.00s<span class="o">)</span>
+Compiled<span class="w"> </span>busybox<span class="w"> </span><span class="o">(</span><span class="m">0</span>.24s<span class="o">)</span>
+Compiled<span class="w"> </span>minikube-nginx-jsonnet<span class="w"> </span><span class="o">(</span><span class="m">0</span>.49s<span class="o">)</span>
+Compiled<span class="w"> </span>minikube-nginx-kadet<span class="w"> </span><span class="o">(</span><span class="m">0</span>.25s<span class="o">)</span>
+Compiled<span class="w"> </span>minikube-mysql<span class="w"> </span><span class="o">(</span><span class="m">0</span>.59s<span class="o">)</span>
+Compiled<span class="w"> </span>minikube-es<span class="w"> </span><span class="o">(</span><span class="m">1</span>.17s<span class="o">)</span>
+Compiled<span class="w"> </span>all-glob<span class="w"> </span><span class="o">(</span><span class="m">1</span>.55s<span class="o">)</span>
+Validation:<span class="w"> </span>manifest<span class="w"> </span>validation<span class="w"> </span>successful<span class="w"> </span><span class="k">for</span><span class="w"> </span>./compiled/minikube-mysql/manifests/mysql_secret.yml
+Validation:<span class="w"> </span>manifest<span class="w"> </span>validation<span class="w"> </span>successful<span class="w"> </span><span class="k">for</span><span class="w"> </span>./compiled/minikube-mysql/manifests/mysql_service_jsonnet.yml
+Validation:<span class="w"> </span>manifest<span class="w"> </span>validation<span class="w"> </span>successful<span class="w"> </span><span class="k">for</span><span class="w"> </span>./compiled/minikube-mysql/manifests/mysql_service_simple.yml
+</code></pre></div>
 </details>
 </div>
 </div>
@@ -2823,11 +2823,11 @@ Validation: manifest validation successful for ./compiled/minikube-mysql/manifes
 <div class="admonition tip">
 <p class="admonition-title">override permanently <code>schema-path</code></p>
 <p>Remember to use the <code>.kapitan</code> dotfile configuration to override permanently the <code>schema-path</code> location.</p>
-<p><code>shell
-  $ cat .kapitan
-  # other options abbreviated for clarity
-  validate:
-    schemas-path: custom/schemas/cache/path</code></p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>cat<span class="w"> </span>.kapitan
+<span class="c1"># other options abbreviated for clarity</span>
+validate:
+<span class="w">  </span>schemas-path:<span class="w"> </span>custom/schemas/cache/path
+</code></pre></div>
 </div>
 </div>
 <h4 id="example">Example</h4>

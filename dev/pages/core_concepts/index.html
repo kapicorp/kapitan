@@ -768,6 +768,61 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#compiling-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compiling targets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#targets-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Targets outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#organising-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Organising targets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next steps
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2717,47 +2772,49 @@
 <h2 id="targets"><a href="../inventory/targets/"><strong>Targets</strong></a></h2>
 <p><strong>Kapitan</strong> organises your configuration through <a href="../inventory/targets/"><strong>targets</strong></a>.</p>
 <p>A simple target is typically made of a <code>classes</code> and a <code>parameters</code> sections, and it looks like this:</p>
-<p>```yaml</p>
-<h1 id="inventorytargetsproductionyaml">inventory/targets/production.yaml</h1>
-<p>classes:
-  - common
-  - acme.applications.super</p>
-<p>parameters:
-    description: My Super Application
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/production.yaml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acme.applications.super</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">My Super Application</span>
+</code></pre></div>
 <h2 id="compiling-targets"><strong>Compiling targets</strong></h2>
 <p>You can tell <strong>Kapitan</strong> to <strong>compile</strong> all your targets by running the following command in a valid kapitan repository root:</p>
-<p><code>$ kapitan compile
+<div class="highlight"><pre><span></span><code>$ kapitan compile
 Rendered inventory (0.06s): discovered 200 targets.
 Compiling 200/200 targets using 64 concurrent processes: (64 CPU detected)
 ...
 Compiled production (0.68s)
 ...
-Compiled 200 targets in 20s</code></p>
+Compiled 200 targets in 20s
+</code></pre></div>
 <p>Alternatively, you can select just the target you want to compile, using the <code>-t</code> or <code>--target</code> flag:</p>
-<p><code>$ kapitan compile -t production
+<div class="highlight"><pre><span></span><code>$ kapitan compile -t production
 Rendered inventory (0.06s): discovered 200 targets.
 Compiling 1/200 targets using 1 concurrent processes: (64 CPU detected)
 Compiled production (0.68s)
-Compiled 1 targets in 0.73s</code></p>
+Compiled 1 targets in 0.73s
+</code></pre></div>
 <h2 id="targets-outputs"><strong>Targets outputs</strong></h2>
 <p>The output of a target compilation gets copied under the <em><code>compiled</code></em> folder, with the same structure as the original target.</p>
 <div class="grid">
 
-<p><code>shell 
-📁 inventory/
-└── 📁 targets/
-    └── <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span> production.yml    #  ---&gt;</code></p>
+<div class="highlight"><pre><span></span><code>📁<span class="w"> </span>inventory/
+└──<span class="w"> </span>📁<span class="w"> </span>targets/
+<span class="w">    </span>└──<span class="w"> </span><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span><span class="w"> </span>production.yml<span class="w">    </span><span class="c1">#  ---&gt;</span>
+</code></pre></div>
 
-<p><code>shell 
-📁 compiled/
-├── <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 9V3.5L18.5 9M6 2c-1.11 0-2 .89-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/></svg></span> ...
-└── 📁 production/           # compiled output
-    ├── <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22.27 19.385H1.73A1.73 1.73 0 0 1 0 17.655V6.345a1.73 1.73 0 0 1 1.73-1.73h20.54A1.73 1.73 0 0 1 24 6.345v11.308a1.73 1.73 0 0 1-1.73 1.731zM5.769 15.923v-4.5l2.308 2.885 2.307-2.885v4.5h2.308V8.078h-2.308l-2.307 2.885-2.308-2.885H3.46v7.847zM21.232 12h-2.309V8.077h-2.307V12h-2.308l3.461 4.039z"/></svg></span> README.md
-    ├── 📁 scripts/
-    ├── 📁 manifests/
-    ├── 📁 terraform/
-    └── <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 9V3.5L18.5 9M6 2c-1.11 0-2 .89-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/></svg></span> ...</code></p>
+<div class="highlight"><pre><span></span><code>📁<span class="w"> </span>compiled/
+├──<span class="w"> </span><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 9V3.5L18.5 9M6 2c-1.11 0-2 .89-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/></svg></span><span class="w"> </span>...
+└──<span class="w"> </span>📁<span class="w"> </span>production/<span class="w">           </span><span class="c1"># compiled output</span>
+<span class="w">    </span>├──<span class="w"> </span><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22.27 19.385H1.73A1.73 1.73 0 0 1 0 17.655V6.345a1.73 1.73 0 0 1 1.73-1.73h20.54A1.73 1.73 0 0 1 24 6.345v11.308a1.73 1.73 0 0 1-1.73 1.731zM5.769 15.923v-4.5l2.308 2.885 2.307-2.885v4.5h2.308V8.078h-2.308l-2.307 2.885-2.308-2.885H3.46v7.847zM21.232 12h-2.309V8.077h-2.307V12h-2.308l3.461 4.039z"/></svg></span><span class="w"> </span>README.md
+<span class="w">    </span>├──<span class="w"> </span>📁<span class="w"> </span>scripts/
+<span class="w">    </span>├──<span class="w"> </span>📁<span class="w"> </span>manifests/
+<span class="w">    </span>├──<span class="w"> </span>📁<span class="w"> </span>terraform/
+<span class="w">    </span>└──<span class="w"> </span><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 9V3.5L18.5 9M6 2c-1.11 0-2 .89-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/></svg></span><span class="w"> </span>...
+</code></pre></div>
 </div>
 
 <p>The files or directories being created depends on what is defined inside the targets, and will change based on the configuration you define in the <strong>Kapitan</strong> target.</p>
@@ -2770,46 +2827,46 @@ Compiled 1 targets in 0.73s</code></p>
 </div>
 <div class="grid">
 
-<p><code>shell 
-📁 inventory/
-└── 📁 targets/
-    └── 📁 teams/
-        └── 📁 devops/
-            └── <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span> grafana.yml # teams.devops.grafana</code></p>
+<div class="highlight"><pre><span></span><code>📁<span class="w"> </span>inventory/
+└──<span class="w"> </span>📁<span class="w"> </span>targets/
+<span class="w">    </span>└──<span class="w"> </span>📁<span class="w"> </span>teams/
+<span class="w">        </span>└──<span class="w"> </span>📁<span class="w"> </span>devops/
+<span class="w">            </span>└──<span class="w"> </span><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span><span class="w"> </span>grafana.yml<span class="w"> </span><span class="c1"># teams.devops.grafana</span>
+</code></pre></div>
 
-<p><code>shell 
-📁 compiled/
-└── 📁 teams/
-    ├── <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 9V3.5L18.5 9M6 2c-1.11 0-2 .89-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/></svg></span> ...
-    └── 📁 devops/
-        └── 📁 grafana/    # teams.devops.grafana
-            ├── 📁 scripts/
-            ├── 📁 manifests/
-            └── 📁 terraform/</code></p>
+<div class="highlight"><pre><span></span><code>📁<span class="w"> </span>compiled/
+└──<span class="w"> </span>📁<span class="w"> </span>teams/
+<span class="w">    </span>├──<span class="w"> </span><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 9V3.5L18.5 9M6 2c-1.11 0-2 .89-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/></svg></span><span class="w"> </span>...
+<span class="w">    </span>└──<span class="w"> </span>📁<span class="w"> </span>devops/
+<span class="w">        </span>└──<span class="w"> </span>📁<span class="w"> </span>grafana/<span class="w">    </span><span class="c1"># teams.devops.grafana</span>
+<span class="w">            </span>├──<span class="w"> </span>📁<span class="w"> </span>scripts/
+<span class="w">            </span>├──<span class="w"> </span>📁<span class="w"> </span>manifests/
+<span class="w">            </span>└──<span class="w"> </span>📁<span class="w"> </span>terraform/
+</code></pre></div>
 </div>
 
 <h2 id="classes"><a href="../inventory/classes/"><strong>Classes</strong></a></h2>
 <p><strong>Kapitan</strong> allows you to organise your shared inventory data using <a href="../inventory/classes/"><strong>classes</strong></a>, which are found in the <em><code>inventory/classes</code></em> folder.</p>
-<p><code>shell 
-📁 inventory/
-└── 📁 classes/
-    ├── <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span> common.yml              # common
-    └── 📁 teams/
-        ├── 📁 project1/
-        │   └── <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span> config.yml      # teams.project1.config
-        └── 📁 project2/
-            ├── <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span> config.yml      # teams.project2.config
-            └── <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span> kubernetes.yml  # teams.project2.kubernetes</code></p>
+<div class="highlight"><pre><span></span><code>📁<span class="w"> </span>inventory/
+└──<span class="w"> </span>📁<span class="w"> </span>classes/
+<span class="w">    </span>├──<span class="w"> </span><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span><span class="w"> </span>common.yml<span class="w">              </span><span class="c1"># common</span>
+<span class="w">    </span>└──<span class="w"> </span>📁<span class="w"> </span>teams/
+<span class="w">        </span>├──<span class="w"> </span>📁<span class="w"> </span>project1/
+<span class="w">        </span>│<span class="w">   </span>└──<span class="w"> </span><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span><span class="w"> </span>config.yml<span class="w">      </span><span class="c1"># teams.project1.config</span>
+<span class="w">        </span>└──<span class="w"> </span>📁<span class="w"> </span>project2/
+<span class="w">            </span>├──<span class="w"> </span><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span><span class="w"> </span>config.yml<span class="w">      </span><span class="c1"># teams.project2.config</span>
+<span class="w">            </span>└──<span class="w"> </span><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m0 .97 4.111 6.453v4.09h2.638v-4.09L11.053.969H8.214L5.58 5.125 2.965.969Zm12.093.024-4.47 10.544h2.114l.97-2.345h4.775l.804 2.345h2.26L14.255.994Zm1.133 2.225 1.463 3.87h-3.096zm3.06 9.475v10.29H24v-2.199h-5.454v-8.091zm-12.175.002v10.335h2.217v-7.129l2.32 4.792h1.746l2.4-4.96v7.295h2.127V12.696h-2.904L9.44 17.37l-2.455-4.674Z"/></svg></span><span class="w"> </span>kubernetes.yml<span class="w">  </span><span class="c1"># teams.project2.kubernetes</span>
+</code></pre></div>
 <p>The structure of a class is very similar to target files. Classes can refer to other classes.</p>
-<p>```yaml</p>
-<h1 id="inventoryclassescommonyaml">inventory/classes/common.yaml</h1>
-<p>classes:
-    - kapitan.common</p>
-<p>parameters:
-    organization: ACME
-    headquarters: London
-    timezone: Europe/London
-```</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/classes/common.yaml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kapitan.common</span>
+
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">organization</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ACME</span>
+<span class="w">    </span><span class="nt">headquarters</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">London</span>
+<span class="w">    </span><span class="nt">timezone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Europe/London</span>
+</code></pre></div>
 <hr />
 <h2 id="next-steps">Next steps</h2>
 <ul>

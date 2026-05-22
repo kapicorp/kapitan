@@ -2646,24 +2646,24 @@ execute binaries outside of kapitan that generate or manipulate files.</p>
 however, with the <code>external</code> input type, we could specify the <code>ytt</code> binary to be executed with specific arguments
 and environment variables.</p>
 <p>In this example, we're removing a label from a k8s manifests in a directory <code>ingresses</code> and placing it into the compiled target directory.</p>
-<p><code>yaml
-parameters:
-  target_name: k8s-manifests
-  kapitan:
-    vars:
-      target: ${target_name}
-    compile:
-      - input_type: external
-        input_paths:
-          - /usr/local/bin/ytt # path to ytt on system
-        output_path: .
-        args:
-          - -f
-          - ingresses/ # directory with ingresses
-          - -f
-          - ytt/remove.yaml # custom ytt script
-          - "&gt;"
-          - \${compiled_target_dir}/ingresses/ingresses.yaml # final merged result</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">k8s-manifests</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vars</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${target_name}</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">external</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/usr/local/bin/ytt</span><span class="w"> </span><span class="c1"># path to ytt on system</span>
+<span class="w">        </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.</span>
+<span class="w">        </span><span class="nt">args</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-f</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ingresses/</span><span class="w"> </span><span class="c1"># directory with ingresses</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-f</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ytt/remove.yaml</span><span class="w"> </span><span class="c1"># custom ytt script</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;&gt;&quot;</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">\${compiled_target_dir}/ingresses/ingresses.yaml</span><span class="w"> </span><span class="c1"># final merged result</span>
+</code></pre></div>
 <p><em>Supported output types</em>: N/A (no need to specify <code>output_type</code>)</p>
 <p>Additionally, the input type supports field <code>env_vars</code>, which can be used to set environment variables for the external command.
 By default, the external command doesn't inherit any environment variables from Kapitan's environment.
