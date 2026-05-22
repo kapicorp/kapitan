@@ -1,5 +1,5 @@
 ---
-title: "Getting Started with Kapitan for Kubernetes and Infrastructure Configuration"
+title: "Getting Started with Kapitan"
 description: "Install Kapitan with Docker or pip, clone a reference repository, and compile your first Kubernetes and infrastructure targets in minutes."
 ---
 
@@ -76,13 +76,13 @@ Compiled echo-server (0.14s)
 
 ### Docker
 
-[![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
+[![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases){: aria-label="GitHub releases"}
 
 !!! success "recommended"
     ### Docker
     ![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)
-    [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
-    [![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
+    [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan){: aria-label="Docker image size"}
+    [![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22){: aria-label="Docker Build and Push status"}
 
 
     === "Linux"
