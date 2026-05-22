@@ -9,7 +9,6 @@ import logging
 import os
 from time import sleep
 
-import docker
 import hvac
 from hvac.exceptions import InvalidRequest
 
@@ -19,12 +18,30 @@ from kapitan.errors import KapitanError
 logger = logging.getLogger(__name__)
 
 
+try:
+    import docker
+except ImportError:
+    docker = None
+
+
 class VaultServerError(KapitanError):
     """Generic vaultserver errors"""
 
 
+# Module-level singletons so test classes can share vault server instances.
+_shared_vault_servers = {}
+
+
+def get_shared_vault_server(server_cls=None):
+    """Return a shared VaultServer singleton, creating it if necessary."""
+    cls = server_cls or VaultServer
+    if cls not in _shared_vault_servers:
+        _shared_vault_servers[cls] = cls()
+    return _shared_vault_servers[cls]
+
+
 class VaultServer:
-    """Opens a vault server in a container"""
+    """Opens a vault server in a container or connects to an existing one."""
 
     def __init__(self):
         self.parameters = {}
@@ -32,9 +49,25 @@ class VaultServer:
         self.root_token = None
         self.vault_client = None
         self.dev_root_token = "root"
-        self.docker_client = docker.from_env()
-        self.vault_container = self.setup_container()
-        self.setup_vault()
+        self.docker_client = None
+        self.vault_container = None
+
+        # If VAULT_ADDR is already set (e.g. CI service container), use it.
+        existing_addr = os.environ.get("VAULT_ADDR")
+        if existing_addr:
+            self.vault_url = existing_addr
+            self.parameters["addr"] = self.vault_url
+            self.root_token = self.dev_root_token
+            self.setup_vault()
+        else:
+            if docker is None:
+                raise VaultServerError(
+                    "Docker Python package is not installed. "
+                    "Install it or set VAULT_ADDR to connect to an existing vault server."
+                )
+            self.docker_client = docker.from_env()
+            self.vault_container = self.setup_container()
+            self.setup_vault()
 
     def setup_container(self):
         env = {
@@ -48,6 +81,7 @@ class VaultServer:
             environment=env,
             detach=True,
             auto_remove=False,
+            user="root",
             command="server -dev",
         )
 
@@ -139,11 +173,19 @@ class VaultServer:
         self.vault_client.sys.create_or_update_policy(name=policy, policy=test_policy)
         os.environ["VAULT_USERNAME"] = "test_user"
         os.environ["VAULT_PASSWORD"] = "test_password"
-        self.vault_client.sys.enable_auth_method("userpass")
+        try:
+            self.vault_client.sys.enable_auth_method("userpass")
+        except InvalidRequest as exc:
+            if "path is already in use" not in str(exc):
+                raise
         self.vault_client.auth.userpass.create_or_update_user(
             username="test_user", password="test_password", policies=[policy]
         )
-        self.vault_client.sys.enable_auth_method("approle")
+        try:
+            self.vault_client.sys.enable_auth_method("approle")
+        except InvalidRequest as exc:
+            if "path is already in use" not in str(exc):
+                raise
         self.vault_client.auth.approle.create_or_update_approle("test_role")
         os.environ["VAULT_ROLE_ID"] = self.vault_client.auth.approle.read_role_id(
             "test_role"
@@ -159,19 +201,27 @@ class VaultServer:
 
     def close_container(self):
         logger.info(f"Closing vault container {self.vault_url}")
-        self.vault_client.adapter.close()
+        if self.vault_client is not None:
+            self.vault_client.adapter.close()
 
-        self.vault_container.stop()
-        self.vault_container.remove()
-        self.docker_client.close()
+        if self.vault_container is not None:
+            self.vault_container.stop()
+            self.vault_container.remove()
+
+        if self.docker_client is not None:
+            self.docker_client.close()
 
 
 class VaultTransitServer(VaultServer):
     def set_backend_path(self):
         self.vault_client = hvac.Client(url=self.vault_url, token=self.root_token)
-        self.vault_client.sys.enable_secrets_engine(
-            backend_type="transit", path="transit"
-        )
+        try:
+            self.vault_client.sys.enable_secrets_engine(
+                backend_type="transit", path="transit"
+            )
+        except InvalidRequest as exc:
+            if "path is already in use" not in str(exc):
+                raise
 
     def get_policy(self):
         test_policy = """
