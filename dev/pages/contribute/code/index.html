@@ -2916,40 +2916,36 @@
 Kapitan project and create a <a href="https://help.github.com/articles/about-pull-requests/">Pull Request</a>
 targeting master branch. All submissions, including submissions by project members, require review.</p>
 <h3 id="setup">Setup</h3>
-<p>We build Kapitan using <code>uv</code> and provide a comprehensive Makefile for development tasks.</p>
+<p>We build Kapitan using <code>uv</code> (for Python deps) and <code>mise</code> (for external toolchain), and provide a comprehensive Makefile for development tasks.</p>
 <h4 id="quick-start">Quick Start</h4>
 <p>The easiest way to set up your development environment is using our Makefile:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Complete development environment setup</span>
 make<span class="w"> </span>setup
 </code></pre></div>
 <p>This command will:
-- Install <code>uv</code> package manager
+- Install pinned toolchain via <code>mise</code> (<code>uv</code>, Helm, Kustomize, CUE)
 - Install all Python dependencies (including dev, test, docs, and optional extras)
-- Install external tools (kustomize and CUE)</p>
+- Configure pre-commit hooks</p>
 <h4 id="manual-setup">Manual Setup</h4>
 <p>If you prefer to set up components individually:</p>
 <ol>
 <li>
-<p><strong>Install <code>uv</code></strong></p>
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>install_uv
+<p><strong>Install <code>mise</code></strong></p>
+<p>Follow the official installation instructions for your platform and shell:
+<a href="https://mise.jdx.dev/getting-started.html#installing-mise-cli">https://mise.jdx.dev/getting-started.html#installing-mise-cli</a></p>
+</li>
+<li>
+<p><strong>Install Toolchain</strong></p>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>install_tools
 <span class="c1"># or manually:</span>
-curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+mise<span class="w"> </span>install<span class="w"> </span>--locked
 </code></pre></div>
 </li>
 <li>
 <p><strong>Install Python Dependencies</strong></p>
 <div class="highlight"><pre><span></span><code>make<span class="w"> </span>install
 <span class="c1"># or manually:</span>
-uv<span class="w"> </span>sync<span class="w"> </span>--locked<span class="w"> </span>--all-extras<span class="w"> </span>--dev
-</code></pre></div>
-</li>
-<li>
-<p><strong>Install External Tools</strong> (required for some tests)</p>
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>install_external_tools
-<span class="c1"># This installs:</span>
-<span class="c1"># - Helm (Kubernetes package manager)</span>
-<span class="c1"># - Kustomize (Kubernetes manifest management)</span>
-<span class="c1"># - CUE (data validation and configuration)</span>
+mise<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>--<span class="w"> </span>uv<span class="w"> </span>sync<span class="w"> </span>--locked<span class="w"> </span>--all-extras<span class="w"> </span>--dev
 </code></pre></div>
 </li>
 <li>
@@ -2960,7 +2956,7 @@ uv<span class="w"> </span>sync<span class="w"> </span>--locked<span class="w"> <
 </li>
 <li>
 <p><strong>Run Kapitan with your compiled code</strong></p>
-<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>kapitan<span class="w"> </span>&lt;your<span class="w"> </span>command&gt;
+<div class="highlight"><pre><span></span><code>mise<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>--<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>kapitan<span class="w"> </span>&lt;your<span class="w"> </span>command&gt;
 </code></pre></div>
 </li>
 </ol>
@@ -2969,8 +2965,7 @@ uv<span class="w"> </span>sync<span class="w"> </span>--locked<span class="w"> <
 <p><strong>Setup Commands:</strong>
 - <code>make setup</code> - Complete development environment setup (recommended for first-time setup)
 - <code>make install</code> - Install Python dependencies
-- <code>make install_uv</code> - Install <code>uv</code> package manager
-- <code>make install_external_tools</code> - Install Helm, Kustomize, and CUE
+- <code>make install_tools</code> - Install all pinned tools from <code>mise.toml</code>
 - <code>make install_pre_commit</code> - Configure git pre-commit hooks</p>
 <p><strong>Development Commands:</strong>
 - <code>make format</code> - Format code with ruff
@@ -3029,16 +3024,14 @@ uv<span class="w"> </span>sync<span class="w"> </span>--locked<span class="w"> <
 </li>
 <li>
 <p>To test your changes with your local Kapitan version:
-   <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>kapitan<span class="w"> </span>&lt;your<span class="w"> </span>command&gt;
+   <div class="highlight"><pre><span></span><code>mise<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>--<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>kapitan<span class="w"> </span>&lt;your<span class="w"> </span>command&gt;
 <span class="c1"># or set an alias:</span>
-<span class="nb">alias</span><span class="w"> </span><span class="nv">kapitan</span><span class="o">=</span><span class="s1">&#39;uv run kapitan&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">kapitan</span><span class="o">=</span><span class="s1">&#39;mise exec -- uv run kapitan&#39;</span>
 </code></pre></div></p>
 </li>
 <li>
 <p>To run specific test files:
-   <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/test_vault_transit.py
-<span class="c1"># or using unittest:</span>
-uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>unittest<span class="w"> </span>tests/test_vault_transit.py
+   <div class="highlight"><pre><span></span><code>mise<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>--<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>--no-cov<span class="w"> </span>tests/test_vault_transit.py
 </code></pre></div></p>
 </li>
 </ol>
@@ -3060,11 +3053,11 @@ uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </sp
 If you didn't use <code>make setup</code>, you can configure pre-commit hooks manually:</p>
 <div class="highlight"><pre><span></span><code>make<span class="w"> </span>install_pre_commit
 <span class="c1"># or directly:</span>
-uv<span class="w"> </span>run<span class="w"> </span>pre-commit<span class="w"> </span>install
+mise<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>--<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>pre-commit<span class="w"> </span>install
 </code></pre></div>
 <p><strong>Usage:</strong>
 - Hooks run automatically on <code>git commit</code>
-- To run manually: <code>pre-commit run --all-files</code>
+- To run manually: <code>mise exec -- uv run pre-commit run --all-files</code>
 - To skip hooks temporarily: <code>git commit --no-verify</code></p>
 <p>The pre-commit configuration includes:
 - <strong>Ruff</strong>: Code linting and auto-fixing
