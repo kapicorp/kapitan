@@ -180,19 +180,16 @@ class LoadTargetInventoryTest(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].target_full_path, "t1/name")
 
-    def test_missing_kapitan_key_skips_target(self):
+    def test_missing_inventory_target_key_skips_target(self):
+        """When inventory.targets[target_name] raises KeyError, the target is skipped."""
         target = MockTarget("t1")
-        target.parameters = MagicMock()
-        target.parameters.kapitan = MagicMock()
-        # Simulate KeyError by making kapitan access raise
-        target.parameters.kapitan = MagicMock()
-        target.parameters.kapitan.compile = []
-        target.parameters.kapitan.vars = MagicMock()
-        target.parameters.kapitan.vars.target = "t1"
-
         inv = MockInventory({"t1": target})
+        # Remove t1 from inv.targets so that inventory.targets[target_name]
+        # raises KeyError inside load_target_inventory.
+        del inv.targets["t1"]
+
         result = load_target_inventory(inv, None)
-        self.assertEqual(len(result), 1)
+        self.assertEqual(len(result), 0)
 
 
 class CompileTargetTest(unittest.TestCase):
