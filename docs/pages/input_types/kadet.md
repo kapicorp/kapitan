@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Kadet Input Type: Python-Based Configuration Generation"
+title: "Kapitan Kadet Input Type"
 description: "Use Python and Kadet with Kapitan to generate infrastructure configuration. Define resources as classes and access the Kapitan inventory from Python code."
 ---
 

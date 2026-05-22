@@ -79,6 +79,7 @@ class VaultServer:
             image="hashicorp/vault",
             ports={"8200/tcp": ("127.0.0.1", None)},
             environment=env,
+            cap_add=["IPC_LOCK"],
             detach=True,
             auto_remove=False,
             user="root",

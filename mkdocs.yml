@@ -29,6 +29,8 @@ plugins:
   - search
   - markdown-exec
   - meta
+  - mike:
+      redirect_template: overrides/redirect.html
 
 theme:
   name: material
