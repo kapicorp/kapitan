@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Inventory Explained: Targets, Classes, and Parameters"
+title: "Kapitan Inventory"
 description: "Learn how Kapitan inventory uses targets, classes, and parameters to model reusable infrastructure configuration across environments."
 ---
 
