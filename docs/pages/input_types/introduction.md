@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Input Types: Jsonnet, Jinja, Kadet, Helm, Kustomize, and CUE"
+title: "Kapitan Input Types"
 description: "Explore Kapitan input types including Jsonnet, Jinja2, Kadet, Helm, Kustomize, CUE, copy, remove, and external. Choose the right templating engine for your infrastructure."
 ---
 
