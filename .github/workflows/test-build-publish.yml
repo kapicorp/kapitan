@@ -271,12 +271,12 @@ jobs:
           docker run -t --rm local-test --version
 
       - name: Set up uv
-        if: github.event_name != 'pull_request'
+        if: needs.check-changes.outputs.has-code-changes == 'true' && github.event_name != 'pull_request'
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
 
       - name: Generate Docker SBOM
         id: docker-sbom
-        if: github.event_name != 'pull_request'
+        if: needs.check-changes.outputs.has-code-changes == 'true' && github.event_name != 'pull_request'
         timeout-minutes: 10
         run: |
           mkdir -p dist
@@ -307,11 +307,11 @@ jobs:
           echo "Docker SBOM generated: ${SBOM_FILE}"
 
       - name: Validate Docker SBOM
-        if: github.event_name != 'pull_request'
+        if: needs.check-changes.outputs.has-code-changes == 'true' && github.event_name != 'pull_request'
         run: scripts/validate_sbom.sh "${{ steps.docker-sbom.outputs.sbom-file }}"
 
       - name: Upload Docker SBOM artifact
-        if: github.event_name != 'pull_request'
+        if: needs.check-changes.outputs.has-code-changes == 'true' && github.event_name != 'pull_request'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: docker-sbom-py${{ matrix.python-version }}-${{ steps.docker-sbom.outputs.platform-slug }}
@@ -334,8 +334,8 @@ jobs:
 
   upload-docker-sboms:
     name: upload Docker SBOMs to release
-    needs: [setup, build]
-    if: github.event_name == 'release'
+    needs: [setup, build, check-changes]
+    if: github.event_name == 'release' && needs.check-changes.outputs.has-code-changes == 'true'
     runs-on: ${{ needs.setup.outputs.runner }}
     permissions:
       contents: write
