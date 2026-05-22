@@ -18,5 +18,6 @@ code:
   - '!.github/workflows/housekeeping.yml'
   - '!.github/workflows/makefile-test.yml'
   - '!.github/workflows/pex-build-upload.yml'
+  - '!.github/workflows/pr-auto-label.yml'
   - '!.github/workflows/python-pypi-publish-dev.yml'
   - '!.github/workflows/python-pypi-publish.yml'
