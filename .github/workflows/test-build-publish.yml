@@ -20,21 +20,11 @@ on:
       - master
       - main
       - test/*
-    paths-ignore:
-      - 'docs/**'
-      - '.github/workflows/documentation.yml'
-      - 'mkdocs.yml'
-      - 'CNAME'
 
   release:
     types: [created]
 
   pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '.github/workflows/documentation.yml'
-      - 'mkdocs.yml'
-      - 'CNAME'
 
 jobs:
   setup:
@@ -66,18 +56,37 @@ jobs:
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
+  check-changes:
+    name: detect code changes
+    runs-on: ubuntu-24.04
+    outputs:
+      has-docs-changes: ${{ steps.filter.outputs.docs }}
+      has-code-changes: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          predicate-quantifier: 'every'
+          filters: .github/filters/filters.yml
   precommit:
     name: precommit checks
-    needs: [setup]
+    needs: [setup, check-changes]
     runs-on: ${{ needs.setup.outputs.runner }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        if: needs.check-changes.outputs.has-code-changes == 'true'
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        if: needs.check-changes.outputs.has-code-changes == 'true'
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+        if: needs.check-changes.outputs.has-code-changes == 'true'
 
   test:
     name: python ${{ matrix.python-version }} tests
-    needs: [setup]
+    needs: [setup, check-changes]
     runs-on: ${{ needs.setup.outputs.runner }}
     strategy:
       fail-fast: false
@@ -85,21 +94,26 @@ jobs:
         python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
       - name: Checkout kapitan recursively
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: recursive
       - name: Set up Python ${{ matrix.python-version }}
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Set up uv
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
       - name: Install libraries dependencies
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         run: |
           uv sync --locked --all-extras --dev
 
       - name: Cache external tools
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         id: cache-tools
         uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
@@ -110,7 +124,7 @@ jobs:
           key: external-tools-${{ runner.os }}-${{ runner.arch }}-v1
 
       - name: Install external tools
-        if: steps.cache-tools.outputs.cache-hit != 'true'
+        if: needs.check-changes.outputs.has-code-changes == 'true' && steps.cache-tools.outputs.cache-hit != 'true'
         run: |
           # Install Helm
           curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
@@ -125,12 +139,14 @@ jobs:
           curl -fsSL "https://github.com/cue-lang/cue/releases/download/${CUE_VERSION}/cue_${CUE_VERSION}_linux_${ARCH}.tar.gz" | sudo tar xz -C /usr/local/bin cue
 
       - name: Verify external tools
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         run: |
           helm version --short
           kustomize version
           cue version
 
       - name: Run pytest
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         uses: pavelzw/pytest-action@510c5e90c360a185039bea56ce8b3e7e51a16507 # v2.2.0
         with:
           verbose: true
@@ -143,8 +159,10 @@ jobs:
 
   build:
     name: build ${{ matrix.platform.platform }} image using python ${{ matrix.python-version }}
-    needs: [setup, precommit, test]
+    needs: [setup, precommit, test, check-changes]
     runs-on: ${{ matrix.platform.runner }}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -152,23 +170,26 @@ jobs:
         python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
       - name: Checkout kapitan recursively
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           submodules: recursive
 
       - name: Set up Docker Buildx
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Login to DockerHub
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        if: env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
+        if: needs.check-changes.outputs.has-code-changes == 'true' && env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Compute tag suffix
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         id: suffix
         run: |
           # Platform suffix: convert linux/amd64 -> -linux-amd64
@@ -185,6 +206,7 @@ jobs:
           fi
 
       - name: Docker meta
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         id: meta
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
@@ -198,11 +220,14 @@ jobs:
             type=semver,pattern={{major}},suffix=${{ steps.suffix.outputs.python-suffix }}${{ steps.suffix.outputs.platform-suffix }}
           flavor: |
             latest=false
+          labels: |
+            io.kapitan.sbom.format=CycloneDX
+            io.kapitan.sbom.spec-version=1.6
 
       # For default python version, also create tags with -py suffix for compatibility
       - name: Docker meta (py-suffixed tags for default version)
         id: meta-py
-        if: steps.suffix.outputs.is-default == 'true'
+        if: needs.check-changes.outputs.has-code-changes == 'true' && steps.suffix.outputs.is-default == 'true'
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
           images: |
@@ -216,6 +241,7 @@ jobs:
             latest=false
 
       - name: Combine tags
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         id: tags
         run: |
           # Combine primary tags with py-suffixed tags (if any)
@@ -228,6 +254,7 @@ jobs:
 
       # Build, test locally, then push if not a PR
       - name: Build Kapitan image
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           platforms: ${{ matrix.platform.platform }}
@@ -241,13 +268,62 @@ jobs:
             PYTHON_VERSION=${{ matrix.python-version }}
 
       - name: Test Kapitan image
+        if: needs.check-changes.outputs.has-code-changes == 'true'
         run: |
           docker run -t --rm local-test --version
+
+      - name: Set up uv
+        if: github.event_name != 'pull_request'
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+
+      - name: Generate Docker SBOM
+        id: docker-sbom
+        if: github.event_name != 'pull_request'
+        timeout-minutes: 10
+        run: |
+          mkdir -p dist
+          PLATFORM_SLUG=$(echo "${{ matrix.platform.platform }}" | tr '/' '-')
+          # On release events use the tag; otherwise fall back to a short SHA so
+          # the artifact filename is still unique and traceable.
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${GITHUB_SHA::8}"
+          fi
+          SBOM_FILE="dist/kapitan-${VERSION}-py${{ matrix.python-version }}-${PLATFORM_SLUG}-docker.sbom.cdx.json"
+          # Generate SBOM from production+extras deps via uv export.
+          # --all-extras matches the Docker image which installs gojsonnet/omegaconf/reclass-rs.
+          # --no-group test/docs prevents dev tooling from contaminating the SBOM.
+          uv export \
+              --no-dev --no-group test --no-group docs \
+              --all-extras --no-editable \
+              --format requirements-txt --no-hashes | \
+            grep -Ev '^[[:space:]]*(#|\.[[:space:]]*$|$)' | \
+            uvx --from 'cyclonedx-bom>=4,<5' cyclonedx-py requirements \
+              --mc-type application \
+              --of JSON \
+              --output-reproducible \
+              -o "${SBOM_FILE}" -
+          echo "sbom-file=${SBOM_FILE}" >> "$GITHUB_OUTPUT"
+          echo "platform-slug=${PLATFORM_SLUG}" >> "$GITHUB_OUTPUT"
+          echo "Docker SBOM generated: ${SBOM_FILE}"
+
+      - name: Validate Docker SBOM
+        if: github.event_name != 'pull_request'
+        run: scripts/validate_sbom.sh "${{ steps.docker-sbom.outputs.sbom-file }}"
+
+      - name: Upload Docker SBOM artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: docker-sbom-py${{ matrix.python-version }}-${{ steps.docker-sbom.outputs.platform-slug }}
+          path: ${{ steps.docker-sbom.outputs.sbom-file }}
+          retention-days: 1
 
       - name: Push image to DockerHub
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        if: env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
+        if: needs.check-changes.outputs.has-code-changes == 'true' && env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           platforms: ${{ matrix.platform.platform }}
@@ -258,12 +334,42 @@ jobs:
           build-args: |
             PYTHON_VERSION=${{ matrix.python-version }}
 
+  upload-docker-sboms:
+    name: upload Docker SBOMs to release
+    needs: [setup, build]
+    if: github.event_name == 'release'
+    runs-on: ${{ needs.setup.outputs.runner }}
+    permissions:
+      contents: write
+    steps:
+      - name: Download Docker SBOM artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: docker-sbom-*
+          merge-multiple: true
+          path: dist/sboms
+
+      - name: Verify SBOMs were downloaded
+        run: |
+          count=$(find dist/sboms -name '*.sbom.cdx.json' -type f | wc -l)
+          echo "Found ${count} Docker SBOM(s)"
+          if [ "${count}" -eq 0 ]; then
+            echo "ERROR: no Docker SBOMs downloaded; build artifacts may have expired (retention=1 day)." >&2
+            exit 1
+          fi
+
+      - name: Upload Docker SBOMs to release
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
+        with:
+          files: dist/sboms/*.sbom.cdx.json
+
   build-multi-architecture:
     name: combine platform images for python ${{ matrix.python-version }}
     needs:
       - setup
       - build
-    if: github.event_name != 'pull_request'
+      - check-changes
+    if: github.event_name != 'pull_request' && needs.check-changes.outputs.has-code-changes == 'true'
     runs-on: ${{ needs.setup.outputs.runner }}
     timeout-minutes: 10
     strategy:
