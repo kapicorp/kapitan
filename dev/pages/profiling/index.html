@@ -6,36 +6,36 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Use Kustomize within Kapitan to patch and customize Kubernetes manifests across environments.">
+        <meta name="description" content="Kapitan is an open source configuration management tool for Kubernetes, Terraform, and infrastructure. Generate, organize, validate, and manage configuration across environments.">
       
       
       
-        <link rel="canonical" href="https://kapitan.dev/dev/pages/input_types/kustomize/">
+        <link rel="canonical" href="https://kapitan.dev/dev/pages/profiling/">
       
       
-        <link rel="prev" href="../helm/">
+        <link rel="prev" href="../glossary/">
       
       
-        <link rel="next" href="../jsonnet/">
+        <link rel="next" href="../inventory/introduction/">
       
       
         
       
       
-      <link rel="icon" href="../../../images/logo.min.svg">
+      <link rel="icon" href="../../images/logo.min.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
   
     
-    <title>Kapitan Kustomize Input Type</title>
+    <title>Profiling – Kapitan: Keep your ship together</title>
   
 
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -54,11 +54,11 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/_markdown_exec_pyodide.css">
+      <link rel="stylesheet" href="../../assets/_markdown_exec_pyodide.css">
     
-      <link rel="stylesheet" href="../../../assets/_markdown_exec_ansi.css">
+      <link rel="stylesheet" href="../../assets/_markdown_exec_ansi.css">
     
-    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
   
@@ -89,16 +89,16 @@
 
   
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Kapitan Kustomize Input Type" />
-  <meta property="og:description" content="Use Kustomize within Kapitan to patch and customize Kubernetes manifests across environments." />
-  <meta property="og:url" content="https://kapitan.dev/dev/pages/input_types/kustomize/" />
+  <meta property="og:title" content="Profiling" />
+  <meta property="og:description" content="Kapitan is an open source configuration management tool for Kubernetes, Terraform, and infrastructure. Generate, organize, validate, and manage configuration across environments." />
+  <meta property="og:url" content="https://kapitan.dev/dev/pages/profiling/" />
   <meta property="og:image" content="https://kapitan.dev/devimages/kapitan_logo.png" />
   <meta property="og:site_name" content="Kapitan: Keep your ship together" />
 
   
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Kapitan Kustomize Input Type" />
-  <meta name="twitter:description" content="Use Kustomize within Kapitan to patch and customize Kubernetes manifests across environments." />
+  <meta name="twitter:title" content="Profiling" />
+  <meta name="twitter:description" content="Kapitan is an open source configuration management tool for Kubernetes, Terraform, and infrastructure. Generate, organize, validate, and manage configuration across environments." />
   <meta name="twitter:image" content="https://kapitan.dev/devimages/kapitan_logo.png" />
 
   
@@ -122,7 +122,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#kustomize-input-type" class="md-skip">
+        <a href="#profiling-kapitan-runs" class="md-skip">
           Skip to content
         </a>
       
@@ -142,9 +142,9 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../.." title="Kapitan: Keep your ship together" class="md-header__button md-logo" aria-label="Kapitan: Keep your ship together" data-md-component="logo">
+    <a href="../.." title="Kapitan: Keep your ship together" class="md-header__button md-logo" aria-label="Kapitan: Keep your ship together" data-md-component="logo">
       
-  <img src="../../../images/logo.min.svg" alt="logo">
+  <img src="../../images/logo.min.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -161,7 +161,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Kapitan Kustomize Input Type
+              Profiling
             
           </span>
         </div>
@@ -273,7 +273,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../.." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -292,7 +292,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../ADOPTERS/" class="md-tabs__link">
+      <a href="../../ADOPTERS/" class="md-tabs__link">
         
   
   
@@ -311,7 +311,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../getting_started/" class="md-tabs__link">
+      <a href="../../getting_started/" class="md-tabs__link">
         
   
   
@@ -334,7 +334,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../core_concepts/" class="md-tabs__link">
+        <a href="../core_concepts/" class="md-tabs__link">
           
   
   
@@ -356,7 +356,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../blog/" class="md-tabs__link">
+        <a href="../blog/" class="md-tabs__link">
           
   
   
@@ -378,7 +378,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../support/" class="md-tabs__link">
+        <a href="../../support/" class="md-tabs__link">
           
   
   
@@ -400,7 +400,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../contribute/sponsor/" class="md-tabs__link">
+        <a href="../contribute/sponsor/" class="md-tabs__link">
           
   
   
@@ -477,7 +477,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../FAQ/" class="md-tabs__link">
+      <a href="../../FAQ/" class="md-tabs__link">
         
   
   
@@ -520,9 +520,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../.." title="Kapitan: Keep your ship together" class="md-nav__button md-logo" aria-label="Kapitan: Keep your ship together" data-md-component="logo">
+    <a href="../.." title="Kapitan: Keep your ship together" class="md-nav__button md-logo" aria-label="Kapitan: Keep your ship together" data-md-component="logo">
       
-  <img src="../../../images/logo.min.svg" alt="logo">
+  <img src="../../images/logo.min.svg" alt="logo">
 
     </a>
     Kapitan: Keep your ship together
@@ -549,7 +549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../.." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -576,7 +576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../ADOPTERS/" class="md-nav__link">
+      <a href="../../ADOPTERS/" class="md-nav__link">
         
   
   
@@ -603,7 +603,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../getting_started/" class="md-nav__link">
+      <a href="../../getting_started/" class="md-nav__link">
         
   
   
@@ -709,7 +709,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../core_concepts/" class="md-nav__link">
+      <a href="../core_concepts/" class="md-nav__link">
         
   
   
@@ -737,7 +737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../kubernetes_configuration_management/" class="md-nav__link">
+      <a href="../kubernetes_configuration_management/" class="md-nav__link">
         
   
   
@@ -765,7 +765,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../kapitan_vs_helm_kustomize/" class="md-nav__link">
+      <a href="../kapitan_vs_helm_kustomize/" class="md-nav__link">
         
   
   
@@ -793,7 +793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../kapitan_examples/" class="md-nav__link">
+      <a href="../kapitan_examples/" class="md-nav__link">
         
   
   
@@ -821,7 +821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../glossary/" class="md-nav__link">
+      <a href="../glossary/" class="md-nav__link">
         
   
   
@@ -846,10 +846,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../profiling/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Profiling
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -865,6 +892,142 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-an-output-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing an output format
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-am-i-only-seeing-imapunorderediteratornext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why am I only seeing IMapUnorderedIterator.next?
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Why am I only seeing IMapUnorderedIterator.next?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-profile-workers-production-shaped" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A — --profile-workers (production-shaped)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-profile-serial-single-unified-flame-graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B — --profile-serial (single unified flame graph)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#profiling-multiprocessing-workers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Profiling multiprocessing workers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memory-profiling-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory profiling notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overhead" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overhead
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ci-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -941,7 +1104,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../inventory/introduction/" class="md-nav__link">
+      <a href="../inventory/introduction/" class="md-nav__link">
         
   
   
@@ -969,7 +1132,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../inventory/targets/" class="md-nav__link">
+      <a href="../inventory/targets/" class="md-nav__link">
         
   
   
@@ -997,7 +1160,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../inventory/classes/" class="md-nav__link">
+      <a href="../inventory/classes/" class="md-nav__link">
         
   
   
@@ -1025,7 +1188,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../inventory/parameters_interpolation/" class="md-nav__link">
+      <a href="../inventory/parameters_interpolation/" class="md-nav__link">
         
   
   
@@ -1053,7 +1216,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../inventory/advanced/" class="md-nav__link">
+      <a href="../inventory/advanced/" class="md-nav__link">
         
   
   
@@ -1139,7 +1302,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../inventory/backends/" class="md-nav__link">
+      <a href="../inventory/backends/" class="md-nav__link">
         
   
   
@@ -1167,7 +1330,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../inventory/reclass-rs/" class="md-nav__link">
+      <a href="../inventory/reclass-rs/" class="md-nav__link">
         
   
   
@@ -1195,7 +1358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../inventory/omegaconf/" class="md-nav__link">
+      <a href="../inventory/omegaconf/" class="md-nav__link">
         
   
   
@@ -1236,10 +1399,8 @@
                 
   
   
-    
   
   
-  
     
     
       
@@ -1270,11 +1431,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_8" >
         
           
           <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="0">
@@ -1295,7 +1456,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1313,7 +1474,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../introduction/" class="md-nav__link">
+      <a href="../input_types/introduction/" class="md-nav__link">
         
   
   
@@ -1341,7 +1502,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../kadet/" class="md-nav__link">
+      <a href="../input_types/kadet/" class="md-nav__link">
         
   
   
@@ -1369,7 +1530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../jinja/" class="md-nav__link">
+      <a href="../input_types/jinja/" class="md-nav__link">
         
   
   
@@ -1397,7 +1558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cuelang/" class="md-nav__link">
+      <a href="../input_types/cuelang/" class="md-nav__link">
         
   
   
@@ -1425,7 +1586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../helm/" class="md-nav__link">
+      <a href="../input_types/helm/" class="md-nav__link">
         
   
   
@@ -1450,37 +1611,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Kustomize
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../input_types/kustomize/" class="md-nav__link">
         
   
   
@@ -1496,165 +1630,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#configuration-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Options
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Examples
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#basic-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Basic Usage
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#using-patches" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using Patches
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#multiple-environments" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Multiple Environments
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Best Practices
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#common-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Common Issues
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#debugging" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Debugging
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1667,7 +1642,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../jsonnet/" class="md-nav__link">
+      <a href="../input_types/jsonnet/" class="md-nav__link">
         
   
   
@@ -1695,7 +1670,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../external/" class="md-nav__link">
+      <a href="../input_types/external/" class="md-nav__link">
         
   
   
@@ -1723,7 +1698,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../copy/" class="md-nav__link">
+      <a href="../input_types/copy/" class="md-nav__link">
         
   
   
@@ -1751,7 +1726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../remove/" class="md-nav__link">
+      <a href="../input_types/remove/" class="md-nav__link">
         
   
   
@@ -1787,7 +1762,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../references/" class="md-nav__link">
+      <a href="../../references/" class="md-nav__link">
         
   
   
@@ -1877,7 +1852,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../remote_repositories/" class="md-nav__link">
+      <a href="../remote_repositories/" class="md-nav__link">
         
   
   
@@ -1905,7 +1880,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../external_dependencies/" class="md-nav__link">
+      <a href="../external_dependencies/" class="md-nav__link">
         
   
   
@@ -1933,7 +1908,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../publishing_generators/" class="md-nav__link">
+      <a href="../publishing_generators/" class="md-nav__link">
         
   
   
@@ -1961,7 +1936,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../argocd/" class="md-nav__link">
+      <a href="../argocd/" class="md-nav__link">
         
   
   
@@ -1989,7 +1964,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../fluxcd/" class="md-nav__link">
+      <a href="../fluxcd/" class="md-nav__link">
         
   
   
@@ -2089,7 +2064,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../commands/kapitan_compile/" class="md-nav__link">
+      <a href="../commands/kapitan_compile/" class="md-nav__link">
         
   
   
@@ -2117,7 +2092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../commands/kapitan_inventory/" class="md-nav__link">
+      <a href="../commands/kapitan_inventory/" class="md-nav__link">
         
   
   
@@ -2145,7 +2120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../commands/kapitan_lint/" class="md-nav__link">
+      <a href="../commands/kapitan_lint/" class="md-nav__link">
         
   
   
@@ -2173,7 +2148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../commands/kapitan_searchvar/" class="md-nav__link">
+      <a href="../commands/kapitan_searchvar/" class="md-nav__link">
         
   
   
@@ -2201,7 +2176,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../commands/kapitan_validate/" class="md-nav__link">
+      <a href="../commands/kapitan_validate/" class="md-nav__link">
         
   
   
@@ -2229,7 +2204,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../commands/kapitan_dotfile/" class="md-nav__link">
+      <a href="../commands/kapitan_dotfile/" class="md-nav__link">
         
   
   
@@ -2293,7 +2268,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../blog/" class="md-nav__link ">
+            <a href="../blog/" class="md-nav__link ">
               
   
   
@@ -2397,7 +2372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../support/" class="md-nav__link">
+      <a href="../../support/" class="md-nav__link">
         
   
   
@@ -2425,7 +2400,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../troubleshooting/" class="md-nav__link">
+      <a href="../troubleshooting/" class="md-nav__link">
         
   
   
@@ -2453,7 +2428,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../related/" class="md-nav__link">
+      <a href="../../related/" class="md-nav__link">
         
   
   
@@ -2546,7 +2521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contribute/sponsor/" class="md-nav__link">
+      <a href="../contribute/sponsor/" class="md-nav__link">
         
   
   
@@ -2574,7 +2549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contribute/talk/" class="md-nav__link">
+      <a href="../contribute/talk/" class="md-nav__link">
         
   
   
@@ -2658,7 +2633,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contribute/documentation/" class="md-nav__link">
+      <a href="../contribute/documentation/" class="md-nav__link">
         
   
   
@@ -2686,7 +2661,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contribute/code/" class="md-nav__link">
+      <a href="../contribute/code/" class="md-nav__link">
         
   
   
@@ -2810,7 +2785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../FAQ/" class="md-nav__link">
+      <a href="../../FAQ/" class="md-nav__link">
         
   
   
@@ -2846,7 +2821,7 @@
   <!-- Edit button -->
   
   <a
-      href="https://github.com/kapicorp/kapitan/edit/master/docs/pages/input_types/kustomize.md"
+      href="https://github.com/kapicorp/kapitan/edit/master/docs/pages/profiling.md"
       title="Edit this page"
       aria-label="Edit this page"
       class="md-content__button md-icon"
@@ -2854,238 +2829,180 @@
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
   </a>
   
-  <h1 id="kustomize-input-type">Kustomize Input Type</h1>
-<p>The Kustomize input type allows you to use <a href="https://kustomize.io/">Kustomize</a> to manage and customize Kubernetes manifests within Kapitan. This input type is particularly useful when you need to:</p>
-<ul>
-<li>Apply patches to existing Kubernetes manifests</li>
-<li>Set namespaces for resources</li>
-<li>Manage multiple environments with overlays</li>
-<li>Customize resources without modifying the original manifests</li>
-</ul>
-<h2 id="configuration">Configuration</h2>
-<p>The Kustomize input type supports the following configuration options:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">compile</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
-<span class="w">      </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
-<span class="w">      </span><span class="nt">input_paths</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">path/to/kustomize/overlay</span>
-<span class="w">      </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-namespace</span><span class="w">  </span><span class="c1"># Optional: Set namespace for all resources</span>
-<span class="w">      </span><span class="nt">patches</span><span class="p">:</span><span class="w">  </span><span class="c1"># Optional: Apply patches to resources</span>
-<span class="w">        </span><span class="nt">patch-name</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">target</span><span class="p">:</span>
-<span class="w">            </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
-<span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-deployment</span>
-<span class="w">            </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-namespace</span>
-<span class="w">          </span><span class="nt">patch</span><span class="p">:</span>
-<span class="w">            </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
-<span class="w">            </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
-<span class="w">            </span><span class="nt">metadata</span><span class="p">:</span>
-<span class="w">              </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-deployment</span>
-<span class="w">              </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-namespace</span>
-<span class="w">            </span><span class="nt">spec</span><span class="p">:</span>
-<span class="w">              </span><span class="nt">template</span><span class="p">:</span>
-<span class="w">                </span><span class="nt">spec</span><span class="p">:</span>
-<span class="w">                  </span><span class="nt">containers</span><span class="p">:</span>
-<span class="w">                    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-container</span>
-<span class="w">                      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:1.19</span>
+  <h1 id="profiling-kapitan-runs">Profiling Kapitan runs</h1>
+<p>Kapitan ships with optional CPU and memory profiling that you can enable from
+any subcommand (<code>compile</code>, <code>inventory</code>, <code>eval</code>, …). Reports are written to a
+configurable output directory, one file per run (and per worker PID, if you
+opt in).</p>
+<h2 id="quick-start">Quick start</h2>
+<p>CPU profiling uses <a href="https://github.com/joerick/pyinstrument"><code>pyinstrument</code></a>
+(optional dependency). Memory profiling uses the standard library
+<code>tracemalloc</code> module and needs no extra install.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># install the optional CPU profiler</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;kapitan[profile]&#39;</span>
+
+<span class="c1"># CPU profile a compile run, write an interactive HTML report</span>
+kapitan<span class="w"> </span>--profile<span class="w"> </span>compile
+
+<span class="c1"># CPU + memory profile, with workers, custom output dir</span>
+kapitan<span class="w"> </span>--profile<span class="w"> </span>--profile-workers<span class="w"> </span>--memory-profile<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--profile-output-dir<span class="w"> </span>./profiles<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>compile
+
+<span class="c1"># Text report straight to a file (and stderr summary)</span>
+kapitan<span class="w"> </span>--profile<span class="w"> </span>--profile-format<span class="w"> </span>text<span class="w"> </span>compile
 </code></pre></div>
-<h3 id="configuration-options">Configuration Options</h3>
+<p>By default reports land in <code>./kapitan-profiles/</code>:</p>
+<div class="highlight"><pre><span></span><code>kapitan-profiles/
+├── kapitan-compile-20260508-101502-pid12345.html        # parent CPU
+├── kapitan-worker-20260508-101503-pid12346.html         # worker CPU (--profile-workers)
+├── kapitan-worker-20260508-101503-pid12347.html
+└── kapitan-compile-20260508-101502-pid12345.memory.txt  # memory (--memory-profile)
+</code></pre></div>
+<h2 id="cli-flags">CLI flags</h2>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
+<th>Flag</th>
+<th>Default</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>output_path</code></td>
-<td>string</td>
-<td>Path where compiled manifests will be written</td>
+<td><code>--profile</code></td>
+<td>off</td>
+<td>Enable pyinstrument CPU profiling for the parent process.</td>
 </tr>
 <tr>
-<td><code>input_type</code></td>
-<td>string</td>
-<td>Must be set to <code>kustomize</code></td>
+<td><code>--profile-workers</code></td>
+<td>off</td>
+<td>Also profile each <code>multiprocessing</code> worker; one report per PID. Requires <code>--profile</code>.</td>
 </tr>
 <tr>
-<td><code>input_paths</code></td>
-<td>list</td>
-<td>List of paths to Kustomize overlays</td>
+<td><code>--profile-serial</code></td>
+<td>off</td>
+<td>Run target compilation serially in the parent (no Pool). Produces a single unified flame graph with full depth. See <em>Why am I only seeing <code>IMapUnorderedIterator.next</code>?</em> below.</td>
 </tr>
 <tr>
-<td><code>namespace</code></td>
-<td>string</td>
-<td>Optional: Namespace to set for all resources</td>
+<td><code>--profile-format</code></td>
+<td><code>html</code></td>
+<td>One of <code>html</code>, <code>text</code>, <code>json</code>, <code>speedscope</code>.</td>
 </tr>
 <tr>
-<td><code>patches</code></td>
-<td>object</td>
-<td>Optional: Dictionary of patches to apply</td>
+<td><code>--profile-interval</code></td>
+<td><code>0.001</code></td>
+<td>pyinstrument sampling interval (seconds). Lower = more detail, more overhead.</td>
+</tr>
+<tr>
+<td><code>--profile-output-dir</code></td>
+<td><code>kapitan-profiles</code></td>
+<td>Directory to write reports into (created if missing).</td>
+</tr>
+<tr>
+<td><code>--memory-profile</code></td>
+<td>off</td>
+<td>Enable <code>tracemalloc</code> snapshot diff; writes a top-N allocation report.</td>
+</tr>
+<tr>
+<td><code>--memory-profile-top</code></td>
+<td><code>30</code></td>
+<td>Number of top allocators to include.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="examples">Examples</h2>
-<h3 id="basic-usage">Basic Usage</h3>
-<p>Here's a simple example that uses Kustomize to manage a deployment:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/my-app.yml</span>
-<span class="nt">classes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
-
-<span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
-<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
-<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
-<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kubernetes/base</span>
-<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
+<p>The flags are global (registered on the top-level parser), so they go
+<em>before</em> the subcommand:</p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>--profile<span class="w"> </span>compile<span class="w"> </span>-t<span class="w"> </span>my-target<span class="w">     </span><span class="c1"># ✅</span>
+kapitan<span class="w"> </span>compile<span class="w"> </span>--profile<span class="w"> </span>-t<span class="w"> </span>my-target<span class="w">     </span><span class="c1"># ❌ (argparse error)</span>
 </code></pre></div>
-<p>With the following directory structure:
-<div class="highlight"><pre><span></span><code>kubernetes/
-  base/
-    kustomization.yaml
-    deployment.yaml
-</code></pre></div></p>
-<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/base/kustomization.yaml</span>
-<span class="nt">resources</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deployment.yaml</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/base/deployment.yaml</span>
-<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">spec</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">containers</span><span class="p">:</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
-<span class="w">          </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:latest</span>
-</code></pre></div>
-<h3 id="using-patches">Using Patches</h3>
-<p>Here's an example that uses patches to customize a deployment:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/my-app.yml</span>
-<span class="nt">classes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
-
-<span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
-<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
-<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
-<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kubernetes/base</span>
-<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
-<span class="w">        </span><span class="nt">patches</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">update-image</span><span class="p">:</span>
-<span class="w">            </span><span class="nt">target</span><span class="p">:</span>
-<span class="w">              </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
-<span class="w">              </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
-<span class="w">              </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
-<span class="w">            </span><span class="nt">patch</span><span class="p">:</span>
-<span class="w">              </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
-<span class="w">              </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
-<span class="w">              </span><span class="nt">metadata</span><span class="p">:</span>
-<span class="w">                </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
-<span class="w">                </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
-<span class="w">              </span><span class="nt">spec</span><span class="p">:</span>
-<span class="w">                </span><span class="nt">template</span><span class="p">:</span>
-<span class="w">                  </span><span class="nt">spec</span><span class="p">:</span>
-<span class="w">                    </span><span class="nt">containers</span><span class="p">:</span>
-<span class="w">                      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
-<span class="w">                        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:1.19</span>
-</code></pre></div>
-<h3 id="multiple-environments">Multiple Environments</h3>
-<p>You can use Kustomize overlays to manage different environments:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/my-app-prod.yml</span>
-<span class="nt">classes</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">common</span>
-
-<span class="nt">parameters</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">target_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-prod</span>
-<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manifests</span>
-<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kustomize</span>
-<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
-<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kubernetes/overlays/prod</span>
-<span class="w">        </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app-prod</span>
-</code></pre></div>
-<p>With the following directory structure:
-<div class="highlight"><pre><span></span><code>kubernetes/
-  base/
-    kustomization.yaml
-    deployment.yaml
-  overlays/
-    prod/
-      kustomization.yaml
-      patches/
-        replicas.yaml
-</code></pre></div></p>
-<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/overlays/prod/kustomization.yaml</span>
-<span class="nt">resources</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">../../base</span>
-<span class="nt">patches</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">patches/replicas.yaml</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># kubernetes/overlays/prod/patches/replicas.yaml</span>
-<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps/v1</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Deployment</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-app</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-</code></pre></div>
-<h2 id="best-practices">Best Practices</h2>
-<ol>
-<li>
-<p><strong>Use Base and Overlays</strong>: Organize your Kustomize resources using base and overlays for better maintainability.</p>
-</li>
-<li>
-<p><strong>Keep Patches Small</strong>: Create small, focused patches that modify specific aspects of resources.</p>
-</li>
-<li>
-<p><strong>Use Namespaces</strong>: Always specify namespaces in your patches to avoid conflicts.</p>
-</li>
-<li>
-<p><strong>Version Control</strong>: Keep your Kustomize resources in version control for better tracking and collaboration.</p>
-</li>
-<li>
-<p><strong>Documentation</strong>: Document your Kustomize overlays and patches for better maintainability.</p>
-</li>
-</ol>
-<h2 id="troubleshooting">Troubleshooting</h2>
-<h3 id="common-issues">Common Issues</h3>
-<ol>
-<li>
-<p><strong>Patch Not Applied</strong>: Ensure that the target resource exists and the patch format is correct.</p>
-</li>
-<li>
-<p><strong>Namespace Issues</strong>: Make sure to specify the namespace in both the target and patch.</p>
-</li>
-<li>
-<p><strong>Resource Not Found</strong>: Verify that the input paths are correct and the resources exist.</p>
-</li>
-</ol>
-<h3 id="debugging">Debugging</h3>
-<p>To debug Kustomize issues:</p>
-<ol>
-<li>Check the generated kustomization.yaml in the temporary directory</li>
-<li>Verify that all paths are correct</li>
-<li>Ensure that patches are properly formatted</li>
-<li>Check that target resources exist</li>
-</ol>
-<h2 id="related">Related</h2>
+<h2 id="choosing-an-output-format">Choosing an output format</h2>
 <ul>
-<li><a href="https://kustomize.io/">Kustomize Documentation</a></li>
-<li><a href="https://kubernetes.io/docs/home/">Kubernetes Documentation</a></li>
-<li><a href="../introduction/">Kapitan Input Types</a></li>
+<li><strong>html</strong> (default) — interactive flame-graph-style report, open in any
+  browser. Best for exploration.</li>
+<li><strong>speedscope</strong> — drop the file into <a href="https://www.speedscope.app/">https://www.speedscope.app/</a>.</li>
+<li><strong>json</strong> — machine-readable for custom dashboards / CI diffing.</li>
+<li><strong>text</strong> — printed to stderr <em>and</em> written to disk; great for CI logs and
+  quick <code>grep</code>.</li>
 </ul>
+<h2 id="why-am-i-only-seeing-imapunorderediteratornext">Why am I only seeing <code>IMapUnorderedIterator.next</code>?</h2>
+<p><code>pyinstrument</code> is a sampling profiler — it can only observe the <strong>current
+Python process</strong>. <code>kapitan compile</code> farms target compilation out to a
+<code>multiprocessing.Pool</code>, so the parent process spends almost all its time
+blocked in <code>IMapUnorderedIterator.next</code> waiting for child results. The
+interesting work (kadet, jinja, jsonnet, kustomize, helm…) happens in
+separate child processes whose stacks the parent's profiler physically
+cannot see.</p>
+<p>You have two ways to see deeper:</p>
+<h3 id="option-a-profile-workers-production-shaped">Option A — <code>--profile-workers</code> (production-shaped)</h3>
+<p>Keeps the multiprocessing pool. Each worker self-profiles and writes its
+own report. Best for understanding real-world behaviour and per-target
+variance.</p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>--profile<span class="w"> </span>--profile-workers<span class="w"> </span>compile
+</code></pre></div>
+<p>Load the resulting <code>kapitan-worker-*.speedscope.json</code> files into
+<a href="https://www.speedscope.app/">https://www.speedscope.app/</a> (it accepts multiple profiles in tabs).</p>
+<h3 id="option-b-profile-serial-single-unified-flame-graph">Option B — <code>--profile-serial</code> (single unified flame graph)</h3>
+<p>Bypasses the Pool entirely and runs every target's compilation inline in
+the parent process. The single pyinstrument report then contains the
+<strong>full call tree</strong> including all input-type internals.</p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>--profile<span class="w"> </span>--profile-serial<span class="w"> </span>compile
+</code></pre></div>
+<p>Use this when you're answering "where is time being spent?" — it's the
+clearest possible view. Trade-off: wall-clock is slower (no parallelism)
+and peak memory is higher (everything runs in one process). Don't use it
+for production benchmarking.</p>
+<blockquote>
+<p>Tip: combine <code>--profile-serial</code> with <code>--profile-format speedscope</code> and
+the resulting JSON loads into speedscope.app as a single deep flame graph.</p>
+</blockquote>
+<h2 id="profiling-multiprocessing-workers">Profiling multiprocessing workers</h2>
+<p><code>kapitan compile</code> parallelises target compilation with a <code>multiprocessing.Pool</code>.
+The parent profile shows dispatch/IO/serial work, but <strong>the actual compile
+work happens in workers</strong>. Use <code>--profile-workers</code> to profile them too:</p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>--profile<span class="w"> </span>--profile-workers<span class="w"> </span>compile
+</code></pre></div>
+<p>Each worker writes its own <code>kapitan-worker-&lt;ts&gt;-pid&lt;PID&gt;.&lt;ext&gt;</code> file. To get a
+unified view, you can convert the speedscope JSONs and load them as separate
+profiles in <a href="https://www.speedscope.app/">https://www.speedscope.app/</a> (it supports multi-profile views).</p>
+<p>Worker profiling is wired via inherited environment variables, so it works
+with all <code>--mp-method</code> choices (<code>spawn</code>, <code>fork</code>, <code>forkserver</code>).</p>
+<h2 id="memory-profiling-notes">Memory profiling notes</h2>
+<p><code>pyinstrument</code> is a <strong>CPU sampling profiler — it does not measure memory</strong>.
+The <code>--memory-profile</code> flag uses Python's standard <code>tracemalloc</code> to take
+snapshots before and after the run and report the top allocation deltas.
+The text report includes:</p>
+<ul>
+<li>current allocated bytes at end of run</li>
+<li>peak allocated bytes during the run</li>
+<li>the top <em>N</em> allocation sites with full traceback</li>
+</ul>
+<p>For deeper memory analysis (allocation timelines, native allocations, leak
+detection across long-running processes) consider running Kapitan under
+<a href="https://bloomberg.github.io/memray/"><code>memray</code></a> externally:</p>
+<div class="highlight"><pre><span></span><code>memray<span class="w"> </span>run<span class="w"> </span>-o<span class="w"> </span>kapitan.bin<span class="w"> </span>-m<span class="w"> </span>kapitan<span class="w"> </span>compile
+memray<span class="w"> </span>flamegraph<span class="w"> </span>kapitan.bin
+</code></pre></div>
+<h2 id="overhead">Overhead</h2>
+<ul>
+<li>pyinstrument at the default <code>0.001 s</code> interval typically adds <strong>&lt;5 %</strong>
+  wall-clock overhead.</li>
+<li><code>tracemalloc</code> overhead is much higher (10–50 %) because every allocation is
+  intercepted. Only enable <code>--memory-profile</code> when you need it.</li>
+</ul>
+<h2 id="ci-usage">CI usage</h2>
+<p>Profiles are deterministic per-PID-and-timestamp filenames, so it's safe to
+upload <code>kapitan-profiles/</code> as a CI artifact. Example GitHub Actions step:</p>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Compile with profile</span>
+<span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kapitan --profile --profile-format speedscope compile</span>
+
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Upload profile</span>
+<span class="w">  </span><span class="nt">if</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">always()</span>
+<span class="w">  </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/upload-artifact@v4</span>
+<span class="w">  </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kapitan-profile</span>
+<span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kapitan-profiles/</span>
+</code></pre></div>
 
               </article>
             </div>
@@ -3232,13 +3149,13 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["announce.dismiss", "content.code.annotate", "content.tabs.link", "navigation.instant", "navigation.indexes", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.follow", "toc.integrate"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["announce.dismiss", "content.code.annotate", "content.tabs.link", "navigation.instant", "navigation.indexes", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.follow", "toc.integrate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
     
     
   
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="../../../assets/_markdown_exec_pyodide.js"></script>
+        <script src="../../assets/_markdown_exec_pyodide.js"></script>
       
     
   <!-- Google Tag Manager (noscript) -->
