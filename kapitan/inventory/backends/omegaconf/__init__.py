@@ -125,28 +125,25 @@ class OmegaConfInventory(Inventory):
             class_path_base = self.classes_path
 
         # Now try to find the class file
-        extension = ".yml"
+        for ext in (".yml", ".yaml"):
+            cases = [
+                # case components.kapicorp is absolute and a directory, look for components/kapicorp/init.yml
+                # case .components.kapicorp is relative and a directory, look for <class_parent_dir>/components/kapicorp/init.yml
+                os.path.join(class_path_base, *class_name.split("."), "init" + ext),
+                # case components.kapicorp is absolute and a file, look for components/kapicorp.yml
+                # case components.kapicorp is relative and a file, look for <class_parent_dir>/components/kapicorp.yml
+                os.path.join(class_path_base, *class_name.split(".")) + ext,
+                # Reclass compatibility mode
+                # case .components.kapicorp  points to <class_parent_dir>/kapicorp.yml
+                os.path.join(class_path_base, *class_name.split(".")[2:]) + ext,
+                # case components.kapicorp points to components/kapicorp/init.yml
+                os.path.join(class_path_base, *class_name.split(".")[2:], "init" + ext),
+            ]
 
-        cases = [
-            # case components.kapicorp is absolute and a directory, look for components/kapicorp/init.yml
-            # case .components.kapicorp is relative and a directory, look for <class_parent_dir>/components/kapicorp/init.yml
-            os.path.join(class_path_base, *class_name.split("."), "init" + extension),
-            # case components.kapicorp is absolute and a file, look for components/kapicorp.yml
-            # case components.kapicorp is relative and a file, look for <class_parent_dir>/components/kapicorp.yml
-            os.path.join(class_path_base, *class_name.split(".")) + extension,
-            # Reclass compatibility mode
-            # case .components.kapicorp  points to <class_parent_dir>/kapicorp.yml
-            os.path.join(class_path_base, *class_name.split(".")[2:]) + extension,
-            # case components.kapicorp points to components/kapicorp/init.yml
-            os.path.join(
-                class_path_base, *class_name.split(".")[2:], "init" + extension
-            ),
-        ]
-
-        for case in cases:
-            if os.path.isfile(case):
-                class_file = case
-                return class_file
+            for case in cases:
+                if os.path.isfile(case):
+                    class_file = case
+                    return class_file
 
         logger.error(f"class file not found for class {class_name}, tried {cases}")
         return None

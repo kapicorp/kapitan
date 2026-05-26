@@ -1,4 +1,9 @@
-# :kapitan-logo: **Input Type | Jinja2**
+---
+title: "Kapitan Jinja2 Input Type"
+description: "Learn how to use Jinja2 templates in Kapitan to generate scripts, documentation, and configuration files with access to the full Kapitan inventory."
+---
+
+# :kapitan-logo: **Kapitan Jinja2 Input Type**
 
 This input type is probably the most simple input type to use: it is very versatile and is commonly used to create scripts and documentation files.
 
@@ -89,24 +94,24 @@ Templates will be provided at runtime with 3 variables:
         ```markdown
         | *Target*                                                               |
         |------------------------------------------------------------------------|
-        | [argocd](../argocd/docs/README.md)                                     |
-        | [dev-sockshop](../dev-sockshop/docs/README.md)                         |
-        | [echo-server](../echo-server/docs/README.md)                           |
-        | [examples](../examples/docs/README.md)                                 |
-        | [gke-pvm-killer](../gke-pvm-killer/docs/README.md)                     |
-        | [global](../global/docs/README.md)                                     |
-        | [guestbook-argocd](../guestbook-argocd/docs/README.md)                 |
-        | [kapicorp-demo-march](../kapicorp-demo-march/docs/README.md)           |
-        | [kapicorp-project-123](../kapicorp-project-123/docs/README.md)         |
-        | [kapicorp-terraform-admin](../kapicorp-terraform-admin/docs/README.md) |
-        | [mysql](../mysql/docs/README.md)                                       |
-        | [postgres-proxy](../postgres-proxy/docs/README.md)                     |
-        | [pritunl](../pritunl/docs/README.md)                                   |
-        | [prod-sockshop](../prod-sockshop/docs/README.md)                       |
-        | [sock-shop](../sock-shop/docs/README.md)                               |
-        | [tesoro](../tesoro/docs/README.md)                                     |
-        | [tutorial](../tutorial/docs/README.md)                                 |
-        | [vault](../vault/docs/README.md)                                       |
+        | \[argocd\]\(../argocd/docs/README.md\)                                     |
+        | \[dev-sockshop\]\(../dev-sockshop/docs/README.md\)                         |
+        | \[echo-server\]\(../echo-server/docs/README.md\)                           |
+        | \[examples\]\(../examples/docs/README.md\)                                 |
+        | \[gke-pvm-killer\]\(../gke-pvm-killer/docs/README.md\)                     |
+        | \[global\]\(../global/docs/README.md\)                                     |
+        | \[guestbook-argocd\]\(../guestbook-argocd/docs/README.md\)                 |
+        | \[kapicorp-demo-march\]\(../kapicorp-demo-march/docs/README.md\)           |
+        | \[kapicorp-project-123\]\(../kapicorp-project-123/docs/README.md\)         |
+        | \[kapicorp-terraform-admin\]\(../kapicorp-terraform-admin/docs/README.md\) |
+        | \[mysql\]\(../mysql/docs/README.md\)                                       |
+        | \[postgres-proxy\]\(../postgres-proxy/docs/README.md\)                     |
+        | \[pritunl\]\(../pritunl/docs/README.md\)                                   |
+        | \[prod-sockshop\]\(../prod-sockshop/docs/README.md\)                       |
+        | \[sock-shop\]\(../sock-shop/docs/README.md\)                               |
+        | \[tesoro\]\(../tesoro/docs/README.md\)                                     |
+        | \[tutorial\]\(../tutorial/docs/README.md\)                                 |
+        | \[vault\]\(../vault/docs/README.md\)                                       |
 
         ```
 

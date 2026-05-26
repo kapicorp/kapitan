@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Versioned documentation paths managed by mike.
+# Each versioned subdirectory is legitimate content and should be crawlable.
+# The /latest/ alias points to the current stable version.
+
+Sitemap: https://kapitan.dev/sitemap.xml

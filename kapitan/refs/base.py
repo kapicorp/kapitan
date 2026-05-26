@@ -99,7 +99,7 @@ class PlainRef:
             except KeyError:
                 raise RefError(
                     f"PlainRef: cannot access sub-variable key {self.embedded_subvar_path}"
-                )
+                ) from None
         else:
             return self.data
 
@@ -195,9 +195,10 @@ class PlainRefBackend:
     def __contains__(self, ref_path):
         try:
             self.__getitem__(ref_path)
-            return True
         except KeyError:
             return False
+        else:
+            return True
 
     def __iter__(self):
         for full_path in list_all_paths(self.path):
@@ -320,7 +321,7 @@ class Revealer:
                 except KeyError:
                     raise RefError(
                         f"Revealer: cannot access {tag} sub-variable key {ref.embedded_subvar_path}"
-                    )
+                    ) from None
 
             # else this is just a ref
             else:
@@ -359,7 +360,7 @@ class Revealer:
             except KeyError:
                 raise RefError(
                     f"Revealer: cannot access {tag} sub-variable key {subvar_path}"
-                )
+                ) from None
 
     @lru_cache(maxsize=256)
     def _reveal_tag_without_subvar(self, tag_without_subvar):
@@ -395,7 +396,7 @@ class Revealer:
                 return ref.compile()
             # if refs don't exist:
             except KeyError:
-                raise RefError(f"Could not find ref backend for tag: {tag}")
+                raise RefError(f"Could not find ref backend for tag: {tag}") from None
 
         return compile_replace_match
 
@@ -601,7 +602,7 @@ class RefController:
         try:
             yield
         except RefBackendError as e:
-            raise RefBackendError(f"{e}\n  for key {ref_key}")
+            raise RefBackendError(f"{e}\n  for key {ref_key}") from e
 
     def __init__(self, path, **kwargs):
         """
@@ -664,7 +665,7 @@ class RefController:
 
                 self.register_backend(AzureKMSBackend(self.path, **ref_kwargs))
             else:
-                raise RefBackendError(f"no backend for ref type: {type_name}")
+                raise RefBackendError(f"no backend for ref type: {type_name}") from None
         return self.backends[type_name]
 
     def tag_type(self, tag):
@@ -810,11 +811,11 @@ class RefController:
                 except KeyError:
                     raise RefError(
                         f"{func_name}: unknown ref function used. Choose one of: {[key for key in get_func_lookup()]}"
-                    )
-                except TypeError:
+                    ) from None
+                except TypeError as e:
                     raise RefError(
                         f"{func_params}: too many arguments for function {func_name}"
-                    )
+                    ) from e
 
         return ctx
 
@@ -844,7 +845,7 @@ class RefController:
                     # raise RefFromFuncError to indicate new ref needs to be created
                     raise RefFromFuncError(
                         f"{token}: does not exist and must be created from function: {func_str}"
-                    )
+                    ) from None
 
         raise KeyError(f"{tag}: ref not found")
 

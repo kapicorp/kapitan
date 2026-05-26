@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import yaml
 
@@ -46,9 +46,9 @@ class ReclassInventory(Inventory):
             _reclass = reclass.core.Core(
                 storage, class_mappings, reclass.settings.Settings(reclass_config)
             )
-            start = datetime.now()
+            start = datetime.now(timezone.utc)
             rendered_inventory = _reclass.inventory()
-            elapsed = datetime.now() - start
+            elapsed = datetime.now(timezone.utc) - start
             logger.debug(f"Inventory rendering with reclass took {elapsed}")
 
             # store parameters and classes
@@ -63,7 +63,7 @@ class ReclassInventory(Inventory):
                 logger.error("Inventory reclass error: inventory not found")
             else:
                 logger.error(f"Inventory reclass error: {e.message}")
-            raise InventoryError(e.message)
+            raise InventoryError(e.message) from e
 
 
 def get_reclass_config(

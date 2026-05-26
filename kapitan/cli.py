@@ -22,6 +22,7 @@ from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import select_jsonnet_runtime
 from kapitan.inventory import AVAILABLE_BACKENDS, InventoryBackends
 from kapitan.lint import start_lint
+from kapitan.profiling import add_profiling_arguments, cpu_profile, memory_profile
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
 from kapitan.resources import generate_inventory, resource_callbacks, search_imports
@@ -70,6 +71,16 @@ def trigger_compile(args):
     if not args.ignore_version_check:
         check_version()
 
+    if getattr(args, "yaml_use_rapidyaml", False):
+        from kapitan.yaml_ryml import HAS_RYML
+
+        if not HAS_RYML:
+            logger.warning(
+                "--yaml-use-rapidyaml was requested but the 'rapidyaml' "
+                "package is not installed; falling back to PyYAML. "
+                "Install with `uv pip install kapitan[rapidyaml]`."
+            )
+
     ref_controller = RefController(args.refs_path, embed_refs=args.embed_refs)
     # cache controller for use in reveal_maybe jinja2 filter
     cached.ref_controller_obj = ref_controller
@@ -81,7 +92,8 @@ def trigger_compile(args):
             ref_controller=ref_controller,
             args=args,
         )
-    except:
+    except Exception as e:
+        logger.debug("Compile failed: %s", e, exc_info=True)
         sys.exit(1)
 
 
@@ -95,6 +107,7 @@ def build_parser():
         help="set multiprocessing start method",
         choices=["spawn", "fork", "forkserver"],
     )
+    add_profiling_arguments(parser)
     subparser = parser.add_subparsers(help="commands", dest="subparser_name")
 
     inventory_backend_parser = argparse.ArgumentParser(add_help=False)
@@ -324,6 +337,17 @@ def build_parser():
         help="dumps all none-type entries as empty, default is dumping as 'null'",
     )
 
+    compile_parser.add_argument(
+        "--yaml-use-rapidyaml",
+        default=from_dot_kapitan("compile", "yaml-use-rapidyaml", False),
+        action="store_true",
+        help=(
+            "use the rapidyaml emitter, "
+            "fallback to PyYaml if rapidyaml not installed, "
+            "default is False"
+        ),
+    )
+
     compile_selector_parser = compile_parser.add_mutually_exclusive_group()
     compile_selector_parser.add_argument(
         "--targets",
@@ -391,6 +415,14 @@ def build_parser():
         default=from_dot_kapitan("inventory", "indent", 2),
         metavar="INT",
         help="Indentation spaces for inventory output, default is 2",
+    )
+    inventory_parser.add_argument(
+        "--topics",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="NAME",
+        help="show aggregated topics instead of target inventory",
     )
     inventory_parser.add_argument(
         "--multiline-string-style",
@@ -657,8 +689,9 @@ def main(*argv):
         getattr(args, "func", None) == generate_inventory
         and args.pattern
         and args.target_name == ""
+        and getattr(args, "topics", None) is None
     ):
-        parser.error("--pattern requires --target_name")
+        parser.error("--pattern requires --target_name or --topics")
 
     logger.debug("Running with args: %s", args)
 
@@ -677,7 +710,13 @@ def main(*argv):
         logging_level = logging.INFO
     setup_logging(level=logging_level, force=True)
 
-    # call chosen command
-    args.func(args)
+    if getattr(args, "profile_workers", False) and not getattr(args, "profile", False):
+        logger.warning("--profile-workers has no effect without --profile")
+
+    # call chosen command, optionally wrapped in CPU/memory profilers.
+    # Order matters: memory_profile is the outer context so the tracemalloc
+    # snapshot covers pyinstrument's own teardown/render time too.
+    with memory_profile(args), cpu_profile(args):
+        args.func(args)
 
     return 0
