@@ -1,3 +1,8 @@
+---
+title: "Kapitan Inventory"
+description: "Learn how Kapitan inventory uses targets, classes, and parameters to model reusable infrastructure configuration across environments."
+---
+
 # :kapitan-logo: **What is the inventory?**
 
 The **Inventory** is a core component of Kapitan: this section aims to explain how it works and how to best take advantage of it.
@@ -66,3 +71,13 @@ parameters:
 
 
 By combining [**target**](targets.md) and [**classes**](classes.md), the **Inventory** becomes the SSOT for your whole configuration, and learning how to use it will unleash the real power of **Kapitan**.
+
+---
+
+## Next steps
+
+- Learn how to define environments and deployments with [Kapitan inventory targets](targets.md).
+- Understand how to compose reusable configuration with [Kapitan inventory classes](classes.md).
+- Discover how to reference values across the inventory with [parameter interpolation](parameters_interpolation.md).
+- Explore [advanced inventory features](advanced.md) such as target labels and inventory backends.
+- See how the inventory drives [input types](../input_types/introduction.md) like [Jsonnet](../input_types/jsonnet.md), [Jinja](../input_types/jinja.md), and [Helm](../input_types/helm.md).

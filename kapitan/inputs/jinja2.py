@@ -11,6 +11,7 @@ import os
 from kapitan import cached
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeJinja2Config
+from kapitan.topics import topics
 from kapitan.utils import render_jinja2
 
 
@@ -52,6 +53,7 @@ class Jinja2(InputType):
 
         context["inventory_global"] = cached.global_inv
         context["inventory"] = cached.global_inv[target_name]
+        context["topics"] = topics
         context["input_params"] = input_params
         vars = cached.global_inv[target_name]["parameters"]["kapitan"]["vars"]
         context.update(vars)

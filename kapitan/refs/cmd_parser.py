@@ -70,7 +70,7 @@ def ref_write(args, ref_controller):
             except UnicodeDecodeError as e:
                 raise KapitanError(
                     f"Could not read file. Please add '--binary' if the file contains binary data. ({e})"
-                )
+                ) from e
 
     # Empty configuration object
     reference_backend_configs = KapitanReferenceConfig()
@@ -82,10 +82,10 @@ def ref_write(args, ref_controller):
             reference_backend_configs = inv.get_parameters(
                 args.target_name
             ).kapitan.secrets
-        except (KeyError, AttributeError):
+        except (KeyError, AttributeError) as e:
             raise KapitanError(
                 f"parameters.kapitan.secrets not defined in {args.target_name}"
-            )
+            ) from e
 
     _validate_token_name(token_name)
 
@@ -93,10 +93,10 @@ def ref_write(args, ref_controller):
 
     try:
         type_name = KapitanReferencesTypes(type_name)
-    except ValueError:
+    except ValueError as e:
         raise KapitanError(
             f"Invalid token type: {type_name}. Try using gpg/gkms/awskms/azkms/vaultkv/vaulttransit/base64/plain/env"
-        )
+        ) from e
 
     tag = f"?{{{type_name}:{token_path}}}"
 
@@ -372,8 +372,8 @@ def ref_reveal(args, ref_controller):
         elif tag_name:
             out = revealer.reveal_raw_string(tag_name)
             sys.stdout.write(out)
-    except (RefHashMismatchError, KeyError):
-        raise KapitanError(f"Reveal failed for file {file_name}")
+    except (RefHashMismatchError, KeyError) as e:
+        raise KapitanError(f"Reveal failed for file {file_name}") from e
 
 
 def secret_update_validate(args, ref_controller):

@@ -3,27 +3,41 @@ description: Request a new functionality
 title: "[feat]: "
 labels: ["feature"]
 body:
-  # information
   - type: markdown
     attributes:
       value: |
         Thanks for taking the time to fill out this feature request!
-  # feature description
   - type: textarea
     id: feature-description
     attributes:
       label: Description of the feature
       description: |
         A clear and concise description of what the feature request is.
-        Please make proposals, how you would use this feature (syntax).
+        Please make proposals for how you would use this feature (syntax, CLI flags, inventory structure, etc.).
       placeholder: Tell us what you want to see in the project!
     validations:
       required: true
-  # additional context
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: |
+        Describe the problem or workflow that this feature would solve.
+        Concrete examples help us understand and prioritize.
+      placeholder: "When I try to ..., I have to work around by ..."
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      description: Would you be willing to contribute this feature?
+      options:
+        - label: I would be willing to contribute this feature
   - type: textarea
     id: additional-context
     attributes:
       label: Additional context
       description: |
         Add any other context about the feature here.
-      placeholder: Anything that might help us understanding your feature request...
+      placeholder: Anything that might help us understand your feature request...
