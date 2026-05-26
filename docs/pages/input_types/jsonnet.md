@@ -1,5 +1,5 @@
 ---
-title: "Kapitan with Jsonnet: Generate Kubernetes and Infrastructure Config"
+title: "Kapitan with Jsonnet"
 description: "Use Jsonnet with Kapitan to generate Kubernetes manifests and infrastructure configuration. Access inventory data, validate with JSON Schema, and output YAML or JSON."
 ---
 
