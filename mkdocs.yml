@@ -129,6 +129,7 @@ nav:
           - Publishing generators: pages/publishing_generators.md
           - ArgoCD integration: pages/argocd.md
           - FluxCD integration: pages/fluxcd.md
+          - Generator schema validation: pages/generator_schema_validation.md
       - CLI reference:
           - compile: pages/commands/kapitan_compile.md
           - inventory: pages/commands/kapitan_inventory.md

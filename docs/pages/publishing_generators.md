@@ -150,3 +150,8 @@ Use `--force-fetch` to invalidate the cache and re-pull regardless.
 
 See [External dependencies OCI](external_dependencies.md#defining-dependencies) for the full
 reference of available fields.
+
+!!! tip "Ship a schema with your generator"
+    You can include a `schema.json` file in the bundle root so consumers get
+    automatic inventory validation. See
+    [Generator schema validation](generator_schema_validation.md) for details.
