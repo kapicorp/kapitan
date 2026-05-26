@@ -1,0 +1,121 @@
+name: Bleeding Edge Merge
+
+on:
+  schedule:
+    # Run every hour at minute 17 (avoid :00 cron storms)
+    - cron: "17 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  merge-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork master
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/kapicorp/kapitan.git
+
+      - name: Fetch upstream
+        run: git fetch upstream
+
+      - name: Reset bleeding-edge to upstream master
+        run: |
+          git checkout -B bleeding-edge upstream/master
+
+      - name: Fetch and merge open PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="kapicorp/kapitan"
+
+          # Write PR list to JSON file for safe parsing
+          gh pr list --repo "$REPO" --state open --json number,title,isDraft,headRefName > prs.json
+
+          failed=""
+          count=0
+
+          # Iterate over PR numbers safely, skipping drafts
+          for number in $(jq -r '.[] | select(.isDraft == false) | .number' prs.json); do
+            title=$(jq -r ".[] | select(.number == ${number}) | .title" prs.json)
+
+            echo "Checking PR #${number}: ${title}"
+
+            # Get head SHA to inspect CI status
+            sha=$(gh api "repos/$REPO/pulls/$number" --jq '.head.sha' 2>/dev/null || true)
+            if [ -z "$sha" ]; then
+              echo "  SKIPPED: could not get PR details"
+              continue
+            fi
+
+            # Check GitHub Actions / check-suites
+            failing_checks=false
+            check_conclusions=$(gh api "repos/$REPO/commits/$sha/check-suites" --jq '.check_suites[].conclusion // empty' 2>/dev/null || true)
+            if [ -n "$check_conclusions" ]; then
+              if echo "$check_conclusions" | grep -qiE "failure|error|timed_out|action_required"; then
+                echo "  SKIPPED: failing checks detected"
+                failing_checks=true
+              fi
+            fi
+            if [ "$failing_checks" = true ]; then
+              continue
+            fi
+
+            # Check legacy commit statuses
+            failing_statuses=false
+            status_states=$(gh api "repos/$REPO/commits/$sha/status" --jq '.statuses[].state // empty' 2>/dev/null || true)
+            if [ -n "$status_states" ]; then
+              if echo "$status_states" | grep -qiE "failure|error"; then
+                echo "  SKIPPED: failing statuses detected"
+                failing_statuses=true
+              fi
+            fi
+            if [ "$failing_statuses" = true ]; then
+              continue
+            fi
+
+            # Fetch PR ref from upstream
+            if git fetch upstream "pull/${number}/head:pr-${number}"; then
+              if git merge --no-edit "pr-${number}"; then
+                echo "  MERGED PR #${number}"
+                count=$((count + 1))
+              else
+                echo "  CONFLICT: PR #${number} could not be merged cleanly. Skipping."
+                failed="${failed}#${number} (${title}) - merge conflict\n"
+                git merge --abort || true
+              fi
+            else
+              echo "  Could not fetch PR #${number}"
+              failed="${failed}#${number} (${title}) - fetch failed\n"
+            fi
+          done
+
+          echo ""
+          echo "Successfully merged ${count} PRs"
+
+          if [ -n "$failed" ]; then
+            echo ""
+            echo "Failed to merge:"
+            printf '%s\n' "${failed}"
+          fi
+
+      - name: Push bleeding-edge branch
+        run: |
+          git push origin bleeding-edge --force-with-lease
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "Bleeding edge branch updated."
+          echo "View it at: https://github.com/${{ github.repository }}/tree/bleeding-edge"
