@@ -19,6 +19,8 @@ class KapitanDependencyBaseConfig(BaseModel):
     source: str
     output_path: str
     force_fetch: bool | None = False
+    schema_path: str | None = None
+    schema_inventory_path: str | None = None
 
 
 class KapitanDependencyHelmConfig(KapitanDependencyBaseConfig):
