@@ -19,6 +19,10 @@ from reclass.errors import NotFoundError, ReclassException
 
 from kapitan import cached
 from kapitan.dependency_manager.base import fetch_dependencies
+from kapitan.dependency_manager.schema_validation import (
+    _SourceTrackerCache,
+    validate_generator_schemas,
+)
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs import get_compiler
 from kapitan.profiling import worker_profile
@@ -26,6 +30,18 @@ from kapitan.resources import get_inventory
 
 
 logger = logging.getLogger(__name__)
+
+
+def _emit_schema_findings(findings, validation_mode):
+    """Log or raise schema validation findings based on the configured mode."""
+    for finding in findings:
+        for error in finding["errors"]:
+            if validation_mode == "error":
+                raise CompileError(error["formatted"])
+            if validation_mode == "info":
+                logger.info(error["formatted"])
+            else:
+                logger.warning(error["formatted"])
 
 
 def compile_targets(inventory_path, search_paths, ref_controller, args):
@@ -127,6 +143,28 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                     logger.info(
                         "Fetched dependencies (%.2fs)", time.time() - fetching_start
                     )
+
+            # Validate generator schemas after dependencies are fetched.
+            # This runs in the main process so schema errors surface early
+            # before compilation work starts in the pool.
+            tracker_cache = _SourceTrackerCache()
+            for target_name in targets:
+                target = inventory.targets.get(target_name)
+                if target is None:
+                    continue
+                kapitan_config = target.parameters.kapitan
+                if kapitan_config is None:
+                    continue
+                validation_mode = kapitan_config.generator_schema_validation
+                if validation_mode == "disabled":
+                    continue
+                # Wrap dumped parameters so dotted paths like
+                # "parameters.components.argocd" resolve correctly.
+                parameters = {"parameters": target.parameters.model_dump()}
+                findings = validate_generator_schemas(
+                    kapitan_config, parameters, inventory_path, tracker_cache
+                )
+                _emit_schema_findings(findings, validation_mode)
 
             compile_start = time.time()
             worker = partial(
