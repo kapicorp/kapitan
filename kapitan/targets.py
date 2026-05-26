@@ -21,6 +21,7 @@ from kapitan import cached
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs import get_compiler
+from kapitan.profiling import worker_profile
 from kapitan.resources import get_inventory
 
 
@@ -139,7 +140,19 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
 
             # compile_target() returns None on success
             # so p is only not None when raising an exception
-            [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+            if getattr(args, "profile_serial", False):
+                # Serial in-process mode: bypass the Pool so a single
+                # pyinstrument profile in the parent contains the full
+                # call tree (kadet/jinja/jsonnet internals included).
+                # Wall-clock is slower but visibility is complete.
+                logger.info(
+                    "--profile-serial: compiling %d targets serially in the parent process",
+                    len(target_objs),
+                )
+                for target_obj in target_objs:
+                    worker(target_obj)
+            else:
+                [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
             os.makedirs(compile_path, exist_ok=True)
 
@@ -275,6 +288,22 @@ def compile_target(
     target_config, search_paths, compile_path, ref_controller, args, globals_cached=None
 ):
     """Compiles target_obj and writes to compile_path"""
+    # worker_profile() is a no-op unless the parent set the
+    # KAPITAN_PROFILE_WORKERS_DIR env var (i.e. user passed --profile-workers).
+    with worker_profile():
+        return _compile_target_impl(
+            target_config,
+            search_paths,
+            compile_path,
+            ref_controller,
+            args,
+            globals_cached,
+        )
+
+
+def _compile_target_impl(
+    target_config, search_paths, compile_path, ref_controller, args, globals_cached=None
+):
     start = time.time()
     compile_configs = target_config.compile
     target_name = target_config.vars.target
