@@ -1,4 +1,9 @@
-# :kapitan-logo: **Input Type | Jinja2**
+---
+title: "Kapitan Jinja2 Input Type"
+description: "Learn how to use Jinja2 templates in Kapitan to generate scripts, documentation, and configuration files with access to the full Kapitan inventory."
+---
+
+# :kapitan-logo: **Kapitan Jinja2 Input Type**
 
 This input type is probably the most simple input type to use: it is very versatile and is commonly used to create scripts and documentation files.
 

@@ -11,6 +11,7 @@ import filecmp
 import hashlib
 import os
 import unittest
+from unittest.mock import patch
 
 import pytest
 
@@ -89,7 +90,23 @@ class CopyMissingFileTest(unittest.TestCase):
         config = KapitanInputTypeCopyConfig(
             input_paths=[test_file_path], output_path=compile_path
         )
-        copy_compiler.compile_file(config, test_file_missing_path, compile_path)
+        with self.assertRaises(OSError):
+            copy_compiler.compile_file(config, test_file_missing_path, compile_path)
+
+
+@pytest.mark.usefixtures("isolated_compile_dir")
+class CopyOperationErrorTest(unittest.TestCase):
+    def test_copy_oserror_propagates(self):
+        file_path, compile_path, test_file_path = dirs_bootstrap_helper(os.getcwd())
+        copy_compiler = Copy(compile_path, "", "", "test", None)
+        config = KapitanInputTypeCopyConfig(
+            input_paths=[test_file_path], output_path=compile_path
+        )
+        with patch(
+            "kapitan.inputs.copy.shutil.copy2", side_effect=OSError("disk full")
+        ):
+            with self.assertRaises(OSError):
+                copy_compiler.compile_file(config, test_file_path, compile_path)
 
 
 @pytest.mark.usefixtures("isolated_kubernetes_inventory")

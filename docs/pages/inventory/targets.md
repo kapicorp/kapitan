@@ -1,5 +1,10 @@
 
-# :kapitan-logo: **Targets**
+---
+title: "Kapitan Inventory Targets: Defining Environments and Deployments"
+description: "Learn how to define Kapitan targets for production, staging, and development. Organize targets hierarchically and compile environment-specific configuration."
+---
+
+# :kapitan-logo: **Kapitan Inventory Targets**
 
 In the world of Kapitan, a target represents a specific environment or deployment scenario where you want to apply your configurations.
 
@@ -71,3 +76,12 @@ inventory/
 ```
 
 In this example, the `my-cluster.yml` target file is located within the `clusters/production/` subdirectory, and can be identified with `clusters.production.my-cluster`.
+
+---
+
+## Next steps
+
+- Compose reusable configuration fragments with [Kapitan inventory classes](classes.md).
+- Learn how to reference values across classes and targets with [parameter interpolation](parameters_interpolation.md).
+- Explore [advanced inventory features](advanced.md) such as target labels.
+- See how targets are compiled with different [input types](../input_types/introduction.md).

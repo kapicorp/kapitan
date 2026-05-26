@@ -1,0 +1,55 @@
+---
+name: Publish Dev Pre-release to PyPI
+
+# Publish a PEP 440 dev pre-release (e.g. 0.35.2.dev3) to PyPI on every
+# merge to the default branch. This gives users an easy way to test the
+# latest master without waiting for a stable release.
+#
+# For stable releases, see: python-pypi-publish.yml
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  pypi-publish-dev:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # NOTE:
+      # Remove user/password and uncomment id-token permission once Trusted
+      # Publishing (OIDC) is setup in pypi. See:
+      # https://github.com/pypa/gh-action-pypi-publish
+      # id-token: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: recursive
+          # Full history is required for uv-dynamic-versioning to compute the
+          # distance from the latest tag (e.g. 3 commits after v0.35.1).
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version-file: pyproject.toml
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+
+      - name: Build and check
+        run: |
+          uv build
+          uvx twine check dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}

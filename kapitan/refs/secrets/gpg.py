@@ -91,7 +91,7 @@ class GPGSecret(Base64Ref):
 
             return cls(data, recipients, **ref_params.kwargs)
         except KeyError:
-            raise RefError("Could not create GPGSecret: target_name missing")
+            raise RefError("Could not create GPGSecret: target_name missing") from None
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
