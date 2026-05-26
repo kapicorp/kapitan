@@ -43,8 +43,6 @@ BACKEND_EXAMPLES = [
         golden_dir=os.path.join(GOLDEN_BASE, "reclass"),
         compile_args=[
             "compile",
-            "-t",
-            "compile-test",
             "--inventory-path",
             "inventory",
             "--inventory-backend=reclass",
@@ -56,8 +54,6 @@ BACKEND_EXAMPLES = [
         golden_dir=os.path.join(GOLDEN_BASE, "reclass-rs"),
         compile_args=[
             "compile",
-            "-t",
-            "compile-test",
             "--inventory-path",
             "inventory",
             "--inventory-backend=reclass-rs",
@@ -69,8 +65,6 @@ BACKEND_EXAMPLES = [
         golden_dir=os.path.join(GOLDEN_BASE, "omegaconf"),
         compile_args=[
             "compile",
-            "-t",
-            "compile-test",
             "--inventory-path",
             "inventory",
             "--inventory-backend=omegaconf",

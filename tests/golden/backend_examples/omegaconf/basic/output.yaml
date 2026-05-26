@@ -1,0 +1,13 @@
+---
+# Rendered by omegaconf example
+app_name: omegaconf-test
+environment: dev
+namespace: default
+interpolated: omegaconf-test
+nested_interpolated: dev
+full_name: omegaconf-test-dev
+ref_value: default
+deferred_value: omegaconf-test
+escaped_value: ${app_name}
+escaped_real_key: ${environment}
+conditional_false: {}

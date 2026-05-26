@@ -556,8 +556,6 @@ class TestBackendExampleGoldenOutput:
             exit_code, _, stderr = run_kapitan_command(
                 [
                     "compile",
-                    "-t",
-                    "compile-test",
                     "--inventory-path",
                     "inventory",
                     f"--inventory-backend={InventoryBackends.RECLASS}",
@@ -577,8 +575,6 @@ class TestBackendExampleGoldenOutput:
             exit_code, _, stderr = run_kapitan_command(
                 [
                     "compile",
-                    "-t",
-                    "compile-test",
                     "--inventory-path",
                     "inventory",
                     f"--inventory-backend={InventoryBackends.RECLASS_RS}",
@@ -597,8 +593,6 @@ class TestBackendExampleGoldenOutput:
             exit_code, _, stderr = run_kapitan_command(
                 [
                     "compile",
-                    "-t",
-                    "compile-test",
                     "--inventory-path",
                     "inventory",
                     f"--inventory-backend={InventoryBackends.OMEGACONF}",
