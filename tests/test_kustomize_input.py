@@ -13,6 +13,7 @@ import tempfile
 import unittest
 
 import yaml
+from pydantic import ValidationError
 
 from kapitan.errors import KustomizeTemplateError
 from kapitan.inputs.kustomize import Kustomize
@@ -215,7 +216,7 @@ class KustomizeInputTest(unittest.TestCase):
             )
 
             # Compile the overlay and expect an error
-            with self.assertRaises(Exception):
+            with self.assertRaises(KustomizeTemplateError):
                 self.kustomize.compile_file(config, temp_dir, self.compile_path)
 
         finally:
@@ -535,7 +536,7 @@ class KustomizeConfigSchemaTest(unittest.TestCase):
 
     def test_unknown_field_rejected(self):
         """Unknown fields should be rejected by extra='forbid'."""
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             KapitanInputTypeKustomizeConfig(
                 input_paths=["./foo"],
                 output_path="bar",

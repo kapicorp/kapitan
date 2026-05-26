@@ -84,17 +84,19 @@ class Kustomize(InputType):
         Raises:
             KustomizeTemplateError: If kustomize build fails
         """
+
+        # Get the absolute path to the input directory
+        abs_input_path = os.path.abspath(input_path)
+        if not os.path.isdir(abs_input_path):
+            raise KustomizeTemplateError(
+                f"Input path {input_path} must be a directory containing a kustomization.yaml file"
+            )
+
+        result = None
         try:
             # Create a temporary directory for our kustomization
             temp_dir = tempfile.mkdtemp()
             kustomization_path = os.path.join(temp_dir, "kustomization.yaml")
-
-            # Get the absolute path to the input directory
-            abs_input_path = os.path.abspath(input_path)
-            if not os.path.isdir(abs_input_path):
-                raise KustomizeTemplateError(
-                    f"Input path {input_path} must be a directory containing a kustomization.yaml file"
-                )
 
             # Copy the input directory to the temporary directory
             input_dir_name = os.path.basename(abs_input_path)
@@ -147,11 +149,15 @@ class Kustomize(InputType):
                 result = subprocess.run(
                     cmd, stdout=f, stderr=subprocess.PIPE, text=True, check=False
                 )
-                if result.returncode != 0:
-                    raise KustomizeTemplateError(
-                        f"Kustomize build failed: {result.stderr}"
-                    )
+        except Exception as e:
+            raise KustomizeTemplateError(
+                f"Failed to compile Kustomize overlay: {e!s}"
+            ) from e
 
+        if result.returncode != 0:
+            raise KustomizeTemplateError(f"Kustomize build failed: {result.stderr}")
+
+        try:
             # Read and process the output
             with open(temp_output_file, encoding="utf-8") as f:
                 rendered_output = f.read()
@@ -176,7 +182,9 @@ class Kustomize(InputType):
         except KustomizeTemplateError:
             raise
         except Exception as e:
-            raise KustomizeTemplateError(f"Failed to compile Kustomize overlay: {e!s}")
+            raise KustomizeTemplateError(
+                f"Failed to compile Kustomize overlay: {e!s}"
+            ) from e
 
     def _write_output_file(
         self, output_path: str, compile_path: str, content: str

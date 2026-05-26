@@ -132,8 +132,8 @@ class GPGSecretsTest(unittest.TestCase):
             serialization.load_pem_private_key(
                 revealed.encode(), password=None, backend=default_backend()
             )
-        except ValueError:
-            raise Exception("Failed to decode ed25519 private key")
+        except ValueError as e:
+            raise AssertionError("Failed to decode ed25519 private key") from e
 
         REVEALER._reveal_tag_without_subvar.cache_clear()
         tag = "?{gpg:secret/ed25519||ed25519}"
@@ -144,8 +144,8 @@ class GPGSecretsTest(unittest.TestCase):
             private_key = serialization.load_pem_private_key(
                 revealed.encode(), password=None, backend=default_backend()
             )
-        except ValueError:
-            raise Exception("Failed to decode ed25519 private key")
+        except ValueError as e:
+            raise AssertionError("Failed to decode ed25519 private key") from e
 
         # Test 'publickey' with previous private key as the parameter
         tag_ed25519public = (
@@ -175,8 +175,8 @@ class GPGSecretsTest(unittest.TestCase):
             serialization.load_pem_private_key(
                 revealed.encode(), password=None, backend=default_backend()
             )
-        except ValueError:
-            raise Exception("Failed to decode RSA private key")
+        except ValueError as e:
+            raise AssertionError("Failed to decode RSA private key") from e
 
         REVEALER._reveal_tag_without_subvar.cache_clear()
         # Test with parameter key_size=2048
@@ -188,8 +188,8 @@ class GPGSecretsTest(unittest.TestCase):
             private_key = serialization.load_pem_private_key(
                 revealed.encode(), password=None, backend=default_backend()
             )
-        except ValueError:
-            raise Exception("Failed to decode RSA private key")
+        except ValueError as e:
+            raise AssertionError("Failed to decode RSA private key") from e
 
         self.assertEqual(private_key.key_size, 2048)
 

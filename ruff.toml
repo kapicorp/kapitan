@@ -154,21 +154,7 @@ ignore = [
     "SIM118",  # Use `in` instead of `in dict.keys()` - explicit can be clearer
     "B006",    # Mutable default argument - sometimes intentional with proper handling
     "FA102",   # Missing from __future__ import annotations - not always needed
-    
-    # HIGH PRIORITY TO FIX (currently ignored for migration):
-    "B904",    # [HIGH] raise-without-from-inside-except - Important for debugging (59 violations)
-    "E722",    # [HIGH] bare-except - Can hide bugs, should specify exception types (3 violations)
-    "DTZ005",  # [HIGH] call-datetime-now-without-tzinfo - Can cause timezone bugs (4 violations)
-    "DTZ007",  # [HIGH] call-datetime-strptime-without-zone - Timezone issues (1 violation)
-    
-    # MEDIUM PRIORITY (should fix when refactoring):
-    "SIM115",  # [MEDIUM] open-file-with-context-handler - Resource leak risk (2 violations)
-    "B017",    # [MEDIUM] assert-raises-exception - Test assertion issue (1 violation)
-    "TRY002",  # [MEDIUM] raise-vanilla-class - Should use specific exceptions (6 violations)
-    "TRY300",  # [MEDIUM] try-consider-else - Could improve error handling (4 violations)
-    "TRY301",  # [MEDIUM] raise-within-try - Should raise in except block (4 violations)
-    "PT011",   # [MEDIUM] pytest-raises-too-broad - Too broad exception in tests (3 violations)
-    
+
     # LOW PRIORITY (style/convention - can ignore):
     "PLW0603", # [LOW] global-statement - Sometimes necessary for module state (24 violations)
     "PLC0415", # [LOW] import-outside-top-level - Performance optimization pattern (22 violations)

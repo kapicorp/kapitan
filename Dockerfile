@@ -38,7 +38,7 @@ RUN uv sync --locked --all-extras
 
 COPY ./kapitan ./kapitan
 
-RUN uv pip install .[gojsonnet,omegaconf,reclass-rs]
+RUN uv pip install .[gojsonnet,omegaconf,reclass-rs,rapidyaml]
 
 ARG PYTHON_VERSION=3.11
 FROM golang:1 AS go-builder

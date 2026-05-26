@@ -298,9 +298,9 @@ def directory_hash(directory):
                     else:
                         raise CompileError(
                             f"utils.directory_hash failed to open {file_path}: {e}"
-                        )
+                        ) from e
     except Exception as e:
-        raise CompileError(f"utils.directory_hash failed: {e}")
+        raise CompileError(f"utils.directory_hash failed: {e}") from e
 
     return hash.hexdigest()
 
@@ -473,14 +473,12 @@ def unpack_downloaded_file(file_path, output_path, content_type):
             content_type = "application/zip"
 
     if content_type == "application/x-tar":
-        tar = tarfile.open(file_path)
-        tar.extractall(path=output_path)
-        tar.close()
+        with tarfile.open(file_path) as tar:
+            tar.extractall(path=output_path)
         is_unpacked = True
     elif content_type == "application/zip":
-        zfile = ZipFile(file_path)
-        zfile.extractall(output_path)
-        zfile.close()
+        with ZipFile(file_path) as zfile:
+            zfile.extractall(output_path)
         is_unpacked = True
     elif content_type in [
         "application/gzip",
@@ -490,9 +488,8 @@ def unpack_downloaded_file(file_path, output_path, content_type):
         "application/x-compressed-tar",
     ]:
         if re.search(r"(\.tar\.gz|\.tgz)$", file_path):
-            tar = tarfile.open(file_path)
-            tar.extractall(path=output_path)
-            tar.close()
+            with tarfile.open(file_path) as tar:
+                tar.extractall(path=output_path)
             is_unpacked = True
         else:
             extension = re.findall(r"\..*$", file_path)[0]
@@ -550,7 +547,7 @@ def safe_copy_tree(src, dst):
     try:
         names = os.listdir(src)
     except OSError as e:
-        raise SafeCopyError(f"Error listing files in {src}: {e.strerror}")
+        raise SafeCopyError(f"Error listing files in {src}: {e.strerror}") from e
 
     try:
         os.makedirs(dst, exist_ok=True)
@@ -643,7 +640,9 @@ def render_jinja2_file(
     except jinja2.TemplateError as e:
         # Exception misses the line number info. Retreive it from traceback
         err_info = _jinja_error_info(traceback.extract_tb(sys.exc_info()[2]))
-        raise CompileError(f"Jinja2 TemplateError: {e}, at {err_info[0]}:{err_info[1]}")
+        raise CompileError(
+            f"Jinja2 TemplateError: {e}, at {err_info[0]}:{err_info[1]}"
+        ) from e
 
 
 def render_jinja2(
@@ -689,7 +688,9 @@ def render_jinja2(
                     "mode": file_mode(render_path),
                 }
             except Exception as e:
-                raise CompileError(f"Jinja2 error: failed to render {render_path}: {e}")
+                raise CompileError(
+                    f"Jinja2 error: failed to render {render_path}: {e}"
+                ) from e
 
     return rendered
 
