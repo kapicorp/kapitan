@@ -444,8 +444,8 @@ class Base64RefsTest(unittest.TestCase):
         self.assertEqual(len(revealed), 64)
         try:
             int(revealed, 16)  # sha256 should convert to hex
-        except ValueError:
-            raise Exception("ref is not sha256 hash")
+        except ValueError as e:
+            raise AssertionError("ref is not sha256 hash") from e
 
     # TODO write tests for RefController errors (lookups, etc..)
 

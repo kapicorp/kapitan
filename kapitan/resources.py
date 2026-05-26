@@ -23,6 +23,7 @@ from kapitan import __file__ as kapitan_install_path
 from kapitan import cached
 from kapitan.errors import CompileError, InventoryError
 from kapitan.inventory import Inventory, get_inventory_backend
+from kapitan.topics import topics
 from kapitan.utils import (
     PrettyDumper,
     StrEnum,
@@ -56,6 +57,7 @@ def resource_callbacks(search_paths):
             partial(jinja2_render_file, search_paths),
         ),
         "inventory": (("target", "inv_path"), partial(inventory, search_paths)),
+        "topics": (("name",), topics),
         "file_read": (("name",), partial(read_file, search_paths)),
         "file_exists": (("name",), partial(file_exists, search_paths)),
         "dir_files_list": (("name",), partial(dir_files_list, search_paths)),
@@ -83,9 +85,10 @@ def jsonschema_validate(obj, schema_obj):
         jsonschema.validate(
             _obj, _schema_obj, format_checker=jsonschema.FormatChecker()
         )
-        return {"valid": True, "reason": ""}
     except jsonschema.ValidationError as e:
         return {"valid": False, "reason": "" + str(e)}
+    else:
+        return {"valid": True, "reason": ""}
 
 
 def yaml_dump(obj):
@@ -128,7 +131,9 @@ def jinja2_render_file(search_paths, name, ctx):
             try:
                 return render_jinja2_file(_full_path, ctx, search_paths=search_paths)
             except Exception as e:
-                raise CompileError(f"Jsonnet jinja2 failed to render {_full_path}: {e}")
+                raise CompileError(
+                    f"Jsonnet jinja2 failed to render {_full_path}: {e}"
+                ) from e
 
     raise OSError(f"jinja2 failed to render, could not find file: {_full_path}")
 
@@ -144,7 +149,9 @@ def yaml_load(search_paths, name):
                 with open(_full_path) as f:
                     return json.dumps(yaml.safe_load(f.read()))
             except Exception as e:
-                raise CompileError(f"Parse yaml failed to parse {_full_path}: {e}")
+                raise CompileError(
+                    f"Parse yaml failed to parse {_full_path}: {e}"
+                ) from e
 
     raise OSError(f"could not find any input yaml file: {_full_path}")
 
@@ -161,7 +168,9 @@ def yaml_load_stream(search_paths, name):
                     _obj = yaml.load_all(f.read(), Loader=yaml.SafeLoader)
                     return json.dumps(list(_obj))
             except Exception as e:
-                raise CompileError(f"Parse yaml failed to parse {_full_path}: {e}")
+                raise CompileError(
+                    f"Parse yaml failed to parse {_full_path}: {e}"
+                ) from e
 
     raise OSError(f"could not find any input yaml file: {_full_path}")
 
@@ -325,7 +334,17 @@ def generate_inventory(args):
     try:
         inv = get_inventory(args.inventory_path)
 
-        if args.target_name:
+        # ``--topics`` is mutually informative with ``--target-name``: if a
+        # topic name is provided we dump that single topic; otherwise we dump
+        # the full topics mapping. Topic data is plain dicts (see
+        # ``kapitan.topics``) so it flows through the existing yaml dumping.
+        topics_arg = getattr(args, "topics", None)
+        if topics_arg is not None:
+            inv = topics(topics_arg) if topics_arg else topics()
+            if args.pattern:
+                pattern = args.pattern.split(".")
+                inv = deep_get(inv, pattern)
+        elif args.target_name:
             inv = inv.inventory[args.target_name]
             if args.pattern:
                 pattern = args.pattern.split(".")
@@ -383,6 +402,13 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
     )
     backend = get_inventory_backend(backend_id)
 
+    # migrate inventory to selected inventory backend BEFORE instantiating,
+    # because the constructor renders the inventory which would fail on
+    # un-migrated syntax.
+    if hasattr(cached.args, "migrate") and cached.args.migrate:
+        migrator = backend(inventory_path=inventory_path, initialise=False)
+        migrator.migrate()
+
     logger.debug(f"Using {backend.__name__} as inventory backend")
     try:
         inventory_backend = backend(
@@ -396,9 +422,5 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
 
     cached.inv = inventory_backend
     cached.global_inv = cached.inv.inventory
-
-    # migrate inventory to selected inventory backend
-    if hasattr(cached.args, "migrate") and cached.args.migrate:
-        inventory_backend.migrate()
 
     return cached.inv

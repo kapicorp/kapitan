@@ -14,6 +14,7 @@ import unittest
 
 import yaml
 
+from kapitan.errors import KustomizeTemplateError
 from kapitan.inputs.kustomize import Kustomize
 from kapitan.inventory.model.input_types import KapitanInputTypeKustomizeConfig
 
@@ -214,7 +215,7 @@ class KustomizeInputTest(unittest.TestCase):
             )
 
             # Compile the overlay and expect an error
-            with self.assertRaises(Exception):
+            with self.assertRaises(KustomizeTemplateError):
                 self.kustomize.compile_file(config, temp_dir, self.compile_path)
 
         finally:

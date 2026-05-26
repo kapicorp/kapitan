@@ -85,7 +85,9 @@ class AzureKMSSecret(Base64Ref):
             key = target_inv.kapitan.secrets.azkms.key
             return cls(data, key, **ref_params.kwargs)
         except KeyError:
-            raise RefError("Could not create AzureKMSSecret: target_name missing")
+            raise RefError(
+                "Could not create AzureKMSSecret: target_name missing"
+            ) from None
 
     @classmethod
     def from_path(cls, ref_full_path, **kwargs):
@@ -145,7 +147,7 @@ class AzureKMSSecret(Base64Ref):
             self.key = key
 
         except Exception as e:
-            raise AzureKMSError(e)
+            raise AzureKMSError(str(e)) from e
 
     def _decrypt(self, data, key):
         """decrypt data"""
@@ -161,7 +163,7 @@ class AzureKMSSecret(Base64Ref):
             return plaintext.decode()
 
         except Exception as e:
-            raise AzureKMSError(e)
+            raise AzureKMSError(str(e)) from e
 
     def dump(self):
         """

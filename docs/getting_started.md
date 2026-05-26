@@ -1,4 +1,9 @@
-# :kapitan-logo: **Kapitan Overview**
+---
+title: "Getting Started with Kapitan"
+description: "Install Kapitan with Docker or pip, clone a reference repository, and compile your first Kubernetes and infrastructure targets in minutes."
+---
+
+# :kapitan-logo: **Getting Started with Kapitan**
 
 ## Setup your installation
 
@@ -71,13 +76,13 @@ Compiled echo-server (0.14s)
 
 ### Docker
 
-[![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
+[![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases){: aria-label="GitHub releases"}
 
 !!! success "recommended"
     ### Docker
     ![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)
-    [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
-    [![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22)
+    [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan){: aria-label="Docker image size"}
+    [![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22){: aria-label="Docker Build and Push status"}
 
 
     === "Linux"
@@ -103,7 +108,7 @@ Compiled echo-server (0.14s)
 === "Linux"
 
     ```shell
-    sudo apt-get update && sudo apt-get install -y python3.8-dev python3-pip python3-yaml
+    sudo apt-get update && sudo apt-get install -y python3-dev python3-pip python3-yaml
     ```
 
 === "Mac"
@@ -121,7 +126,7 @@ Compiled echo-server (0.14s)
 === "Linux"
 
     !!! note ""
-        `kapitan` will be installed in `$HOME/.local/lib/python3.7/bin`
+        `kapitan` will be installed in `$HOME/.local/lib/python3.x/bin`
 
     ```shell
     pip3 install --user --upgrade kapitan
@@ -130,7 +135,7 @@ Compiled echo-server (0.14s)
 === "Mac"
 
     !!! note ""
-        `kapitan` will be installed in `$HOME/Library/Python/3.7/bin`
+        `kapitan` will be installed in `$HOME/Library/Python/3.x/bin`
 
     ```shell
     pip3 install --user --upgrade kapitan
@@ -144,3 +149,34 @@ Compiled echo-server (0.14s)
     ```shell
     sudo pip3 install --upgrade kapitan
     ```
+
+#### Pre-release versions
+
+Every merge to `master` is automatically published to PyPI as a PEP 440 pre-release. To install the latest development build:
+
+=== "pip"
+
+    ```shell
+    pip3 install --user --upgrade --pre kapitan
+    ```
+
+=== "uv"
+
+    ```shell
+    uv tool install --upgrade --prerelease allow kapitan
+    ```
+
+=== "poetry"
+
+    ```shell
+    poetry add --allow-prereleases kapitan
+    ```
+
+---
+
+## Next steps
+
+- Learn the [Kapitan core concepts](pages/core_concepts.md): how inventory, targets, classes, and input types work together.
+- Understand the [Kapitan inventory](pages/inventory/introduction.md): targets, classes, and parameter interpolation.
+- Explore [input types](pages/input_types/introduction.md) such as [Jsonnet](pages/input_types/jsonnet.md), [Jinja](pages/input_types/jinja.md), [Kadet](pages/input_types/kadet.md), [Helm](pages/input_types/helm.md), and [Kustomize](pages/input_types/kustomize.md).
+- Manage secrets and external values with [Kapitan References](references.md).

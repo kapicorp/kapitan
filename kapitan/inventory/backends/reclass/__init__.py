@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import yaml
 
@@ -8,7 +8,7 @@ import reclass
 import reclass.core
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory, InventoryTarget
-from reclass.errors import ReclassException
+from reclass.errors import NotFoundError, ReclassException
 
 
 logger = logging.getLogger(__name__)
@@ -46,9 +46,9 @@ class ReclassInventory(Inventory):
             _reclass = reclass.core.Core(
                 storage, class_mappings, reclass.settings.Settings(reclass_config)
             )
-            start = datetime.now()
+            start = datetime.now(timezone.utc)
             rendered_inventory = _reclass.inventory()
-            elapsed = datetime.now() - start
+            elapsed = datetime.now(timezone.utc) - start
             logger.debug(f"Inventory rendering with reclass took {elapsed}")
 
             # store parameters and classes
@@ -59,7 +59,10 @@ class ReclassInventory(Inventory):
                 self.targets[target_name].exports = rendered_target["exports"]
 
         except ReclassException as e:
-            logger.error("Inventory reclass error: %s", e.message)
+            if isinstance(e, NotFoundError):
+                logger.error("Inventory reclass error: inventory not found")
+            else:
+                logger.error(f"Inventory reclass error: {e.message}")
             raise InventoryError(e.message) from e
 
 
