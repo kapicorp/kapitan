@@ -17,6 +17,10 @@ regressions in inventory handling.
    difference is that reclass-rs currently returns empty exports for some
    inventories (documented below).
 
+   They have **separate golden snapshot directories** for compile output so that
+   future divergences are caught immediately rather than masked by a shared
+   snapshot.
+
 Backend parity matrix
 ---------------------
 
@@ -50,19 +54,14 @@ from kapitan.cached import reset_cache
 from kapitan.cli import build_parser
 from kapitan.inventory import InventoryBackends
 from kapitan.resources import inventory as get_inventory
+from tests.backend_examples import (
+    OMEGACONF_EXAMPLE,
+    OMEGACONF_INVENTORY,
+    RECLASS_EXAMPLE,
+    RECLASS_INVENTORY,
+    TEST_PWD,
+)
 from tests.test_helpers import IsolatedTestEnvironment, run_kapitan_command
-
-
-TEST_PWD = os.getcwd()
-
-# Reclass and reclass-rs share the same inventory because they are drop-in
-# compatible at the file-format level.
-RECLASS_INVENTORY = os.path.join(TEST_PWD, "examples/reclass/inventory")
-OMEGACONF_INVENTORY = os.path.join(TEST_PWD, "examples/omegaconf/inventory")
-
-# Example directories used for compile tests.
-RECLASS_EXAMPLE = os.path.join(TEST_PWD, "examples/reclass")
-OMEGACONF_EXAMPLE = os.path.join(TEST_PWD, "examples/omegaconf")
 
 
 def _skip_if_backend_missing(backend_id):
@@ -540,55 +539,18 @@ class TestOmegaconfExampleInventory:
         assert inv["parameters"]["if_numeric"] == "has_replicas"
 
 
-class TestBackendExamplesCompile:
-    """Compile tests that copy examples into temp directories."""
+class TestBackendExampleGoldenOutput:
+    """Golden-master compile tests for backend examples.
 
-    def _compile_example(self, example_path, backend_id, target):
-        with IsolatedTestEnvironment(example_path) as iso:
-            exit_code, _, stderr = run_kapitan_command(
-                [
-                    "compile",
-                    "-t",
-                    target,
-                    "--inventory-path",
-                    "inventory",
-                    f"--inventory-backend={backend_id}",
-                ]
-            )
-            assert exit_code == 0, stderr
-            compiled_dir = os.path.join(iso.path, "compiled", target)
-            assert os.path.isdir(
-                compiled_dir
-            ), f"Expected compiled directory {compiled_dir} to exist for {backend_id}"
-            compiled_files = [
-                os.path.join(dp, f) for dp, _, fn in os.walk(compiled_dir) for f in fn
-            ]
-            assert (
-                len(compiled_files) > 0
-            ), f"Expected at least one compiled file for {backend_id}"
-            return iso.path
+    These tests compile the backend examples and compare the full compiled
+    output tree against committed golden snapshots. A unified diff is
+    produced on mismatch so reviewers see exactly which files changed.
 
-    @pytest.mark.parametrize(
-        "backend_id",
-        [
-            InventoryBackends.RECLASS,
-            InventoryBackends.RECLASS_RS,
-        ],
-    )
-    def test_reclass_example_compiles(self, backend_id):
-        _skip_if_backend_missing(backend_id)
-        self._compile_example(RECLASS_EXAMPLE, backend_id, "compile-test")
+    To update golden snapshots after an intentional output change:
+        make refresh-backend-goldens
+    """
 
-    def test_omegaconf_example_compiles(self, omegaconf_backend):
-        self._compile_example(
-            OMEGACONF_EXAMPLE, InventoryBackends.OMEGACONF, "compile-test"
-        )
-
-
-class TestBackendCompileOutput:
-    """Validate the actual content of compiled output files."""
-
-    def test_reclass_compile_output_content(self):
+    def test_reclass_example_golden_output(self):
         _skip_if_backend_missing(InventoryBackends.RECLASS)
         with IsolatedTestEnvironment(RECLASS_EXAMPLE) as iso:
             exit_code, _, stderr = run_kapitan_command(
@@ -602,63 +564,15 @@ class TestBackendCompileOutput:
                 ]
             )
             assert exit_code == 0, stderr
-            output_path = os.path.join(iso.path, "compiled", "compile-test", "output")
-            assert os.path.exists(output_path)
-            with open(output_path) as f:
-                content = f.read()
-            assert "app_name: reclass-test" in content
-            assert "environment: dev" in content
-            assert "namespace: default" in content
-            assert "config_log_level: info" in content
-            assert "config_retries: 3" in content
+            from tests.test_helpers import assert_directories_match
 
-    def test_omegaconf_compile_output_content(self):
-        _skip_if_backend_missing(InventoryBackends.OMEGACONF)
-        from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
-
-        register_resolvers(OMEGACONF_INVENTORY)
-        with IsolatedTestEnvironment(OMEGACONF_EXAMPLE) as iso:
-            exit_code, _, stderr = run_kapitan_command(
-                [
-                    "compile",
-                    "-t",
-                    "compile-test",
-                    "--inventory-path",
-                    "inventory",
-                    f"--inventory-backend={InventoryBackends.OMEGACONF}",
-                ]
+            assert_directories_match(
+                os.path.join(iso.path, "compiled"),
+                os.path.join(TEST_PWD, "tests/golden/backend_examples/reclass"),
             )
-            assert exit_code == 0, stderr
-            output_path = os.path.join(iso.path, "compiled", "compile-test", "output")
-            assert os.path.exists(output_path)
-            with open(output_path) as f:
-                content = f.read()
-            assert "app_name: omegaconf-test" in content
-            assert "environment: dev" in content
-            assert "namespace: default" in content
-            assert "interpolated: omegaconf-test" in content
 
-
-class TestBackendExampleGoldenOutput:
-    """Golden-master compile tests for backend examples.
-
-    These tests compile the backend examples and compare the full compiled
-    output tree against committed golden snapshots. A unified diff is
-    produced on mismatch so reviewers see exactly which files changed.
-
-    To update golden snapshots after an intentional output change:
-        make refresh-backend-goldens
-    """
-
-    @pytest.mark.parametrize(
-        "backend_id",
-        [
-            InventoryBackends.RECLASS,
-            InventoryBackends.RECLASS_RS,
-        ],
-    )
-    def test_reclass_example_golden_output(self, backend_id):
-        _skip_if_backend_missing(backend_id)
+    def test_reclass_rs_example_golden_output(self):
+        _skip_if_backend_missing(InventoryBackends.RECLASS_RS)
         with IsolatedTestEnvironment(RECLASS_EXAMPLE) as iso:
             exit_code, _, stderr = run_kapitan_command(
                 [
@@ -667,7 +581,7 @@ class TestBackendExampleGoldenOutput:
                     "compile-test",
                     "--inventory-path",
                     "inventory",
-                    f"--inventory-backend={backend_id}",
+                    f"--inventory-backend={InventoryBackends.RECLASS_RS}",
                 ]
             )
             assert exit_code == 0, stderr
@@ -675,7 +589,7 @@ class TestBackendExampleGoldenOutput:
 
             assert_directories_match(
                 os.path.join(iso.path, "compiled"),
-                os.path.join(TEST_PWD, "tests/golden/backend_examples/reclass"),
+                os.path.join(TEST_PWD, "tests/golden/backend_examples/reclass-rs"),
             )
 
     def test_omegaconf_example_golden_output(self, omegaconf_backend):

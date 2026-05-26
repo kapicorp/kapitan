@@ -1,0 +1,7 @@
+---
+# Rendered by reclass example
+app_name: reclass-test
+environment: dev
+namespace: default
+config_log_level: info
+config_retries: 3
