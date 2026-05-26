@@ -22,6 +22,7 @@ from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import select_jsonnet_runtime
 from kapitan.inventory import AVAILABLE_BACKENDS, InventoryBackends
 from kapitan.lint import start_lint
+from kapitan.profiling import add_profiling_arguments, cpu_profile, memory_profile
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
 from kapitan.resources import generate_inventory, resource_callbacks, search_imports
@@ -106,6 +107,7 @@ def build_parser():
         help="set multiprocessing start method",
         choices=["spawn", "fork", "forkserver"],
     )
+    add_profiling_arguments(parser)
     subparser = parser.add_subparsers(help="commands", dest="subparser_name")
 
     inventory_backend_parser = argparse.ArgumentParser(add_help=False)
@@ -708,7 +710,13 @@ def main(*argv):
         logging_level = logging.INFO
     setup_logging(level=logging_level, force=True)
 
-    # call chosen command
-    args.func(args)
+    if getattr(args, "profile_workers", False) and not getattr(args, "profile", False):
+        logger.warning("--profile-workers has no effect without --profile")
+
+    # call chosen command, optionally wrapped in CPU/memory profilers.
+    # Order matters: memory_profile is the outer context so the tracemalloc
+    # snapshot covers pyinstrument's own teardown/render time too.
+    with memory_profile(args), cpu_profile(args):
+        args.func(args)
 
     return 0
