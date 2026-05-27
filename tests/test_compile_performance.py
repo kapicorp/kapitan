@@ -55,8 +55,9 @@ def test_compile_performance_with_profiling(isolated_performance_inventory):
     full call tree (kadet/jinja/jsonnet internals) in one unified flame graph.
     """
     helper = CompileTestHelper(isolated_performance_inventory)
-    helper.compile_targets(
-        extra_args=["--inventory-path", ".", "--parallelism", "1", *PROFILE_ARGS],
+    # Profiling flags are top-level arguments and must come BEFORE the subcommand.
+    helper.compile_with_args(
+        [*PROFILE_ARGS, "compile", "--inventory-path", ".", "--parallelism", "1"],
     )
 
 
