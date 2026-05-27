@@ -50,6 +50,7 @@ jobs:
         run: mise exec -- uv sync --locked --all-extras --dev
 
       - name: Run benchmarks
+        id: benchmark
         run: |
           mise exec -- uv run pytest tests/test_compile_performance.py \
             -v --no-cov -p no:xdist -m benchmark \
@@ -61,6 +62,29 @@ jobs:
         with:
           name: benchmark-results
           path: benchmark-result.json
+
+      - name: Generate benchmark summary
+        run: python3 scripts/generate_benchmark_summary.py benchmark-result.json
+
+      - name: Run profiling (serial)
+        env:
+          KAPITAN_BENCHMARK_PROFILE_DIR: ${{ github.workspace }}/kapitan-profiles
+        run: |
+          mise exec -- uv run pytest tests/test_compile_performance.py \
+            -v --no-cov -p no:xdist \
+            -k test_compile_performance_with_profiling
+
+      - name: Generate profiling summary
+        env:
+          KAPITAN_BENCHMARK_PROFILE_DIR: ${{ github.workspace }}/kapitan-profiles
+        run: python3 scripts/generate_profiling_summary.py "$KAPITAN_BENCHMARK_PROFILE_DIR"
+
+      - name: Upload profiling reports
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: kapitan-profiles
+          path: ${{ github.workspace }}/kapitan-profiles/
+          if-no-files-found: warn
 
       - name: Clean working tree for gh-pages checkout
         run: git reset --hard

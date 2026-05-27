@@ -12,6 +12,8 @@ These tests use pytest-benchmark to measure compile throughput.
 Run locally with: uv run pytest tests/test_compile_performance.py -v --no-cov -p no:xdist
 """
 
+import os
+
 import pytest
 
 from kapitan import cached
@@ -19,6 +21,18 @@ from kapitan.cli import build_parser
 from kapitan.inventory import InventoryBackends
 from kapitan.resources import inventory as get_inventory
 from tests.test_helpers import CompileTestHelper
+
+
+PROFILE_DIR = os.environ.get("KAPITAN_BENCHMARK_PROFILE_DIR", "kapitan-profiles")
+PROFILE_ARGS = [
+    "--profile",
+    "--profile-serial",
+    "--profile-format",
+    "json",
+    "--memory-profile",
+    "--profile-output-dir",
+    PROFILE_DIR,
+]
 
 
 def _render_inventory(backend: InventoryBackends = None):
@@ -29,6 +43,21 @@ def _render_inventory(backend: InventoryBackends = None):
         args.extend(["--inventory-backend", str(backend)])
     cached.args = build_parser().parse_args(args)
     get_inventory(inventory_path=".")
+
+
+@pytest.mark.slow
+@pytest.mark.integration
+def test_compile_performance_with_profiling(isolated_performance_inventory):
+    """Run a single compile with profiling enabled to generate flame graphs.
+
+    Not benchmarked — exists purely to produce --profile and --memory-profile
+    artifacts for CI download. Uses --profile-serial so the report captures the
+    full call tree (kadet/jinja/jsonnet internals) in one unified flame graph.
+    """
+    helper = CompileTestHelper(isolated_performance_inventory)
+    helper.compile_targets(
+        extra_args=["--inventory-path", ".", "--parallelism", "1", *PROFILE_ARGS],
+    )
 
 
 @pytest.mark.benchmark(max_time=10.0)

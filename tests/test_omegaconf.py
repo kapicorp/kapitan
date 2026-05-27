@@ -30,7 +30,9 @@ logger = logging.getLogger(__name__)
 
 TEST_PWD = os.getcwd()
 TEST_KUBERNETES_INVENTORY = os.path.join(TEST_PWD, "examples/kubernetes/")
-TEST_OMEGACONF_INVENTORY = os.path.join(TEST_PWD, "tests/test_resources/omegaconf")
+TEST_OMEGACONF_INVENTORY = os.path.join(
+    TEST_PWD, "tests/test_resources/omegaconf/inventory"
+)
 
 
 class InventoryTestOmegaConfKubernetes(unittest.TestCase):
