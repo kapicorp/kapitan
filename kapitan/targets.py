@@ -21,6 +21,7 @@ from kapitan import cached
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs import get_compiler
+from kapitan.profiling import worker_profile
 from kapitan.resources import get_inventory
 
 
@@ -59,7 +60,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         targets = search_targets(inventory, targets, labels)
 
     except CompileError as e:
-        raise CompileError(f"Error searching targets: {e}")
+        raise CompileError(f"Error searching targets: {e}") from e
 
     if len(targets) == 0:
         raise CompileError(
@@ -72,35 +73,36 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)"
     )
 
+    # check if --fetch or --force-fetch is enabled
+    force_fetch = args.force_fetch
+    fetch = args.fetch or force_fetch
+
+    # deprecated --force flag
+    if args.force:
+        logger.info(
+            "DeprecationWarning: --force is deprecated. Use --force-fetch instead of --force --fetch"
+        )
+        force_fetch = True
+
+    if fetch:
+        # skip classes that are not yet available
+        target_objs = load_target_inventory(
+            inventory, targets, ignore_class_not_found=True
+        )
+    else:
+        # ignore_class_not_found = False by default
+        target_objs = load_target_inventory(inventory, targets)
+
+    if not target_objs:
+        raise CompileError("Error: no targets found")
+
+    # append "compiled" to output_path so we can safely overwrite it
+    output_path = args.output_path
+    compile_path = os.path.join(output_path, "compiled")
+
     with multiprocessing.Pool(parallelism) as pool:
         try:
             fetching_start = time.time()
-            # check if --fetch or --force-fetch is enabled
-            force_fetch = args.force_fetch
-            fetch = args.fetch or force_fetch
-
-            # deprecated --force flag
-            if args.force:
-                logger.info(
-                    "DeprecationWarning: --force is deprecated. Use --force-fetch instead of --force --fetch"
-                )
-                force_fetch = True
-
-            if fetch:
-                # skip classes that are not yet available
-                target_objs = load_target_inventory(
-                    inventory, targets, ignore_class_not_found=True
-                )
-            else:
-                # ignore_class_not_found = False by default
-                target_objs = load_target_inventory(inventory, targets)
-
-            # append "compiled" to output_path so we can safely overwrite it
-            output_path = args.output_path
-            compile_path = os.path.join(output_path, "compiled")
-
-            if not target_objs:
-                raise CompileError("Error: no targets found")
 
             # fetch dependencies
             if fetch:
@@ -138,7 +140,19 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
 
             # compile_target() returns None on success
             # so p is only not None when raising an exception
-            [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
+            if getattr(args, "profile_serial", False):
+                # Serial in-process mode: bypass the Pool so a single
+                # pyinstrument profile in the parent contains the full
+                # call tree (kadet/jinja/jsonnet internals included).
+                # Wall-clock is slower but visibility is complete.
+                logger.info(
+                    "--profile-serial: compiling %d targets serially in the parent process",
+                    len(target_objs),
+                )
+                for target_obj in target_objs:
+                    worker(target_obj)
+            else:
+                [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
             os.makedirs(compile_path, exist_ok=True)
 
@@ -169,7 +183,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                 logger.error("Inventory reclass error: inventory not found")
             else:
                 logger.error("Inventory reclass error: %s", e.message)
-            raise InventoryError(e.message)
+            raise InventoryError(e.message) from e
         except Exception as e:
             # if compile worker fails, terminate immediately
             pool.terminate()
@@ -183,7 +197,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                 logger.exception(e)
             else:
                 logger.error(e)
-            raise CompileError(f"Error compiling targets: {e}")
+            raise CompileError(f"Error compiling targets: {e}") from e
 
         finally:
             shutil.rmtree(temp_path)
@@ -237,10 +251,10 @@ def search_targets(inventory, targets, labels):
 
     try:
         labels_dict = dict(label.split("=") for label in labels)
-    except ValueError:
+    except ValueError as e:
         raise CompileError(
             "Compile error: Failed to parse labels, should be formatted like: kapitan compile -l env=prod app=example"
-        )
+        ) from e
 
     targets_found = []
     # It should come back already rendered
@@ -274,6 +288,22 @@ def compile_target(
     target_config, search_paths, compile_path, ref_controller, args, globals_cached=None
 ):
     """Compiles target_obj and writes to compile_path"""
+    # worker_profile() is a no-op unless the parent set the
+    # KAPITAN_PROFILE_WORKERS_DIR env var (i.e. user passed --profile-workers).
+    with worker_profile():
+        return _compile_target_impl(
+            target_config,
+            search_paths,
+            compile_path,
+            ref_controller,
+            args,
+            globals_cached,
+        )
+
+
+def _compile_target_impl(
+    target_config, search_paths, compile_path, ref_controller, args, globals_cached=None
+):
     start = time.time()
     compile_configs = target_config.compile
     target_name = target_config.vars.target
