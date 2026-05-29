@@ -53,8 +53,8 @@ class VaultClient(hvac.Client):
         try:
             with open(token_file) as fp:
                 token = fp.read()
-        except OSError:
-            raise VaultError(f"Cannot read file {token_file}")
+        except OSError as e:
+            raise VaultError(f"Cannot read file {token_file}") from e
 
         if not token:
             raise VaultError(f"{token_file} is empty")

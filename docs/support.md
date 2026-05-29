@@ -1,3 +1,8 @@
+---
+title: "Kapitan Support"
+description: "Get help with Kapitan through the community Slack channel, GitHub discussions, and documentation resources."
+---
+
 # :kapitan-logo: **Get support with Kapitan**
 
 ## Community

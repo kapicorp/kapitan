@@ -88,3 +88,50 @@ class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
 
 
 del InventoryTargetTestBase  # remove InventoryTargetTestBase so that it doesn't run
+
+
+class InventoryTopicsTest(unittest.TestCase):
+    """Tests for `kapitan.topics` aggregation across targets."""
+
+    def setUp(self) -> None:
+        backend_id = InventoryBackends.RECLASS
+        if not importlib.util.find_spec(backend_id.replace("-", "_")):
+            self.skipTest(f"backend module {backend_id} not available")
+
+        self.tmp = tempfile.mkdtemp()
+        inv_dir = os.path.join(self.tmp, "inventory")
+        os.makedirs(os.path.join(inv_dir, "classes"))
+        targets_dir = os.path.join(inv_dir, "targets")
+        os.makedirs(targets_dir)
+
+        def write(name, body):
+            with open(os.path.join(targets_dir, name), "w") as fp:
+                fp.write(body)
+
+        write(
+            "target-1.yml",
+            "parameters:\n  colour: red\n  kapitan:\n    topics:\n      colours:\n        parameters:\n          colour: ${colour}\n",
+        )
+        write(
+            "target-2.yml",
+            "parameters:\n  colour: blue\n  kapitan:\n    topics:\n      colours:\n        parameters:\n          colour: ${colour}\n",
+        )
+        write("target-3.yml", "parameters:\n  unrelated: true\n")
+
+        self.inventory_path = inv_dir
+        args = build_parser().parse_args(["compile"])
+        args.inventory_backend = backend_id
+        kapitan.cached.reset_cache()
+        kapitan.cached.args = args
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp)
+
+    def test_topics_aggregated_on_inventory(self):
+        inventory(inventory_path=self.inventory_path)
+        topics = kapitan.cached.inv.topics
+        self.assertIn("colours", topics)
+        targets = topics["colours"]["parameters"]["targets"]
+        self.assertEqual(targets["target-1"]["colour"], "red")
+        self.assertEqual(targets["target-2"]["colour"], "blue")
+        self.assertNotIn("target-3", targets)
