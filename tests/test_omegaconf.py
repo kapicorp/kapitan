@@ -89,7 +89,7 @@ class InventoryTestOmegaConfKubernetes(unittest.TestCase):
 
 
 # Deferred resolver, merge resolver, and custom resolver tests are covered by
-# the example-backed suite in tests/test_backend_examples.py.
+# the example-backed suite in tests/test_inventory_backend_examples.py.
 
 
 class TestOmegaConfMigrate(unittest.TestCase):
