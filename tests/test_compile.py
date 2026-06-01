@@ -13,7 +13,9 @@ import io
 import logging
 import os
 import shutil
+import sys
 import unittest
+from unittest import mock
 
 import pytest
 import toml
@@ -192,7 +194,9 @@ class CompileKubernetesTest(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             # Ignoring stdout for "kapitan --help"
             with contextlib.redirect_stdout(io.StringIO()):
-                kapitan()
+                # Isolate from pytest arguments in sys.argv
+                with mock.patch.object(sys, "argv", ["kapitan"]):
+                    kapitan()
         self.assertEqual(cm.exception.code, 1)
 
     def test_compile_specific_target(self):
