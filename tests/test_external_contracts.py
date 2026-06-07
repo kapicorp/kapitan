@@ -490,11 +490,11 @@ class TestRefsContract:
         revealed = revealer.reveal_obj(obj)
         assert revealed["password"] == "secret-value"
 
-    def test_revealer_leaves_plain_strings_untouched(self):
+    def test_revealer_leaves_plain_strings_untouched(self, temp_dir):
         """Revealer must not modify strings that contain no ref tags."""
         from kapitan.refs.base import RefController, Revealer
 
-        rc = RefController("/tmp")
+        rc = RefController(temp_dir)
         revealer = Revealer(rc)
 
         obj = {"message": "hello world", "number": 42}
