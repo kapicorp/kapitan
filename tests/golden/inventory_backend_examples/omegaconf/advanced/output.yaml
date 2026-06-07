@@ -1,0 +1,33 @@
+---
+# Rendered by omegaconf example
+app_name: omegaconf-test
+environment: dev
+namespace: default
+interpolated: unknown
+merged_service_port: 8080
+conditional_result: enabled_value
+conditional_else: development_mode
+computed_replicas: 2
+custom_concat: helloworld
+custom_double: 2
+greeting: Hello ${USER}, welcome to omegaconf-test
+overwrite_result:
+  key_a: value_a
+  key_b: value_b
+  nested_child: replaced
+  key_c: value_c
+relative_value: from_relative
+relative_demo: True
+init_value: from_init
+init_common: True
+empty_test_loaded: True
+bool_and: False
+bool_or: True
+bool_not: False
+bool_equal: True
+if_numeric: has_replicas
+write_result: DONE
+nested_func: HELLOWORLD
+parentkey_test_name: parentkey_test
+default_result: fallback_value
+access_result: accessed_value

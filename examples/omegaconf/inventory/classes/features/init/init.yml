@@ -1,0 +1,5 @@
+---
+# Omegaconf init class: loaded automatically when the parent directory is included
+parameters:
+  init_value: from_init
+  init_common: true
