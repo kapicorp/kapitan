@@ -11,7 +11,7 @@ benchmark:
   - "kapitan/refs/**"
   - "tests/test_compile_performance.py"
   - "tests/test_resources/inventory/performance/**"
-  - ".github/workflows/benchmark.yml"
+  - ".github/workflows/benchmark-*.yml"
   - ".github/filters/filters.yml"
   - "pyproject.toml"
 

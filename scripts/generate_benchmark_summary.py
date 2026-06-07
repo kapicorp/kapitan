@@ -49,6 +49,12 @@ def main():
 
     output_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if output_path:
+        # Guard against duplicate append if this script is invoked multiple
+        # times in the same job.
+        if os.path.exists(output_path):
+            with open(output_path) as f:
+                if "## Benchmark Summary" in f.read():
+                    return
         with open(output_path, "a") as f:
             f.write("\n".join(summary) + "\n")
     else:

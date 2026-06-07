@@ -86,13 +86,18 @@ jobs:
         run: python3 scripts/generate_benchmark_summary.py benchmark-result.json
 
       - name: Compare PR vs baseline
+        id: compare-baseline
         if: inputs.compare-baseline == true && steps.cache-base.outputs.cache-hit == 'true'
+        continue-on-error: true
         uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
         with:
           tool: "pytest"
           output-file-path: benchmark-result.json
           external-data-json-path: ./.benchmark-cache/benchmark-data.json
           save-data-file: false
+          # 150% threshold is intentionally coarse: benchmark variance on GitHub
+          # Actions runners is high (noisy neighbours, different CPU models).
+          # A 2.5x spike is a clear signal; smaller deltas are usually noise.
           fail-on-alert: ${{ inputs.fail-on-alert }}
           comment-on-alert: ${{ inputs.comment-on-alert }}
           github-token: ${{ secrets.github-token }}
@@ -118,6 +123,12 @@ jobs:
           name: kapitan-profiles
           path: ${{ github.workspace }}/kapitan-profiles/
           if-no-files-found: warn
+
+      - name: Fail on benchmark regression
+        if: steps.compare-baseline.outcome == 'failure'
+        run: |
+          echo "::error::Performance regression detected (threshold: 150%). See comparison step above for details."
+          exit 1
 
       - name: Clean working tree for gh-pages checkout
         if: inputs.push-charts == true

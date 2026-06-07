@@ -95,14 +95,28 @@ def _memory_block(profile_dir: Path) -> list[str]:
 def main():
     profile_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("kapitan-profiles")
 
+    mem_lines = _memory_block(profile_dir)
+    if not mem_lines:
+        print(
+            "Warning: no memory profile files found in "
+            f"'{profile_dir}'; skipping memory summary section.",
+            file=sys.stderr,
+        )
+
     summary = ["## Profiling Summary", ""]
     summary.extend(_cpu_table(profile_dir))
     if summary[-1] != "":
         summary.append("")
-    summary.extend(_memory_block(profile_dir))
+    summary.extend(mem_lines)
 
     output_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if output_path:
+        # Guard against duplicate append if this script is invoked multiple
+        # times in the same job.
+        if os.path.exists(output_path):
+            with open(output_path) as f:
+                if "## Profiling Summary" in f.read():
+                    return
         with open(output_path, "a") as f:
             f.write("\n".join(summary) + "\n")
     else:
