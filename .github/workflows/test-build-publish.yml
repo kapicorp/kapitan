@@ -175,8 +175,8 @@ jobs:
           verbose: true
           emoji: false
           job-summary: true
-          # pytest-xdist has known hangs/crashes on Python 3.14 (issue #1289/#1313);
-          # run serially on 3.14 until upstream fix is available.
+          # pytest-xdist intermittently hangs on Python 3.14 (dead worker pipes,
+          # see pytest-dev/pytest-xdist#1313); run serially on 3.14 until fixed.
           custom-pytest: ${{ matrix.python-version == '3.14' && 'mise exec -- uv run pytest' || 'mise exec -- uv run pytest -n auto' }}
           custom-arguments: '-q'
           click-to-expand: true
