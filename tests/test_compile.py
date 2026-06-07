@@ -14,7 +14,9 @@ import io
 import logging
 import os
 import shutil
+import sys
 import unittest
+from unittest import mock
 
 import pytest
 import toml
@@ -260,7 +262,9 @@ class CompileKubernetesTest(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             # Ignoring stdout for "kapitan --help"
             with contextlib.redirect_stdout(io.StringIO()):
-                kapitan()
+                # Isolate from pytest arguments in sys.argv
+                with mock.patch.object(sys, "argv", ["kapitan"]):
+                    kapitan()
         self.assertEqual(cm.exception.code, 1)
 
     def test_compile_specific_target(self):
@@ -400,58 +404,6 @@ class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
     @unittest.skip("Already tested")
     def test_compile_not_enough_args(self):
         pass
-
-
-class CompileTestResourcesOCOmegaconf(unittest.TestCase):
-    """Test compile with test_resources/omegaconf inventory using omegaconf backend.
-
-    Note: Omegaconf inventory resolution tests are in test_omegaconf.py.
-    This class only tests that compilation works with omegaconf backend.
-    """
-
-    inventory_path = os.path.join(TEST_PWD, "tests/test_resources/omegaconf")
-    extraArgv = ["--inventory-backend=omegaconf"]
-
-    def setUp(self):
-        reset_cache()
-        os.chdir(self.inventory_path)
-        shutil.rmtree("compiled", ignore_errors=True)
-        # Register custom resolvers from test_resources/omegaconf
-        import sys
-
-        from omegaconf import OmegaConf
-
-        from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
-
-        inv_path = os.path.join(self.inventory_path, "inventory")
-        register_resolvers(inv_path)
-        if inv_path not in sys.path:
-            sys.path.insert(0, inv_path)
-        from resolvers import pass_resolvers
-
-        for name, func in pass_resolvers().items():
-            if not OmegaConf.has_resolver(name):
-                OmegaConf.register_new_resolver(name, func)
-
-    def test_compile_resolvers_target(self):
-        """Test compiling test-resolvers target with omegaconf backend.
-
-        This test verifies that omegaconf inventory resolves correctly
-        and compiles without errors (even with empty compile list).
-        """
-        kapitan("compile", "-t", "test-resolvers", *self.extraArgv)
-
-        # Target should compile successfully (even with empty compile list)
-        compiled_dir = os.path.join(self.inventory_path, "compiled/test-resolvers")
-        self.assertTrue(
-            os.path.exists(compiled_dir),
-            f"Expected compiled directory {compiled_dir} to exist",
-        )
-
-    def tearDown(self):
-        shutil.rmtree("compiled", ignore_errors=True)
-        os.chdir(TEST_PWD)
-        reset_cache()
 
 
 class CompileTerraformTest(unittest.TestCase):
