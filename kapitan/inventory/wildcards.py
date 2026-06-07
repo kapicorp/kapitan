@@ -74,14 +74,21 @@ def discover_classes(classes_path: str) -> list[str]:
     are ignored.
 
     .. note:: ``followlinks=True`` is used so symlinked component directories
-       (common in Commodore) are traversed.  Circular symlinks can cause
-       infinite recursion; avoid them in ``inventory/classes/``.
+       (common in Commodore) are traversed.  Circular symlinks are detected
+       and pruned automatically.
     """
     found: set[str] = set()
     if not os.path.isdir(classes_path):
         return []
 
+    visited_dirs: set[str] = set()
     for root, dirs, files in os.walk(classes_path, followlinks=True):
+        real_root = os.path.realpath(root)
+        if real_root in visited_dirs:
+            # Circular symlink detected — prune to avoid infinite recursion.
+            dirs[:] = []
+            continue
+        visited_dirs.add(real_root)
         dirs[:] = [d for d in dirs if not d.startswith(".")]
         for filename in files:
             if filename.startswith("."):
@@ -200,10 +207,14 @@ def expand_class_patterns(
 # ---------------------------------------------------------------------------
 
 
-def _safe_load_yaml_text(text: str):
+def _safe_load_yaml_text(text: str, path: str = ""):
     try:
         return yaml.safe_load(text) or {}
-    except yaml.YAMLError:
+    except yaml.YAMLError as exc:
+        if path:
+            logger.warning(
+                "Skipping wildcard scan for %s: invalid YAML (%s)", path, exc
+            )
         return None
 
 
@@ -223,7 +234,14 @@ def _files_with_wildcards(inventory_path: str) -> list[str]:
         base = os.path.join(inventory_path, sub)
         if not os.path.isdir(base):
             continue
+        visited_dirs: set[str] = set()
         for root, dirs, files in os.walk(base, followlinks=True):
+            real_root = os.path.realpath(root)
+            if real_root in visited_dirs:
+                # Circular symlink detected — prune to avoid infinite recursion.
+                dirs[:] = []
+                continue
+            visited_dirs.add(real_root)
             dirs[:] = [d for d in dirs if not d.startswith(".")]
             for filename in files:
                 if filename.startswith("."):
@@ -240,7 +258,7 @@ def _files_with_wildcards(inventory_path: str) -> list[str]:
                     continue
                 if not any(c in text for c in GLOB_METACHARACTERS):
                     continue
-                data = _safe_load_yaml_text(text)
+                data = _safe_load_yaml_text(text, path)
                 if not isinstance(data, dict):
                     continue
                 classes = data.get("classes")

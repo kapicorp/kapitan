@@ -140,6 +140,18 @@ class DiscoverClassesTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(discover_classes(os.path.join(tmp, "missing")), [])
 
+    def test_circular_symlink_is_detected_and_pruned(self):
+        """Circular directory symlinks must not cause infinite recursion."""
+        with tempfile.TemporaryDirectory() as tmp:
+            classes = os.path.join(tmp, "classes")
+            os.makedirs(os.path.join(classes, "a"))
+            _write(os.path.join(classes, "a", "x.yml"))
+            # Create circular symlink: classes/a/b -> ../a
+            os.symlink(os.path.join("..", "a"), os.path.join(classes, "a", "b"))
+
+            found = discover_classes(classes)
+            self.assertEqual(found, ["a.x"])
+
 
 class ExpandClassPatternsTest(unittest.TestCase):
     AVAILABLE = [
@@ -457,6 +469,30 @@ class MaterializeExpandedInventoryTest(unittest.TestCase):
             "/nonexistent/path", enable_wildcards=True
         )
         self.assertEqual(result, "/nonexistent/path")
+
+    def test_malformed_yaml_with_metachar_logs_warning(self):
+        """A file containing a metacharacter but invalid YAML should log a
+        warning rather than crashing or being silently ignored.
+        """
+        import logging
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            inv = os.path.join(tmp, "inventory")
+            os.makedirs(os.path.join(inv, "targets"))
+            os.makedirs(os.path.join(inv, "classes"))
+            with open(
+                os.path.join(inv, "targets", "broken.yml"), "w", encoding="utf-8"
+            ) as fh:
+                fh.write("classes: [*")  # invalid YAML with metacharacter
+
+            logger = logging.getLogger("kapitan.inventory.wildcards")
+            with patch.object(logger, "warning") as mock_warn:
+                result = materialize_expanded_inventory(inv, enable_wildcards=True)
+                # Should return the original path because the file failed to parse
+                self.assertEqual(result, inv)
+                mock_warn.assert_called_once()
+                self.assertIn("broken.yml", mock_warn.call_args[0][1])
 
 
 class FeatureFlagTest(unittest.TestCase):
