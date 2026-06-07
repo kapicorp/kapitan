@@ -54,7 +54,7 @@ from kapitan.cached import reset_cache
 from kapitan.cli import build_parser
 from kapitan.inventory import InventoryBackends
 from kapitan.resources import inventory as get_inventory
-from tests.backend_examples import (
+from tests.inventory_backend_examples import (
     OMEGACONF_EXAMPLE,
     OMEGACONF_INVENTORY,
     RECLASS_EXAMPLE,
@@ -539,15 +539,15 @@ class TestOmegaconfExampleInventory:
         assert inv["parameters"]["if_numeric"] == "has_replicas"
 
 
-class TestBackendExampleGoldenOutput:
-    """Golden-master compile tests for backend examples.
+class TestInventoryBackendExampleGoldenOutput:
+    """Golden-master compile tests for inventory backend examples.
 
-    These tests compile the backend examples and compare the full compiled
+    These tests compile the inventory backend examples and compare the full compiled
     output tree against committed golden snapshots. A unified diff is
     produced on mismatch so reviewers see exactly which files changed.
 
     To update golden snapshots after an intentional output change:
-        make refresh-backend-goldens
+        make refresh-inventory-backend-goldens
     """
 
     def test_reclass_example_golden_output(self):
@@ -566,7 +566,9 @@ class TestBackendExampleGoldenOutput:
 
             assert_directories_match(
                 os.path.join(iso.path, "compiled"),
-                os.path.join(TEST_PWD, "tests/golden/backend_examples/reclass"),
+                os.path.join(
+                    TEST_PWD, "tests/golden/inventory_backend_examples/reclass"
+                ),
             )
 
     def test_reclass_rs_example_golden_output(self):
@@ -585,7 +587,9 @@ class TestBackendExampleGoldenOutput:
 
             assert_directories_match(
                 os.path.join(iso.path, "compiled"),
-                os.path.join(TEST_PWD, "tests/golden/backend_examples/reclass-rs"),
+                os.path.join(
+                    TEST_PWD, "tests/golden/inventory_backend_examples/reclass-rs"
+                ),
             )
 
     def test_omegaconf_example_golden_output(self, omegaconf_backend):
@@ -603,5 +607,7 @@ class TestBackendExampleGoldenOutput:
 
             assert_directories_match(
                 os.path.join(iso.path, "compiled"),
-                os.path.join(TEST_PWD, "tests/golden/backend_examples/omegaconf"),
+                os.path.join(
+                    TEST_PWD, "tests/golden/inventory_backend_examples/omegaconf"
+                ),
             )

@@ -288,7 +288,7 @@ def run_kapitan_command(args: List[str]) -> tuple[int, str, str]:
 
 
 REFRESH_GOLDENS_HINT = (
-    "Run `make refresh-backend-goldens` to regenerate snapshots if this output change "
+    "Run `make refresh-inventory-backend-goldens` to regenerate snapshots if this output change "
     "is intentional and approved."
 )
 

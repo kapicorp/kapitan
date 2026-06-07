@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-"""Regenerate the golden compiled snapshots for backend examples.
+"""Regenerate the golden compiled snapshots for inventory backend examples.
 
 Usage:
-    make refresh-backend-goldens
+    make refresh-inventory-backend-goldens
     # or directly:
-    uv run python scripts/refresh_backend_goldens.py
+    uv run python scripts/refresh_inventory_backend_goldens.py
 """
 
 from __future__ import annotations
@@ -20,13 +20,13 @@ import tempfile
 REPO_ROOT = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
 
-def _import_backend_examples():
-    """Import tests.backend_examples after adjusting sys.path."""
+def _import_inventory_backend_examples():
+    """Import tests.inventory_backend_examples after adjusting sys.path."""
     if REPO_ROOT not in sys.path:
         sys.path.insert(0, REPO_ROOT)
-    from tests.backend_examples import BACKEND_EXAMPLES
+    from tests.inventory_backend_examples import INVENTORY_BACKEND_EXAMPLES
 
-    return BACKEND_EXAMPLES
+    return INVENTORY_BACKEND_EXAMPLES
 
 
 def refresh_one(scenario) -> None:
@@ -68,8 +68,8 @@ def refresh_one(scenario) -> None:
 
 
 def main() -> int:
-    BACKEND_EXAMPLES = _import_backend_examples()
-    for scenario in BACKEND_EXAMPLES:
+    INVENTORY_BACKEND_EXAMPLES = _import_inventory_backend_examples()
+    for scenario in INVENTORY_BACKEND_EXAMPLES:
         refresh_one(scenario)
     print(
         "[refresh-goldens] Done. Review `git status` / `git diff` and commit the "
