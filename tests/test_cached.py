@@ -20,8 +20,10 @@ class TestResetCache:
         # Set some values
         cached.inv = {"key": "value"}
         cached.global_inv = {"global": "data"}
+        cached.inventory_global_kadet = {True: {"global": "kadet"}}
         cached.inv_cache = {"cache": "entry"}
         cached.inv_sources = {"source1", "source2"}
+        cached.kapitan_input_kadet = "kadet-cache"
         cached.gpg_obj = "gpg"
         cached.gkms_obj = "gkms"
         cached.awskms_obj = "awskms"
@@ -36,8 +38,10 @@ class TestResetCache:
         # Verify all cleared
         assert cached.inv == {}
         assert cached.global_inv == {}
+        assert cached.inventory_global_kadet == {}
         assert cached.inv_cache == {}
         assert cached.inv_sources == set()
+        assert cached.kapitan_input_kadet is None
         assert cached.gpg_obj is None
         assert cached.gkms_obj is None
         assert cached.awskms_obj is None

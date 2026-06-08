@@ -10,7 +10,12 @@
 import tempfile
 import unittest
 
-from kadet import ABORT_EXCEPTION_TYPE, BaseObj, Dict
+import kadet
+from box.exceptions import BoxKeyError
+from kadet import BaseObj, Dict
+
+from kapitan import cached
+from kapitan.inputs import kadet as kapitan_kadet
 
 
 class KadetTestObj(BaseObj):
@@ -117,7 +122,7 @@ class KadetTest(unittest.TestCase):
         self.assertEqual(output, desired_output)
 
     def test_need(self):
-        with self.assertRaises(ABORT_EXCEPTION_TYPE):
+        with self.assertRaises(kadet.ABORT_EXCEPTION_TYPE):
             KadetTestObj(this_should_error=True)
 
     def test_update_root_yaml(self):
@@ -165,3 +170,74 @@ class KadetTest(unittest.TestCase):
         output = kobj.dump()
         desired_output = {"this": "that", "list": [1, 2, 3]}
         self.assertEqual(output, desired_output)
+
+
+class InventoryGlobalTest(unittest.TestCase):
+    def setUp(self):
+        self.original_global_inv = cached.global_inv
+        self.original_inventory_global_kadet = cached.inventory_global_kadet
+        cached.inventory_global_kadet = {}
+        kapitan_kadet.inventory_digest.cache_clear()
+
+    def tearDown(self):
+        cached.global_inv = self.original_global_inv
+        cached.inventory_global_kadet = self.original_inventory_global_kadet
+        kapitan_kadet.inventory_digest.cache_clear()
+
+    def test_inventory_global_uses_default_box_by_default(self):
+        cached.global_inv = {
+            "test-target": {
+                "parameters": {
+                    "cluster": {
+                        "name": "test-cluster",
+                    },
+                },
+            },
+        }
+        inventory_global = kapitan_kadet.inventory_global()
+        inventory_global["test-target"].parameters.generated.value = "boxed"
+
+        self.assertEqual(
+            inventory_global["test-target"].parameters.generated.value, "boxed"
+        )
+
+    def test_inventory_global_default_box_survives_inventory_digest(self):
+        cached.global_inv = {
+            "test-target": {
+                "parameters": {
+                    "cluster": {
+                        "name": "test-cluster",
+                    },
+                },
+            },
+        }
+        target_token = kapitan_kadet.current_target.set("test-target")
+        try:
+            kapitan_kadet.inventory_digest("test-target")
+            inventory_global = kapitan_kadet.inventory_global()
+            inventory_global["test-target"].parameters.generated.value = "boxed"
+
+            self.assertEqual(
+                inventory_global["test-target"].parameters.generated.value, "boxed"
+            )
+        finally:
+            kapitan_kadet.current_target.reset(target_token)
+
+    def test_inventory_keeps_non_lazy_default(self):
+        cached.global_inv = {
+            "test-target": {
+                "parameters": {
+                    "cluster": {
+                        "name": "test-cluster",
+                    },
+                },
+            },
+        }
+        target_token = kapitan_kadet.current_target.set("test-target")
+        try:
+            inventory = kapitan_kadet.inventory()
+
+            with self.assertRaises(BoxKeyError):
+                inventory.parameters.generated.value = "boxed"
+        finally:
+            kapitan_kadet.current_target.reset(target_token)
