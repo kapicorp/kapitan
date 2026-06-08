@@ -69,6 +69,8 @@ class OmegaConfTarget(InventoryTarget):
 
 
 class OmegaConfInventory(Inventory):
+    _instance = None
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, target_class=OmegaConfTarget)
 
@@ -78,30 +80,50 @@ class OmegaConfInventory(Inventory):
         ignore_class_not_found: bool = False,
     ) -> None:
         if not self.initialised:
-            manager = mp.Manager()
-            shared_targets = manager.dict()
-            with mp.Pool(min(len(targets), available_cpu_count())) as pool:
-                r = pool.map_async(
-                    self.inventory_worker,
-                    [(self, target, shared_targets) for target in targets.values()],
-                )
-                r.wait()
+            if not targets:
+                target_values = []
+            elif hasattr(targets, "values"):
+                target_values = list(targets.values())
+            else:
+                target_values = list(targets)
 
-                if not r.successful():
-                    raise OmegaConfRenderingError(
-                        "Error while loading the OmegaConf inventory"
+            if not target_values:
+                return
+
+            num_workers = min(len(target_values), available_cpu_count())
+            chunksize = max(1, len(target_values) // (num_workers * 2))
+
+            try:
+                with mp.Pool(
+                    num_workers,
+                    initializer=_set_inventory_worker_instance,
+                    initargs=(self,),
+                ) as pool:
+                    rendered_targets = list(
+                        pool.imap_unordered(
+                            OmegaConfInventory.inventory_worker,
+                            target_values,
+                            chunksize=chunksize,
+                        )
                     )
+            except Exception as e:
+                raise OmegaConfRenderingError(
+                    "Error while loading the OmegaConf inventory"
+                ) from e
 
-            for target in shared_targets.values():
-                self.targets[target.name] = target
+            rendered_by_name = {target.name: target for target in rendered_targets}
+            for target in target_values:
+                self.targets[target.name] = rendered_by_name[target.name]
 
     @staticmethod
-    def inventory_worker(zipped_args):
-        self, target, shared_targets = zipped_args
+    def inventory_worker(target):
+        self = OmegaConfInventory._instance
+        if self is None:
+            raise OmegaConfRenderingError("OmegaConf inventory worker not initialised")
+
         try:
             register_resolvers(self.inventory_path)
             self.load_target(target)
-            shared_targets[target.name] = target
 
         except Exception as e:
             import traceback
@@ -109,6 +131,8 @@ class OmegaConfInventory(Inventory):
             logger.error(f"{target.name}: could not render due to error {e}")
             logger.debug(f"{target.name}: traceback: {traceback.format_exc()}")
             raise
+        else:
+            return target
 
     @cached(cache=LRUCache(maxsize=1024))
     def resolve_class_file_path(
@@ -154,6 +178,17 @@ class OmegaConfInventory(Inventory):
         with open(filename) as f:
             return yaml.safe_load(f)
 
+    @cached(cache=LRUCache(maxsize=1024))
+    def get_class_config(self, filename):
+        parameters, classes, applications, exports = self.load_parameters_from_file(
+            filename
+        )
+        if parameters:
+            parameters = OmegaConf.to_container(parameters)
+        else:
+            parameters = {}
+        return parameters, classes, applications, exports
+
     def load_parameters_from_file(self, filename, parameters=None) -> Dict:
         if parameters is None:
             parameters = {}
@@ -190,7 +225,7 @@ class OmegaConfInventory(Inventory):
                 if self.ignore_class_not_found:
                     continue
                 raise InventoryError(f"Class {class_name} not found")
-            p, c, a, e = self.load_parameters_from_file(class_file)
+            p, c, a, e = self.get_class_config(class_file)
             if p:
                 parameters = OmegaConf.unsafe_merge(
                     parameters, p, list_merge_mode=ListMergeMode.EXTEND_UNIQUE
@@ -253,3 +288,7 @@ class OmegaConfInventory(Inventory):
         if not targets:
             targets = self.targets.values()
         map(lambda target: target.resolve(), targets)
+
+
+def _set_inventory_worker_instance(inventory):
+    OmegaConfInventory._instance = inventory
