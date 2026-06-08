@@ -39,6 +39,10 @@ from kapitan.version import VERSION
 
 logger = logging.getLogger(__name__)
 
+_CGROUP_V2_CPU_MAX = "/sys/fs/cgroup/cpu.max"
+_CGROUP_V1_CPU_QUOTA = "/sys/fs/cgroup/cpu/cpu.cfs_quota_us"
+_CGROUP_V1_CPU_PERIOD = "/sys/fs/cgroup/cpu/cpu.cfs_period_us"
+
 
 try:
     from enum import StrEnum
@@ -49,6 +53,63 @@ try:
     from yaml import CSafeLoader as YamlLoader
 except ImportError:
     from yaml import SafeLoader as YamlLoader
+
+
+def available_cpu_count():
+    """Return CPUs available to this process, accounting for container limits."""
+    os_cpu_count = os.cpu_count() or 1
+    try:
+        cpu_count = min(
+            os_cpu_count,
+            _cpu_count_from_affinity(os_cpu_count),
+            _cpu_count_from_cgroup(os_cpu_count),
+        )
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        logger.debug("Unable to detect available CPU count: %s", exc)
+        cpu_count = os_cpu_count
+
+    return max(1, int(cpu_count or 1))
+
+
+def _cpu_count_from_affinity(os_cpu_count):
+    sched_getaffinity = getattr(os, "sched_getaffinity", None)
+    if sched_getaffinity is None:
+        return os_cpu_count
+
+    try:
+        return len(sched_getaffinity(0))
+    except (NotImplementedError, OSError):
+        return os_cpu_count
+
+
+def _cpu_count_from_cgroup(os_cpu_count):
+    try:
+        if os.path.exists(_CGROUP_V2_CPU_MAX):
+            cpu_quota_us, cpu_period_us = _read_cpu_file(_CGROUP_V2_CPU_MAX).split()
+        elif os.path.exists(_CGROUP_V1_CPU_QUOTA) and os.path.exists(
+            _CGROUP_V1_CPU_PERIOD
+        ):
+            cpu_quota_us = _read_cpu_file(_CGROUP_V1_CPU_QUOTA)
+            cpu_period_us = _read_cpu_file(_CGROUP_V1_CPU_PERIOD)
+        else:
+            return os_cpu_count
+
+        if cpu_quota_us == "max":
+            return os_cpu_count
+
+        cpu_quota_us = int(cpu_quota_us)
+        cpu_period_us = int(cpu_period_us)
+        if cpu_quota_us > 0 and cpu_period_us > 0:
+            return math.ceil(cpu_quota_us / cpu_period_us)
+    except (OSError, ValueError):
+        logger.debug("Unable to detect CPU count from cgroup files", exc_info=True)
+
+    return os_cpu_count
+
+
+def _read_cpu_file(path):
+    with open(path, encoding="utf-8") as cpu_file:
+        return cpu_file.read().strip()
 
 
 def fatal_error(message):
