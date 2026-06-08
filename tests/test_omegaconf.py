@@ -19,7 +19,12 @@ from kapitan.errors import InventoryError
 from kapitan.inventory import get_inventory_backend
 from kapitan.inventory.backends.omegaconf import OmegaConfInventory
 from kapitan.inventory.backends.omegaconf.migrate import migrate_dir, migrate_str
-from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
+from kapitan.inventory.backends.omegaconf.resolvers import (
+    LITERAL_MARKER_PREFIX,
+    LITERAL_MARKER_SUFFIX,
+    process_literals,
+    register_resolvers,
+)
 from kapitan.resources import get_inventory
 
 
@@ -161,6 +166,31 @@ class TestOmegaConfClassResolution(unittest.TestCase):
         self.assertEqual(resolved, os.path.join(classes_dir, "common.yml"))
 
         shutil.rmtree(temp_dir)
+
+
+class TestOmegaConfProcessLiterals(unittest.TestCase):
+    """Tests for escaped interpolation marker processing."""
+
+    def test_process_literals_preserves_unmodified_tree(self):
+        data = {"a": ["plain", {"nested": "value"}], "b": 1}
+
+        result = process_literals(data)
+
+        self.assertIs(result, data)
+        self.assertIs(result["a"], data["a"])
+        self.assertIs(result["a"][1], data["a"][1])
+
+    def test_process_literals_copies_only_changed_branches(self):
+        literal = f"prefix {LITERAL_MARKER_PREFIX}USER{LITERAL_MARKER_SUFFIX}"
+        unchanged = {"nested": "value"}
+        data = {"a": ["plain", literal], "b": unchanged}
+
+        result = process_literals(data)
+
+        self.assertIsNot(result, data)
+        self.assertIsNot(result["a"], data["a"])
+        self.assertIs(result["b"], unchanged)
+        self.assertEqual(result["a"][1], "prefix ${USER}")
 
 
 class TestOmegaConfInventoryMigrationTiming(unittest.TestCase):
