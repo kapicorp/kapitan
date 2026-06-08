@@ -34,10 +34,28 @@ def process_literals(obj):
     Converts __KAPITAN_LITERAL__content__KAPITAN_LITERAL_END__ back to ${content}.
     """
     if isinstance(obj, dict):
-        return {k: process_literals(v) for k, v in obj.items()}
+        result = None
+        for k, v in obj.items():
+            processed = process_literals(v)
+            if result is not None:
+                result[k] = processed
+            elif processed is not v:
+                result = dict(obj)
+                result[k] = processed
+        return obj if result is None else result
     if isinstance(obj, list):
-        return [process_literals(item) for item in obj]
+        result = None
+        for index, item in enumerate(obj):
+            processed = process_literals(item)
+            if result is not None:
+                result[index] = processed
+            elif processed is not item:
+                result = list(obj)
+                result[index] = processed
+        return obj if result is None else result
     if isinstance(obj, str):
+        if LITERAL_MARKER_PREFIX not in obj:
+            return obj
         return LITERAL_PATTERN.sub(r"${\1}", obj)
     return obj
 
