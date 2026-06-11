@@ -1081,6 +1081,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#wildcard-class-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wildcard class patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2783,6 +2794,131 @@ They are organised hierarchically in subfolders, and the way they can be importe
 <div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">applications.sock-shop</span>
 </code></pre></div>
+<h3 id="wildcard-class-patterns">Wildcard class patterns</h3>
+<p>Class entries may also be glob patterns that expand to the matching set of
+classes discovered under <code>inventory/classes/</code>. This avoids having to list
+each class individually when the set is large or grows over time
+(see <a href="https://github.com/kapicorp/kapitan/issues/1084">issue #1084</a>).</p>
+<div class="admonition warning">
+<p class="admonition-title">Opt-in required</p>
+<p>Wildcard expansion is <strong>disabled by default</strong>.  You must pass
+<code>--enable-class-wildcards</code> on the <code>kapitan compile</code> or <code>kapitan inventory</code>
+command (or set <code>enable-class-wildcards: true</code> under the
+<code>[inventory_backend]</code> section of <code>.kapitan</code>) to activate it.</p>
+<p>The flag is intentionally opt-in because inventories may contain glob
+metacharacters in class names for legitimate reasons — for example a class
+file literally named <code>config[html].yml</code>, or Reclass references that include
+<code>?</code> such as <code>${?some_parameter}</code>.  Without the flag those entries are passed
+through unchanged to the backend, which handles them normally.</p>
+</div>
+<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;*&quot;</span><span class="w">             </span><span class="c1"># all classes (top-level and nested) — quote required</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">clusters.*</span><span class="w">      </span><span class="c1"># all classes whose dotted name starts with &#39;clusters.&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">apps.dev-*</span><span class="w">      </span><span class="c1"># all classes under apps/ whose basename starts with &#39;dev-&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;*.dev-*&quot;</span><span class="w">       </span><span class="c1"># any class with a &#39;dev-...&#39; segment in any subdir</span>
+</code></pre></div>
+<p>Supported glob characters are <code>*</code>, <code>?</code>, <code>[</code> and <code>]</code> (standard
+<a href="https://docs.python.org/3/library/fnmatch.html"><code>fnmatch</code></a> syntax).</p>
+<p><strong>Pattern semantics:</strong></p>
+<ul>
+<li>Patterns are matched against the <strong>full dotted class name</strong> using
+  <code>fnmatch</code>. There is no special-case based on whether a pattern contains
+  <code>.</code>. For example, <code>dev-*</code> matches only top-level classes named
+  <code>dev-...</code>; to match <code>apps.dev-api</code> you must write <code>apps.dev-*</code> or
+  <code>*.dev-*</code>.</li>
+<li>Class entries that look like Reclass / Kapitan parameter references —
+  any string containing <code>${</code> and <code>}</code>, including <code>${var}</code> and <code>${?var}</code> —
+  are passed through to the backend unchanged, even if they contain a
+  glob metacharacter such as <code>?</code>. The wildcard expander cannot resolve
+  such references; the backend handles them after class inheritance.
+  Notably, this also means that pattern expansion isn't supported in
+  class includes that use Reclass references.</li>
+</ul>
+<p><strong>Exact-match precedence:</strong></p>
+<p>When <code>--enable-class-wildcards</code> is on, the expander first checks whether a
+<code>classes:</code> entry exactly matches an existing class name. If it does, the entry
+is treated as a literal include even if the name contains glob metacharacters.
+Only entries that do <strong>not</strong> match any existing class and that contain
+metacharacters are expanded as patterns.</p>
+<p>This means:</p>
+<ul>
+<li>A class file literally named <code>config[html].yml</code> can still be included with
+  <code>- config[html]</code>. It will be treated as an exact class name, not as a
+  character-class pattern.</li>
+<li>If you want <code>config[html]</code> to act as a pattern that matches <code>configh</code>,
+  <code>configt</code>, <code>configm</code>, <code>configl</code>, you would need to remove the literal class
+  file so there is no exact match.</li>
+</ul>
+<p><strong>Deterministic lexicographic ordering:</strong></p>
+<p>Each pattern expands to a <strong>lexicographically sorted</strong> list of matches at
+the position of the pattern in the <code>classes:</code> list, giving deterministic
+output.</p>
+<div class="admonition warning">
+<p class="admonition-title">Override order depends on class names</p>
+<p>Lexicographic order is deterministic but can be surprising.  For example,
+a pattern <code>*.base</code> that matches both <code>config.base</code> and <code>defaults.base</code>
+will always expand to <code>[config.base, defaults.base]</code> because <code>c &lt; d</code>.
+Whether <code>config.base</code> or <code>defaults.base</code> "wins" in a merge depends on the
+backend's evaluation order.</p>
+<p><strong>Adding a new class that matches an existing pattern can change the
+include order of previously matched classes.</strong>  For example, if you later
+add <code>alpha.base</code>, the expansion of <code>*.base</code> becomes
+<code>[alpha.base, config.base, defaults.base]</code>, shifting the indices of
+<code>config.base</code> and <code>defaults.base</code>.  If another part of your inventory
+depends on those indices (unlikely but possible with some backends), the
+behavior changes.</p>
+<p>When wildcard expansion order is critical, design class names carefully.
+A safe convention is to use <strong>numeric prefixes</strong> that sort in the desired
+precedence order:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app.00-defaults</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app.10-config</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app.90-overrides</span>
+</code></pre></div>
+<p>This ensures that <code>app.*</code> always expands in the intended order regardless
+of what other <code>app.*</code> classes are added later.</p>
+<p>Avoid wildcards when merge order is critical and you cannot control
+class naming conventions.</p>
+</div>
+<ul>
+<li>Duplicates (across exact entries and pattern expansions) are removed,
+  preserving the first occurrence.</li>
+<li>A pattern that matches <strong>no</strong> classes raises an inventory error, unless
+  <code>--ignore-class-not-found</code> is set, in which case the unmatched pattern is
+  silently dropped (mirroring the behavior of exact missing class names).</li>
+</ul>
+<p><strong>Symlink handling:</strong></p>
+<p>Wildcard expansion materializes a temporary copy of the inventory tree using
+<code>shutil.copytree(..., symlinks=True)</code>.  Symlinks that point to targets
+<strong>inside</strong> the inventory tree are preserved and resolve correctly.  Relative
+symlinks that point <strong>outside</strong> the inventory tree (a common pattern when
+pulling in external modules, e.g. with Commodore) are rewritten to absolute
+paths in the materialized copy so they continue to work.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>discover_classes</code> follows directory symlinks during class discovery, so
+classes inside symlinked directories are discoverable.  External directory
+symlinks are rewritten to absolute paths in the materialized copy, which
+also makes their contents discoverable.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title"><code>ignore_class_notfound_regexp</code> interaction</p>
+<p>Wildcard expansion happens before the inventory backend processes missing
+classes.  If you use <code>ignore_class_notfound_regexp</code> in your reclass
+configuration, the regex is evaluated against each <strong>expanded class name</strong>, not
+against the original pattern string.  If you rely on regex-based skipping of
+pattern-like entries, you may need to adjust your regex or use
+<code>--ignore-class-not-found</code> instead.</p>
+</div>
+<p>Wildcard expansion happens before the backend resolves inheritance, and works
+both in target files and in nested class files.</p>
+<p><strong>Backend-specific notes:</strong></p>
+<ul>
+<li>The omegaconf backend's class-file resolver currently only looks for <code>.yml</code>
+  files (a pre-existing limitation unrelated to wildcards).  Wildcard
+  expansion correctly discovers <code>.yaml</code> classes, but omegaconf will fail to
+  load them.</li>
+</ul>
 <h2 id="definition">Definition</h2>
 <p>Let's take a look at the <code>common</code> class which appears in the example above:</p>
 <p>As explained, because the <strong><code>common.yaml</code></strong> is directly under the <strong><code>inventory/classes</code></strong> subdirectory, it can be imported directly into a target with:</p>
