@@ -14,8 +14,11 @@ import stat
 import tempfile
 import unittest
 
+import yaml
+
 from kapitan.utils import (
     SafeCopyError,
+    YamlLoader,
     compare_versions,
     copy_tree,
     deep_get,
@@ -119,6 +122,25 @@ class CopyTreeTest(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
+
+
+class YamlLoaderValueTagTest(unittest.TestCase):
+    """Regression test for PyYAML ConstructorError on bare '=' (value tag).
+
+    https://github.com/kapicorp/kapitan/issues/1415
+    """
+
+    def test_bare_equal_sign(self):
+        result = yaml.load("=", Loader=YamlLoader)
+        self.assertEqual(result, "=")
+
+    def test_list_with_equal_sign(self):
+        result = yaml.load("- =", Loader=YamlLoader)
+        self.assertEqual(result, ["="])
+
+    def test_nested_equal_sign(self):
+        result = yaml.load("items:\n  - =", Loader=YamlLoader)
+        self.assertEqual(result, {"items": ["="]})
 
 
 class PruneEmptyTest(unittest.TestCase):
