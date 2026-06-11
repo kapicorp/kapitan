@@ -246,7 +246,7 @@ class OmegaConfInventory(Inventory):
         )
 
     def migrate(self):
-        migrate(self.inventory_path)
+        migrate(self.original_inventory_path)
 
     def resolve_targets(self, targets: list[OmegaConfTarget] = None) -> None:
         if not targets:
