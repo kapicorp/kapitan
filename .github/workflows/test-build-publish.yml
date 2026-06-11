@@ -150,7 +150,9 @@ jobs:
           verbose: true
           emoji: false
           job-summary: true
-          custom-pytest: mise exec -- uv run pytest -n auto
+          # pytest-xdist has known hangs/crashes on Python 3.14 (issue #1289/#1313);
+          # run serially on 3.14 until upstream fix is available.
+          custom-pytest: ${{ matrix.python-version == '3.14' && 'mise exec -- uv run pytest' || 'mise exec -- uv run pytest -n auto' }}
           custom-arguments: '-q'
           click-to-expand: true
           report-title: 'Kapitan tests'
