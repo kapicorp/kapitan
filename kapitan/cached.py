@@ -43,6 +43,7 @@ def reset_cache():
     global \
         inv, \
         global_inv, \
+        inventory_global_kadet, \
         inv_cache, \
         gpg_obj, \
         gkms_obj, \
@@ -51,10 +52,12 @@ def reset_cache():
         dot_kapitan, \
         ref_controller_obj, \
         revealer_obj, \
-        inv_sources
+        inv_sources, \
+        kapitan_input_kadet
 
     inv = {}
     global_inv = {}
+    inventory_global_kadet = {}
     inv_cache = {}
     inv_sources = set()
     gpg_obj = None
@@ -64,6 +67,7 @@ def reset_cache():
     dot_kapitan = {}
     ref_controller_obj = None
     revealer_obj = None
+    kapitan_input_kadet = None
 
 
 def from_dict(cache_dict: dict[str, Any]) -> None:

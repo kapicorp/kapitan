@@ -34,16 +34,21 @@ search_paths = contextvars.ContextVar("current search_paths in thread")
 current_target = contextvars.ContextVar("current target in thread")
 
 
-@cache
-def inventory_global(lazy=False):
+def _inventory_global(default_box=False):
     # At hoc inventory for kadet
-    if not cached.inventory_global_kadet:
-        cached.inventory_global_kadet = Dict(cached.global_inv, default_box=lazy)
-    return cached.inventory_global_kadet
+    if default_box not in cached.inventory_global_kadet:
+        cached.inventory_global_kadet[default_box] = Dict(
+            cached.global_inv, default_box=default_box
+        )
+    return cached.inventory_global_kadet[default_box]
+
+
+def inventory_global(lazy=True):
+    return _inventory_global(default_box=lazy)
 
 
 def inventory(lazy=False):
-    return inventory_global(lazy)[current_target.get()]
+    return _inventory_global(default_box=lazy)[current_target.get()]
 
 
 def topics(name=None, lazy=False):
