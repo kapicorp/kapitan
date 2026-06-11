@@ -1,0 +1,11 @@
+---
+parameters:
+  # Base list parameter
+  tags:
+    - base-tag
+    - common
+
+  # Another list for override demonstration
+  features:
+    - logging
+    - metrics
