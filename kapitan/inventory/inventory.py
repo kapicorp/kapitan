@@ -37,8 +37,24 @@ class Inventory(ABC):
         ignore_class_not_found=False,
         initialise=True,
         target_class=InventoryTarget,
+        enable_class_wildcards: bool = False,
     ):
-        self.inventory_path = inventory_path
+        # Pre-expand wildcard class entries (kapicorp/kapitan#1084) into a
+        # temporary mirror of the inventory tree so all backends see only
+        # concrete class names.  Expansion is opt-in (enable_class_wildcards
+        # defaults to False) to avoid breaking inventories that contain
+        # literal glob metacharacters in class names or Reclass references
+        # that happen to include ``?``.  The original path is preserved for
+        # callers that need to operate on the user's on-disk inventory (e.g.
+        # ``migrate()``).
+        from kapitan.inventory.wildcards import materialize_expanded_inventory
+
+        self.original_inventory_path = inventory_path
+        self.inventory_path = materialize_expanded_inventory(
+            inventory_path,
+            ignore_class_not_found=ignore_class_not_found,
+            enable_wildcards=enable_class_wildcards,
+        )
         self.compose_target_name = compose_target_name
         self.targets_path = os.path.join(self.inventory_path, "targets")
         self.classes_path = os.path.join(self.inventory_path, "classes")
