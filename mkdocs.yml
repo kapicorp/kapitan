@@ -21,6 +21,9 @@ site_description: "Kapitan is an open source configuration management tool for K
 # - robots.txt (in docs/robots.txt) allows all paths and references the
 #   generated sitemap.xml.
 strict: true
+validation:
+  links:
+    not_found: ignore  # example links in code blocks (jinja.md compiled-result) are not real doc pages
 plugins:
   - blog:
       archive: false
