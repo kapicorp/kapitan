@@ -41,10 +41,7 @@ def _gkms_client():
 
 
 def gkms_obj():
-    # cached.gkms_obj kept as a backward-compatible mirror (pool seeding,
-    # serialization); the memoized factory above is the source of truth.
-    cached.gkms_obj = _gkms_client()
-    return cached.gkms_obj
+    return _gkms_client()
 
 
 cached.register_handler_cache_clearer(_gkms_client.cache_clear)

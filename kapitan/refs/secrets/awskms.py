@@ -27,10 +27,7 @@ def _awskms_client():
 
 
 def awskms_obj():
-    # cached.awskms_obj kept as a backward-compatible mirror (pool seeding,
-    # serialization); the memoized factory above is the source of truth.
-    cached.awskms_obj = _awskms_client()
-    return cached.awskms_obj
+    return _awskms_client()
 
 
 cached.register_handler_cache_clearer(_awskms_client.cache_clear)
