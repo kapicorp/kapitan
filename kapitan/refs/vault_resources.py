@@ -50,6 +50,11 @@ class VaultClient(hvac.Client):
         self.env["token"] = token
 
     def read_token_from_file(self, token_file):
+        if os.path.islink(token_file):
+            raise VaultError(
+                f"Token file {token_file} is a symbolic link and will not be read"
+            )
+
         try:
             with open(token_file) as fp:
                 token = fp.read()

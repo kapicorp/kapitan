@@ -50,6 +50,16 @@ try:
 except ImportError:
     from yaml import SafeLoader as YamlLoader
 
+# PyYAML SafeLoader lacks constructor for 'tag:yaml.org,2002:value' (bare '=').
+# Some charts emit this, causing a ConstructorError. Treat it as a scalar string.
+# https://github.com/yaml/pyyaml/issues/89
+# https://github.com/kapicorp/kapitan/issues/1415
+for _YamlLoader in {YamlLoader, yaml.SafeLoader}:
+    _YamlLoader.add_constructor(
+        "tag:yaml.org,2002:value",
+        lambda loader, node: loader.construct_scalar(node),
+    )
+
 
 def fatal_error(message):
     "Logs error message, sys.exit(1)"
