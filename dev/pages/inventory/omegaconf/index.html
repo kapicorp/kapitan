@@ -1375,6 +1375,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#literal-output-with-escape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Literal ${...} Output with ${escape:...}
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3089,6 +3100,7 @@
 <li><strong>Second pass</strong>: Resolves previously escaped <code>\${...}</code> interpolations (now unescaped)</li>
 </ol>
 <p>This enables <strong>deferred evaluation</strong> - interpolations that resolve based on their final context after merging.</p>
+<p>Escaped <code>\${...}</code> values are not treated as literal output in this backend. They are unescaped after the first pass and resolved in the second pass. To emit a literal <code>${...}</code> string in compiled output, use the <code>${escape:...}</code> resolver.</p>
 <hr />
 <h2 id="installation">Installation</h2>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>kapitan<span class="o">[</span>omegaconf<span class="o">]</span>
@@ -3155,6 +3167,21 @@
 <span class="w">  </span><span class="nt">api-backend</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">api-backend</span><span class="w">       </span><span class="c1"># Resolved from \${parentkey:}</span>
 <span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">production</span>
+</code></pre></div></p>
+<hr />
+<h3 id="literal-output-with-escape">Literal <code>${...}</code> Output with <code>${escape:...}</code></h3>
+<p>Use the <code>escape</code> resolver when the compiled output must contain <code>${...}</code> syntax, for example Terraform references or shell variables. The escaped content is protected from both OmegaConf resolution passes.</p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">terraform_ref</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${escape:google_service_account.cluster.email}</span>
+<span class="w">  </span><span class="nt">shell_home</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${escape:HOME}</span>
+
+<span class="w">  </span><span class="c1"># Quote complex expressions so OmegaConf parses them as one resolver argument.</span>
+<span class="w">  </span><span class="nt">terraform_expression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${escape:&#39;var.foo == &quot;bar&quot; ? 1</span><span class="w"> </span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0&#39;}</span>
+</code></pre></div>
+<p><strong>Result:</strong>
+<div class="highlight"><pre><span></span><code><span class="nt">terraform_ref</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${google_service_account.cluster.email}</span>
+<span class="nt">shell_home</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${HOME}</span>
+<span class="nt">terraform_expression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${var.foo == &quot;bar&quot; ? 1</span><span class="w"> </span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0}</span>
 </code></pre></div></p>
 <hr />
 <h2 id="built-in-resolvers">Built-in Resolvers</h2>
@@ -3489,14 +3516,15 @@
 <td><code>${_kapitan_...}</code></td>
 </tr>
 <tr>
-<td><code>\${escaped}</code></td>
-<td><code>${tag:escaped}</code></td>
+<td><code>\${escaped}</code> used as literal output</td>
+<td><code>${escape:escaped}</code></td>
 </tr>
 </tbody>
 </table>
 <h3 id="manual-changes-may-be-needed">Manual Changes May Be Needed</h3>
 <ul>
 <li>Keys containing <code>.</code> (dots) need special handling with the <code>access</code> resolver</li>
+<li>Literal <code>${...}</code> output should use <code>${escape:...}</code>. Continue using <code>\${...}</code> only for deferred OmegaConf interpolation.</li>
 <li>Some reclass-specific features like <code>exports</code> are not yet supported</li>
 </ul>
 <hr />
