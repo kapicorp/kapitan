@@ -10,6 +10,35 @@
   - BEFORE: `parameters._reclass_.name.short = test`
   - AFTER: `parameters._reclass_.name.short = project`
 
+## 0.36.0
+
+### Features
+
+- Implement topics (#1466)
+- Deliver generators via OCI artifacts (#1425)
+- Allow git dependencies to be pinned to a tag or commit SHA (#1451)
+- Add CPU and memory profiling support (#1507)
+- Introduce rapidyaml emitter option (#1464)
+- Use mise for external dependencies (#1411)
+- Automated dev pre-releases to PyPI on merge to master (#1490)
+- Supply-chain metadata: CycloneDX SBOMs and SHA256 checksums on releases (#1453)
+
+### Fixes
+
+- omegaconf: resolve `--migrate` flag and `.yaml` class support (#1483)
+- Resolve high-priority B904, E722, DTZ005, DTZ007 ruff violations (#1461)
+
+### Performance
+
+- Seed inventory cache once per worker via Pool initializer (#1519)
+
+### Internal
+
+- Golden snapshots for all targets, fix mutable defaults, add linter unit tests (#1468)
+- Add auto-label workflow for PRs and stale triage for issues (#1505)
+- Align CI workflow filters; fix docs-only PRs blocking required checks (#1492, #1493)
+- Documentation: SEO foundation, landing pages, glossary, troubleshooting, ArgoCD/FluxCD guide, README and homepage refresh
+
 ## 0.30.0-rc.0
 
 - Helm binary support (KAP 09) (#701) special thanks @Jean-Daniel @sebradloff @srueg
