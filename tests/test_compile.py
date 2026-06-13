@@ -587,3 +587,29 @@ class CompileTestEmptyKapitanConfig(unittest.TestCase):
             finally:
                 os.chdir(original_dir)
                 reset_cache()
+
+    def test_unknown_requested_target_errors(self):
+        """Test that requesting a nonexistent target with -t fails instead of silently skipping"""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as test_dir:
+            inventory_dir = os.path.join(test_dir, "inventory")
+            os.makedirs(os.path.join(inventory_dir, "classes"), exist_ok=True)
+            os.makedirs(os.path.join(inventory_dir, "targets"), exist_ok=True)
+
+            with open(
+                os.path.join(inventory_dir, "targets", "real-target.yml"), "w"
+            ) as f:
+                f.write("parameters:\n  kapitan: {}")
+
+            original_dir = os.getcwd()
+            try:
+                os.chdir(test_dir)
+                reset_cache()
+                with self.assertRaises(SystemExit) as cm:
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        kapitan("compile", "-t", "does-not-exist")
+                self.assertEqual(cm.exception.code, 1)
+            finally:
+                os.chdir(original_dir)
+                reset_cache()

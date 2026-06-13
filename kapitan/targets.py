@@ -73,6 +73,15 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
     targets = args.targets or discovered_targets
     labels = args.labels
 
+    # fail fast on explicitly requested targets that don't exist (e.g. typos),
+    # rather than silently skipping them later
+    if args.targets:
+        unknown_targets = [t for t in args.targets if t not in discovered_targets]
+        if unknown_targets:
+            raise CompileError(
+                f"Targets not found in inventory: {', '.join(sorted(unknown_targets))}"
+            )
+
     try:
         targets = search_targets(inventory, targets, labels)
 
@@ -183,8 +192,8 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
             else:
                 [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
-            # Only copy compiled outputs if there were targets to compile
-            if target_objs and os.path.exists(temp_compile_path):
+            # Only copy compiled outputs if anything was actually compiled
+            if os.path.exists(temp_compile_path):
                 os.makedirs(compile_path, exist_ok=True)
 
                 # if '-t' is set on compile or only a few changed, only override selected targets
@@ -261,11 +270,8 @@ def load_target_inventory(inventory, requested_targets, ignore_class_not_found=F
                 )
                 continue
 
-            # check if parameters.kapitan.compile exists and is not empty
-            if (
-                not hasattr(kapitan_target_configs, "compile")
-                or not kapitan_target_configs.compile
-            ):
+            # check if parameters.kapitan.compile is empty
+            if not kapitan_target_configs.compile:
                 logger.info(
                     f"Skipping target {target_name}: no kapitan.compile configuration"
                 )
