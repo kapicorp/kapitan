@@ -373,48 +373,56 @@ def generate_inventory(args):
         raise
 
 
-def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inventory:
+def get_inventory(
+    inventory_path,
+    ignore_class_not_found: bool = False,
+    *,
+    backend_id=None,
+    compose_target_name=None,
+    migrate=None,
+    enable_class_wildcards=None,
+) -> Inventory:
     """
     generic inventory function that makes inventory backend pluggable
     default backend is reclass
+
+    Backend selection and rendering flags may be passed explicitly. When left
+    as None they fall back to the parsed CLI args in ``kapitan.cached.args`` so
+    existing call sites keep working; library callers can pass them directly
+    and avoid depending on the global cache.
     """
 
     # if inventory is already cached there is nothing to do
     if cached.inv and cached.inv.targets:
         return cached.inv
 
-    compose_target_name = (
-        hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
-    )
-    if hasattr(cached.args, "compose_node_name") and cached.args.compose_node_name:
-        logger.warning(
-            "inventory flag '--compose-node-name' is deprecated and scheduled to be dropped with the next release. "
-            "Please use '--compose-target-name' instead."
-        )
-        compose_target_name = True
+    # fall back to CLI args when a flag is not passed explicitly
+    if backend_id is None:
+        backend_id = getattr(cached.args, "inventory_backend", False)
+    if compose_target_name is None:
+        compose_target_name = getattr(cached.args, "compose_target_name", False)
+        if getattr(cached.args, "compose_node_name", False):
+            logger.warning(
+                "inventory flag '--compose-node-name' is deprecated and scheduled to be dropped with the next release. "
+                "Please use '--compose-target-name' instead."
+            )
+            compose_target_name = True
+    if migrate is None:
+        migrate = getattr(cached.args, "migrate", False)
+    if enable_class_wildcards is None:
+        enable_class_wildcards = getattr(cached.args, "enable_class_wildcards", False)
 
-    # select inventory backend
-    backend_id = (
-        hasattr(cached.args, "inventory_backend") and cached.args.inventory_backend
-    )
-    compose_target_name = (
-        hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
-    )
     backend = get_inventory_backend(backend_id)
 
     # migrate inventory to selected inventory backend BEFORE instantiating,
     # because the constructor renders the inventory which would fail on
     # un-migrated syntax.
-    if hasattr(cached.args, "migrate") and cached.args.migrate:
+    if migrate:
         migrator = backend(inventory_path=inventory_path, initialise=False)
         migrator.migrate()
 
     logger.debug(f"Using {backend.__name__} as inventory backend")
     try:
-        enable_class_wildcards = (
-            hasattr(cached.args, "enable_class_wildcards")
-            and cached.args.enable_class_wildcards
-        )
         inventory_backend = backend(
             inventory_path=inventory_path,
             compose_target_name=compose_target_name,
