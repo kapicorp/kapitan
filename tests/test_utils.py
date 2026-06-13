@@ -16,7 +16,9 @@ import unittest
 
 import yaml
 
+from kapitan import cached
 from kapitan.utils import (
+    PrettyDumper,
     SafeCopyError,
     YamlLoader,
     compare_versions,
@@ -364,6 +366,40 @@ class GetEntropyTest(unittest.TestCase):
         # Counter("") is empty, so the generator produces no values
         # and sum([]) returns 0. round(0, 2) == 0.
         self.assertEqual(get_entropy(""), 0)
+
+
+class NullPresenterTest(unittest.TestCase):
+    """Characterization of null_presenter / --yaml-dump-null-as-empty.
+
+    Pins current behavior so the planned move of null_presenter off the
+    cached.args global (reading the flag as an explicit param instead) cannot
+    silently change output. This locks behavior, not correctness — issue #1396
+    is out of scope here.
+    """
+
+    def setUp(self):
+        from argparse import Namespace
+
+        self._saved_args = cached.args
+        cached.args = Namespace()
+
+    def tearDown(self):
+        cached.args = self._saved_args
+
+    def _dump(self, data):
+        return yaml.dump(data, Dumper=PrettyDumper, default_flow_style=False)
+
+    def test_null_as_empty_true_omits_value(self):
+        cached.args.yaml_dump_null_as_empty = True
+        self.assertEqual(self._dump({"a": None, "b": 1}), "a:\nb: 1\n")
+
+    def test_null_as_empty_false_emits_null(self):
+        cached.args.yaml_dump_null_as_empty = False
+        self.assertEqual(self._dump({"a": None, "b": 1}), "a: null\nb: 1\n")
+
+    def test_flag_absent_defaults_to_null(self):
+        # attribute missing entirely -> getattr default False path
+        self.assertEqual(self._dump({"a": None}), "a: null\n")
 
 
 class CompareVersionsTest(unittest.TestCase):
