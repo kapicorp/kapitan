@@ -51,27 +51,35 @@ jobs:
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Detected version: ${VERSION}"
+      - name: Stage release artifacts
+        run: |
+          # Keep dist/ pristine (wheel + sdist only) so the PyPI publish step,
+          # which uploads everything in dist/, is not fed non-distribution
+          # files (SBOM, SHA256SUMS) that twine rejects. Release-only extras
+          # live in release/ alongside copies of the distributions.
+          mkdir -p release
+          cp dist/kapitan-*.whl dist/kapitan-*.tar.gz release/
       - name: Generate SBOM
         timeout-minutes: 10
         run: |
-          scripts/generate_sbom.sh "${{ steps.version.outputs.version }}" dist
+          scripts/generate_sbom.sh "${{ steps.version.outputs.version }}" release
       - name: Generate SHA256 checksums
         timeout-minutes: 5
         run: |
-          scripts/generate_checksums.sh dist dist/SHA256SUMS
+          scripts/generate_checksums.sh release release/SHA256SUMS
       - name: Validate checksums
         timeout-minutes: 5
         run: |
-          (cd dist && sha256sum -c SHA256SUMS)
+          (cd release && sha256sum -c SHA256SUMS)
       - name: Upload release artifacts
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
         with:
           files: |
-            dist/kapitan-*.whl
-            dist/kapitan-*.tar.gz
-            dist/kapitan-${{ steps.version.outputs.version }}.python.sbom.cdx.json
-            dist/SHA256SUMS
+            release/kapitan-*.whl
+            release/kapitan-*.tar.gz
+            release/kapitan-${{ steps.version.outputs.version }}.python.sbom.cdx.json
+            release/SHA256SUMS
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
