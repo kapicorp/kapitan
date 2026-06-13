@@ -2997,7 +2997,8 @@ options:
 <span class="w">  </span>--validate<span class="w">            </span>validate<span class="w"> </span>compile<span class="w"> </span>output<span class="w"> </span>against<span class="w"> </span>schemas<span class="w"> </span>as<span class="w"> </span>specified
 <span class="w">                        </span><span class="k">in</span><span class="w"> </span>inventory
 <span class="w">  </span>--parallelism<span class="w"> </span>INT,<span class="w"> </span>-p<span class="w"> </span>INT
-<span class="w">                        </span>Number<span class="w"> </span>of<span class="w"> </span>concurrent<span class="w"> </span>compile<span class="w"> </span>processes,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="m">4</span>
+<span class="w">                        </span>Number<span class="w"> </span>of<span class="w"> </span>concurrent<span class="w"> </span>compile<span class="w"> </span>processes,<span class="w"> </span>default<span class="w"> </span>is
+<span class="w">                        </span>min<span class="o">(</span>len<span class="o">(</span>targets<span class="o">)</span>,<span class="w"> </span>available<span class="w"> </span>CPU<span class="w"> </span>count<span class="o">)</span>
 <span class="w">  </span>--indent<span class="w"> </span>INT,<span class="w"> </span>-i<span class="w"> </span>INT<span class="w">  </span>Indentation<span class="w"> </span>spaces<span class="w"> </span><span class="k">for</span><span class="w"> </span>YAML/JSON,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="m">2</span>
 <span class="w">  </span>--refs-path<span class="w"> </span>REFS_PATH
 <span class="w">                        </span><span class="nb">set</span><span class="w"> </span>refs<span class="w"> </span>path,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="s2">&quot;./refs&quot;</span>
