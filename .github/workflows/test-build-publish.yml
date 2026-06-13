@@ -62,7 +62,10 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       has-docs-changes: ${{ steps.filter.outputs.docs }}
-      has-code-changes: ${{ steps.filter.outputs.code }}
+      # On a release event the tag rides on top of master, so paths-filter diffs an
+      # empty range (master...tag) and reports no code changes. Force-enable the code
+      # path on releases so the docker build/push and multi-arch manifest always run.
+      has-code-changes: ${{ steps.filter.outputs.code == 'true' || github.event_name == 'release' }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
