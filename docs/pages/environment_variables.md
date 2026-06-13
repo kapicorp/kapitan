@@ -44,15 +44,3 @@ The `env` reference backend resolves `?{env:...}` references from the environmen
 
 For example, the reference `?{env:mysql_port}` is revealed from `KAPITAN_VAR_mysql_port`
 (or `KAPITAN_VAR_MYSQL_PORT`).
-
-## Profiling (advanced)
-
-These are normally set **automatically** by Kapitan from the `--profile*` flags to
-propagate profiling configuration to pool workers — you do not usually set them by
-hand. See [Profiling](profiling.md).
-
-| Variable | Default | When it applies | Description |
-| --- | --- | --- | --- |
-| `KAPITAN_PROFILE_WORKERS_DIR` | unset (disabled) | compile (workers) | Output directory for per-worker profiles. When unset, worker profiling is disabled. |
-| `KAPITAN_PROFILE_WORKERS_FORMAT` | `html` | compile (workers) | Profile output format: `html`, `text`, `json`, or `speedscope`. |
-| `KAPITAN_PROFILE_WORKERS_INTERVAL` | `0.001` | compile (workers) | Sampling interval, in seconds. |
