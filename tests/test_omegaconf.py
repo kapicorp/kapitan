@@ -12,11 +12,14 @@ import os
 import shutil
 import tempfile
 import unittest
+from collections import Counter
+from unittest import mock
 
 from kapitan import cached
 from kapitan.cached import reset_cache
 from kapitan.errors import InventoryError
 from kapitan.inventory import get_inventory_backend
+from kapitan.inventory.backends import omegaconf as omegaconf_backend
 from kapitan.inventory.backends.omegaconf import OmegaConfInventory
 from kapitan.inventory.backends.omegaconf.migrate import migrate_dir, migrate_str
 from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
@@ -161,6 +164,134 @@ class TestOmegaConfClassResolution(unittest.TestCase):
         self.assertEqual(resolved, os.path.join(classes_dir, "common.yml"))
 
         shutil.rmtree(temp_dir)
+
+
+class TestOmegaConfInventoryPerformance(unittest.TestCase):
+    """Tests for OmegaConf inventory rendering optimisations."""
+
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.inventory_path = os.path.join(self.temp_dir, "inventory")
+        self.classes_dir = os.path.join(self.inventory_path, "classes")
+        self.targets_dir = os.path.join(self.inventory_path, "targets")
+        os.makedirs(self.classes_dir)
+        os.makedirs(self.targets_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+        OmegaConfInventory.load_file.cache_clear()
+        OmegaConfInventory.resolve_class_file_path.cache_clear()
+        OmegaConfInventory.get_class_config.cache_clear()
+        OmegaConfInventory._instance = None
+
+    def write_inventory(self):
+        with open(os.path.join(self.classes_dir, "common.yml"), "w") as f:
+            f.write(
+                "parameters:\n"
+                "  shared:\n"
+                "    owner: ${target_specific}\n"
+                "    items:\n"
+                "      - common\n"
+            )
+
+        for target_name in ("one", "two"):
+            with open(os.path.join(self.targets_dir, f"{target_name}.yml"), "w") as f:
+                f.write(
+                    "classes:\n"
+                    "  - common\n"
+                    "parameters:\n"
+                    f"  target_specific: {target_name}\n"
+                    "  shared:\n"
+                    "    items:\n"
+                    f"      - {target_name}\n"
+                )
+
+    def make_inventory(self):
+        inventory = OmegaConfInventory(
+            inventory_path=self.inventory_path, initialise=False
+        )
+        inventory.targets = {
+            target_name: inventory.target_class(
+                name=target_name, path=f"{target_name}.yml"
+            )
+            for target_name in ("one", "two")
+        }
+        return inventory
+
+    def test_render_targets_uses_worker_returns_without_manager(self):
+        """Rendered targets should be returned from workers, not stored via Manager."""
+        self.write_inventory()
+        inventory = self.make_inventory()
+
+        class RecordingPool:
+            instances = []
+
+            def __init__(self, processes, initializer=None, initargs=()):
+                self.processes = processes
+                self.initializer = initializer
+                self.initargs = initargs
+                self.received_targets = []
+                self.chunksize = None
+                RecordingPool.instances.append(self)
+
+            def __enter__(self):
+                self.initializer(*self.initargs)
+                return self
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                return False
+
+            def imap_unordered(self, worker, iterable, chunksize=1):
+                self.received_targets = list(iterable)
+                self.chunksize = chunksize
+                for target in reversed(self.received_targets):
+                    yield worker(target)
+
+        with (
+            mock.patch.object(
+                omegaconf_backend.mp,
+                "Manager",
+                side_effect=AssertionError("mp.Manager should not be used"),
+            ),
+            mock.patch.object(omegaconf_backend, "available_cpu_count", return_value=2),
+            mock.patch.object(omegaconf_backend.mp, "Pool", RecordingPool),
+        ):
+            inventory.render_targets(inventory.targets)
+
+        pool = RecordingPool.instances[0]
+        self.assertEqual(pool.processes, 2)
+        self.assertIs(pool.initargs[0], inventory)
+        self.assertEqual([target.name for target in pool.received_targets], ["one", "two"])
+        self.assertGreaterEqual(pool.chunksize, 1)
+        self.assertEqual(inventory.targets["one"].parameters.shared["owner"], "one")
+        self.assertEqual(inventory.targets["two"].parameters.shared["owner"], "two")
+
+    def test_shared_class_config_is_cached_and_resolves_per_target(self):
+        """Shared class trees should be loaded once without sharing resolved state."""
+        self.write_inventory()
+        inventory = self.make_inventory()
+        common_file = os.path.join(self.classes_dir, "common.yml")
+        calls = Counter()
+        original_load_parameters_from_file = inventory.load_parameters_from_file
+
+        def counting_load_parameters_from_file(filename, parameters=None):
+            calls[filename] += 1
+            return original_load_parameters_from_file(filename, parameters=parameters)
+
+        inventory.load_parameters_from_file = counting_load_parameters_from_file
+
+        inventory.load_target(inventory.targets["one"])
+        inventory.load_target(inventory.targets["two"])
+
+        self.assertEqual(calls[common_file], 1)
+        self.assertEqual(inventory.targets["one"].parameters.shared["owner"], "one")
+        self.assertEqual(inventory.targets["two"].parameters.shared["owner"], "two")
+        self.assertEqual(
+            inventory.targets["one"].parameters.shared["items"], ["common", "one"]
+        )
+        self.assertEqual(
+            inventory.targets["two"].parameters.shared["items"], ["common", "two"]
+        )
 
 
 class TestOmegaConfInventoryMigrationTiming(unittest.TestCase):
