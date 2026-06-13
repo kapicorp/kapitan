@@ -1,3 +1,8 @@
+---
+title: "Kapitan Advanced Inventory: Labels and Backends"
+description: "Discover advanced Kapitan inventory features such as target labels and selectors to group, filter, and organize your targets."
+---
+
 # Advanced Inventory Features
 
 ## Target labels

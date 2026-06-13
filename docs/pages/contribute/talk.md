@@ -1,3 +1,8 @@
+---
+title: "Talk About Kapitan and Spread the Word"
+description: "Help promote Kapitan by starring it, sharing the website, writing blog posts, and spreading the word across your network."
+---
+
 # :kapitan-logo: **Talk about Kapitan**
 
 Our project needs your support to get noticed! Please let everyone know that you are using **Kapitan**
