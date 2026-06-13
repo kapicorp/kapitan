@@ -8,7 +8,7 @@ name: Publish Dev Pre-release to PyPI
 # For stable releases, see: python-pypi-publish.yml
 
 concurrency:
-  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
   cancel-in-progress: true
 
 on:
@@ -46,7 +46,7 @@ jobs:
       - name: Build and check
         run: |
           uv build
-          uvx twine check dist/*
+          uvx twine check dist/*.whl dist/*.tar.gz
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
