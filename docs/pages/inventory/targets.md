@@ -1,4 +1,3 @@
-
 ---
 title: "Kapitan Inventory Targets: Defining Environments and Deployments"
 description: "Learn how to define Kapitan targets for production, staging, and development. Organize targets hierarchically and compile environment-specific configuration."
