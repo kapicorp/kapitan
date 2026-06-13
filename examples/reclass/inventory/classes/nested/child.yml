@@ -1,0 +1,7 @@
+---
+classes:
+  - nested
+
+parameters:
+  child_value: from_child
+  child_override: base

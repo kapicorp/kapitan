@@ -128,28 +128,29 @@ class Kadet(InputType):
         Write the kadet evaluated items as files to compile_path.  External variables are not used in Kadet.
         """
 
-        input_params = config.input_params
+        input_params = dict(config.input_params)
         target_name = self.target_name
         current_target.set(target_name)
         search_paths.set(self.search_paths)
         inputs_hash = None
         output_obj = None
 
+        # set compile_path allowing kadet functions to have context on where files
+        # are being compiled on the current kapitan run
+        # we only do this if user didn't pass its own value
+        input_params.setdefault("compile_path", compile_path)
+
         if cache_obj := self.cacheable():
             inputs_hash = self.inputs_hash(
                 inventory_digest(current_target.get()),
                 target_name,
                 Path(input_path),
+                input_params,
             )
 
             output_obj = cache_obj.get(inputs_hash)
 
         if output_obj is None:
-            # set compile_path allowing kadet functions to have context on where files
-            # are being compiled on the current kapitan run
-            # we only do this if user didn't pass its own value
-            input_params.setdefault("compile_path", compile_path)
-
             kadet_module, spec = module_from_path(input_path)
             sys.modules[spec.name] = kadet_module
             spec.loader.exec_module(kadet_module)

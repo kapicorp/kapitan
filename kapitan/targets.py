@@ -28,6 +28,23 @@ from kapitan.resources import get_inventory
 logger = logging.getLogger(__name__)
 
 
+def _pool_init(globals_cached):
+    """Pool initializer: seed each worker's `cached` module from the parent.
+
+    Called once per worker after fork/spawn. ``initargs`` is pickled once per
+    worker process, so the inventory snapshot is paid for at most once per
+    worker rather than once per task.
+
+    On fork the parent's state is already inherited via copy-on-write so the
+    restore is skipped; on spawn the worker's `cached` is empty and gets
+    populated from the snapshot. When ``--inventory-pool-cache=False``
+    (``globals_cached is None``), workers keep whatever state they inherited
+    (the full cache on fork, an empty module on spawn).
+    """
+    if globals_cached and not cached.inv:
+        cached.from_dict(globals_cached)
+
+
 def compile_targets(inventory_path, search_paths, ref_controller, args):
     """
     Searches and loads target files, and runs compile_target() on a
@@ -103,41 +120,50 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
     output_path = args.output_path
     compile_path = os.path.join(output_path, "compiled")
 
-    with multiprocessing.Pool(parallelism) as pool:
-        try:
-            fetching_start = time.time()
+    try:
+        fetching_start = time.time()
 
-            # fetch dependencies
-            if fetch:
+        # fetch dependencies on a short-lived pool: it doesn't read worker-side
+        # `cached` state, so it doesn't need the inventory snapshot
+        fetch_targets = None
+        if fetch:
+            fetch_targets = (target_objs, force_fetch)
+        elif not force_fetch:
+            fetch_objs = [
+                target
+                for target in target_objs
+                for entry in target.dependencies
+                if entry.force_fetch
+            ]
+            if fetch_objs:
+                fetch_targets = (fetch_objs, True)
+
+        if fetch_targets is not None:
+            with multiprocessing.Pool(parallelism) as fetch_pool:
                 fetch_dependencies(
-                    output_path, target_objs, dep_cache_dir, force_fetch, pool
+                    output_path,
+                    fetch_targets[0],
+                    dep_cache_dir,
+                    fetch_targets[1],
+                    fetch_pool,
                 )
-            # fetch targets which have force_fetch: true
-            elif not force_fetch:
-                fetch_objs = []
-                # iterate through targets
-                for target in target_objs:
-                    for entry in target.dependencies:
-                        force_fetch = entry.force_fetch
-                        if entry.force_fetch:
-                            fetch_objs.append(target)
+            logger.info("Fetched dependencies (%.2fs)", time.time() - fetching_start)
 
-                # fetch dependencies from targets with force_fetch set to true
-                if fetch_objs:
-                    fetch_dependencies(
-                        output_path, fetch_objs, dep_cache_dir, True, pool
-                    )
-                    logger.info(
-                        "Fetched dependencies (%.2fs)", time.time() - fetching_start
-                    )
+        # snapshot `cached` once and pass it to the compile pool via
+        # initargs so each worker is seeded a single time. Per-target
+        # mutations (e.g. target_full_path) travel with the target object
+        # itself via imap_unordered.
+        pool_initargs = (cached.as_dict() if args.inventory_pool_cache else None,)
 
+        with multiprocessing.Pool(
+            parallelism, initializer=_pool_init, initargs=pool_initargs
+        ) as pool:
             compile_start = time.time()
             worker = partial(
                 compile_target,
                 search_paths=search_paths,
                 compile_path=temp_compile_path,
                 ref_controller=ref_controller,
-                globals_cached=cached.as_dict() if args.inventory_pool_cache else None,
                 args=args,
             )
 
@@ -185,30 +211,27 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                 f"Compiled {len(target_objs)} targets in %.2fs",
                 time.time() - compile_start,
             )
-        except ReclassException as e:
-            if isinstance(e, NotFoundError):
-                logger.error("Inventory reclass error: inventory not found")
-            else:
-                logger.error("Inventory reclass error: %s", e.message)
-            raise InventoryError(e.message) from e
-        except Exception as e:
-            # if compile worker fails, terminate immediately
-            pool.terminate()
-            logger.debug("Compile pool terminated")
-            # only print traceback for errors we don't know about
-            if not isinstance(e, KapitanError):
-                logger.exception("\nUnknown (Non-Kapitan) error occurred:\n")
+    except ReclassException as e:
+        if isinstance(e, NotFoundError):
+            logger.error("Inventory reclass error: inventory not found")
+        else:
+            logger.error("Inventory reclass error: %s", e.message)
+        raise InventoryError(e.message) from e
+    except Exception as e:
+        # only print traceback for errors we don't know about
+        if not isinstance(e, KapitanError):
+            logger.exception("\nUnknown (Non-Kapitan) error occurred:\n")
 
-            logger.error("\n")
-            if args.verbose:
-                logger.exception(e)
-            else:
-                logger.error(e)
-            raise CompileError(f"Error compiling targets: {e}") from e
+        logger.error("\n")
+        if args.verbose:
+            logger.exception(e)
+        else:
+            logger.error(e)
+        raise CompileError(f"Error compiling targets: {e}") from e
 
-        finally:
-            shutil.rmtree(temp_path)
-            logger.debug("Removed %s", temp_path)
+    finally:
+        shutil.rmtree(temp_path)
+        logger.debug("Removed %s", temp_path)
 
 
 def load_target_inventory(inventory, requested_targets, ignore_class_not_found=False):
@@ -303,9 +326,7 @@ def search_targets(inventory, targets, labels):
     return targets_found
 
 
-def compile_target(
-    target_config, search_paths, compile_path, ref_controller, args, globals_cached=None
-):
+def compile_target(target_config, search_paths, compile_path, ref_controller, args):
     """Compiles target_obj and writes to compile_path"""
     # worker_profile() is a no-op unless the parent set the
     # KAPITAN_PROFILE_WORKERS_DIR env var (i.e. user passed --profile-workers).
@@ -316,20 +337,15 @@ def compile_target(
             compile_path,
             ref_controller,
             args,
-            globals_cached,
         )
 
 
 def _compile_target_impl(
-    target_config, search_paths, compile_path, ref_controller, args, globals_cached=None
+    target_config, search_paths, compile_path, ref_controller, args
 ):
     start = time.time()
     compile_configs = target_config.compile
     target_name = target_config.vars.target
-
-    # Only populates the cache if the subprocess doesn't have it
-    if globals_cached and not cached.inv:
-        cached.from_dict(globals_cached)
 
     for compile_config in compile_configs:
         try:

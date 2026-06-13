@@ -1,0 +1,22 @@
+---
+parameters:
+  omegaconf:
+    remove:
+      - base_component
+      - service_defaults
+      - deployment_defaults
+
+  base_component:
+    name: base
+    namespace: ${namespace}
+    labels:
+      app: base-app
+
+  service_defaults:
+    type: ClusterIP
+    port: 80
+
+  deployment_defaults:
+    replicas: 1
+    strategy:
+      type: RollingUpdate
