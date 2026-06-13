@@ -26,6 +26,7 @@ from kapitan.cached import reset_cache
 from kapitan.cli import main as kapitan
 from kapitan.inventory import InventoryBackends
 from kapitan.utils import directory_hash
+from tests.test_helpers import create_test_inventory
 
 
 logger = logging.getLogger(__name__)
@@ -482,134 +483,65 @@ class TomlOutputTest(unittest.TestCase):
         reset_cache()
 
 
+@pytest.mark.usefixtures("isolated_compile_dir")
 class CompileTestEmptyKapitanConfig(unittest.TestCase):
-    """Test for issue #1379: misleading error when parameters.kapitan.compile is missing"""
+    """Issue #1379: targets without a kapitan.compile config are skipped, not errored."""
 
     def test_missing_compile_config_no_error(self):
-        """Test that targets without compile configuration are skipped gracefully without FileNotFoundError"""
-        import tempfile
+        # empty kapitan and a kapitan without a compile key are both skipped silently
+        create_test_inventory(
+            os.getcwd(),
+            {
+                "empty-kapitan": {"parameters": {"kapitan": {}}},
+                "no-compile-key": {
+                    "parameters": {"kapitan": {"vars": {"target": "no-compile-key"}}}
+                },
+            },
+        )
+        with contextlib.redirect_stdout(io.StringIO()):
+            kapitan("compile")
 
-        test_configs = [
-            ("empty-kapitan", "parameters:\n  kapitan: {}"),
-            (
-                "no-compile-key",
-                "parameters:\n  kapitan:\n    vars:\n      target: test-target",
-            ),
-        ]
-
-        for target_name, target_config in test_configs:
-            with self.subTest(config=target_name):
-                with tempfile.TemporaryDirectory() as test_dir:
-                    inventory_dir = os.path.join(test_dir, "inventory")
-                    os.makedirs(os.path.join(inventory_dir, "classes"), exist_ok=True)
-                    os.makedirs(os.path.join(inventory_dir, "targets"), exist_ok=True)
-
-                    # Create target with the config
-                    with open(
-                        os.path.join(inventory_dir, "targets", "test-target.yml"), "w"
-                    ) as f:
-                        f.write(target_config)
-
-                    original_dir = os.getcwd()
-                    try:
-                        os.chdir(test_dir)
-                        reset_cache()
-                        # Should complete without errors, just skip the target
-                        with contextlib.redirect_stdout(io.StringIO()):
-                            kapitan("compile")
-
-                        # Verify no target directory was compiled
-                        compiled_dir = os.path.join(test_dir, "compiled")
-                        if os.path.exists(compiled_dir):
-                            self.assertFalse(
-                                os.path.exists(
-                                    os.path.join(compiled_dir, "test-target")
-                                )
-                            )
-                    finally:
-                        os.chdir(original_dir)
-                        reset_cache()
+        self.assertFalse(os.path.exists(os.path.join("compiled", "empty-kapitan")))
+        self.assertFalse(os.path.exists(os.path.join("compiled", "no-compile-key")))
 
     def test_mixed_targets_compile_only_valid(self):
-        """Test that when mixing valid and invalid targets, only valid ones are compiled"""
-        import tempfile
+        # only the target carrying a compile config is rendered
+        create_test_inventory(
+            os.getcwd(),
+            {
+                "no-compile": {"parameters": {"kapitan": {}}},
+                "with-compile": {
+                    "parameters": {
+                        "kapitan": {
+                            "vars": {"target": "with-compile"},
+                            "compile": [
+                                {
+                                    "output_path": ".",
+                                    "input_type": "copy",
+                                    "input_paths": [
+                                        "inventory/targets/with-compile.yml"
+                                    ],
+                                }
+                            ],
+                        }
+                    }
+                },
+            },
+        )
+        with contextlib.redirect_stdout(io.StringIO()):
+            kapitan("compile")
 
-        with tempfile.TemporaryDirectory() as test_dir:
-            inventory_dir = os.path.join(test_dir, "inventory")
-            os.makedirs(os.path.join(inventory_dir, "classes"), exist_ok=True)
-            os.makedirs(os.path.join(inventory_dir, "targets"), exist_ok=True)
-
-            # Create target WITHOUT compile config
-            with open(
-                os.path.join(inventory_dir, "targets", "no-compile.yml"), "w"
-            ) as f:
-                f.write("parameters:\n  kapitan: {}")
-
-            # Create target WITH compile config
-            with open(
-                os.path.join(inventory_dir, "targets", "with-compile.yml"), "w"
-            ) as f:
-                f.write("""parameters:
-  kapitan:
-    vars:
-      target: with-compile
-    compile:
-      - output_path: .
-        input_type: copy
-        input_paths:
-          - inventory/targets/with-compile.yml
-""")
-
-            original_dir = os.getcwd()
-            try:
-                os.chdir(test_dir)
-                reset_cache()
-                # Should compile only the valid target
-                with contextlib.redirect_stdout(io.StringIO()):
-                    kapitan("compile")
-
-                # Verify only with-compile was compiled
-                compiled_dir = os.path.join(test_dir, "compiled")
-                self.assertTrue(os.path.exists(compiled_dir))
-                self.assertTrue(
-                    os.path.exists(os.path.join(compiled_dir, "with-compile"))
-                )
-                self.assertFalse(
-                    os.path.exists(os.path.join(compiled_dir, "no-compile"))
-                )
-
-                # Verify the file was actually compiled
-                self.assertTrue(
-                    os.path.exists(
-                        os.path.join(compiled_dir, "with-compile", "with-compile.yml")
-                    )
-                )
-            finally:
-                os.chdir(original_dir)
-                reset_cache()
+        self.assertTrue(
+            os.path.exists(os.path.join("compiled", "with-compile", "with-compile.yml"))
+        )
+        self.assertFalse(os.path.exists(os.path.join("compiled", "no-compile")))
 
     def test_unknown_requested_target_errors(self):
-        """Test that requesting a nonexistent target with -t fails instead of silently skipping"""
-        import tempfile
-
-        with tempfile.TemporaryDirectory() as test_dir:
-            inventory_dir = os.path.join(test_dir, "inventory")
-            os.makedirs(os.path.join(inventory_dir, "classes"), exist_ok=True)
-            os.makedirs(os.path.join(inventory_dir, "targets"), exist_ok=True)
-
-            with open(
-                os.path.join(inventory_dir, "targets", "real-target.yml"), "w"
-            ) as f:
-                f.write("parameters:\n  kapitan: {}")
-
-            original_dir = os.getcwd()
-            try:
-                os.chdir(test_dir)
-                reset_cache()
-                with self.assertRaises(SystemExit) as cm:
-                    with contextlib.redirect_stdout(io.StringIO()):
-                        kapitan("compile", "-t", "does-not-exist")
-                self.assertEqual(cm.exception.code, 1)
-            finally:
-                os.chdir(original_dir)
-                reset_cache()
+        # requesting a nonexistent target with -t fails instead of silently skipping
+        create_test_inventory(
+            os.getcwd(), {"real-target": {"parameters": {"kapitan": {}}}}
+        )
+        with self.assertRaises(SystemExit) as cm:
+            with contextlib.redirect_stdout(io.StringIO()):
+                kapitan("compile", "-t", "does-not-exist")
+        self.assertEqual(cm.exception.code, 1)
