@@ -92,87 +92,84 @@ class Kustomize(InputType):
                 f"Input path {input_path} must be a directory containing a kustomization.yaml file"
             )
 
-        result = None
         try:
-            # Create a temporary directory for our kustomization
-            temp_dir = tempfile.mkdtemp()
-            kustomization_path = os.path.join(temp_dir, "kustomization.yaml")
+            # Both temp directories are cleaned up automatically on exit of the
+            # `with` block, even if an exception is raised inside it.
+            with tempfile.TemporaryDirectory() as temp_dir, \
+                    tempfile.TemporaryDirectory() as output_dir:
+                kustomization_path = os.path.join(temp_dir, "kustomization.yaml")
 
-            # Copy the input directory to the temporary directory
-            input_dir_name = os.path.basename(abs_input_path)
-            temp_input_dir = os.path.join(temp_dir, input_dir_name)
-            shutil.copytree(abs_input_path, temp_input_dir)
+                # Copy the input directory to the temporary directory
+                input_dir_name = os.path.basename(abs_input_path)
+                temp_input_dir = os.path.join(temp_dir, input_dir_name)
+                shutil.copytree(abs_input_path, temp_input_dir)
 
-            # Read the original kustomization.yaml if it exists
-            original_kustomization = {}
-            original_kustomization_path = os.path.join(
-                temp_input_dir, "kustomization.yaml"
-            )
-            if os.path.exists(original_kustomization_path):
-                with open(original_kustomization_path) as f:
-                    original_kustomization = yaml.safe_load(f) or {}
-
-            # Create our kustomization with patches
-            kustomization = {
-                "resources": [input_dir_name],
-                "namespace": config.namespace
-                or original_kustomization.get("namespace", ""),
-            }
-
-            # Add patches if specified
-            if config.patches:
-                kustomization["patches"] = []
-                for name, patch in config.patches.items():
-                    patch_file = os.path.join(temp_dir, f"{name}.yaml")
-                    with open(patch_file, "w") as f:
-                        yaml.dump(patch["patch"], f, default_flow_style=False)
-                    kustomization["patches"].append(
-                        {
-                            "path": os.path.basename(patch_file),
-                            "target": patch["target"],
-                        }
-                    )
-
-            # Write the kustomization file
-            with open(kustomization_path, "w") as f:
-                yaml.dump(kustomization, f, default_flow_style=False)
-
-            # Build the kustomize command
-            cmd = [self.kustomize_path, "build", temp_dir]
-
-            # Create temporary directory for output
-            output_dir = tempfile.mkdtemp()
-            output_file = os.path.join(output_dir, "output.yaml")
-
-            # Run kustomize build
-            with open(output_file, "w") as f:
-                result = subprocess.run(
-                    cmd, stdout=f, stderr=subprocess.PIPE, text=True, check=False
+                # Read the original kustomization.yaml if it exists
+                original_kustomization = {}
+                original_kustomization_path = os.path.join(
+                    temp_input_dir, "kustomization.yaml"
                 )
-        except Exception as e:
-            raise KustomizeTemplateError(
-                f"Failed to compile Kustomize overlay: {e!s}"
-            ) from e
+                if os.path.exists(original_kustomization_path):
+                    with open(original_kustomization_path) as f:
+                        original_kustomization = yaml.safe_load(f) or {}
 
-        if result.returncode != 0:
-            raise KustomizeTemplateError(f"Kustomize build failed: {result.stderr}")
+                # Create our kustomization with patches
+                kustomization = {
+                    "resources": [input_dir_name],
+                    "namespace": config.namespace
+                    or original_kustomization.get("namespace", ""),
+                }
 
-        try:
-            # Read and process the output
-            with open(output_file) as f:
-                for doc in yaml.safe_load_all(f):
-                    if doc:
-                        # Generate a unique filename based on kind and name
-                        kind = doc.get("kind", "").lower()
-                        name = doc.get("metadata", {}).get("name", "").lower()
-                        filename = (
-                            f"{name}-{kind}.yaml" if name and kind else "output.yaml"
+                # Add patches if specified
+                if config.patches:
+                    kustomization["patches"] = []
+                    for name, patch in config.patches.items():
+                        patch_file = os.path.join(temp_dir, f"{name}.yaml")
+                        with open(patch_file, "w") as f:
+                            yaml.dump(patch["patch"], f, default_flow_style=False)
+                        kustomization["patches"].append(
+                            {
+                                "path": os.path.basename(patch_file),
+                                "target": patch["target"],
+                            }
                         )
 
-                        # Write the document to the output file
-                        output_path = os.path.join(compile_path, filename)
-                        with open(output_path, "w") as out:
-                            yaml.dump(doc, out, default_flow_style=False)
+                # Write the kustomization file
+                with open(kustomization_path, "w") as f:
+                    yaml.dump(kustomization, f, default_flow_style=False)
+
+                # Build the kustomize command
+                cmd = [self.kustomize_path, "build", temp_dir]
+
+                # Run kustomize build into the output temp dir
+                output_file = os.path.join(output_dir, "output.yaml")
+                with open(output_file, "w") as f:
+                    result = subprocess.run(
+                        cmd, stdout=f, stderr=subprocess.PIPE, text=True, check=False
+                    )
+
+                if result.returncode != 0:
+                    raise KustomizeTemplateError(
+                        f"Kustomize build failed: {result.stderr}"
+                    )
+
+                # Read and process the output
+                with open(output_file) as f:
+                    for doc in yaml.safe_load_all(f):
+                        if doc:
+                            # Generate a unique filename based on kind and name
+                            kind = doc.get("kind", "").lower()
+                            name = doc.get("metadata", {}).get("name", "").lower()
+                            filename = (
+                                f"{name}-{kind}.yaml" if name and kind else "output.yaml"
+                            )
+
+                            # Write the document to the output file
+                            output_path = os.path.join(compile_path, filename)
+                            with open(output_path, "w") as out:
+                                yaml.dump(doc, out, default_flow_style=False)
+        except KustomizeTemplateError:
+            raise
         except Exception as e:
             raise KustomizeTemplateError(
                 f"Failed to compile Kustomize overlay: {e!s}"

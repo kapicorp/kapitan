@@ -59,35 +59,35 @@ class Helm(InputType):
         if config.kube_version:
             helm_flags["--api-versions"] = config.kube_version
 
-        temp_dir = tempfile.mkdtemp()
-        # save the template output to temp dir first
-        _, error_message = render_chart(
-            chart_dir=input_path,
-            output_path=temp_dir,
-            helm_path=helm_path,
-            helm_params=helm_params,
-            helm_values_file=helm_values_file,
-            helm_values_files=helm_values_files,
-            helm_flags=helm_flags,
-        )
-        if error_message:
-            raise HelmTemplateError(error_message)
-        # Iterate over all files in the temporary directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # save the template output to temp dir first
+            _, error_message = render_chart(
+                chart_dir=input_path,
+                output_path=temp_dir,
+                helm_path=helm_path,
+                helm_params=helm_params,
+                helm_values_file=helm_values_file,
+                helm_values_files=helm_values_files,
+                helm_flags=helm_flags,
+            )
+            if error_message:
+                raise HelmTemplateError(error_message)
+            # Iterate over all files in the temporary directory
 
-        walk_root_files = os.walk(temp_dir)
-        for current_dir, _, files in walk_root_files:
-            for file in files:  # go through all the template files
-                rel_dir = os.path.relpath(current_dir, temp_dir)
-                rel_file_name = os.path.join(rel_dir, file)
-                full_file_name = os.path.join(current_dir, file)
-                # Open each file and write its content to the compilation path
-                with open(full_file_name, encoding="utf-8") as f:
-                    file_path = os.path.join(compile_path, rel_file_name)
-                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                    item_value = [
-                        doc for doc in yaml.safe_load_all(f) if doc is not None
-                    ]
-                    self.to_file(config, file_path, item_value)
+            walk_root_files = os.walk(temp_dir)
+            for current_dir, _, files in walk_root_files:
+                for file in files:  # go through all the template files
+                    rel_dir = os.path.relpath(current_dir, temp_dir)
+                    rel_file_name = os.path.join(rel_dir, file)
+                    full_file_name = os.path.join(current_dir, file)
+                    # Open each file and write its content to the compilation path
+                    with open(full_file_name, encoding="utf-8") as f:
+                        file_path = os.path.join(compile_path, rel_file_name)
+                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                        item_value = [
+                            doc for doc in yaml.safe_load_all(f) if doc is not None
+                        ]
+                        self.to_file(config, file_path, item_value)
 
     def render_chart(self, *args, **kwargs):
         return render_chart(*args, **kwargs)
@@ -193,11 +193,14 @@ def render_chart(
 
     # If output_path is '-', output is a string with rendered chart
     if output_path == "-":
-        _, helm_output = tempfile.mkstemp(".helm_output.yml", text=True)
+        fd, helm_output = tempfile.mkstemp(".helm_output.yml", text=True)
+        os.close(fd)
         with open(helm_output, "w+") as f:
             error_message = helm_cli(helm_path, args, stdout=f)
             f.seek(0)
-            return (f.read(), error_message)
+            content = f.read()
+        os.unlink(helm_output)
+        return (content, error_message)
 
     if output_file:
         with open(os.path.join(output_path, output_file), "wb") as f:
@@ -231,7 +234,8 @@ def write_helm_values_file(helm_values: dict):
     Returns:
         str: The path to the temporary YAML file.
     """
-    _, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
+    fd, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
+    os.close(fd)
     with open(helm_values_file, "w") as fp:
         dumper = yaml.SafeDumper
         dumper.add_representer(str, _helm_str_representer)
