@@ -256,8 +256,8 @@ def load_target_inventory(inventory, requested_targets, ignore_class_not_found=F
             kapitan_target_configs = target.parameters.kapitan
             # check if parameters.kapitan is empty
             if not kapitan_target_configs:
-                logger.debug(
-                    f"load_target_inventory: target {target_name} has no kapitan configuration, skipping"
+                logger.info(
+                    f"Skipping target {target_name}: no kapitan configuration (parameters.kapitan is empty)"
                 )
                 continue
 
@@ -266,8 +266,8 @@ def load_target_inventory(inventory, requested_targets, ignore_class_not_found=F
                 not hasattr(kapitan_target_configs, "compile")
                 or not kapitan_target_configs.compile
             ):
-                logger.debug(
-                    f"load_target_inventory: target {target_name} has no kapitan.compile configuration, skipping"
+                logger.info(
+                    f"Skipping target {target_name}: no kapitan.compile configuration"
                 )
                 continue
 
