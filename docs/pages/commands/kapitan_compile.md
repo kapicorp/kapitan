@@ -219,7 +219,8 @@ library), enabled with `--yaml-use-rapidyaml`.
           --validate            validate compile output against schemas as specified
                                 in inventory
           --parallelism INT, -p INT
-                                Number of concurrent compile processes, default is 4
+                                Number of concurrent compile processes, default is
+                                min(len(targets), available CPU count)
           --indent INT, -i INT  Indentation spaces for YAML/JSON, default is 2
           --refs-path REFS_PATH
                                 set refs path, default is "./refs"

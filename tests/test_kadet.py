@@ -9,8 +9,15 @@
 
 import tempfile
 import unittest
+from argparse import Namespace
+from pathlib import Path
+from unittest import mock
 
-from kadet import ABORT_EXCEPTION_TYPE, BaseObj, Dict
+import kadet
+from kadet import BaseObj, Dict
+
+from kapitan.inputs.kadet import Kadet
+from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
 
 
 class KadetTestObj(BaseObj):
@@ -117,7 +124,7 @@ class KadetTest(unittest.TestCase):
         self.assertEqual(output, desired_output)
 
     def test_need(self):
-        with self.assertRaises(ABORT_EXCEPTION_TYPE):
+        with self.assertRaises(kadet.ABORT_EXCEPTION_TYPE):
             KadetTestObj(this_should_error=True)
 
     def test_update_root_yaml(self):
@@ -165,3 +172,43 @@ class KadetTest(unittest.TestCase):
         output = kobj.dump()
         desired_output = {"this": "that", "list": [1, 2, 3]}
         self.assertEqual(output, desired_output)
+
+
+class KadetCompileCacheTest(unittest.TestCase):
+    def test_compile_cache_key_includes_input_params(self):
+        input_params = {"value": "second"}
+        config = KapitanInputTypeKadetConfig(
+            input_paths=["component"],
+            output_path=".",
+            input_params=input_params,
+        )
+        compiler = Kadet(
+            "compiled",
+            ["."],
+            None,
+            "test-target",
+            Namespace(cache=True),
+        )
+
+        cache = mock.Mock()
+        cache.get.return_value = {}
+
+        with (
+            mock.patch.object(compiler, "cacheable", return_value=cache),
+            mock.patch.object(
+                compiler, "inputs_hash", return_value="cache-key"
+            ) as inputs_hash,
+            mock.patch(
+                "kapitan.inputs.kadet.inventory_digest", return_value=b"inventory"
+            ),
+        ):
+            compiler.compile_file(config, "component", "compiled/test-target")
+
+        inputs_hash.assert_called_once_with(
+            b"inventory",
+            "test-target",
+            Path("component"),
+            {"value": "second", "compile_path": "compiled/test-target"},
+        )
+        cache.get.assert_called_once_with("cache-key")
+        self.assertEqual(config.input_params, input_params)

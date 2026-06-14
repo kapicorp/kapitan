@@ -34,6 +34,8 @@ The OmegaConf backend uses a **double-pass resolution** strategy:
 
 This enables **deferred evaluation** - interpolations that resolve based on their final context after merging.
 
+Escaped `\${...}` values are not treated as literal output in this backend. They are unescaped after the first pass and resolved in the second pass. To emit a literal `${...}` string in compiled output, use the `${escape:...}` resolver.
+
 ---
 
 ## Installation
@@ -123,6 +125,28 @@ deployments:
   api-backend:
     name: api-backend       # Resolved from \${parentkey:}
     namespace: production
+```
+
+---
+
+### Literal `${...}` Output with `${escape:...}`
+
+Use the `escape` resolver when the compiled output must contain `${...}` syntax, for example Terraform references or shell variables. The escaped content is protected from both OmegaConf resolution passes.
+
+```yaml
+parameters:
+  terraform_ref: ${escape:google_service_account.cluster.email}
+  shell_home: ${escape:HOME}
+
+  # Quote complex expressions so OmegaConf parses them as one resolver argument.
+  terraform_expression: ${escape:'var.foo == "bar" ? 1 : 0'}
+```
+
+**Result:**
+```yaml
+terraform_ref: ${google_service_account.cluster.email}
+shell_home: ${HOME}
+terraform_expression: ${var.foo == "bar" ? 1 : 0}
 ```
 
 ---
@@ -324,11 +348,12 @@ kapitan compile --inventory-backend=omegaconf --migrate
 |------------------|-------------------|
 | `${path:to:key}` | `${path.to.key}` |
 | `${_reclass_...}` | `${_kapitan_...}` |
-| `\${escaped}` | `${tag:escaped}` |
+| `\${escaped}` used as literal output | `${escape:escaped}` |
 
 ### Manual Changes May Be Needed
 
 - Keys containing `.` (dots) need special handling with the `access` resolver
+- Literal `${...}` output should use `${escape:...}`. Continue using `\${...}` only for deferred OmegaConf interpolation.
 - Some reclass-specific features like `exports` are not yet supported
 
 ---
