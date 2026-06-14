@@ -9,6 +9,7 @@ import logging
 import multiprocessing as mp
 import os
 import time
+from collections.abc import Mapping
 from functools import singledispatch
 
 import yaml
@@ -80,9 +81,9 @@ class OmegaConfInventory(Inventory):
         ignore_class_not_found: bool = False,
     ) -> None:
         if not self.initialised:
-            if not targets:
+            if targets is None:
                 target_values = []
-            elif hasattr(targets, "values"):
+            elif isinstance(targets, Mapping):
                 target_values = list(targets.values())
             else:
                 target_values = list(targets)
@@ -90,7 +91,7 @@ class OmegaConfInventory(Inventory):
             if not target_values:
                 return
 
-            num_workers = min(len(target_values), available_cpu_count())
+            num_workers = max(1, min(len(target_values), available_cpu_count()))
             chunksize = max(1, len(target_values) // (num_workers * 2))
 
             try:
@@ -184,7 +185,7 @@ class OmegaConfInventory(Inventory):
             filename
         )
         if parameters:
-            parameters = OmegaConf.to_container(parameters)
+            parameters = OmegaConf.to_container(parameters, resolve=False)
         else:
             parameters = {}
         return parameters, classes, applications, exports
@@ -285,9 +286,16 @@ class OmegaConfInventory(Inventory):
         migrate(self.original_inventory_path)
 
     def resolve_targets(self, targets: list[OmegaConfTarget] = None) -> None:
-        if not targets:
-            targets = self.targets.values()
-        map(lambda target: target.resolve(), targets)
+        if targets is None:
+            target_values = self.targets.values()
+        elif isinstance(targets, Mapping):
+            target_values = targets.values()
+        else:
+            target_values = targets
+
+        register_resolvers(self.inventory_path)
+        for target in target_values:
+            self.load_target(target)
 
 
 def _set_inventory_worker_instance(inventory):

@@ -261,10 +261,65 @@ class TestOmegaConfInventoryPerformance(unittest.TestCase):
         pool = RecordingPool.instances[0]
         self.assertEqual(pool.processes, 2)
         self.assertIs(pool.initargs[0], inventory)
-        self.assertEqual([target.name for target in pool.received_targets], ["one", "two"])
+        self.assertEqual(
+            [target.name for target in pool.received_targets], ["one", "two"]
+        )
         self.assertGreaterEqual(pool.chunksize, 1)
         self.assertEqual(inventory.targets["one"].parameters.shared["owner"], "one")
         self.assertEqual(inventory.targets["two"].parameters.shared["owner"], "two")
+
+    def test_render_targets_returns_for_empty_targets_without_pool(self):
+        """Empty target inputs should not create a multiprocessing pool."""
+        inventory = OmegaConfInventory(
+            inventory_path=self.inventory_path, initialise=False
+        )
+
+        with mock.patch.object(
+            omegaconf_backend.mp,
+            "Pool",
+            side_effect=AssertionError("mp.Pool should not be used"),
+        ):
+            for targets in ({}, [], iter(())):
+                with self.subTest(targets=type(targets).__name__):
+                    inventory.render_targets(targets)
+
+    def test_render_targets_clamps_worker_count(self):
+        """Worker count should stay valid even if CPU detection returns zero."""
+        self.write_inventory()
+        inventory = self.make_inventory()
+
+        class RecordingPool:
+            instances = []
+
+            def __init__(self, processes, initializer=None, initargs=()):
+                self.processes = processes
+                self.initializer = initializer
+                self.initargs = initargs
+                self.received_targets = []
+                self.chunksize = None
+                RecordingPool.instances.append(self)
+
+            def __enter__(self):
+                self.initializer(*self.initargs)
+                return self
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                return False
+
+            def imap_unordered(self, worker, iterable, chunksize=1):
+                self.received_targets = list(iterable)
+                self.chunksize = chunksize
+                for target in self.received_targets:
+                    yield worker(target)
+
+        with (
+            mock.patch.object(omegaconf_backend, "available_cpu_count", return_value=0),
+            mock.patch.object(omegaconf_backend.mp, "Pool", RecordingPool),
+        ):
+            inventory.render_targets(inventory.targets)
+
+        self.assertEqual(RecordingPool.instances[0].processes, 1)
+        self.assertGreaterEqual(RecordingPool.instances[0].chunksize, 1)
 
     def test_shared_class_config_is_cached_and_resolves_per_target(self):
         """Shared class trees should be loaded once without sharing resolved state."""
@@ -292,6 +347,16 @@ class TestOmegaConfInventoryPerformance(unittest.TestCase):
         self.assertEqual(
             inventory.targets["two"].parameters.shared["items"], ["common", "two"]
         )
+
+    def test_resolve_targets_loads_each_target(self):
+        """resolve_targets should actively load unresolved target definitions."""
+        self.write_inventory()
+        inventory = self.make_inventory()
+
+        inventory.resolve_targets()
+
+        self.assertEqual(inventory.targets["one"].parameters.shared["owner"], "one")
+        self.assertEqual(inventory.targets["two"].parameters.shared["owner"], "two")
 
 
 class TestOmegaConfInventoryMigrationTiming(unittest.TestCase):
