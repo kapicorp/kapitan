@@ -7,6 +7,10 @@ concurrency:
 
 on:
   workflow_dispatch:
+  release:
+    # Publish a versioned docs set (e.g. /0.36/) and move the "latest" alias
+    # on every stable GitHub release. See the "Deploy release docs" step.
+    types: [published]
   pull_request:
     paths:
       - 'docs/**'
@@ -47,10 +51,24 @@ jobs:
       - name: Verify rendering
         run: uv run pytest tests/test_docs_rendering.py -v --no-cov
 
-      - name: Deploy docs
-        if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+      # On master pushes (and manual dispatch): refresh the rolling "dev" docs.
+      - name: Deploy dev docs
+        if: github.event_name != 'pull_request' && github.event_name != 'release' && github.ref_name == github.event.repository.default_branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_COMMITTER_NAME: mike-mkdocs-bot
           GIT_COMMITTER_EMAIL: admins@kapicorp
         run: uv run mike deploy --push dev master
+
+      # On a stable release (tag v0.36.0): publish the docs under the
+      # major.minor version (0.36) and point the "latest" alias at it.
+      - name: Deploy release docs
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_COMMITTER_NAME: mike-mkdocs-bot
+          GIT_COMMITTER_EMAIL: admins@kapicorp
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"   # 0.36.0
+          DOCS_VERSION="${VERSION%.*}"     # 0.36
+          uv run mike deploy --push --update-aliases "$DOCS_VERSION" latest

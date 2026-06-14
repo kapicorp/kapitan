@@ -23,6 +23,7 @@ from kapitan.errors import CompileError, InventoryError, KapitanError
 from kapitan.inputs import get_compiler
 from kapitan.profiling import worker_profile
 from kapitan.resources import get_inventory
+from kapitan.utils import available_cpu_count
 
 
 logger = logging.getLogger(__name__)
@@ -84,10 +85,11 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
             f"No matching targets found in inventory: {labels if labels else args.targets}"
         )
 
-    parallelism = args.parallelism or min(len(targets), os.cpu_count())
+    available_cpus = available_cpu_count()
+    parallelism = args.parallelism or min(len(targets), available_cpus)
 
     logger.info(
-        f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)"
+        f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({available_cpus} CPU available)"
     )
 
     # check if --fetch or --force-fetch is enabled
