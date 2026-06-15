@@ -6,7 +6,7 @@ import tempfile
 
 import yaml
 
-from kapitan.errors import KustomizeTemplateError
+from kapitan.errors import CuelangTemplateError
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeCuelangConfig
 
@@ -82,4 +82,4 @@ class Cuelang(InputType):
             )
             if result.returncode != 0:
                 err = f"Failed to run CUE export: {result.stderr}"
-                raise KustomizeTemplateError(err)
+                raise CuelangTemplateError(err)
