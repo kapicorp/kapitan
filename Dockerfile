@@ -33,6 +33,9 @@ COPY ./pyproject.toml ./pyproject.toml
 COPY ./uv.lock ./uv.lock
 COPY ./README.md ./README.md
 COPY ./kapitan/version.py ./kapitan/version.py
+# uv-dynamic-versioning resolves the package version from git tags at build
+# time; without .git it falls back to 0.0.0 (see pyproject.toml).
+COPY ./.git ./.git
 
 RUN uv sync --locked --all-extras
 
