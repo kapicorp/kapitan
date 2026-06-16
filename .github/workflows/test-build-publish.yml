@@ -76,6 +76,28 @@ jobs:
         with:
           predicate-quantifier: 'every'
           filters: .github/filters/filters.yml
+
+  version-info:
+    name: compute package version
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.compute.outputs.version }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # Tags are required for uv-dynamic-versioning to compute distance
+          # from the latest release.
+          fetch-depth: 0
+          filter: blob:none
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+      - id: compute
+        # Invoke the same tool the build backend uses, so the resolved version
+        # matches what an unbypassed build would have produced.
+        run: |
+          VERSION=$(uvx uv-dynamic-versioning)
+          echo "Computed version: ${VERSION}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
   precommit:
     name: precommit checks
     needs: [setup, check-changes]
@@ -162,7 +184,7 @@ jobs:
 
   build:
     name: build ${{ matrix.platform.platform }} image using python ${{ matrix.python-version }}
-    needs: [setup, precommit, test, check-changes]
+    needs: [setup, precommit, test, check-changes, version-info]
     runs-on: ${{ matrix.platform.runner }}
     permissions:
       contents: read
@@ -269,11 +291,16 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
           build-args: |
             PYTHON_VERSION=${{ matrix.python-version }}
+            KAPITAN_VERSION=${{ needs.version-info.outputs.version }}
 
       - name: Test Kapitan image
         if: needs.check-changes.outputs.has-code-changes == 'true'
         run: |
-          docker run -t --rm local-test --version
+          # Assert on the version — `--version` printing 0.0.0 would otherwise
+          # exit 0 and the build-arg wiring could rot silently (see #1552).
+          GOT=$(docker run --rm local-test --version | tr -d '[:space:]')
+          EXP="${{ needs.version-info.outputs.version }}"
+          [ "$GOT" = "$EXP" ] || { echo "version mismatch: got '$GOT' want '$EXP'"; exit 1; }
 
       - name: Set up uv
         if: needs.check-changes.outputs.has-code-changes == 'true' && github.event_name != 'pull_request'
@@ -336,6 +363,7 @@ jobs:
           cache-from: type=gha,scope=${{ github.ref_name }}-${{ matrix.platform.platform }}-py${{ matrix.python-version }}
           build-args: |
             PYTHON_VERSION=${{ matrix.python-version }}
+            KAPITAN_VERSION=${{ needs.version-info.outputs.version }}
 
   upload-docker-sboms:
     name: upload Docker SBOMs to release
