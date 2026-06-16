@@ -9,7 +9,6 @@
 
 import tempfile
 import unittest
-from argparse import Namespace
 from pathlib import Path
 from unittest import mock
 
@@ -203,11 +202,17 @@ class KadetCacheKeyTest(unittest.TestCase):
 
         with (
             mock.patch.object(compiler, "cacheable", return_value=cache_obj),
-            mock.patch.object(compiler, "inputs_hash", return_value="fixed-hash") as mock_hash,
-            mock.patch("kapitan.inputs.kadet.inventory_digest", return_value=b"inventory"),
+            mock.patch.object(
+                compiler, "inputs_hash", return_value="fixed-hash"
+            ) as mock_hash,
+            mock.patch(
+                "kapitan.inputs.kadet.inventory_digest", return_value=b"inventory"
+            ),
             mock.patch.object(compiler, "to_file"),
         ):
-            compiler.compile_file(config, "component", "/tmp/run1-abc/compiled/test-target")
+            compiler.compile_file(
+                config, "component", "/tmp/run1-abc/compiled/test-target"
+            )
 
         mock_hash.assert_called_once_with(
             b"inventory",
@@ -242,11 +247,19 @@ class KadetCacheKeyTest(unittest.TestCase):
             mock.patch("kapitan.inputs.kadet.inventory_digest", return_value=b"inv"),
             mock.patch.object(compiler, "to_file"),
         ):
-            compiler.compile_file(config, "component", "/tmp/run1-xyz/compiled/test-target")
-            compiler.compile_file(config, "component", "/tmp/run2-qrs/compiled/test-target")
+            compiler.compile_file(
+                config, "component", "/tmp/run1-xyz/compiled/test-target"
+            )
+            compiler.compile_file(
+                config, "component", "/tmp/run2-qrs/compiled/test-target"
+            )
 
         self.assertEqual(len(calls), 2)
-        self.assertEqual(calls[0], calls[1], "Cache key must be stable across different compile_paths")
+        self.assertEqual(
+            calls[0],
+            calls[1],
+            "Cache key must be stable across different compile_paths",
+        )
 
     def test_config_input_params_not_mutated(self):
         """compile_file must not mutate config.input_params (compile_path is injected
