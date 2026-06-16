@@ -1,0 +1,32 @@
+# Copyright 2026 The Kapitan Authors
+# SPDX-License-Identifier: Apache-2.0
+
+[build-system]
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
+
+[project]
+name = "kapitan-core"
+description = "Rust core extension for Kapitan (PyO3)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [{ name = "The Kapitan Authors", email = "kapitan-admins@googlegroups.com" }]
+# Version is read from Cargo.toml's [package] version by maturin. CI stamps
+# that field from the same git tag as the kapitan package, so both ship the
+# same version.
+dynamic = ["version"]
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "License :: OSI Approved :: Apache Software License",
+]
+
+[project.urls]
+Repository = "https://github.com/kapicorp/kapitan"
+
+[tool.maturin]
+# Import name in Python: `import kapitan_core`.
+module-name = "kapitan_core"
+# Strip symbols from the release binary to keep the wheel small.
+strip = true
