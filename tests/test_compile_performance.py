@@ -141,3 +141,31 @@ def test_inventory_render_performance_omegaconf(
 ):
     """Benchmark inventory rendering with omegaconf backend."""
     benchmark(_render_inventory, InventoryBackends.OMEGACONF)
+
+
+@pytest.mark.benchmark(max_time=2.0)
+@pytest.mark.slow
+@pytest.mark.integration
+def test_inventory_render_performance_synthetic(benchmark, synthetic_large_inventory):
+    """Benchmark rendering of the generated shared-class-stack inventory."""
+    benchmark(_render_inventory)
+
+
+@pytest.mark.benchmark(max_time=2.0)
+@pytest.mark.slow
+@pytest.mark.integration
+def test_inventory_render_performance_synthetic_reclass_rs(
+    benchmark, synthetic_large_inventory
+):
+    """Benchmark the synthetic shared-class-stack with reclass-rs backend."""
+    benchmark(_render_inventory, InventoryBackends.RECLASS_RS)
+
+
+@pytest.mark.benchmark(max_time=2.0)
+@pytest.mark.slow
+@pytest.mark.integration
+def test_inventory_render_performance_synthetic_omegaconf(
+    benchmark, synthetic_large_inventory
+):
+    """Benchmark the synthetic shared-class-stack with omegaconf backend."""
+    benchmark(_render_inventory, InventoryBackends.OMEGACONF)

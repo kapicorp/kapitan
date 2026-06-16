@@ -186,6 +186,38 @@ def isolated_docker_inventory(temp_dir):
 
 
 @pytest.fixture
+def synthetic_large_inventory(temp_dir):
+    """
+    Generate an on-the-fly large synthetic inventory and chdir into it.
+
+    The inventory is the shared-class-stack shape that exposes backend
+    rendering cost: many targets all pulling one deep class chain. Size is
+    tunable via KAPITAN_BENCH_{TARGETS,CLASSES,KEYS} for heavier local runs;
+    defaults stay modest to bound CI time. Returns the inventory path.
+    """
+    from tests.benchmarks.inventory_generator import make_large_inventory
+
+    targets = int(os.environ.get("KAPITAN_BENCH_TARGETS", "40"))
+    classes = int(os.environ.get("KAPITAN_BENCH_CLASSES", "12"))
+    keys = int(os.environ.get("KAPITAN_BENCH_KEYS", "15"))
+
+    isolated_path = os.path.join(temp_dir, "synthetic")
+    os.makedirs(isolated_path)
+    make_large_inventory(isolated_path, targets=targets, classes=classes, keys=keys)
+
+    original_dir = os.getcwd()
+    reset_cache()
+    cached.args = Namespace()
+    os.chdir(isolated_path)
+
+    yield isolated_path
+
+    os.chdir(original_dir)
+    reset_cache()
+    cached.args = Namespace()
+
+
+@pytest.fixture
 def isolated_performance_inventory(temp_dir):
     """
     Create an isolated copy of the performance stress inventory for test execution.
