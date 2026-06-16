@@ -7,9 +7,9 @@
 
 """Tests for generator schema discovery and validation."""
 
+import importlib.util
 import json
 import logging
-import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -20,12 +20,28 @@ import yaml
 from kapitan.cached import reset_cache
 from kapitan.cli import main as kapitan
 from kapitan.dependency_manager.schema_validation import (
+    SourceTrackerCache,
     _resolve_schema_path,
-    _SourceTrackerCache,
     validate_generator_schemas,
 )
+from kapitan.inventory import InventoryBackends
 from kapitan.inventory.model import KapitanInventorySettings
 from kapitan.inventory.model.dependencies import KapitanDependencyGitConfig
+
+
+# Backends to exercise in end-to-end compile tests. Optional backends are
+# skipped at runtime when their module is not installed.
+INVENTORY_BACKENDS = [
+    InventoryBackends.RECLASS,
+    InventoryBackends.RECLASS_RS,
+    InventoryBackends.OMEGACONF,
+]
+
+
+def _skip_if_backend_unavailable(backend):
+    module_name = backend.replace("-", "_")
+    if not importlib.util.find_spec(module_name):
+        pytest.skip(f"backend module {module_name} not available")
 
 
 class GeneratorSchemaValidationTest(unittest.TestCase):
@@ -308,12 +324,12 @@ class GeneratorSchemaValidationTest(unittest.TestCase):
             )
 
     def test_source_tracker_cache_reuses_instances(self):
-        """_SourceTrackerCache returns the same tracker for repeated lookups."""
+        """SourceTrackerCache returns the same tracker for repeated lookups."""
         with tempfile.TemporaryDirectory() as tmp:
             yaml_file = Path(tmp) / "test.yml"
             yaml_file.write_text("foo: bar\n")
 
-            cache = _SourceTrackerCache()
+            cache = SourceTrackerCache()
             tracker1 = cache.get(yaml_file)
             tracker2 = cache.get(yaml_file)
 
@@ -381,28 +397,28 @@ class TestGeneratorSchemaValidationCompile:
         targets_dir = Path(base_dir) / "inventory" / "targets"
         (targets_dir / "test.yml").write_text(yaml.dump(target))
 
-    def test_compile_error_mode_raises(self, schema_validation_inventory):
+    @pytest.mark.parametrize("backend", INVENTORY_BACKENDS)
+    def test_compile_error_mode_raises(
+        self, schema_validation_inventory, monkeypatch, backend
+    ):
         """With generator_schema_validation: error, compile exits with failure."""
+        _skip_if_backend_unavailable(backend)
         self._write_target(schema_validation_inventory, "error")
-        original_dir = os.getcwd()
-        os.chdir(schema_validation_inventory)
+        monkeypatch.chdir(schema_validation_inventory)
         reset_cache()
-        try:
-            with pytest.raises(SystemExit) as exc_info:
-                kapitan("compile", "-t", "test")
-            assert exc_info.value.code == 1
-        finally:
-            os.chdir(original_dir)
-            reset_cache()
+        with pytest.raises(SystemExit) as exc_info:
+            kapitan("compile", "-t", "test", "--inventory-backend", backend)
+        assert exc_info.value.code == 1
+        reset_cache()
 
-    def test_compile_warn_mode_succeeds(self, schema_validation_inventory):
+    @pytest.mark.parametrize("backend", INVENTORY_BACKENDS)
+    def test_compile_warn_mode_succeeds(
+        self, schema_validation_inventory, monkeypatch, backend
+    ):
         """With generator_schema_validation: warn, compile succeeds despite mismatch."""
+        _skip_if_backend_unavailable(backend)
         self._write_target(schema_validation_inventory, "warn")
-        original_dir = os.getcwd()
-        os.chdir(schema_validation_inventory)
+        monkeypatch.chdir(schema_validation_inventory)
         reset_cache()
-        try:
-            kapitan("compile", "-t", "test")
-        finally:
-            os.chdir(original_dir)
-            reset_cache()
+        kapitan("compile", "-t", "test", "--inventory-backend", backend)
+        reset_cache()

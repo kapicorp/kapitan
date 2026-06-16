@@ -20,7 +20,7 @@ from reclass.errors import NotFoundError, ReclassException
 from kapitan import cached
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.dependency_manager.schema_validation import (
-    _SourceTrackerCache,
+    SourceTrackerCache,
     validate_generator_schemas,
 )
 from kapitan.errors import CompileError, InventoryError, KapitanError
@@ -220,7 +220,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         # Validate generator schemas after dependencies are fetched.
         # This runs in the main process so schema errors surface early
         # before compilation work starts in the pool.
-        tracker_cache = _SourceTrackerCache()
+        tracker_cache = SourceTrackerCache()
         for target_name in targets:
             target = inventory.targets.get(target_name)
             if target is None:

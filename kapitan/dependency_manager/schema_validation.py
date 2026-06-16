@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class _SourceTrackerCache:
+class SourceTrackerCache:
     """Cache _SourceTracker instances by filepath to avoid re-parsing YAML files."""
 
     def __init__(self):
@@ -113,7 +113,7 @@ class _SourceTracker:
 def _find_source_location(
     full_path: list[str],
     inventory_path: str,
-    tracker_cache: _SourceTrackerCache,
+    tracker_cache: SourceTrackerCache,
 ) -> dict | None:
     """Search inventory YAML files for the source of *full_path*.
 
@@ -173,7 +173,7 @@ def _format_validation_error(
     dependency_output_path: str,
     inventory_dotted_path: str | None,
     inventory_path: str,
-    tracker_cache: _SourceTrackerCache,
+    tracker_cache: SourceTrackerCache,
 ) -> str:
     """Format a single validation error with source context.
 
@@ -225,7 +225,7 @@ def _validate_against_schema(
     dependency_output_path: str,
     inventory_dotted_path: str | None,
     inventory_path: str,
-    tracker_cache: _SourceTrackerCache,
+    tracker_cache: SourceTrackerCache,
 ) -> list[dict]:
     """Validate *data* against the JSON Schema stored at *schema_path*.
 
@@ -284,7 +284,7 @@ def validate_generator_schemas(
     target_obj,
     parameters: dict,
     inventory_path: str,
-    tracker_cache: _SourceTrackerCache | None = None,
+    tracker_cache: SourceTrackerCache | None = None,
 ) -> list[dict]:
     """Validate generator schemas for a single target.
 
@@ -300,7 +300,7 @@ def validate_generator_schemas(
     ``dependency``, ``schema_path``, ``inventory_path``, ``errors``.
     """
     if tracker_cache is None:
-        tracker_cache = _SourceTrackerCache()
+        tracker_cache = SourceTrackerCache()
 
     findings = []
 

@@ -638,3 +638,32 @@ class OciFetchDependencyTest(unittest.TestCase):
                     (dep.source, [dep]), save_dir=save_dir, force=False
                 )
             self.assertIn("resolves outside", str(ctx.exception))
+
+    @patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+    def test_nested_artifact_without_subpath_emits_warning(self, MockClient):
+        """When output_path has only subdirs (no files) and no subpath is set, warn."""
+        with (
+            tempfile.TemporaryDirectory() as save_dir,
+            tempfile.TemporaryDirectory() as out_dir,
+        ):
+            dep = self._make_dep(output_path=out_dir)
+
+            def fake_pull(target, outdir, allowed_media_type):
+                # Simulate oras preserving push-time path: all content nested.
+                nested = Path(outdir) / "system" / "generators" / "mygenerator"
+                nested.mkdir(parents=True, exist_ok=True)
+                (nested / "__init__.py").write_text("def main(): return {}")
+
+            MockClient.return_value.pull.side_effect = fake_pull
+
+            with self.assertLogs(
+                "kapitan.dependency_manager.base", level="WARNING"
+            ) as log:
+                fetch_oci_dependency(
+                    (dep.source, [dep]), save_dir=save_dir, force=False
+                )
+
+            warning_text = "\n".join(log.output)
+            self.assertIn("only subdirectories", warning_text)
+            self.assertIn("subpath", warning_text)
+            self.assertIn("system", warning_text)
