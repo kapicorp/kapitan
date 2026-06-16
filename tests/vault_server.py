@@ -7,7 +7,7 @@
 
 import logging
 import os
-from time import sleep
+from time import monotonic, sleep
 
 import hvac
 from hvac.exceptions import InvalidRequest
@@ -28,15 +28,31 @@ class VaultServerError(KapitanError):
     """Generic vaultserver errors"""
 
 
+# How long to wait for the vault server to come up before giving up. Bounded
+# so an unreachable VAULT_ADDR (or a container that never starts) fails fast
+# instead of retrying forever. Overridable via env for tests/slow CI.
+def _setup_timeout():
+    return float(os.environ.get("KAPITAN_VAULT_SETUP_TIMEOUT", "60"))
+
+
 # Module-level singletons so test classes can share vault server instances.
 _shared_vault_servers = {}
+# Cache construction failures so every dependent test class skips immediately
+# instead of each re-waiting the full setup timeout.
+_failed_vault_servers = {}
 
 
 def get_shared_vault_server(server_cls=None):
     """Return a shared VaultServer singleton, creating it if necessary."""
     cls = server_cls or VaultServer
+    if cls in _failed_vault_servers:
+        raise _failed_vault_servers[cls]
     if cls not in _shared_vault_servers:
-        _shared_vault_servers[cls] = cls()
+        try:
+            _shared_vault_servers[cls] = cls()
+        except VaultServerError as exc:
+            _failed_vault_servers[cls] = exc
+            raise
     return _shared_vault_servers[cls]
 
 
@@ -88,7 +104,13 @@ class VaultServer:
 
         # make sure the container is up & running before testing
 
+        deadline = monotonic() + _setup_timeout()
         while vault_container.status != "running":
+            if monotonic() >= deadline:
+                raise VaultServerError(
+                    f"Vault container did not reach 'running' within "
+                    f"{_setup_timeout():.0f}s (status: {vault_container.status})"
+                )
             sleep(2)
             vault_container.reload()
             if vault_container.status in ("exited", "dead"):
@@ -110,8 +132,14 @@ class VaultServer:
         return vault_container
 
     def setup_vault(self):
+        deadline = monotonic() + _setup_timeout()
         vault_status = {}
         while not vault_status.get("initialized", False):
+            if monotonic() >= deadline:
+                raise VaultServerError(
+                    f"Vault at {self.vault_url} did not become ready within "
+                    f"{_setup_timeout():.0f}s"
+                )
             sleep(2)
             try:
                 vault_client = hvac.Client(url=self.vault_url)
