@@ -67,7 +67,7 @@ The directory tree produced by `kapitan compile`, located at `compiled/`. Each t
 
 ### Parallelism
 
-Kapitan compiles targets in parallel using multiple processes. The default parallelism is `min(number_of_targets, cpu_count)`. You can control it with the `-p` flag.
+Kapitan compiles targets in parallel using multiple processes. The default parallelism is `min(number_of_targets, available_cpu_count)`, where available CPUs account for process affinity and container CPU limits. You can control it with the `-p` flag.
 
 ## References and secrets
 

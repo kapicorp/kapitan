@@ -181,7 +181,7 @@ parameters:
 **Resolution:**
 
 - Compile only the target you need: `kapitan compile -t <target>`.
-- Increase parallelism with `-p` (defaults to CPU count).
+- Increase parallelism with `-p` (defaults to available CPU count).
 - Consider switching to the **reclass-rs** backend for faster inventory rendering.
 - If using OmegaConf, check for expensive custom resolvers.
 
