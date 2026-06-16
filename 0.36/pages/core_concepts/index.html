@@ -2824,7 +2824,7 @@
 <p>You can tell <strong>Kapitan</strong> to <strong>compile</strong> all your targets by running the following command in a valid kapitan repository root:</p>
 <div class="highlight"><pre><span></span><code>$ kapitan compile
 Rendered inventory (0.06s): discovered 200 targets.
-Compiling 200/200 targets using 64 concurrent processes: (64 CPU detected)
+Compiling 200/200 targets using 64 concurrent processes: (64 CPU available)
 ...
 Compiled production (0.68s)
 ...
@@ -2833,7 +2833,7 @@ Compiled 200 targets in 20s
 <p>Alternatively, you can select just the target you want to compile, using the <code>-t</code> or <code>--target</code> flag:</p>
 <div class="highlight"><pre><span></span><code>$ kapitan compile -t production
 Rendered inventory (0.06s): discovered 200 targets.
-Compiling 1/200 targets using 1 concurrent processes: (64 CPU detected)
+Compiling 1/200 targets using 1 concurrent processes: (64 CPU available)
 Compiled production (0.68s)
 Compiled 1 targets in 0.73s
 </code></pre></div>

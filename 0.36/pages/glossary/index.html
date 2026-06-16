@@ -3092,7 +3092,7 @@
 <h3 id="compiled-output">Compiled output</h3>
 <p>The directory tree produced by <code>kapitan compile</code>, located at <code>compiled/</code>. Each target has its own subdirectory containing the generated files. This output is plain text and can be committed to version control, reviewed in pull requests, or fed directly to a deployment pipeline.</p>
 <h3 id="parallelism">Parallelism</h3>
-<p>Kapitan compiles targets in parallel using multiple processes. The default parallelism is <code>min(number_of_targets, cpu_count)</code>. You can control it with the <code>-p</code> flag.</p>
+<p>Kapitan compiles targets in parallel using multiple processes. The default parallelism is <code>min(number_of_targets, available_cpu_count)</code>, where available CPUs account for process affinity and container CPU limits. You can control it with the <code>-p</code> flag.</p>
 <h2 id="references-and-secrets">References and secrets</h2>
 <h3 id="reference">Reference</h3>
 <p>A placeholder for a value that is stored outside the inventory, typically because it is sensitive or highly variable. References use the syntax <code>?{backend:path}</code>. During compilation, Kapitan replaces the reference with the actual value. During reveal, encrypted references are decrypted.</p>
