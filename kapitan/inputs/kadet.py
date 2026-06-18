@@ -280,7 +280,8 @@ class Kadet(InputType):
     def cacheable(self):
         if cached.args.cache:
             if cached.kapitan_input_kadet is None:
-                cached.kapitan_input_kadet = InputCache("kadet")
+                metrics = (cached.input_cache_metrics or {}).get("kadet")
+                cached.kapitan_input_kadet = InputCache("kadet", metrics=metrics)
 
             return cached.kapitan_input_kadet
         return False
