@@ -28,7 +28,7 @@
     
   
     
-    <title>Kapitan Inventory – Kapitan: Keep your ship together</title>
+    <title>Kapitan Inventory: Classes, Targets & Parameters</title>
   
 
     
@@ -89,7 +89,7 @@
 
   
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Kapitan Inventory" />
+  <meta property="og:title" content="Kapitan Inventory: Classes, Targets & Parameters" />
   <meta property="og:description" content="Learn how Kapitan inventory uses targets, classes, and parameters to model reusable infrastructure configuration across environments." />
   <meta property="og:url" content="https://kapitan.dev/dev/pages/inventory/introduction/" />
   <meta property="og:image" content="https://kapitan.dev/devimages/kapitan_logo.png" />
@@ -97,7 +97,7 @@
 
   
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Kapitan Inventory" />
+  <meta name="twitter:title" content="Kapitan Inventory: Classes, Targets & Parameters" />
   <meta name="twitter:description" content="Learn how Kapitan inventory uses targets, classes, and parameters to model reusable infrastructure configuration across environments." />
   <meta name="twitter:image" content="https://kapitan.dev/devimages/kapitan_logo.png" />
 
@@ -161,7 +161,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Kapitan Inventory
+              Kapitan Inventory: Classes, Targets & Parameters
             
           </span>
         </div>
@@ -1001,6 +1001,17 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-inventory-is-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the inventory is built
+      
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#next-steps" class="md-nav__link">
@@ -2777,6 +2788,55 @@ parameters:
   target_name: web
 </code></pre></div>
 <p>By combining <a href="../targets/"><strong>target</strong></a> and <a href="../classes/"><strong>classes</strong></a>, the <strong>Inventory</strong> becomes the SSOT for your whole configuration, and learning how to use it will unleash the real power of <strong>Kapitan</strong>.</p>
+<hr />
+<h2 id="how-the-inventory-is-built">How the inventory is built</h2>
+<p>Before any input type runs, <strong>Kapitan</strong> turns a target file and its class graph
+into a single, fully-resolved set of <code>parameters</code>. Understanding the order of
+these steps explains <em>why</em> a value overrides another, and <em>when</em> a <code>${...}</code>
+reference gets its value.</p>
+<pre class="mermaid"><code>flowchart TD
+    A["Read target&lt;br/&gt;targets/production.yml"] --&gt; B{"wildcards&lt;br/&gt;enabled?"}
+    B --&gt;|"--enable-class-wildcards"| C["Expand glob patterns&lt;br/&gt;into matching class names"]
+    B --&gt;|default| D
+    C --&gt; D["Resolve each class to a file&lt;br/&gt;classes/kapicorp/common.yml → kapicorp.common"]
+    D --&gt; E["Load classes recursively&lt;br/&gt;(depth-first: a class's own&lt;br/&gt;classes are loaded before it)"]
+    E --&gt; F["Deep-merge parameters in include order&lt;br/&gt;later entries override earlier;&lt;br/&gt;the target's own parameters win last"]
+    F --&gt; G["Resolve ${...} interpolation&lt;br/&gt;against the fully-merged parameters"]
+    G --&gt; H["Final resolved inventory&lt;br/&gt;handed to the compile phase"]
+
+    style F fill:#fff3e0
+    style G fill:#e1f5fe</code></pre>
+<ol>
+<li><strong>Read target</strong> — the target file is the entry point. Its <code>classes:</code> list
+   drives everything that follows.</li>
+<li><strong>Expand wildcards</strong> <em>(optional)</em> — with
+   <a href="../classes/#wildcard-class-patterns"><code>--enable-class-wildcards</code></a>, glob
+   patterns in <code>classes:</code> are expanded to concrete class names <em>before</em> the
+   backend sees them. Without the flag, entries pass through unchanged.</li>
+<li><strong>Resolve &amp; load classes</strong> — each class name maps to a file under
+   <code>inventory/classes/</code>. Classes are loaded <strong>recursively and depth-first</strong>: a
+   class's own <code>classes:</code> are loaded before the class itself, so foundational
+   data lands first.</li>
+<li><strong>Merge parameters</strong> — <code>parameters</code> blocks are <strong>deep-merged</strong> in the order
+   classes are encountered. <strong>Later entries override earlier ones</strong>, and the
+   target's own <code>parameters</code> are merged last, giving them the highest
+   precedence. This is why list position in <code>classes:</code> matters (see the
+   <a href="../classes/#wildcard-class-patterns">override-order warning</a> for wildcards).</li>
+<li><strong>Resolve interpolation</strong> — only <strong>after</strong> the full merge are <code>${...}</code>
+   references resolved, against the final merged values. A reference therefore
+   sees the <em>winning</em> value regardless of which class defined it.</li>
+<li><strong>Final inventory</strong> — the resolved <code>parameters</code> are handed to the
+   <a href="../../input_types/introduction/#phases-of-the-compile-command">compile phase</a>,
+   which feeds each input type.</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Backend differences</p>
+<p>The merge-then-resolve model above is the shared mental model. The
+<a href="../backends/"><code>reclass</code></a> and <code>reclass-rs</code> backends follow it directly;
+the <a href="../omegaconf/"><code>omegaconf</code></a> backend uses a <strong>double-pass</strong> resolution to
+support escaped interpolations. Test inventory changes against every backend
+you support.</p>
+</div>
 <hr />
 <h2 id="next-steps">Next steps</h2>
 <ul>

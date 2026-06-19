@@ -28,7 +28,7 @@
     
   
     
-    <title>Kapitan Core Concepts – Kapitan: Keep your ship together</title>
+    <title>Kapitan Core Concepts: Inventory, Targets & Inputs</title>
   
 
     
@@ -89,7 +89,7 @@
 
   
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Kapitan Core Concepts" />
+  <meta property="og:title" content="Kapitan Core Concepts: Inventory, Targets & Inputs" />
   <meta property="og:description" content="Learn how Kapitan organizes configuration with inventory, targets, classes, and input types to generate Kubernetes, Terraform, and infrastructure manifests." />
   <meta property="og:url" content="https://kapitan.dev/dev/pages/core_concepts/" />
   <meta property="og:image" content="https://kapitan.dev/devimages/kapitan_logo.png" />
@@ -97,7 +97,7 @@
 
   
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Kapitan Core Concepts" />
+  <meta name="twitter:title" content="Kapitan Core Concepts: Inventory, Targets & Inputs" />
   <meta name="twitter:description" content="Learn how Kapitan organizes configuration with inventory, targets, classes, and input types to generate Kubernetes, Terraform, and infrastructure manifests." />
   <meta name="twitter:image" content="https://kapitan.dev/devimages/kapitan_logo.png" />
 
@@ -161,7 +161,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Kapitan Core Concepts
+              Kapitan Core Concepts: Inventory, Targets & Inputs
             
           </span>
         </div>
@@ -2786,7 +2786,7 @@
 <p>So you can essentially <em>compose</em> your configuration using your favourite tools.</p>
 </blockquote>
 <pre class="mermaid"><code>    graph LR
-        TARGETS ==  **kapitan compile** ==&gt; INPUT_TYPES
+        TARGETS == "`**kapitan compile**`" ==&gt; INPUT_TYPES
         INPUT_TYPES --&gt; TARGETS_OUTPUT
         TARGETS_OUTPUT --&gt; GENERATED_FILES
 
