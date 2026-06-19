@@ -65,6 +65,36 @@ for _YamlLoader in {YamlLoader, yaml.SafeLoader}:
     )
 
 
+def warn_on_path_traversal(roots, resolved_path, accessor):
+    """Warn (without blocking) when ``resolved_path`` escapes every allowed root.
+
+    File accessors such as jsonnet's ``import``/``file_read`` natives, the jinja2
+    render callback and input glob expansion resolve a caller-supplied name
+    against search paths with ``os.path.join``. A name containing ``..`` (or a
+    symlink) can resolve outside the inventory and read unrelated files such as
+    SSH keys. This logs a warning so the access is visible; it does not yet block
+    it.
+
+    Args:
+        roots: iterable of directories the access is expected to stay within.
+        resolved_path: the path actually selected by the accessor.
+        accessor: short name of the caller, used in the warning message.
+    """
+    real_path = os.path.realpath(resolved_path)
+    for root in roots:
+        real_root = os.path.realpath(root)
+        if real_path == real_root or real_path.startswith(real_root + os.sep):
+            return
+    logger.warning(
+        "%s: resolved path %r escapes its search path(s) (resolved to %r). "
+        "This reads a file outside the inventory and may be blocked in a future "
+        "release.",
+        accessor,
+        resolved_path,
+        real_path,
+    )
+
+
 def available_cpu_count():
     """Return CPUs available to this process, accounting for container limits."""
     os_cpu_count = os.cpu_count() or 1
