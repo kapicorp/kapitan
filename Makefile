@@ -32,6 +32,7 @@ install_tools: check_mise
 	@$(MISE) exec -- helm version --short
 	@$(MISE) exec -- kustomize version
 	@$(MISE) exec -- cue version
+	@$(MISE) exec -- go version
 
 # Configure pre-commit git hooks (pre-commit package installed via uv)
 .PHONY: install_pre_commit
