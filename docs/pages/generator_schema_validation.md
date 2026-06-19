@@ -1,3 +1,8 @@
+---
+title: Generator schema validation in Kapitan
+description: Ship a JSON Schema alongside a generator so Kapitan validates the relevant inventory input at compile time, catching type and key mistakes early.
+---
+
 # Generator schema validation
 
 Generator authors can ship a JSON Schema alongside their generator code so that Kapitan validates the relevant inventory input at compile time. This catches common mistakes (wrong types, missing keys) before rendering starts.
