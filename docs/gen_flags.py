@@ -27,6 +27,20 @@ def _esc(value):
     return " ".join(text.replace("|", "\\|").split())
 
 
+def _default_cell(value):
+    """Render a flag default as a code span. Lists become `["a", "b"]` rather
+    than a bare `a, b`, which reads ambiguously in a table cell."""
+    if value is None or value in ("", []):
+        return ""
+    if isinstance(value, (list | tuple)):
+        items = ", ".join(f'"{v}"' if isinstance(v, str) else str(v) for v in value)
+        text = f"[{items}]"
+    else:
+        text = str(value)
+    safe = " ".join(text.replace("|", "\\|").split())
+    return f"`{safe}`"
+
+
 def _subcommands(parser):
     """Yield (name, subparser) for each subcommand, skipping alias duplicates."""
     for action in parser._actions:
@@ -71,7 +85,7 @@ def _flag_table(rows):
     lines = ["| Flag | Default | Choices | Description |", "| --- | --- | --- | --- |"]
     for r in flags:
         lines.append(
-            f"| {r['options']} | {_esc(r['default'])} "
+            f"| {r['options']} | {_default_cell(r['default'])} "
             f"| {_esc(r['choices'])} | {_esc(r['help'])} |"
         )
     return "\n".join(lines)
@@ -107,7 +121,9 @@ def _dotfile_table(rows):
         return None
     lines = ["| Key | Default | Description |", "| --- | --- | --- |"]
     for r in flags:
-        lines.append(f"| `{r['key']}` | {_esc(r['default'])} | {_esc(r['help'])} |")
+        lines.append(
+            f"| `{r['key']}` | {_default_cell(r['default'])} | {_esc(r['help'])} |"
+        )
     return "\n".join(lines)
 
 
