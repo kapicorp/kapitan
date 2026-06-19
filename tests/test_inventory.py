@@ -90,6 +90,59 @@ class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
 del InventoryTargetTestBase  # remove InventoryTargetTestBase so that it doesn't run
 
 
+class InventoryComposeFlagSeamTest(unittest.TestCase):
+    """Characterization of the resources.py -> cached.args seam for compose_target_name.
+
+    The backend-level behavior is covered in test_compose_node_name.py. This pins
+    the *wiring* in resources.get_inventory: that the public inventory() entry
+    point reads cached.args.compose_target_name and passes it to the backend.
+    The planned refactor turns this cached.args read into an explicit parameter;
+    this test guards that the flag still takes effect through inventory().
+    """
+
+    backend_id = InventoryBackends.RECLASS
+
+    def setUp(self) -> None:
+        if not importlib.util.find_spec(self.backend_id.replace("-", "_")):
+            self.skipTest(f"backend module {self.backend_id} not available")
+        # Build a collision inventory: duplicating every target under a subdir
+        # makes target names collide unless compose_target_name composes the
+        # dir into the name.
+        self.tmp = tempfile.mkdtemp()
+        inv_path = os.path.join(self.tmp, "inventory")
+        shutil.copytree(os.path.join(TEST_KUBERNETES_INVENTORY, "inventory"), inv_path)
+        targets_path = os.path.join(inv_path, "targets")
+        shutil.copytree(targets_path, os.path.join(targets_path, "env1"))
+        self.inventory_path = inv_path
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp)
+
+    def _set_args(self, compose_target_name):
+        args = build_parser().parse_args(["compile"])
+        args.inventory_backend = self.backend_id
+        args.compose_target_name = compose_target_name
+        kapitan.cached.reset_cache()
+        kapitan.cached.args = args
+
+    def test_compose_false_collides(self):
+        # name collision is fatal -> resources.get_inventory exits
+        self._set_args(compose_target_name=False)
+        with self.assertRaises(SystemExit):
+            inventory(inventory_path=self.inventory_path)
+
+    def test_compose_true_composes_names(self):
+        self._set_args(compose_target_name=True)
+        inv = inventory(inventory_path=self.inventory_path)
+        # composed names (env1.<target>) coexist with the originals
+        self.assertIn("minikube-es", inv)
+        self.assertIn("env1.minikube-es", inv)
+
+
+class InventoryComposeFlagSeamTestReclassRs(InventoryComposeFlagSeamTest):
+    backend_id = InventoryBackends.RECLASS_RS
+
+
 class InventoryTopicsTest(unittest.TestCase):
     """Tests for `kapitan.topics` aggregation across targets."""
 
