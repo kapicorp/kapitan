@@ -1,3 +1,8 @@
+---
+title: Kapitan environment variables (KAPITAN_*) reference
+description: "Reference for every KAPITAN_* environment variable Kapitan reads: what it does, its default, where to set it, and which run phase it applies to."
+---
+
 # :kapitan-logo: Environment variables
 
 **Kapitan** reads a small set of `KAPITAN_*` environment variables to tune behaviour
