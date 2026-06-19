@@ -38,6 +38,12 @@ inv_sources: set[str] = set()
 # Kadet caches
 kapitan_input_kadet = None
 
+# Shared cache metrics for the compile pool, keyed by input_type_name.
+# Populated by compile_targets() only when caching is enabled, then propagated
+# to workers via the pool initializer so every InputCache(input_type_name=N)
+# bumps the same shared CacheMetrics across processes.
+input_cache_metrics: dict | None = None
+
 
 def reset_cache():
     global \
