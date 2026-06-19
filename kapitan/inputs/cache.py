@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import multiprocessing
 import os
 import pickle
 from pathlib import Path
@@ -12,8 +13,44 @@ from kapitan.errors import CompileError
 logger = logging.getLogger(__name__)
 
 
+class CacheMetrics:
+    """Process-safe counters for cache hits, misses and fills.
+
+    Backed by ``multiprocessing.Value`` so workers spawned by the compile
+    Pool can share a single tally with the parent. Pass the same instance
+    to every ``InputCache`` that should report into the same totals.
+    """
+
+    def __init__(self):
+        # 'Q' is unsigned long long (uint64); plenty of headroom for counters.
+        self.hits = multiprocessing.Value("Q", 0)
+        self.misses = multiprocessing.Value("Q", 0)
+        self.fills = multiprocessing.Value("Q", 0)
+
+    @staticmethod
+    def _bump(counter):
+        with counter.get_lock():
+            counter.value += 1
+
+    def hit(self):
+        self._bump(self.hits)
+
+    def miss(self):
+        self._bump(self.misses)
+
+    def fill(self):
+        self._bump(self.fills)
+
+    def snapshot(self) -> dict:
+        return {
+            "hits": self.hits.value,
+            "misses": self.misses.value,
+            "fills": self.fills.value,
+        }
+
+
 class InputCache:
-    def __init__(self, input_type_name: str):
+    def __init__(self, input_type_name: str, metrics: CacheMetrics | None = None):
         if cache_home := os.environ.get("XDG_CACHE_HOME"):
             self.input_cache_home = f"{cache_home}/kapitan/{input_type_name}"
         elif cache_home := os.environ.get("HOME"):
@@ -23,7 +60,9 @@ class InputCache:
                 "Could not get cache dir: $XDG_CACHE_HOME or $HOME not set."
             )
 
+        self.input_type_name = input_type_name
         self.kv_cache = {}
+        self.metrics = metrics if metrics is not None else CacheMetrics()
 
         logger.debug("Input cache home: %s", self.input_cache_home)
 
@@ -45,9 +84,18 @@ class InputCache:
                             retry,
                             lock_retries,
                         )
-                        return self.load_output(fp)
+                        output_obj = self.load_output(fp)
+                        # load_output can return None when a kadet
+                        # ModuleNotFoundError is swallowed; treat that as a
+                        # miss so the caller recomputes.
+                        if output_obj is None:
+                            self.metrics.miss()
+                        else:
+                            self.metrics.hit()
+                        return output_obj
                 except FileNotFoundError:
                     pass
+        self.metrics.miss()
         return None
 
     def set(self, inputs_hash, output_obj, lock_retries=2):
@@ -76,7 +124,7 @@ class InputCache:
                     retry,
                     lock_retries,
                 )
-
+                self.metrics.fill()
                 return inputs_hash
         return None
 

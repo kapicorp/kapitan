@@ -1,3 +1,8 @@
+---
+title: "Kapitan searchvar: Find Where Variables Are Set"
+description: "Search your inventory with the kapitan searchvar command to find every file where a variable is declared."
+---
+
 # :kapitan-logo: **CLI Reference** | `kapitan searchvar`
 
 ## `kapitan searchvar`
