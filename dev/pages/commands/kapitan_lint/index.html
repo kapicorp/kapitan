@@ -13,10 +13,10 @@
         <link rel="canonical" href="https://kapitan.dev/dev/pages/commands/kapitan_lint/">
       
       
-        <link rel="prev" href="../kapitan_inventory/">
+        <link rel="prev" href="../kapitan_init/">
       
       
-        <link rel="next" href="../kapitan_searchvar/">
+        <link rel="next" href="../kapitan_refs/">
       
       
         
@@ -57,6 +57,8 @@
       <link rel="stylesheet" href="../../../assets/_markdown_exec_pyodide.css">
     
       <link rel="stylesheet" href="../../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -1926,6 +1928,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
     
@@ -1976,6 +1986,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../kapitan_flags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    global flags
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../kapitan_compile/" class="md-nav__link">
         
   
@@ -2004,6 +2042,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../kapitan_eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../kapitan_inventory/" class="md-nav__link">
         
   
@@ -2012,6 +2078,34 @@
     
   
     inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kapitan_init/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    init
   
 
     
@@ -2102,10 +2196,49 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flags
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kapitan_refs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    refs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2830,6 +2963,62 @@ No<span class="w"> </span>usage<span class="w"> </span>found<span class="w"> </s
 </code></pre></div>
 </details>
 </div>
+<h2 id="flags">Flags</h2>
+<p>The table below is generated from <strong>Kapitan</strong>'s argument parser at docs-build time, so it always matches the installed version. See also the <a href="../kapitan_flags/">global flags</a> accepted by every command, and the <a href="../kapitan_dotfile/"><code>.kapitan</code> dotfile</a> to set any of these permanently.</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Default</th>
+<th>Choices</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--fail-on-warning</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>exit with failure code if warnings exist, default is False</td>
+</tr>
+<tr>
+<td><code>--skip-class-checks</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>skip checking for unused classes, default is False</td>
+</tr>
+<tr>
+<td><code>--skip-yamllint</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>skip running yamllint on inventory, default is False</td>
+</tr>
+<tr>
+<td><code>--search-secrets</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>searches for plaintext secrets in inventory, default is False</td>
+</tr>
+<tr>
+<td><code>--refs-path</code></td>
+<td><code>./refs</code></td>
+<td></td>
+<td>set refs path, default is "./refs"</td>
+</tr>
+<tr>
+<td><code>--compiled-path</code></td>
+<td><code>./compiled</code></td>
+<td></td>
+<td>set compiled path, default is "./compiled"</td>
+</tr>
+<tr>
+<td><code>--inventory-path</code></td>
+<td><code>./inventory</code></td>
+<td></td>
+<td>set inventory path, default is "./inventory"</td>
+</tr>
+</tbody>
+</table>
   
 
 

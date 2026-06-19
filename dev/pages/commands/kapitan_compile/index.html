@@ -13,10 +13,10 @@
         <link rel="canonical" href="https://kapitan.dev/dev/pages/commands/kapitan_compile/">
       
       
-        <link rel="prev" href="../../fluxcd/">
+        <link rel="prev" href="../kapitan_flags/">
       
       
-        <link rel="next" href="../kapitan_inventory/">
+        <link rel="next" href="../kapitan_eval/">
       
       
         
@@ -57,6 +57,8 @@
       <link rel="stylesheet" href="../../../assets/_markdown_exec_pyodide.css">
     
       <link rel="stylesheet" href="../../../assets/_markdown_exec_ansi.css">
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -1926,6 +1928,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
     
@@ -1968,6 +1978,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kapitan_flags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    global flags
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2130,10 +2168,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#help" class="md-nav__link">
+  <a href="#flags" class="md-nav__link">
     <span class="md-ellipsis">
       
-        help
+        Flags
       
     </span>
   </a>
@@ -2144,6 +2182,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kapitan_eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    eval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2184,6 +2250,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../kapitan_init/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    init
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../kapitan_lint/" class="md-nav__link">
         
   
@@ -2192,6 +2286,34 @@
     
   
     lint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kapitan_refs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    refs
   
 
     
@@ -3028,85 +3150,200 @@ around <strong>6x faster</strong> than the default PyYAML emitter.</p>
   them in double-quoted scalars).</li>
 </ul>
 </div>
-<h2 id="help">help</h2>
-<div class="admonition example">
-<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile<span class="w"> </span>--help
-</code></pre></div>
-<details class="example">
-<summary>click to expand output</summary>
-<div class="highlight"><pre><span></span><code>usage:<span class="w"> </span>kapitan<span class="w"> </span>compile<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>--inventory-backend<span class="w"> </span><span class="o">{</span>reclass<span class="o">}]</span>
-<span class="w">               </span><span class="o">[</span>--search-paths<span class="w"> </span>JPATH<span class="w"> </span><span class="o">[</span>JPATH<span class="w"> </span>...<span class="o">]]</span>
-<span class="w">               </span><span class="o">[</span>--jinja2-filters<span class="w"> </span>FPATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--verbose<span class="o">]</span><span class="w"> </span><span class="o">[</span>--prune<span class="o">]</span>
-<span class="w">               </span><span class="o">[</span>--quiet<span class="o">]</span><span class="w"> </span><span class="o">[</span>--output-path<span class="w"> </span>PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--fetch<span class="o">]</span>
-<span class="w">               </span><span class="o">[</span>--force-fetch<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span><span class="w"> </span><span class="o">[</span>--validate<span class="o">]</span>
-<span class="w">               </span><span class="o">[</span>--parallelism<span class="w"> </span>INT<span class="o">]</span><span class="w"> </span><span class="o">[</span>--indent<span class="w"> </span>INT<span class="o">]</span>
-<span class="w">               </span><span class="o">[</span>--refs-path<span class="w"> </span>REFS_PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--reveal<span class="o">]</span><span class="w"> </span><span class="o">[</span>--embed-refs<span class="o">]</span>
-<span class="w">               </span><span class="o">[</span>--inventory-path<span class="w"> </span>INVENTORY_PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--cache<span class="o">]</span>
-<span class="w">               </span><span class="o">[</span>--cache-paths<span class="w"> </span>PATH<span class="w"> </span><span class="o">[</span>PATH<span class="w"> </span>...<span class="o">]]</span>
-<span class="w">               </span><span class="o">[</span>--ignore-version-check<span class="o">]</span><span class="w"> </span><span class="o">[</span>--use-go-jsonnet<span class="o">]</span>
-<span class="w">               </span><span class="o">[</span>--compose-target-name<span class="o">]</span><span class="w"> </span><span class="o">[</span>--schemas-path<span class="w"> </span>SCHEMAS_PATH<span class="o">]</span>
-<span class="w">               </span><span class="o">[</span>--yaml-multiline-string-style<span class="w"> </span>STYLE<span class="o">]</span>
-<span class="w">               </span><span class="o">[</span>--yaml-dump-null-as-empty<span class="o">]</span>
-<span class="w">               </span><span class="o">[</span>--yaml-use-rapidyaml<span class="o">]</span>
-<span class="w">               </span><span class="o">[</span>--targets<span class="w"> </span>TARGET<span class="w"> </span><span class="o">[</span>TARGET<span class="w"> </span>...<span class="o">]</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>--labels
-<span class="w">               </span><span class="o">[</span><span class="nv">key</span><span class="o">=</span>value<span class="w"> </span>...<span class="o">]]</span>
-
-options:
-<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">            </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
-<span class="w">  </span>--inventory-backend<span class="w"> </span><span class="o">{</span>reclass,reclass-rs<span class="o">}</span>
-<span class="w">                        </span>Select<span class="w"> </span>the<span class="w"> </span>inventory<span class="w"> </span>backend<span class="w"> </span>to<span class="w"> </span>use<span class="w"> </span><span class="o">(</span><span class="nv">default</span><span class="o">=</span>reclass<span class="o">)</span>
-<span class="w">  </span>--search-paths<span class="w"> </span>JPATH<span class="w"> </span><span class="o">[</span>JPATH<span class="w"> </span>...<span class="o">]</span>,<span class="w"> </span>-J<span class="w"> </span>JPATH<span class="w"> </span><span class="o">[</span>JPATH<span class="w"> </span>...<span class="o">]</span>
-<span class="w">                        </span><span class="nb">set</span><span class="w"> </span>search<span class="w"> </span>paths,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="o">[</span><span class="s2">&quot;.&quot;</span><span class="o">]</span>
-<span class="w">  </span>--jinja2-filters<span class="w"> </span>FPATH,<span class="w"> </span>-J2F<span class="w"> </span>FPATH
-<span class="w">                        </span>load<span class="w"> </span>custom<span class="w"> </span>jinja2<span class="w"> </span>filters<span class="w"> </span>from<span class="w"> </span>any<span class="w"> </span>file,<span class="w"> </span>default<span class="w"> </span>is
-<span class="w">                        </span>to<span class="w"> </span>put<span class="w"> </span>them<span class="w"> </span>inside<span class="w"> </span>lib/jinja2_filters.py
-<span class="w">  </span>--verbose,<span class="w"> </span>-v<span class="w">         </span><span class="nb">set</span><span class="w"> </span>verbose<span class="w"> </span>mode
-<span class="w">  </span>--prune<span class="w">               </span>prune<span class="w"> </span>jsonnet<span class="w"> </span>output
-<span class="w">  </span>--quiet<span class="w">               </span><span class="nb">set</span><span class="w"> </span>quiet<span class="w"> </span>mode,<span class="w"> </span>only<span class="w"> </span>critical<span class="w"> </span>output
-<span class="w">  </span>--output-path<span class="w"> </span>PATH<span class="w">    </span><span class="nb">set</span><span class="w"> </span>output<span class="w"> </span>path,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="s2">&quot;.&quot;</span>
-<span class="w">  </span>--fetch<span class="w">               </span>fetch<span class="w"> </span>remote<span class="w"> </span>inventories<span class="w"> </span>and/or<span class="w"> </span>external<span class="w"> </span>dependencies
-<span class="w">  </span>--force-fetch<span class="w">         </span>overwrite<span class="w"> </span>existing<span class="w"> </span>inventory<span class="w"> </span>and/or<span class="w"> </span>dependency<span class="w"> </span>item
-<span class="w">  </span>--force<span class="w">               </span>overwrite<span class="w"> </span>existing<span class="w"> </span>inventory<span class="w"> </span>and/or<span class="w"> </span>dependency<span class="w"> </span>item
-<span class="w">  </span>--validate<span class="w">            </span>validate<span class="w"> </span>compile<span class="w"> </span>output<span class="w"> </span>against<span class="w"> </span>schemas<span class="w"> </span>as<span class="w"> </span>specified
-<span class="w">                        </span><span class="k">in</span><span class="w"> </span>inventory
-<span class="w">  </span>--parallelism<span class="w"> </span>INT,<span class="w"> </span>-p<span class="w"> </span>INT
-<span class="w">                        </span>Number<span class="w"> </span>of<span class="w"> </span>concurrent<span class="w"> </span>compile<span class="w"> </span>processes,<span class="w"> </span>default<span class="w"> </span>is
-<span class="w">                        </span>min<span class="o">(</span>len<span class="o">(</span>targets<span class="o">)</span>,<span class="w"> </span>available<span class="w"> </span>CPU<span class="w"> </span>count<span class="o">)</span>
-<span class="w">  </span>--indent<span class="w"> </span>INT,<span class="w"> </span>-i<span class="w"> </span>INT<span class="w">  </span>Indentation<span class="w"> </span>spaces<span class="w"> </span><span class="k">for</span><span class="w"> </span>YAML/JSON,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="m">2</span>
-<span class="w">  </span>--refs-path<span class="w"> </span>REFS_PATH
-<span class="w">                        </span><span class="nb">set</span><span class="w"> </span>refs<span class="w"> </span>path,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="s2">&quot;./refs&quot;</span>
-<span class="w">  </span>--reveal<span class="w">              </span>reveal<span class="w"> </span>refs<span class="w"> </span><span class="o">(</span>warning:<span class="w"> </span>this<span class="w"> </span>will<span class="w"> </span>potentially<span class="w"> </span>write
-<span class="w">                        </span>sensitive<span class="w"> </span>data<span class="o">)</span>
-<span class="w">  </span>--embed-refs<span class="w">          </span>embed<span class="w"> </span>ref<span class="w"> </span>contents
-<span class="w">  </span>--inventory-path<span class="w"> </span>INVENTORY_PATH
-<span class="w">                        </span><span class="nb">set</span><span class="w"> </span>inventory<span class="w"> </span>path,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="s2">&quot;./inventory&quot;</span>
-<span class="w">  </span>--cache,<span class="w"> </span>-c<span class="w">           </span><span class="nb">enable</span><span class="w"> </span>compilation<span class="w"> </span>caching<span class="w"> </span>to<span class="w"> </span><span class="nv">$XDG_CACHE_HOME</span>/kapitan,
-<span class="w">                        </span>default<span class="w"> </span>is<span class="w"> </span>False<span class="w"> </span><span class="o">[</span>this<span class="w"> </span>is<span class="w"> </span>EXPERIMENTAL<span class="o">]</span>
-<span class="w">  </span>--cache-paths<span class="w"> </span>PATH<span class="w"> </span><span class="o">[</span>PATH<span class="w"> </span>...<span class="o">]</span>
-<span class="w">                        </span>cache<span class="w"> </span>additional<span class="w"> </span>paths<span class="w"> </span>to<span class="w"> </span>.kapitan_cache,<span class="w"> </span>default<span class="w"> </span>is
-<span class="w">                        </span><span class="o">[]</span>
-<span class="w">  </span>--ignore-version-check
-<span class="w">                        </span>ignore<span class="w"> </span>the<span class="w"> </span>version<span class="w"> </span>from<span class="w"> </span>.kapitan
-<span class="w">  </span>--use-go-jsonnet<span class="w">      </span>use<span class="w"> </span>go-jsonnet
-<span class="w">  </span>--compose-target-name<span class="w">   </span>Create<span class="w"> </span>same<span class="w"> </span>subfolder<span class="w"> </span>structure<span class="w"> </span>from<span class="w"> </span>inventory/targets
-<span class="w">                        </span>inside<span class="w"> </span>compiled<span class="w"> </span>folder
-<span class="w">  </span>--schemas-path<span class="w"> </span>SCHEMAS_PATH
-<span class="w">                        </span><span class="nb">set</span><span class="w"> </span>schema<span class="w"> </span>cache<span class="w"> </span>path,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="s2">&quot;./schemas&quot;</span>
-<span class="w">  </span>--yaml-multiline-string-style<span class="w"> </span>STYLE,<span class="w"> </span>-L<span class="w"> </span>STYLE
-<span class="w">                        </span><span class="nb">set</span><span class="w"> </span>multiline<span class="w"> </span>string<span class="w"> </span>style<span class="w"> </span>to<span class="w"> </span>STYLE,<span class="w"> </span>default<span class="w"> </span>is
-<span class="w">                        </span><span class="s1">&#39;double-quotes&#39;</span>
-<span class="w">  </span>--yaml-dump-null-as-empty
-<span class="w">                        </span>dumps<span class="w"> </span>all<span class="w"> </span>none-type<span class="w"> </span>entries<span class="w"> </span>as<span class="w"> </span>empty,<span class="w"> </span>default<span class="w"> </span>is
-<span class="w">                        </span>dumping<span class="w"> </span>as<span class="w"> </span><span class="s1">&#39;null&#39;</span>
-<span class="w">  </span>--yaml-use-rapidyaml<span class="w">  </span>use<span class="w"> </span>the<span class="w"> </span>rapidyaml<span class="w"> </span>emitter,<span class="w"> </span>fallback<span class="w"> </span>to<span class="w"> </span>PyYaml
-<span class="w">                        </span><span class="k">if</span><span class="w"> </span>rapidyaml<span class="w"> </span>not<span class="w"> </span>installed,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span>False.
-<span class="w">  </span>--targets<span class="w"> </span>TARGET<span class="w"> </span><span class="o">[</span>TARGET<span class="w"> </span>...<span class="o">]</span>,<span class="w"> </span>-t<span class="w"> </span>TARGET<span class="w"> </span><span class="o">[</span>TARGET<span class="w"> </span>...<span class="o">]</span>
-<span class="w">                        </span>targets<span class="w"> </span>to<span class="w"> </span>compile,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span>all
-<span class="w">  </span>--labels<span class="w"> </span><span class="o">[</span><span class="nv">key</span><span class="o">=</span>value<span class="w"> </span>...<span class="o">]</span>,<span class="w"> </span>-l<span class="w"> </span><span class="o">[</span><span class="nv">key</span><span class="o">=</span>value<span class="w"> </span>...<span class="o">]</span>
-<span class="w">                        </span>compile<span class="w"> </span>targets<span class="w"> </span>matching<span class="w"> </span>the<span class="w"> </span>labels,<span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span>all
-</code></pre></div>
-</details>
-</div>
+<h2 id="flags">Flags</h2>
+<p>The table below is generated from <strong>Kapitan</strong>'s argument parser at docs-build time, so it always matches the installed version. See also the <a href="../kapitan_flags/">global flags</a> accepted by every command, and the <a href="../kapitan_dotfile/"><code>.kapitan</code> dotfile</a> to set any of these permanently.</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Default</th>
+<th>Choices</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--inventory-backend</code></td>
+<td><code>reclass</code></td>
+<td>reclass, reclass-rs, omegaconf</td>
+<td>Select the inventory backend to use (default=reclass)</td>
+</tr>
+<tr>
+<td><code>--migrate</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>Migrate your inventory to your selected inventory backend.</td>
+</tr>
+<tr>
+<td><code>--compose-target-name</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>Create same subfolder structure from inventory/targets inside compiled folder</td>
+</tr>
+<tr>
+<td><code>--enable-class-wildcards</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>Enable glob pattern expansion in classes: lists (default: off). Patterns such as clusters.<em>, dev-</em> and * are expanded to all matching class names discovered under inventory/classes/. This flag is intentionally opt-in: inventories that contain literal glob metacharacters in class names (e.g. config[html]) or Reclass references that include ? would be incorrectly treated as patterns if expansion were always on.</td>
+</tr>
+<tr>
+<td><code>--search-paths</code>, <code>-J</code></td>
+<td><code>[".", "lib"]</code></td>
+<td></td>
+<td>set search paths, default is ["."]</td>
+</tr>
+<tr>
+<td><code>--jinja2-filters</code>, <code>-J2F</code></td>
+<td><code>lib/jinja2_filters.py</code></td>
+<td></td>
+<td>load custom jinja2 filters from any file, default is to put them inside lib/jinja2_filters.py</td>
+</tr>
+<tr>
+<td><code>--verbose</code>, <code>-v</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>set verbose mode</td>
+</tr>
+<tr>
+<td><code>--prune</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>prune jsonnet output</td>
+</tr>
+<tr>
+<td><code>--quiet</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>set quiet mode, only critical output</td>
+</tr>
+<tr>
+<td><code>--output-path</code></td>
+<td><code>.</code></td>
+<td></td>
+<td>set output path, default is "."</td>
+</tr>
+<tr>
+<td><code>--fetch</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>fetch remote inventories and/or external dependencies</td>
+</tr>
+<tr>
+<td><code>--force-fetch</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>overwrite existing inventory and/or dependency item</td>
+</tr>
+<tr>
+<td><code>--force</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>overwrite existing inventory and/or dependency item</td>
+</tr>
+<tr>
+<td><code>--validate</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>validate compile output against schemas as specified in inventory</td>
+</tr>
+<tr>
+<td><code>--parallelism</code>, <code>-p</code></td>
+<td></td>
+<td></td>
+<td>Number of concurrent compile processes, default is min(len(targets), available CPU count)</td>
+</tr>
+<tr>
+<td><code>--indent</code>, <code>-i</code></td>
+<td><code>2</code></td>
+<td></td>
+<td>Indentation spaces for YAML/JSON, default is 2</td>
+</tr>
+<tr>
+<td><code>--refs-path</code></td>
+<td><code>./refs</code></td>
+<td></td>
+<td>set refs path, default is "./refs"</td>
+</tr>
+<tr>
+<td><code>--reveal</code>, <code>--no-reveal</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>reveal refs (warning: this will potentially write sensitive data)</td>
+</tr>
+<tr>
+<td><code>--embed-refs</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>embed ref contents</td>
+</tr>
+<tr>
+<td><code>--inventory-path</code></td>
+<td><code>./inventory</code></td>
+<td></td>
+<td>set inventory path, default is "./inventory"</td>
+</tr>
+<tr>
+<td><code>--inventory-pool-cache</code></td>
+<td><code>True</code></td>
+<td></td>
+<td>enable passing inventory object cache to process pool, setting to False might speed up compilation for large inventories, default is True</td>
+</tr>
+<tr>
+<td><code>--cache</code>, <code>-c</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>enable compilation caching to $XDG_CACHE_HOME/kapitan, default is False [this is EXPERIMENTAL]</td>
+</tr>
+<tr>
+<td><code>--ignore-version-check</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>ignore the version from .kapitan</td>
+</tr>
+<tr>
+<td><code>--use-go-jsonnet</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>use go-jsonnet</td>
+</tr>
+<tr>
+<td><code>--schemas-path</code></td>
+<td><code>./schemas</code></td>
+<td></td>
+<td>set schema cache path, default is "./schemas"</td>
+</tr>
+<tr>
+<td><code>--yaml-multiline-string-style</code>, <code>-L</code></td>
+<td><code>literal</code></td>
+<td>literal, folded, double-quotes</td>
+<td>set multiline string style to STYLE, default is 'literal'</td>
+</tr>
+<tr>
+<td><code>--yaml-dump-null-as-empty</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>dumps all none-type entries as empty, default is dumping as 'null'</td>
+</tr>
+<tr>
+<td><code>--yaml-use-rapidyaml</code></td>
+<td><code>False</code></td>
+<td></td>
+<td>use the rapidyaml emitter, fallback to PyYaml if rapidyaml not installed, default is False</td>
+</tr>
+<tr>
+<td><code>--targets</code>, <code>-t</code></td>
+<td></td>
+<td></td>
+<td>targets to compile, default is all</td>
+</tr>
+<tr>
+<td><code>--labels</code>, <code>-l</code></td>
+<td></td>
+<td></td>
+<td>compile targets matching the labels, default is all</td>
+</tr>
+</tbody>
+</table>
   
 
 

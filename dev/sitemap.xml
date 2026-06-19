@@ -117,11 +117,27 @@
          <lastmod>2026-06-19</lastmod>
     </url>
     <url>
+         <loc>https://kapitan.dev/dev/pages/commands/kapitan_eval/</loc>
+         <lastmod>2026-06-19</lastmod>
+    </url>
+    <url>
+         <loc>https://kapitan.dev/dev/pages/commands/kapitan_flags/</loc>
+         <lastmod>2026-06-19</lastmod>
+    </url>
+    <url>
+         <loc>https://kapitan.dev/dev/pages/commands/kapitan_init/</loc>
+         <lastmod>2026-06-19</lastmod>
+    </url>
+    <url>
          <loc>https://kapitan.dev/dev/pages/commands/kapitan_inventory/</loc>
          <lastmod>2026-06-19</lastmod>
     </url>
     <url>
          <loc>https://kapitan.dev/dev/pages/commands/kapitan_lint/</loc>
+         <lastmod>2026-06-19</lastmod>
+    </url>
+    <url>
+         <loc>https://kapitan.dev/dev/pages/commands/kapitan_refs/</loc>
          <lastmod>2026-06-19</lastmod>
     </url>
     <url>
