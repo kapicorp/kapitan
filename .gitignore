@@ -43,3 +43,6 @@ junit.xml
 
 # Python venv
 .venv
+
+# direnv
+.direnv/
