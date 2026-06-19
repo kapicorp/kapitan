@@ -1,3 +1,8 @@
+---
+title: "Kapitan OmegaConf Inventory Backend with Resolvers"
+description: "Configure the OmegaConf inventory backend in Kapitan for advanced interpolation, custom resolvers, and deferred evaluation."
+---
+
 # The OmegaConf Inventory Backend
 
 ## Overview

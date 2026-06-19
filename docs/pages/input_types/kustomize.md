@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Kustomize Input Type"
+title: "Kapitan Kustomize Input Type: Patch K8s Manifests"
 description: "Use Kustomize within Kapitan to patch and customize Kubernetes manifests across environments."
 ---
 

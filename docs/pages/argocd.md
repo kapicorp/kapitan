@@ -1,3 +1,8 @@
+---
+title: "Kapitan ArgoCD Integration: GitOps Config Plugin"
+description: "Integrate Kapitan with ArgoCD as a Config Management Plugin to render Kubernetes manifests for GitOps delivery."
+---
+
 # :kapitan-logo: ArgoCD Integration
 
 Kapitan can be used as an [ArgoCD Config Management Plugin (CMP)](https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins/).

@@ -13,12 +13,14 @@ import shutil
 import stat
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import yaml
 
 from kapitan.utils import (
     SafeCopyError,
     YamlLoader,
+    available_cpu_count,
     compare_versions,
     copy_tree,
     deep_get,
@@ -263,6 +265,105 @@ class Sha256StringTest(unittest.TestCase):
         digest = sha256_string("héllo wörld 🌍")
         self.assertEqual(len(digest), 64)
         self.assertTrue(all(c in "0123456789abcdef" for c in digest))
+
+
+class AvailableCpuCountTest(unittest.TestCase):
+    """Test available_cpu_count uses process-aware CPU detection."""
+
+    def test_uses_affinity_count(self):
+        with (
+            patch("kapitan.utils.os.cpu_count", return_value=64),
+            patch(
+                "kapitan.utils.os.sched_getaffinity",
+                create=True,
+                return_value={0, 1},
+            ),
+            patch("kapitan.utils.os.path.exists", return_value=False),
+        ):
+            self.assertEqual(available_cpu_count(), 2)
+
+    def test_uses_cgroup_v2_quota(self):
+        with (
+            patch("kapitan.utils.os.cpu_count", return_value=64),
+            patch(
+                "kapitan.utils.os.sched_getaffinity",
+                create=True,
+                return_value=set(range(64)),
+            ),
+            patch(
+                "kapitan.utils.os.path.exists",
+                side_effect=lambda path: path == "/sys/fs/cgroup/cpu.max",
+            ),
+            patch("kapitan.utils._read_cpu_file", return_value="250000 100000"),
+        ):
+            self.assertEqual(available_cpu_count(), 3)
+
+    def test_uses_cgroup_v1_quota(self):
+        cgroup_files = {
+            "/sys/fs/cgroup/cpu/cpu.cfs_quota_us": "150000",
+            "/sys/fs/cgroup/cpu/cpu.cfs_period_us": "100000",
+        }
+        with (
+            patch("kapitan.utils.os.cpu_count", return_value=64),
+            patch(
+                "kapitan.utils.os.sched_getaffinity",
+                create=True,
+                return_value=set(range(64)),
+            ),
+            patch(
+                "kapitan.utils.os.path.exists",
+                side_effect=lambda path: path in cgroup_files,
+            ),
+            patch(
+                "kapitan.utils._read_cpu_file",
+                side_effect=lambda path: cgroup_files[path],
+            ),
+        ):
+            self.assertEqual(available_cpu_count(), 2)
+
+    def test_cgroup_quota_takes_minimum_with_affinity(self):
+        with (
+            patch("kapitan.utils.os.cpu_count", return_value=64),
+            patch(
+                "kapitan.utils.os.sched_getaffinity",
+                create=True,
+                return_value={0, 1},
+            ),
+            patch(
+                "kapitan.utils.os.path.exists",
+                side_effect=lambda path: path == "/sys/fs/cgroup/cpu.max",
+            ),
+            patch("kapitan.utils._read_cpu_file", return_value="300000 100000"),
+        ):
+            self.assertEqual(available_cpu_count(), 2)
+
+    def test_cgroup_max_uses_os_cpu_count(self):
+        with (
+            patch("kapitan.utils.os.cpu_count", return_value=8),
+            patch(
+                "kapitan.utils.os.sched_getaffinity",
+                create=True,
+                return_value=set(range(8)),
+            ),
+            patch(
+                "kapitan.utils.os.path.exists",
+                side_effect=lambda path: path == "/sys/fs/cgroup/cpu.max",
+            ),
+            patch("kapitan.utils._read_cpu_file", return_value="max 100000"),
+        ):
+            self.assertEqual(available_cpu_count(), 8)
+
+    def test_never_returns_less_than_one(self):
+        with (
+            patch("kapitan.utils.os.cpu_count", return_value=None),
+            patch(
+                "kapitan.utils.os.sched_getaffinity",
+                create=True,
+                return_value=set(),
+            ),
+            patch("kapitan.utils.os.path.exists", return_value=False),
+        ):
+            self.assertEqual(available_cpu_count(), 1)
 
 
 class RenderJinja2TemplateTest(unittest.TestCase):

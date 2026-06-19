@@ -20,15 +20,17 @@ from reclass.errors import NotFoundError, ReclassException
 from kapitan import cached
 from kapitan.dependency_manager.base import fetch_dependencies
 from kapitan.errors import CompileError, InventoryError, KapitanError
-from kapitan.inputs import get_compiler
+from kapitan.inputs import CACHEABLE_INPUT_TYPES, get_compiler
+from kapitan.inputs.cache import CacheMetrics
 from kapitan.profiling import worker_profile
 from kapitan.resources import get_inventory
+from kapitan.utils import available_cpu_count
 
 
 logger = logging.getLogger(__name__)
 
 
-def _pool_init(globals_cached):
+def _pool_init(globals_cached, input_cache_metrics):
     """Pool initializer: seed each worker's `cached` module from the parent.
 
     Called once per worker after fork/spawn. ``initargs`` is pickled once per
@@ -40,9 +42,44 @@ def _pool_init(globals_cached):
     populated from the snapshot. When ``--inventory-pool-cache=False``
     (``globals_cached is None``), workers keep whatever state they inherited
     (the full cache on fork, an empty module on spawn).
+
+    ``input_cache_metrics`` is a dict mapping input_type_name to a
+    ``CacheMetrics`` backed by shared ``multiprocessing.Value`` counters.
+    Forwarding it explicitly keeps the spawn start method working, where
+    module globals don't cross the process boundary.
     """
     if globals_cached and not cached.inv:
         cached.from_dict(globals_cached)
+    cached.input_cache_metrics = input_cache_metrics
+
+
+def _log_cache_metrics(metrics_by_type):
+    """Emit a one-line summary of compile-cache activity per input type.
+
+    Skips entries that saw no lookups (e.g., an input type isn't used in
+    this compile run). When caching was on but nothing fired anywhere,
+    a single "no lookups" line is emitted instead.
+    """
+    if not metrics_by_type:
+        return
+    any_activity = False
+    for input_type, metrics in metrics_by_type.items():
+        snap = metrics.snapshot()
+        lookups = snap["hits"] + snap["misses"]
+        if lookups == 0:
+            continue
+        any_activity = True
+        hit_rate = 100.0 * snap["hits"] / lookups
+        logger.info(
+            "Compile cache (%s): %d hits, %d misses, %d fills (hit rate %.1f%%)",
+            input_type,
+            snap["hits"],
+            snap["misses"],
+            snap["fills"],
+            hit_rate,
+        )
+    if not any_activity:
+        logger.info("Compile cache: no lookups")
 
 
 def compile_targets(inventory_path, search_paths, ref_controller, args):
@@ -93,10 +130,11 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
             f"No matching targets found in inventory: {labels if labels else args.targets}"
         )
 
-    parallelism = args.parallelism or min(len(targets), os.cpu_count())
+    available_cpus = available_cpu_count()
+    parallelism = args.parallelism or min(len(targets), available_cpus)
 
     logger.info(
-        f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({os.cpu_count()} CPU detected)"
+        f"Compiling {len(targets)}/{len(discovered_targets)} targets using {parallelism} concurrent processes: ({available_cpus} CPU available)"
     )
 
     # check if --fetch or --force-fetch is enabled
@@ -128,6 +166,14 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
     # append "compiled" to output_path so we can safely overwrite it
     output_path = args.output_path
     compile_path = os.path.join(output_path, "compiled")
+
+    # Allocate one shared CacheMetrics per cacheable input type so workers
+    # bump the same counters as the parent. The dict is pre-populated here
+    # (eagerly, before pool spawn) because multiprocessing.Value objects
+    # have to be created in the parent to be sharable across workers.
+    cached.input_cache_metrics = (
+        {name: CacheMetrics() for name in CACHEABLE_INPUT_TYPES} if args.cache else None
+    )
 
     try:
         fetching_start = time.time()
@@ -162,7 +208,10 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         # initargs so each worker is seeded a single time. Per-target
         # mutations (e.g. target_full_path) travel with the target object
         # itself via imap_unordered.
-        pool_initargs = (cached.as_dict() if args.inventory_pool_cache else None,)
+        pool_initargs = (
+            cached.as_dict() if args.inventory_pool_cache else None,
+            cached.input_cache_metrics,
+        )
 
         with multiprocessing.Pool(
             parallelism, initializer=_pool_init, initargs=pool_initargs
@@ -220,6 +269,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                 f"Compiled {len(target_objs)} targets in %.2fs",
                 time.time() - compile_start,
             )
+            _log_cache_metrics(cached.input_cache_metrics)
     except ReclassException as e:
         if isinstance(e, NotFoundError):
             logger.error("Inventory reclass error: inventory not found")
