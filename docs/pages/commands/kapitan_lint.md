@@ -1,3 +1,8 @@
+---
+title: "Kapitan lint: Check Your Inventory and Refs"
+description: "Run the kapitan lint command to check your inventory and refs for YAML issues and orphan classes."
+---
+
 # :kapitan-logo: **CLI Reference** | `kapitan lint`
 
 ## `kapitan lint`
