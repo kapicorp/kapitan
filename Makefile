@@ -175,21 +175,21 @@ clean:
 .PHONY: docs_build
 docs_build:
 	@echo "===== Building Documentation ====="
-	timeout 300 $(UV_RUN) mkdocs build --strict
+	timeout 300 uv run mkdocs build --strict
 
 # Preview docs with live reload of LOCAL changes (unlike docs_serve / mike serve,
 # which only serves already-deployed versions from the gh-pages branch).
 .PHONY: docs_preview
 docs_preview:
 	@echo "===== Previewing Documentation (local changes) at http://localhost:8000 ====="
-	$(UV_RUN) mkdocs serve
+	uv run mkdocs serve
 
 # Serve already-published documentation versions (mike / gh-pages)
 .PHONY: docs_serve
 docs_serve:
 	@echo "===== Serving Published Documentation Locally ====="
 	@echo "Documentation will be available at http://localhost:8000"
-	$(UV_RUN) mike serve
+	uv run mike serve
 
 # Verify fenced code blocks render correctly + flag tables generate and build
 .PHONY: docs_check
