@@ -22,7 +22,9 @@ import pytest
 
 LOCKFILE = Path(__file__).resolve().parent.parent / "uv.lock"
 
-# A packaged distribution entry: a wheel or sdist served over http(s).
+# A registry distribution entry: a wheel or sdist served over http(s). Git and
+# direct-URL dependencies are intentionally not matched here — they pin by commit
+# or URL rather than by hash, so a missing sha256 on those is expected, not a gap.
 _DIST_URL = re.compile(r'url = "https?://[^"]+\.(?:whl|tar\.gz|zip)"')
 # uv records a sha256 digest inline on the same line as the distribution url.
 _SHA256 = re.compile(r'hash = "sha256:[0-9a-f]{64}"')
@@ -46,6 +48,19 @@ def test_every_distribution_is_hash_pinned():
     )
 
 
-def test_lockfile_actually_contains_hashes():
-    # Guards against the scan silently passing on an empty or malformed lock.
-    assert _SHA256.search(LOCKFILE.read_text()), "no sha256 hashes found in uv.lock"
+def test_scanner_still_matches_distributions():
+    # Anchor against format drift: if a future uv.lock layout stops matching
+    # _DIST_URL, the hash check above would pass while inspecting nothing. Every
+    # package normally ships at least one registry distribution, so requiring at
+    # least one matched distribution per package catches a regex that has gone
+    # stale (it would drop toward zero) without being brittle to dependency churn.
+    text = LOCKFILE.read_text()
+    package_count = text.count("[[package]]")
+    distributions = _DIST_URL.findall(text)
+
+    assert package_count > 0, "no packages found in uv.lock"
+    assert _SHA256.search(text), "no sha256 hashes found in uv.lock"
+    assert len(distributions) >= package_count, (
+        f"matched only {len(distributions)} distributions for {package_count} "
+        "packages; the _DIST_URL pattern likely no longer matches uv.lock's format"
+    )
