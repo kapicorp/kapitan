@@ -135,12 +135,11 @@ class Kadet(InputType):
         inputs_hash = None
         output_obj = None
 
-        # set compile_path allowing kadet functions to have context on where files
-        # are being compiled on the current kapitan run
-        # we only do this if user didn't pass its own value
-        input_params.setdefault("compile_path", compile_path)
-
         if cache_obj := self.cacheable():
+            # Hash input_params before setdefault injects compile_path below, so the
+            # volatile per-run tempdir never appears in the key. Any compile_path the
+            # user explicitly included in input_params is still hashed, preserving the
+            # collision safety added by PR #1520.
             inputs_hash = self.inputs_hash(
                 inventory_digest(current_target.get()),
                 target_name,
@@ -151,6 +150,10 @@ class Kadet(InputType):
             output_obj = cache_obj.get(inputs_hash)
 
         if output_obj is None:
+            # set compile_path after the cache key is computed so the volatile tempdir
+            # path does not get baked into the hash; only inject if user didn't supply one
+            input_params.setdefault("compile_path", compile_path)
+
             kadet_module, spec = module_from_path(input_path)
             sys.modules[spec.name] = kadet_module
             spec.loader.exec_module(kadet_module)
@@ -277,7 +280,8 @@ class Kadet(InputType):
     def cacheable(self):
         if cached.args.cache:
             if cached.kapitan_input_kadet is None:
-                cached.kapitan_input_kadet = InputCache("kadet")
+                metrics = (cached.input_cache_metrics or {}).get("kadet")
+                cached.kapitan_input_kadet = InputCache("kadet", metrics=metrics)
 
             return cached.kapitan_input_kadet
         return False

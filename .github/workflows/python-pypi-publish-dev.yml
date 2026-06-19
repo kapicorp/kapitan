@@ -46,10 +46,16 @@ jobs:
       - name: Build and check
         run: |
           uv build
-          uvx twine check dist/*
+          # Restrict to actual distributions so this stays correct if
+          # non-package artifacts (SBOM, checksums) are ever added to dist/.
+          uvx twine check dist/*.whl dist/*.tar.gz
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
+          # Dev versions are derived from distance-from-latest-tag, so the same
+          # version can be recomputed across runs (re-runs, tag moves, etc.).
+          # Treat "already on PyPI" as a no-op instead of failing the workflow.
+          skip-existing: true

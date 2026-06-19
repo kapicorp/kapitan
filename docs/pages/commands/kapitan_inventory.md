@@ -1,3 +1,8 @@
+---
+title: "Kapitan inventory: Render Target Inventory Values"
+description: "Run the kapitan inventory command to render the merged inventory values for a specific target."
+---
+
 # :kapitan-logo: **CLI Reference** | `kapitan inventory`
 
 ## `kapitan inventory`

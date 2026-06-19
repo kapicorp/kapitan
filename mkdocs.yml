@@ -126,6 +126,7 @@ nav:
           - Copy: pages/input_types/copy.md
           - Remove: pages/input_types/remove.md
       - References: references.md
+      - Environment variables: pages/environment_variables.md
       - Advanced Kapitan:
           - Remote repositories: pages/remote_repositories.md
           - External dependencies: pages/external_dependencies.md

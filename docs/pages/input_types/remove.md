@@ -1,3 +1,8 @@
+---
+title: "Kapitan Remove Input Type: Delete Files and Directories"
+description: "Learn how to use the Kapitan remove input type to delete files or directories created during other compile inputs."
+---
+
 # :kapitan-logo:  Remove
 
 This input type simply removes files or directories. This can be helpful if you can't control particular files
