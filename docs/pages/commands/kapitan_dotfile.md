@@ -1,3 +1,8 @@
+---
+title: "Kapitan .kapitan Dotfile: Override CLI Defaults"
+description: "Configure the .kapitan dotfile to pin versions and set persistent command flags across all Kapitan runs."
+---
+
 # :kapitan-logo: **CLI Reference** | `.kapitan` config file
 
 ## `.kapitan`

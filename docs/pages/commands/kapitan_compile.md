@@ -1,3 +1,8 @@
+---
+title: "Kapitan compile: Render Targets to Output Files"
+description: "Learn how the kapitan compile command merges inventory and inputs to generate your output files."
+---
+
 # :kapitan-logo: **CLI Reference** | `kapitan compile`
 
 ## `kapitan compile`
