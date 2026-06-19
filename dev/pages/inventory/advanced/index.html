@@ -3009,8 +3009,11 @@ Compiled<span class="w"> </span>acme-documentation<span class="w"> </span><span 
 <p>Topics let targets expose a subset of their parameters so that other targets can
 aggregate and consume them, without resorting to backend-specific features like
 reclass exports or expensive <code>inventory_global()</code> scans.</p>
-<p>A target opts into a topic by declaring parameters under
-<code>parameters.kapitan.topics.&lt;topic_name&gt;.parameters</code>:</p>
+<p>A target's relationship to a topic has two independent sides — <strong>produce</strong>
+and <strong>consume</strong> — both declared under
+<code>parameters.kapitan.topics.&lt;topic_name&gt;</code> on the same node.</p>
+<p><strong>Producers</strong> declare <code>parameters:</code> to publish a slice of their own
+configuration into the topic:</p>
 <div class="admonition example">
 <p class="admonition-title"><code>inventory/targets/target-1.yml</code></p>
 <div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
@@ -3033,11 +3036,34 @@ reclass exports or expensive <code>inventory_global()</code> scans.</p>
 <span class="w">          </span><span class="nt">colour</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${colour}</span>
 </code></pre></div>
 </div>
+<p><strong>Consumers</strong> declare <code>consume: true</code> to opt into reading a topic. This is
+required — calling <code>topics("colours")</code> from a target that has not declared
+<code>consume: true</code> on the <code>colours</code> node is a compile error.</p>
+<div class="admonition example">
+<p class="admonition-title"><code>inventory/targets/painter.yml</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">topics</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">colours</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">consume</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+</div>
+<p>A target can be both producer and consumer of the same topic — just declare
+<code>parameters:</code> and <code>consume: true</code> together on the same node.</p>
+<p>Why the explicit consumer declaration? Topics introduce a <em>cross-target</em>
+dependency that is otherwise invisible: if <code>target-1</code> changes its colour,
+the painter's output changes even though the painter's own inventory did
+not. Without an explicit opt-in, the input cache would serve stale results
+because it has no way to know which producers a given consumer depends on.
+Declaring <code>consume: true</code> turns that hidden dependency into an explicit one,
+and the kadet input cache (see <code>kapitan/inputs/cache.py</code>) mixes a digest of
+each declared topic's aggregated view into the consumer's cache key.</p>
 <p>Kapitan aggregates participating targets into a single topic view of the shape
 <code>{parameters: {targets: {&lt;target_name&gt;: &lt;topic_parameters&gt;}}}</code>. The <code>topics()</code>
 function is available to every input type (kadet, jinja2, jsonnet). Call it
 without arguments to get the full mapping of all topics, or with a name to get
-a single topic.</p>
+a single topic — in both cases every topic that would be returned must be
+declared <code>consume: true</code> on the calling target.</p>
 <div class="admonition example">
 <p class="admonition-title">kadet (<code>components/painter/__init__.py</code>)</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kapitan.inputs.kadet</span><span class="w"> </span><span class="kn">import</span> <span class="n">topics</span>
