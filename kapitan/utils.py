@@ -28,7 +28,7 @@ import requests
 import yaml
 
 from kapitan import cached, defaults
-from kapitan.errors import CompileError
+from kapitan.errors import CompileError, PathTraversalError
 from kapitan.jinja2_filters import (
     _jinja_error_info,
     load_jinja2_filters,
@@ -65,34 +65,69 @@ for _YamlLoader in {YamlLoader, yaml.SafeLoader}:
     )
 
 
-def warn_on_path_traversal(roots, resolved_path, accessor):
-    """Warn (without blocking) when ``resolved_path`` escapes every allowed root.
+# How file accessors react when a resolved path escapes its search paths.
+PATH_TRAVERSAL_MODES = ("warn", "error", "off")
+_DEFAULT_PATH_TRAVERSAL_MODE = "warn"
+_path_traversal_mode = _DEFAULT_PATH_TRAVERSAL_MODE
+
+
+def set_path_traversal_mode(mode):
+    """Set the process-wide reaction to a path escaping its search paths.
+
+    One of ``PATH_TRAVERSAL_MODES``: ``warn`` (log, default), ``error`` (raise
+    ``PathTraversalError``) or ``off`` (skip the check). Workers call this from
+    ``compile_target`` so the setting survives the spawn process boundary.
+    """
+    global _path_traversal_mode
+    if mode not in PATH_TRAVERSAL_MODES:
+        raise ValueError(
+            f"invalid path traversal mode {mode!r}, expected one of "
+            f"{', '.join(PATH_TRAVERSAL_MODES)}"
+        )
+    _path_traversal_mode = mode
+
+
+@lru_cache(maxsize=512)
+def _realpath(path):
+    """``os.path.realpath`` memoised for stable inputs such as search paths."""
+    return os.path.realpath(path)
+
+
+def check_path_traversal(roots, resolved_path, accessor):
+    """React when ``resolved_path`` escapes every allowed root.
 
     File accessors such as jsonnet's ``import``/``file_read`` natives, the jinja2
     render callback and input glob expansion resolve a caller-supplied name
     against search paths with ``os.path.join``. A name containing ``..`` (or a
     symlink) can resolve outside the inventory and read unrelated files such as
-    SSH keys. This logs a warning so the access is visible; it does not yet block
-    it.
+    SSH keys.
+
+    The reaction is set by ``set_path_traversal_mode``: ``warn`` logs and lets
+    the read continue, ``error`` raises ``PathTraversalError``, ``off`` disables
+    the check entirely.
 
     Args:
         roots: iterable of directories the access is expected to stay within.
         resolved_path: the path actually selected by the accessor.
-        accessor: short name of the caller, used in the warning message.
+        accessor: short name of the caller, used in the message.
     """
+    if _path_traversal_mode == "off":
+        return
+    # ``resolved_path`` differs every call so it is not memoised; the roots
+    # (search paths) repeat across a whole compile, so ``_realpath`` caches them.
     real_path = os.path.realpath(resolved_path)
     for root in roots:
-        real_root = os.path.realpath(root)
+        real_root = _realpath(root)
         if real_path == real_root or real_path.startswith(real_root + os.sep):
             return
-    logger.warning(
-        "%s: resolved path %r escapes its search path(s) (resolved to %r). "
-        "This reads a file outside the inventory and may be blocked in a future "
-        "release.",
-        accessor,
-        resolved_path,
-        real_path,
+    message = (
+        f"{accessor}: resolved path {resolved_path!r} escapes its search "
+        f"path(s) (resolved to {real_path!r}); this reads a file outside the "
+        f"inventory"
     )
+    if _path_traversal_mode == "error":
+        raise PathTraversalError(message)
+    logger.warning("%s (set path-traversal mode to 'error' to forbid this)", message)
 
 
 def available_cpu_count():

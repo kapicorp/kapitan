@@ -27,7 +27,12 @@ from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.cmd_parser import handle_refs_command
 from kapitan.resources import generate_inventory, resource_callbacks, search_imports
 from kapitan.targets import compile_targets
-from kapitan.utils import check_version, from_dot_kapitan, searchvar
+from kapitan.utils import (
+    PATH_TRAVERSAL_MODES,
+    check_version,
+    from_dot_kapitan,
+    searchvar,
+)
 from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
 
@@ -201,6 +206,16 @@ def build_parser():
         default=from_dot_kapitan("compile", "search-paths", [".", "lib"]),
         metavar="JPATH",
         help='set search paths, default is ["."]',
+    )
+    compile_parser.add_argument(
+        "--path-traversal-mode",
+        type=str,
+        choices=PATH_TRAVERSAL_MODES,
+        default=from_dot_kapitan("compile", "path-traversal-mode", "warn"),
+        help="how to react when a file accessor (jsonnet import/file_read, "
+        "jinja2 render, input glob) resolves a path outside its search paths: "
+        "'warn' logs it (default), 'error' fails the compile, 'off' disables "
+        "the check",
     )
     compile_parser.add_argument(
         "--jinja2-filters",

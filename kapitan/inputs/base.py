@@ -19,7 +19,7 @@ from kapitan import cached
 from kapitan.errors import CompileError, KapitanError
 from kapitan.inventory.model.input_types import CompileInputTypeConfig, OutputType
 from kapitan.refs.base import Revealer
-from kapitan.utils import PrettyDumper, prune_empty, warn_on_path_traversal
+from kapitan.utils import PrettyDumper, check_path_traversal, prune_empty
 from kapitan.yaml_ryml import HAS_RYML
 from kapitan.yaml_ryml import dump as ryml_dump
 
@@ -131,7 +131,7 @@ class InputType:
                 )
 
             for expanded_path in expanded_paths:
-                warn_on_path_traversal(self.search_paths, expanded_path, "input path")
+                check_path_traversal(self.search_paths, expanded_path, "input path")
                 self.compile_input_path(comp_obj, expanded_path, target_compile_path)
 
     def to_file(self, config: CompileInputTypeConfig, file_path, file_content):
