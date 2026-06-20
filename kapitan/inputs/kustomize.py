@@ -200,20 +200,24 @@ class Kustomize(InputType):
             ) from e
 
     def _resolve_output_file(self, output_path: str, compile_path: str) -> str:
-        """Resolve ``output_file`` to an absolute path, guarding against traversal.
+        """Resolve ``output_file`` to a real absolute path, guarding against traversal.
+
+        ``os.path.realpath`` resolves symlinks as well as ``..`` segments, so a
+        symlinked directory inside ``compile_path`` that points outside of it
+        cannot be used to escape the compile directory.
 
         Args:
             output_path: Path where output should be written (joined with compile_path)
             compile_path: Base compile path that output must stay within
 
         Returns:
-            The normalized absolute output path.
+            The normalized, symlink-resolved absolute output path.
 
         Raises:
             KustomizeTemplateError: If output_file resolves outside compile_path
         """
-        normalized_output = os.path.abspath(output_path)
-        normalized_compile = os.path.abspath(compile_path)
+        normalized_output = os.path.realpath(output_path)
+        normalized_compile = os.path.realpath(compile_path)
         if not normalized_output.startswith(normalized_compile + os.sep):
             raise KustomizeTemplateError(
                 f"output_file must resolve inside output_path: {output_path}"

@@ -18,6 +18,7 @@ from pydantic import ValidationError
 from kapitan.errors import KustomizeTemplateError
 from kapitan.inputs.kustomize import Kustomize
 from kapitan.inventory.model.input_types import KapitanInputTypeKustomizeConfig
+from kapitan.refs.base import PlainRef, RefController
 
 
 class KustomizeInputTest(unittest.TestCase):
@@ -524,6 +525,66 @@ class KustomizeInputTest(unittest.TestCase):
                 self.kustomize.compile_file(config_abs, temp_dir, self.compile_path)
         finally:
             shutil.rmtree(temp_dir)
+
+    def test_compile_file_with_output_file_reveals_refs(self):
+        """output_file path should resolve kapitan refs via to_file()."""
+        refs_dir = tempfile.mkdtemp()
+        temp_dir = tempfile.mkdtemp()
+        try:
+            ref_controller = RefController(refs_dir)
+            tag = "?{plain:my/kustomize_secret}"
+            ref_controller[tag] = PlainRef(b"super-secret-value")
+
+            args = type(
+                "Args",
+                (),
+                {"kustomize_path": "kustomize", "reveal": False, "indent": 2},
+            )
+            kustomize = Kustomize(
+                self.compile_path,
+                [],
+                ref_controller,
+                self.target_name,
+                args,
+            )
+
+            kustomization = {
+                "resources": ["configmap.yaml"],
+            }
+            with open(
+                os.path.join(temp_dir, "kustomization.yaml"), "w", encoding="utf-8"
+            ) as f:
+                yaml.dump(kustomization, f)
+
+            configmap = {
+                "apiVersion": "v1",
+                "kind": "ConfigMap",
+                "metadata": {"name": "test-config"},
+                "data": {"token": tag},
+            }
+            with open(
+                os.path.join(temp_dir, "configmap.yaml"), "w", encoding="utf-8"
+            ) as f:
+                yaml.dump(configmap, f)
+
+            config = KapitanInputTypeKustomizeConfig(
+                input_paths=[temp_dir],
+                output_path=self.compile_path,
+                output_file="bundle.yml",
+            )
+
+            kustomize.compile_file(config, temp_dir, self.compile_path)
+
+            output_file = os.path.join(self.compile_path, "bundle.yml")
+            with open(output_file, encoding="utf-8") as f:
+                content = f.read()
+
+            # The ref tag must be resolved, not written through verbatim.
+            self.assertIn("super-secret-value", content)
+            self.assertNotIn(tag, content)
+        finally:
+            shutil.rmtree(temp_dir)
+            shutil.rmtree(refs_dir)
 
 
 class KustomizeConfigSchemaTest(unittest.TestCase):
