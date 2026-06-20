@@ -1,3 +1,8 @@
+---
+title: "Kapitan Remote Inventories: Fetch Git and HTTP Classes"
+description: "Configure Kapitan to recursively fetch remote inventory classes and targets from Git and HTTP sources."
+---
+
 # :kapitan-logo: Remote Inventories
 
 Kapitan is capable of recursively fetching inventory items stored in remote locations and copy it to the specified output path. This feature can be used by specifying those inventory items in classes or targets under `parameters.kapitan.inventory`. Supported types are:

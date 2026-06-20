@@ -1,6 +1,6 @@
 ---
-title: "Kapitan with Jsonnet"
-description: "Use Jsonnet with Kapitan to generate Kubernetes manifests and infrastructure configuration. Access inventory data, validate with JSON Schema, and output YAML or JSON."
+title: "Kapitan Jsonnet Input Type: Generate Manifests"
+description: "Use Jsonnet with Kapitan to generate Kubernetes manifests and infrastructure config. Access inventory data, validate with JSON Schema, and output YAML."
 ---
 
 # :kapitan-logo: **Kapitan with Jsonnet**

@@ -10,6 +10,13 @@ from kapitan.inventory.model.input_types import InputTypes
 from .base import InputType
 
 
+# Input types that maintain a persistent compilation cache via InputCache.
+# compile_targets() pre-allocates one CacheMetrics per entry so all workers
+# share counters across the multiprocessing pool. Add an entry here when a
+# new input type adopts InputCache.
+CACHEABLE_INPUT_TYPES: tuple[str, ...] = ("kadet",)
+
+
 @functools.cache  # Use lru_cache for caching
 def get_compiler(input_type: InputType) -> type[InputType]:
     """Dynamically imports and returns the compiler class based on input_type."""

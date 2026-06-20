@@ -34,6 +34,13 @@ COPY ./uv.lock ./uv.lock
 COPY ./README.md ./README.md
 COPY ./kapitan/version.py ./kapitan/version.py
 
+# uv-dynamic-versioning normally derives the version from git tags, which
+# would require shipping .git into the build context. Instead the caller
+# computes the version once outside Docker and passes it in via this
+# build-arg; the env var tells uv-dynamic-versioning to use it verbatim.
+ARG KAPITAN_VERSION
+ENV UV_DYNAMIC_VERSIONING_BYPASS=${KAPITAN_VERSION}
+
 RUN uv sync --locked --all-extras
 
 COPY ./kapitan ./kapitan

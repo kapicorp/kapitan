@@ -1,3 +1,8 @@
+---
+title: "Kapitan Copy Input Type: Copy Files Without Rendering"
+description: "Learn how to use the Kapitan copy input type to copy files and directories to the output without any rendering or processing."
+---
+
 # :kapitan-logo: Copy
 
 This input type simply copies the input templates to the output directory without any rendering/processing.

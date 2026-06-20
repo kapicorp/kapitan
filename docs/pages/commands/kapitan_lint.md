@@ -1,3 +1,8 @@
+---
+title: "Kapitan lint: Check Your Inventory and Refs"
+description: "Run the kapitan lint command to check your inventory and refs for YAML issues and orphan classes."
+---
+
 # :kapitan-logo: **CLI Reference** | `kapitan lint`
 
 ## `kapitan lint`
@@ -32,3 +37,9 @@ Perform a checkup on your inventory or refs.
         'features.gkms-demo',
         'projects.localhost.kubernetes.katacoda'}
         ```
+
+## Flags
+
+The table below is generated from **Kapitan**'s argument parser at docs-build time, so it always matches the installed version. See also the [global flags](kapitan_flags.md) accepted by every command, and the [`.kapitan` dotfile](kapitan_dotfile.md) to set any of these permanently.
+
+<!-- kapitan-flags:command:lint -->

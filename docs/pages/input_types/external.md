@@ -1,3 +1,8 @@
+---
+title: "Kapitan External Input Type: Run Scripts and Binaries"
+description: "Learn how to use the Kapitan external input type to execute scripts or binaries that generate or manipulate compiled files."
+---
+
 # :kapitan-logo: External
 
 This input type executes an external script or binary. This can be used to manipulate already compiled files or
