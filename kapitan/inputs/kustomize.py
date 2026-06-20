@@ -20,7 +20,10 @@ import yaml
 
 from kapitan.errors import KustomizeTemplateError
 from kapitan.inputs.base import InputType
-from kapitan.inventory.model.input_types import KapitanInputTypeKustomizeConfig
+from kapitan.inventory.model.input_types import (
+    KapitanInputTypeKustomizeConfig,
+    OutputType,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -163,8 +166,18 @@ class Kustomize(InputType):
                 rendered_output = f.read()
 
             if config.output_file:
-                output_path = os.path.join(compile_path, config.output_file)
-                self._write_output_file(output_path, compile_path, rendered_output)
+                output_path = self._resolve_output_file(
+                    os.path.join(compile_path, config.output_file), compile_path
+                )
+                # Preserve the raw multi-document stream from ``kustomize
+                # build`` verbatim and let kapitan handle ref revealing by
+                # writing it as plain output. ``to_file`` manages the output
+                # type, ref revealing and directory creation for us.
+                self.to_file(
+                    config.model_copy(update={"output_type": OutputType.PLAIN}),
+                    output_path,
+                    rendered_output,
+                )
                 return
 
             for doc in yaml.safe_load_all(rendered_output):
@@ -186,15 +199,15 @@ class Kustomize(InputType):
                 f"Failed to compile Kustomize overlay: {e!s}"
             ) from e
 
-    def _write_output_file(
-        self, output_path: str, compile_path: str, content: str
-    ) -> None:
-        """Write raw kustomize output to a file, guarding against path traversal.
+    def _resolve_output_file(self, output_path: str, compile_path: str) -> str:
+        """Resolve ``output_file`` to an absolute path, guarding against traversal.
 
         Args:
-            output_path: Absolute or relative path where output should be written
+            output_path: Path where output should be written (joined with compile_path)
             compile_path: Base compile path that output must stay within
-            content: Raw content to write
+
+        Returns:
+            The normalized absolute output path.
 
         Raises:
             KustomizeTemplateError: If output_file resolves outside compile_path
@@ -205,6 +218,4 @@ class Kustomize(InputType):
             raise KustomizeTemplateError(
                 f"output_file must resolve inside output_path: {output_path}"
             )
-        os.makedirs(os.path.dirname(normalized_output), exist_ok=True)
-        with open(normalized_output, "w", encoding="utf-8") as out:
-            out.write(content)
+        return normalized_output

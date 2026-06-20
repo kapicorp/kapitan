@@ -29,7 +29,11 @@ class KustomizeInputTest(unittest.TestCase):
         self.search_paths = []
         self.ref_controller = None
         self.target_name = "test-target"
-        self.args = type("Args", (), {"kustomize_path": "kustomize"})
+        self.args = type(
+            "Args",
+            (),
+            {"kustomize_path": "kustomize", "reveal": False, "indent": 2},
+        )
         self.kustomize = Kustomize(
             self.compile_path,
             self.search_paths,
