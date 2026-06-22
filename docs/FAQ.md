@@ -1,6 +1,6 @@
 ---
 comments: true
-title: "Kapitan FAQ"
+title: "Kapitan FAQ: Frequently Asked Questions"
 description: "Find answers to frequently asked questions about Kapitan inventory, targets, classes, compilation, references, secrets, and supported input types."
 ---
 
