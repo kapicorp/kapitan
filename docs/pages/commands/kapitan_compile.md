@@ -177,85 +177,8 @@ library), enabled with `--yaml-use-rapidyaml`.
       back to PyYAML for that single document (rapidyaml does not escape
       them in double-quoted scalars).
 
-## help
+## Flags
 
-!!! example ""
+The table below is generated from **Kapitan**'s argument parser at docs-build time, so it always matches the installed version. See also the [global flags](kapitan_flags.md) accepted by every command, and the [`.kapitan` dotfile](kapitan_dotfile.md) to set any of these permanently.
 
-    ```shell
-    kapitan compile --help
-    ```
-
-    ??? example "click to expand output"
-
-        ```shell
-        usage: kapitan compile [-h] [--inventory-backend {reclass}]
-                       [--search-paths JPATH [JPATH ...]]
-                       [--jinja2-filters FPATH] [--verbose] [--prune]
-                       [--quiet] [--output-path PATH] [--fetch]
-                       [--force-fetch] [--force] [--validate]
-                       [--parallelism INT] [--indent INT]
-                       [--refs-path REFS_PATH] [--reveal] [--embed-refs]
-                       [--inventory-path INVENTORY_PATH] [--cache]
-                       [--cache-paths PATH [PATH ...]]
-                       [--ignore-version-check] [--use-go-jsonnet]
-                       [--compose-target-name] [--schemas-path SCHEMAS_PATH]
-                       [--yaml-multiline-string-style STYLE]
-                       [--yaml-dump-null-as-empty]
-                       [--yaml-use-rapidyaml]
-                       [--targets TARGET [TARGET ...] | --labels
-                       [key=value ...]]
-
-        options:
-          -h, --help            show this help message and exit
-          --inventory-backend {reclass,reclass-rs}
-                                Select the inventory backend to use (default=reclass)
-          --search-paths JPATH [JPATH ...], -J JPATH [JPATH ...]
-                                set search paths, default is ["."]
-          --jinja2-filters FPATH, -J2F FPATH
-                                load custom jinja2 filters from any file, default is
-                                to put them inside lib/jinja2_filters.py
-          --verbose, -v         set verbose mode
-          --prune               prune jsonnet output
-          --quiet               set quiet mode, only critical output
-          --output-path PATH    set output path, default is "."
-          --fetch               fetch remote inventories and/or external dependencies
-          --force-fetch         overwrite existing inventory and/or dependency item
-          --force               overwrite existing inventory and/or dependency item
-          --validate            validate compile output against schemas as specified
-                                in inventory
-          --parallelism INT, -p INT
-                                Number of concurrent compile processes, default is
-                                min(len(targets), available CPU count)
-          --indent INT, -i INT  Indentation spaces for YAML/JSON, default is 2
-          --refs-path REFS_PATH
-                                set refs path, default is "./refs"
-          --reveal              reveal refs (warning: this will potentially write
-                                sensitive data)
-          --embed-refs          embed ref contents
-          --inventory-path INVENTORY_PATH
-                                set inventory path, default is "./inventory"
-          --cache, -c           enable compilation caching to $XDG_CACHE_HOME/kapitan,
-                                default is False [this is EXPERIMENTAL]
-          --cache-paths PATH [PATH ...]
-                                cache additional paths to .kapitan_cache, default is
-                                []
-          --ignore-version-check
-                                ignore the version from .kapitan
-          --use-go-jsonnet      use go-jsonnet
-          --compose-target-name   Create same subfolder structure from inventory/targets
-                                inside compiled folder
-          --schemas-path SCHEMAS_PATH
-                                set schema cache path, default is "./schemas"
-          --yaml-multiline-string-style STYLE, -L STYLE
-                                set multiline string style to STYLE, default is
-                                'double-quotes'
-          --yaml-dump-null-as-empty
-                                dumps all none-type entries as empty, default is
-                                dumping as 'null'
-          --yaml-use-rapidyaml  use the rapidyaml emitter, fallback to PyYaml
-                                if rapidyaml not installed, default is False.
-          --targets TARGET [TARGET ...], -t TARGET [TARGET ...]
-                                targets to compile, default is all
-          --labels [key=value ...], -l [key=value ...]
-                                compile targets matching the labels, default is all
-        ```
+<!-- kapitan-flags:command:compile -->

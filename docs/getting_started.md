@@ -1,5 +1,5 @@
 ---
-title: "Getting Started with Kapitan"
+title: "Getting Started with Kapitan in Minutes"
 description: "Install Kapitan with Docker or pip, clone a reference repository, and compile your first Kubernetes and infrastructure targets in minutes."
 ---
 
