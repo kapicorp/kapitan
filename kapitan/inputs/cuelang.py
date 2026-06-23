@@ -40,46 +40,46 @@ class Cuelang(InputType):
     def compile_file(
         self, config: KapitanInputTypeCuelangConfig, input_path: str, compile_path: str
     ) -> None:
-        temp_dir = tempfile.mkdtemp()
         abs_input_path = os.path.abspath(input_path)
 
-        # Copy the input directory to the temporary directory
-        input_dir_name = os.path.basename(abs_input_path)
-        temp_input_dir = os.path.join(temp_dir, input_dir_name)
-        shutil.copytree(abs_input_path, temp_input_dir)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Copy the input directory to the temporary directory
+            input_dir_name = os.path.basename(abs_input_path)
+            temp_input_dir = os.path.join(temp_dir, input_dir_name)
+            shutil.copytree(abs_input_path, temp_input_dir)
 
-        # Write the input data to file
-        input_file_path = os.path.join(temp_input_dir, "input.yaml")
-        with open(input_file_path, "w") as f:
-            yaml.dump(config.input, f)
+            # Write the input data to file
+            input_file_path = os.path.join(temp_input_dir, "input.yaml")
+            with open(input_file_path, "w") as f:
+                yaml.dump(config.input, f)
 
-        #  Prepare the command to run CUE export
-        cmd = [
-            self.cue_path,
-            "export",
-            ".",
-        ]
-        # if specified where to inject the input, add it to the command
-        if config.input_fill_path:
-            cmd += ["-l", config.input_fill_path]
-        cmd += ["input.yaml", "--out", "yaml"]
-        # if specified where the output is yielded, add it to the command
-        if config.output_yield_path:
-            cmd += ["--expression", config.output_yield_path]
+            #  Prepare the command to run CUE export
+            cmd = [
+                self.cue_path,
+                "export",
+                ".",
+            ]
+            # if specified where to inject the input, add it to the command
+            if config.input_fill_path:
+                cmd += ["-l", config.input_fill_path]
+            cmd += ["input.yaml", "--out", "yaml"]
+            # if specified where the output is yielded, add it to the command
+            if config.output_yield_path:
+                cmd += ["--expression", config.output_yield_path]
 
-        output_filename = (
-            config.output_filename if config.output_filename else "output.yaml"
-        )
-        output_file = os.path.join(compile_path, output_filename)
-        with open(output_file, "w") as f:
-            result = subprocess.run(
-                cmd,
-                stdout=f,
-                stderr=subprocess.PIPE,
-                text=True,
-                cwd=temp_input_dir,
-                check=False,
+            output_filename = (
+                config.output_filename if config.output_filename else "output.yaml"
             )
-            if result.returncode != 0:
-                err = f"Failed to run CUE export: {result.stderr}"
-                raise KustomizeTemplateError(err)
+            output_file = os.path.join(compile_path, output_filename)
+            with open(output_file, "w") as f:
+                result = subprocess.run(
+                    cmd,
+                    stdout=f,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    cwd=temp_input_dir,
+                    check=False,
+                )
+                if result.returncode != 0:
+                    err = f"Failed to run CUE export: {result.stderr}"
+                    raise KustomizeTemplateError(err)
