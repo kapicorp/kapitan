@@ -44,6 +44,16 @@ kapitan_input_kadet = None
 # bumps the same shared CacheMetrics across processes.
 input_cache_metrics: dict | None = None
 
+# Memoized secret-handler factories register their ``cache_clear`` here so
+# ``reset_cache`` can flush them without importing the optional cloud SDK
+# modules. Populated lazily as each refs.secrets.* module is imported.
+_handler_cache_clearers: list = []
+
+
+def register_handler_cache_clearer(clear_fn) -> None:
+    """Register a callable that clears a memoized secret-handler factory cache."""
+    _handler_cache_clearers.append(clear_fn)
+
 
 def reset_cache():
     global \
@@ -70,6 +80,10 @@ def reset_cache():
     dot_kapitan = {}
     ref_controller_obj = None
     revealer_obj = None
+
+    # flush memoized secret-handler factories (lru_cache stores)
+    for clear_fn in _handler_cache_clearers:
+        clear_fn()
 
 
 def from_dict(cache_dict: dict[str, Any]) -> None:
