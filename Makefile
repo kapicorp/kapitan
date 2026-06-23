@@ -97,6 +97,12 @@ check_format:
 	@echo "===== Checking Code Formatting ====="
 	$(UV_RUN) ruff format --check .
 
+# Verify uv.lock is in sync with pyproject.toml (used in CI)
+.PHONY: check_lock
+check_lock:
+	@echo "===== Verifying Dependency Lockfile ====="
+	$(UV) lock --check
+
 # Run Python unit tests with coverage
 .PHONY: test_python
 test_python:
@@ -134,12 +140,12 @@ test_docker: build_docker
 
 # Run all tests (comprehensive test suite)
 .PHONY: test
-test: install lint test_coverage test_docker check_format
+test: install lint check_lock test_coverage test_docker check_format
 	@echo "===== All Tests Passed! ====="
 
 # Quick test without Docker or external tools
 .PHONY: test_quick
-test_quick: lint test_python check_format
+test_quick: lint check_lock test_python check_format
 	@echo "===== Quick Tests Passed! ====="
 
 ################################################################################
