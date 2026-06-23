@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Kapitan is an open source configuration management tool for Kubernetes, Terraform, and infrastructure. Generate, organize, validate, and manage configuration across environments.">
+        <meta name="description" content="Read the Kapitan v0.32.0 release notes covering six months of improvements and community contributions to the project.">
       
       
         <meta name="author" content="Alessandro De Maria">
       
       
-        <link rel="canonical" href="https://kapitan.dev/0.36/pages/blog/04/12/2022/kapitan-logo-new-kapitan-release--v0320/">
+        <link rel="canonical" href="https://kapitan.dev/0.36/pages/blog/04/12/2022/kapitan-v0320-release-new-features--improvements/">
       
       
       
-        <link rel="next" href="../kapitan-logo-new-kapitan-release--v0310/">
+        <link rel="next" href="../kapitan-v0310-release-new-features--improvements/">
       
       
         
@@ -28,7 +28,7 @@
     
   
     
-    <title>New Kapitan release v0.32.0</title>
+    <title>Kapitan v0.32.0 Release: New Features & Improvements</title>
   
 
     
@@ -58,6 +58,8 @@
     
       <link rel="stylesheet" href="../../../../../../assets/_markdown_exec_ansi.css">
     
+      <link rel="stylesheet" href="../../../../../../stylesheets/extra.css">
+    
     <script>__md_scope=new URL("../../../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -80,6 +82,49 @@
   
 
   
+  <link rel="apple-touch-icon" href="https://kapitan.dev/0.36images/kapitan_logo.png" />
+
+  
+  <style>
+    .kapitan-share {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin: 2.4rem 0 0.8rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--md-default-fg-color--lightest);
+    }
+    .kapitan-share__label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--md-default-fg-color--light);
+      margin-right: 0.2rem;
+    }
+    .kapitan-share__link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.6rem;
+      height: 1.6rem;
+      padding: 0;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--md-default-fg-color--light);
+      transition: color 125ms;
+    }
+    .kapitan-share__link:hover {
+      color: var(--md-accent-fg-color);
+    }
+    .kapitan-share__link svg {
+      width: 1rem;
+      height: 1rem;
+      fill: currentColor;
+    }
+  </style>
+
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="dns-prefetch" href="https://www.youtube.com">
@@ -89,16 +134,16 @@
 
   
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="New Kapitan release v0.32.0" />
-  <meta property="og:description" content="Kapitan is an open source configuration management tool for Kubernetes, Terraform, and infrastructure. Generate, organize, validate, and manage configuration across environments." />
-  <meta property="og:url" content="https://kapitan.dev/0.36/pages/blog/04/12/2022/kapitan-logo-new-kapitan-release--v0320/" />
+  <meta property="og:title" content="Kapitan v0.32.0 Release: New Features & Improvements" />
+  <meta property="og:description" content="Read the Kapitan v0.32.0 release notes covering six months of improvements and community contributions to the project." />
+  <meta property="og:url" content="https://kapitan.dev/0.36/pages/blog/04/12/2022/kapitan-v0320-release-new-features--improvements/" />
   <meta property="og:image" content="https://kapitan.dev/0.36images/kapitan_logo.png" />
   <meta property="og:site_name" content="Kapitan: Keep your ship together" />
 
   
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="New Kapitan release v0.32.0" />
-  <meta name="twitter:description" content="Kapitan is an open source configuration management tool for Kubernetes, Terraform, and infrastructure. Generate, organize, validate, and manage configuration across environments." />
+  <meta name="twitter:title" content="Kapitan v0.32.0 Release: New Features & Improvements" />
+  <meta name="twitter:description" content="Read the Kapitan v0.32.0 release notes covering six months of improvements and community contributions to the project." />
   <meta name="twitter:image" content="https://kapitan.dev/0.36images/kapitan_logo.png" />
 
   
@@ -161,7 +206,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              New Kapitan release v0.32.0
+              Kapitan v0.32.0 Release: New Features & Improvements
             
           </span>
         </div>
@@ -633,6 +678,8 @@
   
     
     
+      
+        
       
         
       
@@ -1623,6 +1670,34 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../../../../environment_variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
       
@@ -1647,10 +1722,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_11" >
         
           
-          <label class="md-nav__link" for="__nav_4_10" id="__nav_4_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
             
   
   
@@ -1668,8 +1743,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_10">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_11">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1848,6 +1923,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
     
@@ -1859,10 +1942,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_12" >
         
           
-          <label class="md-nav__link" for="__nav_4_11" id="__nav_4_11_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_12" id="__nav_4_12_label" tabindex="0">
             
   
   
@@ -1880,8 +1963,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_11">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_12">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1898,6 +1981,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../commands/kapitan_flags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    global flags
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../commands/kapitan_compile/" class="md-nav__link">
         
   
@@ -1906,6 +2017,34 @@
     
   
     compile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../commands/kapitan_eval/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    eval
   
 
     
@@ -1954,6 +2093,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../commands/kapitan_init/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    init
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../commands/kapitan_lint/" class="md-nav__link">
         
   
@@ -1962,6 +2129,34 @@
     
   
     lint
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../commands/kapitan_refs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    refs
   
 
     
