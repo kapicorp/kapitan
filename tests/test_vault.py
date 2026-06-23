@@ -17,7 +17,7 @@ import unittest
 from kapitan.inventory.model.references import KapitanReferenceVaultKVConfig
 from kapitan.refs.base import RefController, RefParams, Revealer
 from kapitan.refs.secrets.vaultkv import VaultClient, VaultError, VaultSecret
-from tests.vault_server import get_shared_vault_server
+from tests.vault_server import VaultServerError, get_shared_vault_server
 
 
 logger = logging.getLogger(__name__)
@@ -33,12 +33,17 @@ class VaultSecretTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # setup vault server (running in container)
-        cls.server = get_shared_vault_server()
+        try:
+            cls.server = get_shared_vault_server()
+        except VaultServerError as exc:
+            raise unittest.SkipTest(f"vault server unavailable: {exc}") from exc
 
     @classmethod
     def tearDownClass(cls):
         # close connection
-        cls.server.close_container()
+        server = getattr(cls, "server", None)
+        if server is not None:
+            server.close_container()
         shutil.rmtree(REFS_PATH, ignore_errors=True)
 
     def test_token_authentication(self):
