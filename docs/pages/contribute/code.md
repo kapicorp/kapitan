@@ -2,7 +2,7 @@
 comments: true
 tags:
   - community
-title: "Contribute to Kapitan"
+title: "Contribute Code to Kapitan: Issues, PRs & Setup"
 description: "Guidelines for contributing code to Kapitan, from opening issues and pull requests to development setup and testing."
 ---
 # :kapitan-logo: **Kapitan** code

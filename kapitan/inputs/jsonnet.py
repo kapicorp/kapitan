@@ -13,6 +13,7 @@ from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeJsonnetConfig
 from kapitan.resources import resource_callbacks, search_imports
+from kapitan.topics import current_target
 
 
 logger = logging.getLogger(__name__)
@@ -72,33 +73,41 @@ class Jsonnet(InputType):
 
         use_go = self.args.use_go_jsonnet
         ext_vars = {"target": self.target_name}
-
-        def _search_imports(cwd, imp):
-            return search_imports(cwd, imp, self.search_paths)
-
+        # Publish the calling target so the ``topics`` native callback (see
+        # kapitan.resources.resource_callbacks) can enforce consume declarations
+        # when called from jsonnet code. Reset on the way out so pool workers
+        # reused across targets don't leak the value to later readers.
+        token = current_target.set(self.target_name)
         try:
-            jsonnet = select_jsonnet_runtime(use_go)
-            json_output = jsonnet.evaluate_file(
-                input_path,
-                import_callback=_search_imports,
-                native_callbacks=resource_callbacks(self.search_paths),
-                ext_vars=ext_vars,
-            )
 
-            output_obj = json.loads(json_output)
+            def _search_imports(cwd, imp):
+                return search_imports(cwd, imp, self.search_paths)
 
-        except (ImportError, CompileError) as e:
-            raise CompileError(f"Jsonnet Error compiling {input_path}: {e}") from e
+            try:
+                jsonnet = select_jsonnet_runtime(use_go)
+                json_output = jsonnet.evaluate_file(
+                    input_path,
+                    import_callback=_search_imports,
+                    native_callbacks=resource_callbacks(self.search_paths),
+                    ext_vars=ext_vars,
+                )
 
-        # If output_obj is not a dictionary, wrap it in a dictionary using the input filename
-        # (without extension) as the key. This ensures that even single-item outputs are handled correctly.
-        if not isinstance(output_obj, dict):
-            filename = os.path.splitext(os.path.basename(input_path))[0]
-            # Using filename as key ensures that single-item outputs are handled correctly.
-            # Prevents issues when a single item is returned and needs to be written to a file.
-            output_obj = {filename: output_obj}
+                output_obj = json.loads(json_output)
 
-        # Write each item in output_obj to a separate file.
-        for item_key, item_value in output_obj.items():
-            file_path = os.path.join(compile_path, item_key)
-            self.to_file(config, file_path, item_value)
+            except (ImportError, CompileError) as e:
+                raise CompileError(f"Jsonnet Error compiling {input_path}: {e}") from e
+
+            # If output_obj is not a dictionary, wrap it in a dictionary using the input filename
+            # (without extension) as the key. This ensures that even single-item outputs are handled correctly.
+            if not isinstance(output_obj, dict):
+                filename = os.path.splitext(os.path.basename(input_path))[0]
+                # Using filename as key ensures that single-item outputs are handled correctly.
+                # Prevents issues when a single item is returned and needs to be written to a file.
+                output_obj = {filename: output_obj}
+
+            # Write each item in output_obj to a separate file.
+            for item_key, item_value in output_obj.items():
+                file_path = os.path.join(compile_path, item_key)
+                self.to_file(config, file_path, item_value)
+        finally:
+            current_target.reset(token)

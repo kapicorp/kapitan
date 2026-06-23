@@ -1,3 +1,8 @@
+---
+title: "Kapitan searchvar: Find Where Variables Are Set"
+description: "Search your inventory with the kapitan searchvar command to find every file where a variable is declared."
+---
+
 # :kapitan-logo: **CLI Reference** | `kapitan searchvar`
 
 ## `kapitan searchvar`
@@ -38,3 +43,9 @@ Shows all inventory files where a variable is declared:
         ./inventory/classes/components/weaveworks/carts.yml          weaveworksdemos/carts:0.4.8
         ./inventory/classes/components/kapicorp/tesoro.yml           kapicorp/tesoro
         ```
+
+## Flags
+
+The table below is generated from **Kapitan**'s argument parser at docs-build time, so it always matches the installed version. See also the [global flags](kapitan_flags.md) accepted by every command, and the [`.kapitan` dotfile](kapitan_dotfile.md) to set any of these permanently.
+
+<!-- kapitan-flags:command:searchvar -->

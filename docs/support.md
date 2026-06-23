@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Support"
+title: "Kapitan Support and Community Help"
 description: "Get help with Kapitan through the community Slack channel, GitHub discussions, and documentation resources."
 ---
 

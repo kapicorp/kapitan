@@ -24,6 +24,7 @@ from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType
 from kapitan.inputs.cache import InputCache
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
+from kapitan.topics import consumed_topics_digest, current_target
 
 
 # Set external kadet exception to kapitan.error.CompileError
@@ -31,7 +32,6 @@ kadet.ABORT_EXCEPTION_TYPE = CompileError
 
 logger = logging.getLogger(__name__)
 search_paths = contextvars.ContextVar("current search_paths in thread")
-current_target = contextvars.ContextVar("current target in thread")
 
 
 @cache
@@ -130,65 +130,81 @@ class Kadet(InputType):
 
         input_params = dict(config.input_params)
         target_name = self.target_name
-        current_target.set(target_name)
-        search_paths.set(self.search_paths)
-        inputs_hash = None
-        output_obj = None
-
-        if cache_obj := self.cacheable():
-            # Hash input_params before setdefault injects compile_path below, so the
-            # volatile per-run tempdir never appears in the key. Any compile_path the
-            # user explicitly included in input_params is still hashed, preserving the
-            # collision safety added by PR #1520.
-            inputs_hash = self.inputs_hash(
-                inventory_digest(current_target.get()),
-                target_name,
-                Path(input_path),
-                input_params,
-            )
-
-            output_obj = cache_obj.get(inputs_hash)
-
-        if output_obj is None:
-            # set compile_path after the cache key is computed so the volatile tempdir
-            # path does not get baked into the hash; only inject if user didn't supply one
-            input_params.setdefault("compile_path", compile_path)
-
-            kadet_module, spec = module_from_path(input_path)
-            sys.modules[spec.name] = kadet_module
-            spec.loader.exec_module(kadet_module)
-            logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
-            kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
-            logger.debug("Kadet main args: %s", kadet_arg_spec.args)
-
-            if len(kadet_arg_spec.args) > 1:
-                raise ValueError(
-                    f"Kadet {spec.name} main parameters not equal to 1 or 0"
-                )
-
-            try:
-                if len(kadet_arg_spec.args) == 1:
-                    output_obj = kadet_module.main(input_params)
-                elif len(kadet_arg_spec.args) == 0:
-                    output_obj = kadet_module.main()
-
-            except Exception as exc:
-                raise CompileError(
-                    f"Could not load Kadet module: {spec.name[16:]}"
-                ) from exc
-
-            output_obj = _to_dict(output_obj)
+        # Reset the ContextVar in finally so workers reused across targets don't
+        # leak the value to non-input readers (e.g. ``inventory()`` called from
+        # a later component's module-level code).
+        token = current_target.set(target_name)
+        try:
+            search_paths.set(self.search_paths)
+            inputs_hash = None
+            output_obj = None
 
             if cache_obj := self.cacheable():
-                cache_obj.set(inputs_hash, output_obj)
+                # Hash input_params before setdefault injects compile_path below, so the
+                # volatile per-run tempdir never appears in the key. Any compile_path the
+                # user explicitly included in input_params is still hashed, preserving the
+                # collision safety added by PR #1520.
+                #
+                # Mix in a digest of every topic this target declared as consumed so
+                # changes to *producer* targets invalidate this target's cache. Returns
+                # ``None`` (and is omitted) for targets that consume no topics, so
+                # non-topic users keep their existing cache keys.
+                extra_inputs: list = []
+                if topics_digest := consumed_topics_digest(target_name):
+                    extra_inputs.append(topics_digest)
 
-        # Return None if output_obj has no output
-        if not output_obj:
-            return
+                inputs_hash = self.inputs_hash(
+                    inventory_digest(current_target.get()),
+                    target_name,
+                    Path(input_path),
+                    input_params,
+                    *extra_inputs,
+                )
 
-        for item_key, item_value in output_obj.items():
-            file_path = os.path.join(compile_path, item_key)
-            self.to_file(config, file_path, item_value)
+                output_obj = cache_obj.get(inputs_hash)
+
+            if output_obj is None:
+                # set compile_path after the cache key is computed so the volatile tempdir
+                # path does not get baked into the hash; only inject if user didn't supply one
+                input_params.setdefault("compile_path", compile_path)
+
+                kadet_module, spec = module_from_path(input_path)
+                sys.modules[spec.name] = kadet_module
+                spec.loader.exec_module(kadet_module)
+                logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
+                kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
+                logger.debug("Kadet main args: %s", kadet_arg_spec.args)
+
+                if len(kadet_arg_spec.args) > 1:
+                    raise ValueError(
+                        f"Kadet {spec.name} main parameters not equal to 1 or 0"
+                    )
+
+                try:
+                    if len(kadet_arg_spec.args) == 1:
+                        output_obj = kadet_module.main(input_params)
+                    elif len(kadet_arg_spec.args) == 0:
+                        output_obj = kadet_module.main()
+
+                except Exception as exc:
+                    raise CompileError(
+                        f"Could not load Kadet module: {spec.name[16:]}"
+                    ) from exc
+
+                output_obj = _to_dict(output_obj)
+
+                if cache_obj := self.cacheable():
+                    cache_obj.set(inputs_hash, output_obj)
+
+            # Return None if output_obj has no output
+            if not output_obj:
+                return
+
+            for item_key, item_value in output_obj.items():
+                file_path = os.path.join(compile_path, item_key)
+                self.to_file(config, file_path, item_value)
+        finally:
+            current_target.reset(token)
 
     def inputs_hash(self, *inputs):
         """
@@ -280,7 +296,8 @@ class Kadet(InputType):
     def cacheable(self):
         if cached.args.cache:
             if cached.kapitan_input_kadet is None:
-                cached.kapitan_input_kadet = InputCache("kadet")
+                metrics = (cached.input_cache_metrics or {}).get("kadet")
+                cached.kapitan_input_kadet = InputCache("kadet", metrics=metrics)
 
             return cached.kapitan_input_kadet
         return False
