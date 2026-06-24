@@ -1,0 +1,7 @@
+parameters:
+  component: queue
+  queue:
+    type: rabbitmq
+    prefetch_count: 50
+    dead_letter_exchange: dlx
+    ttl: 300000

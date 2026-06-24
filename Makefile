@@ -142,6 +142,14 @@ test: install lint test_coverage test_docker check_format
 test_quick: lint test_python check_format
 	@echo "===== Quick Tests Passed! ====="
 
+# Run performance benchmarks (serial, no coverage)
+.PHONY: benchmark
+benchmark:
+	@echo "===== Running Performance Benchmarks ====="
+	uv run pytest tests/test_compile_performance.py -v --no-cov -p no:xdist -m benchmark \
+		--benchmark-warmup=on
+	@echo "===== Performance Benchmarks Complete ====="
+
 ################################################################################
 # Release and Packaging
 ################################################################################
@@ -230,6 +238,7 @@ help:
 	@echo "  make test_python        - Run Python unit tests with coverage"
 	@echo "  make test               - Run comprehensive test suite"
 	@echo "  make test_coverage      - Run tests coverage report"
+	@echo "  make benchmark          - Run performance benchmarks"
 	@echo "  make build_docker       - Build Docker image"
 	@echo "  make test_docker        - Build and test Docker image"
 	@echo ""
