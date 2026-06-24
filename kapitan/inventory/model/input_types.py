@@ -108,6 +108,7 @@ class KapitanInputTypeKustomizeConfig(KapitanInputTypeBaseConfig):
     patches: dict[str, Any] | None = {}
     patches_strategic: dict[str, Any] | None = {}
     patches_json: dict[str, Any] | None = {}
+    output_file: str | None = None
 
 
 class KapitanInputTypeCuelangConfig(KapitanInputTypeBaseConfig):
