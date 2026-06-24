@@ -235,6 +235,8 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
           subpath: relative/path/inside/artifact # mkdocs (3)!
           insecure: false # mkdocs (4)!
           tls_verify: true # mkdocs (5)!
+          schema_path: path/to/schema.json # mkdocs (6)!
+          schema_inventory_path: parameters.components.mygenerator # mkdocs (7)!
     ```
 
     1. Directory where the pulled artifact contents will be written.
@@ -242,6 +244,8 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
     3. Optional sub-directory inside the pulled artifact to copy instead of the entire artifact root. Required when the artifact was pushed from a parent directory (oras preserves push-time paths).
     4. Set to `true` to allow pulling from an HTTP (non-TLS) registry. Defaults to `false`. Note: this is distinct from TLS certificate verification use `tls_verify` for self-signed certificates.
     5. Controls TLS certificate verification. Set to `false` to skip verification (e.g. self-signed certs in dev), or provide a path to a custom CA bundle as a string (e.g. `"/etc/ssl/certs/my-ca.crt"`). Defaults to `true`.
+    6. Optional path to a JSON Schema file for this dependency. If omitted, Kapitan looks for `<output_path>/schema.json`.
+    7. Optional dot-separated inventory path (e.g. `parameters.components.argocd`) that the schema validates. See [Generator schema validation](generator_schema_validation.md).
 
     !!! note
 
