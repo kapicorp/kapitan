@@ -61,15 +61,19 @@ class Helm(InputType):
 
         temp_dir = tempfile.mkdtemp()
         # save the template output to temp dir first
-        _, error_message = render_chart(
-            chart_dir=input_path,
-            output_path=temp_dir,
-            helm_path=helm_path,
-            helm_params=helm_params,
-            helm_values_file=helm_values_file,
-            helm_values_files=helm_values_files,
-            helm_flags=helm_flags,
-        )
+        try:
+            _, error_message = render_chart(
+                chart_dir=input_path,
+                output_path=temp_dir,
+                helm_path=helm_path,
+                helm_params=helm_params,
+                helm_values_file=helm_values_file,
+                helm_values_files=helm_values_files,
+                helm_flags=helm_flags,
+            )
+        finally:
+            if helm_values_file:
+                os.unlink(helm_values_file)
         if error_message:
             raise HelmTemplateError(error_message)
         # Iterate over all files in the temporary directory
@@ -267,14 +271,18 @@ class HelmChart(BaseModel):
         helm_values_file = None
         if self.helm_values != {}:
             helm_values_file = write_helm_values_file(self.helm_values)
-        output, error_message = render_chart(
-            self.chart_dir,
-            "-",
-            self.helm_path,
-            self.helm_params,
-            helm_values_file,
-            None,
-        )
+        try:
+            output, error_message = render_chart(
+                self.chart_dir,
+                "-",
+                self.helm_path,
+                self.helm_params,
+                helm_values_file,
+                None,
+            )
+        finally:
+            if helm_values_file:
+                os.unlink(helm_values_file)
         if error_message:
             raise HelmTemplateError(error_message)
 

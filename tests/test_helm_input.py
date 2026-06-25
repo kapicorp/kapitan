@@ -11,6 +11,7 @@ import io
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 import pytest
 import yaml
@@ -381,3 +382,52 @@ class HelmInputTest(unittest.TestCase):
     def tearDown(self):
         os.chdir(TEST_PWD)
         reset_cache()
+
+
+class HelmValuesFileCleanupTest(unittest.TestCase):
+    """The temp values file written for helm is deleted after rendering."""
+
+    def test_load_chart_removes_values_file(self):
+        """A successful render deletes the temporary helm values file."""
+        captured = {}
+
+        def fake_render_chart(*args, **kwargs):
+            # render_chart(chart_dir, output_path, helm_path, helm_params,
+            #              helm_values_file, helm_values_files)
+            captured["values_file"] = args[4]
+            return ("", None)
+
+        # HelmChart.__init__ eagerly calls new() -> load_chart(), so the chart
+        # must be constructed while render_chart is patched.
+        with mock.patch(
+            "kapitan.inputs.helm.render_chart", side_effect=fake_render_chart
+        ):
+            HelmChart(chart_dir="/nonexistent", helm_values={"key": "value"})
+
+        values_file = captured["values_file"]
+        self.assertIsNotNone(values_file)
+        self.assertFalse(
+            os.path.exists(values_file),
+            "temporary helm values file was not cleaned up",
+        )
+
+    def test_load_chart_removes_values_file_on_error(self):
+        """The values file is deleted even when rendering raises."""
+        captured = {}
+
+        def fake_render_chart(*args, **kwargs):
+            captured["values_file"] = args[4]
+            raise RuntimeError("boom")
+
+        with mock.patch(
+            "kapitan.inputs.helm.render_chart", side_effect=fake_render_chart
+        ):
+            with self.assertRaises(RuntimeError):
+                HelmChart(chart_dir="/nonexistent", helm_values={"key": "value"})
+
+        values_file = captured["values_file"]
+        self.assertIsNotNone(values_file)
+        self.assertFalse(
+            os.path.exists(values_file),
+            "temporary helm values file was not cleaned up on error",
+        )
