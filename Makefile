@@ -32,6 +32,7 @@ install_tools: check_mise
 	@$(MISE) exec -- helm version --short
 	@$(MISE) exec -- kustomize version
 	@$(MISE) exec -- cue version
+	@$(MISE) exec -- go version
 
 # Configure pre-commit git hooks (pre-commit package installed via uv)
 .PHONY: install_pre_commit
@@ -113,7 +114,7 @@ test_coverage: test_python
 .PHONY: refresh-inventory-backend-goldens
 refresh-inventory-backend-goldens:
 	@echo "===== Refreshing Inventory Backend Example Golden Snapshots ====="
-	uv run python scripts/refresh_inventory_backend_goldens.py
+	$(UV_RUN) python scripts/refresh_inventory_backend_goldens.py
 	@echo "Golden snapshots refreshed. Review git diff before committing."
 
 # Build Docker image
@@ -175,27 +176,27 @@ clean:
 .PHONY: docs_build
 docs_build:
 	@echo "===== Building Documentation ====="
-	timeout 300 uv run mkdocs build --strict
+	timeout 300 $(UV_RUN) mkdocs build --strict
 
 # Preview docs with live reload of LOCAL changes (unlike docs_serve / mike serve,
 # which only serves already-deployed versions from the gh-pages branch).
 .PHONY: docs_preview
 docs_preview:
 	@echo "===== Previewing Documentation (local changes) at http://localhost:8000 ====="
-	uv run mkdocs serve
+	$(UV_RUN) mkdocs serve
 
 # Serve already-published documentation versions (mike / gh-pages)
 .PHONY: docs_serve
 docs_serve:
 	@echo "===== Serving Published Documentation Locally ====="
 	@echo "Documentation will be available at http://localhost:8000"
-	uv run mike serve
+	$(UV_RUN) mike serve
 
 # Verify fenced code blocks render correctly + flag tables generate and build
 .PHONY: docs_check
 docs_check:
 	@echo "===== Verifying Documentation Rendering ====="
-	uv run pytest tests/test_docs_rendering.py tests/test_docs_flags.py -v --no-cov
+	$(UV_RUN) pytest tests/test_docs_rendering.py tests/test_docs_flags.py -v --no-cov
 	@echo "Documentation rendering verified!"
 
 # Deploy documentation to GitHub Pages
