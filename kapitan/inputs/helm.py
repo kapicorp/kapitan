@@ -5,15 +5,19 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import json
 import logging
 import os
 import tempfile
+from pathlib import Path
 
 import yaml
 
+from kapitan import cached
 from kapitan.errors import HelmTemplateError
-from kapitan.helm_cli import helm_cli
+from kapitan.helm_cli import helm_cli, helm_version
 from kapitan.inputs.base import InputType
+from kapitan.inputs.cache import InputCache, walk_and_hash
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
 
@@ -240,6 +244,45 @@ def write_helm_values_file(helm_values: dict):
     return helm_values_file
 
 
+def _helmchart_cache_obj():
+    """Return the helm InputCache when caching is enabled, else ``None``.
+
+    Lazy-initialised per worker process. Shares the multiprocessing
+    CacheMetrics counter pre-allocated by ``compile_targets`` so hits/misses
+    show up in the end-of-compile summary alongside kadet's.
+    """
+    if not getattr(cached.args, "cache", False):
+        return None
+    if cached.kapitan_input_helm is None:
+        metrics = (cached.input_cache_metrics or {}).get("helm")
+        cached.kapitan_input_helm = InputCache("helm", metrics=metrics)
+    return cached.kapitan_input_helm
+
+
+def _helmchart_cache_key(chart_dir, helm_values, helm_params, helm_path, cache_obj):
+    """Hash everything that determines ``helm template`` output for HelmChart().
+
+    The chart_dir contents are walked recursively, so file edits to templates,
+    Chart.yaml, values.yaml or subcharts all move the key. ``helm_values`` and
+    ``helm_params`` are JSON-serialised with sorted keys for determinism.
+    """
+    h = InputCache.hash_object()
+    h.update(b"chart\x00")
+    walk_and_hash(Path(chart_dir), cache_obj, h)
+    h.update(b"\x00values\x00")
+    h.update(json.dumps(helm_values, sort_keys=True, default=str).encode("utf-8"))
+    h.update(b"\x00params\x00")
+    h.update(json.dumps(helm_params, sort_keys=True, default=str).encode("utf-8"))
+    h.update(b"\x00helm_path\x00")
+    h.update(str(helm_path or "").encode("utf-8"))
+    # Mix in the actual binary's version so a helm upgrade (which can change
+    # CRD handling, manifest field order, schema validation) busts the cache
+    # even when ``helm_path`` itself is unchanged or None.
+    h.update(b"\x00helm_version\x00")
+    h.update(helm_version(helm_path).encode("utf-8"))
+    return h.hexdigest()
+
+
 class HelmChart(BaseModel):
     """
     Represents a Helm chart. Renders the chart and stores the rendered objects in self.root.
@@ -264,6 +307,23 @@ class HelmChart(BaseModel):
             ] = BaseObj.from_dict(obj)
 
     def load_chart(self):
+        # Cache layer is independent of kadet's: an unrelated inventory key
+        # change invalidates kadet but leaves this hit, so the helm subprocess
+        # is only re-run when (chart_dir + helm_values + helm_params +
+        # helm_path) actually changed.
+        cache_obj = _helmchart_cache_obj()
+        cache_key = None
+        if cache_obj:
+            cache_key = _helmchart_cache_key(
+                self.chart_dir,
+                self.helm_values,
+                self.helm_params,
+                self.helm_path,
+                cache_obj,
+            )
+            if (cached_docs := cache_obj.get(cache_key)) is not None:
+                return cached_docs
+
         helm_values_file = None
         if self.helm_values != {}:
             helm_values_file = write_helm_values_file(self.helm_values)
@@ -278,4 +338,7 @@ class HelmChart(BaseModel):
         if error_message:
             raise HelmTemplateError(error_message)
 
-        return [doc for doc in yaml.safe_load_all(output) if doc is not None]
+        docs = [doc for doc in yaml.safe_load_all(output) if doc is not None]
+        if cache_obj is not None:
+            cache_obj.set(cache_key, docs)
+        return docs
