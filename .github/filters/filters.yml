@@ -1,3 +1,20 @@
+---
+# Filters used by GitHub Actions path-filter jobs.
+# Changes to these paths should trigger performance benchmarks.
+
+benchmark:
+  - "kapitan/inventory/**"
+  - "kapitan/inputs/**"
+  - "kapitan/targets.py"
+  - "kapitan/resources.py"
+  - "kapitan/cached.py"
+  - "kapitan/refs/**"
+  - "tests/test_compile_performance.py"
+  - "tests/test_resources/inventory/performance/**"
+  - ".github/workflows/benchmark-*.yml"
+  - ".github/filters/filters.yml"
+  - "pyproject.toml"
+
 # ------------------------------------------------
 # Path filters for test-build-publish.yml
 # ------------------------------------------------

@@ -1,0 +1,16 @@
+classes:
+  - common.base
+  - clusters.prod.env
+  - clusters.prod.apps.api.app
+  - clusters.prod.apps.api.components.gateway
+  - mixins.logging
+  - mixins.monitoring
+
+parameters:
+  target_name: prod-api
+  kapitan:
+    compile:
+      - input_type: jsonnet
+        input_paths:
+          - templates/config.jsonnet
+        output_path: config

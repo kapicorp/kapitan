@@ -1,0 +1,10 @@
+parameters:
+  app: worker
+  port: 8083
+  health_check:
+    path: /health
+    interval: 30s
+  features:
+    - queue_processing
+    - retry_logic
+    - dead_letter_queue

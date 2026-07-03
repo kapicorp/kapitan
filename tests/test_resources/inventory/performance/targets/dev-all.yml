@@ -1,0 +1,24 @@
+classes:
+  - common.base
+  - clusters.dev.env
+  - clusters.prod.apps.frontend.app
+  - clusters.prod.apps.frontend.components.nginx
+  - clusters.prod.apps.frontend.components.redis
+  - clusters.prod.apps.backend.app
+  - clusters.prod.apps.backend.components.postgres
+  - clusters.prod.apps.backend.components.kafka
+  - clusters.prod.apps.api.app
+  - clusters.prod.apps.api.components.gateway
+  - clusters.prod.apps.worker.app
+  - clusters.prod.apps.worker.components.queue
+  - clusters.prod.apps.worker.components.scheduler
+  - mixins.logging
+
+parameters:
+  target_name: dev-all
+  kapitan:
+    compile:
+      - input_type: jsonnet
+        input_paths:
+          - templates/config.jsonnet
+        output_path: config

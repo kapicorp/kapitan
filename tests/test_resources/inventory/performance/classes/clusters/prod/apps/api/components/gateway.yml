@@ -1,0 +1,12 @@
+parameters:
+  component: gateway
+  gateway:
+    rate_limits:
+      - path: /api/v1/*
+        requests_per_second: 1000
+      - path: /api/v2/*
+        requests_per_second: 500
+    auth:
+      jwt: true
+      oauth2: true
+      api_key: true
