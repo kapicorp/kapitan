@@ -102,19 +102,18 @@ class Inventory(ABC):
         for target in self.targets.values():
             target_topics = getattr(target.parameters.kapitan, "topics", None) or {}
             for topic_name, topic_values in target_topics.items():
-                # A target only counts as a *producer* of a topic if it actually
-                # declares a ``parameters:`` node — declaring just ``consume: true``
-                # (consumer-only) must not surface as an empty entry in the
-                # aggregated view. Support both pydantic-style attribute access
-                # and the raw-dict fallback the omegaconf backend produces.
+                # support both pydantic model and raw dict
                 if isinstance(topic_values, dict):
-                    if "parameters" not in topic_values:
-                        continue
-                    topic_params = topic_values["parameters"] or {}
+                    topic_params = topic_values.get("parameters")
                 else:
                     topic_params = getattr(topic_values, "parameters", None)
-                    if topic_params is None:
-                        continue
+                # A target that only declared ``consume: true`` (i.e. no
+                # ``parameters`` sub-block) is a consumer, not a contributor;
+                # skip it so it doesn't self-appear as an empty entry in the
+                # aggregated view.
+                if topic_params is None:
+                    continue
+
                 topics.setdefault(topic_name, {})[target.name] = topic_params
 
         return {
