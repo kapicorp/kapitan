@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -25,6 +25,9 @@ class KapitanInventorySettings(BaseModel):
     target_full_path: str = ""
     secrets: KapitanReferenceConfig | None = None
     validate_: list[dict] = Field(alias="validate", default=[])
+    generator_schema_validation: Literal["warn", "error", "disabled", "info"] = Field(
+        default="warn", exclude=True
+    )
 
 
 class KapitanMetadataName(BaseModel):
