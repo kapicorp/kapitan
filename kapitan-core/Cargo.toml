@@ -1,0 +1,27 @@
+# Copyright 2026 The Kapitan Authors
+# SPDX-License-Identifier: Apache-2.0
+
+[package]
+name = "kapitan-core"
+# This version is the single source of truth that maturin reads (see
+# pyproject.toml `dynamic = ["version"]`). In CI it is stamped from the same
+# git tag that drives the kapitan Python package, so the two stay in lockstep.
+# Locally it is just a placeholder for `maturin develop`.
+version = "0.0.0"
+edition = "2024"
+
+description = "Rust core extension for Kapitan (PyO3)"
+license = "Apache-2.0"
+repository = "https://github.com/kapicorp/kapitan"
+publish = false
+
+[lib]
+# The compiled module is imported from Python as `kapitan_core`.
+name = "kapitan_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+# `extension-module` -> build a Python extension (don't link libpython).
+# `abi3-py310`       -> build a single stable-ABI wheel that works on every
+#                       CPython >= 3.10, matching kapitan's requires-python.
+pyo3 = { version = "0.27", features = ["extension-module", "abi3-py310"] }
