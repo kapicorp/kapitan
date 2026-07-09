@@ -51,6 +51,8 @@ except ImportError:  # pragma: no cover - the optional dep is missing
 
 from yaml.resolver import Resolver as _PyYAMLResolver
 
+from kapitan.utils import is_leading_zero_int_string
+
 
 logger = logging.getLogger(__name__)
 
@@ -147,10 +149,12 @@ def _scalar_for_ryml(
     if isinstance(value, str):
         if "\n" in value:
             return value, multiline_flag
-        if _str_is_ambiguous(value):
+        if _str_is_ambiguous(value) or is_leading_zero_int_string(value):
             # Single-quotes are the cheapest safe quoting for plain strings
             # with no embedded special characters; ryml will pick double
-            # quotes itself if escaping is required.
+            # quotes itself if escaping is required. ``is_leading_zero_int_string``
+            # covers leading-zero digit strings PyYAML's resolver misses but a
+            # Go/YAML-1.2 parser (Helm, Kubernetes) would read as a number.
             return value, ryml.VAL_SQUO  # type: ignore[union-attr]
         # Let ryml decide (plain unless it needs quotes for chars like leading
         # whitespace, leading '-', embedded ': ', etc.).
@@ -173,7 +177,7 @@ def _key_for_ryml(key: Any) -> tuple[str, int]:
     if isinstance(key, float):
         return repr(key), ryml.KEY_PLAIN  # type: ignore[union-attr]
     if isinstance(key, str):
-        if _str_is_ambiguous(key) or "\n" in key:
+        if _str_is_ambiguous(key) or is_leading_zero_int_string(key) or "\n" in key:
             return key, ryml.KEY_SQUO  # type: ignore[union-attr]
         return key, 0
     return str(key), ryml.KEY_SQUO  # type: ignore[union-attr]

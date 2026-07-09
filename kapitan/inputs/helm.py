@@ -20,6 +20,7 @@ from kapitan.inputs.base import InputType
 from kapitan.inputs.cache import InputCache, walk_and_hash
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
+from kapitan.utils import is_leading_zero_int_string
 
 
 logger = logging.getLogger(__name__)
@@ -214,15 +215,13 @@ def render_chart(
 
 
 def _helm_str_representer(dumper, data):
-    """Quote strings that could be misinterpreted by Helm's Go YAML parser.
+    """Quote leading-zero digit strings so Helm's Go YAML parser keeps them as
+    strings. ``is_leading_zero_int_string`` guards the compiled-manifest
+    serializer too, so the value stays quoted end to end.
 
-    Fixes https://github.com/kapicorp/kapitan/issues/1370 where strings like
-    "03190301" are converted to scientific notation (3.190301e+06).
+    See https://github.com/kapicorp/kapitan/issues/1370 and #1595.
     """
-    style = None
-    # Quote digit-only strings starting with 0 or large numeric strings
-    if data and len(data) > 1 and data.isdigit() and (data[0] == "0" or len(data) > 6):
-        style = "'"
+    style = "'" if is_leading_zero_int_string(data) else None
     return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
 
 

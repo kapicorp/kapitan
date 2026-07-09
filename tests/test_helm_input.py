@@ -318,6 +318,41 @@ class HelmInputTest(unittest.TestCase):
                 "This indicates the string was converted to a number and displayed in scientific notation.",
             )
 
+    def test_numeric_string_quoted_in_compiled_output(self):
+        """Numeric strings must stay quoted in the compiled manifest (#1595).
+
+        The #1372 fix quoted only helm's values file, not the output serializer,
+        so it re-emitted "03190301" unquoted. A Deployment ``env[].value`` is
+        string-typed with no coercion, so an unquoted value fails ``kubectl
+        apply``. Assert on raw text: ``yaml.safe_load`` reads "03190301" as a
+        string whether or not it is quoted, so it cannot detect the defect.
+        """
+        temp = tempfile.mkdtemp()
+        kapitan("compile", "--output-path", temp, "-t", "helm-string-values")
+
+        deployment_file = os.path.join(
+            temp,
+            "compiled",
+            "helm-string-values",
+            "string-values-test",
+            "templates",
+            "deployment.yaml",
+        )
+        self.assertTrue(os.path.isfile(deployment_file))
+
+        with open(deployment_file) as fp:
+            content = fp.read()
+
+        # The env value is a string-typed field: it must be emitted quoted so
+        # kubectl/the API server does not parse it as an integer (which also
+        # drops the leading zero: 03190301 -> 3190301).
+        self.assertTrue(
+            "'03190301'" in content or '"03190301"' in content,
+            "Numeric string '03190301' must be quoted in the compiled manifest so "
+            "it stays a string on string-typed fields (e.g. Deployment env value). "
+            f"Compiled deployment:\n{content}",
+        )
+
     def test_write_helm_values_file_preserves_numeric_strings(self):
         """
         Unit test for write_helm_values_file to verify that numeric-looking strings

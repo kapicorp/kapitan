@@ -181,6 +181,19 @@ def prune_empty(d):
 _SUPPORTED_MULTILINE_STYLES = {"literal": "|", "folded": ">", "double-quotes": '"'}
 
 
+def is_leading_zero_int_string(data: str) -> bool:
+    """True if ``data`` is a leading-zero digit string like ``"03190301"``.
+
+    PyYAML emits these unquoted (YAML 1.1 rejects them as octal), but Helm and
+    Kubernetes (Go/YAML 1.2) read them as ints and drop the leading zero, so
+    callers force-quote them. Other int-looking strings are already quoted by
+    PyYAML's emitter and by ``_str_is_ambiguous``.
+
+    See https://github.com/kapicorp/kapitan/issues/1595 (follows #1370/#1372).
+    """
+    return len(data) > 1 and data[0] == "0" and data.isdigit()
+
+
 class PrettyDumper(yaml.SafeDumper):
     """
     Increases indent of nested lists.
@@ -210,18 +223,14 @@ class PrettyDumper(yaml.SafeDumper):
         # This avoids the per-call ``functools.partial`` allocation and the
         # ``dict.get`` lookup that the previous implementation did inside
         # ``multiline_str_presenter`` for every string node.
-        if style_char is None:
-
-            def _str_presenter(dumper, data):
-                return dumper.represent_scalar("tag:yaml.org,2002:str", data)
-        else:
-
-            def _str_presenter(dumper, data, _style=style_char):
-                if "\n" in data:
-                    return dumper.represent_scalar(
-                        "tag:yaml.org,2002:str", data, style=_style
-                    )
-                return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+        def _str_presenter(dumper, data, _style=style_char):
+            if _style is not None and "\n" in data:
+                style = _style
+            elif is_leading_zero_int_string(data):
+                style = "'"
+            else:
+                style = None
+            return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
 
         dumper_cls = type(
             f"PrettyDumper_{style_selection or 'default'}",
