@@ -194,6 +194,19 @@ def is_leading_zero_int_string(data: str) -> bool:
     return len(data) > 1 and data[0] == "0" and data.isdigit()
 
 
+def leading_zero_str_representer(dumper, data):
+    """Force-quote leading-zero digit strings (#1595); emit other strings plainly.
+
+    Single source of truth for the quoting rule, shared by the base
+    ``PrettyDumper``, its ``get_dumper_for_style`` subclasses, and helm's
+    values-file dumper. Bare-``PrettyDumper`` call sites (``refs reveal`` via
+    ``_reveal_file``, ``kapitan inventory``) would otherwise re-emit
+    ``"03190301"`` unquoted and reintroduce the error.
+    """
+    style = "'" if is_leading_zero_int_string(data) else None
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
+
+
 class PrettyDumper(yaml.SafeDumper):
     """
     Increases indent of nested lists.
@@ -224,13 +237,13 @@ class PrettyDumper(yaml.SafeDumper):
         # ``dict.get`` lookup that the previous implementation did inside
         # ``multiline_str_presenter`` for every string node.
         def _str_presenter(dumper, data, _style=style_char):
+            # Force the configured multiline style; defer every other string
+            # (including the leading-zero case) to the shared representer.
             if _style is not None and "\n" in data:
-                style = _style
-            elif is_leading_zero_int_string(data):
-                style = "'"
-            else:
-                style = None
-            return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
+                return dumper.represent_scalar(
+                    "tag:yaml.org,2002:str", data, style=_style
+                )
+            return leading_zero_str_representer(dumper, data)
 
         dumper_cls = type(
             f"PrettyDumper_{style_selection or 'default'}",
@@ -267,6 +280,7 @@ def null_presenter(dumper, data):
 
 
 PrettyDumper.add_representer(type(None), null_presenter)
+PrettyDumper.add_representer(str, leading_zero_str_representer)
 
 
 def flatten_dict(d, parent_key="", sep="."):

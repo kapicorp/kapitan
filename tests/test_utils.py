@@ -21,6 +21,7 @@ import yaml
 
 from kapitan.errors import UnsafeArchiveError
 from kapitan.utils import (
+    PrettyDumper,
     SafeCopyError,
     YamlLoader,
     available_cpu_count,
@@ -646,3 +647,16 @@ class IsLeadingZeroIntStringTest(unittest.TestCase):
         for value in ("1234567", "12a", "0", ""):
             with self.subTest(value=value):
                 self.assertFalse(is_leading_zero_int_string(value))
+
+
+class PrettyDumperLeadingZeroTest(unittest.TestCase):
+    """The bare PrettyDumper must quote leading-zero strings so ``refs reveal``
+    (_reveal_file) and ``kapitan inventory``, which dump with the base class
+    rather than a get_dumper_for_style subclass, don't reintroduce #1595."""
+
+    def test_bare_dumper_quotes_leading_zero_string(self):
+        out = yaml.dump({"value": "03190301"}, Dumper=PrettyDumper)
+        self.assertTrue(
+            "'03190301'" in out or '"03190301"' in out,
+            f"bare PrettyDumper must quote leading-zero strings. Got:\n{out}",
+        )

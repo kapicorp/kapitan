@@ -20,7 +20,7 @@ from kapitan.inputs.base import InputType
 from kapitan.inputs.cache import InputCache, walk_and_hash
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
-from kapitan.utils import is_leading_zero_int_string
+from kapitan.utils import leading_zero_str_representer
 
 
 logger = logging.getLogger(__name__)
@@ -214,17 +214,6 @@ def render_chart(
         return ("", error_message)
 
 
-def _helm_str_representer(dumper, data):
-    """Quote leading-zero digit strings so Helm's Go YAML parser keeps them as
-    strings. ``is_leading_zero_int_string`` guards the compiled-manifest
-    serializer too, so the value stays quoted end to end.
-
-    See https://github.com/kapicorp/kapitan/issues/1370 and #1595.
-    """
-    style = "'" if is_leading_zero_int_string(data) else None
-    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
-
-
 def write_helm_values_file(helm_values: dict):
     """Dump helm values into a temporary YAML file.
 
@@ -237,7 +226,9 @@ def write_helm_values_file(helm_values: dict):
     _, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
     with open(helm_values_file, "w") as fp:
         dumper = yaml.SafeDumper
-        dumper.add_representer(str, _helm_str_representer)
+        # Quote leading-zero digit strings so Helm's Go YAML parser keeps them
+        # as strings (#1370/#1595); shared with the compiled-output serializer.
+        dumper.add_representer(str, leading_zero_str_representer)
         yaml.dump(helm_values, fp, Dumper=dumper)
 
     return helm_values_file
