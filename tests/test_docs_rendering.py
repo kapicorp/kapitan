@@ -80,10 +80,16 @@ def test_fenced_block_renders(md, name, source):
 # slot. New pages that skip frontmatter fail here instead of shipping invisible
 # to search.
 
-DOCS_PAGES_DIR = pathlib.Path(__file__).resolve().parent.parent / "docs" / "pages"
+DOCS_DIR = pathlib.Path(__file__).resolve().parent.parent / "docs"
+DOCS_PAGES_DIR = DOCS_DIR / "pages"
 
 TITLE_MIN, TITLE_MAX = 30, 65
 DESCRIPTION_MIN, DESCRIPTION_MAX = 50, 160
+
+# Top-level docs pages (homepage + nav entries) that the original gate skipped
+# but that search engines actually crawl. tags.md is a generated tag-index
+# placeholder ([TAGS]) with no prose of its own, so it is excluded.
+TOP_LEVEL_EXCLUDE = {"tags.md"}
 
 # Matches a leading YAML frontmatter block. MkDocs only recognises frontmatter
 # when it is the very first thing in the file, so anchor at the start.
@@ -91,11 +97,13 @@ _FRONTMATTER_RE = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.DOTALL)
 
 
 def _docs_pages():
-    return sorted(DOCS_PAGES_DIR.rglob("*.md"))
+    pages = set(DOCS_PAGES_DIR.rglob("*.md"))
+    pages.update(p for p in DOCS_DIR.glob("*.md") if p.name not in TOP_LEVEL_EXCLUDE)
+    return sorted(pages)
 
 
 def _page_id(path):
-    return str(path.relative_to(DOCS_PAGES_DIR))
+    return str(path.relative_to(DOCS_DIR))
 
 
 def _parse_frontmatter(text):

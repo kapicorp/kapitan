@@ -90,13 +90,15 @@ class InventoryTargetTestOmegaConf(InventoryTargetTestBase):
 del InventoryTargetTestBase  # remove InventoryTargetTestBase so that it doesn't run
 
 
-class InventoryTopicsTest(unittest.TestCase):
+class InventoryTopicsTestBase(unittest.TestCase):
     """Tests for `kapitan.topics` aggregation across targets."""
 
+    backend_id = None
+
     def setUp(self) -> None:
-        backend_id = InventoryBackends.RECLASS
-        if not importlib.util.find_spec(backend_id.replace("-", "_")):
-            self.skipTest(f"backend module {backend_id} not available")
+        backend_module_name = self.backend_id.replace("-", "_")
+        if not importlib.util.find_spec(backend_module_name):
+            self.skipTest(f"backend module {backend_module_name} not available")
 
         self.tmp = tempfile.mkdtemp()
         inv_dir = os.path.join(self.tmp, "inventory")
@@ -118,9 +120,19 @@ class InventoryTopicsTest(unittest.TestCase):
         )
         write("target-3.yml", "parameters:\n  unrelated: true\n")
 
+        # Consumer-only target: declares consume but produces no parameters.
+        write(
+            "consumer.yml",
+            "parameters:\n  kapitan:\n    topics:\n      colours:\n        consume: true\n",
+        )
+
         self.inventory_path = inv_dir
+        if self.backend_id == InventoryBackends.OMEGACONF:
+            from kapitan.inventory.backends.omegaconf import migrate
+
+            migrate(self.inventory_path)
         args = build_parser().parse_args(["compile"])
-        args.inventory_backend = backend_id
+        args.inventory_backend = self.backend_id
         kapitan.cached.reset_cache()
         kapitan.cached.args = args
 
@@ -135,3 +147,62 @@ class InventoryTopicsTest(unittest.TestCase):
         self.assertEqual(targets["target-1"]["colour"], "red")
         self.assertEqual(targets["target-2"]["colour"], "blue")
         self.assertNotIn("target-3", targets)
+
+        # Consumer-only target has no ``parameters:`` node on the topic so it
+        # must not appear as a producer in the aggregated view.
+        self.assertNotIn("consumer", targets)
+
+    def test_topics_cli_excludes_consumer_only_targets(self):
+        """``kapitan inventory --topics`` must not list targets that only
+        declared ``consume: true`` (no ``parameters:`` sub-block) — those are
+        consumers of the topic, not contributors to it.
+        """
+        from kapitan.topics import topics as topics_view
+
+        inventory(inventory_path=self.inventory_path)
+
+        # Full mapping path: ``kapitan inventory --topics``.
+        all_topics = topics_view()
+        self.assertIn("colours", all_topics)
+        all_targets = all_topics["colours"]["parameters"]["targets"]
+        self.assertIn("target-1", all_targets)
+        self.assertIn("target-2", all_targets)
+        self.assertNotIn("consumer", all_targets)
+
+        # Single-topic path: ``kapitan inventory --topics colours``.
+        one_topic = topics_view("colours")
+        single_targets = one_topic["parameters"]["targets"]
+        self.assertIn("target-1", single_targets)
+        self.assertIn("target-2", single_targets)
+        self.assertNotIn("consumer", single_targets)
+
+    def test_consumed_topics_reflects_declaration(self):
+        inventory(inventory_path=self.inventory_path)
+        inv = kapitan.cached.inv
+        self.assertEqual(inv.consumed_topics("consumer"), {"colours"})
+        # Producers that did not declare ``consume: true`` are not consumers.
+        self.assertEqual(inv.consumed_topics("target-1"), set())
+        self.assertEqual(inv.consumed_topics("target-3"), set())
+        # Unknown target gracefully returns the empty set.
+        self.assertEqual(inv.consumed_topics("does-not-exist"), set())
+
+
+class InventoryTopicsTestReclass(InventoryTopicsTestBase):
+    def setUp(self):
+        self.backend_id = InventoryBackends.RECLASS
+        super().setUp()
+
+
+class InventoryTopicsTestReclassRs(InventoryTopicsTestBase):
+    def setUp(self):
+        self.backend_id = InventoryBackends.RECLASS_RS
+        super().setUp()
+
+
+class InventoryTopicsTestOmegaConf(InventoryTopicsTestBase):
+    def setUp(self):
+        self.backend_id = InventoryBackends.OMEGACONF
+        super().setUp()
+
+
+del InventoryTopicsTestBase  # remove base so it doesn't run on its own

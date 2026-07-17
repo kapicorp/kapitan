@@ -103,15 +103,53 @@ class Inventory(ABC):
             target_topics = getattr(target.parameters.kapitan, "topics", None) or {}
             for topic_name, topic_values in target_topics.items():
                 # support both pydantic model and raw dict
-                topic_params = getattr(topic_values, "parameters", None)
-                if topic_params is None and isinstance(topic_values, dict):
-                    topic_params = topic_values.get("parameters", {})
-                topics.setdefault(topic_name, {})[target.name] = topic_params or {}
+                if isinstance(topic_values, dict):
+                    topic_params = topic_values.get("parameters")
+                else:
+                    topic_params = getattr(topic_values, "parameters", None)
+                # A target that only declared ``consume: true`` (i.e. no
+                # ``parameters`` sub-block) is a consumer, not a contributor;
+                # skip it so it doesn't self-appear as an empty entry in the
+                # aggregated view.
+                if topic_params is None:
+                    continue
+
+                topics.setdefault(topic_name, {})[target.name] = topic_params
 
         return {
             name: {"parameters": {"targets": targets}}
             for name, targets in topics.items()
         }
+
+    def consumed_topics(self, target_name: str) -> set[str]:
+        """Return the set of topic names ``target_name`` has opted into consuming.
+
+        A target opts in by declaring ``consume: true`` on the topic node::
+
+            parameters:
+              kapitan:
+                topics:
+                  <topic_name>:
+                    consume: true
+
+        Consumption is independent of production: a target may declare
+        ``parameters:`` (produce), ``consume: true`` (consume), or both on the
+        same topic node. Only ``consume: true`` (strictly ``True``) counts —
+        accidental strings like ``"true"`` are rejected so foot-guns surface
+        as undeclared-topic errors rather than silent cache stalls.
+        """
+        target = self.targets.get(target_name)
+        if target is None:
+            return set()
+        target_topics = getattr(target.parameters.kapitan, "topics", None) or {}
+        declared: set[str] = set()
+        for topic_name, topic_values in target_topics.items():
+            consume = getattr(topic_values, "consume", None)
+            if consume is None and isinstance(topic_values, dict):
+                consume = topic_values.get("consume")
+            if consume is True:
+                declared.add(topic_name)
+        return declared
 
     def __initialise(self, ignore_class_not_found) -> bool:
         """

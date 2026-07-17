@@ -46,10 +46,11 @@ jobs:
           uv run mike --version
           uv run mkdocs --version
 
-      - run: uv run mkdocs build
+      - name: Build docs (strict, timeout-guarded)
+        run: make docs_build
 
-      - name: Verify rendering
-        run: uv run pytest tests/test_docs_rendering.py -v --no-cov
+      - name: Verify rendering and flag-table generation
+        run: make docs_check
 
       # On master pushes (and manual dispatch): refresh the rolling "dev" docs.
       - name: Deploy dev docs
