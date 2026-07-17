@@ -24,6 +24,30 @@ url = "https://github.com/cue-lang/cue/releases/download/v0.15.4/cue_v0.15.4_dar
 checksum = "sha256:d42e26a0fb09219fc1735326fb2188dadf7c8deab136698a55d793c0c15a6aaa"
 url = "https://github.com/cue-lang/cue/releases/download/v0.15.4/cue_v0.15.4_windows_amd64.zip"
 
+[[tools.go]]
+version = "1.26.4"
+backend = "core:go"
+
+[tools.go."platforms.linux-arm64"]
+checksum = "sha256:ef758ae7c6cf9267c9c0ef080b8965f453d89ab2d25d9eb22de4405925238768"
+url = "https://dl.google.com/go/go1.26.4.linux-arm64.tar.gz"
+
+[tools.go."platforms.linux-x64"]
+checksum = "sha256:1153d3d50e0ac764b447adfe05c2bcf08e889d42a02e0fe0259bd47f6733ad7f"
+url = "https://dl.google.com/go/go1.26.4.linux-amd64.tar.gz"
+
+[tools.go."platforms.macos-arm64"]
+checksum = "sha256:b62ad2b6d7d2464f12a5bcad7ff47f19d08325773b5efd21610e445a05a9bf53"
+url = "https://dl.google.com/go/go1.26.4.darwin-arm64.tar.gz"
+
+[tools.go."platforms.macos-x64"]
+checksum = "sha256:05dc9b5f9997744520aaebb3d5deaa7c755371aebbfb7f97c2511a9f3367538d"
+url = "https://dl.google.com/go/go1.26.4.darwin-amd64.tar.gz"
+
+[tools.go."platforms.windows-x64"]
+checksum = "sha256:3ca8fb4630b07c419cbdd51f754e31363cfcfb83b3a5354d9e895c90be2cc345"
+url = "https://dl.google.com/go/go1.26.4.windows-amd64.zip"
+
 [[tools.helm]]
 version = "3.19.5"
 backend = "aqua:helm/helm"
