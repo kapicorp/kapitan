@@ -12,6 +12,11 @@ Provides utilities for test isolation and parallel execution.
 
 import multiprocessing.pool as mp
 import os
+
+# Ensure git.Repo.init() and git init in tests use traditional files ref-format
+# to avoid GitPython crashing on 'refs/heads/.invalid' when Git defaults to reftable.
+os.environ.setdefault("GIT_DEFAULT_REF_FORMAT", "files")
+
 import shutil
 import subprocess
 import tempfile
