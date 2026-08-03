@@ -18,13 +18,11 @@ import sys
 import yaml
 
 from kapitan import cached, defaults, setup_logging
-from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import select_jsonnet_runtime
 from kapitan.inventory import AVAILABLE_BACKENDS, InventoryBackends
 from kapitan.lint import start_lint
 from kapitan.profiling import add_profiling_arguments, cpu_profile, memory_profile
 from kapitan.refs.base import RefController, Revealer
-from kapitan.refs.cmd_parser import handle_refs_command
 from kapitan.resources import generate_inventory, resource_callbacks, search_imports
 from kapitan.targets import compile_targets
 from kapitan.utils import check_version, from_dot_kapitan, searchvar
@@ -32,6 +30,18 @@ from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 
 
 logger = logging.getLogger(__name__)
+
+
+def trigger_refs(args):
+    from kapitan.refs.cmd_parser import handle_refs_command
+
+    handle_refs_command(args)
+
+
+def trigger_init(args):
+    from kapitan.initialiser import initialise_skeleton
+
+    initialise_skeleton(args)
 
 
 def print_deprecated_secrets_msg(args):
@@ -493,7 +503,7 @@ def build_parser():
     refs_parser = subparser.add_parser(
         "refs", aliases=["r"], help="manage refs", parents=[inventory_backend_parser]
     )
-    refs_parser.set_defaults(func=handle_refs_command, name="refs")
+    refs_parser.set_defaults(func=trigger_refs, name="refs")
 
     refs_parser.add_argument(
         "--write",
@@ -665,7 +675,7 @@ def build_parser():
         "init",
         help="initialize a directory with the recommended kapitan project skeleton.",
     )
-    init_parser.set_defaults(func=initialise_skeleton, name="init")
+    init_parser.set_defaults(func=trigger_init, name="init")
 
     init_parser.add_argument(
         "--directory",

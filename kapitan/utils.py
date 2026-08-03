@@ -402,10 +402,11 @@ def list_all_paths(folder):
 
 def dot_kapitan_config():
     """Returns the parsed YAML .kapitan file. Subsequent requests will be cached"""
-    if not cached.dot_kapitan:
+    if not cached.dot_kapitan_loaded:
+        cached.dot_kapitan_loaded = True
         if os.path.exists(".kapitan"):
             with open(".kapitan") as f:
-                cached.dot_kapitan = yaml.safe_load(f)
+                cached.dot_kapitan = yaml.safe_load(f) or {}
 
     return cached.dot_kapitan
 

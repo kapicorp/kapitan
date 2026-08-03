@@ -30,6 +30,7 @@ azkms_obj: Any = None
 
 # Configuration and control objects
 dot_kapitan: dict[str, Any] = {}
+dot_kapitan_loaded: bool = False
 ref_controller_obj: Any = None
 revealer_obj: Any = None
 args: Namespace = Namespace()  # args won't need resetting
@@ -61,6 +62,7 @@ def reset_cache():
         awskms_obj, \
         azkms_obj, \
         dot_kapitan, \
+        dot_kapitan_loaded, \
         ref_controller_obj, \
         revealer_obj, \
         inv_sources
@@ -74,6 +76,7 @@ def reset_cache():
     awskms_obj = None
     azkms_obj = None
     dot_kapitan = {}
+    dot_kapitan_loaded = False
     ref_controller_obj = None
     revealer_obj = None
 
@@ -94,6 +97,7 @@ def from_dict(cache_dict: dict[str, Any]) -> None:
         awskms_obj, \
         azkms_obj, \
         dot_kapitan, \
+        dot_kapitan_loaded, \
         ref_controller_obj, \
         revealer_obj, \
         inv_sources, \
@@ -108,6 +112,7 @@ def from_dict(cache_dict: dict[str, Any]) -> None:
     awskms_obj = cache_dict["awskms_obj"]
     azkms_obj = cache_dict["azkms_obj"]
     dot_kapitan = cache_dict["dot_kapitan"]
+    dot_kapitan_loaded = cache_dict.get("dot_kapitan_loaded", False)
     ref_controller_obj = cache_dict["ref_controller_obj"]
     revealer_obj = cache_dict["revealer_obj"]
     args = cache_dict["args"]
@@ -130,6 +135,7 @@ def as_dict() -> dict[str, Any]:
         "awskms_obj": awskms_obj,
         "azkms_obj": azkms_obj,
         "dot_kapitan": dot_kapitan,
+        "dot_kapitan_loaded": dot_kapitan_loaded,
         "ref_controller_obj": ref_controller_obj,
         "revealer_obj": revealer_obj,
         "args": args,

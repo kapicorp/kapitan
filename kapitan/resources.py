@@ -37,6 +37,7 @@ from kapitan.utils import (
 logger = logging.getLogger(__name__)
 
 JSONNET_CACHE = {}
+_JSONNET_IMPORT_CACHE = {}
 
 yaml.SafeDumper.add_multi_representer(
     StrEnum,
@@ -239,11 +240,17 @@ def search_imports(cwd, import_str, search_paths):
     This function returns a tuple[str, bytes] since jsonnet 0.19.0 require the
     content of the file to be provided as a bytes type instead of a str.
     """
+    cache_key = (cwd, import_str)
+    if cache_key in _JSONNET_IMPORT_CACHE:
+        return _JSONNET_IMPORT_CACHE[cache_key]
+
     basename = os.path.basename(import_str)
     full_import_path = os.path.normpath(os.path.join(cwd, import_str))
 
     if full_import_path in JSONNET_CACHE:
-        return full_import_path, JSONNET_CACHE[full_import_path].encode()
+        res = (full_import_path, JSONNET_CACHE[full_import_path].encode())
+        _JSONNET_IMPORT_CACHE[cache_key] = res
+        return res
 
     if not os.path.exists(full_import_path):
         # if import_str not found, search in install_path
@@ -270,6 +277,10 @@ def search_imports(cwd, import_str, search_paths):
     # if the above search did not find anything, let jsonnet error
     # with a non existent import
     normalised_path = os.path.normpath(full_import_path)
+    if normalised_path in JSONNET_CACHE:
+        res = (normalised_path, JSONNET_CACHE[normalised_path].encode())
+        _JSONNET_IMPORT_CACHE[cache_key] = res
+        return res
 
     logger.debug(
         "cwd:%s import_str:%s basename:%s -> norm:%s",
@@ -284,7 +295,9 @@ def search_imports(cwd, import_str, search_paths):
         normalised_path_content = f.read()
         JSONNET_CACHE[normalised_path] = normalised_path_content
 
-    return normalised_path, normalised_path_content.encode()
+    res = (normalised_path, normalised_path_content.encode())
+    _JSONNET_IMPORT_CACHE[cache_key] = res
+    return res
 
 
 def inventory(
@@ -324,8 +337,7 @@ def inventory(
     inv = get_inventory(full_inv_path)
 
     if target_name:
-        target = inv.get_target(target_name)
-        return target.model_dump(by_alias=True)
+        return inv.get_target_dump(target_name)
 
     return inv.inventory
 

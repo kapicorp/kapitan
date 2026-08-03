@@ -66,6 +66,16 @@ class Inventory(ABC):
         if initialise:
             self.__initialise(ignore_class_not_found=ignore_class_not_found)
 
+    def get_target_dump(self, target_name: str) -> dict:
+        if not hasattr(self, "_target_dump_cache"):
+            self._target_dump_cache = {}
+        if target_name not in self._target_dump_cache:
+            target = self.get_target(target_name)
+            self._target_dump_cache[target_name] = (
+                target.model_dump(by_alias=True) if target else None
+            )
+        return self._target_dump_cache[target_name]
+
     @functools.cached_property
     def inventory(self) -> dict:
         """
@@ -73,7 +83,7 @@ class Inventory(ABC):
         """
 
         return {
-            target.name: target.model_dump(by_alias=True)
+            target.name: self.get_target_dump(target.name)
             for target in self.targets.values()
         }
 
@@ -187,6 +197,11 @@ class Inventory(ABC):
             self.render_targets(
                 self.targets, ignore_class_not_found=ignore_class_not_found
             )
+            for target_name, target_obj in self.targets.items():
+                if target_obj.parameters and target_obj.parameters.kapitan:
+                    target_obj.parameters.kapitan.target_full_path = (
+                        target_name.replace(".", "/")
+                    )
             self.initialised = True
         return self.initialised
 

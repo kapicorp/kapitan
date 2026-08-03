@@ -15,12 +15,6 @@ from kapitan.refs import KapitanReferencesTypes
 from kapitan.refs.base import PlainRef, RefController, Revealer
 from kapitan.refs.base64 import Base64Ref
 from kapitan.refs.env import EnvRef
-from kapitan.refs.secrets.awskms import AWSKMSSecret
-from kapitan.refs.secrets.azkms import AzureKMSSecret
-from kapitan.refs.secrets.gkms import GoogleKMSSecret
-from kapitan.refs.secrets.gpg import GPGSecret, lookup_fingerprints
-from kapitan.refs.secrets.vaultkv import VaultSecret
-from kapitan.refs.secrets.vaulttransit import VaultTransit
 from kapitan.resources import get_inventory
 from kapitan.utils import fatal_error, search_target_token_paths
 
@@ -113,6 +107,8 @@ def ref_write(args, ref_controller):
                 "parameters.kapitan.secrets.gpg.recipients and use --target"
             )
 
+        from kapitan.refs.secrets.gpg import GPGSecret
+
         secret_obj = GPGSecret(data, recipients, encode_base64=args.base64)
         ref_controller[tag] = secret_obj
 
@@ -129,6 +125,8 @@ def ref_write(args, ref_controller):
 
         logger.debug(f"Using gkms key {key}")
 
+        from kapitan.refs.secrets.gkms import GoogleKMSSecret
+
         secret_obj = GoogleKMSSecret(data, key, encode_base64=args.base64)
         ref_controller[tag] = secret_obj
 
@@ -144,6 +142,8 @@ def ref_write(args, ref_controller):
             )
 
         logger.debug(f"Using awskms key {key}")
+        from kapitan.refs.secrets.awskms import AWSKMSSecret
+
         secret_obj = AWSKMSSecret(data, key, encode_base64=args.base64)
         ref_controller[tag] = secret_obj
 
@@ -159,6 +159,8 @@ def ref_write(args, ref_controller):
             )
 
         logger.debug(f"Using azkms key {key}")
+        from kapitan.refs.secrets.azkms import AzureKMSSecret
+
         secret_obj = AzureKMSSecret(data, key, encode_base64=args.base64)
         ref_controller[tag] = secret_obj
 
@@ -212,6 +214,8 @@ def ref_write(args, ref_controller):
         else:
             raise RefError("Could not create VaultSecret: vaultkv: key is missing")
 
+        from kapitan.refs.secrets.vaultkv import VaultSecret
+
         secret_obj = VaultSecret(_data, vault_params, **kwargs)
         ref_controller[tag] = secret_obj
 
@@ -231,6 +235,8 @@ def ref_write(args, ref_controller):
                 "No Authentication type parameter specified. Specify it"
                 " in parameters.kapitan.secrets.vaultkv.auth and use --target-name or use --vault-auth"
             )
+
+        from kapitan.refs.secrets.vaulttransit import VaultTransit
 
         secret_obj = VaultTransit(_data, vault_params)
         ref_controller[tag] = secret_obj
@@ -405,6 +411,8 @@ def secret_update_validate(args, ref_controller):
                     continue
                 recipients = secrets.gpg.recipients
                 secret_obj = ref_controller[token_path]
+                from kapitan.refs.secrets.gpg import lookup_fingerprints
+
                 target_fingerprints = set(lookup_fingerprints(recipients))
                 secret_fingerprints = set(lookup_fingerprints(secret_obj.recipients))
                 if target_fingerprints != secret_fingerprints:
