@@ -129,14 +129,14 @@ def cpu_profile(args) -> Iterator[None]:
             rendered, ext = _render_pyinstrument(profiler, fmt)
         except Exception as e:  # pragma: no cover - defensive
             logger.error("Failed to render profile: %s", e)
-            return
-        out_path = out_dir / f"kapitan-{subcmd}-{_timestamp()}-pid{os.getpid()}.{ext}"
-        out_path.write_text(rendered)
-        logger.info("CPU profile written: %s", out_path)
-        # When in text mode, also echo a short summary to stderr so users see it.
-        if fmt == "text":
-            print("\n=== Kapitan CPU profile (pyinstrument) ===", file=sys.stderr)
-            print(rendered, file=sys.stderr)
+        else:
+            out_path = out_dir / f"kapitan-{subcmd}-{_timestamp()}-pid{os.getpid()}.{ext}"
+            out_path.write_text(rendered)
+            logger.info("CPU profile written: %s", out_path)
+            # When in text mode, also echo a short summary to stderr so users see it.
+            if fmt == "text":
+                print("\n=== Kapitan CPU profile (pyinstrument) ===", file=sys.stderr)
+                print(rendered, file=sys.stderr)
 
 
 @contextlib.contextmanager
@@ -225,15 +225,15 @@ def worker_profile() -> Iterator[None]:
             rendered, ext = _render_pyinstrument(profiler, fmt)
         except Exception as e:  # pragma: no cover - defensive
             logger.error("Worker %d failed to render profile: %s", os.getpid(), e)
-            return
-        out_path = Path(out_dir) / (
-            f"kapitan-worker-{_timestamp()}-pid{os.getpid()}.{ext}"
-        )
-        try:
-            out_path.write_text(rendered)
-            logger.debug("Worker CPU profile written: %s", out_path)
-        except OSError as e:  # pragma: no cover - defensive
-            logger.error("Failed to write worker profile %s: %s", out_path, e)
+        else:
+            out_path = Path(out_dir) / (
+                f"kapitan-worker-{_timestamp()}-pid{os.getpid()}.{ext}"
+            )
+            try:
+                out_path.write_text(rendered)
+                logger.debug("Worker CPU profile written: %s", out_path)
+            except OSError as e:  # pragma: no cover - defensive
+                logger.error("Failed to write worker profile %s: %s", out_path, e)
 
 
 def add_profiling_arguments(parser) -> None:
