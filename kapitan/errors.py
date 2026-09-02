@@ -84,3 +84,7 @@ class CuelangTemplateError(KapitanError):
 
 class OCIFetchingError(KapitanError):
     """Raised when fetching an OCI artifact fails."""
+
+
+class PathTraversalError(KapitanError):
+    """Raised when a file accessor resolves a path outside its search paths."""

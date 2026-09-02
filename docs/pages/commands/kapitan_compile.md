@@ -177,6 +177,36 @@ library), enabled with `--yaml-use-rapidyaml`.
       back to PyYAML for that single document (rapidyaml does not escape
       them in double-quoted scalars).
 
+## Restrict file access outside the inventory
+
+Generators resolve file paths against the configured `--search-paths`. A path
+that climbs out with `..` (or a symlink) can read files outside your inventory,
+such as an SSH key. This affects jsonnet `import` and the `file_read`,
+`yaml_load`, `dir_files_*` and `jinja2_render_file` native callbacks, as well as
+input path globbing.
+
+`--path-traversal-mode` controls what happens when a resolved path escapes every
+search path:
+
+| Mode | Behaviour |
+| --- | --- |
+| `warn` (default) | Log a warning and continue compiling. |
+| `error` | Abort the compile with an error. |
+| `off` | Disable the check entirely. |
+
+!!! example ""
+
+    ```shell
+    kapitan compile --path-traversal-mode error
+    ```
+
+To apply it on every run, set it in the [`.kapitan`](kapitan_dotfile.md) dotfile:
+
+```yaml
+compile:
+  path-traversal-mode: error
+```
+
 ## Flags
 
 The table below is generated from **Kapitan**'s argument parser at docs-build time, so it always matches the installed version. See also the [global flags](kapitan_flags.md) accepted by every command, and the [`.kapitan` dotfile](kapitan_dotfile.md) to set any of these permanently.
