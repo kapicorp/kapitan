@@ -53,7 +53,7 @@ Compiled echo-server (0.14s)
 ## running **Kapitan**
 
 !!! success "recommended"
-    ### `kapitan` wrapper script
+    **`kapitan` wrapper script**
     If you use the provided repository, we already package a `kapitan` shell script that wraps the docker command to run **Kapitan**
 
     ```shell
@@ -79,7 +79,7 @@ Compiled echo-server (0.14s)
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases){: aria-label="GitHub releases"}
 
 !!! success "recommended"
-    ### Docker
+    **Docker**
     ![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)
     [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan){: aria-label="Docker image size"}
     [![Docker](https://github.com/kapicorp/kapitan/workflows/Docker%20Build%20and%20Push/badge.svg)](https://github.com/kapicorp/kapitan/actions?query=workflow%3A%22Docker+Build+and+Push%22){: aria-label="Docker Build and Push status"}
