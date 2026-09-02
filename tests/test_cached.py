@@ -23,9 +23,6 @@ class TestResetCache:
         cached.inv_cache = {"cache": "entry"}
         cached.inv_sources = {"source1", "source2"}
         cached.gpg_obj = "gpg"
-        cached.gkms_obj = "gkms"
-        cached.awskms_obj = "awskms"
-        cached.azkms_obj = "azkms"
         cached.dot_kapitan = {"dot": "kapitan"}
         cached.ref_controller_obj = "ref"
         cached.revealer_obj = "revealer"
@@ -39,9 +36,6 @@ class TestResetCache:
         assert cached.inv_cache == {}
         assert cached.inv_sources == set()
         assert cached.gpg_obj is None
-        assert cached.gkms_obj is None
-        assert cached.awskms_obj is None
-        assert cached.azkms_obj is None
         assert cached.dot_kapitan == {}
         assert cached.ref_controller_obj is None
         assert cached.revealer_obj is None
@@ -68,9 +62,6 @@ class TestFromDict:
             "inv_cache": {"cache_key": "cache_value"},
             "inv_sources": {"source1", "source2"},
             "gpg_obj": "test_gpg",
-            "gkms_obj": "test_gkms",
-            "awskms_obj": "test_awskms",
-            "azkms_obj": "test_azkms",
             "dot_kapitan": {"dot_key": "dot_value"},
             "ref_controller_obj": "test_ref",
             "revealer_obj": "test_revealer",
@@ -84,9 +75,6 @@ class TestFromDict:
         assert cached.inv_cache == {"cache_key": "cache_value"}
         assert cached.inv_sources == {"source1", "source2"}
         assert cached.gpg_obj == "test_gpg"
-        assert cached.gkms_obj == "test_gkms"
-        assert cached.awskms_obj == "test_awskms"
-        assert cached.azkms_obj == "test_azkms"
         assert cached.dot_kapitan == {"dot_key": "dot_value"}
         assert cached.ref_controller_obj == "test_ref"
         assert cached.revealer_obj == "test_revealer"
