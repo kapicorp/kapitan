@@ -55,6 +55,9 @@ jobs:
         with:
           install: false
 
+      - name: Verify dependency lockfile is up to date
+        run: make check_lock
+
       - name: Test make install
         run: |
           make install
