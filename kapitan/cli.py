@@ -692,6 +692,16 @@ def build_parser():
 def main(*argv):
     """main function for command line usage"""
 
+    # --- TEMPORARY demo: prove the Rust (kapitan-core) piping ---
+    # kapitan-core is optional; only call it when the wheel is installed.
+    try:
+        from kapitan_core import hello_from_kapitan_core
+
+        hello_from_kapitan_core()
+    except ImportError:
+        logger.debug("kapitan-core (Rust) not installed; skipping demo")
+    # --- end demo ---
+
     parser = build_parser()
     args = parser.parse_args(argv or None)
 
