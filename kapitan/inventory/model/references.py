@@ -12,6 +12,8 @@ class KapitanReferenceBaseConfig(BaseModel):
 
 class KapitanReferenceGPGConfig(KapitanReferenceBaseConfig):
     recipients: list[dict[str, str]] = []
+    # key id or fingerprint that signs refs; None uses gpg's default key
+    signing_key: str | None = None
 
 
 # Must be pydantic_settings.BaseSettings so that environment variables are actually used to
