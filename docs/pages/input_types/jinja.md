@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Jinja2 Input Type"
+title: "Kapitan Jinja2 Input Type: Template Config Files"
 description: "Learn how to use Jinja2 templates in Kapitan to generate scripts, documentation, and configuration files with access to the full Kapitan inventory."
 ---
 
