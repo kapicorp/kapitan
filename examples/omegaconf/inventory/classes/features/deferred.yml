@@ -1,0 +1,38 @@
+---
+parameters:
+  # Deferred parentkey resolver demonstration
+  # parentkey resolves at definition location, not merge destination
+  deployment_template:
+    name: \${parentkey:}
+    namespace: ${namespace}
+    labels:
+      app.kubernetes.io/name: \${parentkey:}
+      app.kubernetes.io/instance: ${target_name}
+
+  deployments:
+    web-app: ${merge:${deployment_template}, ${web_app_overrides}}
+    api-service: ${merge:${deployment_template}, ${api_service_overrides}}
+
+  web_app_overrides:
+    replicas: 2
+
+  api_service_overrides:
+    replicas: 3
+
+  # Custom resolver with _root_ context access
+  secrets:
+    db_password: ${with_root:database,password}
+
+  # Uppercase custom resolver
+  uppercase_test:
+    env_upper: ${upper:${environment}}
+    cluster_upper: ${upper:${cluster}}
+
+  # Capitalize custom resolver (camelCase)
+  capitalize_test:
+    camel_name: ${capitalize:${app_name}}
+
+  # String extraction custom resolvers
+  demo_name: omegaconf-demo
+  suffix_test: ${get_suffix:${demo_name}}
+  substr_test: ${get_substr:${demo_name}}

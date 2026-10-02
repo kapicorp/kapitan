@@ -1,0 +1,16 @@
+---
+# Rendered by reclass example
+app_name: reclass-test
+environment: staging
+namespace: default
+target_name: advanced
+config_log_level: info
+config_retries: 3
+init_value: from_init
+init_common: True
+child_value: from_child
+child_override: overridden
+sibling_value: from_sibling
+relative_demo: True
+metadata_team: platform
+metadata_version: 1.0.0

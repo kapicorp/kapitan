@@ -1,0 +1,13 @@
+---
+parameters:
+  target_name: ${_kapitan_.name.short}
+
+  app_name: omegaconf-test
+  environment: dev
+  namespace: default
+  cluster: minikube
+  replicas: 1
+
+  kapitan:
+    vars:
+      target: ${target_name}

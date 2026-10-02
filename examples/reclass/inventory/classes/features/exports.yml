@@ -1,0 +1,9 @@
+---
+classes:
+  - features.dicts
+
+exports:
+  exported_app_name: ${app_name}
+  exported_config:
+    log_level: ${config:log_level}
+    retries: ${config:retries}

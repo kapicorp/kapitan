@@ -1,0 +1,13 @@
+---
+parameters:
+  # Base dictionary for merge demonstration
+  config:
+    log_level: info
+    retries: 3
+    nested:
+      key_a: value_a
+
+  # Another dictionary for override demonstration
+  metadata:
+    team: platform
+    version: 1.0.0

@@ -1,0 +1,103 @@
+---
+# Rendered by omegaconf example
+app_name: {{ inventory.parameters.app_name }}
+environment: {{ inventory.parameters.environment }}
+namespace: {{ inventory.parameters.namespace }}
+interpolated: {{ inventory.parameters.interpolated | default('unknown') }}
+{% if inventory.parameters.nested_interpolated is defined %}
+nested_interpolated: {{ inventory.parameters.nested_interpolated }}
+{% endif %}
+{% if inventory.parameters.full_name is defined %}
+full_name: {{ inventory.parameters.full_name }}
+{% endif %}
+{% if inventory.parameters.ref_value is defined %}
+ref_value: {{ inventory.parameters.ref_value }}
+{% endif %}
+{% if inventory.parameters.deferred_value is defined %}
+deferred_value: {{ inventory.parameters.deferred_value }}
+{% endif %}
+{% if inventory.parameters.escaped_value is defined %}
+escaped_value: {{ inventory.parameters.escaped_value }}
+{% endif %}
+{% if inventory.parameters.escaped_real_key is defined %}
+escaped_real_key: {{ inventory.parameters.escaped_real_key }}
+{% endif %}
+{% if inventory.parameters.conditional_false is defined %}
+conditional_false: {{ inventory.parameters.conditional_false }}
+{% endif %}
+{% if inventory.parameters.merged_service is defined %}
+merged_service_port: {{ inventory.parameters.merged_service.port | default(0) }}
+{% endif %}
+{% if inventory.parameters.conditional_result is defined %}
+conditional_result: {{ inventory.parameters.conditional_result }}
+{% endif %}
+{% if inventory.parameters.conditional_else is defined %}
+conditional_else: {{ inventory.parameters.conditional_else }}
+{% endif %}
+{% if inventory.parameters.computed_replicas is defined %}
+computed_replicas: {{ inventory.parameters.computed_replicas }}
+{% endif %}
+{% if inventory.parameters.custom_concat is defined %}
+custom_concat: {{ inventory.parameters.custom_concat }}
+{% endif %}
+{% if inventory.parameters.custom_double is defined %}
+custom_double: {{ inventory.parameters.custom_double }}
+{% endif %}
+{% if inventory.parameters.greeting is defined %}
+greeting: {{ inventory.parameters.greeting }}
+{% endif %}
+{% if inventory.parameters.overwrite_result is defined %}
+overwrite_result:
+  key_a: {{ inventory.parameters.overwrite_result.key_a }}
+  key_b: {{ inventory.parameters.overwrite_result.key_b }}
+  nested_child: {{ inventory.parameters.overwrite_result.nested.child }}
+  key_c: {{ inventory.parameters.overwrite_result.key_c }}
+{% endif %}
+{% if inventory.parameters.relative_value is defined %}
+relative_value: {{ inventory.parameters.relative_value }}
+{% endif %}
+{% if inventory.parameters.relative_demo is defined %}
+relative_demo: {{ inventory.parameters.relative_demo }}
+{% endif %}
+{% if inventory.parameters.init_value is defined %}
+init_value: {{ inventory.parameters.init_value }}
+{% endif %}
+{% if inventory.parameters.init_child is defined %}
+init_child: {{ inventory.parameters.init_child }}
+{% endif %}
+{% if inventory.parameters.init_common is defined %}
+init_common: {{ inventory.parameters.init_common }}
+{% endif %}
+{% if inventory.parameters.empty_test is defined %}
+empty_test_loaded: {{ inventory.parameters.empty_test.loaded }}
+{% endif %}
+{% if inventory.parameters.bool_and is defined %}
+bool_and: {{ inventory.parameters.bool_and }}
+{% endif %}
+{% if inventory.parameters.bool_or is defined %}
+bool_or: {{ inventory.parameters.bool_or }}
+{% endif %}
+{% if inventory.parameters.bool_not is defined %}
+bool_not: {{ inventory.parameters.bool_not }}
+{% endif %}
+{% if inventory.parameters.bool_equal is defined %}
+bool_equal: {{ inventory.parameters.bool_equal }}
+{% endif %}
+{% if inventory.parameters.if_numeric is defined %}
+if_numeric: {{ inventory.parameters.if_numeric }}
+{% endif %}
+{% if inventory.parameters.write_result is defined %}
+write_result: {{ inventory.parameters.write_result }}
+{% endif %}
+{% if inventory.parameters.nested_func is defined %}
+nested_func: {{ inventory.parameters.nested_func }}
+{% endif %}
+{% if inventory.parameters.parentkey_test is defined %}
+parentkey_test_name: {{ inventory.parameters.parentkey_test.name }}
+{% endif %}
+{% if inventory.parameters.default_result is defined %}
+default_result: {{ inventory.parameters.default_result }}
+{% endif %}
+{% if inventory.parameters.access_result is defined %}
+access_result: {{ inventory.parameters.access_result }}
+{% endif %}

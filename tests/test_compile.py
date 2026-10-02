@@ -8,12 +8,15 @@
 "compile tests"
 
 import contextlib
+import filecmp
 import glob
 import io
 import logging
 import os
 import shutil
+import sys
 import unittest
+from unittest import mock
 
 import pytest
 import toml
@@ -32,6 +35,33 @@ TEST_RESOURCES_PATH = os.path.join(os.getcwd(), "tests/test_resources")
 TEST_DOCKER_PATH = os.path.join(os.getcwd(), "examples/docker/")
 TEST_TERRAFORM_PATH = os.path.join(os.getcwd(), "examples/terraform/")
 TEST_KUBERNETES_PATH = os.path.join(os.getcwd(), "examples/kubernetes/")
+
+
+def _diff_directories(dir1, dir2):
+    """Return a list of (rel_path, dir1_path, dir2_path) for files that differ.
+
+    Missing files are represented as None in the corresponding slot.
+    """
+    diff = []
+    files1 = {}
+    files2 = {}
+    for root, _, files in os.walk(dir1):
+        for name in files:
+            rel = os.path.relpath(os.path.join(root, name), dir1)
+            files1[rel] = os.path.join(root, name)
+    for root, _, files in os.walk(dir2):
+        for name in files:
+            rel = os.path.relpath(os.path.join(root, name), dir2)
+            files2[rel] = os.path.join(root, name)
+    all_files = set(files1.keys()) | set(files2.keys())
+    for rel in sorted(all_files):
+        if rel not in files1:
+            diff.append((rel, None, files2[rel]))
+        elif rel not in files2:
+            diff.append((rel, files1[rel], None))
+        elif not filecmp.cmp(files1[rel], files2[rel], shallow=False):
+            diff.append((rel, files1[rel], files2[rel]))
+    return diff
 
 
 class CompileTestResourcesTestObjs(unittest.TestCase):
@@ -171,6 +201,7 @@ class CompileTestResourcesTestJinja2PostfixStrip(unittest.TestCase):
         reset_cache()
 
 
+@pytest.mark.slow
 @pytest.mark.usefixtures("isolated_kubernetes_inventory")
 class CompileKubernetesTest(unittest.TestCase):
     extraArgv = []
@@ -186,13 +217,54 @@ class CompileKubernetesTest(unittest.TestCase):
         reference_dir = os.path.join(TEST_PWD, "tests/test_kubernetes_compiled")
         compiled_dir_hash = directory_hash(compile_dir)
         test_compiled_dir_hash = directory_hash(reference_dir)
+        if compiled_dir_hash != test_compiled_dir_hash:
+            diffs = _diff_directories(compile_dir, reference_dir)
+            msg_lines = [
+                f"Compiled directory hash mismatch: {compiled_dir_hash} != {test_compiled_dir_hash}",
+                "Differences found:",
+            ]
+            for rel, compiled_path, ref_path in diffs:
+                if compiled_path is None:
+                    msg_lines.append(f"  MISSING in compiled: {rel}")
+                elif ref_path is None:
+                    msg_lines.append(f"  MISSING in reference: {rel}")
+                else:
+                    msg_lines.append(f"  DIFFER: {rel}")
+                    try:
+                        with (
+                            open(compiled_path, encoding="utf-8") as f1,
+                            open(ref_path, encoding="utf-8") as f2,
+                        ):
+                            compiled_text = f1.read().splitlines(keepends=True)
+                            ref_text = f2.read().splitlines(keepends=True)
+                        import difflib
+
+                        diff = list(
+                            difflib.unified_diff(
+                                ref_text,
+                                compiled_text,
+                                fromfile=f"reference/{rel}",
+                                tofile=f"compiled/{rel}",
+                            )
+                        )
+                        if diff:
+                            msg_lines.extend(diff[:40])
+                            if len(diff) > 40:
+                                msg_lines.append(
+                                    f"  ... ({len(diff) - 40} more diff lines)"
+                                )
+                    except Exception as e:
+                        msg_lines.append(f"    Could not diff text: {e}")
+            self.fail("\n".join(msg_lines))
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
     def test_compile_not_enough_args(self):
         with self.assertRaises(SystemExit) as cm:
             # Ignoring stdout for "kapitan --help"
             with contextlib.redirect_stdout(io.StringIO()):
-                kapitan()
+                # Isolate from pytest arguments in sys.argv
+                with mock.patch.object(sys, "argv", ["kapitan"]):
+                    kapitan()
         self.assertEqual(cm.exception.code, 1)
 
     def test_compile_specific_target(self):
@@ -230,6 +302,82 @@ class CompileKubernetesTest(unittest.TestCase):
             self.assertEqual(env["parameters"]["c"], "ccccc")
             self.assertEqual(env["exports"], {})
 
+    def test_compile_wildcard_classes(self):
+        """Compile target with wildcard class patterns using --enable-class-wildcards.
+
+        Replaces the exact class ``cluster.minikube`` in ``all-glob.yml`` with
+        the wildcard ``cluster.min*``.  Because only ``cluster.minikube``
+        matches that pattern, the expanded class list is identical and the
+        compiled output should match the reference exactly.
+        """
+        reset_cache()
+
+        target_path = "inventory/targets/all-glob.yml"
+        with open(target_path) as f:
+            original_text = f.read()
+        target = yaml.safe_load(original_text)
+
+        # Replace the exact class with a wildcard that resolves to the same class.
+        target["classes"] = ["common", "component.namespace", "cluster.min*"]
+
+        try:
+            with open(target_path, "w") as f:
+                yaml.dump(target, f)
+
+            kapitan(
+                "compile", "-t", "all-glob", "--enable-class-wildcards", *self.extraArgv
+            )
+
+            compile_dir = os.path.join(os.getcwd(), "compiled/all-glob")
+            reference_dir = os.path.join(
+                TEST_PWD, "tests/test_kubernetes_compiled/all-glob"
+            )
+            compiled_dir_hash = directory_hash(compile_dir)
+            test_compiled_dir_hash = directory_hash(reference_dir)
+            if compiled_dir_hash != test_compiled_dir_hash:
+                diffs = _diff_directories(compile_dir, reference_dir)
+                msg_lines = [
+                    f"Compiled directory hash mismatch: {compiled_dir_hash} != {test_compiled_dir_hash}",
+                    "Differences found:",
+                ]
+                for rel, compiled_path, ref_path in diffs:
+                    if compiled_path is None:
+                        msg_lines.append(f"  MISSING in compiled: {rel}")
+                    elif ref_path is None:
+                        msg_lines.append(f"  MISSING in reference: {rel}")
+                    else:
+                        msg_lines.append(f"  DIFFER: {rel}")
+                        try:
+                            with (
+                                open(compiled_path, encoding="utf-8") as f1,
+                                open(ref_path, encoding="utf-8") as f2,
+                            ):
+                                compiled_text = f1.read().splitlines(keepends=True)
+                                ref_text = f2.read().splitlines(keepends=True)
+                            import difflib
+
+                            diff = list(
+                                difflib.unified_diff(
+                                    ref_text,
+                                    compiled_text,
+                                    fromfile=f"reference/{rel}",
+                                    tofile=f"compiled/{rel}",
+                                )
+                            )
+                            if diff:
+                                msg_lines.extend(diff[:40])
+                                if len(diff) > 40:
+                                    msg_lines.append(
+                                        f"  ... ({len(diff) - 40} more diff lines)"
+                                    )
+                        except Exception as e:
+                            msg_lines.append(f"    Could not diff text: {e}")
+                self.fail("\n".join(msg_lines))
+            self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
+        finally:
+            with open(target_path, "w") as f:
+                f.write(original_text)
+
     def tearDown(self):
         os.chdir(TEST_PWD)
         reset_cache()
@@ -256,58 +404,6 @@ class CompileKubernetesTestOmegaconf(CompileKubernetesTest):
     @unittest.skip("Already tested")
     def test_compile_not_enough_args(self):
         pass
-
-
-class CompileTestResourcesOCOmegaconf(unittest.TestCase):
-    """Test compile with test_resources/omegaconf inventory using omegaconf backend.
-
-    Note: Omegaconf inventory resolution tests are in test_omegaconf.py.
-    This class only tests that compilation works with omegaconf backend.
-    """
-
-    inventory_path = os.path.join(TEST_PWD, "tests/test_resources/omegaconf")
-    extraArgv = ["--inventory-backend=omegaconf"]
-
-    def setUp(self):
-        reset_cache()
-        os.chdir(self.inventory_path)
-        shutil.rmtree("compiled", ignore_errors=True)
-        # Register custom resolvers from test_resources/omegaconf
-        import sys
-
-        from omegaconf import OmegaConf
-
-        from kapitan.inventory.backends.omegaconf.resolvers import register_resolvers
-
-        inv_path = os.path.join(self.inventory_path, "inventory")
-        register_resolvers(inv_path)
-        if inv_path not in sys.path:
-            sys.path.insert(0, inv_path)
-        from resolvers import pass_resolvers
-
-        for name, func in pass_resolvers().items():
-            if not OmegaConf.has_resolver(name):
-                OmegaConf.register_new_resolver(name, func)
-
-    def test_compile_resolvers_target(self):
-        """Test compiling test-resolvers target with omegaconf backend.
-
-        This test verifies that omegaconf inventory resolves correctly
-        and compiles without errors (even with empty compile list).
-        """
-        kapitan("compile", "-t", "test-resolvers", *self.extraArgv)
-
-        # Target should compile successfully (even with empty compile list)
-        compiled_dir = os.path.join(self.inventory_path, "compiled/test-resolvers")
-        self.assertTrue(
-            os.path.exists(compiled_dir),
-            f"Expected compiled directory {compiled_dir} to exist",
-        )
-
-    def tearDown(self):
-        shutil.rmtree("compiled", ignore_errors=True)
-        os.chdir(TEST_PWD)
-        reset_cache()
 
 
 class CompileTerraformTest(unittest.TestCase):

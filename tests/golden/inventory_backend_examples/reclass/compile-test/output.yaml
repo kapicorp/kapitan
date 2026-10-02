@@ -1,0 +1,14 @@
+---
+# Rendered by reclass example
+app_name: reclass-test
+environment: dev
+namespace: default
+target_name: compile-test
+interpolated: reclass-test
+nested_interpolated: https://reclass-test.example.com
+escaped_value: ${app_name}
+ref_value: info
+config_log_level: info
+config_retries: 3
+metadata_team: platform
+metadata_version: 1.0.0

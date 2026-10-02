@@ -1,0 +1,17 @@
+---
+parameters:
+  # Base object for override demonstration
+  overwrite_base:
+    key_a: value_a
+    key_b: value_b
+    nested:
+      child: original
+
+  # Override via merge resolver (deep merge)
+  overwrite_override:
+    nested:
+      child: replaced
+    key_c: value_c
+
+  # Demonstrate override behavior
+  overwrite_result: ${merge:${overwrite_base}, ${overwrite_override}}

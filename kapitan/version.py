@@ -23,4 +23,4 @@ URL = "https://github.com/kapicorp/kapitan"
 try:
     VERSION = version("kapitan")
 except PackageNotFoundError:
-    VERSION = "0.35.1"
+    VERSION = "0.36.0"
