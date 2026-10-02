@@ -57,7 +57,13 @@ echo "Exported $(wc -l < "${REQUIREMENTS_FILE}") dependency lines"
 # Note: --pyproject is intentionally omitted; it crashes cyclonedx-bom 4.x
 #       (observed in 4.6.1 with "'str' object has no attribute 'get'").
 #       Re-evaluate when bumping to cyclonedx-bom 5.x.
-uvx --from 'cyclonedx-bom>=4,<5' cyclonedx-py requirements \
+# --python 3.13: run the tool under a Python with prebuilt lxml wheels. lxml is
+#       a transitive dep of cyclonedx-python-lib[validation] and has no cp314
+#       wheels yet, so on Python 3.14 uv builds it from source and fails on
+#       runners lacking libxml2/libxslt dev headers. Pinning the tool's
+#       interpreter keeps it independent of the project's Python, which tracks
+#       pyproject's requires-python upper bound (<3.15) and may select 3.14.
+uvx --python 3.13 --from 'cyclonedx-bom>=4,<5' cyclonedx-py requirements \
     --mc-type application \
     --of JSON \
     --output-reproducible \

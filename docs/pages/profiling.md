@@ -1,3 +1,8 @@
+---
+title: "Profiling Kapitan Runs: CPU and Memory Reports"
+description: "Learn how to profile Kapitan CPU and memory usage with pyinstrument and tracemalloc reports."
+---
+
 # Profiling Kapitan runs
 
 Kapitan ships with optional CPU and memory profiling that you can enable from
