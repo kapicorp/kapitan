@@ -194,3 +194,9 @@ For example, rendering the inventory for the `mysql` target:
           scripts: []
           target_name: mysql
         ```
+
+## Flags
+
+The table below is generated from **Kapitan**'s argument parser at docs-build time, so it always matches the installed version. See also the [global flags](kapitan_flags.md) accepted by every command, and the [`.kapitan` dotfile](kapitan_dotfile.md) to set any of these permanently.
+
+<!-- kapitan-flags:command:inventory -->
