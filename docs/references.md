@@ -54,6 +54,8 @@ Some reference backends require configuration, both in the Inventory and to conf
                 recipients:
                   - name: example@kapitan.dev
                     fingerprint: D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C
+                # optional: key that signs the refs, default is gpg's default key
+                signing_key: D9234C61F58BEB3ED8552A57E28DC07A3CBFAE7C
         ```
     === "gkms"
         ```yaml
