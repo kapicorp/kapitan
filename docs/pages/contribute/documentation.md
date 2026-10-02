@@ -1,4 +1,6 @@
 ---
+title: "Contribute Documentation to the Kapitan Project"
+description: "Learn how to contribute documentation to Kapitan, from local setup with MkDocs to submitting and deploying changes."
 comments: true
 tags:
   - community

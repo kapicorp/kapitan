@@ -1,3 +1,8 @@
+---
+title: "Kapitan reclass-rs: Fast Rust Inventory Backend"
+description: "Speed up Kapitan inventory rendering with reclass-rs, a faster Rust reimplementation of the reclass backend for parameter references."
+---
+
 # The reclass-rs inventory backend
 
 ## Overview
