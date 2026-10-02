@@ -1,0 +1,17 @@
+classes:
+  - common.base
+  - clusters.prod.env
+  - clusters.prod.apps.worker.app
+  - clusters.prod.apps.worker.components.queue
+  - clusters.prod.apps.worker.components.scheduler
+  - mixins.logging
+  - mixins.monitoring
+
+parameters:
+  target_name: prod-worker
+  kapitan:
+    compile:
+      - input_type: jsonnet
+        input_paths:
+          - templates/config.jsonnet
+        output_path: config

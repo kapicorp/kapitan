@@ -1,0 +1,7 @@
+parameters:
+  logging:
+    level: info
+    format: json
+    outputs:
+      - stdout
+      - file

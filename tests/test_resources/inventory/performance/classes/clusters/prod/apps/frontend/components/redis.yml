@@ -1,0 +1,8 @@
+parameters:
+  component: redis
+  redis:
+    maxmemory: 256mb
+    maxmemory_policy: allkeys-lru
+    persistence:
+      aof: true
+      rdb: true
