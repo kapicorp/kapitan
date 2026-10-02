@@ -93,11 +93,26 @@ def load_jinja2_filters_from_file(env, jinja2_filters):
 
 
 # Custom filters
+def make_reveal_maybe(reveal, revealer):
+    """Build a ``reveal_maybe`` filter bound to an explicit reveal flag and revealer.
+
+    Keeps the filter unit-testable without mutating global state; callers that
+    have the reveal flag and revealer to hand should prefer this over the
+    cache-reading ``reveal_maybe`` shim below.
+    """
+
+    def reveal_maybe(ref_tag):
+        "Will reveal ref_tag if valid and --reveal flag is used"
+        if reveal:
+            return revealer.reveal_raw(ref_tag)
+        return ref_tag
+
+    return reveal_maybe
+
+
 def reveal_maybe(ref_tag):
-    "Will reveal ref_tag if valid and --reveal flag is used"
-    if cached.args.reveal:
-        return cached.revealer_obj.reveal_raw(ref_tag)
-    return ref_tag
+    "Backward-compatible filter reading the global cache; see make_reveal_maybe."
+    return make_reveal_maybe(cached.args.reveal, cached.revealer_obj)(ref_tag)
 
 
 def base64_encode(string):
