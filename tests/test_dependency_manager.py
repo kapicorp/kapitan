@@ -26,6 +26,7 @@ from kapitan.dependency_manager.base import (
     fetch_helm_chart,
     fetch_http_source,
     fetch_oci_dependency,
+    helm_dependencies_digest,
 )
 from kapitan.errors import HelmFetchingError, OCIFetchingError
 from kapitan.inventory.model import KapitanInventorySettings
@@ -667,3 +668,219 @@ class OciFetchDependencyTest(unittest.TestCase):
             self.assertIn("only subdirectories", warning_text)
             self.assertIn("subpath", warning_text)
             self.assertIn("system", warning_text)
+
+
+@pytest.mark.usefixtures("reset_cached_args")
+class HelmDependenciesDigestTest(unittest.TestCase):
+    """Cover the cache-key digest derived from ``parameters.kapitan.dependencies``.
+
+    The digest is what makes HelmChart() inside kadet cache-correct: chart files
+    live outside the kadet component path, so without this their edits do not
+    perturb the kadet cache key. See PR description for the full motivation.
+    """
+
+    def _set_inv(self, deps, target="t1"):
+        from kapitan import cached
+
+        cached.inv = {target: {"parameters": {"kapitan": {"dependencies": deps}}}}
+
+    def _set_output_base(self, base):
+        from argparse import Namespace
+
+        from kapitan import cached
+
+        cached.args = Namespace(output_path=base, cache=False)
+
+    def _write_chart(self, root: Path, name: str, body: str = "v1"):
+        chart_dir = root / name
+        (chart_dir / "templates").mkdir(parents=True, exist_ok=True)
+        (chart_dir / "Chart.yaml").write_text(f"name: {name}\nversion: 1.0.0\n")
+        (chart_dir / "templates" / "deploy.yaml").write_text(body)
+        return chart_dir
+
+    def test_returns_none_when_target_has_no_deps(self):
+        self._set_inv([])
+        self._set_output_base(".")
+        self.assertIsNone(helm_dependencies_digest("t1"))
+
+    def test_returns_none_when_only_non_helm_deps(self):
+        self._set_inv(
+            [
+                {
+                    "type": "git",
+                    "source": "https://example.com/repo.git",
+                    "output_path": "vendor/repo",
+                }
+            ]
+        )
+        self._set_output_base(".")
+        self.assertIsNone(helm_dependencies_digest("t1"))
+
+    def test_returns_none_when_target_missing(self):
+        self._set_inv([], target="other")
+        self._set_output_base(".")
+        self.assertIsNone(helm_dependencies_digest("missing"))
+
+    def test_digest_changes_when_chart_file_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            self._write_chart(tmp_path / "charts", "foo")
+            self._set_output_base(tmp)
+            self._set_inv(
+                [
+                    {
+                        "type": "helm",
+                        "source": "https://example.com",
+                        "output_path": "charts/foo",
+                        "chart_name": "foo",
+                        "version": "1.0.0",
+                    }
+                ]
+            )
+
+            before = helm_dependencies_digest("t1")
+            self.assertIsNotNone(before)
+
+            # Edit a template file under the declared chart_dir.
+            (tmp_path / "charts" / "foo" / "templates" / "deploy.yaml").write_text("v2")
+            after = helm_dependencies_digest("t1")
+
+            self.assertNotEqual(before, after)
+
+    def test_digest_stable_when_unrelated_files_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            self._write_chart(tmp_path / "charts", "foo")
+            # Sibling files outside the chart_dir must not influence the digest.
+            (tmp_path / "unrelated.yaml").write_text("a")
+            self._set_output_base(tmp)
+            self._set_inv(
+                [
+                    {
+                        "type": "helm",
+                        "source": "https://example.com",
+                        "output_path": "charts/foo",
+                        "chart_name": "foo",
+                        "version": "1.0.0",
+                    }
+                ]
+            )
+
+            before = helm_dependencies_digest("t1")
+            (tmp_path / "unrelated.yaml").write_text("b")
+            after = helm_dependencies_digest("t1")
+
+            self.assertEqual(before, after)
+
+    def test_digest_order_invariant(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            self._write_chart(tmp_path / "charts", "foo")
+            self._write_chart(tmp_path / "charts", "bar")
+            self._set_output_base(tmp)
+
+            dep_foo = {
+                "type": "helm",
+                "source": "https://example.com",
+                "output_path": "charts/foo",
+                "chart_name": "foo",
+                "version": "1.0.0",
+            }
+            dep_bar = {
+                "type": "helm",
+                "source": "https://example.com",
+                "output_path": "charts/bar",
+                "chart_name": "bar",
+                "version": "1.0.0",
+            }
+
+            self._set_inv([dep_foo, dep_bar])
+            d1 = helm_dependencies_digest("t1")
+
+            self._set_inv([dep_bar, dep_foo])
+            d2 = helm_dependencies_digest("t1")
+
+            self.assertEqual(d1, d2)
+
+    def test_digest_ignores_non_helm_deps_alongside(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            self._write_chart(tmp_path / "charts", "foo")
+            self._set_output_base(tmp)
+
+            helm_dep = {
+                "type": "helm",
+                "source": "https://example.com",
+                "output_path": "charts/foo",
+                "chart_name": "foo",
+                "version": "1.0.0",
+            }
+            git_dep = {
+                "type": "git",
+                "source": "https://example.com/repo.git",
+                "output_path": "vendor/repo",
+            }
+
+            self._set_inv([helm_dep])
+            with_only_helm = helm_dependencies_digest("t1")
+
+            self._set_inv([helm_dep, git_dep])
+            with_extras = helm_dependencies_digest("t1")
+
+            self.assertEqual(with_only_helm, with_extras)
+
+    def test_digest_changes_when_output_path_renamed_same_content(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            self._write_chart(tmp_path / "charts", "foo")
+            self._write_chart(tmp_path / "charts", "foo-alias")
+            # foo-alias has the same files as foo because of identical _write_chart;
+            # only the declared output_path label differs.
+            self._set_output_base(tmp)
+
+            self._set_inv(
+                [
+                    {
+                        "type": "helm",
+                        "source": "https://example.com",
+                        "output_path": "charts/foo",
+                        "chart_name": "foo",
+                        "version": "1.0.0",
+                    }
+                ]
+            )
+            before = helm_dependencies_digest("t1")
+
+            self._set_inv(
+                [
+                    {
+                        "type": "helm",
+                        "source": "https://example.com",
+                        "output_path": "charts/foo-alias",
+                        "chart_name": "foo",
+                        "version": "1.0.0",
+                    }
+                ]
+            )
+            after = helm_dependencies_digest("t1")
+
+            self.assertNotEqual(before, after)
+
+    def test_walks_missing_path_gracefully(self):
+        # Path does not exist on disk yet (e.g. user ran --cache without --fetch).
+        # walk_and_hash silently returns; we still fold the declared output_path
+        # in, so the digest is deterministic.
+        self._set_inv(
+            [
+                {
+                    "type": "helm",
+                    "source": "https://example.com",
+                    "output_path": "charts/missing",
+                    "chart_name": "missing",
+                    "version": "1.0.0",
+                }
+            ]
+        )
+        self._set_output_base("/nonexistent-base")
+        digest = helm_dependencies_digest("t1")
+        self.assertIsNotNone(digest)
