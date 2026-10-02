@@ -1,0 +1,6 @@
+classes:
+  - common
+
+parameters:
+  app:
+    name: prod
