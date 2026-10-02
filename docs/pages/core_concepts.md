@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Core Concepts"
+title: "Kapitan Core Concepts: Inventory, Targets & Inputs"
 description: "Learn how Kapitan organizes configuration with inventory, targets, classes, and input types to generate Kubernetes, Terraform, and infrastructure manifests."
 ---
 
@@ -11,7 +11,7 @@ description: "Learn how Kapitan organizes configuration with inventory, targets,
 
 ```mermaid
     graph LR
-        TARGETS ==  **kapitan compile** ==> INPUT_TYPES
+        TARGETS == "`**kapitan compile**`" ==> INPUT_TYPES
         INPUT_TYPES --> TARGETS_OUTPUT
         TARGETS_OUTPUT --> GENERATED_FILES
 
@@ -58,7 +58,7 @@ You can tell **Kapitan** to **compile** all your targets by running the followin
 ```
 $ kapitan compile
 Rendered inventory (0.06s): discovered 200 targets.
-Compiling 200/200 targets using 64 concurrent processes: (64 CPU detected)
+Compiling 200/200 targets using 64 concurrent processes: (64 CPU available)
 ...
 Compiled production (0.68s)
 ...
@@ -70,7 +70,7 @@ Alternatively, you can select just the target you want to compile, using the `-t
 ```
 $ kapitan compile -t production
 Rendered inventory (0.06s): discovered 200 targets.
-Compiling 1/200 targets using 1 concurrent processes: (64 CPU detected)
+Compiling 1/200 targets using 1 concurrent processes: (64 CPU available)
 Compiled production (0.68s)
 Compiled 1 targets in 0.73s
 ```

@@ -18,6 +18,7 @@ from kadet import Dict
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory, InventoryTarget
 from kapitan.inventory.model import KapitanInventoryMetadata, KapitanInventoryParameters
+from kapitan.utils import available_cpu_count
 from omegaconf import ListMergeMode, OmegaConf
 
 from .migrate import migrate
@@ -79,7 +80,7 @@ class OmegaConfInventory(Inventory):
         if not self.initialised:
             manager = mp.Manager()
             shared_targets = manager.dict()
-            with mp.Pool(min(len(targets), os.cpu_count())) as pool:
+            with mp.Pool(min(len(targets), available_cpu_count())) as pool:
                 r = pool.map_async(
                     self.inventory_worker,
                     [(self, target, shared_targets) for target in targets.values()],
