@@ -11,7 +11,7 @@ import os
 from kapitan import cached
 from kapitan.inputs.base import CompiledFile, InputType
 from kapitan.inventory.model.input_types import KapitanInputTypeJinja2Config
-from kapitan.topics import topics
+from kapitan.topics import current_target, topics
 from kapitan.utils import render_jinja2
 
 
@@ -42,41 +42,47 @@ class Jinja2(InputType):
 
         reveal = self.args.reveal
         target_name = self.target_name
+        # Publish the calling target so topics() can enforce consume declarations
+        # when called from a template. Reset on the way out so pool workers
+        # reused across targets don't leak the value to later readers.
+        token = current_target.set(target_name)
+        try:
+            # set compile_path allowing jsonnet to have context on where files
+            # are being compiled during the current Kapitan run.  This is only done if the user
+            # did not provide their own value.
+            input_params.setdefault("compile_path", compile_path)
 
-        # set compile_path allowing jsonnet to have context on where files
-        # are being compiled during the current Kapitan run.  This is only done if the user
-        # did not provide their own value.
-        input_params.setdefault("compile_path", compile_path)
+            # set ext_vars and inventory for jinja2 context
+            context = {}
 
-        # set ext_vars and inventory for jinja2 context
-        context = {}
+            context["inventory_global"] = cached.global_inv
+            context["inventory"] = cached.global_inv[target_name]
+            context["topics"] = topics
+            context["input_params"] = input_params
+            vars = cached.global_inv[target_name]["parameters"]["kapitan"]["vars"]
+            context.update(vars)
 
-        context["inventory_global"] = cached.global_inv
-        context["inventory"] = cached.global_inv[target_name]
-        context["topics"] = topics
-        context["input_params"] = input_params
-        vars = cached.global_inv[target_name]["parameters"]["kapitan"]["vars"]
-        context.update(vars)
+            jinja2_filters = self.args.jinja2_filters
 
-        jinja2_filters = self.args.jinja2_filters
-
-        for item_key, item_value in render_jinja2(
-            input_path,
-            context,
-            jinja2_filters=jinja2_filters,
-            search_paths=self.search_paths,
-        ).items():
-            if strip_postfix and item_key.endswith(stripped_postfix):
-                item_key = item_key.rstrip(stripped_postfix)
-            full_item_path = os.path.join(compile_path, item_key)
-            with CompiledFile(
-                full_item_path,
-                self.ref_controller,
-                mode="w",
-                reveal=reveal,
-                target_name=target_name,
-            ) as fp:
-                fp.write(item_value["content"])
-                mode = item_value["mode"]
-                os.chmod(full_item_path, mode)
-                logger.debug("Wrote %s with mode %.4o", full_item_path, mode)
+            for item_key, item_value in render_jinja2(
+                input_path,
+                context,
+                jinja2_filters=jinja2_filters,
+                search_paths=self.search_paths,
+            ).items():
+                if strip_postfix and item_key.endswith(stripped_postfix):
+                    item_key = item_key.rstrip(stripped_postfix)
+                full_item_path = os.path.join(compile_path, item_key)
+                with CompiledFile(
+                    full_item_path,
+                    self.ref_controller,
+                    mode="w",
+                    reveal=reveal,
+                    target_name=target_name,
+                ) as fp:
+                    fp.write(item_value["content"])
+                    mode = item_value["mode"]
+                    os.chmod(full_item_path, mode)
+                    logger.debug("Wrote %s with mode %.4o", full_item_path, mode)
+        finally:
+            current_target.reset(token)

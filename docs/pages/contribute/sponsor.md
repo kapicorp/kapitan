@@ -1,4 +1,6 @@
 ---
+title: "Sponsor the Kapitan Project and Support Its Future"
+description: "Support Kapitan through GitHub Sponsors or other contributions and get recognised as a project sponsor on our website."
 comments: true
 tags:
   - community
