@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Troubleshooting"
+title: "Kapitan Troubleshooting: Fix Common Errors & Issues"
 description: "Common Kapitan errors and how to resolve them. Covers inventory, compilation, input types, references, and installation issues."
 ---
 

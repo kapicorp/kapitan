@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Core Concepts"
+title: "Kapitan Core Concepts: Inventory, Targets & Inputs"
 description: "Learn how Kapitan organizes configuration with inventory, targets, classes, and input types to generate Kubernetes, Terraform, and infrastructure manifests."
 ---
 
@@ -11,7 +11,7 @@ description: "Learn how Kapitan organizes configuration with inventory, targets,
 
 ```mermaid
     graph LR
-        TARGETS ==  **kapitan compile** ==> INPUT_TYPES
+        TARGETS == "`**kapitan compile**`" ==> INPUT_TYPES
         INPUT_TYPES --> TARGETS_OUTPUT
         TARGETS_OUTPUT --> GENERATED_FILES
 

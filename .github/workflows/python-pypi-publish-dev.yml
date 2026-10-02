@@ -55,3 +55,7 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
+          # Dev versions are derived from distance-from-latest-tag, so the same
+          # version can be recomputed across runs (re-runs, tag moves, etc.).
+          # Treat "already on PyPI" as a no-op instead of failing the workflow.
+          skip-existing: true

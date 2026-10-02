@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Glossary"
+title: "Kapitan Glossary: Key Terms & Concepts Explained"
 description: "Definitions of key terms and concepts used throughout Kapitan documentation and the configuration management workflow."
 ---
 
