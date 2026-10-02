@@ -1,8 +1,15 @@
+---
+title: "Kapitan .kapitan Dotfile: Override CLI Defaults"
+description: "Configure the .kapitan dotfile (dot-kapitan) to pin versions and set persistent command flags across all Kapitan runs."
+search:
+  boost: 3
+---
+
 # :kapitan-logo: **CLI Reference** | `.kapitan` config file
 
 ## `.kapitan`
 
-Kapitan allows you to coveniently override defaults by specifying a local `.kapitan` file in the root of your repository (relative to the kapitan configuration):
+Kapitan allows you to coveniently override defaults by specifying a local `.kapitan` file — also written **dot-kapitan** or **dot kapitan** — in the root of your repository (relative to the kapitan configuration):
 
 This comes handy to make sure **Kapitan** runs consistently for your specific setup.
 
@@ -70,4 +77,8 @@ which would be equivalent to always running **Kapitan** with `--inventory-backen
 
 Please note that the `inventory-backend` flag currently can't be set through the command-specific sections of the **Kapitan** config file.
 
-For additional entries in the `.kapitan` please search for `from_dot_kapitan` in the Kapitan source code.
+## Full flag reference
+
+The tables below are generated directly from **Kapitan**'s argument parser at docs-build time, so they always match the installed version. Each section maps to a top-level key in `.kapitan`: set a flag under the matching command, or under `global` to apply it to every command.
+
+<!-- kapitan-flags:dotfile -->

@@ -381,3 +381,254 @@ class HelmInputTest(unittest.TestCase):
     def tearDown(self):
         os.chdir(TEST_PWD)
         reset_cache()
+
+
+class HelmVersionTest(unittest.TestCase):
+    """Cover the ``helm version`` probe that backs cache-key version mixing."""
+
+    def setUp(self):
+        from kapitan.helm_cli import helm_version
+
+        helm_version.cache_clear()
+
+    def tearDown(self):
+        from kapitan.helm_cli import helm_version
+
+        helm_version.cache_clear()
+
+    def test_returns_unresolved_sentinel_for_missing_binary(self):
+        from kapitan.helm_cli import helm_version
+
+        result = helm_version("/nonexistent/helm-binary-12345")
+        self.assertTrue(result.startswith("unresolved:"))
+        self.assertIn("helm-binary-12345", result)
+
+    def test_memoizes_per_resolved_binary(self):
+        from unittest.mock import patch
+
+        from kapitan.helm_cli import helm_version
+
+        with patch("kapitan.helm_cli.subprocess.run") as mock_run:
+            mock_run.return_value.returncode = 0
+            mock_run.return_value.stdout = b"v3.19.5+g4a19a5b\n"
+
+            helm_version("/path/to/helm-a")
+            helm_version("/path/to/helm-a")  # cached
+            helm_version("/path/to/helm-b")  # distinct path → new call
+
+            self.assertEqual(mock_run.call_count, 2)
+
+    def test_helm_version_returns_real_version(self):
+        """When the real helm binary is on PATH, return its actual version string."""
+        from shutil import which
+
+        from kapitan.helm_cli import helm_version
+
+        if not which("helm"):
+            self.skipTest("helm not on PATH")
+
+        result = helm_version()
+        # helm version --short emits like "v3.19.5+g4a19a5b"
+        self.assertTrue(result.startswith("v"))
+        self.assertFalse(result.startswith("unresolved:"))
+
+
+@pytest.mark.usefixtures("reset_cached_args")
+class HelmChartCacheTest(unittest.TestCase):
+    """HelmChart() must short-circuit the helm subprocess when its actual
+    inputs (chart_dir, helm_values, helm_params, helm_path) are unchanged —
+    even if the surrounding kadet cache missed because of an unrelated
+    inventory edit.
+    """
+
+    def _make_chart_dir(self, root, version="1.0.0", template_body="kind: Deployment"):
+        chart_dir = root / "charts" / "demo"
+        (chart_dir / "templates").mkdir(parents=True, exist_ok=True)
+        (chart_dir / "Chart.yaml").write_text(
+            f"apiVersion: v2\nname: demo\nversion: {version}\n"
+        )
+        (chart_dir / "templates" / "deploy.yaml").write_text(template_body)
+        return chart_dir
+
+    def _enable_cache(self):
+        from argparse import Namespace
+
+        from kapitan import cached
+
+        cached.args = Namespace(cache=True)
+        cached.kapitan_input_helm = None  # force re-init under XDG_CACHE_HOME
+
+    def test_cache_hit_skips_render(self):
+        """Second HelmChart() with identical inputs must NOT shell out to helm."""
+        from pathlib import Path
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            self._make_chart_dir(Path(tmp))
+            os.environ["XDG_CACHE_HOME"] = tmp  # isolate the on-disk cache
+            self._enable_cache()
+
+            chart_dir = str(Path(tmp) / "charts" / "demo")
+            docs = [
+                {"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "x"}}
+            ]
+
+            with (
+                patch(
+                    "kapitan.inputs.helm.render_chart", return_value=("", "")
+                ) as mock_render,
+                patch(
+                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    side_effect=lambda *_a, **_kw: iter(docs),
+                ),
+            ):
+                HelmChart(chart_dir=chart_dir)  # new() calls load_chart()
+                self.assertEqual(mock_render.call_count, 1)
+
+            # Second instantiation with the same inputs must hit the cache.
+            with patch("kapitan.inputs.helm.render_chart") as mock_render_second:
+                second = HelmChart(chart_dir=chart_dir)
+                mock_render_second.assert_not_called()
+                # And the cached docs reach .root via new().
+                self.assertTrue(len(second.root) > 0)
+
+    def test_different_helm_values_force_re_render(self):
+        from pathlib import Path
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            self._make_chart_dir(Path(tmp))
+            os.environ["XDG_CACHE_HOME"] = tmp
+            self._enable_cache()
+
+            chart_dir = str(Path(tmp) / "charts" / "demo")
+            docs = [
+                {"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "x"}}
+            ]
+
+            with (
+                patch(
+                    "kapitan.inputs.helm.render_chart", return_value=("", "")
+                ) as mock_render,
+                patch(
+                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    side_effect=lambda *_a, **_kw: iter(docs),
+                ),
+            ):
+                HelmChart(chart_dir=chart_dir, helm_values={"a": 1})
+                HelmChart(chart_dir=chart_dir, helm_values={"a": 2})
+                # Different helm_values → distinct cache keys → render runs twice.
+                self.assertEqual(mock_render.call_count, 2)
+
+                # Reusing the first values now hits the cache.
+                HelmChart(chart_dir=chart_dir, helm_values={"a": 1})
+                self.assertEqual(mock_render.call_count, 2)
+
+    def test_chart_file_edit_invalidates_cache(self):
+        from pathlib import Path
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            chart_dir = self._make_chart_dir(Path(tmp))
+            os.environ["XDG_CACHE_HOME"] = tmp
+            self._enable_cache()
+
+            docs = [
+                {"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "x"}}
+            ]
+
+            with (
+                patch(
+                    "kapitan.inputs.helm.render_chart", return_value=("", "")
+                ) as mock_render,
+                patch(
+                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    side_effect=lambda *_a, **_kw: iter(docs),
+                ),
+            ):
+                HelmChart(chart_dir=str(chart_dir))
+                self.assertEqual(mock_render.call_count, 1)
+
+                # Edit a template file under the chart_dir.
+                (chart_dir / "templates" / "deploy.yaml").write_text("kind: Service\n")
+                # Bust the per-process kv memo so the new file digest is read fresh.
+                from kapitan import cached as _cached
+
+                _cached.kapitan_input_helm.kv_cache.clear()
+
+                HelmChart(chart_dir=str(chart_dir))
+                self.assertEqual(mock_render.call_count, 2)
+
+    def test_helm_version_change_invalidates_cache(self):
+        """Same chart_dir + helm_values + helm_params but a new helm binary
+        version must bust the cache (e.g. user ran `brew upgrade helm`)."""
+        from pathlib import Path
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            chart_dir = self._make_chart_dir(Path(tmp))
+            os.environ["XDG_CACHE_HOME"] = tmp
+            self._enable_cache()
+
+            docs = [
+                {"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "x"}}
+            ]
+
+            with (
+                patch(
+                    "kapitan.inputs.helm.render_chart", return_value=("", "")
+                ) as mock_render,
+                patch(
+                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    side_effect=lambda *_a, **_kw: iter(docs),
+                ),
+                patch("kapitan.inputs.helm.helm_version", return_value="v3.18.0+gabc"),
+            ):
+                HelmChart(chart_dir=str(chart_dir))
+                self.assertEqual(mock_render.call_count, 1)
+
+            # Simulate a helm upgrade: same path/inputs, different version output.
+            with (
+                patch(
+                    "kapitan.inputs.helm.render_chart", return_value=("", "")
+                ) as mock_render_v2,
+                patch(
+                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    side_effect=lambda *_a, **_kw: iter(docs),
+                ),
+                patch("kapitan.inputs.helm.helm_version", return_value="v3.19.5+gdef"),
+            ):
+                HelmChart(chart_dir=str(chart_dir))
+                self.assertEqual(mock_render_v2.call_count, 1)
+
+    def test_cache_disabled_always_renders(self):
+        """When ``cached.args.cache`` is falsy, the cache layer must be skipped
+        entirely so behaviour is identical to pre-cache versions."""
+        from argparse import Namespace
+        from pathlib import Path
+        from unittest.mock import patch
+
+        from kapitan import cached as _cached
+
+        with tempfile.TemporaryDirectory() as tmp:
+            chart_dir = self._make_chart_dir(Path(tmp))
+            _cached.args = Namespace(cache=False)
+            _cached.kapitan_input_helm = None
+
+            docs = [
+                {"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "x"}}
+            ]
+
+            with (
+                patch(
+                    "kapitan.inputs.helm.render_chart", return_value=("", "")
+                ) as mock_render,
+                patch(
+                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    side_effect=lambda *_a, **_kw: iter(docs),
+                ),
+            ):
+                HelmChart(chart_dir=str(chart_dir))
+                HelmChart(chart_dir=str(chart_dir))
+                self.assertEqual(mock_render.call_count, 2)
+                self.assertIsNone(_cached.kapitan_input_helm)

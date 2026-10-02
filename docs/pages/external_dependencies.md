@@ -1,3 +1,8 @@
+---
+title: "Kapitan External Dependencies: Git, HTTP, Helm, OCI"
+description: "Learn how to fetch external dependencies in Kapitan from Git, HTTP, Helm, and OCI remote sources."
+---
+
 # :kapitan-logo: External dependencies
 
 **Kapitan** has the functionality to fetch external dependencies from remote locations.
