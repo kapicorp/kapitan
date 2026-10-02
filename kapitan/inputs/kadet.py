@@ -20,9 +20,10 @@ from kadet import BaseModel, BaseObj, Dict
 
 from kapitan import cached
 from kapitan.defaults import KADET_COMPONENT_MODULE_PREFIX
+from kapitan.dependency_manager.base import helm_dependencies_digest
 from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType
-from kapitan.inputs.cache import InputCache
+from kapitan.inputs.cache import InputCache, walk_and_hash
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
 from kapitan.topics import consumed_topics_digest, current_target
 
@@ -152,6 +153,16 @@ class Kadet(InputType):
                 extra_inputs: list = []
                 if topics_digest := consumed_topics_digest(target_name):
                     extra_inputs.append(topics_digest)
+
+                # Mix in a digest of every helm chart this target declared
+                # under ``parameters.kapitan.dependencies``. Without this,
+                # editing files under a fetched chart_dir (which lives
+                # outside the kadet component path that walk_and_hash sees)
+                # would not invalidate the kadet cache, and HelmChart()
+                # callers would get stale renders. ``None`` for targets
+                # with no helm deps so non-helm users keep current keys.
+                if helm_deps_digest := helm_dependencies_digest(target_name):
+                    extra_inputs.append(helm_deps_digest)
 
                 inputs_hash = self.inputs_hash(
                     inventory_digest(current_target.get()),
@@ -301,48 +312,6 @@ class Kadet(InputType):
 
             return cached.kapitan_input_kadet
         return False
-
-
-def walk_and_hash(path: Path, input_cache: InputCache, path_hash):
-    """
-    Recursively walk a path and update a hash object with the contents of all files.
-    This implementation is deterministic.
-    """
-    if not path.exists() or str(path).endswith("__pycache__"):
-        return
-
-    if path.is_file():
-        if cached_hash_digest := get_path_hash_from_input_kv(path, input_cache):
-            path_hash.update(cached_hash_digest)
-            logger.debug(
-                "KV Memory hit for path: %s, digest: %s", path, path_hash.hexdigest()
-            )
-            return
-
-        with open(path, "rb") as fp:
-            file_hash = InputCache.hash_file_digest(fp)
-            digest = file_hash.digest()
-            set_path_hash_input_kv(path, digest, input_cache)
-            path_hash.update(digest)
-
-    elif path.is_dir():
-        for item in sorted(path.iterdir(), key=lambda p: p.name):
-            walk_and_hash(item, input_cache, path_hash)
-
-
-def get_path_hash_from_input_kv(path: Path, input_cache: InputCache):
-    try:
-        # TODO temp hack to avoid input_cache being False
-        if input_cache:
-            return input_cache.kv_cache[str(path)]
-    except KeyError:
-        return None
-
-
-def set_path_hash_input_kv(path: Path, h_file, input_cache: InputCache):
-    # TODO temp hack to avoid input_cache being False
-    if input_cache:
-        input_cache.kv_cache[str(path)] = h_file
 
 
 def _to_dict(obj):

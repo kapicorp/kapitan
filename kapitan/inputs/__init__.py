@@ -14,7 +14,7 @@ from .base import InputType
 # compile_targets() pre-allocates one CacheMetrics per entry so all workers
 # share counters across the multiprocessing pool. Add an entry here when a
 # new input type adopts InputCache.
-CACHEABLE_INPUT_TYPES: tuple[str, ...] = ("kadet",)
+CACHEABLE_INPUT_TYPES: tuple[str, ...] = ("kadet", "helm")
 
 
 @functools.cache  # Use lru_cache for caching
