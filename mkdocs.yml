@@ -24,6 +24,12 @@ strict: true
 validation:
   links:
     not_found: ignore  # example links in code blocks (jinja.md compiled-result) are not real doc pages
+hooks:
+  - docs/hooks.py
+
+extra_css:
+  - stylesheets/extra.css
+
 plugins:
   - blog:
       archive: false
@@ -134,9 +140,13 @@ nav:
           - ArgoCD integration: pages/argocd.md
           - FluxCD integration: pages/fluxcd.md
       - CLI reference:
+          - global flags: pages/commands/kapitan_flags.md
           - compile: pages/commands/kapitan_compile.md
+          - eval: pages/commands/kapitan_eval.md
           - inventory: pages/commands/kapitan_inventory.md
+          - init: pages/commands/kapitan_init.md
           - lint: pages/commands/kapitan_lint.md
+          - refs: pages/commands/kapitan_refs.md
           - searchvar: pages/commands/kapitan_searchvar.md
           - validate: pages/commands/kapitan_validate.md
           - kapitan dotfile: pages/commands/kapitan_dotfile.md
