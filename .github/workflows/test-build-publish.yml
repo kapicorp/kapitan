@@ -282,6 +282,10 @@ jobs:
         if: needs.check-changes.outputs.has-code-changes == 'true'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
+          # Use the local checkout rather than the default Git context: a PR's
+          # refs/pull/<n>/merge ref is deleted once the PR is merged, which can
+          # race with an in-flight build and cause buildx to fail resolving it.
+          context: .
           platforms: ${{ matrix.platform.platform }}
           push: false
           load: true
@@ -356,6 +360,7 @@ jobs:
         if: needs.check-changes.outputs.has-code-changes == 'true' && env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
+          context: .
           platforms: ${{ matrix.platform.platform }}
           push: true
           tags: ${{ steps.tags.outputs.tags }}

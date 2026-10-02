@@ -20,10 +20,12 @@ from kadet import BaseModel, BaseObj, Dict
 
 from kapitan import cached
 from kapitan.defaults import KADET_COMPONENT_MODULE_PREFIX
+from kapitan.dependency_manager.base import helm_dependencies_digest
 from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType
-from kapitan.inputs.cache import InputCache
+from kapitan.inputs.cache import InputCache, walk_and_hash
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
+from kapitan.topics import consumed_topics_digest, current_target
 
 
 # Set external kadet exception to kapitan.error.CompileError
@@ -31,7 +33,6 @@ kadet.ABORT_EXCEPTION_TYPE = CompileError
 
 logger = logging.getLogger(__name__)
 search_paths = contextvars.ContextVar("current search_paths in thread")
-current_target = contextvars.ContextVar("current target in thread")
 
 
 @cache
@@ -130,65 +131,91 @@ class Kadet(InputType):
 
         input_params = dict(config.input_params)
         target_name = self.target_name
-        current_target.set(target_name)
-        search_paths.set(self.search_paths)
-        inputs_hash = None
-        output_obj = None
-
-        if cache_obj := self.cacheable():
-            # Hash input_params before setdefault injects compile_path below, so the
-            # volatile per-run tempdir never appears in the key. Any compile_path the
-            # user explicitly included in input_params is still hashed, preserving the
-            # collision safety added by PR #1520.
-            inputs_hash = self.inputs_hash(
-                inventory_digest(current_target.get()),
-                target_name,
-                Path(input_path),
-                input_params,
-            )
-
-            output_obj = cache_obj.get(inputs_hash)
-
-        if output_obj is None:
-            # set compile_path after the cache key is computed so the volatile tempdir
-            # path does not get baked into the hash; only inject if user didn't supply one
-            input_params.setdefault("compile_path", compile_path)
-
-            kadet_module, spec = module_from_path(input_path)
-            sys.modules[spec.name] = kadet_module
-            spec.loader.exec_module(kadet_module)
-            logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
-            kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
-            logger.debug("Kadet main args: %s", kadet_arg_spec.args)
-
-            if len(kadet_arg_spec.args) > 1:
-                raise ValueError(
-                    f"Kadet {spec.name} main parameters not equal to 1 or 0"
-                )
-
-            try:
-                if len(kadet_arg_spec.args) == 1:
-                    output_obj = kadet_module.main(input_params)
-                elif len(kadet_arg_spec.args) == 0:
-                    output_obj = kadet_module.main()
-
-            except Exception as exc:
-                raise CompileError(
-                    f"Could not load Kadet module: {spec.name[16:]}"
-                ) from exc
-
-            output_obj = _to_dict(output_obj)
+        # Reset the ContextVar in finally so workers reused across targets don't
+        # leak the value to non-input readers (e.g. ``inventory()`` called from
+        # a later component's module-level code).
+        token = current_target.set(target_name)
+        try:
+            search_paths.set(self.search_paths)
+            inputs_hash = None
+            output_obj = None
 
             if cache_obj := self.cacheable():
-                cache_obj.set(inputs_hash, output_obj)
+                # Hash input_params before setdefault injects compile_path below, so the
+                # volatile per-run tempdir never appears in the key. Any compile_path the
+                # user explicitly included in input_params is still hashed, preserving the
+                # collision safety added by PR #1520.
+                #
+                # Mix in a digest of every topic this target declared as consumed so
+                # changes to *producer* targets invalidate this target's cache. Returns
+                # ``None`` (and is omitted) for targets that consume no topics, so
+                # non-topic users keep their existing cache keys.
+                extra_inputs: list = []
+                if topics_digest := consumed_topics_digest(target_name):
+                    extra_inputs.append(topics_digest)
 
-        # Return None if output_obj has no output
-        if not output_obj:
-            return
+                # Mix in a digest of every helm chart this target declared
+                # under ``parameters.kapitan.dependencies``. Without this,
+                # editing files under a fetched chart_dir (which lives
+                # outside the kadet component path that walk_and_hash sees)
+                # would not invalidate the kadet cache, and HelmChart()
+                # callers would get stale renders. ``None`` for targets
+                # with no helm deps so non-helm users keep current keys.
+                if helm_deps_digest := helm_dependencies_digest(target_name):
+                    extra_inputs.append(helm_deps_digest)
 
-        for item_key, item_value in output_obj.items():
-            file_path = os.path.join(compile_path, item_key)
-            self.to_file(config, file_path, item_value)
+                inputs_hash = self.inputs_hash(
+                    inventory_digest(current_target.get()),
+                    target_name,
+                    Path(input_path),
+                    input_params,
+                    *extra_inputs,
+                )
+
+                output_obj = cache_obj.get(inputs_hash)
+
+            if output_obj is None:
+                # set compile_path after the cache key is computed so the volatile tempdir
+                # path does not get baked into the hash; only inject if user didn't supply one
+                input_params.setdefault("compile_path", compile_path)
+
+                kadet_module, spec = module_from_path(input_path)
+                sys.modules[spec.name] = kadet_module
+                spec.loader.exec_module(kadet_module)
+                logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
+                kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
+                logger.debug("Kadet main args: %s", kadet_arg_spec.args)
+
+                if len(kadet_arg_spec.args) > 1:
+                    raise ValueError(
+                        f"Kadet {spec.name} main parameters not equal to 1 or 0"
+                    )
+
+                try:
+                    if len(kadet_arg_spec.args) == 1:
+                        output_obj = kadet_module.main(input_params)
+                    elif len(kadet_arg_spec.args) == 0:
+                        output_obj = kadet_module.main()
+
+                except Exception as exc:
+                    raise CompileError(
+                        f"Could not load Kadet module: {spec.name[16:]}"
+                    ) from exc
+
+                output_obj = _to_dict(output_obj)
+
+                if cache_obj := self.cacheable():
+                    cache_obj.set(inputs_hash, output_obj)
+
+            # Return None if output_obj has no output
+            if not output_obj:
+                return
+
+            for item_key, item_value in output_obj.items():
+                file_path = os.path.join(compile_path, item_key)
+                self.to_file(config, file_path, item_value)
+        finally:
+            current_target.reset(token)
 
     def inputs_hash(self, *inputs):
         """
@@ -285,48 +312,6 @@ class Kadet(InputType):
 
             return cached.kapitan_input_kadet
         return False
-
-
-def walk_and_hash(path: Path, input_cache: InputCache, path_hash):
-    """
-    Recursively walk a path and update a hash object with the contents of all files.
-    This implementation is deterministic.
-    """
-    if not path.exists() or str(path).endswith("__pycache__"):
-        return
-
-    if path.is_file():
-        if cached_hash_digest := get_path_hash_from_input_kv(path, input_cache):
-            path_hash.update(cached_hash_digest)
-            logger.debug(
-                "KV Memory hit for path: %s, digest: %s", path, path_hash.hexdigest()
-            )
-            return
-
-        with open(path, "rb") as fp:
-            file_hash = InputCache.hash_file_digest(fp)
-            digest = file_hash.digest()
-            set_path_hash_input_kv(path, digest, input_cache)
-            path_hash.update(digest)
-
-    elif path.is_dir():
-        for item in sorted(path.iterdir(), key=lambda p: p.name):
-            walk_and_hash(item, input_cache, path_hash)
-
-
-def get_path_hash_from_input_kv(path: Path, input_cache: InputCache):
-    try:
-        # TODO temp hack to avoid input_cache being False
-        if input_cache:
-            return input_cache.kv_cache[str(path)]
-    except KeyError:
-        return None
-
-
-def set_path_hash_input_kv(path: Path, h_file, input_cache: InputCache):
-    # TODO temp hack to avoid input_cache being False
-    if input_cache:
-        input_cache.kv_cache[str(path)] = h_file
 
 
 def _to_dict(obj):
