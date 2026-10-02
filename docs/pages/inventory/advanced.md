@@ -1,3 +1,8 @@
+---
+title: "Kapitan Advanced Inventory: Labels and Backends"
+description: "Discover advanced Kapitan inventory features such as target labels and selectors to group, filter, and organize your targets."
+---
+
 # Advanced Inventory Features
 
 ## Target labels
@@ -47,8 +52,12 @@ Topics let targets expose a subset of their parameters so that other targets can
 aggregate and consume them, without resorting to backend-specific features like
 reclass exports or expensive `inventory_global()` scans.
 
-A target opts into a topic by declaring parameters under
-`parameters.kapitan.topics.<topic_name>.parameters`:
+A target's relationship to a topic has two independent sides — **produce**
+and **consume** — both declared under
+`parameters.kapitan.topics.<topic_name>` on the same node.
+
+**Producers** declare `parameters:` to publish a slice of their own
+configuration into the topic:
 
 !!! example "`inventory/targets/target-1.yml`"
     ```yaml
@@ -72,11 +81,37 @@ A target opts into a topic by declaring parameters under
               colour: ${colour}
     ```
 
+**Consumers** declare `consume: true` to opt into reading a topic. This is
+required — calling `topics("colours")` from a target that has not declared
+`consume: true` on the `colours` node is a compile error.
+
+!!! example "`inventory/targets/painter.yml`"
+    ```yaml
+    parameters:
+      kapitan:
+        topics:
+          colours:
+            consume: true
+    ```
+
+A target can be both producer and consumer of the same topic — just declare
+`parameters:` and `consume: true` together on the same node.
+
+Why the explicit consumer declaration? Topics introduce a *cross-target*
+dependency that is otherwise invisible: if `target-1` changes its colour,
+the painter's output changes even though the painter's own inventory did
+not. Without an explicit opt-in, the input cache would serve stale results
+because it has no way to know which producers a given consumer depends on.
+Declaring `consume: true` turns that hidden dependency into an explicit one,
+and the kadet input cache (see `kapitan/inputs/cache.py`) mixes a digest of
+each declared topic's aggregated view into the consumer's cache key.
+
 Kapitan aggregates participating targets into a single topic view of the shape
 `{parameters: {targets: {<target_name>: <topic_parameters>}}}`. The `topics()`
 function is available to every input type (kadet, jinja2, jsonnet). Call it
 without arguments to get the full mapping of all topics, or with a name to get
-a single topic.
+a single topic — in both cases every topic that would be returned must be
+declared `consume: true` on the calling target.
 
 !!! example "kadet (`components/painter/__init__.py`)"
     ```python

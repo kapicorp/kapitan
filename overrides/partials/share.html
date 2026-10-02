@@ -1,0 +1,36 @@
+{#-
+  Per-page social share bar. Rendered at the foot of each page content.
+  Uses the page canonical URL and title so shares point at the live page.
+-#}
+{% if page and page.canonical_url %}
+{% set share_url = page.canonical_url %}
+{% set share_title = (page.meta or {}).get("title") or (page.title | striptags) or config.site_name %}
+<div class="kapitan-share" aria-label="Share this page">
+  <span class="kapitan-share__label">Share this page</span>
+  <a class="kapitan-share__link" target="_blank" rel="noopener"
+     title="Share on X" aria-label="Share on X"
+     href="https://twitter.com/intent/tweet?url={{ share_url | urlencode }}&text={{ share_title | urlencode }}">
+    {% include ".icons/fontawesome/brands/x-twitter.svg" %}
+  </a>
+  <a class="kapitan-share__link" target="_blank" rel="noopener"
+     title="Share on LinkedIn" aria-label="Share on LinkedIn"
+     href="https://www.linkedin.com/sharing/share-offsite/?url={{ share_url | urlencode }}">
+    {% include ".icons/fontawesome/brands/linkedin.svg" %}
+  </a>
+  <a class="kapitan-share__link" target="_blank" rel="noopener"
+     title="Share on Reddit" aria-label="Share on Reddit"
+     href="https://www.reddit.com/submit?url={{ share_url | urlencode }}&title={{ share_title | urlencode }}">
+    {% include ".icons/fontawesome/brands/reddit.svg" %}
+  </a>
+  <a class="kapitan-share__link" target="_blank" rel="noopener"
+     title="Share on Hacker News" aria-label="Share on Hacker News"
+     href="https://news.ycombinator.com/submitlink?u={{ share_url | urlencode }}&t={{ share_title | urlencode }}">
+    {% include ".icons/fontawesome/brands/hacker-news.svg" %}
+  </a>
+  <button class="kapitan-share__link" type="button"
+     title="Copy link" aria-label="Copy link"
+     onclick="navigator.clipboard && navigator.clipboard.writeText('{{ share_url }}')">
+    {% include ".icons/material/link-variant.svg" %}
+  </button>
+</div>
+{% endif %}
