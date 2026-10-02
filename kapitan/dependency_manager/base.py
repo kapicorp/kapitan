@@ -353,6 +353,62 @@ def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
     )
 
 
+def helm_dependencies_digest(target_name: str) -> bytes | None:
+    """Stable digest over the on-disk helm charts declared as dependencies of ``target_name``.
+
+    Returns ``None`` when the target declares no helm dependencies — callers
+    should skip mixing into their cache key in that case, so non-helm users
+    keep their existing keys (mirrors :func:`kapitan.topics.consumed_topics_digest`).
+
+    Each helm dep's ``output_path`` is walked recursively via the same
+    ``walk_and_hash`` helper kadet uses for its component dir; the digest
+    therefore captures every chart-file change including subchart content
+    and ``Chart.yaml`` version bumps. ``cached.inv`` holds the model-dumped
+    inventory captured before ``fetch_dependencies`` normalized
+    ``output_path`` on the live pydantic objects, so the path is resolved
+    here the same way ``fetch_dependencies`` does.
+    """
+    # Local imports to avoid cycles: kapitan.inputs.cache → cache helpers,
+    # and kapitan.cached → runtime state. dependency_manager is imported
+    # eagerly at startup; deferring keeps that path lean.
+    from kapitan import cached
+    from kapitan.inputs.cache import InputCache, walk_and_hash
+    from kapitan.utils import normalise_join_path
+
+    try:
+        target_params = cached.inv[target_name]["parameters"]["kapitan"]
+    except (KeyError, TypeError):
+        return None
+
+    deps = target_params.get("dependencies") or []
+    helm_deps = [d for d in deps if d.get("type") == KapitanDependencyTypes.HELM]
+    if not helm_deps:
+        return None
+
+    helm_deps.sort(
+        key=lambda d: (
+            d.get("output_path", ""),
+            d.get("chart_name", ""),
+            d.get("version") or "",
+        )
+    )
+
+    base = getattr(cached.args, "output_path", ".") or "."
+    input_cache = getattr(cached, "kapitan_input_kadet", None)
+
+    h = InputCache.hash_object()
+    for dep in helm_deps:
+        rel_output_path = dep.get("output_path", "")
+        out_path = normalise_join_path(base, rel_output_path)
+        # Mix the declared path itself so a rename of the dep (with identical
+        # file content) still moves the digest.
+        h.update(rel_output_path.encode("utf-8"))
+        h.update(b"\x00")
+        walk_and_hash(Path(out_path), input_cache, h)
+        h.update(b"\x00")
+    return h.digest()
+
+
 def exists_in_cache(item_path):
     return os.path.exists(item_path)
 
