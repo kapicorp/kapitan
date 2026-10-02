@@ -1,3 +1,8 @@
+---
+title: "Who Uses Kapitan: Adopters and Companies"
+description: "See the companies and organizations using Kapitan to manage Kubernetes, Terraform, and infrastructure configuration in production environments."
+---
+
 # Who uses **Kapitan**
 
 If you're using **Kapitan** in your organization, please let us know by adding to this list on the [docs/ADOPTERS.md](https://github.com/kapicorp/kapitan/blob/master/docs/ADOPTERS.md) file.
