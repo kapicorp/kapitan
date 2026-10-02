@@ -163,3 +163,47 @@ class InputCache:
                 pass
             else:
                 raise
+
+
+def walk_and_hash(path: Path, input_cache: InputCache | None, path_hash):
+    """
+    Recursively walk a path and update a hash object with the contents of all files.
+    This implementation is deterministic.
+
+    ``input_cache`` may be ``None`` or a falsy ``InputCache``; when truthy its
+    ``kv_cache`` dict is used to memoize per-file digests across calls so the
+    same file isn't re-read for every walk within a worker process.
+    """
+    if not path.exists() or str(path).endswith("__pycache__"):
+        return
+
+    if path.is_file():
+        if cached_hash_digest := get_path_hash_from_input_kv(path, input_cache):
+            path_hash.update(cached_hash_digest)
+            logger.debug(
+                "KV Memory hit for path: %s, digest: %s", path, path_hash.hexdigest()
+            )
+            return
+
+        with open(path, "rb") as fp:
+            file_hash = InputCache.hash_file_digest(fp)
+            digest = file_hash.digest()
+            set_path_hash_input_kv(path, digest, input_cache)
+            path_hash.update(digest)
+
+    elif path.is_dir():
+        for item in sorted(path.iterdir(), key=lambda p: p.name):
+            walk_and_hash(item, input_cache, path_hash)
+
+
+def get_path_hash_from_input_kv(path: Path, input_cache: InputCache | None):
+    try:
+        if input_cache:
+            return input_cache.kv_cache[str(path)]
+    except KeyError:
+        return None
+
+
+def set_path_hash_input_kv(path: Path, h_file, input_cache: InputCache | None):
+    if input_cache:
+        input_cache.kv_cache[str(path)] = h_file

@@ -38,6 +38,12 @@ inv_sources: set[str] = set()
 # Kadet caches
 kapitan_input_kadet = None
 
+# Helm cache: rendered manifests keyed on (chart_dir content, helm_values,
+# helm_params, helm_path). Lets HelmChart() callers skip the helm subprocess
+# even when their kadet cache misses (e.g. when an unrelated inventory key
+# changed but helm-relevant inputs did not).
+kapitan_input_helm = None
+
 # Shared cache metrics for the compile pool, keyed by input_type_name.
 # Populated by compile_targets() only when caching is enabled, then propagated
 # to workers via the pool initializer so every InputCache(input_type_name=N)
