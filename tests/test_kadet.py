@@ -285,3 +285,74 @@ class KadetCacheKeyTest(unittest.TestCase):
             compiler.compile_file(config, "component", "compiled/test-target")
 
         self.assertEqual(dict(config.input_params), original_params)
+
+    def test_helm_deps_digest_mixed_into_cache_key(self):
+        """When a target declares helm dependencies, the resulting digest must
+        be passed into inputs_hash so that chart edits invalidate the kadet
+        cache."""
+        compiler = self._make_compiler()
+
+        config = KapitanInputTypeKadetConfig(
+            input_paths=["component"],
+            output_path=".",
+            input_params={},
+        )
+
+        cache_obj = mock.Mock()
+        cache_obj.get.return_value = {"output.yml": {"k": "v"}}
+
+        with (
+            mock.patch.object(compiler, "cacheable", return_value=cache_obj),
+            mock.patch.object(
+                compiler, "inputs_hash", return_value="hash"
+            ) as mock_hash,
+            mock.patch("kapitan.inputs.kadet.inventory_digest", return_value=b"inv"),
+            mock.patch(
+                "kapitan.inputs.kadet.helm_dependencies_digest",
+                return_value=b"helm-deps-digest",
+            ),
+            mock.patch(
+                "kapitan.inputs.kadet.consumed_topics_digest", return_value=None
+            ),
+            mock.patch.object(compiler, "to_file"),
+        ):
+            compiler.compile_file(config, "component", "compiled/test-target")
+
+        args = mock_hash.call_args.args
+        self.assertIn(b"helm-deps-digest", args)
+
+    def test_no_helm_deps_means_no_extra_input(self):
+        """Targets without helm deps must keep their pre-existing cache key shape."""
+        compiler = self._make_compiler()
+
+        config = KapitanInputTypeKadetConfig(
+            input_paths=["component"],
+            output_path=".",
+            input_params={},
+        )
+
+        cache_obj = mock.Mock()
+        cache_obj.get.return_value = {"output.yml": {"k": "v"}}
+
+        with (
+            mock.patch.object(compiler, "cacheable", return_value=cache_obj),
+            mock.patch.object(
+                compiler, "inputs_hash", return_value="hash"
+            ) as mock_hash,
+            mock.patch("kapitan.inputs.kadet.inventory_digest", return_value=b"inv"),
+            mock.patch(
+                "kapitan.inputs.kadet.helm_dependencies_digest", return_value=None
+            ),
+            mock.patch(
+                "kapitan.inputs.kadet.consumed_topics_digest", return_value=None
+            ),
+            mock.patch.object(compiler, "to_file"),
+        ):
+            compiler.compile_file(config, "component", "compiled/test-target")
+
+        mock_hash.assert_called_once_with(
+            b"inv",
+            "test-target",
+            Path("component"),
+            {},
+        )

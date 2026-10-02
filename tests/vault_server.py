@@ -51,6 +51,15 @@ class VaultServer:
         self.dev_root_token = "root"
         self.docker_client = None
         self.vault_container = None
+        # Credentials this server issues, scoped to its own policy. Stored on
+        # the instance so they can be re-exported before each test (see
+        # export_env): all servers share the same process environment, so a
+        # token written by one would otherwise be clobbered by another.
+        self.username = None
+        self.password = None
+        self.role_id = None
+        self.secret_id = None
+        self.token = None
 
         # If VAULT_ADDR is already set (e.g. CI service container), use it.
         existing_addr = os.environ.get("VAULT_ADDR")
@@ -172,15 +181,15 @@ class VaultServer:
         policy = "test_policy"
         test_policy = self.get_policy()
         self.vault_client.sys.create_or_update_policy(name=policy, policy=test_policy)
-        os.environ["VAULT_USERNAME"] = "test_user"
-        os.environ["VAULT_PASSWORD"] = "test_password"
+        self.username = "test_user"
+        self.password = "test_password"
         try:
             self.vault_client.sys.enable_auth_method("userpass")
         except InvalidRequest as exc:
             if "path is already in use" not in str(exc):
                 raise
         self.vault_client.auth.userpass.create_or_update_user(
-            username="test_user", password="test_password", policies=[policy]
+            username=self.username, password=self.password, policies=[policy]
         )
         try:
             self.vault_client.sys.enable_auth_method("approle")
@@ -188,17 +197,34 @@ class VaultServer:
             if "path is already in use" not in str(exc):
                 raise
         self.vault_client.auth.approle.create_or_update_approle("test_role")
-        os.environ["VAULT_ROLE_ID"] = self.vault_client.auth.approle.read_role_id(
-            "test_role"
-        )["data"]["role_id"]
-        os.environ["VAULT_SECRET_ID"] = (
-            self.vault_client.auth.approle.generate_secret_id(
-                "test_role"
-            )["data"]["secret_id"]
-        )
-        os.environ["VAULT_TOKEN"] = self.vault_client.auth.token.create(
-            policies=[policy], ttl="1h"
-        )["auth"]["client_token"]
+        self.role_id = self.vault_client.auth.approle.read_role_id("test_role")["data"][
+            "role_id"
+        ]
+        self.secret_id = self.vault_client.auth.approle.generate_secret_id("test_role")[
+            "data"
+        ]["secret_id"]
+        self.token = self.vault_client.auth.token.create(policies=[policy], ttl="1h")[
+            "auth"
+        ]["client_token"]
+        self.export_env()
+
+    def export_env(self):
+        """Export this server's credentials to the process environment.
+
+        VaultClient reads VAULT_TOKEN (and the userpass/approle vars) from the
+        environment, which is shared across all servers in a worker process.
+        Tests run in parallel under pytest-xdist, so a single worker may set up
+        more than one server (e.g. the kv and transit servers), each issuing a
+        token scoped to a different policy. Whichever ran last would otherwise
+        win globally and unrelated tests would fail with a permission error.
+        Calling this from each test's setUp keeps the active credentials matched
+        to the server under test.
+        """
+        os.environ["VAULT_USERNAME"] = self.username
+        os.environ["VAULT_PASSWORD"] = self.password
+        os.environ["VAULT_ROLE_ID"] = self.role_id
+        os.environ["VAULT_SECRET_ID"] = self.secret_id
+        os.environ["VAULT_TOKEN"] = self.token
 
     def close_container(self):
         logger.info(f"Closing vault container {self.vault_url}")
