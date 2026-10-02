@@ -421,7 +421,8 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
             ignore_class_not_found=ignore_class_not_found,
             enable_class_wildcards=enable_class_wildcards,
         )
-    except InventoryError:
+    except InventoryError as e:
+        logger.error("Inventory error: %s", e)
         sys.exit(1)
 
     cached.inv = inventory_backend
