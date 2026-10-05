@@ -79,7 +79,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
 
 === "git"
 
-    ### Syntax
+    **Syntax**
 
     ```yaml
     parameters:
@@ -102,7 +102,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
 
         This type depends on the `git` binary installed on your system and available to **Kapitan**.
 
-    ### Example
+    **Example**
 
     Say we want to fetch the source code from our kapitan repository, specifically, `kapicorp/kapitan/kapitan/version.py`. Let's create a very simple target file `inventory/targets/kapitan-example.yml`.
 
@@ -127,7 +127,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
 
 === "http"
 
-    ### Syntax
+    **Syntax**
 
     ```yaml
     parameters:
@@ -143,7 +143,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
     2. http[s] types can fetch external dependencies available at `http://` or `https://` URL.
     3. archive mode: download and unpack
 
-    ### Example
+    **Example**
 
     === "Single file"
 
@@ -170,7 +170,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
 
 === "helm"
 
-    ### Syntax
+    **Syntax**
 
     ```yaml
     parameters:
@@ -192,7 +192,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
 
     `source` can be either the URL to a chart repository, or the URL to a chart on an OCI registry (supported since Helm 3.8.0).
 
-    ### Example
+    **Example**
 
     If we want to download the prometheus helm chart we simply add the dependency to the monitoring target.
     We want a specific version `11.3.0` so we put that in.
@@ -223,7 +223,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
 
 === "oci"
 
-    ### Syntax
+    **Syntax**
 
     ```yaml
     parameters:
@@ -253,7 +253,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
         For a full guide on packaging and publishing your own generator bundles, see
         [Publishing generators as OCI artifacts](publishing_generators.md).
 
-    ### Authentication
+    **Authentication**
 
     Credentials are never stored in the inventory. Kapitan supports two authentication approaches:
 
@@ -279,7 +279,7 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
 
     This is the preferred approach for CI/CD pipelines where credentials are injected as secrets.
 
-    ### Example
+    **Example**
 
     Fetching a Kapitan generator bundle published to GHCR and making it available as a Kadet component:
 
