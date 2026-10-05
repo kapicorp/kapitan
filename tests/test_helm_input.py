@@ -318,6 +318,41 @@ class HelmInputTest(unittest.TestCase):
                 "This indicates the string was converted to a number and displayed in scientific notation.",
             )
 
+    def test_numeric_string_quoted_in_compiled_output(self):
+        """Numeric strings must stay quoted in the compiled manifest (#1595).
+
+        The #1372 fix quoted only helm's values file, not the output serializer,
+        so it re-emitted "03190301" unquoted. A Deployment ``env[].value`` is
+        string-typed with no coercion, so an unquoted value fails ``kubectl
+        apply``. Assert on raw text: ``yaml.safe_load`` reads "03190301" as a
+        string whether or not it is quoted, so it cannot detect the defect.
+        """
+        with tempfile.TemporaryDirectory() as temp:
+            kapitan("compile", "--output-path", temp, "-t", "helm-string-values")
+
+            deployment_file = os.path.join(
+                temp,
+                "compiled",
+                "helm-string-values",
+                "string-values-test",
+                "templates",
+                "deployment.yaml",
+            )
+            self.assertTrue(os.path.isfile(deployment_file))
+
+            with open(deployment_file) as fp:
+                content = fp.read()
+
+        # The env value is a string-typed field: it must be emitted quoted so
+        # kubectl/the API server does not parse it as an integer (which also
+        # drops the leading zero: 03190301 -> 3190301).
+        self.assertTrue(
+            "'03190301'" in content or '"03190301"' in content,
+            "Numeric string '03190301' must be quoted in the compiled manifest so "
+            "it stays a string on string-typed fields (e.g. Deployment env value). "
+            f"Compiled deployment:\n{content}",
+        )
+
     def test_write_helm_values_file_preserves_numeric_strings(self):
         """
         Unit test for write_helm_values_file to verify that numeric-looking strings
@@ -338,6 +373,7 @@ class HelmInputTest(unittest.TestCase):
             "leading_zero": "03190301",  # Leading zero string - causes the bug
             "octal_like": "0755",  # Octal-looking string
             "all_zeros": "00000000",  # All zeros string
+            "plain_int_string": "1234567",  # Int-looking, no leading zero
             "normal_string": "hello",  # Normal string for comparison
             "actual_number": 12345,  # Actual number
         }
@@ -348,15 +384,18 @@ class HelmInputTest(unittest.TestCase):
         with open(values_file) as fp:
             content = fp.read()
 
-        # The key check: verify that numeric-looking strings are QUOTED in the YAML output
-        # This is what matters for Helm's Go YAML parser
-
-        # Check that leading_zero string is quoted (single or double quotes)
-        self.assertTrue(
-            "'03190301'" in content or '"03190301"' in content,
-            f"Leading zero string '03190301' should be quoted in YAML output to prevent "
-            f"Helm (Go YAML) from parsing it as an integer. Current YAML content:\n{content}",
-        )
+        # Numeric-looking strings must be QUOTED so Helm's Go YAML parser keeps
+        # them as strings. "03190301" is quoted by our representer; "1234567"
+        # (no leading zero) is quoted by PyYAML's emitter on its own -- pinning
+        # it guards the intentionally-dropped len>6 branch against a dumper
+        # setup change.
+        for value in ("03190301", "1234567"):
+            with self.subTest(value=value):
+                self.assertTrue(
+                    f"'{value}'" in content or f'"{value}"' in content,
+                    f"'{value}' should be quoted so Helm (Go YAML) does not parse "
+                    f"it as an integer. Current YAML content:\n{content}",
+                )
 
     def test_safe_load_all_filters_none_docs(self):
         """Empty YAML documents (None) from multi-doc streams should be filtered out.

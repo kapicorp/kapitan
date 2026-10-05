@@ -20,6 +20,7 @@ from kapitan.inputs.base import InputType
 from kapitan.inputs.cache import InputCache, walk_and_hash
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
+from kapitan.utils import leading_zero_str_representer
 
 
 logger = logging.getLogger(__name__)
@@ -213,19 +214,6 @@ def render_chart(
         return ("", error_message)
 
 
-def _helm_str_representer(dumper, data):
-    """Quote strings that could be misinterpreted by Helm's Go YAML parser.
-
-    Fixes https://github.com/kapicorp/kapitan/issues/1370 where strings like
-    "03190301" are converted to scientific notation (3.190301e+06).
-    """
-    style = None
-    # Quote digit-only strings starting with 0 or large numeric strings
-    if data and len(data) > 1 and data.isdigit() and (data[0] == "0" or len(data) > 6):
-        style = "'"
-    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
-
-
 def write_helm_values_file(helm_values: dict):
     """Dump helm values into a temporary YAML file.
 
@@ -238,7 +226,9 @@ def write_helm_values_file(helm_values: dict):
     _, helm_values_file = tempfile.mkstemp(".helm_values.yml", text=True)
     with open(helm_values_file, "w") as fp:
         dumper = yaml.SafeDumper
-        dumper.add_representer(str, _helm_str_representer)
+        # Quote leading-zero digit strings so Helm's Go YAML parser keeps them
+        # as strings (#1370/#1595); shared with the compiled-output serializer.
+        dumper.add_representer(str, leading_zero_str_representer)
         yaml.dump(helm_values, fp, Dumper=dumper)
 
     return helm_values_file
