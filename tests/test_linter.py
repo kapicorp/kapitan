@@ -44,6 +44,15 @@ class LinterTest(unittest.TestCase):
         desired_output = 3
         self.assertEqual(num_issues_found, desired_output)
 
+    def test_lint_unused_classes_with_variable_reference(self):
+        """Classes referenced with parameter variables like ${env} should not be reported as unused."""
+        inventory_path = "./tests/test_resources/inventory-variable-classes"
+        # app/prod.yml and app/staging.yml are referenced via app.${env}
+        # common.yml is referenced directly
+        # No classes should be reported as unused
+        num_unused = lint_unused_classes(inventory_path)
+        self.assertEqual(num_unused, 0)
+
 
 class LintUnusedClassesTest(unittest.TestCase):
     """Unit tests for lint_unused_classes."""
