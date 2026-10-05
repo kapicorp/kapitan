@@ -41,9 +41,17 @@ def gpg_obj(*args, **kwargs):
 
 
 class GPGSecret(Base64Ref):
-    def __init__(self, data, recipients, encrypt=True, encode_base64=False, **kwargs):
+    def __init__(
+        self,
+        data,
+        recipients,
+        encrypt=True,
+        encode_base64=False,
+        signing_key=None,
+        **kwargs,
+    ):
         """
-        encrypts data for recipients
+        encrypts data for recipients, signed with signing_key (default: gpg's default key)
         set encode_base64 to True to base64 encode data before encrypting and writing
         set encrypt to False if loading data that is already encrypted and base64
         if fingerprint key is not set in recipients, the first non-expired fingerprint will be used
@@ -51,7 +59,7 @@ class GPGSecret(Base64Ref):
         """
         fingerprints = lookup_fingerprints(recipients)
         if encrypt:
-            self._encrypt(data, fingerprints, encode_base64)
+            self._encrypt(data, fingerprints, encode_base64, signing_key)
             if encode_base64:
                 kwargs["encoding"] = "base64"
         else:
@@ -87,9 +95,14 @@ class GPGSecret(Base64Ref):
                     f"parameters.kapitan.secrets not defined in inventory of target {target_name}"
                 )
 
-            recipients = target_inv.kapitan.secrets.gpg.recipients
+            gpg_config = target_inv.kapitan.secrets.gpg
 
-            return cls(data, recipients, **ref_params.kwargs)
+            return cls(
+                data,
+                gpg_config.recipients,
+                signing_key=gpg_config.signing_key,
+                **ref_params.kwargs,
+            )
         except KeyError:
             raise RefError("Could not create GPGSecret: target_name missing") from None
 
@@ -106,7 +119,7 @@ class GPGSecret(Base64Ref):
         ref_data = base64.b64decode(self.data)
         return self._decrypt(ref_data)
 
-    def update_recipients(self, recipients):
+    def update_recipients(self, recipients, signing_key=None):
         """
         re-encrypts data with new recipients, respects original encoding
         returns True if recipients are different and secret is updated, False otherwise
@@ -119,11 +132,11 @@ class GPGSecret(Base64Ref):
         encode_base64 = self.encoding == "base64"
         if encode_base64:
             data_dec = base64.b64decode(data_dec).decode()
-        self._encrypt(data_dec, fingerprints, encode_base64)
+        self._encrypt(data_dec, fingerprints, encode_base64, signing_key)
         self.data = base64.b64encode(self.data).decode()
         return True
 
-    def _encrypt(self, data, fingerprints, encode_base64):
+    def _encrypt(self, data, fingerprints, encode_base64, signing_key=None):
         """
         encrypts data
         set encode_base64 to True to base64 encode data before writing
@@ -135,7 +148,11 @@ class GPGSecret(Base64Ref):
             _data = base64.b64encode(data.encode())
             self.encoding = "base64"
         enc = gpg_obj().encrypt(
-            _data, fingerprints, sign=True, armor=False, **GPG_KWARGS
+            _data,
+            fingerprints,
+            sign=signing_key or True,
+            armor=False,
+            **GPG_KWARGS,
         )
         if enc.ok:
             self.data = enc.data
