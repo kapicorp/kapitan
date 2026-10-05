@@ -1,0 +1,10 @@
+parameters:
+  app: backend
+  port: 8081
+  health_check:
+    path: /health
+    interval: 10s
+  features:
+    - auth
+    - db_pooling
+    - caching

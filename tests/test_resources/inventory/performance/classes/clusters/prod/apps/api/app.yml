@@ -1,0 +1,10 @@
+parameters:
+  app: api
+  port: 8082
+  health_check:
+    path: /health
+    interval: 5s
+  features:
+    - versioning
+    - rate_limiting
+    - request_validation
