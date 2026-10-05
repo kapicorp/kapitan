@@ -6,7 +6,6 @@ import hashlib
 import logging
 import multiprocessing
 import os
-import sys
 import tarfile
 from collections import defaultdict, namedtuple
 from functools import partial
@@ -36,6 +35,7 @@ from kapitan.utils import (
     normalise_join_path,
     safe_copy_file,
     safe_copy_tree,
+    safe_tar_extractall,
     unpack_downloaded_file,
 )
 
@@ -436,10 +436,7 @@ def _extract_tar_blobs(target_dir: str) -> None:
         logger.debug("Extracting OCI tar blob %s into %s", blob_path, target_dir)
         with tarfile.open(blob_path, "r:*") as tar:
             os.unlink(blob_path)
-            if sys.version_info >= (3, 12):
-                tar.extractall(target_dir, filter="data")
-            else:
-                tar.extractall(target_dir)
+            safe_tar_extractall(tar, target_dir)
 
 
 def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependency"):
