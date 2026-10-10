@@ -50,7 +50,6 @@ def initialise_skeleton(args):
         dst_path=directory,
         quiet=True,
         user_defaults=user_defaults,
-        skip_answered=False,
     )
 
     if directory == os.path.abspath(os.path.curdir):
