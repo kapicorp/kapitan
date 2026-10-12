@@ -1909,105 +1909,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#syntax" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Syntax
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#syntax_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Syntax
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#syntax_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Syntax
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#syntax_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Syntax
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#authentication" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -3134,7 +3035,7 @@ kapitan compile --cache --fetch
 <div class="tabbed-set tabbed-alternate" data-tabs="3:4"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><input id="__tabbed_3_4" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">git</label><label for="__tabbed_3_2">http</label><label for="__tabbed_3_3">helm</label><label for="__tabbed_3_4">oci</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<h3 id="syntax">Syntax</h3>
+<p><strong>Syntax</strong></p>
 <div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">dependencies</span><span class="p">:</span>
@@ -3155,7 +3056,7 @@ kapitan compile --cache --fetch
 <p class="admonition-title">Note</p>
 <p>This type depends on the <code>git</code> binary installed on your system and available to <strong>Kapitan</strong>.</p>
 </div>
-<h3 id="example">Example</h3>
+<p><strong>Example</strong></p>
 <p>Say we want to fetch the source code from our kapitan repository, specifically, <code>kapicorp/kapitan/kapitan/version.py</code>. Let's create a very simple target file <code>inventory/targets/kapitan-example.yml</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
@@ -3176,7 +3077,7 @@ kapitan compile --cache --fetch
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<h3 id="syntax_1">Syntax</h3>
+<p><strong>Syntax</strong></p>
 <div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">dependencies</span><span class="p">:</span>
@@ -3190,7 +3091,7 @@ kapitan compile --cache --fetch
 <li>http[s] types can fetch external dependencies available at <code>http://</code> or <code>https://</code> URL.</li>
 <li>archive mode: download and unpack</li>
 </ol>
-<h3 id="example_1">Example</h3>
+<p><strong>Example</strong></p>
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Single file</label><label for="__tabbed_4_2">Archive</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block"></div>
@@ -3214,7 +3115,7 @@ kapitan compile --cache --fetch
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<h3 id="syntax_2">Syntax</h3>
+<p><strong>Syntax</strong></p>
 <div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">dependencies</span><span class="p">:</span>
@@ -3230,7 +3131,7 @@ kapitan compile --cache --fetch
 It defaults to the value of the <code>KAPITAN_HELM_PATH</code> environment var or simply to <code>helm</code> if neither is set.
 You should specify only if you don't want the default behavior.</p>
 <p><code>source</code> can be either the URL to a chart repository, or the URL to a chart on an OCI registry (supported since Helm 3.8.0).</p>
-<h3 id="example_2">Example</h3>
+<p><strong>Example</strong></p>
 <p>If we want to download the prometheus helm chart we simply add the dependency to the monitoring target.
 We want a specific version <code>11.3.0</code> so we put that in.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
@@ -3257,7 +3158,7 @@ We want a specific version <code>11.3.0</code> so we put that in.</p>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<h3 id="syntax_3">Syntax</h3>
+<p><strong>Syntax</strong></p>
 <div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">dependencies</span><span class="p">:</span>
@@ -3283,7 +3184,7 @@ We want a specific version <code>11.3.0</code> so we put that in.</p>
 <p>For a full guide on packaging and publishing your own generator bundles, see
 <a href="../publishing_generators/">Publishing generators as OCI artifacts</a>.</p>
 </div>
-<h3 id="authentication">Authentication</h3>
+<p><strong>Authentication</strong></p>
 <p>Credentials are never stored in the inventory. Kapitan supports two authentication approaches:</p>
 <p><strong>Docker credential store (recommended)</strong> run <code>docker login</code> or <code>oras login</code> before compiling.
 Kapitan will pick up the stored credentials automatically:</p>
@@ -3300,7 +3201,7 @@ Kapitan will call <code>login</code> on the registry automatically before pullin
 kapitan<span class="w"> </span>compile
 </code></pre></div>
 <p>This is the preferred approach for CI/CD pipelines where credentials are injected as secrets.</p>
-<h3 id="example_3">Example</h3>
+<p><strong>Example</strong></p>
 <p>Fetching a Kapitan generator bundle published to GHCR and making it available as a Kadet component:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
