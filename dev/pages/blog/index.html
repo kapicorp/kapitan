@@ -2858,6 +2858,277 @@
     <div class="md-post__meta md-meta">
       <ul class="md-meta__list">
         <li class="md-meta__item">
+          <time datetime="2026-06-25 00:00:00+00:00">June 25, 2026</time></li>
+        
+        
+          
+          <li class="md-meta__item">
+            
+              7 min read
+            
+          </li>
+        
+        
+      </ul>
+      
+    </div>
+  </header>
+  <div class="md-post__content md-typeset">
+    <h2 id="packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm"><a class="toclink" href="25/06/2026/packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm/">Packaging an Air-Gapped Kubernetes Stack with Kapitan and OCM</a></h2>
+<p>Air-gapped clusters are a recurring headache. You have a connected build host
+and a target cluster with no route to the internet, and somewhere between them
+sits a USB stick. Everything the cluster needs has to be packaged on the
+connected side: rendered manifests, Helm charts, and every container image those
+charts pull. The package must be genuinely self-contained, so that once it lands,
+the cluster pulls nothing from outside.</p>
+<p>This post walks through one end-to-end approach using two tools that fit
+together well: <a href="https://kapitan.dev">Kapitan</a> for configuration, and the
+<a href="https://ocm.software">Open Component Model</a> (OCM) for transport. The example
+packages a typical "day-0" platform stack (cert-manager, trust-manager, Harbor,
+Argo CD, and Loki/Grafana), but the pattern works for anything.</p>
+<h3 id="the-one-idea-that-makes-this-clean"><a class="toclink" href="25/06/2026/packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm/#the-one-idea-that-makes-this-clean">The one idea that makes this clean</a></h3>
+<p>It is tempting to make Kapitan <em>build</em> the package: have <code>kapitan compile</code> shell
+out to the <code>ocm</code> CLI and emit a transport archive directly. It works, but it
+conflates two jobs.</p>
+<p>Kapitan is a templating engine. It is deterministic, runs offline, and turns
+configuration into rendered files. Building an OCM package is a different kind of
+work: pulling gigabytes of multi-architecture images and invoking an external
+CLI, with all the network, side effects, and large artifacts that implies. Those
+two jobs belong in different layers:</p>
+<div class="highlight"><pre><span></span><code>Kapitan (template)                       ocm (build / package)
+─────────────────────────                ─────────────────────────
+renders component-constructor.yaml   -&gt;  ocm add component-version    (build)
+from inventory data                      ocm transfer --copy-resources (materialise)
+                                         ocm sign / verify / push
+</code></pre></div>
+<p>Kapitan emits the build recipe; a handful of shell steps cook it. That keeps to
+how Kapitan already works: it renders manifests and scripts, and leaves running
+them to the right tool. The payoff is that <code>kapitan compile</code> stays fast and
+offline, and <code>ocm</code> does the heavy lifting where retries, caching, and registry
+credentials already live.</p>
+<p>Everything below follows from that split.</p>
+<h3 id="prerequisites"><a class="toclink" href="25/06/2026/packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm/#prerequisites">Prerequisites</a></h3>
+<ul>
+<li>The new-generation <code>ocm</code> CLI (the <code>open-component-model</code> rewrite). Check with
+  <code>ocm version</code>.</li>
+<li><code>kapitan</code> and <code>helm</code>.</li>
+<li>A connected build host, and a target environment with an internal OCI registry
+  (Harbor, Zot, or anything OCI 1.1 compliant).</li>
+</ul>
+<h3 id="step-1-list-the-charts"><a class="toclink" href="25/06/2026/packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm/#step-1-list-the-charts">Step 1 - List the charts</a></h3>
+<p>The bundle is plain inventory data, and for the common case it is just a list of
+charts. You do not enumerate images: the ones each chart pulls are discovered
+from the chart itself in Step 3. You say what you want to install; the tooling
+works out what that drags in.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/classes/components/ocm-airgap.yml</span>
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">ocm_bundle</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">component</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example.org/platform/bootstrap</span>
+<span class="w">    </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.1.0&quot;</span>
+<span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">example</span>
+
+<span class="w">    </span><span class="nt">charts</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cert-manager</span>
+<span class="w">        </span><span class="nt">repo</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://charts.jetstack.io</span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.20.2</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">harbor</span>
+<span class="w">        </span><span class="nt">repo</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://helm.goharbor.io</span>
+<span class="w">        </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.19.1&quot;</span>
+<span class="w">      </span><span class="c1"># … the rest of your stack</span>
+</code></pre></div>
+<p>Some charts point their images at odd registries. Argo CD, for instance, has
+historically used a vendor mirror for its Redis image. When you need to pin or
+relocate one, add an explicit <code>images:</code> list here and let it override discovery;
+otherwise you leave it out and ship exactly what the charts render.</p>
+<h3 id="step-2-template-the-ocm-recipe"><a class="toclink" href="25/06/2026/packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm/#step-2-template-the-ocm-recipe">Step 2 - Template the OCM recipe</a></h3>
+<p>OCM builds from a <code>component-constructor.yaml</code>. We render the chart side of it
+from the data above with a Jinja2 template:</p>
+<div class="highlight"><pre><span></span><code><span class="cp">{%</span> <span class="k">set</span> <span class="nv">b</span> <span class="o">=</span> <span class="nv">inventory.parameters.ocm_bundle</span> -<span class="cp">%}</span>
+<span class="x"># GENERATED by kapitan. Do not edit.</span>
+<span class="x">components:</span>
+<span class="x">  - name: </span><span class="cp">{{</span> <span class="nv">b.component</span> <span class="cp">}}</span>
+<span class="x">    version: &quot;</span><span class="cp">{{</span> <span class="nv">b.version</span> <span class="cp">}}</span><span class="x">&quot;</span>
+<span class="x">    provider:</span>
+<span class="x">      name: </span><span class="cp">{{</span> <span class="nv">b.provider</span> <span class="cp">}}</span>
+<span class="x">    resources:</span>
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">c</span> <span class="k">in</span> <span class="nv">b.charts</span> <span class="cp">%}</span>
+<span class="x">      - name: </span><span class="cp">{{</span> <span class="nv">c.name</span> <span class="cp">}}</span><span class="x">-chart</span>
+<span class="x">        type: helmChart</span>
+<span class="x">        version: &quot;</span><span class="cp">{{</span> <span class="nv">c.version</span> <span class="cp">}}</span><span class="x">&quot;</span>
+<span class="x">        input:</span>
+<span class="x">          type: helm</span>
+<span class="x">          path: charts/</span><span class="cp">{{</span> <span class="nv">c.name</span> <span class="cp">}}</span><span class="x">-</span><span class="cp">{{</span> <span class="nv">c.version</span> <span class="cp">}}</span><span class="x">.tgz</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</code></pre></div>
+<p>Charts use <code>input.type: helm</code>, which embeds them by value from a local <code>.tgz</code> at
+construction time. The images come next, in Step 3, appended by reference
+(<code>access.type: ociArtifact</code>) once discovery has found them. By reference because
+the new-generation <code>ocm</code> only embeds images at construction with a separate
+plugin; referencing them now and materialising at transfer time (Step 5) is the
+idiomatic path, and it keeps <code>kapitan compile</code> cheap.</p>
+<p>Wire the template into a target as an ordinary <code>jinja2</code> input, with no <code>ocm</code>
+involved:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># inventory/targets/airgap-bundle.yml</span>
+<span class="nt">classes</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">components.ocm-airgap</span>
+<span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kapitan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vars</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">airgap-bundle</span>
+<span class="w">    </span><span class="nt">compile</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocm</span>
+<span class="w">        </span><span class="nt">input_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jinja2</span>
+<span class="w">        </span><span class="nt">input_paths</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">templates/ocm/component-constructor.yaml</span>
+</code></pre></div>
+<p>Render it:</p>
+<div class="highlight"><pre><span></span><code>kapitan<span class="w"> </span>compile<span class="w"> </span>-t<span class="w"> </span>airgap-bundle
+<span class="c1"># -&gt; compiled/airgap-bundle/ocm/component-constructor.yaml</span>
+</code></pre></div>
+<p>That output is a valid <code>component-constructor.yaml</code> and nothing else. No network,
+no <code>ocm</code>, and it finishes in well under a second. It is the recipe.</p>
+<h3 id="step-3-fetch-the-charts-and-discover-their-images"><a class="toclink" href="25/06/2026/packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm/#step-3-fetch-the-charts-and-discover-their-images">Step 3 - Fetch the charts and discover their images</a></h3>
+<p>Charts are embedded by value, so they have to exist locally before the build.
+Pull them once on the connected host:</p>
+<div class="highlight"><pre><span></span><code>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>jetstack<span class="w"> </span>https://charts.jetstack.io
+helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>harbor<span class="w">    </span>https://helm.goharbor.io
+<span class="c1"># … your repos</span>
+
+helm<span class="w"> </span>pull<span class="w"> </span>jetstack/cert-manager<span class="w"> </span>--version<span class="w"> </span>v1.20.2<span class="w"> </span>-d<span class="w"> </span>lib/ocm/charts/
+helm<span class="w"> </span>pull<span class="w"> </span>harbor/harbor<span class="w">         </span>--version<span class="w"> </span><span class="m">1</span>.19.1<span class="w">  </span>-d<span class="w"> </span>lib/ocm/charts/
+<span class="c1"># … one per chart</span>
+</code></pre></div>
+<p>The template referenced them as <code>charts/&lt;name&gt;-&lt;version&gt;.tgz</code>, relative to the
+directory we run <code>ocm</code> from next.</p>
+<p>Now discover the images. Render each chart, pull the image references out, and
+append them to the rendered constructor as <code>ociArtifact</code> resources. This is why
+the inventory only needed charts: the image list is computed, not typed by hand.</p>
+<div class="highlight"><pre><span></span><code><span class="nv">constructor</span><span class="o">=</span>compiled/airgap-bundle/ocm/component-constructor.yaml
+<span class="k">for</span><span class="w"> </span>tgz<span class="w"> </span><span class="k">in</span><span class="w"> </span>lib/ocm/charts/*.tgz<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span>helm<span class="w"> </span>template<span class="w"> </span>release<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$tgz</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>yq<span class="w"> </span><span class="s1">&#39;.. | .image? // empty&#39;</span>
+<span class="k">done</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-u<span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>-r<span class="w"> </span>ref<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span><span class="nv">name</span><span class="o">=</span><span class="si">${</span><span class="nv">ref</span><span class="p">##*/</span><span class="si">}</span><span class="p">;</span><span class="w"> </span><span class="nv">name</span><span class="o">=</span><span class="si">${</span><span class="nv">name</span><span class="p">%%[:@]*</span><span class="si">}</span><span class="w">        </span><span class="c1"># last path segment, minus tag/digest</span>
+<span class="w">  </span>yq<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;.components[0].resources += [{</span>
+<span class="s2">    \&quot;name\&quot;: \&quot;</span><span class="nv">$name</span><span class="s2">\&quot;,</span>
+<span class="s2">    \&quot;type\&quot;: \&quot;ociArtifact\&quot;,</span>
+<span class="s2">    \&quot;version\&quot;: \&quot;</span><span class="si">${</span><span class="nv">ref</span><span class="p">##*:</span><span class="si">}</span><span class="s2">\&quot;,</span>
+<span class="s2">    \&quot;access\&quot;: {\&quot;type\&quot;: \&quot;ociArtifact\&quot;, \&quot;imageReference\&quot;: \&quot;</span><span class="nv">$ref</span><span class="s2">\&quot;}</span>
+<span class="s2">  }]&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$constructor</span><span class="s2">&quot;</span>
+<span class="k">done</span>
+</code></pre></div>
+<p>That snippet is deliberately small; harden it for your stack (handle digests,
+dedupe, relocate registries). Because it is deterministic, you can run it in CI
+and fail the build when a chart bump introduces an image your registry does not
+mirror yet. If a chart points somewhere you do not trust, the optional <code>images:</code>
+override from Step 1 wins.</p>
+<h3 id="step-4-build-the-ctf-archive"><a class="toclink" href="25/06/2026/packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm/#step-4-build-the-ctf-archive">Step 4 - Build the CTF archive</a></h3>
+<p>Now <code>ocm</code> enters, in a build script. <code>ocm add component-version</code> reads the
+rendered constructor and writes a CTF (Common Transport Format) archive, a
+directory holding an <code>artifact-index.json</code> and content-addressed blobs.</p>
+<p>One gotcha: <code>ocm</code> resolves a helm input's relative <code>path</code> against the process
+working directory, not against a flag. So run it from where the charts live:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>lib/ocm
+ocm<span class="w"> </span>add<span class="w"> </span>component-version<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--repository<span class="w"> </span>../../compiled/airgap-bundle/transport-archive<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--constructor<span class="w"> </span>../../compiled/airgap-bundle/ocm/component-constructor.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--component-version-conflict-policy<span class="w"> </span>replace
+</code></pre></div>
+<p>Inspect the result:</p>
+<div class="highlight"><pre><span></span><code>ocm<span class="w"> </span>get<span class="w"> </span>cv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;CTF::./compiled/airgap-bundle/transport-archive//example.org/platform/bootstrap:0.1.0&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-o<span class="w"> </span>yaml
+</code></pre></div>
+<p>At this point the CTF is small, a few hundred kilobytes. It contains the chart
+bytes and a list of image <em>references</em>, each already pinned to a digest. The
+actual image payload is not in it yet. This is the half-step that surprises
+people: the archive looks like a package, but it is really a manifest plus charts.</p>
+<h3 id="step-5-materialise-by-value-then-build-the-iso"><a class="toclink" href="25/06/2026/packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm/#step-5-materialise-by-value-then-build-the-iso">Step 5 - Materialise by value, then build the ISO</a></h3>
+<p>To make the archive self-contained, transfer it into a fresh CTF by value.
+<code>--copy-resources</code> downloads every referenced image and rewrites it as a local
+blob:</p>
+<div class="highlight"><pre><span></span><code>ocm<span class="w"> </span>transfer<span class="w"> </span>cv<span class="w"> </span>--copy-resources<span class="w"> </span>--recursive<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;CTF::./compiled/airgap-bundle/transport-archive//example.org/platform/bootstrap:0.1.0&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;CTF::./transport-archive&quot;</span>
+</code></pre></div>
+<p>This is the slow, network-heavy step. Expect minutes and gigabytes, depending on
+your stack. When it finishes, check that the archive really has no external
+dependencies:</p>
+<div class="highlight"><pre><span></span><code>ocm<span class="w"> </span>get<span class="w"> </span>cv<span class="w"> </span><span class="s2">&quot;CTF::./transport-archive//example.org/platform/bootstrap:0.1.0&quot;</span><span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;imageReference:&#39;</span><span class="w">   </span><span class="c1"># expect 0</span>
+</code></pre></div>
+<p>Zero external references means the cluster will pull nothing from the internet.
+That is the air-gap guarantee, and it is worth checking rather than assuming.</p>
+<p>Optionally sign the archive, then pack it into an ISO 9660 image. An ISO is a
+good fit for an air gap: a single immutable file you can mount read-only, burn
+to disc, or attach as virtual media to a server's BMC (iLO or iDRAC). Use <code>-R</code>
+(Rock Ridge) so the long sha256 blob filenames survive:</p>
+<div class="highlight"><pre><span></span><code>ocm<span class="w"> </span>sign<span class="w"> </span>cv<span class="w"> </span>--signature<span class="w"> </span>platform<span class="w"> </span>--private-key<span class="w"> </span>key.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;CTF::./transport-archive//example.org/platform/bootstrap:0.1.0&quot;</span>
+
+xorriso<span class="w"> </span>-as<span class="w"> </span>mkisofs<span class="w"> </span>-R<span class="w"> </span>-J<span class="w"> </span>-joliet-long<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-V<span class="w"> </span>AIRGAP_BOOTSTRAP_0_1_0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-o<span class="w"> </span>bootstrap-0.1.0.iso<span class="w"> </span>transport-archive
+sha256sum<span class="w"> </span>bootstrap-0.1.0.iso<span class="w"> </span>&gt;<span class="w"> </span>bootstrap-0.1.0.iso.sha256
+</code></pre></div>
+<h3 id="step-6-import-on-the-air-gapped-side"><a class="toclink" href="25/06/2026/packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm/#step-6-import-on-the-air-gapped-side">Step 6 - Import on the air-gapped side</a></h3>
+<p>Carry the ISO across. On the target host, check integrity, extract the archive,
+verify the signature, and transfer into the internal registry. <code>ocm</code> relocates
+each image into that registry by digest. You can mount the ISO read-only
+(<code>mount -o loop,ro bootstrap-0.1.0.iso /mnt</code>), or extract it without root using
+<code>7z</code>:</p>
+<div class="highlight"><pre><span></span><code>sha256sum<span class="w"> </span>-c<span class="w"> </span>bootstrap-0.1.0.iso.sha256
+7z<span class="w"> </span>x<span class="w"> </span>bootstrap-0.1.0.iso<span class="w"> </span>-o./extracted
+
+ocm<span class="w"> </span>verify<span class="w"> </span>cv<span class="w"> </span>--signature<span class="w"> </span>platform<span class="w"> </span>--public-key<span class="w"> </span>key.pub<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;CTF::./extracted/transport-archive//example.org/platform/bootstrap:0.1.0&quot;</span>
+
+ocm<span class="w"> </span>transfer<span class="w"> </span>cv<span class="w"> </span>--copy-resources<span class="w"> </span>--recursive<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;CTF::./extracted/transport-archive//example.org/platform/bootstrap:0.1.0&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>registry.internal
+</code></pre></div>
+<p>From here, point Argo CD (or <code>kubectl</code>) at <code>registry.internal</code> for all images and
+charts. Nothing reaches outside the gap.</p>
+<h3 id="gotchas-worth-knowing"><a class="toclink" href="25/06/2026/packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm/#gotchas-worth-knowing">Gotchas worth knowing</a></h3>
+<p>A few things cost real debugging time.</p>
+<p>By reference versus by value: in the new-generation <code>ocm</code>, images go in via
+<code>access: ociArtifact</code>, which is a reference. Embedding at construction needs a
+plugin. Materialise with <code>ocm transfer --copy-resources</code>, not at <code>add</code> time.</p>
+<p>Plain-HTTP registries: <code>ocm</code> defaults to HTTPS. For an unencrypted local
+registry, give the target an explicit <code>http://</code> scheme.</p>
+<p>Registry compatibility: the archive uses OCI 1.1 artifact manifests. An old
+<code>registry:2</code> (OCI 1.0) rejects them outright, while Harbor and Zot accept them.
+Some registries still trip over multi-architecture image indexes, so test your
+real target early.</p>
+<p>Multi-arch bloat: <code>--copy-resources</code> copies every architecture of each image by
+default. If your cluster is single-arch, filter them out. The full set can easily
+triple the archive size.</p>
+<p>Toolchain: Kapitan depends on <code>jsonnet</code>, which has no prebuilt wheel for the
+newest Python releases and compiles from source. On a host without a C++
+toolchain, install one (<code>brew install gcc</code>, then <code>CC=... CXX=... uv sync</code>) before
+anything else.</p>
+<h3 id="the-shape-of-it"><a class="toclink" href="25/06/2026/packaging-an-air-gapped-kubernetes-stack-with-kapitan-and-ocm/#the-shape-of-it">The shape of it</a></h3>
+<p>The pipeline is four stages:</p>
+<div class="highlight"><pre><span></span><code>kapitan compile   -&gt;  component-constructor.yaml      (template, offline)
+ocm add           -&gt;  CTF (charts + image refs)        (build)
+ocm transfer      -&gt;  self-contained CTF -&gt; ISO        (materialise)
+ocm transfer      -&gt;  internal registry                (import)
+</code></pre></div>
+<p>Kapitan stays a templating engine. <code>ocm</code> does the packaging. The boundary is the
+one Kapitan already draws everywhere: render the recipe, run it elsewhere. Keeping
+it makes each side simpler. The configuration stays reproducible and reviewable,
+and the build is something you can rerun, cache, and sign without touching your
+templates.</p>
+    
+    
+  </div>
+</article>
+      
+        <article class="md-post md-post--excerpt">
+  <header class="md-post__header">
+    
+    <div class="md-post__meta md-meta">
+      <ul class="md-meta__list">
+        <li class="md-meta__item">
           <time datetime="2024-02-12 00:00:00+00:00">February 12, 2024</time></li>
         
         
