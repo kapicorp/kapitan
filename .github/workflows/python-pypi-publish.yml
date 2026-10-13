@@ -18,11 +18,8 @@ jobs:
       # assets to the GitHub release page. Only actually used when the
       # "Upload release artifacts" step runs (release events only).
       contents: write
-      # NOTE:
-      # Remove user/password and uncomment id-token permission once Trusted
-      # Publishing (OIDC) is setup in pypi. See:
-      # https://github.com/pypa/gh-action-pypi-publish
-      # id-token: write
+      # Trusted Publishing (OIDC) to PyPI.
+      id-token: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -82,6 +79,3 @@ jobs:
             release/SHA256SUMS
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
