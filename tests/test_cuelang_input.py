@@ -4,9 +4,11 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 import yaml
 
+from kapitan.errors import CuelangTemplateError
 from kapitan.inputs.cuelang import Cuelang
 from kapitan.inventory.model.input_types import KapitanInputTypeCuelangConfig
 
@@ -69,6 +71,30 @@ class CuelangInputTest(unittest.TestCase):
                 self.assertEqual(
                     output, {"result": 5}, "Output does not match expected result."
                 )
+        finally:
+            shutil.rmtree(temp_dir)
+
+    def test_compile_file_raises_cuelang_error_on_failure(self):
+        """A failing CUE export raises CuelangTemplateError, not KustomizeTemplateError."""
+        temp_dir = tempfile.mkdtemp()
+
+        try:
+            shutil.copytree("tests/test_cue/module1", temp_dir, dirs_exist_ok=True)
+
+            config = KapitanInputTypeCuelangConfig(
+                input_paths=[temp_dir],
+                output_path=self.compile_path,
+                input_fill_path="input:",
+                input={"numerator": 10, "denominator": 2},
+                output_yield_path="output",
+            )
+
+            failed = type("Result", (), {"returncode": 1, "stderr": "boom"})()
+            with mock.patch(
+                "kapitan.inputs.cuelang.subprocess.run", return_value=failed
+            ):
+                with self.assertRaises(CuelangTemplateError):
+                    self.cuelang.compile_file(config, temp_dir, self.compile_path)
         finally:
             shutil.rmtree(temp_dir)
 
