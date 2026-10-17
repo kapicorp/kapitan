@@ -1,0 +1,162 @@
+---
+name: Benchmark Reusable
+
+on:
+  workflow_call:
+    inputs:
+      compare-baseline:
+        description: 'Compare results against a cached baseline JSON file'
+        type: boolean
+        default: false
+      fail-on-alert:
+        description: 'Fail CI on performance regression'
+        type: boolean
+        default: false
+      comment-on-alert:
+        description: 'Post PR comment on regression'
+        type: boolean
+        default: false
+      push-charts:
+        description: 'Push benchmark charts to gh-pages'
+        type: boolean
+        default: false
+      save-baseline:
+        description: 'Save benchmark JSON for future baseline caching'
+        type: boolean
+        default: false
+    secrets:
+      github-token:
+        required: true
+
+jobs:
+  benchmark:
+    name: Performance Benchmark
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup mise
+        uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
+        with:
+          install: true
+
+      - name: Sync dependencies
+        run: mise exec -- uv sync --locked --all-extras --dev
+
+      - name: Get baseline SHA
+        if: inputs.compare-baseline == true || inputs.save-baseline == true
+        id: base-sha
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            SHA=$(git rev-parse "origin/${{ github.base_ref }}")
+          else
+            SHA=$(git rev-parse HEAD)
+          fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Restore cached base benchmark
+        if: inputs.compare-baseline == true
+        id: cache-base
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ./.benchmark-cache
+          key: ${{ steps.base-sha.outputs.sha }}-${{ runner.os }}-${{ runner.arch }}-benchmark
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-benchmark
+
+      - name: Run benchmarks
+        id: benchmark
+        run: |
+          mise exec -- uv run pytest tests/test_compile_performance.py \
+            -v --no-cov -p no:xdist -m benchmark \
+            --benchmark-warmup=on \
+            --benchmark-json=benchmark-result.json
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: benchmark-results
+          path: benchmark-result.json
+
+      - name: Generate benchmark summary
+        run: python3 scripts/generate_benchmark_summary.py benchmark-result.json
+
+      - name: Compare PR vs baseline
+        id: compare-baseline
+        if: inputs.compare-baseline == true && steps.cache-base.outputs.cache-hit == 'true'
+        continue-on-error: true
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
+        with:
+          tool: "pytest"
+          output-file-path: benchmark-result.json
+          external-data-json-path: ./.benchmark-cache/benchmark-data.json
+          save-data-file: false
+          # 150% threshold is intentionally coarse: benchmark variance on GitHub
+          # Actions runners is high (noisy neighbours, different CPU models).
+          # A 2.5x spike is a clear signal; smaller deltas are usually noise.
+          fail-on-alert: ${{ inputs.fail-on-alert }}
+          comment-on-alert: ${{ inputs.comment-on-alert }}
+          github-token: ${{ secrets.github-token }}
+          summary-always: true
+          alert-threshold: "150%"
+
+      - name: Run profiling (serial)
+        env:
+          KAPITAN_BENCHMARK_PROFILE_DIR: ${{ github.workspace }}/kapitan-profiles
+        run: |
+          mise exec -- uv run pytest tests/test_compile_performance.py \
+            -v --no-cov -p no:xdist \
+            -k test_compile_performance_with_profiling
+
+      - name: Generate profiling summary
+        env:
+          KAPITAN_BENCHMARK_PROFILE_DIR: ${{ github.workspace }}/kapitan-profiles
+        run: python3 scripts/generate_profiling_summary.py "$KAPITAN_BENCHMARK_PROFILE_DIR"
+
+      - name: Upload profiling reports
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: kapitan-profiles
+          path: ${{ github.workspace }}/kapitan-profiles/
+          if-no-files-found: warn
+
+      - name: Fail on benchmark regression
+        if: steps.compare-baseline.outcome == 'failure'
+        run: |
+          echo "::error::Performance regression detected (threshold: 150%). See comparison step above for details."
+          exit 1
+
+      - name: Clean working tree for gh-pages checkout
+        if: inputs.push-charts == true
+        run: git reset --hard
+
+      - name: Store benchmark result for charts
+        if: inputs.push-charts == true
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
+        with:
+          tool: "pytest"
+          output-file-path: benchmark-result.json
+          github-token: ${{ secrets.github-token }}
+          auto-push: true
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench
+          alert-threshold: "150%"
+          fail-on-alert: false
+          comment-on-alert: false
+
+      - name: Save benchmark to cache
+        if: inputs.save-baseline == true
+        run: |
+          mkdir -p .benchmark-cache
+          cp benchmark-result.json .benchmark-cache/benchmark-data.json
+
+      - name: Cache baseline
+        if: inputs.save-baseline == true
+        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ./.benchmark-cache
+          key: ${{ steps.base-sha.outputs.sha }}-${{ runner.os }}-${{ runner.arch }}-benchmark

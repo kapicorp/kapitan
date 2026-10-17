@@ -1,0 +1,8 @@
+parameters:
+  component: kafka
+  kafka:
+    partitions: 12
+    replication_factor: 3
+    retention:
+      ms: 604800000
+      bytes: 1073741824

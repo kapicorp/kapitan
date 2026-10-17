@@ -1,0 +1,9 @@
+parameters:
+  monitoring:
+    enabled: true
+    metrics:
+      - cpu
+      - memory
+      - disk
+      - network
+    scrape_interval: 30s

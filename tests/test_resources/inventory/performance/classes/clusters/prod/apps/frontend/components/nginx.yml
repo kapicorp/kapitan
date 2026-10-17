@@ -1,0 +1,11 @@
+parameters:
+  component: nginx
+  nginx:
+    worker_processes: auto
+    worker_connections: 4096
+    gzip: true
+    brotli: true
+    cache:
+      enabled: true
+      ttl: 3600
+      size: 100m
