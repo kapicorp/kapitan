@@ -110,6 +110,15 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
     targets = args.targets or discovered_targets
     labels = args.labels
 
+    # fail fast on explicitly requested targets that don't exist (e.g. typos),
+    # rather than silently skipping them later
+    if args.targets:
+        unknown_targets = [t for t in args.targets if t not in discovered_targets]
+        if unknown_targets:
+            raise CompileError(
+                f"Targets not found in inventory: {', '.join(sorted(unknown_targets))}"
+            )
+
     try:
         targets = search_targets(inventory, targets, labels)
 
@@ -149,7 +158,10 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         target_objs = load_target_inventory(inventory, targets)
 
     if not target_objs:
-        raise CompileError("Error: no targets found")
+        logger.info(
+            "No targets with compile configuration found. Skipping compilation."
+        )
+        return
 
     # append "compiled" to output_path so we can safely overwrite it
     output_path = args.output_path
@@ -229,29 +241,33 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
             else:
                 [p.get() for p in pool.imap_unordered(worker, target_objs) if p]
 
-            os.makedirs(compile_path, exist_ok=True)
+            # Only copy compiled outputs if anything was actually compiled
+            if os.path.exists(temp_compile_path):
+                os.makedirs(compile_path, exist_ok=True)
 
-            # if '-t' is set on compile or only a few changed, only override selected targets
-            if len(target_objs) < len(discovered_targets):
-                for target in target_objs:
-                    path = target.target_full_path
-                    compile_path_target = os.path.join(compile_path, path)
-                    temp_path_target = os.path.join(temp_compile_path, path)
+                # if '-t' is set on compile or only a few changed, only override selected targets
+                if len(target_objs) < len(discovered_targets):
+                    for target in target_objs:
+                        path = target.target_full_path
+                        compile_path_target = os.path.join(compile_path, path)
+                        temp_path_target = os.path.join(temp_compile_path, path)
 
-                    os.makedirs(compile_path_target, exist_ok=True)
+                        os.makedirs(compile_path_target, exist_ok=True)
 
-                    shutil.rmtree(compile_path_target)
-                    shutil.copytree(temp_path_target, compile_path_target)
-                    logger.debug(
-                        "Copied %s into %s", temp_path_target, compile_path_target
-                    )
-            # otherwise override all targets
-            else:
-                shutil.rmtree(compile_path)
-                shutil.copytree(temp_compile_path, compile_path)
-                logger.debug("Copied %s into %s", temp_compile_path, compile_path)
+                        shutil.rmtree(compile_path_target)
+                        shutil.copytree(temp_path_target, compile_path_target)
+                        logger.debug(
+                            "Copied %s into %s", temp_path_target, compile_path_target
+                        )
+                # otherwise override all targets
+                else:
+                    shutil.rmtree(compile_path)
+                    shutil.copytree(temp_compile_path, compile_path)
+                    logger.debug("Copied %s into %s", temp_compile_path, compile_path)
+
             logger.info(
-                f"Compiled {len(targets)} targets in %.2fs", time.time() - compile_start
+                f"Compiled {len(target_objs)} targets in %.2fs",
+                time.time() - compile_start,
             )
             _log_cache_metrics(cached.input_cache_metrics)
     except ReclassException as e:
@@ -299,9 +315,18 @@ def load_target_inventory(inventory, requested_targets, ignore_class_not_found=F
             kapitan_target_configs = target.parameters.kapitan
             # check if parameters.kapitan is empty
             if not kapitan_target_configs:
-                raise InventoryError(
-                    f"InventoryError: {target_name}: parameters.kapitan has no assignment"
+                logger.info(
+                    f"Skipping target {target_name}: no kapitan configuration (parameters.kapitan is empty)"
                 )
+                continue
+
+            # check if parameters.kapitan.compile is empty
+            if not kapitan_target_configs.compile:
+                logger.info(
+                    f"Skipping target {target_name}: no kapitan.compile configuration"
+                )
+                continue
+
             kapitan_target_configs.target_full_path = inventory.targets[
                 target_name
             ].name.replace(".", "/")
