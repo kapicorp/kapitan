@@ -9,6 +9,7 @@
 
 import logging
 import os
+import re
 import sys
 from pprint import pformat
 
@@ -159,12 +160,27 @@ def lint_unused_classes(inventory_path):
     logger.debug("Collected # of paths: %s", len(class_paths))
     logger.debug("Checking if all classes are declared in %s", classes_dir)
 
+    def _class_path_exists(class_path, file_contents):
+        """Check if a class path is referenced in file contents.
+
+        Handles literal references as well as references containing
+        Reclass parameter variables like app.${env}.
+        """
+        if class_path in file_contents:
+            return True
+        # Check for parameter variable references (e.g. app.${env})
+        segments = class_path.split(".")
+        pattern = r"\.".join(
+            r"(?:" + re.escape(seg) + r"|\$\{[^}]+\})" for seg in segments
+        )
+        return re.search(pattern, file_contents) is not None
+
     for path in list_all_paths(inventory_path):
         if os.path.isfile(path):
             with open(path) as compiled_file:
                 file_contents = compiled_file.read()
                 for class_path in list(class_paths):
-                    exists = class_path in file_contents
+                    exists = _class_path_exists(class_path, file_contents)
                     """
                     Classes files may reside in subdirectories, which act as namespaces.
                     For instance, a class ssh.server will result in the class definition to be read from ssh/server.yml.
@@ -174,7 +190,9 @@ def lint_unused_classes(inventory_path):
                     https://reclass.pantsfullofunix.net/operations.html
                     """
                     if class_path.endswith(".init"):
-                        exists = (class_path[:-5] in file_contents) or (exists)
+                        exists = (
+                            _class_path_exists(class_path[:-5], file_contents) or exists
+                        )
 
                     if exists:
                         class_paths.discard(class_path)
