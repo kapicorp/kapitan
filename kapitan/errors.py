@@ -65,6 +65,10 @@ class GitSubdirNotFoundError(KapitanError):
 class GitFetchingError(KapitanError):
     """repo not found and/or permission error"""
 
+    def __init__(self, message="", *, source=None):
+        super().__init__(message)
+        self.source = source
+
 
 class RequestUnsuccessfulError(KapitanError):
     """request error"""

@@ -525,9 +525,13 @@ def search_target_token_paths(target_secrets_path, targets):
     return target_files
 
 
-def make_request(source):
+# Default timeout for outbound HTTP requests. Override via KAPITAN_FETCH_TIMEOUT (seconds).
+_HTTP_TIMEOUT = int(os.environ.get("KAPITAN_FETCH_TIMEOUT", "30"))
+
+
+def make_request(source, timeout=None):
     """downloads the http file at source and returns it's content"""
-    r = requests.get(source)
+    r = requests.get(source, timeout=timeout if timeout is not None else _HTTP_TIMEOUT)
     if r.ok:
         return r.content, r.headers["Content-Type"]
     r.raise_for_status()

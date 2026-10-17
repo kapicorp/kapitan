@@ -8,6 +8,7 @@ import multiprocessing
 import os
 import sys
 import tarfile
+import time
 from collections import defaultdict, namedtuple
 from functools import partial
 from mimetypes import MimeTypes
@@ -20,6 +21,7 @@ try:
 except ImportError:
     oras = None
 
+import requests
 from git import GitCommandError, Repo
 
 from kapitan.errors import (
@@ -41,6 +43,73 @@ from kapitan.utils import (
 
 
 logger = logging.getLogger(__name__)
+
+# Bounded-retry / backoff configuration for fetch operations.
+# Override via environment variables.
+_FETCH_RETRIES = int(os.environ.get("KAPITAN_FETCH_RETRIES", "3"))
+_FETCH_WAIT_MIN = float(os.environ.get("KAPITAN_FETCH_WAIT_MIN", "0.5"))
+_FETCH_WAIT_MAX = float(os.environ.get("KAPITAN_FETCH_WAIT_MAX", "10"))
+
+# Git stderr fragments that indicate a transient network condition worth retrying.
+_TRANSIENT_GIT_PATTERNS = (
+    "connection reset",
+    "connection timed out",
+    "timed out",
+    "connection refused",
+    "temporarily unavailable",
+    "remote end hung up",
+)
+
+
+def _is_transient_http_exc(exc):
+    """Return True for HTTP exceptions that are worth retrying."""
+    if isinstance(
+        exc, requests.exceptions.ConnectionError | requests.exceptions.Timeout
+    ):
+        return True
+    if isinstance(exc, requests.exceptions.HTTPError):
+        response = exc.response
+        return response is not None and response.status_code in (
+            429,
+            500,
+            502,
+            503,
+            504,
+        )
+    return False
+
+
+def _is_transient_git_exc(exc):
+    """Return True for GitCommandErrors that look like transient network failures."""
+    if not isinstance(exc, GitCommandError):
+        return False
+    stderr = (exc.stderr or "").lower()
+    return any(pattern in stderr for pattern in _TRANSIENT_GIT_PATTERNS)
+
+
+def _retry_fetch(operation, is_transient):
+    """Call ``operation()``, retrying transient failures with exponential backoff.
+
+    Retries up to ``_FETCH_RETRIES`` attempts. Re-raises the last exception
+    once attempts are exhausted or when the failure is not transient, so
+    permanent errors are never masked.
+    """
+    for attempt in range(_FETCH_RETRIES):
+        try:
+            return operation()
+        except Exception as exc:
+            if attempt == _FETCH_RETRIES - 1 or not is_transient(exc):
+                raise
+            wait = min(_FETCH_WAIT_MAX, _FETCH_WAIT_MIN * (2**attempt))
+            logger.debug(
+                "fetch attempt %d/%d failed (%s), retrying in %.2fs",
+                attempt + 1,
+                _FETCH_RETRIES,
+                exc,
+                wait,
+            )
+            time.sleep(wait)
+
 
 HelmSource = namedtuple("HelmSource", ["repo", "chart_name", "version", "helm_path"])
 
@@ -185,15 +254,33 @@ def fetch_git_source(source, save_dir, item_type):
         rmtree(save_dir)
         logger.debug("Removed %s", save_dir)
     logger.debug("%s %s: fetching now", item_type, source)
+
+    start = time.monotonic()
+    outcome = "failure"
     try:
-        Repo.clone_from(source, save_dir)
+        _retry_fetch(lambda: Repo.clone_from(source, save_dir), _is_transient_git_exc)
+        outcome = "success"
         logger.debug("%s %s: successfully fetched", item_type, source)
         logger.debug("Git clone cached to %s", save_dir)
     except GitCommandError as e:
         logger.error(e)
         raise GitFetchingError(
-            f"{item_type} {source}: fetching unsuccessful\n{e.stderr}"
+            f"{item_type} {source}: fetching unsuccessful\n{e.stderr}",
+            source=source,
         ) from e
+    finally:
+        logger.debug(
+            "%s %s: git fetch completed",
+            item_type,
+            source,
+            extra={
+                "source": source,
+                "type": "git",
+                "duration_ms": int((time.monotonic() - start) * 1000),
+                "bytes": 0,
+                "outcome": outcome,
+            },
+        )
 
 
 def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
@@ -258,8 +345,30 @@ def fetch_http_source(source, save_path, item_type):
         os.remove(save_path)
         logger.debug("Removed %s", save_path)
     logger.debug("%s %s: fetching now", item_type, source)
-    content, content_type = make_request(source)
-    logger.debug("%s %s: successfully fetched", item_type, source)
+
+    start = time.monotonic()
+    content = None
+    content_type = None
+    outcome = "failure"
+    try:
+        content, content_type = _retry_fetch(
+            lambda: make_request(source), _is_transient_http_exc
+        )
+        outcome = "success"
+        logger.debug("%s %s: successfully fetched", item_type, source)
+    finally:
+        logger.debug(
+            "%s %s: fetch completed",
+            item_type,
+            source,
+            extra={
+                "source": source,
+                "type": "http",
+                "duration_ms": int((time.monotonic() - start) * 1000),
+                "bytes": len(content) if content is not None else 0,
+                "outcome": outcome,
+            },
+        )
     if content is not None:
         with open(save_path, "wb") as f:
             f.write(content)
