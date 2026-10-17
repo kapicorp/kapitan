@@ -201,6 +201,7 @@ class CompileTargetTest(unittest.TestCase):
 
         args = MagicMock()
         args.inventory_pool_cache = False
+        args.path_traversal_mode = "warn"
 
         # Should not raise
         compile_target(target_config, [], "/tmp", None, args)
@@ -216,6 +217,7 @@ class CompileTargetTest(unittest.TestCase):
 
         args = MagicMock()
         args.inventory_pool_cache = False
+        args.path_traversal_mode = "warn"
 
         # Should not raise because continue_on_compile_error=True
         compile_target(target_config, [], "/tmp", None, args)
@@ -231,6 +233,7 @@ class CompileTargetTest(unittest.TestCase):
 
         args = MagicMock()
         args.inventory_pool_cache = False
+        args.path_traversal_mode = "warn"
 
         with self.assertRaises(CompileError):
             compile_target(target_config, [], "/tmp", None, args)
