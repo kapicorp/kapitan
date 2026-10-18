@@ -10,3 +10,4 @@ description: "Explore projects related to Kapitan, including Tesoro, the Kapitan
 * [sublime-jsonnet-syntax](https://github.com/gburiola/sublime-jsonnet-syntax) - Jsonnet syntax highlighting for Sublime Text
 * [language-jsonnet](https://github.com/google/language-jsonnet) - Jsonnet syntax highlighting for Atom
 * [vim-jsonnet](https://github.com/google/vim-jsonnet) - Jsonnet plugin for Vim (requires a vim plugin manager)
+* [kadet-hub](https://kadet-hub.org) - Public registry of Kadet generators, gate-checked and published to ghcr.io as OCI artifacts with provenance and an SBOM

@@ -155,3 +155,15 @@ Use `--force-fetch` to invalidate the cache and re-pull regardless.
 
 See [External dependencies OCI](external_dependencies.md#defining-dependencies) for the full
 reference of available fields.
+
+## Finding published generators
+
+[kadet-hub](https://kadet-hub.org) is a public registry of generators published this way. Each
+generator page lists its inventory parameters, the kinds it renders and the `type: oci`
+dependency to pin, by digest:
+
+```yaml
+    - type: oci
+      source: ghcr.io/kadet-hub/<name>:<version>@sha256:<digest>
+      output_path: lib/<name>
+```
