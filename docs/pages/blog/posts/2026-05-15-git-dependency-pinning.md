@@ -1,23 +1,28 @@
 ---
 author: The Kapitan Team
 author_gh_user: kapicorp
-read_time: 4m
+read_time: 3m
 date: 2026-05-15
 title: "Pinning Git Dependencies for Reproducible Builds"
 description: "How Kapitan pins git dependencies to a tag or commit SHA so your compiled output stops drifting when an upstream branch moves."
 ---
 
-# :kapitan-logo: **Pinning Git Dependencies for Reproducible Builds**
+# Pinning Git Dependencies for Reproducible Builds
 
-We've all been there: a compile that worked yesterday produces a slightly different diff today, and nobody touched the inventory. The usual culprit is a git dependency tracking a branch that quietly moved underneath you. Same `kapitan compile`, different output, zero changes on your side.
+A compile that produced one diff yesterday produces a different one today,
+and nobody touched the inventory. The usual cause is a git dependency that
+tracks a branch, and the branch moved upstream.
 
-Git dependencies can now be pinned to a specific tag or commit SHA, not just a branch. That one detail is what turns "it compiled fine on my machine" into a build you can actually reproduce six months from now.
+Git dependencies can be pinned to a tag or a commit SHA, not only a branch.
+v0.36.0 documents and tests this, and changes what happens when no `ref` is
+set at all.
 
 <!-- more -->
 
-## The field you want is `ref`
+## The `ref` field
 
-Git dependencies live under `kapitan.dependencies` in your inventory. The knob we care about is `ref`, and it accepts any value git can resolve: a branch name, a tag, or a full/short commit SHA.
+Git dependencies live under `kapitan.dependencies`. `ref` takes any value
+`git checkout` accepts: a branch, a tag, or a full or short commit SHA.
 
 ```yaml
 parameters:
@@ -25,65 +30,77 @@ parameters:
     dependencies:
     - type: git
       output_path: source/kapitan
-      source: git@github.com:kapicorp/kapitan.git
+      source: https://github.com/kapicorp/kapitan.git
       subdir: kapitan
       ref: v0.36.0      # pin to a tag
       submodules: true
 ```
 
-Swap `ref: v0.36.0` for a commit SHA when you want to be ruthless about it:
+or with a commit:
 
 ```yaml
-      ref: 776eef38      # short SHA works too
+      ref: 776eef38      # short SHA
 ```
 
-Both pin you to an exact point in history. A tag is friendlier to read in a review; a commit SHA can't be moved or deleted out from under you the way a tag technically can. Pick your poison based on how much you trust the upstream maintainer.
+Kapitan clones the full repository and runs `git checkout` with the value of
+`ref`, so branches work too. Reproducibility comes from choosing a value that
+does not move. A tag reads better in review; a commit SHA cannot be moved or
+deleted upstream the way a tag can.
 
-!!! note "What `ref` resolves to"
-    Under the hood Kapitan runs a `git checkout` of whatever you put in `ref`. So anything `git checkout` understands works here, branches included. The reproducibility win comes from choosing a value that *doesn't move* — a tag or a SHA — rather than a branch like `main`.
+## Without `ref`
 
-## What happens if you leave `ref` out
-
-If you omit `ref` entirely, Kapitan no longer assumes `master`. It falls back to the remote's default branch (`origin/HEAD`) and checks that out. Handy when you genuinely want "latest", but it's exactly the drift-prone case we're trying to avoid for anything you care about reproducing.
+If `ref` is omitted, Kapitan no longer assumes `master`. It checks out the
+remote's default branch, as `git clone` reports it. That is convenient while
+prototyping and is exactly the drift-prone case for anything you want to
+reproduce later.
 
 ```yaml
     - type: git
       output_path: source/kapitan
-      source: git@github.com:kapicorp/kapitan.git
-      # no ref: -> follows the remote's default branch
+      source: https://github.com/kapicorp/kapitan.git
+      # no ref: follows the remote's default branch
 ```
 
-Our advice, learned the boring way: omit `ref` while you're prototyping, pin it before anything ships.
+## Fetching
 
-## Fetching it
-
-Kapitan won't download dependencies on its own. You ask for them with `--fetch`:
+Dependencies are fetched when you pass `--fetch`, or for individual
+dependencies that set `force_fetch: true` in the inventory:
 
 ```shell
-kapitan compile -t kapitan-example --fetch
-Dependency kapitan: saved to source/kapitan
-Rendered inventory (1.41s)
-Compiled kapitan-example (0.83s)
+$ kapitan compile -t kapitan-example --fetch
+Rendered inventory (0.00s): discovered 1 targets.
+Compiling 1/1 targets using 1 concurrent processes: (24 CPU available)
+Dependency https://github.com/kapicorp/kapitan.git: saved to source/kapitan
+Fetched dependencies (6.06s)
+Compiled kapitan-example (0.00s)
+Compiled 1 targets in 0.49s
 ```
 
-`--fetch` only downloads what isn't already on disk. If you change `ref` and want Kapitan to re-pull over an existing checkout, reach for `--force-fetch` instead — by default Kapitan refuses to clobber local files so it doesn't eat your changes.
+`--fetch` clones the repository again on every run, but it does not
+overwrite files that already exist in `output_path`. After changing `ref`,
+use `--force-fetch` so the checkout at the new ref replaces the old files:
 
 ```shell
 kapitan compile -t kapitan-example --force-fetch
 ```
 
-If you'd rather not type the flag every time, set it in your `.kapitan` dotfile:
+To fetch on every compile without the flag, set it in `.kapitan`:
 
 ```yaml
 compile:
   fetch: true
 ```
 
-## Why we bothered
+## What pinning buys
 
-The reproducibility story is the headline, but pinning pays off in a few quieter ways too. Your diffs get honest — a change in compiled output now means an *intentional* change to a `ref`, not background noise. Rollbacks become a one-line edit. And anyone reading the inventory can see exactly which version of an upstream component you're standing on, without cloning anything.
+A change in compiled output now traces back to a change of `ref` in the
+inventory, rather than to an upstream commit you did not review. Rolling
+back is a one-line edit, and the inventory states which upstream version
+each target is built from.
 
-!!! tip "Pin in CI, float in dev"
-    A pattern we like: pin `ref` to a tag in the inventory that CI compiles, and keep a developer overlay that drops the `ref` for fast local iteration. You get reproducible pipelines and a quick inner loop without maintaining two sources of truth for the URL.
+One pattern that works well: pin `ref` in the inventory that CI compiles,
+and use a developer overlay class that drops it for local iteration. The
+repository URL is still defined once.
 
-Nothing here is exotic. It's one field doing one job well — and that's usually the kind of feature that saves you a confusing afternoon down the line.
+The field reference is in
+[External dependencies](../../external_dependencies.md).
