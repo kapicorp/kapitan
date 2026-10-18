@@ -1,46 +1,51 @@
 ---
 author: The Kapitan Team
 author_gh_user: kapicorp
-read_time: 7m
+read_time: 5m
 date: 2026-04-24
 title: "A Deep Dive into the Kapitan OmegaConf Backend"
 description: "How the OmegaConf inventory backend extends reclass with richer interpolation, custom resolvers, and the new literal escape syntax."
 ---
 
-# :kapitan-logo: **A Deep Dive into the Kapitan OmegaConf Backend**
+# A Deep Dive into the Kapitan OmegaConf Backend
 
-Reclass has been Kapitan's inventory engine for years, and it does the job. But every now and then we hit a wall: we want a default value, a tiny bit of conditional logic, or a key that resolves differently depending on where it gets merged. With reclass you reach for Jinja or a Kadet helper to paper over the gap. The OmegaConf backend closes a lot of those gaps inside the inventory itself.
+Reclass has been Kapitan's inventory engine for years. Where it runs out is
+small logic inside the inventory: a default value, a condition, a key that
+should resolve differently depending on where it is merged. Those cases end
+up in Jinja2 or a Kadet helper. The OmegaConf backend handles many of them in
+the inventory itself.
 
-It's still flagged experimental, so we won't pretend it's a drop-in replacement for every reclass setup. But the interpolation story is genuinely nicer, and a recent change (#1445) tidied up the one corner that always tripped people: how to emit a literal `${...}` without Kapitan trying to resolve it.
+The backend is still marked experimental and is not a drop-in replacement
+for every reclass inventory. v0.35.1 fixed the part that confused people
+most: emitting a literal `${...}` without Kapitan trying to resolve it
+([#1445](https://github.com/kapicorp/kapitan/pull/1445)).
 
 <!-- more -->
 
-## Turning it on
+## Enabling it
 
-The backend ships behind an extra, so install it first:
+The backend ships as an optional extra:
 
 ```shell
 pip install kapitan[omegaconf]
 ```
 
-Then either pass the flag per run:
+Select it per run:
 
 ```shell
 kapitan compile --inventory-backend=omegaconf
 ```
 
-…or make it the default in your `.kapitan` dotfile so you don't have to remember:
+or as the default in `.kapitan`:
 
 ```yaml
 global:
   inventory-backend: omegaconf
 ```
 
-One small but welcome detail: the OmegaConf backend resolves class files with either `.yml` or `.yaml` extensions, with `.yml` winning if both happen to exist. Reclass only ever looked for `.yml`, so if you've inherited a tree full of `.yaml` files this just works now (that fix landed in #1483).
+## Interpolation
 
-## Interpolation that reads like code
-
-Here's where the difference shows up. Reclass references look like `${path:to:key}` with colons. OmegaConf uses dot notation, which lines up with how you'd write the path in your head:
+Reclass references use colons, `${path:to:key}`. OmegaConf uses dots:
 
 ```yaml
 # inventory/targets/my-app.yml
@@ -48,7 +53,7 @@ parameters:
   app_name: my-application
   environment: production
 
-  full_name: ${app_name}-${environment}   # → "my-application-production"
+  full_name: ${app_name}-${environment}   # "my-application-production"
 
   config:
     database:
@@ -56,10 +61,10 @@ parameters:
       port: 5432
 
   db_url: "postgresql://${config.database.host}:${config.database.port}"
-  # → "postgresql://db.example.com:5432"
+  # "postgresql://db.example.com:5432"
 ```
 
-Defaults come for free via OmegaConf's native resolvers, no Jinja required:
+Defaults use OmegaConf's built-in resolvers:
 
 ```yaml
 parameters:
@@ -67,19 +72,27 @@ parameters:
   log_level: ${oc.env:LOG_LEVEL, INFO}        # read from the environment
 ```
 
-And there's a small toolbox of conditional and transformation resolvers on top — `if`, `ifelse`, `equal`, `merge`, `dict`, `yaml`, and friends. We won't list them all here; the [OmegaConf backend docs](../inventory/omegaconf.md) have the full table. The point is that a chunk of logic that used to live in templates can now live in the inventory, where it's easier to follow.
+Kapitan adds conditional and transformation resolvers on top, among them
+`if`, `ifelse`, `equal`, `merge`, `dict` and `yaml`. The
+[OmegaConf backend docs](../../inventory/omegaconf.md) list all of them.
+Logic that used to sit in templates can move into the inventory, next to the
+data it works on.
 
-## Deferred evaluation, or "resolve later"
+## Deferred evaluation
 
-This is the feature we keep coming back to. Sometimes you want a value that doesn't resolve where it's *written*, but where it ends up after merging. OmegaConf does this with a **double-pass** strategy: the first pass resolves normal `${...}` interpolations, and a second pass picks up anything that was escaped as `\${...}` (now unescaped).
+Sometimes a value should resolve where it ends up after merging, not where
+it is written. The backend resolves in two passes: the first resolves normal
+`${...}` interpolations, and the second resolves anything written as
+`\${...}`, which the first pass only unescapes.
 
-The classic case is a template whose name should match the key it's merged under:
+The typical case is a template whose name should be the key it is merged
+under:
 
 ```yaml
 # inventory/classes/base-deployment.yml
 parameters:
   deployment_template:
-    name: \${parentkey:}      # deferred — resolves AFTER merge
+    name: \${parentkey:}      # deferred, resolves after merge
     namespace: ${namespace}    # resolves immediately
 
 # inventory/targets/my-app.yml
@@ -90,7 +103,7 @@ parameters:
     api-backend: ${deployment_template}
 ```
 
-The result:
+Result:
 
 ```yaml
 deployments:
@@ -102,13 +115,17 @@ deployments:
     namespace: production
 ```
 
-One template, two different `name` values, no copy-paste. The `\${...}` escape here means "don't resolve me yet" — it is *not* a way to print a literal dollar sign. That distinction matters, and it's exactly what the next section is about.
+One template, two `name` values. Note that `\${...}` here means "resolve
+later". It does not produce a literal `${` in the output.
 
-## The literal escape: `${escape:...}`
+## Literal output with `${escape:...}`
 
-Here's the corner that used to confuse everyone. Say you're generating Terraform and you want the compiled output to literally contain `${google_service_account.cluster.email}` — a Terraform reference, not something Kapitan should touch. Reaching for `\${...}` doesn't help, because under the double-pass model that backslash just defers resolution to the second pass; the interpolation still fires.
+Generating Terraform is the common case: the compiled output must contain
+`${google_service_account.cluster.email}` as text, for Terraform to resolve.
+`\${...}` does not do that, because the second pass still resolves it.
 
-PR #1445 repurposed the `escape` resolver to do exactly this. `${escape:content}` emits `${content}` verbatim, protected from *both* resolution passes:
+Since #1445, the `escape` resolver covers this. `${escape:content}` emits
+`${content}` verbatim and is not touched by either pass:
 
 ```yaml
 parameters:
@@ -117,7 +134,7 @@ parameters:
   terraform_ref: ${escape:google_service_account.cluster.email}
   shell_home: ${escape:HOME}
 
-  # Works mid-string too — surrounding interpolations still resolve
+  # Works mid-string; surrounding interpolations still resolve
   greeting: "Hello ${escape:USER}, welcome to ${cluster}"
 ```
 
@@ -129,34 +146,40 @@ shell_home: ${HOME}
 greeting: "Hello ${USER}, welcome to my-cluster"
 ```
 
-The mechanism is pleasingly blunt. `escape_interpolation` doesn't return a `${...}` string (which would just get re-resolved on the second pass) — it wraps the content in opaque marker strings, `__KAPITAN_LITERAL__...__KAPITAN_LITERAL_END__`. Only after both OmegaConf passes finish does a final post-processing step swap those markers back for `${content}`. The neat side effect: the escaped content is safe even when it happens to collide with a real inventory key.
+The resolver does not return a `${...}` string, which the second pass would
+resolve again. It wraps the content in marker strings,
+`__KAPITAN_LITERAL__...__KAPITAN_LITERAL_END__`, and a post-processing step
+replaces them with `${content}` after both passes have finished. Because of
+that, escaped content is safe even when it matches a real inventory key:
 
 ```yaml
 parameters:
   environment: dev
-  escaped_key: ${escape:environment}   # → "${environment}", NOT "dev"
+  escaped_key: ${escape:environment}   # "${environment}", not "dev"
 ```
 
-!!! note "Two different escapes"
-    `\${...}` means *deferred* — resolve on the second pass. `${escape:...}` means *literal* — never resolve, emit the `${...}` text as-is. They look similar and do opposite things. If you want a `${...}` in your compiled output, you want `escape`.
+To summarise the two: `\${...}` defers resolution to the second pass,
+`${escape:...}` never resolves and emits the `${...}` text as is.
 
-For expressions with commas or quotes — say a Terraform conditional — wrap the argument in single quotes so OmegaConf parses it as one piece:
+For expressions with commas or quotes, such as a Terraform conditional,
+quote the argument with single quotes so OmegaConf parses it as one value:
 
 ```yaml
 parameters:
   terraform_expression: ${escape:'var.foo == "bar" ? 1 : 0'}
-  # → var.foo == "bar" ? 1 : 0
+  # ${var.foo == "bar" ? 1 : 0}
 ```
 
-## Custom resolvers, when the built-ins run out
+## Custom resolvers
 
-If the stock resolvers don't cover your case, drop a `resolvers.py` in your inventory directory and register your own. They're plain Python functions:
+When the built-in resolvers are not enough, add a `resolvers.py` to the
+inventory directory. Resolvers are plain Python functions:
 
 ```python
 # inventory/resolvers.py
 
 def get_suffix(name: str) -> str:
-    """Extract the bit after the last hyphen."""
+    """Return the part after the last hyphen."""
     return name.split("-")[-1]
 
 def pass_resolvers():
@@ -166,28 +189,40 @@ def pass_resolvers():
 ```yaml
 parameters:
   app_name: my-service
-  suffix: ${get_suffix:${app_name}}   # → "service"
+  suffix: ${get_suffix:${app_name}}   # "service"
 ```
 
-Resolvers can also take a special `_root_` argument to reach the whole inventory, which is how you build things like target-aware Vault references. Handy, but a reminder to keep them small — a resolver that does too much is just a template wearing a disguise.
+A resolver can also take a `_root_` argument to read the whole inventory,
+which is how target-aware lookups such as Vault paths are built. Keep them
+small; a resolver with a lot of logic is a template in another place.
 
 ## Migrating an existing inventory
 
-You don't have to rewrite everything by hand. Point the `--migrate` flag at your tree and Kapitan rewrites the common reclass patterns for you:
+`--migrate` rewrites the common reclass patterns in place:
 
 ```shell
 kapitan compile --inventory-backend=omegaconf --migrate
 ```
 
-It handles the obvious translations — `${path:to:key}` becomes `${path.to.key}`, `${_reclass_...}` becomes `${_kapitan_...}`, and any `\${escaped}` you were using purely as literal output becomes `${escape:escaped}`.
+It turns `${path:to:key}` into `${path.to.key}` and `${_reclass_...}` into
+`${_kapitan_...}`, and it rewrites every `\${...}` into `${escape:...}`. The
+last rewrite cannot tell a reclass literal from a deferred interpolation, so
+any `\${parentkey:}`-style entries you rely on for deferred evaluation must
+be changed back afterwards. Files containing `!`, `(` or `)` get a different
+escape form instead of `${escape:...}`; check those by hand.
 
-!!! danger "Back up first"
-    `--migrate` rewrites files in place. Commit your inventory to version control before you run it, so reverting is a `git checkout` away.
+Commit the inventory before running `--migrate`, so the rewrite can be
+reviewed as a diff and reverted with `git checkout`.
 
-A couple of things migration won't do for you: keys containing literal dots need the `access` resolver, and reclass features like `exports` and inventory queries aren't supported yet. So check the diff, don't just trust it.
+Migration does not cover everything. Keys that contain literal dots need the
+`access` resolver, and reclass `exports` and inventory queries are not
+supported by the OmegaConf backend.
 
-## Should you switch?
+## When to switch
 
-If your inventory is mostly static data, reclass is fine and you can keep it. The OmegaConf backend earns its keep when you find yourself fighting the inventory — wanting a default, a conditional, a self-naming template, or a clean way to pass a literal `${...}` through to Terraform. The interpolation is more expressive, the `${escape:...}` story is finally unambiguous, and `--migrate` gets you most of the way across.
-
-It's experimental, so kick the tyres on a branch first. If something breaks, [tell us](https://github.com/kapicorp/kapitan/issues/new/choose) — that feedback is what moves it out of experimental.
+An inventory that is mostly static data works fine with reclass. The
+OmegaConf backend is worth it when you need defaults, conditions,
+self-naming templates, or literal `${...}` passed through to Terraform.
+Since it is experimental, try it on a branch first, and
+[open an issue](https://github.com/kapicorp/kapitan/issues/new/choose) when
+something breaks.
