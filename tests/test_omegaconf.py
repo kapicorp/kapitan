@@ -214,3 +214,18 @@ class TestOmegaConfInventoryMigrationTiming(unittest.TestCase):
             content = f.read()
         self.assertIn("${shared.name}", content)
         self.assertNotIn("${shared:name}", content)
+
+
+class RegisterResolversApiTest(unittest.TestCase):
+    def test_register_resolvers_avoids_deprecated_register_new_resolver(self):
+        import inspect
+        from unittest import mock
+
+        from omegaconf import OmegaConf
+
+        if "replace" not in inspect.signature(OmegaConf.register_resolver).parameters:
+            self.skipTest("OmegaConf.register_resolver() is the legacy API")
+
+        with mock.patch.object(OmegaConf, "register_new_resolver") as deprecated:
+            register_resolvers()
+        deprecated.assert_not_called()
