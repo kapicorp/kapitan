@@ -1,42 +1,39 @@
 ---
 author: The Kapitan Team
 author_gh_user: kapicorp
-read_time: 4m
+read_time: 3m
 date: 2026-05-15
 title: "Faster YAML Output with the rapidyaml Emitter"
 description: "Speed up YAML-heavy Kapitan compiles with the optional rapidyaml emitter: how to enable it, what it costs, and a real benchmark."
 ---
 
-# :kapitan-logo: **Faster YAML output with the rapidyaml emitter**
+# Faster YAML Output with the rapidyaml Emitter
 
-If you compile a lot of Kubernetes manifests, you've probably watched Kapitan
-sit there churning. A surprising chunk of that wall-clock time isn't templating
-or inventory rendering at all, it's the YAML emitter, PyYAML walking every node
-through a chain of Python callbacks to turn your dicts back into text.
+In compiles that produce a lot of Kubernetes manifests, a large share of the
+wall-clock time is not templating or inventory rendering. It is the YAML
+emitter: PyYAML passes every node through a chain of Python callbacks to
+turn dicts back into text.
 
-We added an opt-in fast path for exactly this. It's a C++ YAML emitter called
-[rapidyaml](https://github.com/biojppm/rapidyaml), wired in behind a single
-flag. It's off by default, so nothing changes unless you ask for it.
+Since v0.36.0, Kapitan has an opt-in alternative: the C++ emitter
+[rapidyaml](https://github.com/biojppm/rapidyaml), enabled with a single
+flag. Without the flag, nothing changes.
 
 <!-- more -->
 
-## Turning it on
+## Enabling it
 
-The emitter lives in an optional extra, because most installs don't need a
-native YAML library and we didn't want to make everyone carry the wheel. Two
-steps: install the extra, then pass the flag.
+The emitter is an optional extra, so installs that do not need a native YAML
+library do not carry it. Install the extra and pass the flag:
 
 ```shell
 pip install kapitan[rapidyaml]
 kapitan compile --yaml-use-rapidyaml
 ```
 
-One wrinkle worth knowing up front: the extra is named `rapidyaml` but the
-Python module it ships is imported as `ryml`. You'll only notice if you go
-poking at it directly.
+The extra is named `rapidyaml`, but the Python module it installs is
+imported as `ryml`.
 
-If you'd rather not type the flag on every invocation, set it in your `.kapitan`
-file under the `compile` section:
+To enable it permanently, set it in the `compile` section of `.kapitan`:
 
 ```yaml
 # .kapitan
@@ -44,34 +41,28 @@ compile:
   yaml-use-rapidyaml: true
 ```
 
-!!! note "It fails soft"
-    If you pass `--yaml-use-rapidyaml` but never installed the extra, Kapitan
-    doesn't error out. It logs a one-time warning and quietly falls back to
-    PyYAML, so a missing dependency degrades to "the old behaviour" rather than
-    a broken compile.
+If the flag is set but the extra is not installed, the compile does not
+fail. Kapitan logs a one-time warning and uses PyYAML.
 
-## What you get
+## Speed
 
-In our own testing on a realistic Kubernetes Deployment manifest, the rapidyaml
-emitter came out around **6x faster** than the default PyYAML path. On a large
-real-world codebase, the author of the change measured end-to-end compile times
-dropping by roughly a factor of three, the emitter isn't the only cost in a
-compile, so your mileage depends on how YAML-bound your targets are.
+On a realistic Kubernetes Deployment manifest, the rapidyaml emitter is
+about 6x faster than the PyYAML path. On a large real-world codebase, the
+author of the change measured end-to-end compile times dropping by a factor
+of three. The emitter is only one part of a compile, so the gain depends on
+how much of your compile time is spent writing YAML.
 
-The win is structural. PyYAML streams every scalar and collection through Python
-representer and emitter callbacks; rapidyaml builds a contiguous tree buffer in
-C++ and emits from that. The more manifests you're dumping, the more that
-difference adds up.
+The difference comes from the approach. PyYAML runs every scalar and
+collection through Python representer and emitter callbacks; rapidyaml
+builds a contiguous tree in C++ and emits from that.
 
-## The honest part: output isn't byte-identical
+## Output is not byte-identical
 
-This is the tradeoff, and it's the thing to test before you flip it on in CI.
-
-The output is **semantically equivalent** to PyYAML's: keys are still sorted
-alphabetically, and every scalar round-trips back to the same Python object. But
-it isn't always byte-for-byte the same text. The most common difference is
-quoting, rapidyaml may single-quote a scalar that PyYAML left plain, for
-example:
+Test this before enabling it in CI. The output is semantically equivalent
+to PyYAML's: keys are still sorted alphabetically, and every scalar loads
+back to the same Python value. The text can differ, though. The most common
+difference is quoting, where rapidyaml single-quotes a scalar PyYAML leaves
+plain:
 
 ```yaml
 # PyYAML
@@ -80,25 +71,23 @@ image: mysql:latest
 image: 'mysql:latest'
 ```
 
-Both parse to the identical string. But if you have tests or fixtures that
-compare compiled output byte-for-byte, that first compile will look like a diff,
-and you'll need to regenerate those fixtures.
+Both load as the same string. Tests or fixtures that compare compiled output
+byte for byte will show a diff on the first compile and need regenerating.
 
-!!! tip "Roll it out where it pays off"
-    Because the flag is per-invocation, you don't have to commit globally. Turn
-    it on for the targets with the heaviest manifests and leave the rest alone,
-    or enable it locally for fast iteration and keep CI on the default emitter
-    until you've regenerated your golden files.
+The flag applies to a whole run. To roll it out gradually, use it for
+separate runs over the targets with the largest manifests (`-t`), or locally
+for faster iteration, and keep CI on PyYAML until the golden files are
+regenerated.
 
-There's one more fallback baked in: if a document contains ASCII control
-characters, that single document is emitted by PyYAML instead, because rapidyaml
-doesn't escape those in double-quoted scalars. You don't have to do anything,
-Kapitan handles the switch per-document.
+One more fallback is built in: output containing ASCII control characters
+is written by PyYAML, because rapidyaml does not escape them in
+double-quoted scalars. Kapitan makes that switch per output file, with no
+configuration.
 
-## Should you use it?
+## When to use it
 
-If your compiles are small, the default PyYAML emitter is fine and you can
-ignore all of this. If you're compiling big manifests or hundreds of targets and
-the YAML step is a real share of your build time, install the extra, regenerate
-any byte-exact fixtures once, and enjoy the faster path. It's opt-in precisely
-so you only take on the tradeoff when the speed is worth it.
+For small compiles the default emitter is fine. If you compile large
+manifests or hundreds of targets and writing YAML is a visible share of the
+build time, install the extra, regenerate byte-exact fixtures once, and
+switch it on. The flag is documented with the other options of
+[`kapitan compile`](../../commands/kapitan_compile.md#fast-yaml-emission-with-rapidyaml).
