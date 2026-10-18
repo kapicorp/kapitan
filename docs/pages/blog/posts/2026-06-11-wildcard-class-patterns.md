@@ -7,17 +7,21 @@ title: "Expanding Inventory Classes with Wildcard Patterns"
 description: "Use --enable-class-wildcards to expand glob patterns like clusters.* in Kapitan inventory classes lists, across every backend."
 ---
 
-# :kapitan-logo: **Expanding Inventory Classes with Wildcard Patterns**
+# Expanding Inventory Classes with Wildcard Patterns
 
-Every large inventory eventually grows the same wart: a target file with a `classes:` list twenty lines long, and a sinking feeling every time someone adds a new class that half the targets should now import. You either update them all by hand or you forget one. We've done both.
+Large inventories tend to end up with targets whose `classes:` list runs to
+twenty lines. Every new class that half the targets should import means
+editing each of those targets, and the one you miss compiles without it.
 
-So we added wildcards. You can now write `clusters.*` in a `classes:` list and let Kapitan expand it to every matching class on disk. It's opt-in, it works with every inventory backend, and the rest of this post shows exactly how.
+Since v0.36.0, a `classes:` entry can be a glob pattern. `clusters.*` expands
+to every matching class on disk. The feature is opt-in and works the same
+under reclass, reclass-rs and OmegaConf.
 
 <!-- more -->
 
-## The before/after
+## Before and after
 
-Here's a target that pins each cluster class explicitly:
+A target that lists each cluster class explicitly:
 
 ```yaml
 # inventory/targets/all-clusters.yml
@@ -28,7 +32,8 @@ classes:
   - clusters.prod
 ```
 
-Add `clusters.canary.yml` next week and this file is silently out of date. With wildcards on, the same target becomes:
+Add `classes/clusters/canary.yml` and this target is out of date. With
+wildcards enabled, the same target becomes:
 
 ```yaml
 # inventory/targets/all-clusters.yml
@@ -37,17 +42,22 @@ classes:
   - clusters.*
 ```
 
-`clusters.*` expands to every class whose dotted name starts with `clusters.`, sorted lexicographically, inserted right where the pattern sits. `common` stays exactly where it is — exact names are passed through untouched.
+`clusters.*` expands, in place, to every class whose dotted name starts with
+`clusters.`, sorted lexicographically. `common` is an exact name and passes
+through unchanged.
 
 ## Turning it on
 
-Wildcard expansion is **disabled by default**, and on purpose. Plenty of real inventories have glob metacharacters in class names for honest reasons — a file literally called `config[html].yml`, or a Reclass reference like `${?optional_param}`. We didn't want to silently reinterpret those, so you have to ask for it:
+Wildcard expansion is disabled by default. Some inventories have glob
+metacharacters in class names for legitimate reasons, such as a file named
+`config[html].yml` or a reclass reference like `${?optional_param}`, and
+those must not be reinterpreted silently. Enable it per run:
 
 ```shell
 kapitan inventory --enable-class-wildcards -t all-clusters
 ```
 
-Or, if you'd rather not type it every time, put it in `.kapitan` under the inventory backend section:
+or permanently in `.kapitan`, under the inventory backend section:
 
 ```yaml
 # .kapitan
@@ -55,52 +65,79 @@ inventory_backend:
   enable-class-wildcards: true
 ```
 
-The flag lives on both `kapitan compile` and `kapitan inventory`, so you can preview the expansion before you compile anything. We find ourselves reaching for `kapitan inventory` first — it shows you the merged result without writing a single file to `compiled/`.
+The flag is accepted by `kapitan compile`, `kapitan inventory` and
+`kapitan refs`. `kapitan inventory` is the quickest way to check what a
+pattern expands to, since it prints the merged result without writing
+anything to `compiled/`.
 
-## What the patterns actually mean
+## Pattern semantics
 
-The matching rule is deliberately boring. Patterns are matched against the **full dotted class name** with Python's [`fnmatch`](https://docs.python.org/3/library/fnmatch.html) — so `*`, `?`, and `[ ]` all work:
+Patterns are matched against the full dotted class name with Python's
+[`fnmatch`](https://docs.python.org/3/library/fnmatch.html), so `*`, `?` and
+`[ ]` work as usual:
 
 ```yaml
 classes:
-  - "*"             # every class, top-level and nested (quote it — bare * is ambiguous YAML)
+  - "*"             # every class, top-level and nested (quoted: bare * is not valid YAML here)
   - clusters.*      # every class whose dotted name starts with 'clusters.'
   - apps.dev-*      # classes under apps/ whose basename starts with 'dev-'
-  - "*.dev-*"       # a 'dev-...' segment in any subdir
+  - "*.dev-*"       # a 'dev-...' segment in any subdirectory
 ```
 
-There's no clever special-casing for dots. `dev-*` matches only *top-level* classes named `dev-...`; if you want `apps.dev-api`, you write `apps.dev-*` or `*.dev-*`. We went back and forth on this and landed on "no surprises" over "convenient".
+Dots get no special treatment. `dev-*` matches only top-level classes named
+`dev-...`; to reach `apps.dev-api` you write `apps.dev-*` or `*.dev-*`. Also
+note that `*` crosses dots, so `apps.dev-*` matches `apps.dev-api.v2` as well.
 
-!!! note "Class names follow the usual rules"
-    A pattern matches the same dotted names you'd write by hand: `classes/clusters/prod.yml` is `clusters.prod`, and `classes/foo/init.yml` collapses to `foo` (the reclass `init` convention). The wildcard expander discovers classes the same way the backend resolves them.
+Class names follow the usual mapping: `classes/clusters/prod.yml` is
+`clusters.prod`, and `classes/foo/init.yml` collapses to `foo`.
 
-Two behaviors worth knowing:
+Two rules decide whether an entry is treated as a pattern at all. If a class
+with that exact name exists, the entry is an exact include: `- config[html]`
+picks up `config[html].yml` and is not read as a character class. And any
+entry containing `${` and `}` is handed to the backend verbatim, even with a
+`?` inside, because references resolve after class inheritance and the
+expander cannot evaluate them. This also means patterns inside a reference
+are not expanded.
 
-- **Exact names win over patterns.** If a class file is literally named `config[html].yml`, then `- config[html]` includes that one file as-is. It's only treated as a character-class pattern when no class with that exact name exists.
-- **Reclass references pass through.** Anything containing `${` and `}` is handed to the backend verbatim, even with a `?` inside. The expander can't resolve `${...}` — that happens after class inheritance — so it doesn't try.
+## Ordering and merge precedence
 
-## Order is deterministic, but mind the merge
+Each pattern expands to a lexicographically sorted list. Duplicates, whether
+from another pattern or an exact entry, are dropped and the first occurrence
+is kept.
 
-Each pattern expands to a **lexicographically sorted** list, and duplicates (across both exact entries and expansions) are dropped, keeping the first occurrence. Deterministic is good. It can also bite you.
+Sorted order is deterministic, but it can move under you. `*.base` matching
+`config.base` and `defaults.base` expands to `[config.base, defaults.base]`.
+Add `alpha.base` later and both shift one position down. If merge precedence
+matters, name classes so they sort in the order you want:
 
-!!! tip "Numeric prefixes when merge order matters"
-    `*.base` matching `config.base` and `defaults.base` always expands to `[config.base, defaults.base]` because `c < d`. Add `alpha.base` later and the order shifts. If precedence matters to your merge, name classes so they sort the way you want:
+```yaml
+classes:
+  - app.00-defaults
+  - app.10-config
+  - app.90-overrides
+```
 
-    ```yaml
-    classes:
-      - app.00-defaults
-      - app.10-config
-      - app.90-overrides
-    ```
+`app.*` then keeps that order regardless of what gets added. Where merge
+order is critical and you do not control the names, list the classes
+explicitly.
 
-    `app.*` then expands in the intended order no matter what gets added later. When merge order is critical and you can't control naming, just don't use a wildcard there.
+A pattern that matches nothing raises an inventory error. With
+`--ignore-class-not-found`, an unmatched pattern is dropped instead, the same
+way missing exact names are handled.
 
-A pattern that matches **nothing** raises an inventory error — we'd rather fail loud than silently include zero classes. If that's not what you want, `--ignore-class-not-found` drops the unmatched pattern instead, mirroring how missing exact names already behave.
+## How it works
 
-## How it works under the hood
+No backend was changed. When the flag is on and at least one `classes:` list
+under `inventory/targets/` or `inventory/classes/` contains a pattern,
+Kapitan copies the inventory tree to a temporary directory, expands the
+patterns in the copy, and points the backend at it. The backend never sees a
+wildcard. The copy is removed on exit, and relative symlinks that would break
+in the copy are rewritten to absolute paths.
 
-No backend was modified to make this happen. When Kapitan sees a wildcard `classes:` entry anywhere under `inventory/targets/` or `inventory/classes/`, it materializes a **temporary copy** of the inventory tree with those entries pre-expanded, then points the chosen backend — reclass, reclass-rs, or omegaconf — at the copy. The backend never learns wildcards exist. The temp tree is cleaned up on exit, and relative symlinks that pointed outside the original tree get rewritten to absolute paths so they still resolve in the copy.
+With the flag off, none of this runs and the inventory path is used as is.
+With the flag on, a text pre-filter skips YAML parsing for files that contain
+no glob metacharacter. Inventories with many AWS ARNs, ref tags or YAML
+anchors pass more files through that filter, which then get parsed.
 
-The cost when you're not using wildcards is effectively nothing: a cheap text scan skips any file with no glob metacharacter in it, which is almost every file in a normal inventory. So leaving the flag off — the default — buys you nothing to worry about.
-
-That's the whole feature. List shrinks, new classes get picked up automatically, and the backend stays none the wiser.
+The full reference is in the
+[classes documentation](../../inventory/classes.md#wildcard-class-patterns).
