@@ -1,23 +1,29 @@
 ---
 author: The Kapitan Team
 author_gh_user: kapicorp
-read_time: 4m
+read_time: 3m
 date: 2026-05-22
 title: "Managing Kapitan's External Tools with mise"
 description: "How we moved Kapitan to mise to pin helm, kustomize, cue and uv versions for reproducible dev and CI setups."
 ---
 
-# :kapitan-logo: **Managing Kapitan's External Tools with mise**
+# Managing Kapitan's External Tools with mise
 
-Kapitan has never been pure Python. To run our test suite you need `helm`, `kustomize` and `cue` on your PATH, and for years we asked contributors to install them however they liked. That worked right up until someone's `kustomize` was a major version ahead of CI's and a test failed for reasons nobody could reproduce.
+Kapitan is not pure Python. The test suite needs `helm`, `kustomize` and
+`cue` on the PATH, and for years contributors installed them however they
+liked. That held until a contributor's `kustomize` was a major version ahead
+of CI's and a test failed in a way nobody else could reproduce.
 
-So we standardised on [`mise`](https://mise.jdx.dev/) to install and pin those tools. `uv` still owns the Python side; `mise` owns everything else. Here's what changed and why it makes your life a little easier.
+The repository now uses [`mise`](https://mise.jdx.dev/) to install and pin
+those tools. `uv` still manages Python dependencies; `mise` manages the
+binaries, including `uv` itself. This is a contributor-facing change: it
+does not affect what `kapitan compile` produces.
 
 <!-- more -->
 
-## One file, four pinned tools
+## mise.toml and mise.lock
 
-The source of truth is a new `mise.toml` at the repo root. It is short on purpose:
+The pins live in `mise.toml` at the repository root:
 
 ```toml
 [tools]
@@ -26,75 +32,75 @@ helm = "3.19.5"
 kustomize = "5.8.1"
 cue = "0.15.4"
 uv = "0.9.18"
+go = "1.26.4"
 ```
 
-Notice `uv` is in there too. We didn't want two different bootstrap stories — one for Python tooling and one for everything else — so `mise` now installs `uv` as well, and the Makefile drives `uv` through `mise exec`.
+`uv` is in the list so there is one bootstrap path instead of two: `mise`
+installs `uv`, and the Makefile runs `uv` through `mise exec`. `go` was added
+later so `uv` can build Python packages that need a Go compiler.
 
-Alongside it sits a `mise.lock` file with per-platform checksums and download URLs for each tool, covering linux, macOS and Windows on amd64/arm64. That's the bit that makes "works on my machine" mean something: when CI runs `mise install --locked`, it gets the exact same binaries you do, checksum-verified.
+Helm is held at v3 on purpose, as the comment says, until Helm v4 has been
+validated against the tests and CI.
 
-!!! note "Why Helm is pinned to v3"
-    The comment in `mise.toml` isn't decorative. We're deliberately holding Helm at v3 until Helm v4's behavior is validated against our tests and CI. Pinning makes that decision explicit instead of leaving it to whatever each contributor happened to install.
+Next to it, `mise.lock` records download URLs and checksums per tool for
+linux and macOS on x64 and arm64, and for Windows on x64. With
+`mise install --locked`, every machine gets the same checksum-verified
+binaries.
 
 ## Setting up as a contributor
 
-First, install `mise` itself — that's the one thing `mise` can't do for you. Follow the official instructions for your platform and shell at <https://mise.jdx.dev/getting-started.html>.
-
-After that, the full setup is unchanged from before:
+Install `mise` itself first, following the
+[getting started guide](https://mise.jdx.dev/getting-started.html). The rest
+is the same command as before:
 
 ```bash
 make setup
 ```
 
-Under the hood this now installs the pinned toolchain via `mise`, then the Python dependencies, then the pre-commit hooks. If you prefer to do it piece by piece, the toolchain step is its own target:
-
-```bash
-make install_tools
-```
-
-That runs `mise install --locked` and then prints the versions back so you can see what you got:
+It installs the pinned toolchain through `mise`, then the Python
+dependencies with `uv sync --locked`, then the pre-commit hooks. The
+toolchain step is also available on its own:
 
 ```console
 $ make install_tools
 ===== Installing Development Toolchain via mise =====
-v0.9.18
-v3.19.5
-{kustomize/v5.8.1  ...}
+uv 0.9.18
+v3.19.5+g4a19a5b
+v5.8.1
 cue version v0.15.4
+go version go1.26.4 linux/amd64
 ```
 
-The old `make install_external_tools` target — the one with the bespoke `curl | bash` installers for each tool — is gone. So is `make install_uv`. Both folded into `make install_tools`.
+`make install_tools` runs `mise install --locked` and prints each tool's
+version. It replaces `make install_external_tools`, which used a separate
+`curl | bash` installer per tool, and `make install_uv`. Both targets are
+gone.
 
-## Running things through mise
+## Running commands through mise
 
-Because `mise` manages the tool versions, you run commands through it rather than relying on whatever's on your PATH. The Makefile already does this for you, but when you invoke Kapitan directly during development:
+Makefile targets such as `make test`, `make lint` and `make format` already
+run through `mise`. When calling tools directly, prefix them with
+`mise exec --`:
 
 ```bash
-mise exec -- uv run kapitan <your command>
+mise exec -- uv run kapitan <command>
+mise exec -- uv run pytest --no-cov tests/test_vault_transit.py
 ```
 
-If that gets tedious, an alias is the obvious fix:
+An alias saves typing:
 
 ```bash
 alias kapitan='mise exec -- uv run kapitan'
 ```
 
-Same pattern for a one-off test file:
+## CI
 
-```bash
-mise exec -- uv run pytest --no-cov tests/test_vault_transit.py
-```
+CI used to install the tools itself: `curl` for Helm, an install script for
+Kustomize, a GitHub API lookup for the latest CUE release, and a cache step
+on top. Besides the amount of YAML, "latest CUE" meant CI could change
+without a commit.
 
-!!! tip "Makefile targets don't need the prefix"
-    You only need `mise exec --` when calling tools yourself. `make test`, `make lint`, `make format` and friends already route through `mise` internally, so `make test` just works.
-
-## What changed in CI
-
-CI used to hand-roll tool installation: a `curl` for Helm, a script for Kustomize, a GitHub API lookup to find the latest CUE release, plus a cache step to keep all that from running every build. It worked, but it was a lot of YAML to maintain, and "latest CUE" is exactly the kind of moving target that bites you on a random Tuesday.
-
-Now the workflows use the [`jdx/mise-action`](https://github.com/jdx/mise-action) and the same `mise install --locked` path you run locally. Local and CI bootstrap the toolchain identically, which is the whole point: when a test passes for you, you can trust it'll pass in CI for the same reasons.
-
-We also took the opportunity to delete a stale `default.nix` that nobody used anymore — it still referenced `poetry` and `black` from a setup we'd long since left behind. One less misleading file in the tree.
-
-## The honest summary
-
-This isn't a feature you'll see in your compiled output. It's plumbing. But it's the kind of plumbing that turns "I can't reproduce your CI failure" into "oh, we're on the same `kustomize` now." If you've cloned Kapitan before and wrestled with tool versions, `make setup` should feel a lot less fiddly next time.
+The workflows now use [`jdx/mise-action`](https://github.com/jdx/mise-action)
+with `MISE_LOCKED=1`, which installs the same locked versions as
+`make install_tools` does locally. A test that passes locally runs against
+the same tool versions in CI.
