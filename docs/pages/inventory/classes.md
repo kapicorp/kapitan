@@ -162,13 +162,6 @@ paths in the materialized copy so they continue to work.
 Wildcard expansion happens before the backend resolves inheritance, and works
 both in target files and in nested class files.
 
-**Backend-specific notes:**
-
-* The omegaconf backend's class-file resolver currently only looks for `.yml`
-  files (a pre-existing limitation unrelated to wildcards).  Wildcard
-  expansion correctly discovers `.yaml` classes, but omegaconf will fail to
-  load them.
-
 
 ## Definition
 

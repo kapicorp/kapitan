@@ -150,8 +150,9 @@ Then compile with `--fetch`:
 kapitan compile --fetch
 ```
 
-`--fetch` only pulls if the artifact is not already cached locally — subsequent runs are instant.
-Use `--force-fetch` to invalidate the cache and re-pull regardless.
+`--fetch` pulls the artifact on every run but does not overwrite files that already exist in
+`output_path`. After changing the tag or digest, use `--force-fetch` so the new content replaces
+the old files.
 
 See [External dependencies OCI](external_dependencies.md#defining-dependencies) for the full
 reference of available fields.
