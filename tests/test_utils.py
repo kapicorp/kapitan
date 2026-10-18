@@ -11,12 +11,15 @@ import glob
 import os
 import shutil
 import stat
+import sys
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
 
 import yaml
 
+from kapitan.errors import UnsafeArchiveError
 from kapitan.utils import (
     SafeCopyError,
     YamlLoader,
@@ -30,7 +33,9 @@ from kapitan.utils import (
     force_copy_file,
     get_entropy,
     prune_empty,
+    safe_tar_extractall,
     sha256_string,
+    unpack_downloaded_file,
 )
 
 
@@ -488,3 +493,139 @@ class CompareVersionsTest(unittest.TestCase):
 
     def test_compare_versions_major_diff(self):
         self.assertEqual(compare_versions("2.0.0", "1.9.9"), "greater")
+
+
+class UnpackDownloadedFileSafetyTest(unittest.TestCase):
+    """Test unpack_downloaded_file refuses archive members that escape output_path."""
+
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.output_path = os.path.join(self.temp_dir, "output")
+        os.makedirs(self.output_path)
+        self.addCleanup(shutil.rmtree, self.temp_dir, ignore_errors=True)
+
+    def _payload(self):
+        payload = os.path.join(self.temp_dir, "payload.txt")
+        with open(payload, "w") as fp:
+            fp.write("owned")
+        return payload
+
+    def _make_tar(self, arcname, mode="w", name="archive.tar", linkname=None):
+        archive = os.path.join(self.temp_dir, name)
+        with tarfile.open(archive, mode) as tar:
+            if linkname is None:
+                tar.add(self._payload(), arcname=arcname)
+            else:
+                info = tarfile.TarInfo(arcname)
+                info.type = tarfile.SYMTYPE
+                info.linkname = linkname
+                tar.addfile(info)
+        return archive
+
+    def test_tar_member_escaping_output_path_is_rejected(self):
+        archive = self._make_tar("../escaped.txt")
+        with self.assertRaises(UnsafeArchiveError):
+            unpack_downloaded_file(archive, self.output_path, "application/x-tar")
+        self.assertFalse(os.path.exists(os.path.join(self.temp_dir, "escaped.txt")))
+
+    def test_tar_absolute_member_stays_inside_output_path(self):
+        # tarfile.add() strips a leading "/", so build the member explicitly to
+        # reproduce what an attacker-crafted archive carries. Absolute names are
+        # neutralised (leading separator stripped) rather than rejected, which is
+        # what the stdlib "data" filter does.
+        absolute_name = os.path.join(self.temp_dir, "absolute.txt")
+        archive = os.path.join(self.temp_dir, "absolute.tar")
+        with tarfile.open(archive, "w") as tar:
+            info = tarfile.TarInfo(absolute_name)
+            info.size = 0
+            tar.addfile(info)
+
+        unpack_downloaded_file(archive, self.output_path, "application/x-tar")
+
+        self.assertFalse(os.path.exists(absolute_name))
+        extracted = os.path.join(self.output_path, absolute_name.lstrip("/"))
+        self.assertTrue(os.path.exists(extracted))
+
+    def test_targz_member_escaping_output_path_is_rejected(self):
+        archive = self._make_tar(
+            "../escaped_gz.txt", mode="w:gz", name="archive.tar.gz"
+        )
+        with self.assertRaises(UnsafeArchiveError):
+            unpack_downloaded_file(archive, self.output_path, "application/gzip")
+        self.assertFalse(os.path.exists(os.path.join(self.temp_dir, "escaped_gz.txt")))
+
+    def test_tar_symlink_escaping_output_path_is_rejected(self):
+        archive = self._make_tar("link", linkname="/etc/passwd")
+        with self.assertRaises(UnsafeArchiveError):
+            unpack_downloaded_file(archive, self.output_path, "application/x-tar")
+        self.assertFalse(
+            os.path.lexists(os.path.join(self.output_path, "link")),
+        )
+
+    def test_tar_with_safe_members_is_extracted(self):
+        archive = self._make_tar("nested/safe.txt")
+        self.assertTrue(
+            unpack_downloaded_file(archive, self.output_path, "application/x-tar")
+        )
+        extracted = os.path.join(self.output_path, "nested", "safe.txt")
+        with open(extracted) as fp:
+            self.assertEqual(fp.read(), "owned")
+
+
+class SafeTarExtractallFallbackTest(unittest.TestCase):
+    """Test the pre-3.12 member validator, which has no stdlib 'data' filter."""
+
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.output_path = os.path.join(self.temp_dir, "output")
+        os.makedirs(self.output_path)
+        self.addCleanup(shutil.rmtree, self.temp_dir, ignore_errors=True)
+
+    def _extract_via_fallback(self, archive):
+        with patch.object(sys, "version_info", (3, 11, 0)):
+            with tarfile.open(archive) as tar:
+                safe_tar_extractall(tar, self.output_path)
+
+    def _tar_with(self, info, name="fallback.tar"):
+        archive = os.path.join(self.temp_dir, name)
+        with tarfile.open(archive, "w") as tar:
+            tar.addfile(info)
+        return archive
+
+    def test_fallback_rejects_traversing_member(self):
+        info = tarfile.TarInfo("../escaped.txt")
+        info.size = 0
+        with self.assertRaises(UnsafeArchiveError):
+            self._extract_via_fallback(self._tar_with(info))
+        self.assertFalse(os.path.exists(os.path.join(self.temp_dir, "escaped.txt")))
+
+    def test_fallback_rejects_escaping_symlink(self):
+        info = tarfile.TarInfo("link")
+        info.type = tarfile.SYMTYPE
+        info.linkname = "/etc/passwd"
+        with self.assertRaises(UnsafeArchiveError):
+            self._extract_via_fallback(self._tar_with(info))
+
+    def test_fallback_rejects_special_file(self):
+        info = tarfile.TarInfo("fifo")
+        info.type = tarfile.FIFOTYPE
+        with self.assertRaises(UnsafeArchiveError):
+            self._extract_via_fallback(self._tar_with(info))
+
+    def test_fallback_neutralises_absolute_member(self):
+        absolute_name = os.path.join(self.temp_dir, "absolute.txt")
+        info = tarfile.TarInfo(absolute_name)
+        info.size = 0
+        self._extract_via_fallback(self._tar_with(info))
+        self.assertFalse(os.path.exists(absolute_name))
+        self.assertTrue(
+            os.path.exists(os.path.join(self.output_path, absolute_name.lstrip("/")))
+        )
+
+    def test_fallback_extracts_safe_member(self):
+        info = tarfile.TarInfo("nested/safe.txt")
+        info.size = 0
+        self._extract_via_fallback(self._tar_with(info))
+        self.assertTrue(
+            os.path.exists(os.path.join(self.output_path, "nested", "safe.txt"))
+        )
