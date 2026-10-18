@@ -28,7 +28,7 @@ import requests
 import yaml
 
 from kapitan import cached, defaults
-from kapitan.errors import CompileError
+from kapitan.errors import CompileError, UnsafeArchiveError
 from kapitan.jinja2_filters import (
     _jinja_error_info,
     load_jinja2_filters,
@@ -534,6 +534,57 @@ def make_request(source):
     return None, None
 
 
+def _validated_tar_members(tar, output_path):
+    """Return tar members, rejecting any that would write outside output_path.
+
+    Fallback for Python < 3.12, which has no ``data`` extraction filter.
+    """
+    dest = os.path.realpath(output_path)
+
+    def contained(path):
+        return path == dest or path.startswith(dest + os.sep)
+
+    members = tar.getmembers()
+    for member in members:
+        if member.isdev():
+            raise UnsafeArchiveError(f"{member.name}: archive contains a special file")
+        # Mirror the stdlib ``data`` filter: absolute names are stripped of
+        # their leading separator rather than rejected, so behaviour matches
+        # Python >= 3.12 exactly.
+        member.name = member.name.lstrip("/")
+        target = os.path.realpath(os.path.join(dest, member.name))
+        if not contained(target):
+            raise UnsafeArchiveError(
+                f"{member.name}: archive member escapes {output_path}"
+            )
+        if member.issym() or member.islnk():
+            anchor = os.path.dirname(target) if member.issym() else dest
+            link = os.path.realpath(os.path.join(anchor, member.linkname))
+            if not contained(link):
+                raise UnsafeArchiveError(
+                    f"{member.name}: link target escapes {output_path}"
+                )
+    return members
+
+
+def safe_tar_extractall(tar, output_path):
+    """Extract tar into output_path, refusing members that escape it.
+
+    Wraps ``TarFile.extractall`` so a malicious or compromised archive cannot
+    write outside its destination via ``..`` components, absolute paths or
+    escaping links.
+    """
+    if sys.version_info >= (3, 12):
+        try:
+            tar.extractall(path=output_path, filter="data")
+        except tarfile.FilterError as e:
+            raise UnsafeArchiveError(f"unsafe archive member: {e}") from e
+    else:
+        tar.extractall(
+            path=output_path, members=_validated_tar_members(tar, output_path)
+        )
+
+
 def unpack_downloaded_file(file_path, output_path, content_type):
     """unpacks files of various MIME type and stores it to the output_path"""
     is_unpacked = False
@@ -545,7 +596,7 @@ def unpack_downloaded_file(file_path, output_path, content_type):
 
     if content_type == "application/x-tar":
         with tarfile.open(file_path) as tar:
-            tar.extractall(path=output_path)
+            safe_tar_extractall(tar, output_path)
         is_unpacked = True
     elif content_type == "application/zip":
         with ZipFile(file_path) as zfile:
@@ -560,7 +611,7 @@ def unpack_downloaded_file(file_path, output_path, content_type):
     ]:
         if re.search(r"(\.tar\.gz|\.tgz)$", file_path):
             with tarfile.open(file_path) as tar:
-                tar.extractall(path=output_path)
+                safe_tar_extractall(tar, output_path)
             is_unpacked = True
         else:
             extension = re.findall(r"\..*$", file_path)[0]
