@@ -114,6 +114,52 @@ def _parse_frontmatter(text):
     return data if isinstance(data, dict) else {}
 
 
+# --- Content-tab heading leak guard ----------------------------------------
+#
+# pymdownx.tabbed content is indented under `=== "label"` markers. A real ATX
+# heading (### ...) placed inside a tab still lands in the page's table of
+# contents, regardless of which tab is active. With repeated tabs (git/http/
+# helm/oci each carrying their own "### Syntax"/"### Example") the TOC fills
+# with duplicated, out-of-order entries. Headings inside tabs must be demoted
+# to bold text (**Syntax**); only code comments may be indented under a tab.
+#
+# Detection: an ATX heading is always at column 0 in well-formed Markdown. Any
+# indented `#...` line that is NOT inside a fenced code block is a heading that
+# leaked into tab content.
+
+_FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
+_INDENTED_HEADING_RE = re.compile(r"^[ \t]+#{1,6}\s")
+
+
+def _indented_headings_outside_fences(text):
+    """Return (line_no, line) for ATX headings indented under content tabs."""
+    offenders = []
+    fence = None  # the opening fence token while inside a code block
+    for i, line in enumerate(text.splitlines(), start=1):
+        m = _FENCE_RE.match(line)
+        if m:
+            token = m.group(1)[0]  # ` or ~
+            if fence is None:
+                fence = token
+            elif token == fence:
+                fence = None
+            continue
+        if fence is None and _INDENTED_HEADING_RE.match(line):
+            offenders.append((i, line.rstrip()))
+    return offenders
+
+
+@pytest.mark.parametrize("page", _docs_pages(), ids=_page_id)
+def test_docs_page_has_no_tab_nested_headings(page):
+    offenders = _indented_headings_outside_fences(page.read_text(encoding="utf-8"))
+    rel = _page_id(page)
+    assert not offenders, (
+        f"{rel}: ATX heading(s) indented inside a content tab leak into the page "
+        f"TOC; demote to bold (**Heading**): "
+        + "; ".join(f"L{n}: {ln.strip()}" for n, ln in offenders)
+    )
+
+
 @pytest.mark.parametrize("page", _docs_pages(), ids=_page_id)
 def test_docs_page_has_seo_frontmatter(page):
     frontmatter = _parse_frontmatter(page.read_text(encoding="utf-8"))
