@@ -258,6 +258,34 @@ class CompileKubernetesTest(unittest.TestCase):
             self.fail("\n".join(msg_lines))
         self.assertEqual(compiled_dir_hash, test_compiled_dir_hash)
 
+    def test_compile_parallel_equals_serial(self):
+        """Characterization: parallel and serial compile produce identical output.
+
+        Pins the multiprocessing worker-seeding path (cached.as_dict/from_dict via
+        the Pool initializer) by compiling the same inventory with --parallelism 4
+        and --parallelism 1 and asserting both match each other and the golden
+        snapshot. A regression that leaks or drops worker state would diverge here.
+        """
+        reference_dir = os.path.join(TEST_PWD, "tests/test_kubernetes_compiled")
+        reference_hash = directory_hash(reference_dir)
+        compile_dir = os.path.join(os.getcwd(), "compiled")
+        hashes = {}
+        for parallelism in ("4", "1"):
+            reset_cache()
+            shutil.rmtree("compiled", ignore_errors=True)
+            kapitan("compile", "-c", "--parallelism", parallelism, *self.extraArgv)
+            hashes[parallelism] = directory_hash(compile_dir)
+        self.assertEqual(
+            hashes["4"],
+            hashes["1"],
+            "parallel (--parallelism 4) vs serial (--parallelism 1) output differs",
+        )
+        self.assertEqual(
+            hashes["1"],
+            reference_hash,
+            "compiled output differs from golden snapshot",
+        )
+
     def test_compile_not_enough_args(self):
         with self.assertRaises(SystemExit) as cm:
             # Ignoring stdout for "kapitan --help"
