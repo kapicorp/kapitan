@@ -88,3 +88,7 @@ class OCIFetchingError(KapitanError):
 
 class PathTraversalError(KapitanError):
     """Raised when a file accessor resolves a path outside its search paths."""
+
+
+class UnsafeArchiveError(KapitanError):
+    """Raised when an archive member would be extracted outside its target directory."""
