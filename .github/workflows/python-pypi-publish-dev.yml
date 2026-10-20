@@ -22,11 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # NOTE:
-      # Remove user/password and uncomment id-token permission once Trusted
-      # Publishing (OIDC) is setup in pypi. See:
-      # https://github.com/pypa/gh-action-pypi-publish
-      # id-token: write
+      # Trusted Publishing (OIDC) to PyPI.
+      id-token: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -53,8 +50,6 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
           # Dev versions are derived from distance-from-latest-tag, so the same
           # version can be recomputed across runs (re-runs, tag moves, etc.).
           # Treat "already on PyPI" as a no-op instead of failing the workflow.
