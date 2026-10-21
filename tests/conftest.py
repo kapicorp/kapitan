@@ -81,6 +81,13 @@ def isolated_compile_dir(temp_dir):
     cached.args = Namespace()
 
 
+def _ignore_coverage_files(src, names):
+    """Ignore coverage data files that may leak into test_resources during parallel runs."""
+    return {
+        name for name in names if name.startswith(".coverage.") or name == ".coverage"
+    }
+
+
 @pytest.fixture
 def isolated_test_resources(temp_dir, request):
     """
@@ -88,7 +95,12 @@ def isolated_test_resources(temp_dir, request):
     Returns the path to the isolated copy.
     """
     isolated_path = os.path.join(temp_dir, "test_resources")
-    shutil.copytree(TEST_RESOURCES_PATH, isolated_path)
+    shutil.copytree(
+        TEST_RESOURCES_PATH,
+        isolated_path,
+        ignore=_ignore_coverage_files,
+        ignore_dangling_symlinks=True,
+    )
 
     original_dir = os.getcwd()
     reset_cache()
