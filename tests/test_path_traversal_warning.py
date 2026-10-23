@@ -15,6 +15,8 @@ import logging
 import pytest
 
 from kapitan import resources
+from kapitan.cached import reset_cache
+from kapitan.cli import main as kapitan
 from kapitan.errors import PathTraversalError
 from kapitan.utils import check_path_traversal, set_path_traversal_mode
 
@@ -144,3 +146,48 @@ def test_search_imports_warns_when_import_escapes_search_paths(tmp_path, caplog)
         "jsonnet import" in r.message and "escapes its search" in r.message
         for r in caplog.records
     )
+
+
+def _compile_project(tmp_path, monkeypatch, *flags):
+    project = tmp_path / "project"
+    (project / "inventory" / "targets").mkdir(parents=True)
+    (project / "inventory" / "classes").mkdir()
+    (project / "components").mkdir()
+    _write(tmp_path / "outside.txt", "outside")
+    _write(
+        project / "components" / "main.jsonnet",
+        '{ out: { value: std.native("file_read")("../outside.txt") } }',
+    )
+    _write(
+        project / "inventory" / "targets" / "t.yml",
+        "parameters:\n"
+        "  kapitan:\n"
+        "    vars:\n"
+        "      target: t\n"
+        "    compile:\n"
+        "      - output_path: .\n"
+        "        input_type: jsonnet\n"
+        "        input_paths: [components/main.jsonnet]\n"
+        "        output_type: yaml\n",
+    )
+    monkeypatch.chdir(project)
+    reset_cache()
+    try:
+        kapitan("compile", *flags)
+    finally:
+        reset_cache()
+    return project / "compiled" / "t" / "out.yaml"
+
+
+def test_compile_error_mode_stops_compile(tmp_path, monkeypatch, capfd):
+    # The mode is applied inside the compile workers, so this also checks the
+    # flag reaches them.
+    with pytest.raises(SystemExit):
+        _compile_project(tmp_path, monkeypatch, "--path-traversal-mode", "error")
+    assert "escapes its search" in capfd.readouterr().err
+    assert not (tmp_path / "project" / "compiled" / "t" / "out.yaml").exists()
+
+
+def test_compile_warn_mode_compiles(tmp_path, monkeypatch):
+    out = _compile_project(tmp_path, monkeypatch, "--path-traversal-mode", "warn")
+    assert "outside" in out.read_text()
