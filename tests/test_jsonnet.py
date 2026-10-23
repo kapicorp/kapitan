@@ -11,12 +11,15 @@ import json
 import os
 import unittest
 
+import _jsonnet
+
 from kapitan.resources import (
     dir_files_list,
     dir_files_read,
     file_exists,
     gzip_b64,
     jsonschema_validate,
+    resource_callbacks,
     yaml_dump,
     yaml_dump_stream,
     yaml_load,
@@ -117,6 +120,14 @@ class JsonnetNativeFuncsTest(unittest.TestCase):
 
         self.assertTrue(validation["valid"])
         self.assertEqual(validation["reason"], "")
+
+    def test_jsonschema_validate_native_positional(self):
+        """jsonnet 0.22 can bind a native callback's positional arguments"""
+        snippet = 'std.native("jsonschema_validate")("{}", "{}")'
+        result = _jsonnet.evaluate_snippet(
+            "snippet", snippet, native_callbacks=resource_callbacks([])
+        )
+        self.assertEqual(json.loads(result), {"valid": True, "reason": ""})
 
     def test_jsonschema_invalid(self):
         """validate invalid obj with jsonschema"""
