@@ -69,6 +69,15 @@ class GetInventoryExplicitParamsTest(unittest.TestCase):
                 compose_target_name=False,
             )
 
+    def test_deprecated_compose_node_name_arg_composes(self):
+        # cached.args fallback: the deprecated flag must still enable compose
+        kapitan.cached.args = Namespace(
+            inventory_backend=self.backend_id, compose_node_name=True
+        )
+        with self.assertLogs("kapitan.resources", level="WARNING"):
+            inv = get_inventory(self.inventory_path)
+        self.assertIn("env1.minikube-es", inv.targets.keys())
+
 
 class GetInventoryExplicitParamsTestReclassRs(GetInventoryExplicitParamsTest):
     backend_id = InventoryBackends.RECLASS_RS
