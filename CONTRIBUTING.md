@@ -68,6 +68,23 @@ Pre-commit hooks run on commit. If a hook fails, fix the issue and commit again.
 5. Ensure `make format` and `make lint` pass.
 6. Open a PR using the provided template.
 
+## Testing unmerged changes on `next`
+
+The `next` branch is `master` plus every open pull request labelled `next` whose
+author has write access, merged in PR number order. The `next` workflow rebuilds
+it every 15 minutes when `master` or one of those PRs changed, and publishes:
+
+- the image `ghcr.io/kapicorp/kapitan:next`, and `next-<commit>` for pinning;
+- the wheel as the workflow artifact `kapitan-next-wheel`.
+
+A PR that conflicts with `master` or with an earlier PR is left out and listed
+in the run's summary, and the last commit on `next` lists what was merged.
+
+`next` contains changes nobody has reviewed yet. Use it to test PRs together
+before they are merged, not in production. Only maintainers can set the label,
+and only PRs by authors with write access are taken, because later pushes to a
+labelled PR reach `next` without another review.
+
 ## What we value
 
 - Accuracy over marketing: do not exaggerate capabilities.
