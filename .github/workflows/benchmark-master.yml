@@ -14,12 +14,13 @@ on:
     - cron: "0 2 * * 1"
   workflow_dispatch:
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   benchmark:
     name: Benchmark Master
+    permissions:
+      contents: write # push charts to gh-pages
     uses: ./.github/workflows/benchmark-reusable.yml
     with:
       compare-baseline: false

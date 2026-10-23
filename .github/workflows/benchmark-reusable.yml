@@ -5,7 +5,7 @@ on:
   workflow_call:
     inputs:
       compare-baseline:
-        description: 'Compare results against a cached baseline JSON file'
+        description: 'Compare results against the cached master baseline'
         type: boolean
         default: false
       fail-on-alert:
@@ -21,7 +21,7 @@ on:
         type: boolean
         default: false
       save-baseline:
-        description: 'Save benchmark JSON for future baseline caching'
+        description: 'Cache this run as the baseline for PR comparisons'
         type: boolean
         default: false
     secrets:
@@ -64,9 +64,10 @@ jobs:
         uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: ./.benchmark-cache
-          key: ${{ steps.base-sha.outputs.sha }}-${{ runner.os }}-${{ runner.arch }}-benchmark
+          key: benchmark-${{ runner.os }}-${{ runner.arch }}-${{ steps.base-sha.outputs.sha }}
+          # no exact hit for the base commit: fall back to the newest baseline
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-benchmark
+            benchmark-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Run benchmarks
         id: benchmark
@@ -87,7 +88,7 @@ jobs:
 
       - name: Compare PR vs baseline
         id: compare-baseline
-        if: inputs.compare-baseline == true && steps.cache-base.outputs.cache-hit == 'true'
+        if: inputs.compare-baseline == true && steps.cache-base.outputs.cache-matched-key != ''
         continue-on-error: true
         uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
         with:
@@ -130,6 +131,26 @@ jobs:
           echo "::error::Performance regression detected (threshold: 150%). See comparison step above for details."
           exit 1
 
+      # external-data-json-path takes the action's own data file
+      # ({entries: {<name>: [...]}}), not raw pytest-benchmark JSON, so the
+      # baseline is written by the action itself.
+      - name: Write baseline data file
+        if: inputs.save-baseline == true
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1.22.1
+        with:
+          tool: "pytest"
+          output-file-path: benchmark-result.json
+          external-data-json-path: ./.benchmark-cache/benchmark-data.json
+          fail-on-alert: false
+          comment-on-alert: false
+
+      - name: Cache baseline
+        if: inputs.save-baseline == true
+        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ./.benchmark-cache
+          key: benchmark-${{ runner.os }}-${{ runner.arch }}-${{ steps.base-sha.outputs.sha }}
+
       - name: Clean working tree for gh-pages checkout
         if: inputs.push-charts == true
         run: git reset --hard
@@ -143,20 +164,8 @@ jobs:
           github-token: ${{ secrets.github-token }}
           auto-push: true
           gh-pages-branch: gh-pages
-          benchmark-data-dir-path: dev/bench
+          # outside mike's version dirs (dev/, master/, latest/, x.y/)
+          benchmark-data-dir-path: benchmarks
           alert-threshold: "150%"
           fail-on-alert: false
           comment-on-alert: false
-
-      - name: Save benchmark to cache
-        if: inputs.save-baseline == true
-        run: |
-          mkdir -p .benchmark-cache
-          cp benchmark-result.json .benchmark-cache/benchmark-data.json
-
-      - name: Cache baseline
-        if: inputs.save-baseline == true
-        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: ./.benchmark-cache
-          key: ${{ steps.base-sha.outputs.sha }}-${{ runner.os }}-${{ runner.arch }}-benchmark
