@@ -15,6 +15,7 @@ import logging
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -545,3 +546,61 @@ class CompileTestEmptyKapitanConfig(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 kapitan("compile", "-t", "does-not-exist")
         self.assertEqual(cm.exception.code, 1)
+
+    def _with_compile(self, name):
+        return {
+            "parameters": {
+                "kapitan": {
+                    "vars": {"target": name},
+                    "compile": [
+                        {
+                            "output_path": ".",
+                            "input_type": "copy",
+                            "input_paths": [f"inventory/targets/{name}.yml"],
+                        }
+                    ],
+                }
+            }
+        }
+
+    def test_unknown_target_among_valid_targets_errors(self):
+        # a typo next to a valid -t target fails instead of compiling the valid one
+        create_test_inventory(
+            os.getcwd(), {"real-target": self._with_compile("real-target")}
+        )
+        with self.assertRaises(SystemExit):
+            with contextlib.redirect_stdout(io.StringIO()):
+                kapitan("compile", "-t", "real-target", "-t", "does-not-exist")
+        self.assertFalse(os.path.exists(os.path.join("compiled", "real-target")))
+
+    def test_no_compilable_targets_removes_temp_dir(self):
+        create_test_inventory(
+            os.getcwd(), {"no-compile": {"parameters": {"kapitan": {}}}}
+        )
+        created = []
+        real_mkdtemp = tempfile.mkdtemp
+
+        def mkdtemp(**kwargs):
+            created.append(real_mkdtemp(**kwargs))
+            return created[-1]
+
+        with mock.patch("kapitan.targets.tempfile.mkdtemp", side_effect=mkdtemp):
+            with contextlib.redirect_stdout(io.StringIO()):
+                kapitan("compile")
+        self.assertEqual(len(created), 1)
+        self.assertFalse(os.path.exists(created[0]))
+
+    def test_skipped_target_does_not_stop_pruning(self):
+        # a full compile still removes compiled/<target> of targets no longer in the inventory
+        create_test_inventory(
+            os.getcwd(),
+            {
+                "no-compile": {"parameters": {"kapitan": {}}},
+                "with-compile": self._with_compile("with-compile"),
+            },
+        )
+        os.makedirs(os.path.join("compiled", "removed-target"))
+        with contextlib.redirect_stdout(io.StringIO()):
+            kapitan("compile")
+        self.assertTrue(os.path.exists(os.path.join("compiled", "with-compile")))
+        self.assertFalse(os.path.exists(os.path.join("compiled", "removed-target")))

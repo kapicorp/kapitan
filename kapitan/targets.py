@@ -161,6 +161,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         logger.info(
             "No targets with compile configuration found. Skipping compilation."
         )
+        shutil.rmtree(temp_path)
         return
 
     # append "compiled" to output_path so we can safely overwrite it
@@ -245,8 +246,8 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
             if os.path.exists(temp_compile_path):
                 os.makedirs(compile_path, exist_ok=True)
 
-                # if '-t' is set on compile or only a few changed, only override selected targets
-                if len(target_objs) < len(discovered_targets):
+                # if '-t' or labels select a subset, only override selected targets
+                if len(targets) < len(discovered_targets):
                     for target in target_objs:
                         path = target.target_full_path
                         compile_path_target = os.path.join(compile_path, path)
