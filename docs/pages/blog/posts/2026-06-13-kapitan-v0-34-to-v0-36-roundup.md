@@ -47,7 +47,7 @@ parameters:
   kapitan:
     dependencies:
     - type: oci
-      source: ghcr.io/kapicorp/generators:1.2.0
+      source: ghcr.io/<org>/<generator>:1.2.0
       output_path: components/generators
 ```
 
