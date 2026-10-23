@@ -7,7 +7,10 @@
 
 import hashlib
 import io
+import logging
 import multiprocessing
+import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -15,8 +18,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+import requests
+from git import GitCommandError
 from pydantic import ValidationError
 
+import kapitan.dependency_manager.base as dm_base
 from kapitan.cli import main as kapitan
 from kapitan.dependency_manager.base import (
     HelmSource,
@@ -668,6 +674,121 @@ class OciFetchDependencyTest(unittest.TestCase):
             self.assertIn("only subdirectories", warning_text)
             self.assertIn("subpath", warning_text)
             self.assertIn("system", warning_text)
+
+
+# ---------------------------------------------------------------------------
+# bounded retries and structured fetch logging
+# ---------------------------------------------------------------------------
+
+
+def test_http_fetch_retries_on_transient_error(httpserver, tmp_path, monkeypatch):
+    """fetch_http_source retries on 503 and eventually succeeds."""
+    monkeypatch.setattr(dm_base, "_FETCH_RETRIES", 3)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MIN", 0)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MAX", 0)
+
+    content = b"ok after retries"
+    # First two requests return 503; third returns 200.
+    httpserver.expect_ordered_request("/retried.bin").respond_with_data(
+        "service unavailable", status=503, content_type="text/plain"
+    )
+    httpserver.expect_ordered_request("/retried.bin").respond_with_data(
+        "service unavailable", status=503, content_type="text/plain"
+    )
+    httpserver.expect_ordered_request("/retried.bin").respond_with_data(
+        content, status=200, content_type="application/octet-stream"
+    )
+
+    save_path = tmp_path / "retried.bin"
+    fetch_http_source(httpserver.url_for("/retried.bin"), str(save_path), "Dependency")
+
+    assert save_path.read_bytes() == content
+    httpserver.check_assertions()
+
+
+def test_http_fetch_exhausts_retries_and_raises(httpserver, tmp_path, monkeypatch):
+    """fetch_http_source raises after all retry attempts are consumed."""
+    monkeypatch.setattr(dm_base, "_FETCH_RETRIES", 2)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MIN", 0)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MAX", 0)
+
+    httpserver.expect_ordered_request("/always503.bin").respond_with_data(
+        "service unavailable", status=503, content_type="text/plain"
+    )
+    httpserver.expect_ordered_request("/always503.bin").respond_with_data(
+        "service unavailable", status=503, content_type="text/plain"
+    )
+
+    save_path = tmp_path / "always503.bin"
+    with pytest.raises(requests.exceptions.HTTPError):
+        fetch_http_source(
+            httpserver.url_for("/always503.bin"), str(save_path), "Dependency"
+        )
+
+
+def test_http_fetch_structured_log(httpserver, tmp_path, monkeypatch, caplog):
+    """fetch_http_source emits a structured log record with the expected fields."""
+    monkeypatch.setattr(dm_base, "_FETCH_RETRIES", 1)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MIN", 0)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MAX", 0)
+
+    content = b"structured log payload"
+    httpserver.expect_request("/data.bin").respond_with_data(
+        content, status=200, content_type="application/octet-stream"
+    )
+
+    save_path = tmp_path / "data.bin"
+    with caplog.at_level(logging.DEBUG, logger="kapitan.dependency_manager.base"):
+        fetch_http_source(httpserver.url_for("/data.bin"), str(save_path), "Dependency")
+
+    fetch_records = [
+        rec for rec in caplog.records if getattr(rec, "type", None) == "http"
+    ]
+    assert len(fetch_records) == 1, "expected exactly one structured http fetch record"
+    rec = fetch_records[0]
+    assert rec.source == httpserver.url_for("/data.bin")
+    assert rec.duration_ms >= 0
+    assert rec.bytes == len(content)
+    assert rec.outcome == "success"
+
+
+def test_git_fetch_retries_on_transient_error(tmp_path, monkeypatch):
+    """fetch_git_source retries a clone that failed with a transient network error."""
+    monkeypatch.setattr(dm_base, "_FETCH_RETRIES", 3)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MIN", 0)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MAX", 0)
+    transient = GitCommandError("clone", 128, stderr="Connection reset by peer")
+    with patch.object(
+        dm_base.Repo, "clone_from", side_effect=[transient, None]
+    ) as clone:
+        fetch_git_source("https://example.com/repo.git", str(tmp_path / "repo"), "Dep")
+    assert clone.call_count == 2
+
+
+def test_fetch_retries_zero_still_fetches_once(monkeypatch):
+    monkeypatch.setattr(dm_base, "_FETCH_RETRIES", 0)
+    assert dm_base._retry_fetch(lambda: "result", lambda exc: True) == "result"
+
+
+def test_non_numeric_fetch_env_falls_back_to_defaults(monkeypatch):
+    for name in (
+        "KAPITAN_FETCH_RETRIES",
+        "KAPITAN_FETCH_WAIT_MIN",
+        "KAPITAN_FETCH_WAIT_MAX",
+        "KAPITAN_FETCH_TIMEOUT",
+    ):
+        monkeypatch.setenv(name, "abc")
+    # fresh interpreter: the values are read at import time
+    code = (
+        "import kapitan.dependency_manager.base as b, kapitan.utils as u;"
+        "print(b._FETCH_RETRIES, b._FETCH_WAIT_MIN, b._FETCH_WAIT_MAX, u._HTTP_TIMEOUT)"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.split() == ["3", "0.5", "10", "30"]
+    assert "Ignoring KAPITAN_FETCH_RETRIES='abc'" in result.stderr
 
 
 @pytest.mark.usefixtures("reset_cached_args")

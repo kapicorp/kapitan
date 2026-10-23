@@ -307,3 +307,23 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
       source: ghcr.io/kapicorp/generators@sha256:abc123...
       output_path: components/generators
     ```
+
+### Retries and timeouts
+
+Network fetches (`git` and `http[s]`) automatically retry on **transient** failures
+(connection resets/timeouts and HTTP `429/500/502/503/504`) using exponential backoff.
+Permanent errors (authentication, `404`, bad URL) are raised immediately and never retried.
+
+Tune the behaviour with environment variables:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `KAPITAN_FETCH_RETRIES` | `3` | Maximum attempts per fetch, including the first. |
+| `KAPITAN_FETCH_WAIT_MIN` | `0.5` | Minimum backoff between attempts, in seconds. |
+| `KAPITAN_FETCH_WAIT_MAX` | `10` | Maximum backoff between attempts, in seconds. |
+| `KAPITAN_FETCH_TIMEOUT` | `30` | Per-request HTTP timeout, in seconds. |
+
+!!! note
+
+    Set `KAPITAN_FETCH_RETRIES=1` to disable retries. Values below 1 count as 1.
+    Non-numeric values are ignored with a warning and the default is used.
