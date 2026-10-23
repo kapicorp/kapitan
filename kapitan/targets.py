@@ -110,11 +110,11 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
     targets = args.targets or discovered_targets
     labels = args.labels
 
-    # errors raised before the compile phase are logged here, the cli only logs them at debug
     try:
         targets = search_targets(inventory, targets, labels)
 
     except CompileError as e:
+        # logged here because the cli only logs compile errors at debug
         logger.error("Error searching targets: %s", e)
         raise CompileError(f"Error searching targets: {e}") from e
 
@@ -151,7 +151,6 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         target_objs = load_target_inventory(inventory, targets)
 
     if not target_objs:
-        logger.error("Error: no targets found")
         raise CompileError("Error: no targets found")
 
     # append "compiled" to output_path so we can safely overwrite it

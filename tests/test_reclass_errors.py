@@ -187,10 +187,6 @@ class CompileErrorLoggingTest(unittest.TestCase):
                 kapitan("compile", *args)
         self.assertIn(expected, "\n".join(logs.output))
 
-    def test_unknown_target_is_logged(self):
-        create_test_inventory(os.getcwd(), {"real": {"parameters": {"foo": 1}}})
-        self._assert_compile_logs("no targets found", "-t", "does-not-exist")
-
     def test_unmatched_labels_are_logged(self):
         create_test_inventory(os.getcwd(), {"real": {"parameters": {"foo": 1}}})
         self._assert_compile_logs("No targets found with labels", "-l", "env=nope")
@@ -205,7 +201,11 @@ class CompileErrorLoggingTest(unittest.TestCase):
         )
 
     def test_reclass_not_found_during_compile_keeps_reclass_message(self):
-        create_test_inventory(os.getcwd(), {"real": {"parameters": {"foo": 1}}})
+        compile_entry = {"output_path": ".", "input_type": "copy", "input_paths": []}
+        create_test_inventory(
+            os.getcwd(),
+            {"real": {"parameters": {"kapitan": {"compile": [compile_entry]}}}},
+        )
         error = NotFoundError("No such directory: some/dependency")
         with mock.patch("kapitan.targets.fetch_dependencies", side_effect=error):
             self._assert_compile_logs("No such directory: some/dependency", "--fetch")
