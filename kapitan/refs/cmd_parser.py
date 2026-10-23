@@ -104,8 +104,10 @@ def ref_write(args, ref_controller):
         # args.recipients is a list, convert to recipients dict
         recipients = [dict((("name", name),)) for name in args.recipients]
 
+        signing_key = None
         if reference_backend_configs.gpg:
             recipients = reference_backend_configs.gpg.recipients
+            signing_key = reference_backend_configs.gpg.signing_key
 
         if not recipients:
             raise KapitanError(
@@ -113,7 +115,9 @@ def ref_write(args, ref_controller):
                 "parameters.kapitan.secrets.gpg.recipients and use --target"
             )
 
-        secret_obj = GPGSecret(data, recipients, encode_base64=args.base64)
+        secret_obj = GPGSecret(
+            data, recipients, encode_base64=args.base64, signing_key=signing_key
+        )
         ref_controller[tag] = secret_obj
 
     elif type_name == KapitanReferencesTypes.GKMS:
@@ -288,8 +292,10 @@ def secret_update(args, ref_controller):
         # args.recipients is a list, convert to recipients dict
         recipients = [dict((("name", name),)) for name in args.recipients]
 
+        signing_key = None
         if reference_backend_configs.gpg:
             recipients = reference_backend_configs.gpg.recipients
+            signing_key = reference_backend_configs.gpg.signing_key
 
         if not recipients:
             raise KapitanError(
@@ -298,7 +304,7 @@ def secret_update(args, ref_controller):
             )
 
         secret_obj = ref_controller[tag]
-        secret_obj.update_recipients(recipients)
+        secret_obj.update_recipients(recipients, signing_key=signing_key)
         ref_controller[tag] = secret_obj
 
     elif type_name == KapitanReferencesTypes.GKMS:
@@ -426,7 +432,9 @@ def secret_update_validate(args, ref_controller):
                             )
                             for f in target_fingerprints
                         ]
-                        secret_obj.update_recipients(new_recipients)
+                        secret_obj.update_recipients(
+                            new_recipients, signing_key=secrets.gpg.signing_key
+                        )
                         ref_controller[token_path] = secret_obj
 
             elif type_name == KapitanReferencesTypes.GKMS:
