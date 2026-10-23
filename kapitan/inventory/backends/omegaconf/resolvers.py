@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import copy
+import inspect
 import logging
 import os
 import re
@@ -237,39 +238,52 @@ def condition_equal(*configs):
     return all(config == configs[0] for config in configs)
 
 
+def _register_resolver(name: str, resolver, replace: bool = False) -> None:
+    """Register a resolver using the non-deprecated OmegaConf API.
+
+    OmegaConf >= 2.4.0 deprecates register_new_resolver() in favour of
+    register_resolver(). Older releases only provide the legacy
+    register_resolver(), so fall back to register_new_resolver() there.
+    """
+    if "replace" in inspect.signature(OmegaConf.register_resolver).parameters:
+        OmegaConf.register_resolver(name, resolver, replace=replace)
+    else:
+        OmegaConf.register_new_resolver(name, resolver, replace=replace)
+
+
 def register_resolvers(inventory_path: str = None) -> None:
     """register pre-defined and user-defined resolvers"""
     replace = True
 
     # yaml key utility functions
-    OmegaConf.register_new_resolver("key", key, replace=replace)
-    OmegaConf.register_new_resolver("parentkey", parentkey, replace=replace)
-    OmegaConf.register_new_resolver("fullkey", fullkey, replace=replace)
-    OmegaConf.register_new_resolver("relpath", relpath, replace=replace)
+    _register_resolver("key", key, replace=replace)
+    _register_resolver("parentkey", parentkey, replace=replace)
+    _register_resolver("fullkey", fullkey, replace=replace)
+    _register_resolver("relpath", relpath, replace=replace)
 
     # yaml object utility functions
-    OmegaConf.register_new_resolver("access", access_key_with_dots, replace=replace)
-    OmegaConf.register_new_resolver("escape", escape_interpolation, replace=replace)
-    OmegaConf.register_new_resolver("merge", merge, replace=replace)
-    OmegaConf.register_new_resolver("dict", to_dict, replace=replace)
-    OmegaConf.register_new_resolver("list", to_list, replace=replace)
-    OmegaConf.register_new_resolver("yaml", to_yaml, replace=replace)
-    OmegaConf.register_new_resolver("add", lambda x, y: x + y, replace=replace)
-    OmegaConf.register_new_resolver("default", default, replace=replace)
-    OmegaConf.register_new_resolver("write", write_to_key, replace=replace)
-    OmegaConf.register_new_resolver("from_file", from_file, replace=replace)
-    OmegaConf.register_new_resolver("filename", filename, replace=replace)
-    OmegaConf.register_new_resolver("parent_filename", parent_filename, replace=replace)
-    OmegaConf.register_new_resolver("path", path, replace=replace)
-    OmegaConf.register_new_resolver("parent_path", parent_path, replace=replace)
+    _register_resolver("access", access_key_with_dots, replace=replace)
+    _register_resolver("escape", escape_interpolation, replace=replace)
+    _register_resolver("merge", merge, replace=replace)
+    _register_resolver("dict", to_dict, replace=replace)
+    _register_resolver("list", to_list, replace=replace)
+    _register_resolver("yaml", to_yaml, replace=replace)
+    _register_resolver("add", lambda x, y: x + y, replace=replace)
+    _register_resolver("default", default, replace=replace)
+    _register_resolver("write", write_to_key, replace=replace)
+    _register_resolver("from_file", from_file, replace=replace)
+    _register_resolver("filename", filename, replace=replace)
+    _register_resolver("parent_filename", parent_filename, replace=replace)
+    _register_resolver("path", path, replace=replace)
+    _register_resolver("parent_path", parent_path, replace=replace)
 
     # boolean algebra
-    OmegaConf.register_new_resolver("if", condition_if, replace=replace)
-    OmegaConf.register_new_resolver("ifelse", condition_if_else, replace=replace)
-    OmegaConf.register_new_resolver("and", condition_and, replace=replace)
-    OmegaConf.register_new_resolver("or", condition_or, replace=replace)
-    OmegaConf.register_new_resolver("not", condition_not, replace=replace)
-    OmegaConf.register_new_resolver("equal", condition_equal, replace=replace)
+    _register_resolver("if", condition_if, replace=replace)
+    _register_resolver("ifelse", condition_if_else, replace=replace)
+    _register_resolver("and", condition_and, replace=replace)
+    _register_resolver("or", condition_or, replace=replace)
+    _register_resolver("not", condition_not, replace=replace)
+    _register_resolver("equal", condition_equal, replace=replace)
 
     # user defined resolvers - check inventory path first, then fall back to system path
     user_resolver_file = None
@@ -314,6 +328,6 @@ def register_user_resolvers(user_resolver_file: str) -> None:
 
     for name, func in funcs.items():
         try:
-            OmegaConf.register_new_resolver(name, func, replace=True)
+            _register_resolver(name, func, replace=True)
         except Exception as e:
             logger.warning(f"Could not load resolver {name}: {e}")

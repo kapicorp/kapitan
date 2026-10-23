@@ -98,7 +98,7 @@ Tune the behaviour with environment variables:
 
 === "git"
 
-    ### Syntax
+    **Syntax**
 
     ```yaml
     parameters:
@@ -121,7 +121,7 @@ Tune the behaviour with environment variables:
 
         This type depends on the `git` binary installed on your system and available to **Kapitan**.
 
-    ### Example
+    **Example**
 
     Say we want to fetch the source code from our kapitan repository, specifically, `kapicorp/kapitan/kapitan/version.py`. Let's create a very simple target file `inventory/targets/kapitan-example.yml`.
 
@@ -146,7 +146,7 @@ Tune the behaviour with environment variables:
 
 === "http"
 
-    ### Syntax
+    **Syntax**
 
     ```yaml
     parameters:
@@ -162,7 +162,7 @@ Tune the behaviour with environment variables:
     2. http[s] types can fetch external dependencies available at `http://` or `https://` URL.
     3. archive mode: download and unpack
 
-    ### Example
+    **Example**
 
     === "Single file"
 
@@ -189,7 +189,7 @@ Tune the behaviour with environment variables:
 
 === "helm"
 
-    ### Syntax
+    **Syntax**
 
     ```yaml
     parameters:
@@ -211,7 +211,7 @@ Tune the behaviour with environment variables:
 
     `source` can be either the URL to a chart repository, or the URL to a chart on an OCI registry (supported since Helm 3.8.0).
 
-    ### Example
+    **Example**
 
     If we want to download the prometheus helm chart we simply add the dependency to the monitoring target.
     We want a specific version `11.3.0` so we put that in.
@@ -242,7 +242,7 @@ Tune the behaviour with environment variables:
 
 === "oci"
 
-    ### Syntax
+    **Syntax**
 
     ```yaml
     parameters:
@@ -272,7 +272,7 @@ Tune the behaviour with environment variables:
         For a full guide on packaging and publishing your own generator bundles, see
         [Publishing generators as OCI artifacts](publishing_generators.md).
 
-    ### Authentication
+    **Authentication**
 
     Credentials are never stored in the inventory. Kapitan supports two authentication approaches:
 
@@ -298,7 +298,7 @@ Tune the behaviour with environment variables:
 
     This is the preferred approach for CI/CD pipelines where credentials are injected as secrets.
 
-    ### Example
+    **Example**
 
     Fetching a Kapitan generator bundle published to GHCR and making it available as a Kadet component:
 
