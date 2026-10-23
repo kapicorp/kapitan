@@ -156,6 +156,39 @@ terraform_expression: ${var.foo == "bar" ? 1 : 0}
 
 ---
 
+### Replacing a Value with `~`
+
+Classes and targets merge: maps are merged key by key, and lists are extended
+with the items they don't contain yet. To replace a value instead, prefix its
+key with `~`, as in reclass:
+
+```yaml
+# inventory/classes/app.yml
+parameters:
+  app:
+    args: [--v=2, --port=80]
+    node_selector: {kubernetes.io/os: linux}
+```
+
+```yaml
+# inventory/targets/prod.yml
+classes: [app]
+parameters:
+  app:
+    ~args: [--v=4]
+    ~node_selector: {zone: a}
+```
+
+`prod` gets `args: [--v=4]` and `node_selector: {zone: a}`. Without the `~`, it
+would get `args: [--v=2, --port=80, --v=4]` and both node selector keys.
+
+The prefix is stripped and never appears in the rendered inventory. It replaces
+everything merged before it, including values from the classes a class includes
+itself, and classes merged after it merge into the replaced value as usual.
+A key starting with `~` therefore can't be used as a plain key, and setting both
+`key` and `~key` in the same file is an error. Kapitan versions up to 0.36.3
+ignore the prefix with this backend and keep `~key` as a separate key.
+
 ## Built-in Resolvers
 
 ### OmegaConf Native Resolvers

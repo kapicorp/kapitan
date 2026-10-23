@@ -229,3 +229,139 @@ class RegisterResolversApiTest(unittest.TestCase):
         with mock.patch.object(OmegaConf, "register_new_resolver") as deprecated:
             register_resolvers()
         deprecated.assert_not_called()
+
+
+class TestOmegaConfOverwritePrefix(unittest.TestCase):
+    """A key starting with ``~`` replaces that key instead of merging into it,
+    as in reclass."""
+
+    def setUp(self):
+        reset_cache()
+        self.temp_dir = tempfile.mkdtemp()
+        self.classes_dir = os.path.join(self.temp_dir, "classes")
+        self.targets_dir = os.path.join(self.temp_dir, "targets")
+        os.makedirs(self.classes_dir)
+        os.makedirs(self.targets_dir)
+        self.write_class(
+            "base",
+            "parameters:\n"
+            "  app:\n"
+            "    args: [a, b]\n"
+            "    sel: {os: linux, zone: x}\n"
+            "    name: base\n",
+        )
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+        reset_cache()
+
+    def write_class(self, name, content):
+        path = os.path.join(self.classes_dir, *name.split(".")) + ".yml"
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(content)
+
+    def params(self, target_content):
+        with open(os.path.join(self.targets_dir, "t.yml"), "w") as f:
+            f.write(target_content)
+        inventory = OmegaConfInventory(inventory_path=self.temp_dir, initialise=False)
+        target = inventory.target_class(name="t", path="t.yml")
+        inventory.targets.update({"t": target})
+        inventory.load_target(target)
+        return target.parameters.model_dump(by_alias=True)
+
+    def assertNoPrefixedKeys(self, ob, path="parameters"):
+        if isinstance(ob, dict):
+            for key, value in ob.items():
+                self.assertFalse(
+                    str(key).startswith("~"), f"{path}.{key} kept its prefix"
+                )
+                self.assertNoPrefixedKeys(value, f"{path}.{key}")
+        elif isinstance(ob, list):
+            for i, value in enumerate(ob):
+                self.assertNoPrefixedKeys(value, f"{path}[{i}]")
+
+    def test_target_replaces_list_map_and_scalar(self):
+        params = self.params(
+            "classes: [base]\n"
+            "parameters:\n"
+            "  app:\n"
+            "    ~args: [z]\n"
+            "    ~sel: {zone: y}\n"
+            "    ~name: target\n"
+        )
+        self.assertEqual(params["app"]["args"], ["z"])
+        self.assertEqual(params["app"]["sel"], {"zone": "y"})
+        self.assertEqual(params["app"]["name"], "target")
+        self.assertNoPrefixedKeys(params)
+
+    def test_without_prefix_lists_and_maps_still_merge(self):
+        params = self.params(
+            "classes: [base]\n"
+            "parameters:\n"
+            "  app:\n"
+            "    args: [z]\n"
+            "    sel: {zone: y}\n"
+        )
+        self.assertEqual(params["app"]["args"], ["a", "b", "z"])
+        self.assertEqual(params["app"]["sel"], {"os": "linux", "zone": "y"})
+
+    def test_class_replaces_value_of_earlier_class(self):
+        self.write_class("reset", "parameters:\n  app:\n    ~args: [z]\n")
+        params = self.params("classes: [base, reset]\n")
+        self.assertEqual(params["app"]["args"], ["z"])
+        self.assertNoPrefixedKeys(params)
+
+    def test_class_with_own_classes_replaces_value_of_earlier_class(self):
+        self.write_class("site.common", "parameters:\n  app:\n    args: [c]\n")
+        self.write_class(
+            "site.reset",
+            "classes: [.common]\nparameters:\n  app:\n    ~args: [z]\n",
+        )
+        params = self.params("classes: [base, site.reset]\n")
+        self.assertEqual(params["app"]["args"], ["z"])
+        self.assertNoPrefixedKeys(params)
+
+    def test_later_class_merges_into_replaced_value(self):
+        self.write_class("reset", "parameters:\n  app:\n    ~args: [z]\n")
+        self.write_class("extra", "parameters:\n  app:\n    args: [w]\n")
+        params = self.params("classes: [base, reset, extra]\n")
+        self.assertEqual(params["app"]["args"], ["z", "w"])
+        self.assertNoPrefixedKeys(params)
+
+    def test_prefix_on_missing_key_sets_it(self):
+        params = self.params("classes: [base]\nparameters:\n  app:\n    ~extra: [z]\n")
+        self.assertEqual(params["app"]["extra"], ["z"])
+        self.assertNoPrefixedKeys(params)
+
+    def test_prefix_nested_inside_replaced_subtree(self):
+        params = self.params(
+            "classes: [base]\n"
+            "parameters:\n"
+            "  ~app:\n"
+            "    ~args: [z]\n"
+            "    sel: {zone: y}\n"
+        )
+        self.assertEqual(params["app"], {"args": ["z"], "sel": {"zone": "y"}})
+        self.assertNoPrefixedKeys(params)
+
+    def test_prefix_with_interpolation(self):
+        self.write_class("other", "parameters:\n  shared:\n    args: [s]\n")
+        params = self.params(
+            "classes: [base, other]\n"
+            "parameters:\n"
+            "  app:\n"
+            "    ~args: ${shared.args}\n"
+        )
+        self.assertEqual(params["app"]["args"], ["s"])
+        self.assertNoPrefixedKeys(params)
+
+    def test_key_and_prefixed_key_in_one_file_fail(self):
+        with self.assertRaisesRegex(InventoryError, "'args' and '~args' are both set"):
+            self.params(
+                "classes: [base]\n"
+                "parameters:\n"
+                "  app:\n"
+                "    args: [y]\n"
+                "    ~args: [z]\n"
+            )

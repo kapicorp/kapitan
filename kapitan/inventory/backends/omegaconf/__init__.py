@@ -19,7 +19,7 @@ from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory, InventoryTarget
 from kapitan.inventory.model import KapitanInventoryMetadata, KapitanInventoryParameters
 from kapitan.utils import available_cpu_count
-from omegaconf import ListMergeMode, OmegaConf
+from omegaconf import DictConfig, ListMergeMode, OmegaConf
 
 from .migrate import migrate
 from .resolvers import register_resolvers
@@ -35,6 +35,64 @@ def keys_to_strings(ob):
 
 class OmegaConfRenderingError(InventoryError):
     pass
+
+
+# A key starting with this prefix replaces the key without it instead of
+# merging into it, as in reclass: ``~args: [a]`` sets ``args`` to ``[a]``.
+OVERWRITE_PREFIX = "~"
+
+
+def _is_overwrite(key) -> bool:
+    return isinstance(key, str) and len(key) > 1 and key.startswith(OVERWRITE_PREFIX)
+
+
+def apply_overwrites(dest: DictConfig, src: dict) -> dict:
+    """Prepare ``src`` for being merged into ``dest``.
+
+    For every ``~key`` in ``src``, removes ``key`` and ``~key`` from ``dest``,
+    so the merge sets the value instead of extending it. A plain ``key`` in
+    ``src`` whose counterpart in ``dest`` is still marked ``~key`` is renamed,
+    so it merges into the replaced value. The markers stay until
+    ``strip_overwrites`` runs on the fully merged parameters, because a class
+    is merged with its own classes before it is merged into the classes before
+    it, and its overwrite has to reach those too.
+    """
+    for key in list(src):
+        if _is_overwrite(key):
+            for name in (key[len(OVERWRITE_PREFIX) :], key):
+                if name in dest:
+                    del dest[name]
+            continue
+        name = key
+        marked = OVERWRITE_PREFIX + key
+        if marked in dest:
+            src[marked] = src.pop(key)
+            name = marked
+        if (
+            isinstance(src[name], dict)
+            and name in dest
+            and not OmegaConf.is_interpolation(dest, name)
+            and isinstance(dest[name], DictConfig)
+        ):
+            apply_overwrites(dest[name], src[name])
+    return src
+
+
+def strip_overwrites(ob, path="parameters"):
+    """Remove the overwrite prefix from every key of the merged parameters."""
+    if isinstance(ob, list):
+        return [strip_overwrites(v, f"{path}[{i}]") for i, v in enumerate(ob)]
+    if not isinstance(ob, dict):
+        return ob
+    out = {}
+    for key, value in ob.items():
+        name = key[len(OVERWRITE_PREFIX) :] if _is_overwrite(key) else key
+        if name in out:
+            raise InventoryError(
+                f"{path}: '{name}' and '{OVERWRITE_PREFIX}{name}' are both set"
+            )
+        out[name] = strip_overwrites(value, f"{path}.{name}")
+    return out
 
 
 @keys_to_strings.register
@@ -192,6 +250,9 @@ class OmegaConfInventory(Inventory):
                 raise InventoryError(f"Class {class_name} not found")
             p, c, a, e = self.load_parameters_from_file(class_file)
             if p:
+                p = apply_overwrites(
+                    parameters, OmegaConf.to_container(p, resolve=False)
+                )
                 parameters = OmegaConf.unsafe_merge(
                     parameters, p, list_merge_mode=ListMergeMode.EXTEND_UNIQUE
                 )
@@ -202,6 +263,7 @@ class OmegaConfInventory(Inventory):
 
         # finally merges the parameters from the current file
         if _parameters:
+            _parameters = apply_overwrites(parameters, _parameters)
             parameters = OmegaConf.unsafe_merge(
                 parameters, _parameters, list_merge_mode=ListMergeMode.EXTEND_UNIQUE
             )
@@ -220,6 +282,7 @@ class OmegaConfInventory(Inventory):
         p, c, a, e = self.load_parameters_from_file(
             full_target_path, parameters=parameters
         )
+        p = OmegaConf.create(strip_overwrites(OmegaConf.to_container(p, resolve=False)))
         load_parameters = time.perf_counter() - start
 
         # First resolve pass - resolves all interpolations, escaped ones become unescaped
