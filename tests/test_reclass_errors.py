@@ -11,9 +11,15 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
+import pytest
+from reclass.errors import NotFoundError
+
+from kapitan.cli import main as kapitan
 from kapitan.inventory import InventoryBackends, get_inventory_backend
 from kapitan.inventory.inventory import InventoryError
+from tests.test_helpers import create_test_inventory
 
 
 class ReclassErrorMessageTest(unittest.TestCase):
@@ -169,3 +175,37 @@ class ReclassRsErrorMessageTest(ReclassErrorMessageTest):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@pytest.mark.usefixtures("isolated_compile_dir")
+class CompileErrorLoggingTest(unittest.TestCase):
+    """kapitan compile logs the actual error instead of exiting silently or generically."""
+
+    def _assert_compile_logs(self, expected, *args):
+        with self.assertLogs("kapitan.targets", level="ERROR") as logs:
+            with self.assertRaises(SystemExit):
+                kapitan("compile", *args)
+        self.assertIn(expected, "\n".join(logs.output))
+
+    def test_unknown_target_is_logged(self):
+        create_test_inventory(os.getcwd(), {"real": {"parameters": {"foo": 1}}})
+        self._assert_compile_logs("no targets found", "-t", "does-not-exist")
+
+    def test_unmatched_labels_are_logged(self):
+        create_test_inventory(os.getcwd(), {"real": {"parameters": {"foo": 1}}})
+        self._assert_compile_logs("No targets found with labels", "-l", "env=nope")
+
+    def test_reclass_not_found_keeps_reclass_message(self):
+        # the missing directory is named instead of a generic "inventory not found"
+        with self.assertLogs("kapitan", level="ERROR") as logs:
+            with self.assertRaises(SystemExit):
+                kapitan("compile", "--inventory-path", "does-not-exist")
+        self.assertIn(
+            "No such directory: does-not-exist/targets", "\n".join(logs.output)
+        )
+
+    def test_reclass_not_found_during_compile_keeps_reclass_message(self):
+        create_test_inventory(os.getcwd(), {"real": {"parameters": {"foo": 1}}})
+        error = NotFoundError("No such directory: some/dependency")
+        with mock.patch("kapitan.targets.fetch_dependencies", side_effect=error):
+            self._assert_compile_logs("No such directory: some/dependency", "--fetch")

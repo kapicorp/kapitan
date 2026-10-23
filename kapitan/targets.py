@@ -15,7 +15,7 @@ import tempfile
 import time
 from functools import partial
 
-from reclass.errors import NotFoundError, ReclassException
+from reclass.errors import ReclassException
 
 from kapitan import cached
 from kapitan.dependency_manager.base import fetch_dependencies
@@ -110,10 +110,12 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
     targets = args.targets or discovered_targets
     labels = args.labels
 
+    # errors raised before the compile phase are logged here, the cli only logs them at debug
     try:
         targets = search_targets(inventory, targets, labels)
 
     except CompileError as e:
+        logger.error("Error searching targets: %s", e)
         raise CompileError(f"Error searching targets: {e}") from e
 
     if len(targets) == 0:
@@ -149,6 +151,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         target_objs = load_target_inventory(inventory, targets)
 
     if not target_objs:
+        logger.error("Error: no targets found")
         raise CompileError("Error: no targets found")
 
     # append "compiled" to output_path so we can safely overwrite it
@@ -255,10 +258,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
             )
             _log_cache_metrics(cached.input_cache_metrics)
     except ReclassException as e:
-        if isinstance(e, NotFoundError):
-            logger.error("Inventory reclass error: inventory not found")
-        else:
-            logger.error("Inventory reclass error: %s", e.message)
+        logger.error("Inventory reclass error: %s", e.message)
         raise InventoryError(e.message) from e
     except Exception as e:
         # only print traceback for errors we don't know about
