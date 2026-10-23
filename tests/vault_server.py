@@ -7,6 +7,7 @@
 
 import logging
 import os
+import unittest
 from time import monotonic, sleep
 
 import hvac
@@ -37,22 +38,29 @@ def _setup_timeout():
 
 # Module-level singletons so test classes can share vault server instances.
 _shared_vault_servers = {}
-# Cache construction failures so every dependent test class skips immediately
-# instead of each re-waiting the full setup timeout.
+# Cache construction failures so every dependent test class fails or skips
+# immediately instead of each re-waiting the full setup timeout.
 _failed_vault_servers = {}
 
 
 def get_shared_vault_server(server_cls=None):
-    """Return a shared VaultServer singleton, creating it if necessary."""
+    """Return a shared VaultServer singleton, creating it if necessary.
+
+    If the server can't be set up, the calling test class is skipped. In CI
+    (CI env var set) the VaultServerError is raised so a broken vault fails
+    the build.
+    """
     cls = server_cls or VaultServer
-    if cls in _failed_vault_servers:
-        raise _failed_vault_servers[cls]
     if cls not in _shared_vault_servers:
         try:
+            if cls in _failed_vault_servers:
+                raise _failed_vault_servers[cls]
             _shared_vault_servers[cls] = cls()
         except VaultServerError as exc:
             _failed_vault_servers[cls] = exc
-            raise
+            if os.environ.get("CI"):
+                raise
+            raise unittest.SkipTest(f"vault server unavailable: {exc}") from exc
     return _shared_vault_servers[cls]
 
 

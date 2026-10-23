@@ -20,7 +20,7 @@ from kapitan.cli import build_parser
 from kapitan.cli import main as kapitan
 from kapitan.errors import KapitanError
 from kapitan.refs.secrets.vaultkv import VaultSecret
-from tests.vault_server import VaultServerError, get_shared_vault_server
+from tests.vault_server import get_shared_vault_server
 
 
 REFS_PATH = tempfile.mkdtemp()
@@ -61,10 +61,7 @@ class CliFuncsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # setup vault server (running in container)
-        try:
-            cls.server = get_shared_vault_server()
-        except VaultServerError as exc:
-            raise unittest.SkipTest(f"vault server unavailable: {exc}") from exc
+        cls.server = get_shared_vault_server()
 
     @classmethod
     def tearDownClass(cls):

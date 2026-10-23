@@ -8,7 +8,9 @@
 import os
 import time
 import unittest
+from unittest import mock
 
+from tests import test_vault, vault_server
 from tests.vault_server import VaultServer, VaultServerError
 
 
@@ -38,3 +40,31 @@ class VaultServerTimeoutTest(unittest.TestCase):
                     os.environ.pop(key, None)
                 else:
                     os.environ[key] = value
+
+
+class BrokenVaultServer:
+    def __init__(self):
+        raise VaultServerError("vault unreachable")
+
+
+@mock.patch.object(vault_server, "VaultServer", BrokenVaultServer)
+@mock.patch.object(vault_server, "_shared_vault_servers", {})
+@mock.patch.object(vault_server, "_failed_vault_servers", {})
+class VaultSetupFailureTest(unittest.TestCase):
+    """A vault test class skips when vault is down, except in CI."""
+
+    def test_skips_outside_ci(self):
+        with mock.patch.dict(os.environ):
+            os.environ.pop("CI", None)
+            for _ in range(2):
+                with self.assertRaises(unittest.SkipTest):
+                    test_vault.VaultSecretTest.setUpClass()
+
+    def test_fails_in_ci(self):
+        with mock.patch.dict(os.environ, {"CI": "true"}):
+            for _ in range(2):
+                try:
+                    with self.assertRaises(VaultServerError):
+                        test_vault.VaultSecretTest.setUpClass()
+                except unittest.SkipTest:
+                    self.fail("vault tests were skipped in CI")
