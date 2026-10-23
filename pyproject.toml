@@ -80,7 +80,7 @@ dependencies = [
 
 [project.optional-dependencies]
 gojsonnet = ["gojsonnet>=0.21.0,<0.22"]
-omegaconf = ["omegaconf>=2.4.0.dev3,<3"]
+omegaconf = ["omegaconf>=2.4.0.dev3,<=2.4.0.dev13"]
 reclass-rs = ["reclass-rs>=0.10.1,<0.11.0"]
 oci = ["oras>=0.2.0"]
 # Enables the rapidyaml (ryml) C++ YAML emitter via --yaml-use-rapidyaml.

@@ -1098,7 +1098,7 @@ requires-dist = [
     { name = "jsonschema", specifier = ">=4.17.3,<5" },
     { name = "kadet", specifier = ">=0.3.0,<0.4" },
     { name = "kapicorp-reclass", specifier = ">=2.0.0" },
-    { name = "omegaconf", marker = "extra == 'omegaconf'", specifier = ">=2.4.0.dev3,<3" },
+    { name = "omegaconf", marker = "extra == 'omegaconf'", specifier = ">=2.4.0.dev3,<=2.4.0.dev13" },
     { name = "oras", marker = "extra == 'oci'", specifier = ">=0.2.0" },
     { name = "packaging", specifier = ">=23,<26" },
     { name = "pydantic", specifier = ">=2.8.2,<3" },
