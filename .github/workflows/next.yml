@@ -2,7 +2,9 @@
 # order. In kapicorp/kapitan these are the PRs labelled `next` whose author has
 # write access. A fork can build its own `next` from kapicorp/kapitan by setting
 # the repository variables NEXT_SOURCE (kapicorp/kapitan) and NEXT_AUTHOR (the
-# login whose open PRs to take). A PR that conflicts is skipped. The issue
+# login whose open PRs to take). NEXT_GREEN_AUTHORS adds the open PRs of
+# these logins, such as dependabot[bot], once all their checks passed. A PR
+# that conflicts is skipped. The issue
 # titled "next: integration status" lists what is in next and is updated on
 # every rebuild. next and its image contain unreviewed changes and are for
 # testing only. See CONTRIBUTING.md.
@@ -25,6 +27,7 @@ concurrency:
 env:
   SOURCE: ${{ vars.NEXT_SOURCE || github.repository }}
   AUTHOR: ${{ vars.NEXT_AUTHOR }}
+  GREEN_AUTHORS: ${{ vars.NEXT_GREEN_AUTHORS }}
 
 jobs:
   assemble:
@@ -41,15 +44,26 @@ jobs:
       merged: ${{ steps.merge.outputs.merged }}
       conflicting: ${{ steps.merge.outputs.conflicting }}
     steps:
+      # Pushing commits that change workflow files needs the `workflows`
+      # permission, which GITHUB_TOKEN can't have. In kapicorp/kapitan the
+      # merged PR commits already exist under refs/pull, so GITHUB_TOKEN works.
+      # A fork receives them new and pushes with a GitHub App installed on it:
+      # its client ID in the variable NEXT_APP_CLIENT_ID and its key in the
+      # secret NEXT_APP_PRIVATE_KEY.
+      - id: app
+        if: vars.NEXT_APP_CLIENT_ID != ''
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.NEXT_APP_CLIENT_ID }}
+          private-key: ${{ secrets.NEXT_APP_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-workflows: write
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-          # Pushing commits that change workflow files needs the `workflows`
-          # permission, which GITHUB_TOKEN can't have. In kapicorp/kapitan the
-          # merged PR commits already exist under refs/pull, so GITHUB_TOKEN
-          # works. A fork receives them new and needs a token in this secret
-          # with Contents and Workflows write access to the fork.
-          token: ${{ secrets.NEXT_PUSH_TOKEN || github.token }}
+          token: ${{ steps.app.outputs.token || github.token }}
 
       - id: merge
         name: merge pull requests
@@ -71,8 +85,22 @@ jobs:
             select='select(any(.labels[]; .name == "next"))
                     | select(.author_association == "OWNER" or .author_association == "MEMBER" or .author_association == "COLLABORATOR")'
           fi
-          gh api --paginate "repos/$SOURCE/pulls?state=open&per_page=100" |
-            jq -r --arg author "$AUTHOR" ".[] | $select | \"\(.number) \(.head.sha)\"" | sort -n >"$RUNNER_TEMP/prs.txt"
+          gh api --paginate "repos/$SOURCE/pulls?state=open&per_page=100" | jq -s 'add' >"$RUNNER_TEMP/open.json"
+          jq -r --arg author "$AUTHOR" ".[] | $select | \"\(.number) \(.head.sha)\"" "$RUNNER_TEMP/open.json" >"$RUNNER_TEMP/selected.txt"
+
+          # PRs by NEXT_GREEN_AUTHORS only once every check on their head passed.
+          # This runs before the fingerprint, so a PR turning green changes it.
+          # shellcheck disable=SC2016 # jq programs, not shell expansions
+          jq -r --arg authors "$GREEN_AUTHORS" \
+            '.[] | select(.user.login as $l | $authors | split(" ") | index($l)) | "\(.number) \(.head.sha)"' \
+            "$RUNNER_TEMP/open.json" | while read -r number sha; do
+              state=$(gh pr view "$number" -R "$SOURCE" --json statusCheckRollup --jq \
+                '[.statusCheckRollup[] | (.conclusion // .state)] as $s
+                 | if ($s | length) > 0 and all($s[]; . == "SUCCESS" or . == "SKIPPED" or . == "NEUTRAL")
+                   then "green" else "not green" end')
+              if [[ "$state" == green ]]; then echo "$number $sha"; fi
+            done >>"$RUNNER_TEMP/selected.txt"
+          sort -n -u "$RUNNER_TEMP/selected.txt" >"$RUNNER_TEMP/prs.txt"
 
           workflow=$(git rev-parse "$GITHUB_SHA:.github/workflows/next.yml")
           git fetch -q "$source_url" master
