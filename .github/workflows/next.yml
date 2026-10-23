@@ -75,18 +75,27 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           source_url="https://github.com/$SOURCE.git"
 
-          # Without NEXT_AUTHOR, only labelled PRs by authors with write access:
-          # once labelled, later pushes to the PR land in next without another
-          # look, so the author must be trusted.
-          # shellcheck disable=SC2016 # $author is a jq variable
-          if [[ -n "$AUTHOR" ]]; then
-            select='select(.user.login == $author)'
-          else
-            select='select(any(.labels[]; .name == "next"))
-                    | select(.author_association == "OWNER" or .author_association == "MEMBER" or .author_association == "COLLABORATOR")'
-          fi
           gh api --paginate "repos/$SOURCE/pulls?state=open&per_page=100" | jq -s 'add' >"$RUNNER_TEMP/open.json"
-          jq -r --arg author "$AUTHOR" ".[] | $select | \"\(.number) \(.head.sha)\"" "$RUNNER_TEMP/open.json" >"$RUNNER_TEMP/selected.txt"
+          # NEXT_AUTHOR (a fork building for one person): that login's open PRs.
+          # Otherwise the PRs labelled `next` whose author has write access to
+          # the source repository. Triage users can set labels too, and later
+          # pushes to a labelled PR land in next without another look, so the
+          # author has to be someone already trusted with write access.
+          # author_association doesn't tell that, so ask for the permission.
+          if [[ -n "$AUTHOR" ]]; then
+            jq -r --arg author "$AUTHOR" '.[] | select(.user.login == $author) | "\(.number) \(.head.sha)"' \
+              "$RUNNER_TEMP/open.json" >"$RUNNER_TEMP/selected.txt"
+          else
+            : >"$RUNNER_TEMP/selected.txt"
+            jq -r '.[] | select(any(.labels[]; .name == "next")) | "\(.number) \(.head.sha) \(.user.login)"' \
+              "$RUNNER_TEMP/open.json" | while read -r number sha login; do
+                permission=$(gh api "repos/$SOURCE/collaborators/$login/permission" --jq .permission 2>/dev/null || echo none)
+                case "$permission" in
+                  admin|maintain|write) echo "$number $sha" >>"$RUNNER_TEMP/selected.txt" ;;
+                  *) echo "::notice::#$number is labelled next, but $login has $permission access, left out" ;;
+                esac
+              done
+          fi
 
           # PRs by NEXT_GREEN_AUTHORS only once every check on their head passed.
           # This runs before the fingerprint, so a PR turning green changes it.
