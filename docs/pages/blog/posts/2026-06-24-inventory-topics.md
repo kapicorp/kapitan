@@ -2,7 +2,7 @@
 author: The Kapitan Team
 author_gh_user: kapicorp
 read_time: 4m
-date: 2026-05-18
+date: 2026-06-24
 title: "Introducing Topics for Organising Kapitan Targets"
 description: "A backend-agnostic way to expose, aggregate, and consume parameters across Kapitan targets, without cryptic reclass queries."
 ---
