@@ -9,6 +9,8 @@ import hashlib
 import io
 import logging
 import multiprocessing
+import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -17,6 +19,7 @@ from unittest.mock import patch
 
 import pytest
 import requests
+from git import GitCommandError
 from pydantic import ValidationError
 
 import kapitan.dependency_manager.base as dm_base
@@ -747,6 +750,45 @@ def test_http_fetch_structured_log(httpserver, tmp_path, monkeypatch, caplog):
     assert rec.duration_ms >= 0
     assert rec.bytes == len(content)
     assert rec.outcome == "success"
+
+
+def test_git_fetch_retries_on_transient_error(tmp_path, monkeypatch):
+    """fetch_git_source retries a clone that failed with a transient network error."""
+    monkeypatch.setattr(dm_base, "_FETCH_RETRIES", 3)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MIN", 0)
+    monkeypatch.setattr(dm_base, "_FETCH_WAIT_MAX", 0)
+    transient = GitCommandError("clone", 128, stderr="Connection reset by peer")
+    with patch.object(
+        dm_base.Repo, "clone_from", side_effect=[transient, None]
+    ) as clone:
+        fetch_git_source("https://example.com/repo.git", str(tmp_path / "repo"), "Dep")
+    assert clone.call_count == 2
+
+
+def test_fetch_retries_zero_still_fetches_once(monkeypatch):
+    monkeypatch.setattr(dm_base, "_FETCH_RETRIES", 0)
+    assert dm_base._retry_fetch(lambda: "result", lambda exc: True) == "result"
+
+
+def test_non_numeric_fetch_env_falls_back_to_defaults(monkeypatch):
+    for name in (
+        "KAPITAN_FETCH_RETRIES",
+        "KAPITAN_FETCH_WAIT_MIN",
+        "KAPITAN_FETCH_WAIT_MAX",
+        "KAPITAN_FETCH_TIMEOUT",
+    ):
+        monkeypatch.setenv(name, "abc")
+    # fresh interpreter: the values are read at import time
+    code = (
+        "import kapitan.dependency_manager.base as b, kapitan.utils as u;"
+        "print(b._FETCH_RETRIES, b._FETCH_WAIT_MIN, b._FETCH_WAIT_MAX, u._HTTP_TIMEOUT)"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.split() == ["3", "0.5", "10", "30"]
+    assert "Ignoring KAPITAN_FETCH_RETRIES='abc'" in result.stderr
 
 
 @pytest.mark.usefixtures("reset_cached_args")

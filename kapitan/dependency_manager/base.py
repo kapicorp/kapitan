@@ -33,6 +33,7 @@ from kapitan.helm_cli import helm_cli
 from kapitan.inventory.model.dependencies import KapitanDependencyTypes
 from kapitan.utils import (
     copy_tree,
+    env_number,
     make_request,
     normalise_join_path,
     safe_copy_file,
@@ -46,9 +47,9 @@ logger = logging.getLogger(__name__)
 
 # Bounded-retry / backoff configuration for fetch operations.
 # Override via environment variables.
-_FETCH_RETRIES = int(os.environ.get("KAPITAN_FETCH_RETRIES", "3"))
-_FETCH_WAIT_MIN = float(os.environ.get("KAPITAN_FETCH_WAIT_MIN", "0.5"))
-_FETCH_WAIT_MAX = float(os.environ.get("KAPITAN_FETCH_WAIT_MAX", "10"))
+_FETCH_RETRIES = env_number("KAPITAN_FETCH_RETRIES", 3, int)
+_FETCH_WAIT_MIN = env_number("KAPITAN_FETCH_WAIT_MIN", 0.5)
+_FETCH_WAIT_MAX = env_number("KAPITAN_FETCH_WAIT_MAX", 10)
 
 # Git stderr fragments that indicate a transient network condition worth retrying.
 _TRANSIENT_GIT_PATTERNS = (
@@ -90,21 +91,22 @@ def _is_transient_git_exc(exc):
 def _retry_fetch(operation, is_transient):
     """Call ``operation()``, retrying transient failures with exponential backoff.
 
-    Retries up to ``_FETCH_RETRIES`` attempts. Re-raises the last exception
+    Makes ``_FETCH_RETRIES`` attempts, at least one. Re-raises the last exception
     once attempts are exhausted or when the failure is not transient, so
     permanent errors are never masked.
     """
-    for attempt in range(_FETCH_RETRIES):
+    attempts = max(1, _FETCH_RETRIES)
+    for attempt in range(attempts):
         try:
             return operation()
         except Exception as exc:
-            if attempt == _FETCH_RETRIES - 1 or not is_transient(exc):
+            if attempt == attempts - 1 or not is_transient(exc):
                 raise
             wait = min(_FETCH_WAIT_MAX, _FETCH_WAIT_MIN * (2**attempt))
             logger.debug(
                 "fetch attempt %d/%d failed (%s), retrying in %.2fs",
                 attempt + 1,
-                _FETCH_RETRIES,
+                attempts,
                 exc,
                 wait,
             )

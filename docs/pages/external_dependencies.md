@@ -77,8 +77,8 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
 
 ### Retries and timeouts
 
-Network fetches (`git` and `http[s]`) automatically retry on **transient** failures —
-connection resets/timeouts and HTTP `429/500/502/503/504` — using exponential backoff.
+Network fetches (`git` and `http[s]`) automatically retry on **transient** failures
+(connection resets/timeouts and HTTP `429/500/502/503/504`) using exponential backoff.
 Permanent errors (authentication, `404`, bad URL) are raised immediately and never retried.
 
 Tune the behaviour with environment variables:
@@ -92,7 +92,8 @@ Tune the behaviour with environment variables:
 
 !!! note
 
-    Set `KAPITAN_FETCH_RETRIES=1` to disable retries.
+    Set `KAPITAN_FETCH_RETRIES=1` to disable retries. Values below 1 count as 1.
+    Non-numeric values are ignored with a warning and the default is used.
 
 ### Defining dependencies
 

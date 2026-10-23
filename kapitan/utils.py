@@ -525,8 +525,20 @@ def search_target_token_paths(target_secrets_path, targets):
     return target_files
 
 
+def env_number(name, default, cast=float):
+    """returns env var name parsed with cast, or default (with a warning) if it isn't a number"""
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    try:
+        return cast(value)
+    except ValueError:
+        logger.warning("Ignoring %s=%r: not a number, using %s", name, value, default)
+        return default
+
+
 # Default timeout for outbound HTTP requests. Override via KAPITAN_FETCH_TIMEOUT (seconds).
-_HTTP_TIMEOUT = int(os.environ.get("KAPITAN_FETCH_TIMEOUT", "30"))
+_HTTP_TIMEOUT = env_number("KAPITAN_FETCH_TIMEOUT", 30)
 
 
 def make_request(source, timeout=None):
