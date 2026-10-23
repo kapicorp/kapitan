@@ -5,11 +5,12 @@ import io
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 from kapitan import cached
 from kapitan.cli import main as kapitan
 from kapitan.refs.base import RefController, Revealer
-from kapitan.refs.secrets.azkms import AzureKMSSecret
+from kapitan.refs.secrets.azkms import AzureKMSSecret, azkms_obj
 
 
 REFS_HOME = tempfile.mkdtemp()
@@ -96,3 +97,30 @@ class AzureKMSTest(unittest.TestCase):
 
     def tearDown(self):
         cached.reset_cache()
+
+
+class AzureKMSClientPerKeyTest(unittest.TestCase):
+    "azkms_obj memoizes one client per key_id"
+
+    KEY_A = "https://vault-a.vault.azure.net/keys/keyA/v1"
+    KEY_B = "https://vault-b.vault.azure.net/keys/keyB/v2"
+
+    def setUp(self):
+        cached.reset_cache()
+
+    def tearDown(self):
+        cached.reset_cache()
+
+    @mock.patch("kapitan.refs.secrets.azkms.CryptographyClient")
+    @mock.patch("kapitan.refs.secrets.azkms.KeyClient")
+    @mock.patch("kapitan.refs.secrets.azkms.DefaultAzureCredential")
+    def test_client_per_key_id(self, credential, key_client, crypto_client):
+        crypto_client.side_effect = lambda key, cred: mock.Mock()
+
+        client_a = azkms_obj(self.KEY_A)
+        client_b = azkms_obj(self.KEY_B)
+
+        self.assertIsNot(client_a, client_b)
+        self.assertIs(azkms_obj(self.KEY_A), client_a)
+        self.assertIs(azkms_obj(self.KEY_B), client_b)
+        self.assertEqual(crypto_client.call_count, 2)
