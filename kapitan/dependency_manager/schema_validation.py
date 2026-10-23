@@ -34,17 +34,22 @@ class SourceTrackerCache:
         return self._cache[filepath]
 
 
-def _resolve_schema_path(dep) -> Path | None:
+def _resolve_schema_path(dep, output_path=".", dep_path_joined=False) -> Path | None:
     """Resolve the candidate schema file for a dependency.
 
     Uses ``schema_path`` if set, otherwise falls back to
-    ``<output_path>/schema.json``.  Returns ``None`` if the file does not
-    exist.
+    ``<output_path>/schema.json``.  Both are relative to the compile
+    *output_path* (``--output-path``), like the dependency ``output_path``.
+    *dep_path_joined* is True when ``fetch_dependencies()`` has already
+    joined ``dep.output_path`` with it.  Returns ``None`` if the file does
+    not exist.
     """
     if dep.schema_path is not None:
-        candidate = Path(dep.schema_path)
-    else:
+        candidate = Path(output_path) / dep.schema_path
+    elif dep_path_joined:
         candidate = Path(dep.output_path) / "schema.json"
+    else:
+        candidate = Path(output_path) / dep.output_path / "schema.json"
 
     if candidate.is_file():
         return candidate
@@ -285,6 +290,8 @@ def validate_generator_schemas(
     parameters: dict,
     inventory_path: str,
     tracker_cache: SourceTrackerCache | None = None,
+    output_path: str = ".",
+    dep_paths_joined: bool = False,
 ) -> list[dict]:
     """Validate generator schemas for a single target.
 
@@ -294,7 +301,8 @@ def validate_generator_schemas(
     *target_obj* is the target's ``KapitanInventorySettings`` (which holds
     ``dependencies``).  *parameters* is the full merged ``parameters`` dict
     for the target.  *inventory_path* is the root inventory directory used
-    to resolve source file locations.
+    to resolve source file locations.  *output_path* and *dep_paths_joined*
+    are passed to ``_resolve_schema_path()``.
 
     Returns a list of finding dicts, each with keys:
     ``dependency``, ``schema_path``, ``inventory_path``, ``errors``.
@@ -305,7 +313,7 @@ def validate_generator_schemas(
     findings = []
 
     for dep in target_obj.dependencies or []:
-        schema_path = _resolve_schema_path(dep)
+        schema_path = _resolve_schema_path(dep, output_path, dep_paths_joined)
         if schema_path is None:
             continue
 

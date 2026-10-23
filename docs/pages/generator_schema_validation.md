@@ -87,7 +87,7 @@ Kapitan looks for `lib/argocd/schema.json` after fetching.
 
 ### Override the schema path
 
-If the schema lives elsewhere, set `schema_path` on the dependency:
+If the schema lives elsewhere, set `schema_path` on the dependency. Like `output_path`, it is relative to `--output-path`:
 
 ```yaml
 parameters:

@@ -234,8 +234,18 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
             # Wrap dumped parameters so dotted paths like
             # "parameters.components.argocd" resolve correctly.
             parameters = {"parameters": target.parameters.model_dump()}
+            # fetch_dependencies() joined the dependency output paths of the
+            # targets it fetched with output_path; the others are still relative
+            fetched = fetch_targets is not None and any(
+                kapitan_config is fetched_obj for fetched_obj in fetch_targets[0]
+            )
             findings = validate_generator_schemas(
-                kapitan_config, parameters, inventory_path, tracker_cache
+                kapitan_config,
+                parameters,
+                inventory_path,
+                tracker_cache,
+                output_path=output_path,
+                dep_paths_joined=fetched,
             )
             _emit_schema_findings(findings, validation_mode)
 

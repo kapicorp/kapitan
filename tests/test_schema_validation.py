@@ -10,6 +10,7 @@
 import importlib.util
 import json
 import logging
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -85,6 +86,26 @@ class GeneratorSchemaValidationTest(unittest.TestCase):
 
             result = _resolve_schema_path(dep)
             self.assertEqual(result, custom_schema)
+
+    def test_schema_discovery_relative_to_output_path(self):
+        """Relative dependency and schema paths resolve against --output-path."""
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp) / "lib" / "argocd"
+            output_dir.mkdir(parents=True)
+            schema_file = output_dir / "schema.json"
+            schema_file.write_text(json.dumps({"type": "object"}))
+
+            dep = self._make_dep(output_path="lib/argocd")
+            self.assertEqual(_resolve_schema_path(dep, tmp), schema_file)
+
+            # fetch_dependencies() already joined the path: don't join it twice
+            dep = self._make_dep(output_path=str(output_dir))
+            self.assertEqual(_resolve_schema_path(dep, tmp, True), schema_file)
+
+            dep = self._make_dep(
+                output_path="elsewhere", schema_path="lib/argocd/schema.json"
+            )
+            self.assertEqual(_resolve_schema_path(dep, tmp), schema_file)
 
     def test_missing_schema_returns_none(self):
         """When no schema file exists, _resolve_schema_path returns None."""
@@ -421,4 +442,29 @@ class TestGeneratorSchemaValidationCompile:
         monkeypatch.chdir(schema_validation_inventory)
         reset_cache()
         kapitan("compile", "-t", "test", "--inventory-backend", backend)
+        reset_cache()
+
+    @pytest.mark.parametrize("backend", INVENTORY_BACKENDS)
+    def test_compile_validates_under_custom_output_path(
+        self, schema_validation_inventory, monkeypatch, backend
+    ):
+        """Without --fetch, the schema is looked up under --output-path, not the CWD."""
+        _skip_if_backend_unavailable(backend)
+        base = Path(schema_validation_inventory)
+        (base / "out").mkdir()
+        shutil.move(base / "lib", base / "out" / "lib")
+        self._write_target(schema_validation_inventory, "error")
+        monkeypatch.chdir(schema_validation_inventory)
+        reset_cache()
+        with pytest.raises(SystemExit) as exc_info:
+            kapitan(
+                "compile",
+                "-t",
+                "test",
+                "--inventory-backend",
+                backend,
+                "--output-path",
+                "out",
+            )
+        assert exc_info.value.code == 1
         reset_cache()
