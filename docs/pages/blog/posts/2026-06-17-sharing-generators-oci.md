@@ -2,7 +2,7 @@
 author: The Kapitan Team
 author_gh_user: kapicorp
 read_time: 5m
-date: 2026-05-15
+date: 2026-06-17
 title: "Sharing Kapitan Generators as OCI Artifacts"
 description: "Package reusable Kapitan generators, push them to an OCI registry with oras, and pull them as a dependency on compile."
 ---
@@ -51,7 +51,7 @@ echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
 # Push version 1.2.0 from inside the generator directory
 cd my-generator
-oras push ghcr.io/kapicorp/generators:1.2.0 \
+oras push ghcr.io/<org>/<generator>:1.2.0 \
   --config /dev/null:application/vnd.oci.image.config.v1+json \
   .
 ```
@@ -60,22 +60,18 @@ oras packs the directory as `.tar.gz` and prints the digest after the push.
 Keep it if you want to pin by digest later:
 
 ```
-Pushed [registry] ghcr.io/kapicorp/generators:1.2.0
+Pushed [registry] ghcr.io/<org>/<generator>:1.2.0
 Digest: sha256:abc123...
 ```
-
-Two details cause most first-time failures.
 
 oras keeps the path you pass at push time. Push `my-generator/` from its
 parent directory and the files arrive at `output_path/my-generator/` instead
 of `output_path/`. Either push `.` from inside the directory, or set
 `subpath:` in the consuming inventory to the path you pushed.
 
-Without `--config`, oras uses the deprecated
-`application/vnd.oci.artifact.manifest.v1+json` manifest format, which some
-registries, GitLab Container Registry among them, reject.
-`--config /dev/null:application/vnd.oci.image.config.v1+json` produces a
-standard OCI image manifest instead.
+The `--config` flag makes oras write an image-spec v1.0 manifest with a
+standard image config. Without it, oras writes an image-spec v1.1 manifest
+with an `artifactType` and an empty config.
 
 ## Consuming it as a dependency
 
@@ -86,7 +82,7 @@ parameters:
   kapitan:
     dependencies:
     - type: oci
-      source: ghcr.io/kapicorp/generators:1.2.0
+      source: ghcr.io/<org>/<generator>:1.2.0
       output_path: components/generators
     compile:
     - input_type: kadet
@@ -121,7 +117,7 @@ release tag, or a digest:
 
 ```yaml
 - type: oci
-  source: ghcr.io/kapicorp/generators@sha256:abc123...
+  source: ghcr.io/<org>/<generator>@sha256:abc123...
   output_path: components/generators
 ```
 
