@@ -2,7 +2,7 @@
 author: The Kapitan Team
 author_gh_user: kapicorp
 read_time: 3m
-date: 2026-05-15
+date: 2026-06-19
 title: "Pinning Git Dependencies for Reproducible Builds"
 description: "How Kapitan pins git dependencies to a tag or commit SHA so your compiled output stops drifting when an upstream branch moves."
 ---
@@ -98,9 +98,12 @@ inventory, rather than to an upstream commit you did not review. Rolling
 back is a one-line edit, and the inventory states which upstream version
 each target is built from.
 
-One pattern that works well: pin `ref` in the inventory that CI compiles,
-and use a developer overlay class that drops it for local iteration. The
-repository URL is still defined once.
+To track a branch locally while CI builds a pinned version, put the ref in a
+parameter, `ref: ${upstream_ref}`, and set `upstream_ref` to a tag in a
+common class. A developer overlay class then overrides `upstream_ref` with a
+branch name. The dependency itself is still defined once. Redefining the
+entry in the overlay's `dependencies` list does not work, because lists from
+several classes are appended and the target ends up with both entries.
 
 The field reference is in
 [External dependencies](../../external_dependencies.md).
