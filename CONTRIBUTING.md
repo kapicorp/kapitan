@@ -94,9 +94,9 @@ variable `NEXT_APP_CLIENT_ID` and its private key in the secret
 `ghcr.io/<owner>/kapitan`.
 
 `next` contains changes nobody has reviewed yet. Use it to test PRs together
-before they are merged, not in production. Only maintainers can set the label,
-and only PRs by authors with write access are taken, because later pushes to a
-labelled PR reach `next` without another review.
+before they are merged, not in production. Only PRs whose author has write
+access are taken, whoever set the label, because later pushes to a labelled PR
+reach `next` without another review.
 
 ## What we value
 
