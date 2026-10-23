@@ -49,10 +49,7 @@ def azkms_obj(key_id):
     """
     Return Azure Key Vault Object
     """
-    # cached.azkms_obj kept as a backward-compatible mirror (pool seeding,
-    # serialization); the memoized factory above is the source of truth.
-    cached.azkms_obj = _azkms_client(key_id)
-    return cached.azkms_obj
+    return _azkms_client(key_id)
 
 
 cached.register_handler_cache_clearer(_azkms_client.cache_clear)
