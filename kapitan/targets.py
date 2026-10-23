@@ -88,13 +88,6 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
     multiprocessing pool with parallel number of processes.
     kwargs are passed to compile_target()
     """
-    # temp_path will hold compiled items
-    temp_path = tempfile.mkdtemp(suffix=".kapitan")
-    # enable previously compiled items to be reference in other compile inputs
-    search_paths.append(temp_path)
-    temp_compile_path = os.path.join(temp_path, "compiled")
-    dep_cache_dir = temp_path
-
     rendering_start = time.time()
     inventory = get_inventory(inventory_path)
     discovered_targets = inventory.targets.keys()
@@ -161,7 +154,6 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         logger.info(
             "No targets with compile configuration found. Skipping compilation."
         )
-        shutil.rmtree(temp_path)
         return
 
     # append "compiled" to output_path so we can safely overwrite it
@@ -175,6 +167,13 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
     cached.input_cache_metrics = (
         {name: CacheMetrics() for name in CACHEABLE_INPUT_TYPES} if args.cache else None
     )
+
+    # temp_path will hold compiled items
+    temp_path = tempfile.mkdtemp(suffix=".kapitan")
+    # enable previously compiled items to be reference in other compile inputs
+    search_paths.append(temp_path)
+    temp_compile_path = os.path.join(temp_path, "compiled")
+    dep_cache_dir = temp_path
 
     try:
         fetching_start = time.time()

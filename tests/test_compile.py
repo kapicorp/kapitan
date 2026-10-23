@@ -573,7 +573,7 @@ class CompileTestEmptyKapitanConfig(unittest.TestCase):
                 kapitan("compile", "-t", "real-target", "-t", "does-not-exist")
         self.assertFalse(os.path.exists(os.path.join("compiled", "real-target")))
 
-    def test_no_compilable_targets_removes_temp_dir(self):
+    def test_no_compilable_targets_leaves_no_temp_dir(self):
         create_test_inventory(
             os.getcwd(), {"no-compile": {"parameters": {"kapitan": {}}}}
         )
@@ -587,8 +587,7 @@ class CompileTestEmptyKapitanConfig(unittest.TestCase):
         with mock.patch("kapitan.targets.tempfile.mkdtemp", side_effect=mkdtemp):
             with contextlib.redirect_stdout(io.StringIO()):
                 kapitan("compile")
-        self.assertEqual(len(created), 1)
-        self.assertFalse(os.path.exists(created[0]))
+        self.assertEqual([p for p in created if os.path.exists(p)], [])
 
     def test_skipped_target_does_not_stop_pruning(self):
         # a full compile still removes compiled/<target> of targets no longer in the inventory
