@@ -2,7 +2,7 @@
 author: The Kapitan Team
 author_gh_user: kapicorp
 read_time: 4m
-date: 2026-05-25
+date: 2026-06-20
 title: "Profiling Slow Kapitan Compiles, Step by Step"
 description: "Kapitan can now emit CPU and memory profiles so you can find which target, input, or inventory step is eating your compile time."
 ---
