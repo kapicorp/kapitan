@@ -10,9 +10,9 @@ description: "How we moved Kapitan to mise to pin helm, kustomize, cue and uv ve
 # Managing Kapitan's External Tools with mise
 
 Kapitan is not pure Python. The test suite needs `helm`, `kustomize` and
-`cue` on the PATH, and for years contributors installed them however they
-liked. That held until a contributor's `kustomize` was a major version ahead
-of CI's and a test failed in a way nobody else could reproduce.
+`cue` on the PATH. Contributors installed them however they liked, so the
+versions on a laptop and in CI could differ, and a test could pass in one
+place and fail in the other.
 
 The repository now uses [`mise`](https://mise.jdx.dev/) to install and pin
 those tools. `uv` still manages Python dependencies; `mise` manages the
