@@ -1,0 +1,161 @@
+# Builds the `next` branch: master plus every open pull request labelled `next`
+# whose author has write access, merged in PR number order. A PR that conflicts
+# is skipped and listed in the job summary. The branch and the image
+# ghcr.io/kapicorp/kapitan:next contain unreviewed changes and are for testing
+# only. See CONTRIBUTING.md.
+name: next
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: next
+  cancel-in-progress: false
+
+jobs:
+  assemble:
+    name: assemble next
+    if: github.repository == 'kapicorp/kapitan'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: read
+    outputs:
+      changed: ${{ steps.merge.outputs.changed }}
+      sha: ${{ steps.merge.outputs.sha }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - id: merge
+        name: merge labelled pull requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Only authors with write access: once labelled, later pushes to the
+          # PR land in next without another look, so the author must be trusted.
+          gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" \
+            --jq '.[] | select(any(.labels[]; .name == "next"))
+                      | select(.author_association == "OWNER" or .author_association == "MEMBER" or .author_association == "COLLABORATOR")
+                      | "\(.number) \(.head.sha)"' | sort -n >prs.txt
+
+          base=$(git rev-parse HEAD)
+          fingerprint="$base $(tr '\n' ' ' <prs.txt)"
+          previous=
+          if git fetch -q origin next 2>/dev/null; then
+            previous=$(git log -1 --format=%B FETCH_HEAD | sed -n 's/^Next-Fingerprint: //p')
+          fi
+          if [[ "$fingerprint" == "$previous" ]]; then
+            echo "Nothing changed since next was last built." >>"$GITHUB_STEP_SUMMARY"
+            echo "changed=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          merged=() conflicting=()
+          while read -r number sha; do
+            git fetch -q origin "pull/$number/head"
+            if [[ "$(git rev-parse FETCH_HEAD)" != "$sha" ]]; then
+              echo "::warning::#$number moved while assembling, taking $(git rev-parse --short FETCH_HEAD)"
+            fi
+            if git merge -q --no-ff --no-edit -m "Merge #$number into next" FETCH_HEAD; then
+              merged+=("#$number")
+            else
+              git merge --abort
+              conflicting+=("#$number")
+            fi
+          done <prs.txt
+
+          git commit -q --allow-empty -m "next: master ${base::12} with ${#merged[@]} pull requests" \
+            -m "Merged: ${merged[*]:-none}" -m "Conflicting: ${conflicting[*]:-none}" \
+            -m "Next-Fingerprint: $fingerprint"
+          git push -q --force origin HEAD:refs/heads/next
+
+          {
+            echo "## next at $(git rev-parse --short HEAD)"
+            echo "Merged: ${merged[*]:-none}"
+            echo
+            echo "Conflicting with master or an earlier PR, left out: ${conflicting[*]:-none}"
+          } >>"$GITHUB_STEP_SUMMARY"
+          echo "changed=true" >>"$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
+
+  test:
+    name: inventory tests on next
+    needs: assemble
+    if: needs.assemble.outputs.changed == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.assemble.outputs.sha }}
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+      - run: uv sync --locked --all-extras
+      - run: >-
+          uv run pytest --no-cov -q
+          tests/test_omegaconf.py tests/test_inventory.py
+          tests/test_inventory_backend_examples.py tests/test_compile.py
+
+  image:
+    name: image and wheel
+    needs: assemble
+    if: needs.assemble.outputs.changed == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ needs.assemble.outputs.sha }}
+          # tags are needed for uv-dynamic-versioning to compute the version
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+      - id: version
+        run: echo "version=$(uvx uv-dynamic-versioning)" >>"$GITHUB_OUTPUT"
+      - run: uv build --wheel
+        env:
+          UV_DYNAMIC_VERSIONING_BYPASS: ${{ steps.version.outputs.version }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: kapitan-next-wheel
+          path: dist/*.whl
+          retention-days: 14
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: short
+        run: echo "sha=${SHA::12}" >>"$GITHUB_OUTPUT"
+        env:
+          SHA: ${{ needs.assemble.outputs.sha }}
+      - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          build-args: KAPITAN_VERSION=${{ steps.version.outputs.version }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/kapicorp/kapitan
+            org.opencontainers.image.revision=${{ needs.assemble.outputs.sha }}
+            org.opencontainers.image.description=Kapitan master plus open pull requests labelled next. Unreviewed, for testing only.
+          tags: |
+            ghcr.io/kapicorp/kapitan:next
+            ghcr.io/kapicorp/kapitan:next-${{ steps.short.outputs.sha }}
