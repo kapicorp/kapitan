@@ -1,6 +1,7 @@
 # Builds the `next` branch: master plus every open pull request labelled `next`
 # whose author has write access, merged in PR number order. A PR that conflicts
-# is skipped and listed in the job summary. The branch and the image
+# is skipped. The issue titled "next: integration status" lists what is in
+# next and is updated on every rebuild. The branch and the image
 # ghcr.io/kapicorp/kapitan:next contain unreviewed changes and are for testing
 # only. See CONTRIBUTING.md.
 name: next
@@ -30,6 +31,9 @@ jobs:
     outputs:
       changed: ${{ steps.merge.outputs.changed }}
       sha: ${{ steps.merge.outputs.sha }}
+      base: ${{ steps.merge.outputs.base }}
+      merged: ${{ steps.merge.outputs.merged }}
+      conflicting: ${{ steps.merge.outputs.conflicting }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -90,8 +94,13 @@ jobs:
             echo
             echo "Conflicting with master or an earlier PR, left out: ${conflicting[*]:-none}"
           } >>"$GITHUB_STEP_SUMMARY"
-          echo "changed=true" >>"$GITHUB_OUTPUT"
-          echo "sha=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
+          {
+            echo "changed=true"
+            echo "sha=$(git rev-parse HEAD)"
+            echo "base=$base"
+            echo "merged=${merged[*]:-}"
+            echo "conflicting=${conflicting[*]:-}"
+          } >>"$GITHUB_OUTPUT"
 
   test:
     name: inventory tests on next
@@ -119,6 +128,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -146,7 +157,8 @@ jobs:
         run: echo "sha=${SHA::12}" >>"$GITHUB_OUTPUT"
         env:
           SHA: ${{ needs.assemble.outputs.sha }}
-      - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+      - id: push
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
           platforms: linux/amd64
@@ -159,3 +171,73 @@ jobs:
           tags: |
             ghcr.io/kapicorp/kapitan:next
             ghcr.io/kapicorp/kapitan:next-${{ steps.short.outputs.sha }}
+
+  report:
+    name: update the status issue
+    needs: [assemble, test, image]
+    if: always() && needs.assemble.outputs.changed == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+      pull-requests: read
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ needs.assemble.outputs.sha }}
+          BASE: ${{ needs.assemble.outputs.base }}
+          MERGED: ${{ needs.assemble.outputs.merged }}
+          CONFLICTING: ${{ needs.assemble.outputs.conflicting }}
+          TESTS: ${{ needs.test.result }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+        run: |
+          set -euo pipefail
+          title="next: integration status"
+          rows() {
+            for pr in $1; do
+              # shellcheck disable=SC2016 # a jq program, not a shell expansion
+              gh api "repos/$REPO/pulls/${pr#\#}" \
+                --jq '"| #\(.number) | \(.title | gsub("[|]"; "/")) | \(.user.login) | `\(.head.sha[0:12])` |"'
+            done
+          }
+          {
+            echo "This issue is updated by the \`next\` workflow. \`next\` is \`master\` plus the open pull requests labelled \`next\` whose author has write access. It contains unreviewed changes, so use it for testing only. See CONTRIBUTING.md."
+            echo
+            echo "- Branch: [\`next\`](https://github.com/$REPO/tree/next) at \`${SHA::12}\`, on \`master\` \`${BASE::12}\`"
+            if [[ -n "$DIGEST" ]]; then
+              echo "- Image: \`ghcr.io/kapicorp/kapitan:next-${SHA::12}\` (\`$DIGEST\`)"
+            else
+              echo "- Image: not built in this run"
+            fi
+            echo "- Inventory and compile tests: $TESTS"
+            echo "- Run: $RUN"
+            echo
+            echo "### Merged"
+            echo
+            if [[ -n "$MERGED" ]]; then
+              echo "| PR | Title | Author | Head |"
+              echo "|---|---|---|---|"
+              rows "$MERGED"
+            else
+              echo "None."
+            fi
+            echo
+            echo "### Left out because they conflict with master or an earlier PR"
+            echo
+            if [[ -n "$CONFLICTING" ]]; then
+              echo "| PR | Title | Author | Head |"
+              echo "|---|---|---|---|"
+              rows "$CONFLICTING"
+            else
+              echo "None."
+            fi
+          } >body.md
+          number=$(gh issue list -R "$REPO" --state open --search "\"$title\" in:title" --json number,title |
+            jq -r --arg t "$title" '[.[] | select(.title == $t)][0].number // empty')
+          if [[ -z "$number" ]]; then
+            number=$(gh api -q .number "repos/$REPO/issues" -f title="$title" -F body=@body.md)
+          else
+            gh issue edit "$number" -R "$REPO" --body-file body.md >/dev/null
+          fi
+          echo "Status issue: https://github.com/$REPO/issues/$number" >>"$GITHUB_STEP_SUMMARY"

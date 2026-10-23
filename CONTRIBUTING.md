@@ -77,8 +77,10 @@ it every 15 minutes when `master` or one of those PRs changed, and publishes:
 - the image `ghcr.io/kapicorp/kapitan:next`, and `next-<commit>` for pinning;
 - the wheel as the workflow artifact `kapitan-next-wheel`.
 
-A PR that conflicts with `master` or with an earlier PR is left out and listed
-in the run's summary, and the last commit on `next` lists what was merged.
+The issue titled "next: integration status" is updated on every rebuild. It
+lists the PRs in `next` with the head commit that was merged, the PRs left out
+because they conflict with `master` or an earlier PR, the image digest and the
+test result.
 
 `next` contains changes nobody has reviewed yet. Use it to test PRs together
 before they are merged, not in production. Only maintainers can set the label,
