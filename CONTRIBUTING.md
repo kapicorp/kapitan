@@ -82,6 +82,12 @@ lists the PRs in `next` with the head commit that was merged, the PRs left out
 because they conflict with `master` or an earlier PR, the image digest and the
 test result.
 
+A fork can build its own `next` from kapicorp/kapitan without waiting for a
+label: set the repository variables `NEXT_SOURCE` to `kapicorp/kapitan` and
+`NEXT_AUTHOR` to the login whose open PRs to merge, enable issues, and make
+`next` the fork's default branch so the schedule runs. The image then goes to
+`ghcr.io/<owner>/kapitan`.
+
 `next` contains changes nobody has reviewed yet. Use it to test PRs together
 before they are merged, not in production. Only maintainers can set the label,
 and only PRs by authors with write access are taken, because later pushes to a
