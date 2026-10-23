@@ -103,34 +103,45 @@ parameters:
 
 ### Deferred Evaluation with `\${...}`
 
-Use escaped interpolations when you need values to resolve **after merging**:
+The backend resolves in two passes. The first resolves normal `${...}` interpolations and turns `\${...}` into `${...}`. The second pass resolves what the first one unescaped. `\${...}` does not produce a literal `${` in the output; use `${escape:...}` for that.
+
+Deferring does not change where `parentkey` looks. It returns the key of the node it is written under, and a template copied by interpolation keeps that key:
 
 ```yaml
 # inventory/classes/base-deployment.yml
 parameters:
   deployment_template:
-    name: \${parentkey:}           # Resolves to the KEY name after merge
-    namespace: ${namespace}         # Resolves immediately
-    
+    name: \${parentkey:}
+    namespace: ${namespace}
+
 # inventory/targets/my-app.yml
+classes:
+  - base-deployment
 parameters:
   namespace: production
-  
   deployments:
-    web-frontend: ${deployment_template}   # name → "web-frontend"
-    api-backend: ${deployment_template}    # name → "api-backend"
+    web-frontend: ${deployment_template}
+    api-backend: "${merge:${deployment_template},{name: api-backend}}"
+    worker:
+      name: ${parentkey:}
+      namespace: ${namespace}
 ```
 
 **Result:**
 ```yaml
 deployments:
-  web-frontend:
-    name: web-frontend      # Resolved from \${parentkey:}
-    namespace: production
   api-backend:
-    name: api-backend       # Resolved from \${parentkey:}
+    name: api-backend
+    namespace: production
+  web-frontend:
+    name: deployment_template   # the template's key
+    namespace: production
+  worker:
+    name: worker
     namespace: production
 ```
+
+To name an entry after its own key, write `${parentkey:}` under the entry, as for `worker`, or set `name` while merging the template, as for `api-backend`. The `merge` value is quoted because its inline dict contains `: `, which YAML would otherwise read as a mapping.
 
 ---
 
@@ -144,7 +155,8 @@ parameters:
   shell_home: ${escape:HOME}
 
   # Quote complex expressions so OmegaConf parses them as one resolver argument.
-  terraform_expression: ${escape:'var.foo == "bar" ? 1 : 0'}
+  # The " : " also needs the whole YAML value quoted.
+  terraform_expression: "${escape:'var.foo == \"bar\" ? 1 : 0'}"
 ```
 
 **Result:**
@@ -386,21 +398,18 @@ kapitan compile --inventory-backend=omegaconf --migrate
 ```yaml
 # inventory/classes/base/deployment.yml
 parameters:
-  # Template that adapts to where it's merged
+  # Defaults shared by every deployment
   deployment_base:
-    name: \${parentkey:}
     namespace: ${namespace}
     labels:
-      app: \${parentkey:}
       environment: ${environment}
     
     image: ??? # Mandatory - must be set
     replicas: ${oc.select:default_replicas, 1}
     
-    resources: ${ifelse:${equal:${environment}, production},
+    resources: '${ifelse:${equal:${environment}, production},
       {limits: {cpu: "2", memory: "4Gi"}},
-      {limits: {cpu: "500m", memory: "512Mi"}}
-    }
+      {limits: {cpu: "500m", memory: "512Mi"}}}'
 
 # inventory/classes/components/api.yml  
 parameters:
@@ -424,17 +433,17 @@ parameters:
     url: "postgres://prod-db:5432/app"
   
   deployments:
-    api-server: ${merge:${deployment_base}, ${api_config}}
+    api-server: "${merge:${deployment_base}, ${api_config}, {name: api-server, labels: {app: api-server}}}"
 ```
 
 **Resolved Result:**
 ```yaml
 deployments:
   api-server:
-    name: api-server              # From \${parentkey:}
+    name: api-server
     namespace: prod
     labels:
-      app: api-server             # From \${parentkey:}
+      app: api-server
       environment: production
     image: myregistry/api:2.1.0
     replicas: 3
