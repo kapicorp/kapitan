@@ -1,0 +1,12 @@
+---
+# Rendered by reclass example
+app_name: myapp
+environment: dev
+namespace: default
+target_name: simple
+config_log_level: unknown
+config_retries: 0
+db_host: localhost
+db_port: 5432
+features: ['logging', 'metrics']
+tags: ['base-tag', 'common', 'app-tag']

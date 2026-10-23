@@ -411,10 +411,15 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
 
     logger.debug(f"Using {backend.__name__} as inventory backend")
     try:
+        enable_class_wildcards = (
+            hasattr(cached.args, "enable_class_wildcards")
+            and cached.args.enable_class_wildcards
+        )
         inventory_backend = backend(
             inventory_path=inventory_path,
             compose_target_name=compose_target_name,
             ignore_class_not_found=ignore_class_not_found,
+            enable_class_wildcards=enable_class_wildcards,
         )
     except InventoryError:
         sys.exit(1)

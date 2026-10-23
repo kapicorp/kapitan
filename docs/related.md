@@ -1,3 +1,8 @@
+---
+title: "Kapitan Related Projects and Ecosystem Tools"
+description: "Explore projects related to Kapitan, including Tesoro, the Kapitan Reference repository, and Jsonnet editor plugins and syntax highlighting tools."
+---
+
 # :kapitan-logo: Related projects
 
 * [Tesoro](https://github.com/kapicorp/tesoro) - Kubernetes Admission Controller for Kapitan Secrets

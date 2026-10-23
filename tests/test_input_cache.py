@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from kapitan.errors import CompileError
-from kapitan.inputs.cache import InputCache
+from kapitan.inputs.cache import CacheMetrics, InputCache
 
 
 class InputCacheTest(unittest.TestCase):
@@ -165,6 +165,63 @@ class InputCacheTest(unittest.TestCase):
                 self.assertNotEqual(cache1.input_cache_home, cache2.input_cache_home)
                 self.assertTrue("input1" in cache1.input_cache_home)
                 self.assertTrue("input2" in cache2.input_cache_home)
+
+    def test_metrics_track_hits_misses_fills(self):
+        """
+        cache.get / cache.set should bump the shared CacheMetrics counters.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch.dict(os.environ, {"HOME": tmpdir}, clear=True):
+                metrics = CacheMetrics()
+                cache = InputCache("test_input", metrics=metrics)
+                inputs_hash = "abcdef123456"
+                test_obj = {"a": 1}
+
+                # miss: nothing cached yet
+                self.assertIsNone(cache.get(inputs_hash))
+                self.assertEqual(
+                    metrics.snapshot(), {"hits": 0, "misses": 1, "fills": 0}
+                )
+
+                # fill: write a new entry
+                cache.set(inputs_hash, test_obj)
+                self.assertEqual(
+                    metrics.snapshot(), {"hits": 0, "misses": 1, "fills": 1}
+                )
+
+                # hit: the same key now returns
+                self.assertEqual(cache.get(inputs_hash), test_obj)
+                self.assertEqual(
+                    metrics.snapshot(), {"hits": 1, "misses": 1, "fills": 1}
+                )
+
+                # second set with the same key is a no-op and must not count as a fill
+                cache.set(inputs_hash, {"c": 3})
+                self.assertEqual(
+                    metrics.snapshot(), {"hits": 1, "misses": 1, "fills": 1}
+                )
+
+    def test_metrics_shared_across_caches(self):
+        """
+        Two InputCache instances sharing the same CacheMetrics should
+        aggregate counters together (simulating multiple worker processes).
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch.dict(os.environ, {"HOME": tmpdir}, clear=True):
+                metrics = CacheMetrics()
+                cache_a = InputCache("input_a", metrics=metrics)
+                cache_b = InputCache("input_b", metrics=metrics)
+
+                cache_a.get("hash_a")  # miss
+                cache_b.get("hash_b")  # miss
+                cache_a.set("hash_a", {"x": 1})  # fill
+                cache_b.set("hash_b", {"y": 2})  # fill
+                cache_a.get("hash_a")  # hit
+                cache_b.get("hash_b")  # hit
+
+                self.assertEqual(
+                    metrics.snapshot(), {"hits": 2, "misses": 2, "fills": 2}
+                )
 
     def test_dump_and_load_output(self):
         """

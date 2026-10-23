@@ -1,0 +1,12 @@
+---
+parameters:
+  target_name: ${_reclass_:name:short}
+
+  app_name: reclass-test
+  environment: dev
+  namespace: default
+  base_url: https://${app_name}.example.com
+
+  kapitan:
+    vars:
+      target: ${target_name}

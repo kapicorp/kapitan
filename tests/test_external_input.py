@@ -96,6 +96,19 @@ class ExternalInputTest(unittest.TestCase):
             msg="Correct content should be written to file",
         )
 
+    def test_mutable_defaults_are_isolated(self):
+        """Two External instances must not share env_vars or command_args."""
+        ext1 = External("/tmp/a", [], None, "t1", None)
+        ext2 = External("/tmp/b", [], None, "t2", None)
+
+        ext1.env_vars["KEY"] = "value1"
+        ext1.command_args.append("arg1")
+
+        self.assertNotIn("KEY", ext2.env_vars)
+        self.assertEqual(ext2.command_args, [])
+        self.assertEqual(ext1.env_vars, {"KEY": "value1"})
+        self.assertEqual(ext1.command_args, ["arg1"])
+
     def tearDown(self):
         os.chdir("../../")
         reset_cache()

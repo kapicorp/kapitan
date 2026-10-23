@@ -1,3 +1,8 @@
+---
+title: "Kapitan FluxCD Integration: GitOps with OCI Artifacts"
+description: "Integrate Kapitan with FluxCD to publish compiled manifests as OCI artifacts for GitOps delivery."
+---
+
 # :kapitan-logo: FluxCD Integration
 
 Kapitan works with [FluxCD](https://fluxcd.io) by compiling manifests in CI and publishing them as [OCI artifacts](https://fluxcd.io/flux/cheatsheets/oci-artifacts/). FluxCD pulls the artifact and applies it to the cluster.

@@ -1,0 +1,8 @@
+/* Keep inline-code flag/key names (e.g. `--inventory-pool-cache`) from wrapping
+   mid-token inside the generated CLI flag tables. Wrapping still happens between
+   separate code spans and within the plain-text description column; tables that
+   overflow scroll horizontally as usual. */
+.md-typeset table:not([class]) td code,
+.md-typeset table:not([class]) th code {
+  white-space: nowrap;
+}

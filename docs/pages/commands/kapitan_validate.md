@@ -1,3 +1,8 @@
+---
+title: "Kapitan validate: Check Compiled Output Schemas"
+description: "Validate compiled output against schemas with the kapitan validate command, including Kubernetes kinds."
+---
+
 # :kapitan-logo: **CLI Reference** | `kapitan validate`
 
 ## `kapitan validate`

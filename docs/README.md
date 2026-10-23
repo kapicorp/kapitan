@@ -1,14 +1,14 @@
 ---
 title: "Kapitan: Configuration management for complex infrastructure"
-description: "Kapitan is an open source configuration management tool that helps teams generate, organize, reuse, validate, and manage Kubernetes, Terraform, and other configuration across environments using inventory, templates, and references."
+description: "Kapitan is an open source configuration management tool to generate, validate, and manage Kubernetes, Terraform, and infrastructure config across environments."
 ---
 
-# :kapitan-logo: **Kapitan: Keep your ship together**
+# :kapitan-logo: Kapitan: Keep your ship together
 
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/kapicorp?style=for-the-badge)
 ![GitHub Stars](https://img.shields.io/github/stars/kapicorp/kapitan?style=for-the-badge)
 
-**Kapitan** is an open source configuration management tool for complex infrastructure systems. It helps teams generate, organize, reuse, validate, and manage Kubernetes, Terraform, and other configuration across environments using inventory, templates, Jsonnet, Jinja2, Kadet, Helm, Kustomize, CUE, and external references.
+Kapitan is an open source configuration management tool for complex infrastructure systems. It helps teams generate, organize, reuse, validate, and manage Kubernetes, Terraform, and other configuration across environments using inventory, templates, Jsonnet, Jinja2, Kadet, Helm, Kustomize, CUE, and external references.
 
 <div class="grid cards" markdown>
 
@@ -48,7 +48,7 @@ description: "Kapitan is an open source configuration management tool that helps
 
 ## What Kapitan does
 
-Kapitan turns a hierarchical **inventory** and a set of **input templates** into compiled configuration files ready for deployment. You define reusable classes, per-environment targets, and parameters in YAML. Kapitan compiles them into Kubernetes manifests, Terraform plans, scripts, documentation, or any text-based output you need.
+Kapitan turns a hierarchical inventory and a set of input templates into compiled configuration files ready for deployment. You define reusable classes, per-environment targets, and parameters in YAML. Kapitan compiles them into Kubernetes manifests, Terraform plans, scripts, documentation, or any text-based output you need.
 
 ```mermaid
 graph LR
@@ -105,7 +105,7 @@ Kapitan requires Python 3.10 or newer.
 
 ### Why Kapitan?
 
-Read the original motivation and design thinking in the blog post: [Why do I need **Kapitan**?](pages/blog/posts/2022-12-04.md#why-do-i-need-kapitan)
+Read the original motivation and design thinking in the blog post: [Why do I need Kapitan?](pages/blog/posts/2022-12-04.md#why-do-i-need-kapitan)
 
 ### Video tutorials
 

@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes Configuration Management with Kapitan"
-description: "Learn how Kapitan helps you manage Kubernetes manifests across environments. Compare plain YAML, Helm, Kustomize, and Kapitan workflows with a practical example."
+description: "Learn how Kapitan helps you manage Kubernetes manifests across environments. Compare plain YAML, Helm, Kustomize, and Kapitan workflows with an example."
 ---
 
 # :kapitan-logo: **Kubernetes Configuration Management with Kapitan**

@@ -22,12 +22,10 @@ class External(InputType):
     External input type. Executes an external command to generate Kubernetes manifests.
     """
 
-    env_vars: dict[
-        str, str
-    ] = {}  #: Environment variables to pass to the external command.
-    command_args: list[
-        str
-    ] = []  #: Command-line arguments to pass to the external command.
+    def __init__(self, compile_path, search_paths, ref_controller, target_name, args):
+        super().__init__(compile_path, search_paths, ref_controller, target_name, args)
+        self.env_vars = {}
+        self.command_args = []
 
     def set_env_vars(self, env_vars):
         """

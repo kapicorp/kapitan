@@ -11,6 +11,7 @@ Provides common functionality for test isolation and execution.
 """
 
 import contextlib
+import difflib
 import io
 import os
 import shutil
@@ -284,6 +285,127 @@ def run_kapitan_command(args: List[str]) -> tuple[int, str, str]:
             exit_code = e.code if e.code is not None else 0
 
     return exit_code, stdout.getvalue(), stderr.getvalue()
+
+
+REFRESH_GOLDENS_HINT = (
+    "Run `make refresh-inventory-backend-goldens` to regenerate snapshots if this output change "
+    "is intentional and approved."
+)
+
+
+def _relative_file_set(directory: str) -> set:
+    """Return the set of file paths in `directory`, relative to it."""
+    relfiles = set()
+    for root, _, files in os.walk(directory):
+        for name in files:
+            full = os.path.join(root, name)
+            relfiles.add(os.path.relpath(full, directory))
+    return relfiles
+
+
+def _read_text_or_none(path: str):
+    """Read a file as utf-8 text; return None for binary files."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except UnicodeDecodeError:
+        return None
+
+
+def diff_directories(actual_dir: str, golden_dir: str) -> str:
+    """Compare two directories and return a human-readable diff.
+
+    Returns an empty string when the directories match. Otherwise returns a
+    multi-section report listing files that are only present on one side and
+    unified diffs for files that differ. Binary files are reported by name
+    only.
+    """
+    if not os.path.isdir(actual_dir):
+        return f"Actual directory does not exist: {actual_dir}"
+    if not os.path.isdir(golden_dir):
+        return f"Golden directory does not exist: {golden_dir}"
+
+    actual_files = _relative_file_set(actual_dir)
+    golden_files = _relative_file_set(golden_dir)
+
+    only_in_actual = sorted(actual_files - golden_files)
+    only_in_golden = sorted(golden_files - actual_files)
+    common = sorted(actual_files & golden_files)
+
+    sections = []
+    if only_in_actual:
+        sections.append(
+            "Files present in compiled output but missing from golden:\n  "
+            + "\n  ".join(only_in_actual)
+        )
+    if only_in_golden:
+        sections.append(
+            "Files present in golden but missing from compiled output:\n  "
+            + "\n  ".join(only_in_golden)
+        )
+
+    diffs = []
+    for relpath in common:
+        actual_path = os.path.join(actual_dir, relpath)
+        golden_path = os.path.join(golden_dir, relpath)
+
+        actual_text = _read_text_or_none(actual_path)
+        golden_text = _read_text_or_none(golden_path)
+
+        if actual_text is None or golden_text is None:
+            with open(actual_path, "rb") as f:
+                actual_bytes = f.read()
+            with open(golden_path, "rb") as f:
+                golden_bytes = f.read()
+            if actual_bytes != golden_bytes:
+                diffs.append(f"Binary file differs: {relpath}")
+            continue
+
+        if actual_text == golden_text:
+            continue
+
+        diff = difflib.unified_diff(
+            golden_text.splitlines(keepends=True),
+            actual_text.splitlines(keepends=True),
+            fromfile=f"golden/{relpath}",
+            tofile=f"compiled/{relpath}",
+        )
+        diff_text = "".join(diff)
+        if diff_text:
+            diffs.append(diff_text)
+
+    if diffs:
+        sections.append("File content differences:\n" + "\n".join(diffs))
+
+    return "\n\n".join(sections)
+
+
+def assert_directories_match(actual_dir: str, golden_dir: str) -> None:
+    """Fail the current test if `actual_dir` differs from `golden_dir`.
+
+    Compares the relative file path sets first (so a rename with identical
+    content is not silently accepted by a content-only hash) and then uses the
+    content hash as a fast equality check. On mismatch, falls back to a
+    unified diff so the failure message identifies which files changed.
+    """
+    if not os.path.isdir(actual_dir):
+        raise AssertionError(f"Actual directory does not exist: {actual_dir}")
+    if not os.path.isdir(golden_dir):
+        raise AssertionError(f"Golden directory does not exist: {golden_dir}")
+
+    if _relative_file_set(actual_dir) == _relative_file_set(golden_dir):
+        if directory_hash(actual_dir) == directory_hash(golden_dir):
+            return
+
+    report = diff_directories(actual_dir, golden_dir) or (
+        "Directory contents differ but no per-file diff could be computed."
+    )
+    raise AssertionError(
+        f"Compiled output does not match golden snapshot.\n"
+        f"  compiled: {actual_dir}\n"
+        f"  golden:   {golden_dir}\n\n"
+        f"{report}\n\n{REFRESH_GOLDENS_HINT}"
+    )
 
 
 def assert_file_contains(file_path: str, expected_content: str) -> None:

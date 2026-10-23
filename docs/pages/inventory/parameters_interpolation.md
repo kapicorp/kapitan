@@ -1,5 +1,5 @@
 ---
-title: "Kapitan Inventory Parameter Interpolation and Variable References"
+title: "Kapitan Parameter Interpolation"
 description: "Learn how to use parameter interpolation in Kapitan inventory to reference values across classes, targets, and nested YAML structures."
 ---
 

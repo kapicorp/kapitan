@@ -1,0 +1,6 @@
+---
+# Reclass init class convention:
+# When a class name resolves to a directory, reclass loads <dir>/init.yml
+parameters:
+  init_value: from_init
+  init_common: true

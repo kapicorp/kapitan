@@ -1,3 +1,8 @@
+---
+title: "Publishing Kapitan Generators as OCI Artifacts"
+description: "Learn how to package and publish Kapitan generators as OCI artifacts with oras for teams to consume."
+---
+
 # :kapitan-logo: Publishing generators as OCI artifacts
 
 Kapitan's [OCI dependency type](external_dependencies.md#defining-dependencies) lets you pull generator

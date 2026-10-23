@@ -1,3 +1,8 @@
+---
+title: "Kapitan CUE Input Type: Generate Config with CUE"
+description: "Learn how to use the Kapitan CUE input type to manage, validate, and generate manifests with the CUE language."
+---
+
 # CUE Lang Input Type
 
 The CUE Lang input type allows you to use [CUE](https://cuelang.org/) to manage, validate, and generate manifests within Kapitan.

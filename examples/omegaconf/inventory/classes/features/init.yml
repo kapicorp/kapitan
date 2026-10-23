@@ -1,0 +1,8 @@
+---
+# This class demonstrates the init class feature.
+# When 'features.init' is included, omegaconf loads features/init/init.yml
+classes:
+  - features.init
+
+parameters:
+  init_child: true

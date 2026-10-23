@@ -3,6 +3,9 @@ classes:
   - common
   - component.namespace
 
+  # Exact class names work as before. When --enable-class-wildcards is
+  # passed, you can also use patterns such as "cluster.*" or "dev-*"
+  # which auto-expand to all matching classes under inventory/classes/.
   - cluster.minikube
 
 parameters:

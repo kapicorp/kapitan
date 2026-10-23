@@ -1,0 +1,15 @@
+---
+classes:
+  - features.lists
+
+parameters:
+  app_name: myapp
+
+  # List override (reclass replaces lists by default)
+  tags:
+    - app-tag
+
+  # Dictionary merge / override demonstration
+  config:
+    port: 8080
+    timeout: 30

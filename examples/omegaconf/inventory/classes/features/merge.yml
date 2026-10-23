@@ -1,0 +1,63 @@
+---
+parameters:
+  # Base objects for merge demonstration
+  base_service:
+    type: ClusterIP
+    port: 80
+    protocol: TCP
+    labels:
+      managed-by: kapitan
+
+  service_override:
+    port: 8080
+    target_port: 8080
+
+  # Merge resolver usage
+  merged_service: ${merge:${base_service}, ${service_override}}
+
+  # Deep merge demonstration
+  base_config:
+    level1:
+      key_a: value_a
+      key_b: value_b
+
+  config_override:
+    level1:
+      key_b: overridden_b
+      key_c: value_c
+
+  merged_config: ${merge:${base_config}, ${config_override}}
+
+  # List concatenation in merge
+  base_list:
+    items:
+      - item1
+      - item2
+
+  list_override:
+    items:
+      - item3
+      - item4
+
+  merged_list: ${merge:${base_list}, ${list_override}}
+
+  # Three-way merge demonstration (replaces the old test_three_way_merge case):
+  # combine defaults + a scalar override + an annotation-style nested addition
+  # to verify that values from all three sources land in the merged result.
+  deployment_defaults:
+    replicas: 1
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+    pod_annotations:
+      prometheus.io/scrape: "true"
+
+  deployment_custom:
+    replicas: 3
+
+  deployment_annotations:
+    pod_annotations:
+      custom.io/annotation: test-value
+
+  merged_deployment: ${merge:${deployment_defaults}, ${deployment_custom}, ${deployment_annotations}}

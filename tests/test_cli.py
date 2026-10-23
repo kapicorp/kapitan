@@ -18,8 +18,9 @@ import pytest
 
 from kapitan.cli import build_parser
 from kapitan.cli import main as kapitan
+from kapitan.errors import KapitanError
 from kapitan.refs.secrets.vaultkv import VaultSecret
-from tests.vault_server import VaultServer
+from tests.vault_server import get_shared_vault_server
 
 
 REFS_PATH = tempfile.mkdtemp()
@@ -60,13 +61,18 @@ class CliFuncsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # setup vault server (running in container)
-        cls.server = VaultServer()
+        cls.server = get_shared_vault_server()
 
     @classmethod
     def tearDownClass(cls):
         # close connection
         cls.server.close_container()
         shutil.rmtree(REFS_PATH, ignore_errors=True)
+
+    def setUp(self):
+        # Re-export this server's credentials; a parallel worker may have set up
+        # another vault server whose token clobbered the shared environment.
+        self.server.export_env()
 
     def test_cli_secret_reveal_tag(self):
         """
@@ -415,6 +421,28 @@ class CliFuncsTest(unittest.TestCase):
         self.assertEqual(f"revealing: {test_secret_content}", stdout.getvalue())
 
         os.remove(test_tag_file)
+
+    def test_cli_secret_write_invalid_ref_name(self):
+        """
+        run $ kapitan refs --write my-ref-name -f content.txt
+        expect KapitanError with clear message
+        """
+        test_secret_content = "secret_value!"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+
+        with self.assertRaises(KapitanError) as cm:
+            kapitan(
+                "refs",
+                "--write",
+                "my-ref-name",
+                "-f",
+                test_secret_file,
+                "--refs-path",
+                REFS_PATH,
+            )
+        self.assertIn("Invalid token name: my-ref-name", str(cm.exception))
 
     def test_cli_secret_write_plain_ref(self):
         """

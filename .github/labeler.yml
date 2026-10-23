@@ -1,0 +1,32 @@
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - 'README.md'
+          - 'mkdocs.yml'
+          - 'CNAME'
+
+github:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+          - 'Makefile'
+          - 'Dockerfile*'
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'pyproject.toml'
+          - 'uv.lock'
+          - 'requirements*.txt'
+
+reclass:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'kapitan/inventory/backends/reclass/**'
+
+python:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'kapitan/**/*.py'
+          - 'tests/**/*.py'

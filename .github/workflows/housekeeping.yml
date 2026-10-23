@@ -17,3 +17,22 @@ jobs:
           days-before-pr-stale: -1
           days-before-close: -1
           days-before-pr-close: -1
+
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f # v10.2.0
+        with:
+          only-labels: 'needs-triage'
+          stale-issue-message: |
+            This issue has been waiting for triage for 14 days with no updates.
+            Please add more details or the correct labels so a maintainer can route it.
+          close-issue-message: |
+            This issue was closed after 30 days in the triage queue due to inactivity.
+            If this is still relevant, please reopen it with additional details.
+          days-before-issue-stale: 14
+          days-before-close: 16
+          days-before-pr-stale: -1
+          days-before-pr-close: -1

@@ -1,0 +1,34 @@
+---
+parameters:
+  # Standard dot-notation interpolation
+  interpolated: ${app_name}
+
+  # Nested interpolation (interpolation inside interpolation)
+  nested_key: environment
+  nested_interpolated: ${${nested_key}}
+
+  # Escaped interpolation using backslash (deferred - resolved in second pass)
+  deferred_value: \${app_name}
+
+  # Escaped interpolation using escape resolver (preserved as literal string)
+  escaped_value: ${escape:app_name}
+
+  # Interpolation used in string composition
+  full_name: ${app_name}-${environment}
+
+  # Reference to another parameter path
+  ref_value: ${namespace}
+
+  # Conditional with false condition (should produce empty dict)
+  feature_disabled: false
+  conditional_false: ${if:${feature_disabled},should_not_appear}
+
+  # Escape must not resolve even when content matches a real key
+  escaped_real_key: ${escape:environment}
+
+  # Relative path resolver with nested structures
+  nested_config:
+    database:
+      host: db.${cluster}.local
+      port: 5432
+    connection_string: postgresql://${relpath:nested_config.database.host}:${relpath:nested_config.database.port}/mydb

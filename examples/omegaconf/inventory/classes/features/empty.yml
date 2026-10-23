@@ -1,0 +1,6 @@
+---
+# Intentionally empty class to test null/empty handling
+classes:
+parameters:
+  empty_test:
+    loaded: true

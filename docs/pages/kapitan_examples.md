@@ -1,6 +1,6 @@
 ---
 title: "Kapitan Examples: Kubernetes, Terraform, and Infrastructure"
-description: "Explore curated Kapitan examples for Kubernetes, Terraform, and multi-environment infrastructure. Clone the reference repository and compile working targets in minutes."
+description: "Explore curated Kapitan examples for Kubernetes, Terraform, and multi-environment infrastructure. Clone the reference repo and compile targets fast."
 ---
 
 # :kapitan-logo: **Kapitan Examples**

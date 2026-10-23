@@ -1,0 +1,54 @@
+---
+# Rendered by reclass example
+app_name: {{ inventory.parameters.app_name }}
+environment: {{ inventory.parameters.environment }}
+namespace: {{ inventory.parameters.namespace }}
+target_name: {{ inventory.parameters.target_name }}
+{% if inventory.parameters.interpolated is defined %}
+interpolated: {{ inventory.parameters.interpolated }}
+{% endif %}
+{% if inventory.parameters.nested_interpolated is defined %}
+nested_interpolated: {{ inventory.parameters.nested_interpolated }}
+{% endif %}
+{% if inventory.parameters.escaped_value is defined %}
+escaped_value: {{ inventory.parameters.escaped_value }}
+{% endif %}
+{% if inventory.parameters.ref_value is defined %}
+ref_value: {{ inventory.parameters.ref_value }}
+{% endif %}
+{% if inventory.parameters.config is defined %}
+config_log_level: {{ inventory.parameters.config.log_level | default('unknown') }}
+config_retries: {{ inventory.parameters.config.retries | default(0) }}
+{% endif %}
+{% if inventory.parameters.db_host is defined %}
+db_host: {{ inventory.parameters.db_host }}
+db_port: {{ inventory.parameters.db_port }}
+{% endif %}
+{% if inventory.parameters.features is defined %}
+features: {{ inventory.parameters.features }}
+{% endif %}
+{% if inventory.parameters.tags is defined %}
+tags: {{ inventory.parameters.tags }}
+{% endif %}
+{% if inventory.parameters.init_value is defined %}
+init_value: {{ inventory.parameters.init_value }}
+{% endif %}
+{% if inventory.parameters.init_common is defined %}
+init_common: {{ inventory.parameters.init_common }}
+{% endif %}
+{% if inventory.parameters.child_value is defined %}
+child_value: {{ inventory.parameters.child_value }}
+{% endif %}
+{% if inventory.parameters.child_override is defined %}
+child_override: {{ inventory.parameters.child_override }}
+{% endif %}
+{% if inventory.parameters.sibling_value is defined %}
+sibling_value: {{ inventory.parameters.sibling_value }}
+{% endif %}
+{% if inventory.parameters.relative_demo is defined %}
+relative_demo: {{ inventory.parameters.relative_demo }}
+{% endif %}
+{% if inventory.parameters.metadata is defined %}
+metadata_team: {{ inventory.parameters.metadata.team }}
+metadata_version: {{ inventory.parameters.metadata.version }}
+{% endif %}

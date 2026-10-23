@@ -1,0 +1,40 @@
+---
+classes:
+  - common
+  - features.merge
+  - features.overwrite
+  - features.init
+  - features.relative
+  - features.deferred
+  - features.empty
+  - features.remove
+  - features.functions
+
+parameters:
+  # Test conditional resolvers
+  feature_enabled: true
+  feature_disabled: false
+
+  conditional_result: ${if:${feature_enabled},enabled_value}
+  conditional_else: ${ifelse:${equal:${environment},dev},development_mode,production_mode}
+
+  # Test arithmetic resolver
+  computed_replicas: ${add:${replicas}, ${replicas}}
+
+  # Test custom resolver (concat)
+  custom_concat: ${concat:hello,world}
+
+  # Test custom resolver (double)
+  custom_double: ${double:${replicas}}
+
+  # Test escape resolver mid-string
+  greeting: "Hello ${escape:USER}, welcome to ${app_name}"
+
+  kapitan:
+    compile:
+      - input_type: jinja2
+        input_paths:
+          - templates/output.yaml.j2
+        output_path: .
+        output_type: yaml
+        suffix_remove: true
