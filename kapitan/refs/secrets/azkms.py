@@ -1,6 +1,7 @@
 "azkms secret module"
 
 import base64
+import functools
 import logging
 from urllib.parse import urlparse
 
@@ -24,31 +25,34 @@ class AzureKMSError(KapitanError):
     """
 
 
+@functools.cache
+def _azkms_client(key_id):
+    # e.g of key_id https://kapitanbackend.vault.azure.net/keys/myKey/deadbeef
+    url = urlparse(key_id)
+    # ['', 'keys', 'myKey', 'deadbeef'] or ['kapitanbackend.vault.azure.net', 'keys', 'myKey', 'deadbeef']
+    # depending on if key_id is prefixed with https://
+    attrs = url.path.split("/")
+    key_vault_uri = url.hostname or attrs[0]
+    key_name = attrs[-2]
+    key_version = attrs[-1]
+
+    # If --verbose is set, show requests from azure
+    if logger.getEffectiveLevel() > logging.DEBUG:
+        logging.getLogger("azure").setLevel(logging.ERROR)
+    credential = DefaultAzureCredential()
+    key_client = KeyClient(vault_url=f"https://{key_vault_uri}", credential=credential)
+    key = key_client.get_key(key_name, key_version)
+    return CryptographyClient(key, credential)
+
+
 def azkms_obj(key_id):
     """
     Return Azure Key Vault Object
     """
-    # e.g of key_id https://kapitanbackend.vault.azure.net/keys/myKey/deadbeef
-    if not cached.azkms_obj:
-        url = urlparse(key_id)
-        # ['', 'keys', 'myKey', 'deadbeef'] or ['kapitanbackend.vault.azure.net', 'keys', 'myKey', 'deadbeef']
-        # depending on if key_id is prefixed with https://
-        attrs = url.path.split("/")
-        key_vault_uri = url.hostname or attrs[0]
-        key_name = attrs[-2]
-        key_version = attrs[-1]
+    return _azkms_client(key_id)
 
-        # If --verbose is set, show requests from azure
-        if logger.getEffectiveLevel() > logging.DEBUG:
-            logging.getLogger("azure").setLevel(logging.ERROR)
-        credential = DefaultAzureCredential()
-        key_client = KeyClient(
-            vault_url=f"https://{key_vault_uri}", credential=credential
-        )
-        key = key_client.get_key(key_name, key_version)
-        cached.azkms_obj = CryptographyClient(key, credential)
 
-    return cached.azkms_obj
+cached.register_handler_cache_clearer(_azkms_client.cache_clear)
 
 
 class AzureKMSSecret(Base64Ref):
