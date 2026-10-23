@@ -1,0 +1,32 @@
+---
+name: Benchmark Master
+
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.ref }}"
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  schedule:
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  benchmark:
+    name: Benchmark Master
+    permissions:
+      contents: write # push charts to gh-pages
+    uses: ./.github/workflows/benchmark-reusable.yml
+    with:
+      compare-baseline: false
+      fail-on-alert: false
+      comment-on-alert: false
+      push-charts: true
+      save-baseline: true
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}

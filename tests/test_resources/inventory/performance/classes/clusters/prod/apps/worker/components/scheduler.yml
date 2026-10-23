@@ -1,0 +1,10 @@
+parameters:
+  component: scheduler
+  scheduler:
+    type: cron
+    timezone: UTC
+    jobs:
+      - name: cleanup
+        schedule: "0 2 * * *"
+      - name: report
+        schedule: "0 6 * * 1"

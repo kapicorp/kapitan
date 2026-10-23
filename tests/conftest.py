@@ -32,6 +32,9 @@ TEST_RESOURCES_PATH = os.path.join(TEST_PWD, "tests/test_resources")
 TEST_DOCKER_PATH = os.path.join(TEST_PWD, "examples/docker/")
 TEST_TERRAFORM_PATH = os.path.join(TEST_PWD, "examples/terraform/")
 TEST_KUBERNETES_PATH = os.path.join(TEST_PWD, "examples/kubernetes/")
+TEST_PERFORMANCE_PATH = os.path.join(
+    TEST_PWD, "tests/test_resources/inventory/performance"
+)
 
 
 @pytest.fixture
@@ -174,6 +177,65 @@ def isolated_docker_inventory(temp_dir):
     # Safety check: ensure we're not in the actual examples directory
     assert "examples/docker" not in isolated_path
     assert temp_dir in isolated_path
+
+    yield isolated_path
+
+    os.chdir(original_dir)
+    reset_cache()
+    cached.args = Namespace()
+
+
+@pytest.fixture
+def synthetic_large_inventory(temp_dir):
+    """
+    Generate an on-the-fly large synthetic inventory and chdir into it.
+
+    The inventory is the shared-class-stack shape that exposes backend
+    rendering cost: many targets all pulling one deep class chain. Size is
+    tunable via KAPITAN_BENCH_{TARGETS,CLASSES,KEYS} for heavier local runs;
+    defaults stay modest to bound CI time. Returns the inventory path.
+    """
+    from tests.benchmarks.inventory_generator import make_large_inventory
+
+    targets = int(os.environ.get("KAPITAN_BENCH_TARGETS", "40"))
+    classes = int(os.environ.get("KAPITAN_BENCH_CLASSES", "12"))
+    keys = int(os.environ.get("KAPITAN_BENCH_KEYS", "15"))
+
+    isolated_path = os.path.join(temp_dir, "synthetic")
+    os.makedirs(isolated_path)
+    make_large_inventory(isolated_path, targets=targets, classes=classes, keys=keys)
+
+    original_dir = os.getcwd()
+    reset_cache()
+    cached.args = Namespace()
+    os.chdir(isolated_path)
+
+    yield isolated_path
+
+    os.chdir(original_dir)
+    reset_cache()
+    cached.args = Namespace()
+
+
+@pytest.fixture
+def isolated_performance_inventory(temp_dir):
+    """
+    Create an isolated copy of the performance stress inventory for test execution.
+    Returns the path to the isolated copy.
+    """
+    isolated_path = os.path.join(temp_dir, "performance")
+    shutil.copytree(TEST_PERFORMANCE_PATH, isolated_path)
+
+    original_dir = os.getcwd()
+    reset_cache()
+    cached.args = Namespace()
+    os.chdir(isolated_path)
+
+    compiled_path = os.path.join(isolated_path, "compiled")
+    assert "tests/test_resources/inventory/performance" not in isolated_path
+    assert temp_dir in isolated_path
+    if os.path.exists(compiled_path):
+        shutil.rmtree(compiled_path)
 
     yield isolated_path
 
