@@ -9,11 +9,7 @@ import unittest
 from kapitan.refs.base import RefController, Revealer
 from kapitan.refs.secrets.vaulttransit import VaultTransit
 from kapitan.refs.vault_resources import VaultClient
-from tests.vault_server import (
-    VaultServerError,
-    VaultTransitServer,
-    get_shared_vault_server,
-)
+from tests.vault_server import VaultTransitServer, get_shared_vault_server
 
 
 logger = logging.getLogger(__name__)
@@ -30,10 +26,7 @@ class VaultTransitTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # setup vaulttransit server (running in container)
-        try:
-            cls.server = get_shared_vault_server(VaultTransitServer)
-        except VaultServerError as exc:
-            raise unittest.SkipTest(f"vault server unavailable: {exc}") from exc
+        cls.server = get_shared_vault_server(VaultTransitServer)
         cls.server.vault_client.secrets.transit.create_key(name="hvac_key")
         cls.server.vault_client.secrets.transit.create_key(name="hvac_updated_key")
 
