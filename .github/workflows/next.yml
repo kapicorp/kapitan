@@ -44,6 +44,12 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          # Pushing commits that change workflow files needs the `workflows`
+          # permission, which GITHUB_TOKEN can't have. In kapicorp/kapitan the
+          # merged PR commits already exist under refs/pull, so GITHUB_TOKEN
+          # works. A fork receives them new and needs a token in this secret
+          # with Contents and Workflows write access to the fork.
+          token: ${{ secrets.NEXT_PUSH_TOKEN || github.token }}
 
       - id: merge
         name: merge pull requests

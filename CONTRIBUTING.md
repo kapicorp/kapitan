@@ -84,7 +84,9 @@ test result.
 
 A fork can build its own `next` from kapicorp/kapitan without waiting for a
 label: set the repository variables `NEXT_SOURCE` to `kapicorp/kapitan` and
-`NEXT_AUTHOR` to the login whose open PRs to merge, enable issues, and make
+`NEXT_AUTHOR` to the login whose open PRs to merge, store a fine-grained token
+with Contents and Workflows write access to the fork as the secret
+`NEXT_PUSH_TOKEN`, enable issues, and make
 `next` the fork's default branch so the schedule runs. The image then goes to
 `ghcr.io/<owner>/kapitan`.
 
