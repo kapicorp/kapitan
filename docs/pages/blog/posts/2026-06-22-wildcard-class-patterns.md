@@ -2,7 +2,7 @@
 author: The Kapitan Team
 author_gh_user: kapicorp
 read_time: 5m
-date: 2026-06-11
+date: 2026-06-22
 title: "Expanding Inventory Classes with Wildcard Patterns"
 description: "Use --enable-class-wildcards to expand glob patterns like clusters.* in Kapitan inventory classes lists, across every backend."
 ---
@@ -121,9 +121,8 @@ classes:
 order is critical and you do not control the names, list the classes
 explicitly.
 
-A pattern that matches nothing raises an inventory error. With
-`--ignore-class-not-found`, an unmatched pattern is dropped instead, the same
-way missing exact names are handled.
+A pattern that matches nothing raises an inventory error, also when
+compiling with `--fetch`.
 
 ## How it works
 
