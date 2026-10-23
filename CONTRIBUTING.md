@@ -84,9 +84,12 @@ test result.
 
 A fork can build its own `next` from kapicorp/kapitan without waiting for a
 label: set the repository variables `NEXT_SOURCE` to `kapicorp/kapitan` and
-`NEXT_AUTHOR` to the login whose open PRs to merge, store a fine-grained token
-with Contents and Workflows write access to the fork as the secret
-`NEXT_PUSH_TOKEN`, enable issues, and make
+`NEXT_AUTHOR` to the login whose open PRs to merge, optionally
+`NEXT_GREEN_AUTHORS` to logins such as `dependabot[bot]` whose PRs are merged
+once all their checks passed, install a GitHub App with
+Contents and Workflows write access on the fork and store its client ID in the
+variable `NEXT_APP_CLIENT_ID` and its private key in the secret
+`NEXT_APP_PRIVATE_KEY`, enable issues, and make
 `next` the fork's default branch so the schedule runs. The image then goes to
 `ghcr.io/<owner>/kapitan`.
 
