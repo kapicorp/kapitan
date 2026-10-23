@@ -2,7 +2,7 @@
 author: The Kapitan Team
 author_gh_user: kapicorp
 read_time: 3m
-date: 2026-05-15
+date: 2026-06-15
 title: "Faster YAML Output with the rapidyaml Emitter"
 description: "Speed up YAML-heavy Kapitan compiles with the optional rapidyaml emitter: how to enable it, what it costs, and a real benchmark."
 ---
@@ -47,9 +47,11 @@ fail. Kapitan logs a one-time warning and uses PyYAML.
 ## Speed
 
 On a realistic Kubernetes Deployment manifest, the rapidyaml emitter is
-about 6x faster than the PyYAML path. On a large real-world codebase, the
-author of the change measured end-to-end compile times dropping by a factor
-of three. The emitter is only one part of a compile, so the gain depends on
+about 6x faster than the PyYAML path. For whole compiles there is one data
+point so far: in the pull request that added the emitter
+([#1464](https://github.com/kapicorp/kapitan/pull/1464)), its author reports
+that local tests on a large codebase compiled about three times faster. The
+emitter is only one part of a compile, so the gain depends on
 how much of your compile time is spent writing YAML.
 
 The difference comes from the approach. PyYAML runs every scalar and
@@ -60,14 +62,15 @@ builds a contiguous tree in C++ and emits from that.
 
 Test this before enabling it in CI. The output is semantically equivalent
 to PyYAML's: keys are still sorted alphabetically, and every scalar loads
-back to the same Python value. The text can differ, though. The most common
-difference is quoting, where rapidyaml single-quotes a scalar PyYAML leaves
-plain:
+back to the same Python value. The text may differ cosmetically, depending
+on the rapidyaml version. With 0.12.1, the version in Kapitan's `uv.lock`,
+rapidyaml single-quotes a scalar such as `mysql:latest` that PyYAML leaves
+plain. rapidyaml 0.15.2 writes it plain, like PyYAML.
 
 ```yaml
-# PyYAML
+# PyYAML, and rapidyaml 0.15.2
 image: mysql:latest
-# rapidyaml
+# rapidyaml 0.12.1
 image: 'mysql:latest'
 ```
 
