@@ -108,9 +108,12 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
     if args.targets:
         unknown_targets = [t for t in args.targets if t not in discovered_targets]
         if unknown_targets:
-            raise CompileError(
+            # logged here because the cli only logs compile errors at debug
+            message = (
                 f"Targets not found in inventory: {', '.join(sorted(unknown_targets))}"
             )
+            logger.error(message)
+            raise CompileError(message)
 
     try:
         targets = search_targets(inventory, targets, labels)

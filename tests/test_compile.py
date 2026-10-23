@@ -568,9 +568,11 @@ class CompileTestEmptyKapitanConfig(unittest.TestCase):
         create_test_inventory(
             os.getcwd(), {"real-target": self._with_compile("real-target")}
         )
-        with self.assertRaises(SystemExit):
-            with contextlib.redirect_stdout(io.StringIO()):
-                kapitan("compile", "-t", "real-target", "-t", "does-not-exist")
+        with self.assertLogs("kapitan.targets", level="ERROR") as logs:
+            with self.assertRaises(SystemExit):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    kapitan("compile", "-t", "real-target", "-t", "does-not-exist")
+        self.assertIn("Targets not found in inventory: does-not-exist", logs.output[0])
         self.assertFalse(os.path.exists(os.path.join("compiled", "real-target")))
 
     def test_no_compilable_targets_leaves_no_temp_dir(self):
