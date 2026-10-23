@@ -4,7 +4,7 @@ author_gh_user: kapicorp
 read_time: 5m
 date: 2026-04-24
 title: "A Deep Dive into the Kapitan OmegaConf Backend"
-description: "How the OmegaConf inventory backend extends reclass with richer interpolation, custom resolvers, and the new literal escape syntax."
+description: "How the OmegaConf inventory backend, an alternative to reclass, handles interpolation, custom resolvers, and the new literal escape syntax."
 ---
 
 # A Deep Dive into the Kapitan OmegaConf Backend
@@ -80,43 +80,55 @@ data it works on.
 
 ## Deferred evaluation
 
-Sometimes a value should resolve where it ends up after merging, not where
-it is written. The backend resolves in two passes: the first resolves normal
-`${...}` interpolations, and the second resolves anything written as
-`\${...}`, which the first pass only unescapes.
+The backend resolves in two passes. The first resolves normal `${...}`
+interpolations and turns anything written as `\${...}` into `${...}`. The
+second pass resolves what the first one unescaped. So `\${...}` here means
+"resolve later". It does not produce a literal `${` in the output.
 
-The typical case is a template whose name should be the key it is merged
-under:
+Deferring does not change where a resolver such as `parentkey` looks.
+`parentkey` returns the key of the node it is written under, and a template
+copied by interpolation keeps that key:
 
 ```yaml
 # inventory/classes/base-deployment.yml
 parameters:
   deployment_template:
-    name: \${parentkey:}      # deferred, resolves after merge
-    namespace: ${namespace}    # resolves immediately
+    name: \${parentkey:}
+    namespace: ${namespace}
 
 # inventory/targets/my-app.yml
+classes:
+  - base-deployment
 parameters:
   namespace: production
   deployments:
     web-frontend: ${deployment_template}
-    api-backend: ${deployment_template}
+    api-backend: "${merge:${deployment_template},{name: api-backend}}"
+    worker:
+      name: ${parentkey:}
+      namespace: ${namespace}
 ```
 
-Result:
+`kapitan inventory --inventory-backend omegaconf` shows:
 
 ```yaml
 deployments:
-  web-frontend:
-    name: web-frontend       # from \${parentkey:}
-    namespace: production
   api-backend:
-    name: api-backend        # from \${parentkey:}
+    name: api-backend
+    namespace: production
+  web-frontend:
+    name: deployment_template
+    namespace: production
+  worker:
+    name: worker
     namespace: production
 ```
 
-One template, two `name` values. Note that `\${...}` here means "resolve
-later". It does not produce a literal `${` in the output.
+`web-frontend` gets the template's key. To name an entry after its own key,
+write `${parentkey:}` under the entry, as for `worker`, or set `name` while
+merging the template, as for `api-backend`. That `merge` value is quoted
+because its inline dict contains `: `, which YAML would otherwise read as a
+mapping.
 
 ## Literal output with `${escape:...}`
 
@@ -162,11 +174,13 @@ To summarise the two: `\${...}` defers resolution to the second pass,
 `${escape:...}` never resolves and emits the `${...}` text as is.
 
 For expressions with commas or quotes, such as a Terraform conditional,
-quote the argument with single quotes so OmegaConf parses it as one value:
+quote the argument with single quotes so OmegaConf parses it as one value.
+The ` : ` in the conditional also needs the whole YAML value quoted, or the
+YAML parser fails with "mapping values are not allowed here":
 
 ```yaml
 parameters:
-  terraform_expression: ${escape:'var.foo == "bar" ? 1 : 0'}
+  terraform_expression: "${escape:'var.foo == \"bar\" ? 1 : 0'}"
   # ${var.foo == "bar" ? 1 : 0}
 ```
 
@@ -221,8 +235,8 @@ supported by the OmegaConf backend.
 ## When to switch
 
 An inventory that is mostly static data works fine with reclass. The
-OmegaConf backend is worth it when you need defaults, conditions,
-self-naming templates, or literal `${...}` passed through to Terraform.
+OmegaConf backend is worth it when you need defaults, conditions, custom
+resolvers, or literal `${...}` passed through to Terraform.
 Since it is experimental, try it on a branch first, and
 [open an issue](https://github.com/kapicorp/kapitan/issues/new/choose) when
 something breaks.
