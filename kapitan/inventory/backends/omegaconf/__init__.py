@@ -17,6 +17,7 @@ from kadet import Dict
 
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory, InventoryTarget
+from kapitan.inventory.inventory import partial_parameters
 from kapitan.inventory.model import KapitanInventoryMetadata, KapitanInventoryParameters
 from kapitan.utils import available_cpu_count
 from omegaconf import ListMergeMode, OmegaConf
@@ -45,6 +46,18 @@ def _handle_dict(ob: dict):
 @keys_to_strings.register
 def _handle_list(ob: list):
     return [keys_to_strings(v) for v in ob]
+
+
+def resolve_or_none(parameters, key):
+    """The resolved value at ``key``, or None if it doesn't resolve (partial loads)."""
+    from .resolvers import process_literals
+
+    try:
+        return process_literals(
+            OmegaConf.to_container(OmegaConf.select(parameters, key), resolve=True)
+        )
+    except Exception:
+        return None
 
 
 class OmegaConfTarget(InventoryTarget):
@@ -146,7 +159,9 @@ class OmegaConfInventory(Inventory):
                     class_file = case
                     return class_file
 
-        logger.error(f"class file not found for class {class_name}, tried {cases}")
+        # a partial load expects missing classes, they may be fetched next
+        log = logger.debug if self.partial else logger.error
+        log(f"class file not found for class {class_name}, tried {cases}")
         return None
 
     @cached(cache=LRUCache(maxsize=1024))
@@ -221,6 +236,22 @@ class OmegaConfInventory(Inventory):
             full_target_path, parameters=parameters
         )
         load_parameters = time.perf_counter() - start
+
+        if self.partial:
+            # resolve each entry on its own, so one that points into a missing
+            # class doesn't hide the others
+            entries = OmegaConf.select(
+                p, "kapitan.dependencies", throw_on_resolution_failure=False
+            )
+            dependencies = [
+                resolve_or_none(p, f"kapitan.dependencies.{i}")
+                for i in range(len(entries or []))
+            ]
+            labels = resolve_or_none(p, "kapitan.labels")
+            target.parameters = partial_parameters(
+                {"dependencies": dependencies, "labels": labels}
+            )
+            return
 
         # First resolve pass - resolves all interpolations, escaped ones become unescaped
         OmegaConf.resolve(p)

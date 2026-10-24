@@ -92,6 +92,7 @@ kapitan compile --fetch
 ```
 
 This will download the dependencies according to their configurations
+and reload the inventory, so classes fetched as dependencies take effect in the same run (see [Fetching classes](../external_dependencies.md#fetching-classes)).
 By default, kapitan does not overwrite an existing item with the same name as that of the fetched inventory items.
 
 Use the `--force-fetch` flag to force fetch (update cache with freshly fetched items) and overwrite inventory items of the same name in the `output_path`.

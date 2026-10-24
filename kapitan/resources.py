@@ -373,10 +373,13 @@ def generate_inventory(args):
         raise
 
 
-def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inventory:
+def get_inventory(
+    inventory_path, ignore_class_not_found: bool = False, partial: bool = False
+) -> Inventory:
     """
     generic inventory function that makes inventory backend pluggable
     default backend is reclass
+    partial renders only dependencies and labels, see Inventory.partial
     """
 
     # if inventory is already cached there is nothing to do
@@ -420,6 +423,7 @@ def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inven
             compose_target_name=compose_target_name,
             ignore_class_not_found=ignore_class_not_found,
             enable_class_wildcards=enable_class_wildcards,
+            partial=partial,
         )
     except InventoryError:
         sys.exit(1)

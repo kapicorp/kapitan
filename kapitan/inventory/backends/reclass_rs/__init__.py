@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import reclass_rs
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory
-from kapitan.inventory.backends.reclass import get_reclass_config
+from kapitan.inventory.backends.reclass import ReclassInventory, get_reclass_config
 
 
 logger = logging.getLogger(__name__)
@@ -42,5 +42,12 @@ class ReclassRsInventory(Inventory):
                 self.targets[target_name].exports = nodeinfo.exports
 
         except ValueError as e:
+            if self.partial:
+                # reclass-rs fails on any unresolvable reference; reclass renders
+                # the same inventory and keeps what resolved
+                logger.debug(f"Reclass-rs error in partial load, using reclass: {e}")
+                return ReclassInventory.render_targets(
+                    self, targets, ignore_class_not_found
+                )
             logger.error(f"Reclass-rs error: {e}")
             raise InventoryError(f"{e}") from e
