@@ -8,7 +8,8 @@ import reclass
 import reclass.core
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory, InventoryTarget
-from reclass.errors import NotFoundError, ReclassException
+from kapitan.inventory.inventory import partial_parameters
+from reclass.errors import InterpolationError, NotFoundError, ReclassException
 
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,11 @@ class ReclassInventory(Inventory):
         reclass_config = get_reclass_config(
             self.inventory_path, ignore_class_not_found, self.compose_target_name
         )
+        if self.partial:
+            # a partial load expects missing classes, they may be fetched next,
+            # and collects unresolvable references instead of stopping at the first
+            reclass_config["ignore_class_notfound_warning"] = False
+            reclass_config["group_errors"] = True
 
         try:
             storage = reclass.get_storage(
@@ -46,6 +52,9 @@ class ReclassInventory(Inventory):
             _reclass = reclass.core.Core(
                 storage, class_mappings, reclass.settings.Settings(reclass_config)
             )
+            if self.partial:
+                render_partial(self.targets, _reclass, storage)
+                return
             start = datetime.now(timezone.utc)
             rendered_inventory = _reclass.inventory()
             elapsed = datetime.now(timezone.utc) - start
@@ -64,6 +73,27 @@ class ReclassInventory(Inventory):
             else:
                 logger.error(f"Inventory reclass error: {e.message}")
             raise InventoryError(e.message) from e
+
+
+def render_partial(targets, _reclass, storage):
+    """Interpolate each target on its own and keep what resolved.
+
+    Reclass collects unresolvable references (``group_errors``) and renders the
+    rest, so dependency entries resolve even when other parameters point into
+    a class that isn't fetched yet.
+    """
+    for target_name in storage.enumerate_nodes():
+        kapitan = None
+        try:
+            node = _reclass._node_entity(target_name)
+            try:
+                node.interpolate(None)
+            except InterpolationError:
+                pass
+            kapitan = node.parameters.as_dict().get("kapitan")
+        except InterpolationError as e:
+            logger.debug(f"{target_name}: skipped in partial load: {e}")
+        targets[target_name].parameters = partial_parameters(kapitan)
 
 
 def get_reclass_config(
