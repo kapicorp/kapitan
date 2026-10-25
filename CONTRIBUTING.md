@@ -72,7 +72,8 @@ Pre-commit hooks run on commit. If a hook fails, fix the issue and commit again.
 
 The `next` branch is `master` plus every open pull request labelled `next` whose
 author has write access, merged in PR number order. The `next` workflow rebuilds
-it every 15 minutes when `master` or one of those PRs changed, and publishes:
+it every 15 minutes when `master` or one of those PRs changed, and, once the
+inventory and compile tests pass on it, publishes:
 
 - the image `ghcr.io/kapicorp/kapitan:next`, and `next-<commit>` for pinning;
 - the wheel as the workflow artifact `kapitan-next-wheel`.
