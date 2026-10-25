@@ -142,7 +142,11 @@ jobs:
 
           # In a fork next is the default branch, which scheduled runs start
           # from, so it has to keep this workflow even if no merged PR has it.
-          git checkout "$GITHUB_SHA" -- .github/workflows/next.yml
+          # A merged PR that carries the workflow wins, so a newer version of
+          # it reaches next instead of being overwritten by the running one.
+          if [[ ! -f .github/workflows/next.yml ]]; then
+            git checkout "$GITHUB_SHA" -- .github/workflows/next.yml
+          fi
           git commit -q --allow-empty -m "next: $SOURCE master ${base::12} with ${#merged[@]} pull requests" \
             -m "Merged: ${merged[*]:-none}" -m "Conflicting: ${conflicting[*]:-none}" \
             -m "Next-Fingerprint: $fingerprint"
@@ -182,8 +186,9 @@ jobs:
 
   image:
     name: image and wheel
-    needs: assemble
-    if: needs.assemble.outputs.changed == 'true'
+    # Only a build whose tests passed moves the next image tags.
+    needs: [assemble, test]
+    if: needs.assemble.outputs.changed == 'true' && needs.test.result == 'success'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -275,7 +280,7 @@ jobs:
             if [[ -n "$DIGEST" ]]; then
               echo "- Image: \`$IMAGE:next-${SHA::12}\` (\`$DIGEST\`)"
             else
-              echo "- Image: not built in this run"
+              echo "- Image: not built in this run, because the tests did not pass; the next tag still points to the previous build"
             fi
             echo "- Inventory and compile tests: $TESTS"
             echo "- Run: $RUN"
