@@ -78,6 +78,10 @@ inventory and compile tests pass on it, publishes:
 - the image `ghcr.io/kapicorp/kapitan:next`, and `next-<commit>` for pinning;
 - the wheel as the workflow artifact `kapitan-next-wheel`.
 
+Each image has a build provenance attestation. Check that an image came from
+this workflow with
+`gh attestation verify oci://ghcr.io/kapicorp/kapitan@<digest> --owner kapicorp`.
+
 The issue titled "next: integration status" is updated on every rebuild. It
 lists the PRs in `next` with the head commit that was merged, the PRs left out
 because they conflict with `master` or an earlier PR, the image digest and the
