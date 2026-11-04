@@ -193,6 +193,10 @@ jobs:
     permissions:
       contents: read
       packages: write
+      # Build provenance: users verify where the image was built with
+      # `gh attestation verify oci://<image>@<digest> --owner <owner>`.
+      id-token: write
+      attestations: write
     outputs:
       digest: ${{ steps.push.outputs.digest }}
       image: ${{ steps.names.outputs.image }}
@@ -242,6 +246,12 @@ jobs:
           tags: |
             ${{ steps.names.outputs.image }}:next
             ${{ steps.names.outputs.image }}:next-${{ steps.names.outputs.sha }}
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ steps.names.outputs.image }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false # needs artifact-metadata: write
 
   report:
     name: update the status issue
