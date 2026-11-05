@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import collections
+import difflib
 import glob
 import json
 import logging
@@ -410,17 +411,51 @@ def dot_kapitan_config():
     return cached.dot_kapitan
 
 
+# (section, flag) pairs looked up via from_dot_kapitan(); build_parser() does all of them
+_dot_kapitan_lookups = set()
+
+
 def from_dot_kapitan(command, flag, default):
     """
     Returns the 'flag' from the '<command>' or from the 'global' section in the  .kapitan file. If
     neither section proivdes a value for the flag, the value passed in `default` is returned.
     """
+    _dot_kapitan_lookups.add((command, flag))
     kapitan_config = dot_kapitan_config()
 
     global_config = kapitan_config.get("global", {})
     cmd_config = kapitan_config.get(command, {})
 
     return cmd_config.get(flag, global_config.get(flag, default))
+
+
+def warn_unknown_dot_kapitan_keys():
+    """Log a warning for each .kapitan section or key that no command reads.
+
+    Must run after build_parser(), which performs every from_dot_kapitan() lookup.
+    """
+    # 'version' is read by check_version(); every flag falls back to 'global'
+    known = {"version": set(), "global": set()}
+    for section, flag in _dot_kapitan_lookups:
+        known.setdefault(section, set()).add(flag)
+        known["global"].add(flag)
+
+    unknown = []  # (description, name, valid names)
+    for section, keys in (dot_kapitan_config() or {}).items():
+        if section not in known:
+            unknown.append((f"section '{section}'", section, known))
+        elif isinstance(keys, dict):
+            unknown += [
+                (f"key '{key}' in section '{section}'", key, known[section])
+                for key in keys
+                if key not in known[section]
+            ]
+
+    for description, name, valid in unknown:
+        # high cutoff: a far-off guess (inventory-backend -> inventory-path) misleads
+        match = difflib.get_close_matches(str(name), valid, n=1, cutoff=0.8)
+        hint = f", did you mean '{match[0]}'?" if match else ""
+        logger.warning(".kapitan: ignoring unknown %s%s", description, hint)
 
 
 def compare_versions(v1_raw, v2_raw):
