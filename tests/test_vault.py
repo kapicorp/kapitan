@@ -13,11 +13,13 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 from kapitan.inventory.model.references import KapitanReferenceVaultKVConfig
 from kapitan.refs.base import RefController, RefParams, Revealer
 from kapitan.refs.secrets.vaultkv import VaultClient, VaultError, VaultSecret
-from tests.vault_server import get_shared_vault_server
+from tests import vault_server
+from tests.vault_server import VaultServer, get_shared_vault_server
 
 
 logger = logging.getLogger(__name__)
@@ -323,3 +325,36 @@ class VaultSecretTest(unittest.TestCase):
             revealed_secret_2.isalpha(),
             msg="A non accessed key changed by accessing/updating another key",
         )
+
+
+class VaultServerAddressTest(unittest.TestCase):
+    """VaultServer must only use an external vault that is meant for tests."""
+
+    def _build(self, env):
+        # 192.0.2.0/24 is TEST-NET-1; setup_vault is mocked, nothing is contacted
+        with (
+            mock.patch.dict(os.environ, env),
+            mock.patch.object(vault_server, "docker"),
+            mock.patch.object(VaultServer, "setup_container") as setup_container,
+            mock.patch.object(VaultServer, "setup_vault"),
+        ):
+            return VaultServer(), setup_container
+
+    def test_vault_addr_alone_is_not_used(self):
+        """A VAULT_ADDR exported for real work must not be treated as a test vault."""
+        with mock.patch.dict(os.environ):
+            os.environ.pop("KAPITAN_TEST_VAULT_ADDR", None)
+            server, setup_container = self._build(
+                {"VAULT_ADDR": "http://192.0.2.1:8200"}
+            )
+
+        setup_container.assert_called_once()
+        self.assertIsNone(server.vault_url)
+
+    def test_kapitan_test_vault_addr_is_used(self):
+        server, setup_container = self._build(
+            {"KAPITAN_TEST_VAULT_ADDR": "http://192.0.2.2:8200"}
+        )
+
+        setup_container.assert_not_called()
+        self.assertEqual(server.vault_url, "http://192.0.2.2:8200")

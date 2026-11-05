@@ -61,8 +61,9 @@ class VaultServer:
         self.secret_id = None
         self.token = None
 
-        # If VAULT_ADDR is already set (e.g. CI service container), use it.
-        existing_addr = os.environ.get("VAULT_ADDR")
+        # Use an external vault only when it is set up for these tests, e.g. the
+        # CI service container. VAULT_ADDR may point at a real vault and is ignored.
+        existing_addr = os.environ.get("KAPITAN_TEST_VAULT_ADDR")
         if existing_addr:
             self.vault_url = existing_addr
             self.parameters["addr"] = self.vault_url
@@ -72,7 +73,7 @@ class VaultServer:
             if docker is None:
                 raise VaultServerError(
                     "Docker Python package is not installed. "
-                    "Install it or set VAULT_ADDR to connect to an existing vault server."
+                    "Install it or set KAPITAN_TEST_VAULT_ADDR to use an existing test vault."
                 )
             self.docker_client = docker.from_env()
             self.vault_container = self.setup_container()
