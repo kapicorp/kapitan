@@ -115,7 +115,7 @@ jobs:
     needs: [setup, check-changes]
     runs-on: ${{ needs.setup.outputs.runner }}
     env:
-      VAULT_ADDR: http://localhost:8200
+      KAPITAN_TEST_VAULT_ADDR: http://localhost:8200
     strategy:
       fail-fast: false
       matrix:
