@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import hashlib
+import json
 import logging
 import multiprocessing
 import os
 import tarfile
+import tempfile
 from collections import defaultdict, namedtuple
 from functools import partial
 from mimetypes import MimeTypes
@@ -25,6 +27,7 @@ from kapitan.errors import (
     GitFetchingError,
     GitSubdirNotFoundError,
     HelmFetchingError,
+    InventoryValidationError,
     OCIFetchingError,
 )
 from kapitan.helm_cli import helm_cli
@@ -49,7 +52,7 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
     """
     parses through the dependencies parameters in target_objs and fetches them
     all dependencies are first fetched into save_dir, after which they are copied to their respective output_path.
-    overwites older version of existing dependencies if force fetced
+    a dependency whose output_path already holds it is skipped unless force fetched
     """
     # there could be multiple dependency items per source_uri due to reclass inheritance or
     # other user requirements. So create a mapping from source_uri to a set of dependencies with
@@ -59,8 +62,8 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
     helm_deps = defaultdict(list)
     oci_deps = defaultdict(list)
 
-    # this dict is to make sure no duplicated output_paths exist per source
-    deps_output_paths = defaultdict(set)
+    # output_path -> pin of the dependency written there
+    pins = {}
     for target_obj in target_objs:
         try:
             dependencies = target_obj.dependencies
@@ -76,13 +79,28 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
                 )
                 item.output_path = full_output_path
 
-                if full_output_path in deps_output_paths[source_uri]:
-                    # if the output_path is duplicated for the same source_uri
+                pin = _pin(item)
+                if full_output_path in pins:
+                    if pins[full_output_path] != pin:
+                        raise InventoryValidationError(
+                            f"Dependencies {pins[full_output_path]} and {pin} have "
+                            f"the same output_path {full_output_path}. Give each "
+                            f"dependency its own output_path."
+                        )
                     logger.debug(
                         "Skipping duplicate output path for uri %s", source_uri
                     )
                     continue
-                deps_output_paths[source_uri].add(full_output_path)
+                pins[full_output_path] = pin
+
+                if (
+                    not (force or item.force_fetch)
+                    and _fetched(full_output_path) == pin
+                ):
+                    logger.debug(
+                        "Dependency %s: %s is up to date", source_uri, full_output_path
+                    )
+                    continue
 
                 if dependency_type == KapitanDependencyTypes.GIT:
                     git_deps[source_uri].append(item)
@@ -107,6 +125,14 @@ def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
                 target_obj["vars"]["target"],
             )
             continue
+
+    for path in pins:
+        for other in pins:
+            if other.startswith(path + os.sep):
+                raise InventoryValidationError(
+                    f"Dependency output_path {other} is inside output_path {path} of "
+                    f"another dependency. Give each dependency its own output_path."
+                )
 
     git_worker = partial(fetch_git_dependency, save_dir=save_dir, force=force)
     http_worker = partial(fetch_http_dependency, save_dir=save_dir, force=force)
@@ -171,9 +197,10 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
         if force:
             # We need `clobber_files=True` here, since we otherwise can't overwrite read-only Git
             # index and pack files if the destination already contains a copy of the Git repo.
-            copied = copy_tree(copy_src_path, output_path, clobber_files=True)
+            copy = partial(copy_tree, copy_src_path, clobber_files=True)
         else:
-            copied = safe_copy_tree(copy_src_path, output_path)
+            copy = partial(safe_copy_tree, copy_src_path)
+        copied = _install(dep, copy, item_type)
         if copied:
             logger.info("%s %s: saved to %s", item_type, source, output_path)
 
@@ -213,24 +240,16 @@ def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
     for dep in deps:
         output_path = dep.output_path
         if dep.unpack:
-            # ensure that the directory we are extracting to exists
-            os.makedirs(output_path, exist_ok=True)
-            if force:
-                is_unpacked = unpack_downloaded_file(
-                    cached_source_path, output_path, content_type
-                )
-            else:
-                unpack_output = os.path.join(
-                    save_dir, "extracted-" + str(multiprocessing.current_process().name)
-                )
-                os.makedirs(unpack_output)
-                is_unpacked = unpack_downloaded_file(
-                    cached_source_path, unpack_output, content_type
-                )
-                safe_copy_tree(unpack_output, output_path)
-                # delete unpack output
-                rmtree(unpack_output)
+            unpack_output = os.path.join(
+                save_dir, "extracted-" + str(multiprocessing.current_process().name)
+            )
+            os.makedirs(unpack_output)
+            is_unpacked = unpack_downloaded_file(
+                cached_source_path, unpack_output, content_type
+            )
             if is_unpacked:
+                copy = copy_tree if force else safe_copy_tree
+                _install(dep, partial(copy, unpack_output), item_type)
                 logger.info("%s %s: extracted to %s", item_type, source, output_path)
             else:
                 logger.info(
@@ -239,15 +258,12 @@ def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
                     source,
                     content_type,
                 )
+            # delete unpack output
+            rmtree(unpack_output)
         else:
             # we are downloading a single file
-            parent_dir = os.path.dirname(output_path)
-            if parent_dir != "":
-                os.makedirs(parent_dir, exist_ok=True)
-            if force:
-                copyfile(cached_source_path, output_path)
-            else:
-                safe_copy_file(cached_source_path, output_path)
+            copy = copyfile if force else safe_copy_file
+            _install(dep, partial(copy, cached_source_path), item_type)
             logger.debug("%s %s: saved to %s", item_type, source, output_path)
 
 
@@ -284,31 +300,33 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
     for dep in deps:
         output_path = dep.output_path
 
-        if not os.path.exists(output_path) or force:
-            if not exists_in_cache(cached_repo_path):
-                fetch_helm_archive(
-                    source.helm_path,
-                    source.repo,
-                    source.chart_name,
-                    source.version,
-                    cached_repo_path,
-                )
-            else:
-                logger.debug("Using cached helm chart at %s", cached_repo_path)
+        if os.path.exists(output_path) and not force and _fetched(output_path) is None:
+            # a chart from before fetch records is only replaced when forced, as before
+            logger.warning(
+                "Dependency %s: %s has no fetch record, not updating it. Delete it "
+                "or use --force-fetch to fetch version %s.",
+                source.chart_name,
+                output_path,
+                source.version or "latest",
+            )
+            continue
 
-            parent_dir = os.path.dirname(output_path)
-            if parent_dir != "":
-                os.makedirs(parent_dir, exist_ok=True)
+        if not exists_in_cache(cached_repo_path):
+            fetch_helm_archive(
+                source.helm_path,
+                source.repo,
+                source.chart_name,
+                source.version,
+                cached_repo_path,
+            )
+        else:
+            logger.debug("Using cached helm chart at %s", cached_repo_path)
 
-            if force:
-                copied = copy_tree(cached_repo_path, output_path)
-            else:
-                copied = safe_copy_tree(cached_repo_path, output_path)
+        copy = copy_tree if force else safe_copy_tree
+        copied = _install(dep, partial(copy, cached_repo_path))
 
-            if copied:
-                logger.info(
-                    "Dependency %s: saved to %s", source.chart_name, output_path
-                )
+        if copied:
+            logger.info("Dependency %s: saved to %s", source.chart_name, output_path)
 
 
 def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
@@ -411,6 +429,66 @@ def helm_dependencies_digest(target_name: str) -> bytes | None:
 
 def exists_in_cache(item_path):
     return os.path.exists(item_path)
+
+
+def _pin(dep):
+    """What a dependency fetches: all its fields except where it goes."""
+    fields = dep.model_dump(mode="json", exclude={"output_path", "force_fetch"})
+    return json.dumps(fields, sort_keys=True)
+
+
+def _record_path(output_path):
+    head, tail = os.path.split(output_path)
+    return os.path.join(head, f".{tail}.kapitan-fetch")
+
+
+def _fetched(output_path):
+    """Pin of the dependency the last fetch wrote to output_path, or None."""
+    if not os.path.lexists(output_path):
+        return None
+    try:
+        with open(_record_path(output_path)) as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
+
+
+def _install(dep, copy, item_type="Dependency"):
+    """Write a dependency to dep.output_path with copy(path) and record its pin.
+
+    copy writes to a new path next to output_path, which then replaces output_path,
+    so it holds exactly what copy wrote. An output_path without a fetch record was
+    written by an older Kapitan or by hand, and is updated in place instead, so
+    nothing Kapitan did not write is deleted.
+    """
+    output_path = dep.output_path
+    if os.path.lexists(output_path) and _fetched(output_path) is None:
+        logger.warning(
+            "%s %s: %s has no fetch record, so it is not replaced. Existing files "
+            "are only overwritten with --force-fetch and files the pinned version "
+            "no longer has are kept. Delete it to let Kapitan replace it.",
+            item_type,
+            dep.source,
+            output_path,
+        )
+        return copy(output_path)
+
+    parent_dir = os.path.dirname(output_path) or "."
+    os.makedirs(parent_dir, exist_ok=True)
+    tmp_dir = tempfile.mkdtemp(
+        prefix=f".{os.path.basename(output_path)}.", dir=parent_dir
+    )
+    try:
+        new_path = os.path.join(tmp_dir, "new")
+        copied = copy(new_path)
+        if os.path.lexists(output_path):
+            os.rename(output_path, os.path.join(tmp_dir, "old"))
+        os.rename(new_path, output_path)
+    finally:
+        rmtree(tmp_dir)
+    with open(_record_path(output_path), "w") as f:
+        f.write(_pin(dep))
+    return copied
 
 
 def _extract_tar_blobs(target_dir: str) -> None:
@@ -544,10 +622,8 @@ def fetch_oci_dependency(dep_mapping, save_dir, force=False, item_type="Dependen
                 raise OCIFetchingError(
                     f"{item_type} {source}: subpath '{dep.subpath}' not found in pulled artifact"
                 )
-        if force:
-            copied = copy_tree(src, dep.output_path)
-        else:
-            copied = safe_copy_tree(src, dep.output_path)
+        copy = copy_tree if force else safe_copy_tree
+        copied = _install(dep, partial(copy, src), item_type)
         if copied:
             logger.info("%s %s: saved to %s", item_type, source, dep.output_path)
 
