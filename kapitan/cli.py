@@ -18,6 +18,7 @@ import sys
 import yaml
 
 from kapitan import cached, defaults, setup_logging
+from kapitan.dependency_manager.oci_push import push_oci_artifact
 from kapitan.initialiser import initialise_skeleton
 from kapitan.inputs.jsonnet import select_jsonnet_runtime
 from kapitan.inventory import AVAILABLE_BACKENDS, InventoryBackends
@@ -95,6 +96,15 @@ def trigger_compile(args):
     except Exception as e:
         logger.debug("Compile failed: %s", e, exc_info=True)
         sys.exit(1)
+
+
+def trigger_publish(args):
+    try:
+        digest = push_oci_artifact(args.directory, args.reference, args.insecure)
+    except Exception as e:
+        logger.error("Publish failed: %s", e)
+        sys.exit(1)
+    print(digest)
 
 
 def build_parser():
@@ -685,6 +695,22 @@ def build_parser():
         "--checkout_ref",
         default=from_dot_kapitan("init", "checkout_ref ", defaults.COPIER_TEMPLATE_REF),
         help=f"Cruft checkout_ref, default is {defaults.COPIER_TEMPLATE_REF}",
+    )
+
+    publish_parser = subparser.add_parser(
+        "publish",
+        help="push a directory to an OCI registry for the oci dependency type",
+    )
+    publish_parser.set_defaults(func=trigger_publish, name="publish")
+    publish_parser.add_argument("directory", help="directory to publish")
+    publish_parser.add_argument(
+        "reference", help="target reference, e.g. ghcr.io/org/generator:1.0.0"
+    )
+    publish_parser.add_argument(
+        "--insecure",
+        help="use plain HTTP instead of HTTPS",
+        action="store_true",
+        default=from_dot_kapitan("publish", "insecure", False),
     )
     return parser
 
