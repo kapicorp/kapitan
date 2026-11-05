@@ -117,11 +117,13 @@ def render_chart(
     """
     args = ["template"]
 
+    # copy both: callers reuse helm_params for the next input path, and
+    # HELM_DEFAULT_FLAGS is shared by every chart rendered in this process
+    helm_params = dict(helm_params)
+    helm_flags = dict(HELM_DEFAULT_FLAGS if helm_flags is None else helm_flags)
+
     name = helm_params.pop("name", None)
     output_file = helm_params.pop("output_file", None)
-
-    if helm_flags is None:
-        helm_flags = HELM_DEFAULT_FLAGS
 
     # Validate and process helm parameters
     for param, value in helm_params.items():
