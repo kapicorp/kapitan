@@ -23,7 +23,7 @@ from kapitan.defaults import KADET_COMPONENT_MODULE_PREFIX
 from kapitan.dependency_manager.base import helm_dependencies_digest
 from kapitan.errors import CompileError
 from kapitan.inputs.base import InputType
-from kapitan.inputs.cache import InputCache, walk_and_hash
+from kapitan.inputs.cache import InputCache, record_reads, walk_and_hash
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
 from kapitan.topics import consumed_topics_digest, current_target
 
@@ -184,33 +184,35 @@ class Kadet(InputType):
                 # path does not get baked into the hash; only inject if user didn't supply one
                 input_params.setdefault("compile_path", compile_path)
 
-                kadet_module, spec = module_from_path(input_path)
-                sys.modules[spec.name] = kadet_module
-                spec.loader.exec_module(kadet_module)
-                logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
-                kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
-                logger.debug("Kadet main args: %s", kadet_arg_spec.args)
+                # files the module opens become part of its cache key
+                with record_reads() as reads:
+                    kadet_module, spec = module_from_path(input_path)
+                    sys.modules[spec.name] = kadet_module
+                    spec.loader.exec_module(kadet_module)
+                    logger.debug("Kadet.compile_file: spec.name: %s", spec.name)
+                    kadet_arg_spec = inspect.getfullargspec(kadet_module.main)
+                    logger.debug("Kadet main args: %s", kadet_arg_spec.args)
 
-                if len(kadet_arg_spec.args) > 1:
-                    raise ValueError(
-                        f"Kadet {spec.name} main parameters not equal to 1 or 0"
-                    )
+                    if len(kadet_arg_spec.args) > 1:
+                        raise ValueError(
+                            f"Kadet {spec.name} main parameters not equal to 1 or 0"
+                        )
 
-                try:
-                    if len(kadet_arg_spec.args) == 1:
-                        output_obj = kadet_module.main(input_params)
-                    elif len(kadet_arg_spec.args) == 0:
-                        output_obj = kadet_module.main()
+                    try:
+                        if len(kadet_arg_spec.args) == 1:
+                            output_obj = kadet_module.main(input_params)
+                        elif len(kadet_arg_spec.args) == 0:
+                            output_obj = kadet_module.main()
 
-                except Exception as exc:
-                    raise CompileError(
-                        f"Could not load Kadet module: {spec.name[16:]}"
-                    ) from exc
+                    except Exception as exc:
+                        raise CompileError(
+                            f"Could not load Kadet module: {spec.name[16:]}"
+                        ) from exc
 
                 output_obj = _to_dict(output_obj)
 
                 if cache_obj := self.cacheable():
-                    cache_obj.set(inputs_hash, output_obj)
+                    cache_obj.set(inputs_hash, output_obj, reads=reads)
 
             # Return None if output_obj has no output
             if not output_obj:
