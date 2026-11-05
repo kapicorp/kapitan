@@ -19,8 +19,6 @@ try:
 except ImportError:
     oras = None
 
-from git import GitCommandError, Repo
-
 from kapitan.errors import (
     GitFetchingError,
     GitSubdirNotFoundError,
@@ -125,6 +123,8 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
     commit SHA); if omitted, the remote's default branch (origin/HEAD) is used. only
     subdir is copied into output_path if specified.
     """
+    from git import Repo  # GitPython runs `git version` on import
+
     source, deps = dep_mapping
     # to avoid collisions between basename(source)
     path_hash = hashlib.sha256(os.path.dirname(source).encode()).hexdigest()[:8]
@@ -180,6 +180,7 @@ def fetch_git_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
 
 def fetch_git_source(source, save_dir, item_type):
     """clones a git repository at source and saves into save_dir"""
+    from git import GitCommandError, Repo  # GitPython runs `git version` on import
 
     if os.path.exists(save_dir):
         rmtree(save_dir)
