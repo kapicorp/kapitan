@@ -30,7 +30,11 @@ from kapitan.inputs.cache import CacheMetrics
 from kapitan.inventory.model import KapitanInventorySettings
 from kapitan.profiling import worker_profile
 from kapitan.resources import get_inventory
-from kapitan.utils import available_cpu_count, normalise_join_path
+from kapitan.utils import (
+    available_cpu_count,
+    normalise_join_path,
+    set_path_traversal_mode,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -601,6 +605,10 @@ def _compile_target_impl(
     start = time.time()
     compile_configs = target_config.compile
     target_name = target_config.vars.target
+
+    # Re-apply per process: with the spawn start method the module global in
+    # ``utils`` resets to the default in each worker, so set it from args here.
+    set_path_traversal_mode(getattr(args, "path_traversal_mode", "warn"))
 
     for compile_config in compile_configs:
         try:

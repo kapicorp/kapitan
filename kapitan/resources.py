@@ -27,6 +27,7 @@ from kapitan.topics import topics
 from kapitan.utils import (
     PrettyDumper,
     StrEnum,
+    check_path_traversal,
     deep_get,
     flatten_dict,
     render_jinja2_file,
@@ -128,6 +129,7 @@ def jinja2_render_file(search_paths, name, ctx):
         logger.debug("jinja2_render_file trying file %s", _full_path)
         if os.path.exists(_full_path):
             logger.debug("jinja2_render_file found file at %s", _full_path)
+            check_path_traversal([path], _full_path, "jinja2_render_file")
             try:
                 return render_jinja2_file(_full_path, ctx, search_paths=search_paths)
             except Exception as e:
@@ -145,6 +147,7 @@ def yaml_load(search_paths, name):
         logger.debug("yaml_load trying file %s", _full_path)
         if os.path.exists(_full_path) and name.endswith((".yml", ".yaml")):
             logger.debug("yaml_load found file at %s", _full_path)
+            check_path_traversal([path], _full_path, "yaml_load")
             try:
                 with open(_full_path) as f:
                     return json.dumps(yaml.safe_load(f.read()))
@@ -163,6 +166,7 @@ def yaml_load_stream(search_paths, name):
         logger.debug("yaml_load_stream trying file %s", _full_path)
         if os.path.exists(_full_path) and name.endswith((".yml", ".yaml")):
             logger.debug("yaml_load_stream found file at %s", _full_path)
+            check_path_traversal([path], _full_path, "yaml_load_stream")
             try:
                 with open(_full_path) as f:
                     _obj = yaml.load_all(f.read(), Loader=yaml.SafeLoader)
@@ -182,6 +186,7 @@ def read_file(search_paths, name):
         logger.debug("read_file trying file %s", full_path)
         if os.path.exists(full_path):
             logger.debug("read_file found file at %s", full_path)
+            check_path_traversal([path], full_path, "read_file")
             with open(full_path, newline="") as f:
                 return f.read()
 
@@ -197,6 +202,7 @@ def file_exists(search_paths, name):
         logger.debug("file_exists trying file %s", full_path)
         if os.path.exists(full_path):
             logger.debug("file_exists found file at %s", full_path)
+            check_path_traversal([path], full_path, "file_exists")
             return {"exists": True, "path": full_path}
 
     return {"exists": False, "path": ""}
@@ -208,6 +214,7 @@ def dir_files_list(search_paths, name):
         full_path = os.path.join(path, name)
         logger.debug("dir_files_list trying directory %s", full_path)
         if os.path.exists(full_path):
+            check_path_traversal([path], full_path, "dir_files_list")
             return [
                 f
                 for f in os.listdir(full_path)
@@ -223,6 +230,7 @@ def dir_files_read(search_paths, name):
         full_path = os.path.join(path, name)
         logger.debug("dir_files_list trying directory %s", full_path)
         if os.path.exists(full_path):
+            check_path_traversal([path], full_path, "dir_files_read")
             return {
                 f: read_file([full_path], f) for f in dir_files_list([full_path], "")
             }
@@ -278,6 +286,9 @@ def search_imports(cwd, import_str, search_paths):
         basename,
         normalised_path,
     )
+
+    allowed_roots = [cwd, os.path.dirname(kapitan_install_path), *search_paths]
+    check_path_traversal(allowed_roots, normalised_path, "jsonnet import")
 
     normalised_path_content = ""
     with open(normalised_path) as f:
