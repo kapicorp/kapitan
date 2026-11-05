@@ -1,11 +1,19 @@
 import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 from kapitan.errors import CompileError
-from kapitan.inputs.cache import CacheMetrics, InputCache
+from kapitan.inputs.cache import (
+    CacheMetrics,
+    InputCache,
+    record_reads,
+    walk_and_hash,
+)
+from kapitan.inputs.kadet import Kadet
+from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
 
 
 class InputCacheTest(unittest.TestCase):
@@ -240,3 +248,68 @@ class InputCacheTest(unittest.TestCase):
                     loaded_obj = cache.load_output(fp)
 
                 self.assertEqual(test_obj, loaded_obj)
+
+
+class KadetCacheReadsTest(unittest.TestCase):
+    """Files a kadet module opens are part of its cache key (#1620)."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        env = patch.dict(os.environ, {"XDG_CACHE_HOME": str(self.root / "cache")})
+        env.start()
+        self.addCleanup(env.stop)
+        self.component = self.root / "reads_component"
+        self.component.mkdir()
+        self.component.joinpath("__init__.py").write_text(
+            "import os\n"
+            "from kapitan.inputs.kadet import load_from_search_paths, search_paths\n"
+            "lib = load_from_search_paths('reads_lib')\n"
+            "def main():\n"
+            "    with open(os.path.join(search_paths.get()[0], 'data.txt')) as f:\n"
+            "        return {'out': {'data': f.read(), 'lib': lib.VALUE}}\n"
+        )
+        self.addCleanup(sys.modules.pop, "kadet_component_reads_component", None)
+        self.root.joinpath("reads_lib").mkdir()
+
+    def compile(self):
+        """Compiles the component as a new kapitan run would; returns output and hits."""
+        cache = InputCache("kadet")
+        compiler = Kadet.__new__(Kadet)
+        compiler.target_name = "demo"
+        compiler.search_paths = [str(self.root)]
+        config = KapitanInputTypeKadetConfig(
+            input_paths=[str(self.component)], output_path="."
+        )
+        with (
+            patch.object(compiler, "cacheable", return_value=cache),
+            patch("kapitan.inputs.kadet.inventory_digest", return_value=b"inv"),
+            patch("kapitan.inputs.kadet.helm_dependencies_digest", return_value=None),
+            patch("kapitan.inputs.kadet.consumed_topics_digest", return_value=None),
+            patch.object(compiler, "to_file") as to_file,
+        ):
+            compiler.compile_file(config, str(self.component), str(self.root))
+        return to_file.call_args.args[2], cache.metrics.snapshot()["hits"]
+
+    def test_files_read_outside_input_path_invalidate_cache(self):
+        self.root.joinpath("data.txt").write_text("v1")
+        self.root.joinpath("reads_lib", "__init__.py").write_text("VALUE = 'v1'\n")
+        self.assertEqual(self.compile(), ({"data": "v1", "lib": "v1"}, 0))
+        self.assertEqual(self.compile(), ({"data": "v1", "lib": "v1"}, 1))
+
+        self.root.joinpath("data.txt").write_text("v2")
+        self.assertEqual(self.compile(), ({"data": "v2", "lib": "v1"}, 0))
+
+        # this run loaded reads_lib from its .pyc, the key must still use the source
+        self.root.joinpath("reads_lib", "__init__.py").write_text("VALUE = 'v2-lib'\n")
+        self.assertEqual(self.compile(), ({"data": "v2", "lib": "v2-lib"}, 0))
+
+    def test_walk_and_hash_records_memoized_paths(self):
+        cache = InputCache("kadet")
+        data = self.root / "data.txt"
+        data.write_text("v1")
+        walk_and_hash(data, cache, InputCache.hash_object())
+        with record_reads() as reads:
+            walk_and_hash(data, cache, InputCache.hash_object())
+        self.assertEqual(reads, {str(data)})
