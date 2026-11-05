@@ -22,6 +22,7 @@ parameters:
       helm_values_files:
         - <values_file_path>
       helm_path: <helm binary>
+      kube_version: <kubernetes_version>
       helm_params:
         name: <chart_release_name>
         namespace: <substitutes_.Release.Namespace>
@@ -39,6 +40,8 @@ This component has helm chart input and takes a `common.yml` helm_values file wh
 
 `helm_path` can be use to provide the helm binary name or path.
 `helm_path` defaults to the value of `KAPITAN_HELM_PATH` env var if it is set, else it defaults to `helm`
+
+`kube_version` sets the Kubernetes version the chart sees as `.Capabilities.KubeVersion`, for example `"1.25.0"`. It is passed to helm as `--kube-version`.
 
 `helm_params` correspond to the flags for `helm template`. Most flags that helm supports can be used here by replacing '-' by '_' in the flag name.
 
