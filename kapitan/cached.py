@@ -19,7 +19,6 @@ from typing import Any
 # Inventory caches
 inv: dict[str, Any] = {}
 global_inv: dict[str, Any] = {}
-inventory_global_kadet: dict[str, Any] = {}
 inv_cache: dict[str, Any] = {}
 
 # Secrets handlers
