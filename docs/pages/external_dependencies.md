@@ -67,6 +67,14 @@ Use the `force-fetch` option to force overwrite your local files in the `output_
           force-fetch: true
         ```
 
+### Requiring pinned dependencies
+
+With `--require-pinned`, or `require-pinned: true` under `compile` in `.kapitan`, the fetch fails before anything is downloaded if a dependency can change while its definition stays the same. The error lists every such dependency. A dependency is pinned when:
+
+- git: `ref` is a full commit SHA
+- http[s] and helm: `sha256` is set
+- oci: `source` ends with a digest, `<registry>/<repository>@sha256:<digest>`
+
 ### Caching
 
 Kapitan also supports caching Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
@@ -137,11 +145,13 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
           output_path: path/to/file # mkdocs (1)!
           source: http[s]://<url> # mkdocs (2)!
           unpack: True | False # mkdocs (3)!
+          sha256: <hex digest> # mkdocs (4)!
     ```
 
     1. `output_path` must fully specify the file name. For example:
     2. http[s] types can fetch external dependencies available at `http://` or `https://` URL.
     3. archive mode: download and unpack
+    4. Optional SHA-256 checksum of the downloaded file, the archive itself when `unpack` is set. The fetch fails if the download does not match.
 
     **Example**
 
@@ -182,9 +192,15 @@ Kapitan also supports caching Use the `--cache` flag to cache the fetched items 
           version: <specific chart version>
           chart_name: <name of chart>
           helm_path: <helm binary>
+          sha256: <hex digest of the chart archive>
+          verify: true | false
     ```
 
     Fetches helm charts and any specific subcharts in the `requirements.yaml` file.
+
+    `sha256` is the optional SHA-256 checksum of the chart archive (`<chart>-<version>.tgz`) that `helm pull` downloads. The fetch fails if the archive does not match.
+
+    `verify: true` passes `--verify` to `helm pull`, which checks the chart's provenance file against the keyring `helm` uses by default. The fetch fails if the chart has no provenance file or the signature does not verify.
 
     `helm_path` can be used to specify where the `helm` binary name or path.
     It defaults to the value of the `KAPITAN_HELM_PATH` environment var or simply to `helm` if neither is set.
