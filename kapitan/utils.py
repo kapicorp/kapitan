@@ -250,8 +250,16 @@ def multiline_str_presenter(dumper, data, style_selection="double-quotes"):
 
 
 def null_presenter(dumper, data):
-    """Configures yaml for omitting value from null-datatype"""
-    flag_value = getattr(cached.args, "yaml_dump_null_as_empty", False)
+    """Configures yaml for omitting value from null-datatype.
+
+    The flag is read from the dumper instance (``dumper.yaml_dump_null_as_empty``)
+    when set explicitly, falling back to the global cache otherwise. Setting the
+    attribute on the dumper makes this representer testable without mutating
+    global state.
+    """
+    flag_value = getattr(dumper, "yaml_dump_null_as_empty", None)
+    if flag_value is None:
+        flag_value = getattr(cached.args, "yaml_dump_null_as_empty", False)
     if flag_value:
         return dumper.represent_scalar("tag:yaml.org,2002:null", "")
     return dumper.represent_scalar("tag:yaml.org,2002:null", "null")
