@@ -5,6 +5,9 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from kapitan.utils import StrEnum
 
 
+SHA256_PATTERN = r"^[0-9a-fA-F]{64}$"
+
+
 class KapitanDependencyTypes(StrEnum):
     HELM = "helm"
     HTTP = "http"
@@ -26,6 +29,8 @@ class KapitanDependencyHelmConfig(KapitanDependencyBaseConfig):
     chart_name: str
     version: str | None = None
     helm_path: str | None = None
+    sha256: str | None = Field(default=None, pattern=SHA256_PATTERN)
+    verify: bool = False
 
 
 class KapitanDependencyGitConfig(KapitanDependencyBaseConfig):
@@ -38,6 +43,7 @@ class KapitanDependencyGitConfig(KapitanDependencyBaseConfig):
 class KapitanDependencyHttpsConfig(KapitanDependencyBaseConfig):
     type: Literal[KapitanDependencyTypes.HTTPS, KapitanDependencyTypes.HTTP]
     unpack: bool = False
+    sha256: str | None = Field(default=None, pattern=SHA256_PATTERN)
 
 
 class KapitanDependencyOciConfig(KapitanDependencyBaseConfig):

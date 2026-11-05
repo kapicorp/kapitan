@@ -251,6 +251,12 @@ def build_parser():
         action="store_true",
         default=from_dot_kapitan("compile", "force-fetch", False),
     )
+    compile_parser.add_argument(
+        "--require-pinned",
+        help="fail if a dependency to fetch is not pinned to a commit SHA, sha256 or digest",
+        action="store_true",
+        default=from_dot_kapitan("compile", "require-pinned", False),
+    )
     compile_parser.add_argument(  # deprecated
         "--force",
         help="overwrite existing inventory and/or dependency item",
