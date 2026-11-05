@@ -38,8 +38,12 @@ class VaultTransitTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         # close connections
-        cls.client.adapter.close()
-        cls.server.close_container()
+        client = getattr(cls, "client", None)
+        if client is not None:
+            client.adapter.close()
+        server = getattr(cls, "server", None)
+        if server is not None:
+            server.close_container()
         shutil.rmtree(REFS_PATH, ignore_errors=True)
 
     def setUp(self):
