@@ -7,6 +7,7 @@
 
 "kadet tests"
 
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -47,6 +48,38 @@ class KadetTestObjWithInner(KadetTestObj):
                 self.root.i_am_inside = True
 
         self.root.inner = Inner()
+
+
+class KadetModuleIsolationTest(unittest.TestCase):
+    def test_submodule_state_does_not_leak_between_targets(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            component = Path(tmp, "isolation_component")
+            component.mkdir()
+            component.joinpath("__init__.py").write_text(
+                "from .state import NAME\n\n\ndef main():\n    return {'out': {'name': NAME}}\n"
+            )
+            component.joinpath("state.py").write_text(
+                "from kapitan.inputs.kadet import current_target\n\nNAME = current_target.get()\n"
+            )
+            for name in ("isolation_component", "isolation_component.state"):
+                self.addCleanup(sys.modules.pop, f"kadet_component_{name}", None)
+            config = KapitanInputTypeKadetConfig(
+                input_paths=[str(component)], output_path="."
+            )
+            compiler = Kadet.__new__(Kadet)
+            compiler.search_paths = []
+
+            with (
+                mock.patch.object(compiler, "cacheable", return_value=False),
+                mock.patch.object(compiler, "to_file") as to_file,
+            ):
+                # one pool worker compiles target a, then target b
+                for target in ("a", "b"):
+                    compiler.target_name = target
+                    compiler.compile_file(config, str(component), tmp)
+
+        outputs = [call.args[2] for call in to_file.call_args_list]
+        self.assertEqual(outputs, [{"name": "a"}, {"name": "b"}])
 
 
 class KadetTest(unittest.TestCase):
