@@ -88,6 +88,32 @@ class InventoryTestOmegaConfKubernetes(unittest.TestCase):
         return super().tearDown()
 
 
+def test_escape_resolver_keeps_shell_parameter_expansion_literal(tmp_path):
+    """Mirrors the docs: ${escape:VAR:-default} emits a literal ${VAR:-default},
+    also inside a multi-line script kept in the inventory."""
+    (tmp_path / "classes").mkdir()
+    (tmp_path / "targets").mkdir()
+    (tmp_path / "targets" / "demo.yml").write_text(
+        "parameters:\n"
+        "  port: 8080\n"
+        "  entrypoint: |\n"
+        "    #!/bin/sh\n"
+        "    exec app --level ${escape:LOG_LEVEL:-info} --port ${port}\n"
+        "  default: ${escape:VAR:-default}\n"
+    )
+    register_resolvers()
+    inventory = OmegaConfInventory(inventory_path=str(tmp_path), initialise=False)
+    target = inventory.target_class(name="demo", path="demo.yml")
+
+    inventory.load_target(target)
+
+    params = target.parameters.model_dump()
+    assert params["default"] == "${VAR:-default}"
+    assert params["entrypoint"] == (
+        "#!/bin/sh\nexec app --level ${LOG_LEVEL:-info} --port 8080\n"
+    )
+
+
 # Deferred resolver, merge resolver, and custom resolver tests are covered by
 # the example-backed suite in tests/test_inventory_backend_examples.py.
 

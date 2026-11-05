@@ -39,7 +39,8 @@ The OmegaConf backend uses a **double-pass resolution** strategy:
 
 This enables **deferred evaluation** - interpolations that resolve based on their final context after merging.
 
-Escaped `\${...}` values are not treated as literal output in this backend. They are unescaped after the first pass and resolved in the second pass. To emit a literal `${...}` string in compiled output, use the `${escape:...}` resolver.
+!!! warning "`\${...}` is not a literal escape in this backend"
+    Escaped `\${...}` values are unescaped after the first pass and resolved in the second pass, so they never reach the output as `${...}`. A shell script or Helm template in an inventory value that contains `${VAR:-default}` therefore fails with `Unsupported interpolation type VAR`, escaped or not. Write it as `${escape:VAR:-default}`, see [Literal `${...}` Output](#literal-output-with-escape).
 
 ---
 
@@ -137,6 +138,25 @@ deployments:
 ### Literal `${...}` Output with `${escape:...}`
 
 Use the `escape` resolver when the compiled output must contain `${...}` syntax, for example Terraform references or shell variables. The escaped content is protected from both OmegaConf resolution passes.
+
+This also works inside multi-line strings, such as a script that a Helm chart or a ConfigMap carries:
+
+```yaml
+parameters:
+  port: 8080
+  entrypoint: |
+    #!/bin/sh
+    exec app --level ${escape:LOG_LEVEL:-info} --port ${port}
+```
+
+**Result:**
+```yaml
+entrypoint: |
+  #!/bin/sh
+  exec app --level ${LOG_LEVEL:-info} --port 8080
+```
+
+More examples:
 
 ```yaml
 parameters:
