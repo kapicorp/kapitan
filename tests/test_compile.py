@@ -15,6 +15,7 @@ import logging
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -26,6 +27,7 @@ from kapitan.cached import reset_cache
 from kapitan.cli import main as kapitan
 from kapitan.inventory import InventoryBackends
 from kapitan.utils import directory_hash
+from tests.test_helpers import create_test_inventory
 
 
 logger = logging.getLogger(__name__)
@@ -480,3 +482,126 @@ class TomlOutputTest(unittest.TestCase):
     def tearDownClass(cls):
         os.chdir(TEST_PWD)
         reset_cache()
+
+
+@pytest.mark.usefixtures("isolated_compile_dir")
+class CompileTestEmptyKapitanConfig(unittest.TestCase):
+    """Issue #1379: targets without a kapitan.compile config are skipped, not errored."""
+
+    def test_missing_compile_config_no_error(self):
+        # empty kapitan and a kapitan without a compile key are both skipped silently
+        create_test_inventory(
+            os.getcwd(),
+            {
+                "empty-kapitan": {"parameters": {"kapitan": {}}},
+                "no-compile-key": {
+                    "parameters": {"kapitan": {"vars": {"target": "no-compile-key"}}}
+                },
+            },
+        )
+        with contextlib.redirect_stdout(io.StringIO()):
+            kapitan("compile")
+
+        self.assertFalse(os.path.exists(os.path.join("compiled", "empty-kapitan")))
+        self.assertFalse(os.path.exists(os.path.join("compiled", "no-compile-key")))
+
+    def test_mixed_targets_compile_only_valid(self):
+        # only the target carrying a compile config is rendered
+        create_test_inventory(
+            os.getcwd(),
+            {
+                "no-compile": {"parameters": {"kapitan": {}}},
+                "with-compile": {
+                    "parameters": {
+                        "kapitan": {
+                            "vars": {"target": "with-compile"},
+                            "compile": [
+                                {
+                                    "output_path": ".",
+                                    "input_type": "copy",
+                                    "input_paths": [
+                                        "inventory/targets/with-compile.yml"
+                                    ],
+                                }
+                            ],
+                        }
+                    }
+                },
+            },
+        )
+        with contextlib.redirect_stdout(io.StringIO()):
+            kapitan("compile")
+
+        self.assertTrue(
+            os.path.exists(os.path.join("compiled", "with-compile", "with-compile.yml"))
+        )
+        self.assertFalse(os.path.exists(os.path.join("compiled", "no-compile")))
+
+    def test_unknown_requested_target_errors(self):
+        # requesting a nonexistent target with -t fails instead of silently skipping
+        create_test_inventory(
+            os.getcwd(), {"real-target": {"parameters": {"kapitan": {}}}}
+        )
+        with self.assertRaises(SystemExit) as cm:
+            with contextlib.redirect_stdout(io.StringIO()):
+                kapitan("compile", "-t", "does-not-exist")
+        self.assertEqual(cm.exception.code, 1)
+
+    def _with_compile(self, name):
+        return {
+            "parameters": {
+                "kapitan": {
+                    "vars": {"target": name},
+                    "compile": [
+                        {
+                            "output_path": ".",
+                            "input_type": "copy",
+                            "input_paths": [f"inventory/targets/{name}.yml"],
+                        }
+                    ],
+                }
+            }
+        }
+
+    def test_unknown_target_among_valid_targets_errors(self):
+        # a typo next to a valid -t target fails instead of compiling the valid one
+        create_test_inventory(
+            os.getcwd(), {"real-target": self._with_compile("real-target")}
+        )
+        with self.assertLogs("kapitan.targets", level="ERROR") as logs:
+            with self.assertRaises(SystemExit):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    kapitan("compile", "-t", "real-target", "-t", "does-not-exist")
+        self.assertIn("Targets not found in inventory: does-not-exist", logs.output[0])
+        self.assertFalse(os.path.exists(os.path.join("compiled", "real-target")))
+
+    def test_no_compilable_targets_leaves_no_temp_dir(self):
+        create_test_inventory(
+            os.getcwd(), {"no-compile": {"parameters": {"kapitan": {}}}}
+        )
+        created = []
+        real_mkdtemp = tempfile.mkdtemp
+
+        def mkdtemp(**kwargs):
+            created.append(real_mkdtemp(**kwargs))
+            return created[-1]
+
+        with mock.patch("kapitan.targets.tempfile.mkdtemp", side_effect=mkdtemp):
+            with contextlib.redirect_stdout(io.StringIO()):
+                kapitan("compile")
+        self.assertEqual([p for p in created if os.path.exists(p)], [])
+
+    def test_skipped_target_does_not_stop_pruning(self):
+        # a full compile still removes compiled/<target> of targets no longer in the inventory
+        create_test_inventory(
+            os.getcwd(),
+            {
+                "no-compile": {"parameters": {"kapitan": {}}},
+                "with-compile": self._with_compile("with-compile"),
+            },
+        )
+        os.makedirs(os.path.join("compiled", "removed-target"))
+        with contextlib.redirect_stdout(io.StringIO()):
+            kapitan("compile")
+        self.assertTrue(os.path.exists(os.path.join("compiled", "with-compile")))
+        self.assertFalse(os.path.exists(os.path.join("compiled", "removed-target")))
