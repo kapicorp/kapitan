@@ -21,12 +21,20 @@ class VaultServerTimeoutTest(unittest.TestCase):
 
         Uses 127.0.0.1:1 (connection refused immediately, no DNS dependency)
         and a short setup timeout so the bounded retry loop trips quickly.
+        Sets KAPITAN_TEST_VAULT_ADDR as well, the opt-in variable from #1674,
+        so the external-vault path is taken with or without that change.
         """
         saved = {
             k: os.environ.get(k)
-            for k in ("VAULT_ADDR", "VAULT_TOKEN", "KAPITAN_VAULT_SETUP_TIMEOUT")
+            for k in (
+                "VAULT_ADDR",
+                "KAPITAN_TEST_VAULT_ADDR",
+                "VAULT_TOKEN",
+                "KAPITAN_VAULT_SETUP_TIMEOUT",
+            )
         }
         os.environ["VAULT_ADDR"] = "http://127.0.0.1:1"
+        os.environ["KAPITAN_TEST_VAULT_ADDR"] = "http://127.0.0.1:1"
         os.environ["KAPITAN_VAULT_SETUP_TIMEOUT"] = "3"
         try:
             start = time.monotonic()
