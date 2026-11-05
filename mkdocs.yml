@@ -23,7 +23,7 @@ site_description: "Kapitan is an open source configuration management tool for K
 strict: true
 validation:
   links:
-    not_found: ignore  # example links in code blocks (jinja.md compiled-result) are not real doc pages
+    not_found: warn
 hooks:
   - docs/hooks.py
 

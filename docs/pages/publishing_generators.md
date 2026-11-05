@@ -52,7 +52,7 @@ echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
 # Push version 1.2.0 — run from INSIDE the generator directory
 cd my-generator
-oras push ghcr.io/kapicorp/generators:1.2.0 \
+oras push ghcr.io/<org>/<generator>:1.2.0 \
   --config /dev/null:application/vnd.oci.image.config.v1+json \
   .
 ```
@@ -72,12 +72,10 @@ oras automatically compresses the directory to `.tar.gz` before upload.
     Kapitan logs the artifact root contents at `INFO` level on every pull so
     you can immediately see what paths are inside the image.
 
-!!! warning "Registry compatibility: always supply `--config`"
-    Without `--config`, oras defaults to the deprecated
-    `application/vnd.oci.artifact.manifest.v1+json` format. Several registries — including
-    **GitLab Container Registry** — reject that format.
-    Passing `--config /dev/null:application/vnd.oci.image.config.v1+json` instructs oras to
-    use the standard OCI *image* manifest, which is accepted by all compliant registries.
+!!! note "What `--config` changes"
+    With `--config /dev/null:application/vnd.oci.image.config.v1+json`, oras writes an
+    image-spec v1.0 manifest with a standard image config. Without it, oras writes an
+    image-spec v1.1 manifest with an `artifactType` and an empty config.
 
 !!! tip "Filtering by media type"
     If you publish multiple different artifact types under the same image (e.g. a generator bundle
@@ -85,7 +83,7 @@ oras automatically compresses the directory to `.tar.gz` before upload.
 
     ```shell
     cd my-generator
-    oras push ghcr.io/kapicorp/generators:1.2.0 \
+    oras push ghcr.io/<org>/<generator>:1.2.0 \
       --config /dev/null:application/vnd.oci.image.config.v1+json \
       .:application/vnd.oci.image.layer.v1.tar+gzip
     ```
@@ -96,7 +94,7 @@ oras automatically compresses the directory to `.tar.gz` before upload.
 After a successful push, record the immutable digest shown in the output for reproducible deployments:
 
 ```
-Pushed [registry] ghcr.io/kapicorp/generators:1.2.0
+Pushed [registry] ghcr.io/<org>/<generator>:1.2.0
 Digest: sha256:abc123...
 ```
 
@@ -124,7 +122,7 @@ parameters:
   kapitan:
     dependencies:
     - type: oci
-      source: ghcr.io/kapicorp/generators:1.2.0
+      source: ghcr.io/<org>/<generator>:1.2.0
       output_path: components/generators
       # No subpath needed when the artifact was pushed from inside the directory
     compile:
@@ -139,7 +137,7 @@ If you pushed from a parent directory (e.g. `oras push ... my-generator/`), add
 
 ```yaml
     - type: oci
-      source: ghcr.io/kapicorp/generators:1.2.0
+      source: ghcr.io/<org>/<generator>:1.2.0
       output_path: components/generators
       subpath: my-generator
 ```
@@ -150,8 +148,9 @@ Then compile with `--fetch`:
 kapitan compile --fetch
 ```
 
-`--fetch` only pulls if the artifact is not already cached locally — subsequent runs are instant.
-Use `--force-fetch` to invalidate the cache and re-pull regardless.
+`--fetch` pulls the artifact on every run but does not overwrite files that already exist in
+`output_path`. After changing the tag or digest, use `--force-fetch` so the new content replaces
+the old files.
 
 See [External dependencies OCI](external_dependencies.md#defining-dependencies) for the full
 reference of available fields.

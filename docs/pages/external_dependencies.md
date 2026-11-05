@@ -98,14 +98,6 @@ Fetched classes usually come from someone else, so Kapitan limits what they can 
 - A dependency declared in a fetched class must write below that class's own `output_path`. A fetched class is a class file at or below the `output_path` of a dependency inside `inventory/classes`. Its `parameters.kapitan.dependencies` list and each `output_path` in it must be literal values, because interpolations can't be checked before the class is loaded.
 - Two dependencies that fetch different sources into the same `output_path` fail, and the error names both.
 
-### Caching
-
-Kapitan also supports caching Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
-
-    ```shell
-    kapitan compile --cache --fetch
-    ```
-
 ### Defining dependencies
 
 === "git"
