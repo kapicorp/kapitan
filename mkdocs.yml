@@ -146,6 +146,7 @@ nav:
           - inventory: pages/commands/kapitan_inventory.md
           - init: pages/commands/kapitan_init.md
           - lint: pages/commands/kapitan_lint.md
+          - publish: pages/commands/kapitan_publish.md
           - refs: pages/commands/kapitan_refs.md
           - searchvar: pages/commands/kapitan_searchvar.md
           - validate: pages/commands/kapitan_validate.md
