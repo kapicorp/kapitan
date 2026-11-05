@@ -13,6 +13,8 @@ import shutil
 import tempfile
 import unittest
 
+import pytest
+
 from kapitan import cached
 from kapitan.cached import reset_cache
 from kapitan.errors import InventoryError
@@ -214,6 +216,25 @@ class TestOmegaConfInventoryMigrationTiming(unittest.TestCase):
             content = f.read()
         self.assertIn("${shared.name}", content)
         self.assertNotIn("${shared:name}", content)
+
+
+@pytest.mark.parametrize(
+    "resolver", ["filename", "parent_filename", "path", "parent_path"]
+)
+def test_file_resolvers_fail_with_clear_error(resolver):
+    """These resolvers read string node flags that upstream OmegaConf cannot
+    hold, so they must fail loudly instead of resolving to None."""
+    from omegaconf import OmegaConf
+    from omegaconf.errors import InterpolationResolutionError
+
+    register_resolvers()
+    config = OmegaConf.create({"node": {"value": f"${{{resolver}:}}"}})
+
+    with pytest.raises(
+        InterpolationResolutionError,
+        match=rf"'\$\{{{resolver}:\}}' is not supported by the omegaconf inventory backend",
+    ):
+        OmegaConf.resolve(config)
 
 
 class RegisterResolversApiTest(unittest.TestCase):

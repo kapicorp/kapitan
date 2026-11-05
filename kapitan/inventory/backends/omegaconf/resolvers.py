@@ -15,6 +15,7 @@ from typing import Any
 
 import yaml
 
+from kapitan.errors import InventoryError
 from omegaconf import Container, ListMergeMode, Node, OmegaConf
 
 
@@ -194,20 +195,20 @@ def from_file(file_path: str):
     return "FILE NOT EXISTS"
 
 
-def filename(_node_: Node):
-    return _node_._get_flag("filename")
+def unsupported_file_resolver(name: str):
+    """Return a resolver that fails for ${filename:}, ${path:} and their parent_ forms.
 
+    They read file names from OmegaConf node flags, which only hold booleans, so
+    nothing can set them and they resolved to None.
+    """
 
-def parent_filename(_parent_: Node):
-    return _parent_._get_flag("filename")
+    def resolver():
+        raise InventoryError(
+            f"'${{{name}:}}' is not supported by the omegaconf inventory backend: "
+            "it does not record which file a value was loaded from"
+        )
 
-
-def path(_node_: Node):
-    return _node_._get_flag("path")
-
-
-def parent_path(_parent_: Node):
-    return _parent_._get_flag("path")
+    return resolver
 
 
 def condition_if(condition: str, config: dict):
@@ -272,10 +273,8 @@ def register_resolvers(inventory_path: str = None) -> None:
     _register_resolver("default", default, replace=replace)
     _register_resolver("write", write_to_key, replace=replace)
     _register_resolver("from_file", from_file, replace=replace)
-    _register_resolver("filename", filename, replace=replace)
-    _register_resolver("parent_filename", parent_filename, replace=replace)
-    _register_resolver("path", path, replace=replace)
-    _register_resolver("parent_path", parent_path, replace=replace)
+    for name in ("filename", "parent_filename", "path", "parent_path"):
+        _register_resolver(name, unsupported_file_resolver(name), replace=replace)
 
     # boolean algebra
     _register_resolver("if", condition_if, replace=replace)
