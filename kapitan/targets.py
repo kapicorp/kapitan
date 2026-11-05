@@ -104,8 +104,11 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
         time.time() - rendering_start,
     )
 
-    if discovered_targets == 0:
-        raise CompileError("No inventory targets discovered at path: {inventory_path}")
+    if not discovered_targets:
+        message = f"No inventory targets discovered at path: {inventory_path}"
+        # raised before the try block below, whose handler is what logs errors
+        logger.error(message)
+        raise CompileError(message)
 
     targets = args.targets or discovered_targets
     labels = args.labels
