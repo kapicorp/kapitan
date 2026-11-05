@@ -725,6 +725,10 @@ def main(*argv):
         logging_level = logging.INFO
     setup_logging(level=logging_level, force=True)
 
+    from kapitan.utils import warn_unknown_dot_kapitan_keys
+
+    warn_unknown_dot_kapitan_keys()
+
     if getattr(args, "profile_workers", False) and not getattr(args, "profile", False):
         logger.warning("--profile-workers has no effect without --profile")
 
