@@ -8,6 +8,7 @@
 import hashlib
 import io
 import multiprocessing
+import tarfile
 import tempfile
 import unittest
 import zipfile
@@ -15,6 +16,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from git import Repo
 from pydantic import ValidationError
 
 from kapitan.cli import main as kapitan
@@ -28,7 +30,11 @@ from kapitan.dependency_manager.base import (
     fetch_oci_dependency,
     helm_dependencies_digest,
 )
-from kapitan.errors import HelmFetchingError, OCIFetchingError
+from kapitan.errors import (
+    HelmFetchingError,
+    InventoryValidationError,
+    OCIFetchingError,
+)
 from kapitan.inventory.model import KapitanInventorySettings
 from kapitan.inventory.model.dependencies import (
     KapitanDependencyGitConfig,
@@ -884,3 +890,267 @@ class HelmDependenciesDigestTest(unittest.TestCase):
         self._set_output_base("/nonexistent-base")
         digest = helm_dependencies_digest("t1")
         self.assertIsNotNone(digest)
+
+
+def _files(path) -> dict[str, str]:
+    """Relative path -> content of every file under path, ignoring git metadata."""
+    root = Path(path)
+    return {
+        p.relative_to(root).as_posix(): p.read_text(encoding="utf-8")
+        for p in root.rglob("*")
+        if p.is_file() and ".git" not in p.relative_to(root).parts
+    }
+
+
+def _make_tar_gz(files: dict[str, str]) -> bytes:
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+        for name, text in files.items():
+            data = text.encode()
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+    return buf.getvalue()
+
+
+def _fetch(base, *dependency_lists, force=False):
+    """Run fetch_dependencies like one `kapitan compile --fetch` with a fresh cache."""
+    targets = [KapitanInventorySettings(dependencies=deps) for deps in dependency_lists]
+    with (
+        tempfile.TemporaryDirectory() as save_dir,
+        multiprocessing.Pool(2) as pool,
+    ):
+        fetch_dependencies(str(base), targets, save_dir, force, pool)
+
+
+@pytest.fixture
+def versioned_git_repo(git_repo):
+    """Tag v1 has a.txt and gone.txt; tag v2 changes a.txt, removes gone.txt, adds new.txt."""
+    repo = git_repo.api
+    root = Path(repo.working_tree_dir)
+    (root / "a.txt").write_text("v1\n")
+    (root / "gone.txt").write_text("v1\n")
+    repo.index.add(["a.txt", "gone.txt"])
+    repo.create_tag("v1", ref=repo.index.commit("v1"))
+    (root / "a.txt").write_text("v2\n")
+    (root / "new.txt").write_text("v2\n")
+    repo.index.remove(["gone.txt"], working_tree=True)
+    repo.index.add(["a.txt", "new.txt"])
+    repo.create_tag("v2", ref=repo.index.commit("v2"))
+    return root
+
+
+V1_FILES = {"a.txt": "v1\n", "gone.txt": "v1\n"}
+V2_FILES = {"a.txt": "v2\n", "new.txt": "v2\n"}
+
+
+@pytest.mark.parametrize("force", [False, True], ids=["fetch", "force-fetch"])
+def test_git_ref_change_replaces_output_path(versioned_git_repo, tmp_path, force):
+    def dep(ref):
+        return {
+            "type": "git",
+            "source": str(versioned_git_repo),
+            "ref": ref,
+            "output_path": "vendor/lib",
+        }
+
+    _fetch(tmp_path, [dep("v1")], force=force)
+    assert _files(tmp_path / "vendor" / "lib") == V1_FILES
+
+    _fetch(tmp_path, [dep("v2")], force=force)
+    assert _files(tmp_path / "vendor" / "lib") == V2_FILES
+
+
+def test_unchanged_dependency_is_not_fetched_again(versioned_git_repo, tmp_path):
+    dep = {
+        "type": "git",
+        "source": str(versioned_git_repo),
+        "ref": "v1",
+        "output_path": "vendor/lib",
+    }
+    _fetch(tmp_path, [dep])
+    (tmp_path / "vendor" / "lib" / "a.txt").write_text("local change\n")
+    # fetching v1 again would fail now
+    Repo(versioned_git_repo).git.tag("-d", "v1")
+
+    _fetch(tmp_path, [dep])
+
+    assert (tmp_path / "vendor" / "lib" / "a.txt").read_text() == "local change\n"
+
+
+@pytest.mark.parametrize("force", [False, True], ids=["fetch", "force-fetch"])
+def test_output_path_without_record_is_updated_in_place(
+    versioned_git_repo, tmp_path, caplog, force
+):
+    """An output_path from an older Kapitan or the user keeps files Kapitan never wrote."""
+    output_path = tmp_path / "vendor" / "lib"
+    output_path.mkdir(parents=True)
+    (output_path / "mine.txt").write_text("mine\n")
+    dep = KapitanDependencyGitConfig(
+        source=str(versioned_git_repo), ref="v1", output_path=str(output_path)
+    )
+
+    with caplog.at_level("WARNING", logger="kapitan.dependency_manager.base"):
+        fetch_git_dependency((dep.source, [dep]), str(tmp_path / "cache"), force)
+
+    assert _files(output_path) == {**V1_FILES, "mine.txt": "mine\n"}
+    assert "has no fetch record" in caplog.text
+
+
+def test_helm_chart_without_record_is_only_replaced_when_forced(tmp_path, caplog):
+    output_path = tmp_path / "charts" / "mychart"
+    output_path.mkdir(parents=True)
+    (output_path / "Chart.yaml").write_text("old\n")
+    dep = KapitanDependencyHelmConfig(
+        source="https://charts.example.com",
+        chart_name="mychart",
+        version="2.0.0",
+        output_path=str(output_path),
+    )
+    source = HelmSource(dep.source, dep.chart_name, dep.version, None)
+
+    with caplog.at_level("WARNING", logger="kapitan.dependency_manager.base"):
+        fetch_helm_chart((source, [dep]), str(tmp_path / "cache"), force=False)
+
+    assert (output_path / "Chart.yaml").read_text() == "old\n"
+    assert "has no fetch record" in caplog.text
+
+
+@pytest.mark.usefixtures("local_http_server")
+def test_https_source_change_replaces_file(httpserver, tmp_path):
+    for version in ("v1", "v2"):
+        httpserver.expect_request(f"/{version}/controller.yml").respond_with_data(
+            f"{version}\n", content_type="text/plain"
+        )
+
+    def dep(version):
+        return {
+            "type": "https",
+            "source": httpserver.url_for(f"/{version}/controller.yml"),
+            "output_path": "components/controller.yml",
+        }
+
+    _fetch(tmp_path, [dep("v1")])
+    _fetch(tmp_path, [dep("v2")])
+
+    assert (tmp_path / "components" / "controller.yml").read_text() == "v2\n"
+
+
+@pytest.mark.usefixtures("local_http_server")
+def test_https_archive_change_replaces_output_path(httpserver, tmp_path):
+    archives = {"v1": V1_FILES, "v2": V2_FILES}
+    for version, files in archives.items():
+        httpserver.expect_request(f"/lib-{version}.tar.gz").respond_with_data(
+            _make_tar_gz(files), content_type="application/gzip"
+        )
+
+    def dep(version):
+        return {
+            "type": "https",
+            "source": httpserver.url_for(f"/lib-{version}.tar.gz"),
+            "output_path": "vendor/lib",
+            "unpack": True,
+        }
+
+    _fetch(tmp_path, [dep("v1")])
+    assert _files(tmp_path / "vendor" / "lib") == V1_FILES
+
+    _fetch(tmp_path, [dep("v2")])
+    assert _files(tmp_path / "vendor" / "lib") == V2_FILES
+
+
+@pytest.mark.usefixtures("local_http_server")
+def test_helm_version_change_replaces_output_path(httpserver, tmp_path):
+    charts = {
+        "1.0.0": {"templates/a.yaml": "v1\n", "templates/gone.yaml": "v1\n"},
+        "2.0.0": {"templates/a.yaml": "v2\n", "templates/new.yaml": "v2\n"},
+    }
+    entries = ""
+    for version, files in charts.items():
+        chart_yaml = f"apiVersion: v2\nname: mychart\nversion: {version}\n"
+        archive = {"mychart/Chart.yaml": chart_yaml}
+        archive.update({f"mychart/{name}": text for name, text in files.items()})
+        httpserver.expect_request(f"/mychart-{version}.tgz").respond_with_data(
+            _make_tar_gz(archive), content_type="application/gzip"
+        )
+        entries += (
+            f"  - name: mychart\n    version: {version}\n"
+            f"    urls: [mychart-{version}.tgz]\n"
+        )
+    httpserver.expect_request("/index.yaml").respond_with_data(
+        f"apiVersion: v1\nentries:\n  mychart:\n{entries}",
+        content_type="text/yaml",
+    )
+
+    def dep(version):
+        return {
+            "type": "helm",
+            "source": httpserver.url_for("/"),
+            "chart_name": "mychart",
+            "version": version,
+            "output_path": "charts/mychart",
+        }
+
+    _fetch(tmp_path, [dep("1.0.0")])
+    _fetch(tmp_path, [dep("2.0.0")])
+
+    files = _files(tmp_path / "charts" / "mychart")
+    assert "version: 2.0.0" in files.pop("Chart.yaml")
+    assert files == {"templates/a.yaml": "v2\n", "templates/new.yaml": "v2\n"}
+
+
+@patch("kapitan.dependency_manager.base.oras.client.OrasClient")
+def test_oci_tag_change_replaces_output_path(MockClient, tmp_path):
+    def fake_pull(target, outdir, allowed_media_type):
+        files = V1_FILES if target.endswith(":v1") else V2_FILES
+        for name, text in files.items():
+            (Path(outdir) / name).parent.mkdir(parents=True, exist_ok=True)
+            (Path(outdir) / name).write_text(text)
+
+    MockClient.return_value.pull.side_effect = fake_pull
+    output_path = tmp_path / "generators"
+
+    for tag in ("v1", "v2"):
+        dep = KapitanDependencyOciConfig(
+            source=f"ghcr.io/example/generators:{tag}", output_path=str(output_path)
+        )
+        fetch_oci_dependency((dep.source, [dep]), str(tmp_path / tag), force=False)
+
+    assert _files(output_path) == V2_FILES
+
+
+@pytest.mark.usefixtures("local_http_server")
+@pytest.mark.parametrize(
+    "output_paths",
+    [("vendor/lib", "vendor/lib"), ("vendor", "vendor/lib/x.yml")],
+    ids=["same", "nested"],
+)
+def test_overlapping_output_paths_raise(httpserver, tmp_path, output_paths):
+    httpserver.expect_request("/a.yml").respond_with_data("a\n")
+    httpserver.expect_request("/b.yml").respond_with_data("b\n")
+    deps = [
+        {
+            "type": "https",
+            "source": httpserver.url_for(f"/{name}.yml"),
+            "output_path": p,
+        }
+        for name, p in zip(("a", "b"), output_paths, strict=True)
+    ]
+
+    with pytest.raises(InventoryValidationError, match="output_path"):
+        _fetch(tmp_path, deps)
+
+
+@pytest.mark.usefixtures("local_http_server")
+def test_same_dependency_in_several_targets_is_fetched_once(httpserver, tmp_path):
+    httpserver.expect_request("/a.yml").respond_with_data("a\n")
+    dep = {
+        "type": "https",
+        "source": httpserver.url_for("/a.yml"),
+        "output_path": "components/a.yml",
+    }
+
+    _fetch(tmp_path, [dep], [dict(dep)])
+
+    assert (tmp_path / "components" / "a.yml").read_text() == "a\n"
+    assert len(httpserver.log) == 1
