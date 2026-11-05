@@ -2,11 +2,13 @@ import os
 import tempfile
 import unittest
 
+import pytest
 import yaml
 
 from kapitan.cached import reset_cache
+from kapitan.cli import build_parser
 from kapitan.inventory import InventoryBackends
-from kapitan.utils import from_dot_kapitan
+from kapitan.utils import from_dot_kapitan, warn_unknown_dot_kapitan_keys
 
 
 class FromDotKapitanTest(unittest.TestCase):
@@ -79,3 +81,52 @@ class FromDotKapitanTest(unittest.TestCase):
         self.work_dir.cleanup()
         os.chdir(self.orig_dir)
         reset_cache()
+
+
+@pytest.fixture
+def dot_kapitan(tmp_path, monkeypatch):
+    """Write a .kapitan into a fresh cwd and build the parser, which reads it."""
+
+    def write(config):
+        (tmp_path / ".kapitan").write_text(yaml.safe_dump(config))
+        build_parser()
+
+    monkeypatch.chdir(tmp_path)
+    reset_cache()
+    yield write
+    reset_cache()
+
+
+def test_unknown_dot_kapitan_keys_are_reported(dot_kapitan, caplog):
+    dot_kapitan(
+        {
+            "inventory_backend": {"omegaconf": True},
+            "compile": {"inventory_path": "./inv"},
+            "compiel": {"indent": 4},
+        }
+    )
+
+    warn_unknown_dot_kapitan_keys()
+
+    warnings = {r.getMessage() for r in caplog.records if r.levelname == "WARNING"}
+    assert warnings == {
+        ".kapitan: ignoring unknown key 'omegaconf' in section 'inventory_backend'",
+        ".kapitan: ignoring unknown key 'inventory_path' in section 'compile', "
+        "did you mean 'inventory-path'?",
+        ".kapitan: ignoring unknown section 'compiel', did you mean 'compile'?",
+    }
+
+
+def test_known_dot_kapitan_keys_are_not_reported(dot_kapitan, caplog):
+    dot_kapitan(
+        {
+            "version": "0.36",
+            "global": {"inventory-path": "./inv", "indent": 4},
+            "compile": {"parallelism": 2},
+            "inventory_backend": {"inventory-backend": "omegaconf"},
+        }
+    )
+
+    warn_unknown_dot_kapitan_keys()
+
+    assert not [r for r in caplog.records if r.levelname == "WARNING"]
