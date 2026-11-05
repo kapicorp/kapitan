@@ -99,6 +99,11 @@ def module_from_path(path, check_name=None):
             f"Module name {module_name} does not match check_name {check_name}"
         )
 
+    # Forget submodules an earlier load imported, so a worker that compiles
+    # several targets imports them again with the current target's state.
+    for name in [name for name in sys.modules if name.startswith(f"{spec.name}.")]:
+        del sys.modules[name]
+
     return mod, spec
 
 
