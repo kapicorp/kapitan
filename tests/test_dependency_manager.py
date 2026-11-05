@@ -8,11 +8,13 @@
 import hashlib
 import io
 import multiprocessing
+import tarfile
 import tempfile
 import unittest
 import zipfile
+from functools import partial
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -24,15 +26,22 @@ from kapitan.dependency_manager.base import (
     fetch_git_dependency,
     fetch_git_source,
     fetch_helm_chart,
+    fetch_http_dependency,
     fetch_http_source,
     fetch_oci_dependency,
     helm_dependencies_digest,
 )
-from kapitan.errors import HelmFetchingError, OCIFetchingError
+from kapitan.errors import (
+    DependencyChecksumError,
+    HelmFetchingError,
+    InventoryValidationError,
+    OCIFetchingError,
+)
 from kapitan.inventory.model import KapitanInventorySettings
 from kapitan.inventory.model.dependencies import (
     KapitanDependencyGitConfig,
     KapitanDependencyHelmConfig,
+    KapitanDependencyHttpsConfig,
     KapitanDependencyOciConfig,
 )
 
@@ -884,3 +893,211 @@ class HelmDependenciesDigestTest(unittest.TestCase):
         self._set_output_base("/nonexistent-base")
         digest = helm_dependencies_digest("t1")
         self.assertIsNotNone(digest)
+
+
+def _make_tar_gz(files: dict[str, str]) -> bytes:
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+        for name, text in files.items():
+            data = text.encode()
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+    return buf.getvalue()
+
+
+def _chart_archive(name="mychart", version="1.0.0") -> bytes:
+    return _make_tar_gz(
+        {
+            f"{name}/Chart.yaml": f"apiVersion: v2\nname: {name}\nversion: {version}\n",
+            f"{name}/templates/a.yaml": "a\n",
+        }
+    )
+
+
+def _helm_dep(repo, output_path, **kwargs):
+    dep = KapitanDependencyHelmConfig(
+        source=repo,
+        chart_name="mychart",
+        version="1.0.0",
+        output_path=str(output_path),
+        **kwargs,
+    )
+    return (HelmSource(repo, "mychart", "1.0.0", None), [dep])
+
+
+@pytest.mark.usefixtures("local_http_server")
+@pytest.mark.parametrize("matches", [True, False], ids=["match", "mismatch"])
+def test_https_sha256(httpserver, tmp_path, matches):
+    httpserver.expect_request("/a.yml").respond_with_data("a\n")
+    output_path = tmp_path / "out" / "a.yml"
+    dep = KapitanDependencyHttpsConfig(
+        type="https",
+        source=httpserver.url_for("/a.yml"),
+        output_path=str(output_path),
+        sha256=hashlib.sha256(b"a\n").hexdigest() if matches else "0" * 64,
+    )
+    fetch = partial(fetch_http_dependency, (dep.source, [dep]), str(tmp_path), False)
+
+    if matches:
+        fetch()
+        assert output_path.read_text() == "a\n"
+    else:
+        with pytest.raises(DependencyChecksumError, match="expected 0000"):
+            fetch()
+        assert not output_path.exists()
+
+
+def test_sha256_must_be_a_hex_digest():
+    with pytest.raises(ValidationError):
+        KapitanDependencyHttpsConfig(
+            type="https", source="https://example.com/a", output_path="a", sha256="abc"
+        )
+
+
+@pytest.mark.usefixtures("local_http_server")
+@pytest.mark.parametrize("matches", [True, False], ids=["match", "mismatch"])
+def test_helm_sha256(httpserver, tmp_path, matches):
+    archive = _chart_archive()
+    _expect_index_yaml(httpserver, "/", "mychart", "1.0.0", "mychart-1.0.0.tgz")
+    _expect_chart_archive(httpserver, "/", "mychart-1.0.0.tgz", archive)
+    output_path = tmp_path / "charts" / "mychart"
+    sha256 = hashlib.sha256(archive).hexdigest() if matches else "0" * 64
+    dep_mapping = _helm_dep(httpserver.url_for("/"), output_path, sha256=sha256)
+    fetch = partial(fetch_helm_chart, dep_mapping, str(tmp_path / "cache"), False)
+
+    if matches:
+        fetch()
+        assert (output_path / "templates" / "a.yaml").read_text() == "a\n"
+    else:
+        with pytest.raises(DependencyChecksumError, match="expected 0000"):
+            fetch()
+        assert not output_path.exists()
+
+
+def test_helm_verify_passes_verify_to_helm_pull(tmp_path):
+    calls = []
+
+    def fake_helm_cli(helm_path, args):
+        calls.append(args)
+        destination = args[args.index("--destination") + 1]
+        Path(destination, "mychart-1.0.0.tgz").write_bytes(_chart_archive())
+        return ""
+
+    output_path = tmp_path / "charts" / "mychart"
+    dep_mapping = _helm_dep("https://charts.example.com", output_path, verify=True)
+    with patch("kapitan.dependency_manager.base.helm_cli", fake_helm_cli):
+        fetch_helm_chart(dep_mapping, str(tmp_path / "cache"), False)
+
+    assert "--verify" in calls[0]
+    assert (output_path / "Chart.yaml").is_file()
+
+
+@pytest.mark.usefixtures("local_http_server")
+def test_helm_verify_rejects_chart_without_provenance(httpserver, tmp_path):
+    _expect_index_yaml(httpserver, "/", "mychart", "1.0.0", "mychart-1.0.0.tgz")
+    _expect_chart_archive(httpserver, "/", "mychart-1.0.0.tgz", _chart_archive())
+    output_path = tmp_path / "charts" / "mychart"
+    dep_mapping = _helm_dep(httpserver.url_for("/"), output_path, verify=True)
+
+    with pytest.raises(HelmFetchingError):
+        fetch_helm_chart(dep_mapping, str(tmp_path / "cache"), False)
+    assert not output_path.exists()
+
+
+PINNED_DEPENDENCIES = [
+    {
+        "type": "git",
+        "source": "https://example.com/repo.git",
+        "ref": "a" * 40,
+        "output_path": "git",
+    },
+    {
+        "type": "https",
+        "source": "https://example.com/a.yml",
+        "sha256": "a" * 64,
+        "output_path": "a.yml",
+    },
+    {
+        "type": "helm",
+        "source": "https://example.com/charts",
+        "chart_name": "mychart",
+        "version": "1.0.0",
+        "sha256": "a" * 64,
+        "output_path": "mychart",
+    },
+    {
+        "type": "oci",
+        "source": "ghcr.io/example/generators@sha256:" + "a" * 64,
+        "output_path": "oci",
+    },
+]
+
+
+def test_require_pinned_allows_pinned_dependencies(tmp_path):
+    pool = MagicMock()
+    targets = [KapitanInventorySettings(dependencies=PINNED_DEPENDENCIES)]
+
+    fetch_dependencies(str(tmp_path), targets, str(tmp_path), False, pool, True)
+
+    dispatched = [list(c.args[1]) for c in pool.imap_unordered.call_args_list]
+    assert sum(len(items) for items in dispatched) == len(PINNED_DEPENDENCIES)
+
+
+@pytest.mark.parametrize(
+    ("dep", "reason"),
+    [
+        (
+            {"type": "git", "source": "https://example.com/r.git", "ref": "v1.0.0"},
+            "ref is not a full commit SHA",
+        ),
+        (
+            {"type": "git", "source": "https://example.com/r.git"},
+            "ref is not a full commit SHA",
+        ),
+        ({"type": "https", "source": "https://example.com/b.yml"}, "no sha256"),
+        (
+            {"type": "helm", "source": "https://example.com/c", "chart_name": "c"},
+            "no sha256",
+        ),
+        (
+            {"type": "oci", "source": "ghcr.io/example/generators:1.0.0"},
+            "no @sha256: digest",
+        ),
+    ],
+    ids=["git-tag", "git-no-ref", "https", "helm", "oci-tag"],
+)
+def test_require_pinned_rejects_unpinned_dependency(tmp_path, dep, reason):
+    deps = [*PINNED_DEPENDENCIES, {**dep, "output_path": "unpinned"}]
+    pool = MagicMock()
+
+    with pytest.raises(InventoryValidationError, match=reason):
+        fetch_dependencies(
+            str(tmp_path),
+            [KapitanInventorySettings(dependencies=deps)],
+            str(tmp_path),
+            False,
+            pool,
+            True,
+        )
+    pool.imap_unordered.assert_not_called()
+
+    # without --require-pinned the same dependencies are fetched
+    fetch_dependencies(
+        str(tmp_path),
+        [KapitanInventorySettings(dependencies=deps)],
+        str(tmp_path),
+        False,
+        pool,
+    )
+    pool.imap_unordered.assert_called()
+
+
+@pytest.mark.usefixtures("isolated_test_resources")
+def test_compile_require_pinned_fails_before_fetching():
+    # the nginx target fetches a git branch and an archive without sha256
+    with pytest.raises(SystemExit) as exc:
+        kapitan("compile", "--fetch", "--require-pinned", "-t", "nginx")
+
+    assert exc.value.code == 1
+    assert not Path("components", "tests").exists()

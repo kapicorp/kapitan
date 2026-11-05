@@ -189,6 +189,7 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                     dep_cache_dir,
                     fetch_targets[1],
                     fetch_pool,
+                    getattr(args, "require_pinned", False),
                 )
             logger.info("Fetched dependencies (%.2fs)", time.time() - fetching_start)
 

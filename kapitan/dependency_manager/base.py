@@ -6,7 +6,9 @@ import hashlib
 import logging
 import multiprocessing
 import os
+import re
 import tarfile
+import tempfile
 from collections import defaultdict, namedtuple
 from functools import partial
 from mimetypes import MimeTypes
@@ -22,9 +24,11 @@ except ImportError:
 from git import GitCommandError, Repo
 
 from kapitan.errors import (
+    DependencyChecksumError,
     GitFetchingError,
     GitSubdirNotFoundError,
     HelmFetchingError,
+    InventoryValidationError,
     OCIFetchingError,
 )
 from kapitan.helm_cli import helm_cli
@@ -45,12 +49,30 @@ logger = logging.getLogger(__name__)
 HelmSource = namedtuple("HelmSource", ["repo", "chart_name", "version", "helm_path"])
 
 
-def fetch_dependencies(output_path, target_objs, save_dir, force, pool):
+def fetch_dependencies(
+    output_path, target_objs, save_dir, force, pool, require_pinned=False
+):
     """
     parses through the dependencies parameters in target_objs and fetches them
     all dependencies are first fetched into save_dir, after which they are copied to their respective output_path.
     overwites older version of existing dependencies if force fetced
+    with require_pinned, fails before fetching anything if a dependency is not pinned
     """
+    if require_pinned:
+        unpinned = sorted(
+            {
+                f"{dep.type} {dep.source} ({reason})"
+                for target_obj in target_objs
+                for dep in target_obj.dependencies
+                if (reason := _unpinned(dep))
+            }
+        )
+        if unpinned:
+            raise InventoryValidationError(
+                "--require-pinned: these dependencies are not pinned: "
+                + "; ".join(unpinned)
+            )
+
     # there could be multiple dependency items per source_uri due to reclass inheritance or
     # other user requirements. So create a mapping from source_uri to a set of dependencies with
     # that source_uri
@@ -212,6 +234,7 @@ def fetch_http_dependency(dep_mapping, save_dir, force, item_type="Dependency"):
         content_type = MimeTypes().guess_type(cached_source_path)[0]
     for dep in deps:
         output_path = dep.output_path
+        _check_sha256(cached_source_path, dep.sha256, f"{item_type} {source}")
         if dep.unpack:
             # ensure that the directory we are extracting to exists
             os.makedirs(output_path, exist_ok=True)
@@ -281,6 +304,7 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
         save_dir, path_hash, source.chart_name + "-" + (source.version or "latest")
     )
 
+    verify = any(dep.verify for dep in deps)
     for dep in deps:
         output_path = dep.output_path
 
@@ -292,9 +316,13 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
                     source.chart_name,
                     source.version,
                     cached_repo_path,
+                    verify,
                 )
             else:
                 logger.debug("Using cached helm chart at %s", cached_repo_path)
+            _check_sha256(
+                cached_repo_path + ".tgz", dep.sha256, f"Dependency {source.chart_name}"
+            )
 
             parent_dir = os.path.dirname(output_path)
             if parent_dir != "":
@@ -311,19 +339,24 @@ def fetch_helm_chart(dep_mapping, save_dir, force):
                 )
 
 
-def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
+def fetch_helm_archive(helm_path, repo, chart_name, version, save_path, verify=False):
     logger.debug(
         "Dependency helm chart %s and version %s: fetching now",
         chart_name,
         version or "latest",
     )
-    # Fetch archive and untar it into parent dir
-    save_dir = os.path.dirname(save_path)
-    args = ["pull", "--destination", save_dir, "--untar"]
+    # Pull the archive into a new dir, keep it next to save_path for its checksum
+    # and unpack it to save_path
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    pull_dir = tempfile.mkdtemp(dir=os.path.dirname(save_path))
+    args = ["pull", "--destination", pull_dir]
 
     if version:
         args.append("--version")
         args.append(version)
+
+    if verify:
+        args.append("--verify")
 
     if repo.startswith("oci://"):
         args.append(repo)
@@ -338,8 +371,13 @@ def fetch_helm_archive(helm_path, repo, chart_name, version, save_path):
             "Dependency helm chart %s and version %s: %s", chart_name, version, response
         )
         raise HelmFetchingError(response)
+    (archive,) = Path(pull_dir).glob("*.tgz")
+    os.rename(archive, save_path + ".tgz")
+    with tarfile.open(save_path + ".tgz") as tar:
+        safe_tar_extractall(tar, pull_dir)
     # rename chart to requested name
-    os.rename(os.path.join(save_dir, chart_name), save_path)
+    os.rename(os.path.join(pull_dir, chart_name), save_path)
+    rmtree(pull_dir)
     logger.debug(
         "Dependency helm chart %s and version %s: successfully fetched",
         chart_name,
@@ -411,6 +449,30 @@ def helm_dependencies_digest(target_name: str) -> bytes | None:
 
 def exists_in_cache(item_path):
     return os.path.exists(item_path)
+
+
+def _check_sha256(path, expected, name):
+    if expected is None:
+        return
+    digest = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            digest.update(chunk)
+    if digest.hexdigest() != expected.lower():
+        raise DependencyChecksumError(
+            f"{name}: sha256 is {digest.hexdigest()}, expected {expected.lower()}"
+        )
+
+
+def _unpinned(dep):
+    """Why dep can change while its definition stays the same, or None."""
+    if dep.type == KapitanDependencyTypes.GIT:
+        if dep.ref and re.fullmatch(r"[0-9a-fA-F]{40}|[0-9a-fA-F]{64}", dep.ref):
+            return None
+        return "ref is not a full commit SHA"
+    if dep.type == KapitanDependencyTypes.OCI:
+        return None if "@sha256:" in dep.source else "source has no @sha256: digest"
+    return None if dep.sha256 else "no sha256"
 
 
 def _extract_tar_blobs(target_dir: str) -> None:
