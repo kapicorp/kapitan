@@ -187,10 +187,8 @@ terraform_expression: ${var.foo == "bar" ? 1 : 0}
 | `parentkey` | Parent node's key name | `${parentkey:}` |
 | `fullkey` | Full path to current key | `${fullkey:}` |
 | `relpath` | Convert absolute path to relative interpolation | `${relpath:some.absolute.path}` |
-| `filename` | Current file's name flag | `${filename:}` |
-| `parent_filename` | Parent node's filename flag | `${parent_filename:}` |
-| `path` | Current file's path flag | `${path:}` |
-| `parent_path` | Parent node's path flag | `${parent_path:}` |
+
+`filename`, `parent_filename`, `path` and `parent_path` are not supported and fail with an error. The backend does not record which file a value was loaded from.
 
 ### Conditional Resolvers
 
