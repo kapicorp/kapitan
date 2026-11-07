@@ -27,6 +27,7 @@ from kapitan.topics import topics
 from kapitan.utils import (
     PrettyDumper,
     StrEnum,
+    check_path_traversal,
     deep_get,
     flatten_dict,
     render_jinja2_file,
@@ -128,6 +129,7 @@ def jinja2_render_file(search_paths, name, ctx):
         logger.debug("jinja2_render_file trying file %s", _full_path)
         if os.path.exists(_full_path):
             logger.debug("jinja2_render_file found file at %s", _full_path)
+            check_path_traversal([path], _full_path, "jinja2_render_file")
             try:
                 return render_jinja2_file(_full_path, ctx, search_paths=search_paths)
             except Exception as e:
@@ -145,6 +147,7 @@ def yaml_load(search_paths, name):
         logger.debug("yaml_load trying file %s", _full_path)
         if os.path.exists(_full_path) and name.endswith((".yml", ".yaml")):
             logger.debug("yaml_load found file at %s", _full_path)
+            check_path_traversal([path], _full_path, "yaml_load")
             try:
                 with open(_full_path) as f:
                     return json.dumps(yaml.safe_load(f.read()))
@@ -163,6 +166,7 @@ def yaml_load_stream(search_paths, name):
         logger.debug("yaml_load_stream trying file %s", _full_path)
         if os.path.exists(_full_path) and name.endswith((".yml", ".yaml")):
             logger.debug("yaml_load_stream found file at %s", _full_path)
+            check_path_traversal([path], _full_path, "yaml_load_stream")
             try:
                 with open(_full_path) as f:
                     _obj = yaml.load_all(f.read(), Loader=yaml.SafeLoader)
@@ -182,6 +186,7 @@ def read_file(search_paths, name):
         logger.debug("read_file trying file %s", full_path)
         if os.path.exists(full_path):
             logger.debug("read_file found file at %s", full_path)
+            check_path_traversal([path], full_path, "read_file")
             with open(full_path, newline="") as f:
                 return f.read()
 
@@ -197,6 +202,7 @@ def file_exists(search_paths, name):
         logger.debug("file_exists trying file %s", full_path)
         if os.path.exists(full_path):
             logger.debug("file_exists found file at %s", full_path)
+            check_path_traversal([path], full_path, "file_exists")
             return {"exists": True, "path": full_path}
 
     return {"exists": False, "path": ""}
@@ -208,6 +214,7 @@ def dir_files_list(search_paths, name):
         full_path = os.path.join(path, name)
         logger.debug("dir_files_list trying directory %s", full_path)
         if os.path.exists(full_path):
+            check_path_traversal([path], full_path, "dir_files_list")
             return [
                 f
                 for f in os.listdir(full_path)
@@ -223,6 +230,7 @@ def dir_files_read(search_paths, name):
         full_path = os.path.join(path, name)
         logger.debug("dir_files_list trying directory %s", full_path)
         if os.path.exists(full_path):
+            check_path_traversal([path], full_path, "dir_files_read")
             return {
                 f: read_file([full_path], f) for f in dir_files_list([full_path], "")
             }
@@ -278,6 +286,9 @@ def search_imports(cwd, import_str, search_paths):
         basename,
         normalised_path,
     )
+
+    allowed_roots = [cwd, os.path.dirname(kapitan_install_path), *search_paths]
+    check_path_traversal(allowed_roots, normalised_path, "jsonnet import")
 
     normalised_path_content = ""
     with open(normalised_path) as f:
@@ -373,53 +384,64 @@ def generate_inventory(args):
         raise
 
 
-def get_inventory(inventory_path, ignore_class_not_found: bool = False) -> Inventory:
+def get_inventory(
+    inventory_path,
+    ignore_class_not_found: bool = False,
+    partial: bool = False,
+    *,
+    backend_id=None,
+    compose_target_name=None,
+    migrate=None,
+    enable_class_wildcards=None,
+) -> Inventory:
     """
     generic inventory function that makes inventory backend pluggable
     default backend is reclass
+    partial renders only dependencies and labels, see Inventory.partial
+
+    Backend selection and rendering flags may be passed explicitly. When left
+    as None they fall back to the parsed CLI args in ``kapitan.cached.args`` so
+    existing call sites keep working; library callers can pass them directly
+    and avoid depending on the global cache.
     """
 
     # if inventory is already cached there is nothing to do
     if cached.inv and cached.inv.targets:
         return cached.inv
 
-    compose_target_name = (
-        hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
-    )
-    if hasattr(cached.args, "compose_node_name") and cached.args.compose_node_name:
-        logger.warning(
-            "inventory flag '--compose-node-name' is deprecated and scheduled to be dropped with the next release. "
-            "Please use '--compose-target-name' instead."
-        )
-        compose_target_name = True
+    # fall back to CLI args when a flag is not passed explicitly
+    if backend_id is None:
+        backend_id = getattr(cached.args, "inventory_backend", False)
+    if compose_target_name is None:
+        compose_target_name = getattr(cached.args, "compose_target_name", False)
+        if getattr(cached.args, "compose_node_name", False):
+            logger.warning(
+                "inventory flag '--compose-node-name' is deprecated and scheduled to be dropped with the next release. "
+                "Please use '--compose-target-name' instead."
+            )
+            compose_target_name = True
+    if migrate is None:
+        migrate = getattr(cached.args, "migrate", False)
+    if enable_class_wildcards is None:
+        enable_class_wildcards = getattr(cached.args, "enable_class_wildcards", False)
 
-    # select inventory backend
-    backend_id = (
-        hasattr(cached.args, "inventory_backend") and cached.args.inventory_backend
-    )
-    compose_target_name = (
-        hasattr(cached.args, "compose_target_name") and cached.args.compose_target_name
-    )
     backend = get_inventory_backend(backend_id)
 
     # migrate inventory to selected inventory backend BEFORE instantiating,
     # because the constructor renders the inventory which would fail on
     # un-migrated syntax.
-    if hasattr(cached.args, "migrate") and cached.args.migrate:
+    if migrate:
         migrator = backend(inventory_path=inventory_path, initialise=False)
         migrator.migrate()
 
     logger.debug(f"Using {backend.__name__} as inventory backend")
     try:
-        enable_class_wildcards = (
-            hasattr(cached.args, "enable_class_wildcards")
-            and cached.args.enable_class_wildcards
-        )
         inventory_backend = backend(
             inventory_path=inventory_path,
             compose_target_name=compose_target_name,
             ignore_class_not_found=ignore_class_not_found,
             enable_class_wildcards=enable_class_wildcards,
+            partial=partial,
         )
     except InventoryError:
         sys.exit(1)

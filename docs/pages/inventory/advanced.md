@@ -136,7 +136,7 @@ declared `consume: true` on the calling target.
     ```jsonnet
     local kap = import "lib/kapitan.libjsonnet";
     {
-      [target]: { colour: params.parameters.colour }
+      [target]: { colour: params.colour }
       for target in std.objectFields(kap.topics("colours").parameters.targets)
       for params in [kap.topics("colours").parameters.targets[target]]
     }

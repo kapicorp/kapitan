@@ -7,25 +7,31 @@
 
 """Tests for kapitan.targets — search_targets, load_target_inventory, compile_target."""
 
+import tempfile
 import unittest
 from unittest.mock import MagicMock
+
+import pytest
 
 from kapitan.errors import CompileError, InventoryError
 from kapitan.targets import (
     compile_target,
+    compile_targets,
     load_target_inventory,
     search_targets,
 )
 
 
 class MockTarget:
-    def __init__(self, name, labels=None, has_params=True, has_kapitan=True):
+    def __init__(
+        self, name, labels=None, has_params=True, has_kapitan=True, has_compile=True
+    ):
         self.name = name
         self.parameters = MagicMock()
         if has_params:
             self.parameters.kapitan = MagicMock()
             self.parameters.kapitan.labels = labels or {}
-            self.parameters.kapitan.compile = []
+            self.parameters.kapitan.compile = [MagicMock()] if has_compile else []
             self.parameters.kapitan.vars = MagicMock()
             self.parameters.kapitan.vars.target = name
             if not has_kapitan:
@@ -160,15 +166,29 @@ class LoadTargetInventoryTest(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].target_full_path, "t2")
 
-    def test_empty_kapitan_raises_inventory_error(self):
+    def test_empty_kapitan_skips_target(self):
+        # parameters.kapitan empty -> target skipped, not raised (issue #1379)
         inv = MockInventory(
             {
                 "t1": MockTarget("t1", has_kapitan=False),
+                "t2": MockTarget("t2"),
             }
         )
-        with self.assertRaises(InventoryError) as ctx:
-            load_target_inventory(inv, None)
-        self.assertIn("parameters.kapitan has no assignment", str(ctx.exception))
+        result = load_target_inventory(inv, None)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].target_full_path, "t2")
+
+    def test_missing_compile_skips_target(self):
+        # parameters.kapitan.compile empty -> target skipped (issue #1379)
+        inv = MockInventory(
+            {
+                "t1": MockTarget("t1", has_compile=False),
+                "t2": MockTarget("t2"),
+            }
+        )
+        result = load_target_inventory(inv, None)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].target_full_path, "t2")
 
     def test_target_name_with_dots_replaced(self):
         inv = MockInventory(
@@ -201,6 +221,7 @@ class CompileTargetTest(unittest.TestCase):
 
         args = MagicMock()
         args.inventory_pool_cache = False
+        args.path_traversal_mode = "warn"
 
         # Should not raise
         compile_target(target_config, [], "/tmp", None, args)
@@ -216,6 +237,7 @@ class CompileTargetTest(unittest.TestCase):
 
         args = MagicMock()
         args.inventory_pool_cache = False
+        args.path_traversal_mode = "warn"
 
         # Should not raise because continue_on_compile_error=True
         compile_target(target_config, [], "/tmp", None, args)
@@ -231,6 +253,21 @@ class CompileTargetTest(unittest.TestCase):
 
         args = MagicMock()
         args.inventory_pool_cache = False
+        args.path_traversal_mode = "warn"
 
         with self.assertRaises(CompileError):
             compile_target(target_config, [], "/tmp", None, args)
+
+
+def test_compile_targets_logs_error_without_targets(tmp_path, monkeypatch, caplog):
+    """An inventory without targets must fail with a message the user sees."""
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    monkeypatch.setattr(
+        "kapitan.targets.get_inventory", lambda _path, **_kwargs: MockInventory({})
+    )
+    message = "No inventory targets discovered at path: ./inventory"
+
+    with pytest.raises(CompileError, match=message):
+        compile_targets("./inventory", [], None, MagicMock(targets=[], labels=[]))
+
+    assert message in [r.getMessage() for r in caplog.records if r.levelname == "ERROR"]

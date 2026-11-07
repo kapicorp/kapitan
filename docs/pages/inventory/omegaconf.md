@@ -103,34 +103,45 @@ parameters:
 
 ### Deferred Evaluation with `\${...}`
 
-Use escaped interpolations when you need values to resolve **after merging**:
+The backend resolves in two passes. The first resolves normal `${...}` interpolations and turns `\${...}` into `${...}`. The second pass resolves what the first one unescaped. `\${...}` does not produce a literal `${` in the output; use `${escape:...}` for that.
+
+Deferring does not change where `parentkey` looks. It returns the key of the node it is written under, and a template copied by interpolation keeps that key:
 
 ```yaml
 # inventory/classes/base-deployment.yml
 parameters:
   deployment_template:
-    name: \${parentkey:}           # Resolves to the KEY name after merge
-    namespace: ${namespace}         # Resolves immediately
-    
+    name: \${parentkey:}
+    namespace: ${namespace}
+
 # inventory/targets/my-app.yml
+classes:
+  - base-deployment
 parameters:
   namespace: production
-  
   deployments:
-    web-frontend: ${deployment_template}   # name → "web-frontend"
-    api-backend: ${deployment_template}    # name → "api-backend"
+    web-frontend: ${deployment_template}
+    api-backend: "${merge:${deployment_template},{name: api-backend}}"
+    worker:
+      name: ${parentkey:}
+      namespace: ${namespace}
 ```
 
 **Result:**
 ```yaml
 deployments:
-  web-frontend:
-    name: web-frontend      # Resolved from \${parentkey:}
-    namespace: production
   api-backend:
-    name: api-backend       # Resolved from \${parentkey:}
+    name: api-backend
+    namespace: production
+  web-frontend:
+    name: deployment_template   # the template's key
+    namespace: production
+  worker:
+    name: worker
     namespace: production
 ```
+
+To name an entry after its own key, write `${parentkey:}` under the entry, as for `worker`, or set `name` while merging the template, as for `api-backend`. The `merge` value is quoted because its inline dict contains `: `, which YAML would otherwise read as a mapping.
 
 ---
 
@@ -144,7 +155,8 @@ parameters:
   shell_home: ${escape:HOME}
 
   # Quote complex expressions so OmegaConf parses them as one resolver argument.
-  terraform_expression: ${escape:'var.foo == "bar" ? 1 : 0'}
+  # The " : " also needs the whole YAML value quoted.
+  terraform_expression: "${escape:'var.foo == \"bar\" ? 1 : 0'}"
 ```
 
 **Result:**
@@ -175,10 +187,8 @@ terraform_expression: ${var.foo == "bar" ? 1 : 0}
 | `parentkey` | Parent node's key name | `${parentkey:}` |
 | `fullkey` | Full path to current key | `${fullkey:}` |
 | `relpath` | Convert absolute path to relative interpolation | `${relpath:some.absolute.path}` |
-| `filename` | Current file's name flag | `${filename:}` |
-| `parent_filename` | Parent node's filename flag | `${parent_filename:}` |
-| `path` | Current file's path flag | `${path:}` |
-| `parent_path` | Parent node's path flag | `${parent_path:}` |
+
+`filename`, `parent_filename`, `path` and `parent_path` are not supported and fail with an error. The backend does not record which file a value was loaded from.
 
 ### Conditional Resolvers
 
@@ -209,7 +219,9 @@ terraform_expression: ${var.foo == "bar" ? 1 : 0}
 | `escape` | Emit a literal `${content}` string (never resolved) | `${escape:HOME}` → `${HOME}` |
 | `default` | Chain of fallback values using oc.select | `${default:key1, key2, fallback}` |
 | `write` | Write resolved content to another inventory location | `${write:destination.path, source.path}` |
-| `from_file` | Read content from a file | `${from_file:path/to/file.txt}` |
+| `from_file` | Read content from a file inside the project | `${from_file:path/to/file.txt}` |
+
+`from_file` only reads a file that resolves, after following symlinks, below the directory Kapitan runs in or below the inventory path. Any other path fails the inventory render, so a class you didn't write can't read files such as `~/.kube/config` into a parameter. Relative paths are relative to the directory Kapitan runs in. To read a file elsewhere on purpose, define your own `from_file` in a [custom resolver](#custom-resolvers), which replaces the built-in one.
 
 ---
 
@@ -386,21 +398,18 @@ kapitan compile --inventory-backend=omegaconf --migrate
 ```yaml
 # inventory/classes/base/deployment.yml
 parameters:
-  # Template that adapts to where it's merged
+  # Defaults shared by every deployment
   deployment_base:
-    name: \${parentkey:}
     namespace: ${namespace}
     labels:
-      app: \${parentkey:}
       environment: ${environment}
     
     image: ??? # Mandatory - must be set
     replicas: ${oc.select:default_replicas, 1}
     
-    resources: ${ifelse:${equal:${environment}, production},
+    resources: '${ifelse:${equal:${environment}, production},
       {limits: {cpu: "2", memory: "4Gi"}},
-      {limits: {cpu: "500m", memory: "512Mi"}}
-    }
+      {limits: {cpu: "500m", memory: "512Mi"}}}'
 
 # inventory/classes/components/api.yml  
 parameters:
@@ -424,17 +433,17 @@ parameters:
     url: "postgres://prod-db:5432/app"
   
   deployments:
-    api-server: ${merge:${deployment_base}, ${api_config}}
+    api-server: "${merge:${deployment_base}, ${api_config}, {name: api-server, labels: {app: api-server}}}"
 ```
 
 **Resolved Result:**
 ```yaml
 deployments:
   api-server:
-    name: api-server              # From \${parentkey:}
+    name: api-server
     namespace: prod
     labels:
-      app: api-server             # From \${parentkey:}
+      app: api-server
       environment: production
     image: myregistry/api:2.1.0
     replicas: 3
