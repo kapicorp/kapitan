@@ -263,7 +263,7 @@ def test_compile_targets_logs_error_without_targets(tmp_path, monkeypatch, caplo
     """An inventory without targets must fail with a message the user sees."""
     monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
     monkeypatch.setattr(
-        "kapitan.targets.get_inventory", lambda _path: MockInventory({})
+        "kapitan.targets.get_inventory", lambda _path, **_kwargs: MockInventory({})
     )
     message = "No inventory targets discovered at path: ./inventory"
 
