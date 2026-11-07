@@ -10,10 +10,11 @@ import logging
 import os
 from abc import ABC, abstractmethod
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
 
 from kapitan.errors import InventoryError
 from kapitan.inventory.model import KapitanInventoryParameters
+from kapitan.inventory.model.dependencies import DependencyTypeConfig
 
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,33 @@ class InventoryTarget(BaseModel):
     exports: dict = {}
 
 
+def partial_parameters(kapitan: dict) -> KapitanInventoryParameters:
+    """Parameters for a partial load: the dependency entries and labels that resolved.
+
+    ``kapitan`` is the target's ``parameters.kapitan``. Entries that don't validate,
+    for example because they point into a class that isn't fetched yet, are left out.
+    """
+    if not isinstance(kapitan, dict):
+        return KapitanInventoryParameters()
+    adapter = TypeAdapter(DependencyTypeConfig)
+    entries = kapitan.get("dependencies")
+    dependencies = []
+    for entry in entries if isinstance(entries, list) else []:
+        try:
+            dependencies.append(adapter.validate_python(entry))
+        except ValidationError:
+            continue
+    try:
+        return KapitanInventoryParameters(
+            kapitan={
+                "dependencies": dependencies,
+                "labels": kapitan.get("labels") or {},
+            }
+        )
+    except ValidationError:
+        return KapitanInventoryParameters(kapitan={"dependencies": dependencies})
+
+
 class Inventory(ABC):
     def __init__(
         self,
@@ -38,6 +66,7 @@ class Inventory(ABC):
         initialise=True,
         target_class=InventoryTarget,
         enable_class_wildcards: bool = False,
+        partial: bool = False,
     ):
         # Pre-expand wildcard class entries (kapicorp/kapitan#1084) into a
         # temporary mirror of the inventory tree so all backends see only
@@ -62,6 +91,8 @@ class Inventory(ABC):
         self.targets: dict[str, target_class] = {}
         self.ignore_class_not_found = ignore_class_not_found
         self.target_class = target_class
+        # a partial load renders only what a fetch round needs, see partial_parameters()
+        self.partial = partial
 
         if initialise:
             self.__initialise(ignore_class_not_found=ignore_class_not_found)
