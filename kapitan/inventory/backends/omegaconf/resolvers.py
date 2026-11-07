@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import copy
+import functools
 import inspect
 import logging
 import os
@@ -186,7 +187,15 @@ def write_to_key(destination: str, origin: str, _root_):
     return "DONE"
 
 
-def from_file(file_path: str):
+def from_file(file_path: str, allowed_roots: tuple[str, ...]):
+    """Return the content of file_path if it resolves below one of allowed_roots."""
+    real_path = os.path.realpath(file_path)
+    if not any(os.path.commonpath([real_path, root]) == root for root in allowed_roots):
+        raise InventoryError(
+            f"from_file: {file_path} resolves to {real_path}, which is outside the "
+            f"project ({', '.join(allowed_roots)}). To read it anyway, register your "
+            f"own from_file resolver in resolvers.py"
+        )
     if os.path.isfile(file_path):
         with open(file_path) as f:
             return f.read()
@@ -272,7 +281,11 @@ def register_resolvers(inventory_path: str = None) -> None:
     _register_resolver("add", lambda x, y: x + y, replace=replace)
     _register_resolver("default", default, replace=replace)
     _register_resolver("write", write_to_key, replace=replace)
-    _register_resolver("from_file", from_file, replace=replace)
+    # from_file only reads below the working directory and the inventory path
+    roots = tuple(os.path.realpath(p) for p in (os.getcwd(), inventory_path) if p)
+    _register_resolver(
+        "from_file", functools.partial(from_file, allowed_roots=roots), replace=replace
+    )
     for name in ("filename", "parent_filename", "path", "parent_path"):
         _register_resolver(name, unsupported_file_resolver(name), replace=replace)
 
