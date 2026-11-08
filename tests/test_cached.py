@@ -56,6 +56,23 @@ class TestResetCache:
         # args should not be reset
         assert cached.args == Namespace(test="value")
 
+    def test_reset_cache_clears_kadet_inventory(self):
+        """A process that compiles project a and then project b sees b's inventory."""
+        from kapitan.inputs.kadet import current_target, inventory, inventory_digest
+
+        token = current_target.set("t")
+        try:
+            digests = set()
+            for name in ("a", "b"):
+                cached.reset_cache()
+                cached.global_inv = {"t": {"parameters": {"name": name}}}
+                assert inventory().parameters.name == name
+                digests.add(inventory_digest("t"))
+            assert len(digests) == 2
+        finally:
+            current_target.reset(token)
+            cached.reset_cache()
+
 
 class TestFromDict:
     """Tests for from_dict function."""
