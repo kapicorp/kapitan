@@ -35,8 +35,13 @@ logger = logging.getLogger(__name__)
 search_paths = contextvars.ContextVar("current search_paths in thread")
 
 
-@cache
 def inventory_global(lazy=False):
+    # bool() first, so inventory_global() and inventory_global(False) share one Dict
+    return _inventory_global(bool(lazy))
+
+
+@cache
+def _inventory_global(lazy):
     # One Dict per lazy value, so the first caller does not decide default_box for all
     return Dict(cached.global_inv, default_box=lazy)
 
