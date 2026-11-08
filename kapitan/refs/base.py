@@ -13,7 +13,7 @@ import logging
 import os
 import re
 import sys
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from functools import lru_cache
 
 import yaml
@@ -189,8 +189,17 @@ class PlainRefBackend:
         full_ref_path = os.path.join(self.path, ref_path)
         os.makedirs(os.path.dirname(full_ref_path), exist_ok=True)
 
-        with open(full_ref_path, "w") as fp:
-            yaml.safe_dump(ref_obj.dump(), stream=fp, default_flow_style=False)
+        # a parallel compile may read the ref meanwhile: write a temporary file
+        # next to it and rename that into place, so readers never see it partial
+        tmp_path = f"{full_ref_path}.{os.getpid()}.tmp"
+        try:
+            with open(tmp_path, "w") as fp:
+                yaml.safe_dump(ref_obj.dump(), stream=fp, default_flow_style=False)
+            os.replace(tmp_path, full_ref_path)
+        except BaseException:
+            with suppress(FileNotFoundError):
+                os.unlink(tmp_path)
+            raise
 
     def __contains__(self, ref_path):
         try:
