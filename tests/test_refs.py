@@ -974,3 +974,30 @@ class Base64RefsTest(unittest.TestCase):
                 REF_CONTROLLER[tag] = Base64Ref(b"newer")
         self.assertEqual(REF_CONTROLLER[tag].reveal(), "new")
         self.assertEqual(os.listdir(ref_dir), ["ref"])
+
+    def test_compile_keeps_a_ref_that_a_parallel_compile_created_first(self):
+        "both compiles found the ref missing, the second one keeps the first value"
+        tag = "?{base64:exclusive/ref||randomstr}"
+        parallel = RefController(REFS_HOME)
+        first = []
+        eval_func_str = RefController._eval_func_str
+
+        def created_meanwhile(controller, ctx, func_str):
+            if controller is REF_CONTROLLER and not first:
+                parallel[tag] = RefParams()
+                first.append(parallel[tag].compile())
+            return eval_func_str(controller, ctx, func_str)
+
+        with mock.patch.object(RefController, "_eval_func_str", created_meanwhile):
+            compiled = REVEALER.compile_raw(tag)
+        self.assertEqual(compiled, first[0])
+        self.assertEqual(REF_CONTROLLER[tag].compile(), first[0])
+        self.assertEqual(os.listdir(os.path.join(REFS_HOME, "exclusive")), ["ref"])
+
+    def test_compile_creates_a_ref_without_hard_links(self):
+        "a filesystem without hard links still gets the ref"
+        tag = "?{base64:nolink/ref||randomstr}"
+        with mock.patch("kapitan.refs.base.os.link", side_effect=PermissionError):
+            REVEALER.compile_raw(tag)
+        self.assertTrue(REF_CONTROLLER[tag].reveal())
+        self.assertEqual(os.listdir(os.path.join(REFS_HOME, "nolink")), ["ref"])
