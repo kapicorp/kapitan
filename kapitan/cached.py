@@ -12,6 +12,7 @@ This module maintains global state for inventory, secrets handlers, and other
 objects that need to be shared across Kapitan's execution.
 """
 
+import sys
 from argparse import Namespace
 from typing import Any
 
@@ -19,7 +20,6 @@ from typing import Any
 # Inventory caches
 inv: dict[str, Any] = {}
 global_inv: dict[str, Any] = {}
-inventory_global_kadet: dict[str, Any] = {}
 inv_cache: dict[str, Any] = {}
 
 # Secrets handlers
@@ -67,6 +67,10 @@ def reset_cache():
 
     inv = {}
     global_inv = {}
+    # kadet memoizes views of global_inv. It imports this module, so no import here
+    if kadet := sys.modules.get("kapitan.inputs.kadet"):
+        kadet._inventory_global.cache_clear()
+        kadet.inventory_digest.cache_clear()
     inv_cache = {}
     inv_sources = set()
     gpg_obj = None
