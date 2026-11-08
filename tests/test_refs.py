@@ -12,6 +12,9 @@ import os
 import string
 import tempfile
 import unittest
+from unittest import mock
+
+import yaml
 
 from kapitan.errors import RefError, RefFromFuncError, RefHashMismatchError
 from kapitan.refs.base import PlainRef, RefController, RefParams, Revealer
@@ -942,3 +945,32 @@ class Base64RefsTest(unittest.TestCase):
         self.assertIsNotNone(key1_pub)
         self.assertIsNotNone(key2_priv)
         self.assertIsNotNone(key2_pub)
+
+    def test_ref_file_is_replaced_whole(self):
+        "a parallel compile that reads a ref while it is written sees the old file"
+        tag = "?{base64:atomic/ref}"
+        ref_dir = os.path.join(REFS_HOME, "atomic")
+        ref_file = os.path.join(ref_dir, "ref")
+        REF_CONTROLLER[tag] = Base64Ref(b"old")
+        with open(ref_file) as fp:
+            old = fp.read()
+
+        seen = []
+        safe_dump = yaml.safe_dump
+
+        def read_while_dumping(*args, **kwargs):
+            with open(ref_file) as fp:
+                seen.append(fp.read())
+            return safe_dump(*args, **kwargs)
+
+        with mock.patch("kapitan.refs.base.yaml.safe_dump", read_while_dumping):
+            REF_CONTROLLER[tag] = Base64Ref(b"new")
+        self.assertEqual(seen, [old])
+        self.assertEqual(REF_CONTROLLER[tag].reveal(), "new")
+
+        # a failed write keeps the old file and leaves no temporary file
+        with mock.patch("kapitan.refs.base.yaml.safe_dump", side_effect=OSError):
+            with self.assertRaises(OSError):
+                REF_CONTROLLER[tag] = Base64Ref(b"newer")
+        self.assertEqual(REF_CONTROLLER[tag].reveal(), "new")
+        self.assertEqual(os.listdir(ref_dir), ["ref"])
