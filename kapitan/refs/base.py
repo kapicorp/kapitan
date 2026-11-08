@@ -185,6 +185,13 @@ class PlainRefBackend:
         raise KeyError(ref_path)
 
     def __setitem__(self, ref_path, ref_obj):
+        self._write(ref_path, ref_obj)
+
+    def create(self, ref_path, ref_obj):
+        """Writes ref_obj unless the ref exists, then raises FileExistsError."""
+        self._write(ref_path, ref_obj, exclusive=True)
+
+    def _write(self, ref_path, ref_obj, exclusive=False):
         assert isinstance(ref_obj, self.ref_type)
         full_ref_path = os.path.join(self.path, ref_path)
         os.makedirs(os.path.dirname(full_ref_path), exist_ok=True)
@@ -195,11 +202,21 @@ class PlainRefBackend:
         try:
             with open(tmp_path, "w") as fp:
                 yaml.safe_dump(ref_obj.dump(), stream=fp, default_flow_style=False)
-            os.replace(tmp_path, full_ref_path)
-        except BaseException:
+            if not exclusive:
+                os.replace(tmp_path, full_ref_path)
+                return
+            try:
+                # unlike a rename, a hard link fails if another process created the ref
+                os.link(tmp_path, full_ref_path)
+            except FileExistsError:
+                raise
+            except OSError:
+                # shortcut: without hard links the last writer wins as before,
+                # a lock file would fix that if such filesystems need it
+                os.replace(tmp_path, full_ref_path)
+        finally:
             with suppress(FileNotFoundError):
                 os.unlink(tmp_path)
-            raise
 
     def __contains__(self, ref_path):
         try:
@@ -400,7 +417,7 @@ class Revealer:
             # if refs needs to be created from func:
             except RefFromFuncError:
                 # create ref from func with kwargs RefParams
-                self.ref_controller[tag] = RefParams(**kwargs)
+                self.ref_controller.create(tag, RefParams(**kwargs))
                 ref = self.ref_controller[tag]
                 return ref.compile()
             # if refs don't exist:
@@ -785,7 +802,7 @@ class RefController:
             return ref
         return None
 
-    def _set_to_token(self, token, ref_obj):
+    def _set_to_token(self, token, ref_obj, exclusive=False):
         attrs = token.split(":")
 
         # 2: default ref tag
@@ -795,7 +812,10 @@ class RefController:
             path = attrs[1]
             backend = self._get_backend(type_name)
             assert isinstance(ref_obj, backend.ref_type)
-            backend[path] = ref_obj
+            if exclusive:
+                backend.create(path, ref_obj)
+            else:
+                backend[path] = ref_obj
         else:
             raise RefError(f"{token}: is not a valid token")
 
@@ -859,12 +879,20 @@ class RefController:
         raise KeyError(f"{tag}: ref not found")
 
     def __setitem__(self, key, value):
+        self._set(key, value)
+
+    def create(self, key, value):
+        """Sets key unless a parallel compile created the ref first, then keeps it."""
+        with suppress(FileExistsError):
+            self._set(key, value, exclusive=True)
+
+    def _set(self, key, value, exclusive=False):
         # ?{ref:my/secret/token} or ?{ref:my/secret/token|func:param1:param2}
         _tag, token, func_str = self.tag_params(key)
 
         with self.detailedException(key):
             if func_str is None and isinstance(value, self.token_type(token)):
-                return self._set_to_token(token, value)
+                return self._set_to_token(token, value, exclusive)
             # if function is set, ensure value is RefParams instance
             if func_str is not None and isinstance(value, RefParams):
                 # run _eval_func_str, create ref_obj and run _set_to_token()
@@ -887,7 +915,7 @@ class RefController:
                 else:
                     ref_obj = ref_type.from_params(ctx.data, value)
 
-                return self._set_to_token(token, ref_obj)
+                return self._set_to_token(token, ref_obj, exclusive)
 
 
 class FunctionContext:
