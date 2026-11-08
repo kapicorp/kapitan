@@ -18,6 +18,7 @@ from kadet import BaseObj, Dict
 from kapitan import cached
 from kapitan.inputs.kadet import (
     Kadet,
+    _inventory_global,
     current_target,
     inventory,
     inventory_global,
@@ -181,8 +182,8 @@ class KadetTest(unittest.TestCase):
 
 class KadetInventoryTest(unittest.TestCase):
     def setUp(self):
-        inventory_global.cache_clear()
-        self.addCleanup(inventory_global.cache_clear)
+        _inventory_global.cache_clear()
+        self.addCleanup(_inventory_global.cache_clear)
         inv = {"demo": {"parameters": {"job": {"name": "demo"}}}}
         patcher = mock.patch.object(cached, "global_inv", inv)
         patcher.start()
@@ -196,6 +197,12 @@ class KadetInventoryTest(unittest.TestCase):
         self.assertFalse(lazy.parameters.job.schedule)
         with self.assertRaises(AttributeError):
             _ = strict.parameters.job.schedule
+
+    def test_strict_inventory_is_one_dict_however_lazy_is_passed(self):
+        # Test suites seed inventory_global() and read through inventory()
+        inventory_global()["demo"] = {"parameters": {"seeded": True}}
+        self.assertTrue(inventory().parameters.seeded)
+        self.assertIs(inventory_global(lazy=False), inventory_global())
 
 
 class KadetCacheKeyTest(unittest.TestCase):
