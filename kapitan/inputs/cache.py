@@ -1,8 +1,13 @@
+import contextvars
 import hashlib
+import json
 import logging
 import multiprocessing
 import os
 import pickle
+import sys
+from contextlib import contextmanager, suppress
+from importlib.util import source_from_cache
 from pathlib import Path
 from typing import Tuple
 
@@ -11,6 +16,40 @@ from kapitan.errors import CompileError
 
 
 logger = logging.getLogger(__name__)
+
+# Set of the files opened for reading inside record_reads(), else None
+_reads = contextvars.ContextVar("files opened for reading", default=None)
+
+
+def _record_open(event, args):
+    """Audit hook: adds each file opened read-only to the set of record_reads()."""
+    if event != "open" or (reads := _reads.get()) is None:
+        return
+    path, _, flags = args
+    if not isinstance(path, str | bytes | os.PathLike) or flags & (
+        os.O_WRONLY | os.O_RDWR
+    ):
+        return
+    path = os.path.abspath(os.fsdecode(path))
+    if path.endswith(".pyc"):
+        # imports read only the bytecode while it is current, the source is what changes
+        with suppress(ValueError):
+            path = source_from_cache(path)
+    reads.add(path)
+
+
+sys.addaudithook(_record_open)
+
+
+@contextmanager
+def record_reads():
+    """Collects the absolute paths of the files opened for reading in this context."""
+    reads = set()
+    token = _reads.set(reads)
+    try:
+        yield reads
+    finally:
+        _reads.reset(token)
 
 
 class CacheMetrics:
@@ -72,8 +111,39 @@ class InputCache:
         cached_path_lock = Path(str(cached_path) + ".lock")
         return cached_path, cached_path_lock, sub_path
 
-    def get(self, inputs_hash, lock_retries=2) -> dict | None:  # output_obj
-        cached_path, cached_path_lock, _ = self.hash_paths(inputs_hash)
+    def reads_path(self, inputs_hash) -> Path:
+        """Path of the list of files that the output for inputs_hash read."""
+        cached_path, _, _ = self.hash_paths(inputs_hash)
+        return Path(f"{cached_path}.reads")
+
+    def reads_hash(self, inputs_hash, reads, compile_path=None) -> str:
+        """Mixes the paths and current content of the files in reads into inputs_hash.
+
+        A relative path is below compile_path.
+        """
+        if not reads:
+            return inputs_hash
+        h = self.hash_object()
+        h.update(inputs_hash.encode())
+        for path in reads:
+            h.update(os.fsencode(path) + b"\0")
+            if os.path.isabs(path):
+                walk_and_hash(Path(path), self, h)
+            else:
+                # no memo, a later compile entry of the same run may rewrite the file
+                walk_and_hash(Path(compile_path, path), None, h)
+        return h.hexdigest()
+
+    def get(
+        self, inputs_hash, lock_retries=2, compile_path=None
+    ) -> dict | None:  # output_obj
+        try:
+            reads = json.loads(self.reads_path(inputs_hash).read_text())
+        except FileNotFoundError:
+            reads = []
+        cached_path, cached_path_lock, _ = self.hash_paths(
+            self.reads_hash(inputs_hash, reads, compile_path)
+        )
         if not cached_path_lock.exists():
             for retry in range(lock_retries):
                 try:
@@ -98,7 +168,30 @@ class InputCache:
         self.metrics.miss()
         return None
 
-    def set(self, inputs_hash, output_obj, lock_retries=2):
+    def set(self, inputs_hash, output_obj, lock_retries=2, reads=(), compile_path=None):
+        """Stores output_obj under inputs_hash and the content of the files in reads.
+
+        The list of files is kept next to the output. get() hashes their
+        current content, so a changed file is a miss. Files below compile_path,
+        a new temporary directory in every run, are kept by their relative path.
+        """
+        # the cache's own files, e.g. a HelmChart() hit, are not inputs
+        cache_root = os.path.abspath(os.path.dirname(self.input_cache_home)) + os.sep
+        reads = [path for path in reads if not path.startswith(cache_root)]
+        if compile_path:
+            run_root = os.path.abspath(compile_path) + os.sep
+            reads = [path.removeprefix(run_root) for path in reads]
+        reads = sorted(reads)
+        reads_path = self.reads_path(inputs_hash)
+        if reads:
+            reads_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp_path = Path(f"{reads_path}.{os.getpid()}")
+            tmp_path.write_text(json.dumps(reads))
+            tmp_path.replace(reads_path)
+        else:
+            reads_path.unlink(missing_ok=True)
+
+        inputs_hash = self.reads_hash(inputs_hash, reads, compile_path)
         cached_path, cached_path_lock, sub_path = self.hash_paths(inputs_hash)
         for retry in range(lock_retries):
             # dont write if already exists
@@ -174,6 +267,9 @@ def walk_and_hash(path: Path, input_cache: InputCache | None, path_hash):
     ``kv_cache`` dict is used to memoize per-file digests across calls so the
     same file isn't re-read for every walk within a worker process.
     """
+    if (reads := _reads.get()) is not None:
+        # the kv_cache memo below skips the open() that _record_open sees
+        reads.add(os.path.abspath(path))
     if not path.exists() or str(path).endswith("__pycache__"):
         return
 
