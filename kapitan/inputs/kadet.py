@@ -177,7 +177,7 @@ class Kadet(InputType):
                     *extra_inputs,
                 )
 
-                output_obj = cache_obj.get(inputs_hash)
+                output_obj = cache_obj.get(inputs_hash, compile_path=compile_path)
 
             if output_obj is None:
                 # set compile_path after the cache key is computed so the volatile tempdir
@@ -212,7 +212,9 @@ class Kadet(InputType):
                 output_obj = _to_dict(output_obj)
 
                 if cache_obj := self.cacheable():
-                    cache_obj.set(inputs_hash, output_obj, reads=reads)
+                    cache_obj.set(
+                        inputs_hash, output_obj, reads=reads, compile_path=compile_path
+                    )
 
             # Return None if output_obj has no output
             if not output_obj:

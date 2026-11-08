@@ -116,24 +116,33 @@ class InputCache:
         cached_path, _, _ = self.hash_paths(inputs_hash)
         return Path(f"{cached_path}.reads")
 
-    def reads_hash(self, inputs_hash, reads) -> str:
-        """Mixes the paths and current content of the files in reads into inputs_hash."""
+    def reads_hash(self, inputs_hash, reads, compile_path=None) -> str:
+        """Mixes the paths and current content of the files in reads into inputs_hash.
+
+        A relative path is below compile_path.
+        """
         if not reads:
             return inputs_hash
         h = self.hash_object()
         h.update(inputs_hash.encode())
         for path in reads:
             h.update(os.fsencode(path) + b"\0")
-            walk_and_hash(Path(path), self, h)
+            if os.path.isabs(path):
+                walk_and_hash(Path(path), self, h)
+            else:
+                # no memo, a later compile entry of the same run may rewrite the file
+                walk_and_hash(Path(compile_path, path), None, h)
         return h.hexdigest()
 
-    def get(self, inputs_hash, lock_retries=2) -> dict | None:  # output_obj
+    def get(
+        self, inputs_hash, lock_retries=2, compile_path=None
+    ) -> dict | None:  # output_obj
         try:
             reads = json.loads(self.reads_path(inputs_hash).read_text())
         except FileNotFoundError:
             reads = []
         cached_path, cached_path_lock, _ = self.hash_paths(
-            self.reads_hash(inputs_hash, reads)
+            self.reads_hash(inputs_hash, reads, compile_path)
         )
         if not cached_path_lock.exists():
             for retry in range(lock_retries):
@@ -159,15 +168,20 @@ class InputCache:
         self.metrics.miss()
         return None
 
-    def set(self, inputs_hash, output_obj, lock_retries=2, reads=()):
+    def set(self, inputs_hash, output_obj, lock_retries=2, reads=(), compile_path=None):
         """Stores output_obj under inputs_hash and the content of the files in reads.
 
         The list of files is kept next to the output. get() hashes their
-        current content, so a changed file is a miss.
+        current content, so a changed file is a miss. Files below compile_path,
+        a new temporary directory in every run, are kept by their relative path.
         """
         # the cache's own files, e.g. a HelmChart() hit, are not inputs
         cache_root = os.path.abspath(os.path.dirname(self.input_cache_home)) + os.sep
-        reads = sorted(path for path in reads if not path.startswith(cache_root))
+        reads = [path for path in reads if not path.startswith(cache_root)]
+        if compile_path:
+            run_root = os.path.abspath(compile_path) + os.sep
+            reads = [path.removeprefix(run_root) for path in reads]
+        reads = sorted(reads)
         reads_path = self.reads_path(inputs_hash)
         if reads:
             reads_path.parent.mkdir(parents=True, exist_ok=True)
@@ -177,7 +191,7 @@ class InputCache:
         else:
             reads_path.unlink(missing_ok=True)
 
-        inputs_hash = self.reads_hash(inputs_hash, reads)
+        inputs_hash = self.reads_hash(inputs_hash, reads, compile_path)
         cached_path, cached_path_lock, sub_path = self.hash_paths(inputs_hash)
         for retry in range(lock_retries):
             # dont write if already exists

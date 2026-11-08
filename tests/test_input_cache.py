@@ -273,9 +273,9 @@ class KadetCacheReadsTest(unittest.TestCase):
         self.addCleanup(sys.modules.pop, "kadet_component_reads_component", None)
         self.root.joinpath("reads_lib").mkdir()
 
-    def compile(self):
+    def compile(self, compile_path=None, cache=None):
         """Compiles the component as a new kapitan run would; returns output and hits."""
-        cache = InputCache("kadet")
+        cache = cache or InputCache("kadet")
         compiler = Kadet.__new__(Kadet)
         compiler.target_name = "demo"
         compiler.search_paths = [str(self.root)]
@@ -289,7 +289,9 @@ class KadetCacheReadsTest(unittest.TestCase):
             patch("kapitan.inputs.kadet.consumed_topics_digest", return_value=None),
             patch.object(compiler, "to_file") as to_file,
         ):
-            compiler.compile_file(config, str(self.component), str(self.root))
+            compiler.compile_file(
+                config, str(self.component), compile_path or str(self.root / "out")
+            )
         return to_file.call_args.args[2], cache.metrics.snapshot()["hits"]
 
     def test_files_read_outside_input_path_invalidate_cache(self):
@@ -304,6 +306,29 @@ class KadetCacheReadsTest(unittest.TestCase):
         # this run loaded reads_lib from its .pyc, the key must still use the source
         self.root.joinpath("reads_lib", "__init__.py").write_text("VALUE = 'v2-lib'\n")
         self.assertEqual(self.compile(), ({"data": "v2", "lib": "v2-lib"}, 0))
+
+    def test_files_below_compile_path_are_keyed_by_relative_path(self):
+        # like mutate: reads what an earlier compile entry wrote in this run
+        self.component.joinpath("__init__.py").write_text(
+            "import os\n"
+            "def main(input_params):\n"
+            "    path = os.path.join(input_params['compile_path'], 'earlier.yml')\n"
+            "    with open(path) as f:\n"
+            "        return {'out': f.read()}\n"
+        )
+        for content, hits in (("v1", 0), ("v1", 1), ("v2", 0), ("v2", 1)):
+            # each run compiles into a new temporary directory and removes it
+            with tempfile.TemporaryDirectory() as compile_path:
+                Path(compile_path, "earlier.yml").write_text(content)
+                self.assertEqual(self.compile(compile_path), (content, hits))
+
+        # a later compile entry may rewrite the file within the same run
+        cache = InputCache("kadet")
+        with tempfile.TemporaryDirectory() as compile_path:
+            Path(compile_path, "earlier.yml").write_text("v3")
+            self.assertEqual(self.compile(compile_path, cache), ("v3", 0))
+            Path(compile_path, "earlier.yml").write_text("v4")
+            self.assertEqual(self.compile(compile_path, cache), ("v4", 0))
 
     def test_walk_and_hash_records_memoized_paths(self):
         cache = InputCache("kadet")
