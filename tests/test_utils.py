@@ -21,6 +21,7 @@ import yaml
 
 from kapitan.errors import UnsafeArchiveError
 from kapitan.utils import (
+    PrettyDumper,
     SafeCopyError,
     YamlLoader,
     available_cpu_count,
@@ -32,6 +33,7 @@ from kapitan.utils import (
     flatten_dict,
     force_copy_file,
     get_entropy,
+    is_leading_zero_int_string,
     prune_empty,
     safe_tar_extractall,
     sha256_string,
@@ -628,4 +630,33 @@ class SafeTarExtractallFallbackTest(unittest.TestCase):
         self._extract_via_fallback(self._tar_with(info))
         self.assertTrue(
             os.path.exists(os.path.join(self.output_path, "nested", "safe.txt"))
+        )
+
+
+class IsLeadingZeroIntStringTest(unittest.TestCase):
+    """is_leading_zero_int_string flags leading-zero digit strings a Go/YAML 1.2
+    parser (Helm, Kubernetes) would re-read as a number (#1370, #1595)."""
+
+    def test_flags_leading_zero_digit_strings(self):
+        self.assertTrue(is_leading_zero_int_string("03190301"))
+
+    def test_does_not_flag_other_strings(self):
+        # One case per guard: no leading zero (other int-looking strings are
+        # PyYAML's job, not this predicate's), non-digit, single char (len > 1
+        # guard), empty.
+        for value in ("1234567", "12a", "0", ""):
+            with self.subTest(value=value):
+                self.assertFalse(is_leading_zero_int_string(value))
+
+
+class PrettyDumperLeadingZeroTest(unittest.TestCase):
+    """The bare PrettyDumper must quote leading-zero strings so ``refs reveal``
+    (_reveal_file) and ``kapitan inventory``, which dump with the base class
+    rather than a get_dumper_for_style subclass, don't reintroduce #1595."""
+
+    def test_bare_dumper_quotes_leading_zero_string(self):
+        out = yaml.dump({"value": "03190301"}, Dumper=PrettyDumper)
+        self.assertTrue(
+            "'03190301'" in out or '"03190301"' in out,
+            f"bare PrettyDumper must quote leading-zero strings. Got:\n{out}",
         )
