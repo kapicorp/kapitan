@@ -876,3 +876,104 @@ class CliFuncsTest(unittest.TestCase):
 
     def tearDown(self):
         shutil.rmtree(REFS_PATH, ignore_errors=True)
+
+
+@pytest.mark.usefixtures("setup_gpg_key")
+class CliRefsUpdateTest(unittest.TestCase):
+    """kapitan refs --update, without the vault container CliFuncsTest starts."""
+
+    def _reveal_ref(self, ref_name):
+        test_tag_file = tempfile.mktemp()
+        with open(test_tag_file, "w") as fp:
+            fp.write(f"revealing: ?{{{ref_name}}}")
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            kapitan("refs", "--reveal", "-f", test_tag_file, "--refs-path", REFS_PATH)
+        os.remove(test_tag_file)
+        return stdout.getvalue()
+
+    def test_cli_secret_update_gpg(self):
+        """
+        run $ kapitan refs --write gpg:test_secret_update
+        then $ kapitan refs --update gpg:test_secret_update --recipients ...
+        and expect the ref to reveal the same value
+        """
+        test_secret_content = "I am a secret!"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+        kapitan(
+            "refs",
+            "--write",
+            "gpg:test_secret_update",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+            "--recipients",
+            "example@kapitan.dev",
+        )
+
+        kapitan(
+            "refs",
+            "--update",
+            "gpg:test_secret_update",
+            "--refs-path",
+            REFS_PATH,
+            "--recipients",
+            "example@kapitan.dev",
+        )
+
+        self.assertEqual(
+            self._reveal_ref("gpg:test_secret_update"),
+            f"revealing: {test_secret_content}",
+        )
+        os.remove(test_secret_file)
+
+    def test_cli_secret_update_invalid_type(self):
+        """
+        run $ kapitan refs --update foo:bar
+        expect KapitanError naming the type
+        """
+        with self.assertRaises(KapitanError) as cm:
+            kapitan("refs", "--update", "foo:bar", "--refs-path", REFS_PATH)
+        self.assertIn("Invalid token type: foo", str(cm.exception))
+
+    def test_cli_secret_update_gpg_target_recipients(self):
+        """
+        run $ kapitan refs --update gpg:test_secret_update_target -t minikube-es
+        without --recipients and expect the target's gpg recipients to be used
+        """
+        test_secret_content = "I am another secret!"
+        test_secret_file = tempfile.mktemp()
+        with open(test_secret_file, "w") as fp:
+            fp.write(test_secret_content)
+        kapitan(
+            "refs",
+            "--write",
+            "gpg:test_secret_update_target",
+            "-f",
+            test_secret_file,
+            "--refs-path",
+            REFS_PATH,
+            "--recipients",
+            "example@kapitan.dev",
+        )
+
+        kapitan(
+            "refs",
+            "--update",
+            "gpg:test_secret_update_target",
+            "--refs-path",
+            REFS_PATH,
+            "--inventory-path",
+            "examples/kubernetes/inventory",
+            "-t",
+            "minikube-es",
+        )
+
+        self.assertEqual(
+            self._reveal_ref("gpg:test_secret_update_target"),
+            f"revealing: {test_secret_content}",
+        )
+        os.remove(test_secret_file)

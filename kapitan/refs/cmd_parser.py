@@ -269,19 +269,19 @@ def secret_update(args, ref_controller):
     if args.target_name:
         inv = get_inventory(args.inventory_path)
 
-        if not inv.get_parameters(args.target_name).kapitan.secrets:
-            reference_backend_configs = inv.get_parameters(
-                args.target_name
-            ).kapitan.secrets
+        target_secrets = inv.get_parameters(args.target_name).kapitan.secrets
+        if not target_secrets:
             raise KapitanError(
                 f"parameters.kapitan.secrets not defined in {args.target_name}"
             )
+        reference_backend_configs = target_secrets
 
     _validate_token_name(token_name)
 
     type_name, token_path = token_name.split(":")
 
-    if type_name not in KapitanReferencesTypes:
+    # Compare values: `str in StrEnum` raises TypeError before Python 3.12
+    if type_name not in {ref_type.value for ref_type in KapitanReferencesTypes}:
         raise KapitanError(
             f"Invalid token type: {type_name}. Try using gpg/gkms/awskms/azkms/vaultkv/vaulttransit/base64/plain/env"
         )
