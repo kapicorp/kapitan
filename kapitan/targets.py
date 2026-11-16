@@ -155,6 +155,13 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
     output_path = args.output_path
     compile_path = os.path.join(output_path, "compiled")
 
+    # Stage compiled output next to compile_path, on the same filesystem, so
+    # it can be moved into place instead of copied. Fall back to temp_path.
+    staging_path = _make_staging_dir(output_path)
+    if staging_path:
+        temp_compile_path = os.path.join(staging_path, "compiled")
+        search_paths.append(staging_path)
+
     # Allocate one shared CacheMetrics per cacheable input type so workers
     # bump the same counters as the parent. The dict is pre-populated here
     # (eagerly, before pool spawn) because multiprocessing.Value objects
@@ -239,17 +246,10 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                     temp_path_target = os.path.join(temp_compile_path, path)
 
                     os.makedirs(compile_path_target, exist_ok=True)
-
-                    shutil.rmtree(compile_path_target)
-                    shutil.copytree(temp_path_target, compile_path_target)
-                    logger.debug(
-                        "Copied %s into %s", temp_path_target, compile_path_target
-                    )
+                    _replace_dir(temp_path_target, compile_path_target)
             # otherwise override all targets
             else:
-                shutil.rmtree(compile_path)
-                shutil.copytree(temp_compile_path, compile_path)
-                logger.debug("Copied %s into %s", temp_compile_path, compile_path)
+                _replace_dir(temp_compile_path, compile_path)
             logger.info(
                 f"Compiled {len(targets)} targets in %.2fs", time.time() - compile_start
             )
@@ -275,6 +275,53 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
     finally:
         shutil.rmtree(temp_path)
         logger.debug("Removed %s", temp_path)
+        if staging_path:
+            shutil.rmtree(staging_path, ignore_errors=True)
+            logger.debug("Removed %s", staging_path)
+
+
+def _make_staging_dir(output_path):
+    """Create a hidden staging directory in output_path.
+
+    Returns None if it can't be created, e.g. when output_path is read-only.
+    """
+    try:
+        os.makedirs(output_path, exist_ok=True)
+        return tempfile.mkdtemp(prefix=".kapitan-compile-", dir=output_path)
+    except OSError as e:
+        logger.debug("Not staging compiled output in %s: %s", output_path, e)
+        return None
+
+
+def _same_filesystem(a, b):
+    return os.stat(a).st_dev == os.stat(b).st_dev
+
+
+def _replace_dir(src, dst):
+    """Replace directory dst with src.
+
+    Moves src into place when both are on the same filesystem and dst is not a
+    symlink. Otherwise removes dst and copies src, as before.
+    """
+    dst_parent = os.path.dirname(os.path.abspath(dst))
+    if not _same_filesystem(src, dst_parent) or os.path.islink(dst):
+        shutil.rmtree(dst)
+        shutil.copytree(src, dst)
+        logger.debug("Copied %s into %s", src, dst)
+        return
+
+    # move dst aside first, so a failed move can be undone
+    trash = tempfile.mkdtemp(prefix=".kapitan-old-", dir=dst_parent)
+    old = os.path.join(trash, "old")
+    os.rename(dst, old)
+    try:
+        os.rename(src, dst)
+    except OSError:
+        os.rename(old, dst)
+        raise
+    finally:
+        shutil.rmtree(trash, ignore_errors=True)
+    logger.debug("Moved %s into %s", src, dst)
 
 
 def load_target_inventory(inventory, requested_targets, ignore_class_not_found=False):
