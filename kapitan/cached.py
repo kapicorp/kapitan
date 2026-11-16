@@ -20,6 +20,7 @@ from typing import Any
 inv: dict[str, Any] = {}
 global_inv: dict[str, Any] = {}
 inventory_global_kadet: dict[str, Any] = {}
+inventory_kadet: dict[str, Any] = {}
 inv_cache: dict[str, Any] = {}
 
 # Secrets handlers
@@ -55,6 +56,7 @@ def reset_cache():
     global \
         inv, \
         global_inv, \
+        inventory_kadet, \
         inv_cache, \
         gpg_obj, \
         gkms_obj, \
@@ -67,6 +69,7 @@ def reset_cache():
 
     inv = {}
     global_inv = {}
+    inventory_kadet = {}
     inv_cache = {}
     inv_sources = set()
     gpg_obj = None
@@ -97,10 +100,12 @@ def from_dict(cache_dict: dict[str, Any]) -> None:
         ref_controller_obj, \
         revealer_obj, \
         inv_sources, \
+        inventory_kadet, \
         args
 
     inv = cache_dict["inv"]
     global_inv = cache_dict["global_inv"]
+    inventory_kadet = {}
     inv_cache = cache_dict["inv_cache"]
     inv_sources = cache_dict["inv_sources"]
     gpg_obj = cache_dict["gpg_obj"]
