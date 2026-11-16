@@ -316,23 +316,19 @@ class Kadet(InputType):
 
 def _to_dict(obj):
     """
-    recursively update obj should it contain other
-    BaseObj values
+    Return obj as plain dicts and lists, resolving nested BaseObj and
+    BaseModel values through their root.
+
+    Builds new containers instead of writing converted children back into
+    obj: storing a dict into a Box converts it into a Box again, so an
+    in-place walk converts every subtree once per level of nesting.
     """
     if isinstance(obj, BaseObj | BaseModel):
-        for k, v in obj.root.items():
-            obj.root[k] = _to_dict(v)
-        # BaseObj needs to return to_dict()
-        return obj.root.to_dict()
-    if isinstance(obj, list):
-        obj = [_to_dict(item) for item in obj]
-        # list has no .to_dict, return itself
-        return obj
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            obj[k] = _to_dict(v)
-        # dict has no .to_dict, return itself
-        return obj
+        return _to_dict(obj.root)
+    if isinstance(obj, dict):  # includes kadet Dict
+        return {k: _to_dict(v) for k, v in obj.items()}
+    if isinstance(obj, list):  # includes BoxList
+        return [_to_dict(item) for item in obj]
 
     # anything else, return itself
     return obj
