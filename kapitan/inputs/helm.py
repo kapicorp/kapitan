@@ -20,6 +20,7 @@ from kapitan.inputs.base import InputType
 from kapitan.inputs.cache import InputCache, walk_and_hash
 from kapitan.inputs.kadet import BaseModel, BaseObj
 from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
+from kapitan.utils import YamlLoader
 
 
 logger = logging.getLogger(__name__)
@@ -89,7 +90,9 @@ class Helm(InputType):
                     file_path = os.path.join(compile_path, rel_file_name)
                     os.makedirs(os.path.dirname(file_path), exist_ok=True)
                     item_value = [
-                        doc for doc in yaml.safe_load_all(f) if doc is not None
+                        doc
+                        for doc in yaml.load_all(f, Loader=YamlLoader)
+                        if doc is not None
                     ]
                     self.to_file(config, file_path, item_value)
 
@@ -338,7 +341,9 @@ class HelmChart(BaseModel):
         if error_message:
             raise HelmTemplateError(error_message)
 
-        docs = [doc for doc in yaml.safe_load_all(output) if doc is not None]
+        docs = [
+            doc for doc in yaml.load_all(output, Loader=YamlLoader) if doc is not None
+        ]
         if cache_obj is not None:
             cache_obj.set(cache_key, docs)
         return docs
