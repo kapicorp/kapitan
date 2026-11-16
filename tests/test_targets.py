@@ -7,11 +7,18 @@
 
 """Tests for kapitan.targets — search_targets, load_target_inventory, compile_target."""
 
+import os
+import shutil
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 from unittest.mock import MagicMock
 
 from kapitan.errors import CompileError, InventoryError
 from kapitan.targets import (
+    _make_staging_dir,
+    _replace_dir,
     compile_target,
     load_target_inventory,
     search_targets,
@@ -234,3 +241,61 @@ class CompileTargetTest(unittest.TestCase):
 
         with self.assertRaises(CompileError):
             compile_target(target_config, [], "/tmp", None, args)
+
+
+class ReplaceDirTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.src = os.path.join(self.tmp, "src")
+        self.dst = os.path.join(self.tmp, "dst")
+        os.makedirs(os.path.join(self.src, "t1"))
+        Path(self.src, "t1", "new.yml").write_text("new")
+        os.makedirs(self.dst)
+        Path(self.dst, "old.yml").write_text("old")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def test_moves_src_into_place(self):
+        _replace_dir(self.src, self.dst)
+        self.assertEqual(Path(self.dst, "t1", "new.yml").read_text(), "new")
+        self.assertFalse(os.path.exists(os.path.join(self.dst, "old.yml")))
+        self.assertFalse(os.path.exists(self.src))
+        self.assertEqual(sorted(os.listdir(self.tmp)), ["dst"])
+
+    def test_copies_across_filesystems(self):
+        with mock.patch("kapitan.targets._same_filesystem", return_value=False):
+            _replace_dir(self.src, self.dst)
+        self.assertEqual(Path(self.dst, "t1", "new.yml").read_text(), "new")
+        self.assertFalse(os.path.exists(os.path.join(self.dst, "old.yml")))
+        self.assertTrue(os.path.exists(self.src))
+
+    def test_restores_dst_when_move_fails(self):
+        real_rename = os.rename
+
+        def failing_rename(src, dst):
+            if src == self.src:
+                raise OSError("boom")
+            return real_rename(src, dst)
+
+        with (
+            mock.patch("kapitan.targets.os.rename", side_effect=failing_rename),
+            self.assertRaises(OSError),
+        ):
+            _replace_dir(self.src, self.dst)
+        self.assertEqual(Path(self.dst, "old.yml").read_text(), "old")
+        self.assertEqual(sorted(os.listdir(self.tmp)), ["dst", "src"])
+
+
+class MakeStagingDirTest(unittest.TestCase):
+    def test_creates_hidden_dir_in_output_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            staging = _make_staging_dir(tmp)
+            self.assertEqual(os.path.dirname(staging), tmp)
+            self.assertTrue(os.path.basename(staging).startswith(".kapitan-compile-"))
+
+    def test_returns_none_when_output_path_is_not_writable(self):
+        with mock.patch(
+            "kapitan.targets.tempfile.mkdtemp", side_effect=PermissionError("ro")
+        ):
+            self.assertIsNone(_make_staging_dir(tempfile.gettempdir()))
