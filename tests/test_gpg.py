@@ -7,6 +7,7 @@
 
 "gpg secrets tests"
 
+import base64
 import os
 import tempfile
 import unittest
@@ -203,6 +204,30 @@ class GPGSecretsTest(unittest.TestCase):
             fp.write("?{gpg:secret/rsapublic}")
         revealed = REVEALER.reveal_raw_file(file_with_secret_tags)
         self.assertEqual(revealed.splitlines()[0], "-----BEGIN PUBLIC KEY-----")
+
+    def test_gpg_write_signing_key(self):
+        "signing_key selects the signer, default is gpg's default key"
+        recipients = [{"fingerprint": KEY.fingerprint}]
+        for signing_key, signer in (
+            (None, KEY.fingerprint),
+            (KEY2.fingerprint, KEY2.fingerprint),
+        ):
+            secret = GPGSecret(
+                "super secret value", recipients, signing_key=signing_key
+            )
+            dec = gpg_obj().decrypt(base64.b64decode(secret.data), **GPG_KWARGS)
+            self.assertEqual(dec.data, b"super secret value")
+            self.assertEqual(dec.pubkey_fingerprint, signer)
+
+    def test_gpg_update_recipients_signing_key(self):
+        "update_recipients re-signs with signing_key"
+        secret = GPGSecret("super secret value", [{"fingerprint": KEY.fingerprint}])
+        secret.update_recipients(
+            [{"fingerprint": KEY.fingerprint}, {"fingerprint": KEY2.fingerprint}],
+            signing_key=KEY2.fingerprint,
+        )
+        dec = gpg_obj().decrypt(base64.b64decode(secret.data), **GPG_KWARGS)
+        self.assertEqual(dec.pubkey_fingerprint, KEY2.fingerprint)
 
     def test_gpg_update_recipients(self):
         """

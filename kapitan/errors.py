@@ -84,3 +84,7 @@ class CuelangTemplateError(KapitanError):
 
 class OCIFetchingError(KapitanError):
     """Raised when fetching an OCI artifact fails."""
+
+
+class UnsafeArchiveError(KapitanError):
+    """Raised when an archive member would be extracted outside its target directory."""
