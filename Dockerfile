@@ -50,6 +50,7 @@ RUN uv pip install .[gojsonnet,omegaconf,reclass-rs,rapidyaml]
 ARG PYTHON_VERSION=3.11
 FROM golang:1 AS go-builder
 RUN GOBIN=$(pwd)/ go install cuelang.org/go/cmd/cue@latest
+RUN GOBIN=$(pwd)/ go install sigs.k8s.io/kustomize/kustomize/v5@latest
 
 # Final image with virtualenv built in previous step
 FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-trixie-slim
@@ -88,6 +89,7 @@ RUN apt-get update \
 RUN useradd --create-home --no-log-init --user-group kapitan
 
 COPY --from=go-builder /go/cue /usr/bin/cue
+COPY --from=go-builder /go/kustomize /usr/bin/kustomize
 COPY --from=python-builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 USER kapitan
