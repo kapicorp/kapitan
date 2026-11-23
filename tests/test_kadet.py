@@ -13,9 +13,10 @@ from pathlib import Path
 from unittest import mock
 
 import kadet
+from box import Box, BoxList
 from kadet import BaseObj, Dict
 
-from kapitan.inputs.kadet import Kadet
+from kapitan.inputs.kadet import Kadet, _to_dict
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
 
 
@@ -356,3 +357,54 @@ class KadetCacheKeyTest(unittest.TestCase):
             Path("component"),
             {},
         )
+
+
+class KadetToDictTest(unittest.TestCase):
+    def _obj(self):
+        inner = BaseObj.from_dict({"inner": {"deep": [1, {"x": 2}]}})
+        obj = BaseObj()
+        obj.root.plain = {"a": {"b": [inner, {"c": inner}]}}
+        obj.root.seq = [BaseObj.from_dict({"i": 1}), (1, 2), "s"]
+        obj.root.boxed = Dict({"k": {"v": 3}})
+        return obj
+
+    def test_to_dict_returns_plain_containers(self):
+        out = _to_dict(self._obj())
+
+        def check(value):
+            self.assertNotIsInstance(value, (Box, BoxList, BaseObj))
+            if isinstance(value, dict):
+                for v in value.values():
+                    check(v)
+            elif isinstance(value, list):
+                for v in value:
+                    check(v)
+
+        check(out)
+        self.assertEqual(
+            out,
+            {
+                "plain": {
+                    "a": {
+                        "b": [
+                            {"inner": {"deep": [1, {"x": 2}]}},
+                            {"c": {"inner": {"deep": [1, {"x": 2}]}}},
+                        ]
+                    }
+                },
+                "seq": [{"i": 1}, (1, 2), "s"],
+                "boxed": {"k": {"v": 3}},
+            },
+        )
+
+    def test_to_dict_leaves_input_unchanged(self):
+        inner = BaseObj.from_dict({"x": 1})
+        obj = BaseObj()
+        obj.root.child = inner
+        _to_dict(obj)
+        self.assertIs(obj.root.child, inner)
+
+    def test_to_dict_handles_plain_dict_and_list(self):
+        obj = BaseObj.from_dict({"x": 1})
+        self.assertEqual(_to_dict({"o": obj}), {"o": {"x": 1}})
+        self.assertEqual(_to_dict([obj]), [{"x": 1}])
