@@ -94,7 +94,7 @@ Kapitan requires Python 3.10 or newer.
 
 ## Trust and community
 
-- **Open source** — MIT license, actively maintained by [KapiCorp](https://github.com/kapicorp).
+- **Open source** — Apache 2.0 license, actively maintained by [KapiCorp](https://github.com/kapicorp).
 - **Releases** — regular tagged releases with release notes on [GitHub](https://github.com/kapicorp/kapitan/releases).
 - **Community** — ask questions and share patterns in the [`#kapitan`](https://kubernetes.slack.com/archives/C981W2HD3) Slack channel.
 - **Related projects** — [Tesoro](https://github.com/kapicorp/tesoro) (Kubernetes admission controller for Kapitan secrets) and [Kapitan Reference](https://github.com/kapicorp/kapitan-reference) (working examples).
