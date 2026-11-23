@@ -67,14 +67,6 @@ Use the `force-fetch` option to force overwrite your local files in the `output_
           force-fetch: true
         ```
 
-### Caching
-
-Kapitan also supports caching Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
-
-    ```shell
-    kapitan compile --cache --fetch
-    ```
-
 ### Defining dependencies
 
 === "git"
