@@ -130,7 +130,9 @@ def cpu_profile(args) -> Iterator[None]:
         except Exception as e:  # pragma: no cover - defensive
             logger.error("Failed to render profile: %s", e)
         else:
-            out_path = out_dir / f"kapitan-{subcmd}-{_timestamp()}-pid{os.getpid()}.{ext}"
+            out_path = (
+                out_dir / f"kapitan-{subcmd}-{_timestamp()}-pid{os.getpid()}.{ext}"
+            )
             out_path.write_text(rendered)
             logger.info("CPU profile written: %s", out_path)
             # When in text mode, also echo a short summary to stderr so users see it.
