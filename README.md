@@ -6,7 +6,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/kapicorp/kapitan)](https://hub.docker.com/r/kapicorp/kapitan)
 [![Releases](https://img.shields.io/github/release/kapicorp/kapitan.svg)](https://github.com/kapicorp/kapitan/releases)
 [![Docker Image Size](https://img.shields.io/docker/image-size/kapicorp/kapitan/latest.svg)](https://hub.docker.com/r/kapicorp/kapitan)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 <img src="docs/images/kapitan_logo.png" width="25" alt="Kapitan logo">
 
@@ -106,7 +106,7 @@ Kapitan turns a hierarchical **inventory** and a set of **input templates** into
 
 ## Project status
 
-Kapitan is actively maintained by [KapiCorp](https://github.com/kapicorp) and the open source community. Releases are published regularly with [release notes](https://github.com/kapicorp/kapitan/releases). The project uses an [MIT license](LICENSE).
+Kapitan is actively maintained by [KapiCorp](https://github.com/kapicorp) and the open source community. Releases are published regularly with [release notes](https://github.com/kapicorp/kapitan/releases). The project uses the [Apache 2.0 license](LICENSE).
 
 ## Contributing
 
