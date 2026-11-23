@@ -7,12 +7,16 @@
 
 """Tests for kapitan.targets — search_targets, load_target_inventory, compile_target."""
 
+import tempfile
 import unittest
 from unittest.mock import MagicMock
+
+import pytest
 
 from kapitan.errors import CompileError, InventoryError
 from kapitan.targets import (
     compile_target,
+    compile_targets,
     load_target_inventory,
     search_targets,
 )
@@ -234,3 +238,17 @@ class CompileTargetTest(unittest.TestCase):
 
         with self.assertRaises(CompileError):
             compile_target(target_config, [], "/tmp", None, args)
+
+
+def test_compile_targets_logs_error_without_targets(tmp_path, monkeypatch, caplog):
+    """An inventory without targets must fail with a message the user sees."""
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    monkeypatch.setattr(
+        "kapitan.targets.get_inventory", lambda _path: MockInventory({})
+    )
+    message = "No inventory targets discovered at path: ./inventory"
+
+    with pytest.raises(CompileError, match=message):
+        compile_targets("./inventory", [], None, MagicMock(targets=[], labels=[]))
+
+    assert message in [r.getMessage() for r in caplog.records if r.levelname == "ERROR"]
