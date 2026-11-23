@@ -38,7 +38,9 @@ class VaultSecretTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         # close connection
-        cls.server.close_container()
+        server = getattr(cls, "server", None)
+        if server is not None:
+            server.close_container()
         shutil.rmtree(REFS_PATH, ignore_errors=True)
 
     def setUp(self):
