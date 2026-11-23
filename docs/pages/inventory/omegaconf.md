@@ -209,7 +209,9 @@ terraform_expression: ${var.foo == "bar" ? 1 : 0}
 | `escape` | Emit a literal `${content}` string (never resolved) | `${escape:HOME}` → `${HOME}` |
 | `default` | Chain of fallback values using oc.select | `${default:key1, key2, fallback}` |
 | `write` | Write resolved content to another inventory location | `${write:destination.path, source.path}` |
-| `from_file` | Read content from a file | `${from_file:path/to/file.txt}` |
+| `from_file` | Read content from a file inside the project | `${from_file:path/to/file.txt}` |
+
+`from_file` only reads a file that resolves, after following symlinks, below the directory Kapitan runs in or below the inventory path. Any other path fails the inventory render, so a class you didn't write can't read files such as `~/.kube/config` into a parameter. Relative paths are relative to the directory Kapitan runs in. To read a file elsewhere on purpose, define your own `from_file` in a [custom resolver](#custom-resolvers), which replaces the built-in one.
 
 ---
 
