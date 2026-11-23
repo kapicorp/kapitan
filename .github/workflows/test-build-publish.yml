@@ -305,6 +305,8 @@ jobs:
           GOT=$(docker run --rm local-test --version | tr -d '[:space:]')
           EXP="${{ needs.version-info.outputs.version }}"
           [ "$GOT" = "$EXP" ] || { echo "version mismatch: got '$GOT' want '$EXP'"; exit 1; }
+          # The omegaconf backend fails to import if the image drifts from uv.lock.
+          docker run --rm --entrypoint python local-test -c "import kapitan.inventory.backends.omegaconf"
 
       - name: Set up uv
         if: needs.check-changes.outputs.has-code-changes == 'true' && github.event_name != 'pull_request'
