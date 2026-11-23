@@ -105,7 +105,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         if: needs.check-changes.outputs.has-code-changes == 'true'
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         if: needs.check-changes.outputs.has-code-changes == 'true'
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
         if: needs.check-changes.outputs.has-code-changes == 'true'
@@ -128,7 +128,7 @@ jobs:
           submodules: recursive
       - name: Set up Python ${{ matrix.python-version }}
         if: needs.check-changes.outputs.has-code-changes == 'true'
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -202,10 +202,10 @@ jobs:
 
       - name: Set up Docker Buildx
         if: needs.check-changes.outputs.has-code-changes == 'true'
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Login to DockerHub
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         if: needs.check-changes.outputs.has-code-changes == 'true' && env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
@@ -280,7 +280,7 @@ jobs:
       # Build, test locally, then push if not a PR
       - name: Build Kapitan image
         if: needs.check-changes.outputs.has-code-changes == 'true'
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           # Use the local checkout rather than the default Git context: a PR's
           # refs/pull/<n>/merge ref is deleted once the PR is merged, which can
@@ -305,6 +305,8 @@ jobs:
           GOT=$(docker run --rm local-test --version | tr -d '[:space:]')
           EXP="${{ needs.version-info.outputs.version }}"
           [ "$GOT" = "$EXP" ] || { echo "version mismatch: got '$GOT' want '$EXP'"; exit 1; }
+          # The omegaconf backend fails to import if the image drifts from uv.lock.
+          docker run --rm --entrypoint python local-test -c "import kapitan.inventory.backends.omegaconf"
 
       - name: Set up uv
         if: needs.check-changes.outputs.has-code-changes == 'true' && github.event_name != 'pull_request'
@@ -358,7 +360,7 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         if: needs.check-changes.outputs.has-code-changes == 'true' && env.DOCKERHUB_USERNAME != '' && github.event_name != 'pull_request'
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: .
           platforms: ${{ matrix.platform.platform }}
@@ -414,10 +416,10 @@ jobs:
         python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
     steps:
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Login to DockerHub
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         if: env.DOCKERHUB_USERNAME != ''
