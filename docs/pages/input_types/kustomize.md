@@ -53,6 +53,7 @@ kapitan:
 | `input_paths` | list | List of paths to Kustomize overlays |
 | `namespace` | string | Optional: Namespace to set for all resources |
 | `patches` | object | Optional: Dictionary of patches to apply |
+| `output_file` | string | Optional: Write raw `kustomize build` output to a single file instead of splitting resources |
 
 ## Examples
 
@@ -141,6 +142,34 @@ parameters:
                       - name: my-app
                         image: nginx:1.19
 ```
+
+### Single-File Output
+
+You can preserve the raw `kustomize build` output in a single file by setting `output_file`:
+
+```yaml
+# inventory/targets/my-app.yml
+classes:
+  - common
+
+parameters:
+  target_name: my-app
+  kapitan:
+    compile:
+      - output_path: manifests/multus
+        input_type: kustomize
+        input_paths:
+          - components/kustomize/multus
+        output_file: install.yml
+```
+
+Result:
+
+```text
+compiled/<target>/manifests/multus/install.yml
+```
+
+When `output_file` is set, Kapitan writes the exact stdout from `kustomize build` to the specified file and skips the default split-file behavior. When it is not set, resources are written individually as `<metadata.name>-<kind>.yaml`.
 
 ### Multiple Environments
 
