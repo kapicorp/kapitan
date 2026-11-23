@@ -3587,6 +3587,7 @@ parameters:
 <li>If the reference file does not exist, <strong>Kapitan</strong> will use the function to initialise it</li>
 <li>If the reference file exists, no functions will run.</li>
 </ul>
+<p>Only the first case uses the backend. Without <code>--reveal</code>, <code>kapitan compile</code> reads existing reference files and writes their hashed tags, so it needs no backend credentials, for example in CI with a committed <code>refs</code> directory. Creating a missing reference encrypts the new value and needs the same access as <code>kapitan refs --write</code>: the recipients' public keys for gpg, a Vault token, or cloud KMS credentials.</p>
 <div class="admonition tip">
 <p class="admonition-title">Automate secret rotation with ease</p>
 <p>You can take advantage of it to implement easy rotation of secrets. Simply delete the reference files, and run <code>kapitan compile</code>: let <strong>Kapitan</strong> do the rest.</p>
