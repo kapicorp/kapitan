@@ -77,6 +77,8 @@ which would be equivalent to always running **Kapitan** with `--inventory-backen
 
 Please note that the `inventory-backend` flag currently can't be set through the command-specific sections of the **Kapitan** config file.
 
+Kapitan logs a warning for every section or key in `.kapitan` that no command reads, for example a typo or a flag set in a section that does not use it.
+
 ## Full flag reference
 
 The tables below are generated directly from **Kapitan**'s argument parser at docs-build time, so they always match the installed version. Each section maps to a top-level key in `.kapitan`: set a flag under the matching command, or under `global` to apply it to every command.
