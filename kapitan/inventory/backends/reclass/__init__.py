@@ -8,7 +8,7 @@ import reclass
 import reclass.core
 from kapitan.errors import InventoryError
 from kapitan.inventory import Inventory, InventoryTarget
-from reclass.errors import NotFoundError, ReclassException
+from reclass.errors import ReclassException
 
 
 logger = logging.getLogger(__name__)
@@ -59,10 +59,7 @@ class ReclassInventory(Inventory):
                 self.targets[target_name].exports = rendered_target["exports"]
 
         except ReclassException as e:
-            if isinstance(e, NotFoundError):
-                logger.error("Inventory reclass error: inventory not found")
-            else:
-                logger.error(f"Inventory reclass error: {e.message}")
+            logger.error(f"Inventory reclass error: {e.message}")
             raise InventoryError(e.message) from e
 
 
