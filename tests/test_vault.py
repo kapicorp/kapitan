@@ -13,11 +13,14 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
+
+import hvac
 
 from kapitan.inventory.model.references import KapitanReferenceVaultKVConfig
 from kapitan.refs.base import RefController, RefParams, Revealer
 from kapitan.refs.secrets.vaultkv import VaultClient, VaultError, VaultSecret
-from tests.vault_server import get_shared_vault_server
+from tests.vault_server import VaultTransitServer, get_shared_vault_server
 
 
 logger = logging.getLogger(__name__)
@@ -45,6 +48,27 @@ class VaultSecretTest(unittest.TestCase):
         # Re-export this server's credentials; a parallel worker may have set up
         # another vault server whose token clobbered the shared environment.
         self.server.export_env()
+
+    def test_transit_setup_on_same_vault_keeps_kv_access(self):
+        """
+        CI points the kv and transit servers at one vault; setting up transit
+        must not take away the kv credentials' access to secret/
+        """
+        addr = self.server.vault_url
+        with mock.patch.dict(
+            os.environ, {"VAULT_ADDR": addr, "KAPITAN_TEST_VAULT_ADDR": addr}
+        ):
+            transit = VaultTransitServer()
+        transit.close_container()
+
+        token_client = hvac.Client(url=addr, token=self.server.token)
+        userpass_client = hvac.Client(url=addr)
+        userpass_client.auth.userpass.login(self.server.username, self.server.password)
+        for client in (token_client, userpass_client):
+            client.secrets.kv.v2.create_or_update_secret(
+                path="policy_clash", secret={"k": "v"}
+            )
+            client.adapter.close()
 
     def test_token_authentication(self):
         """
