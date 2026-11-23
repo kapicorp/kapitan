@@ -1,6 +1,6 @@
 ---
 title: "Publishing Kapitan Generators as OCI Artifacts"
-description: "Learn how to package and publish Kapitan generators as OCI artifacts with oras for teams to consume."
+description: "Learn how to package and publish Kapitan generators as OCI artifacts with kapitan publish or oras for teams to consume."
 ---
 
 # :kapitan-logo: Publishing generators as OCI artifacts
@@ -10,8 +10,8 @@ bundles from any OCI-compliant registry. This page walks through the other half 
 how to package your own generators and publish them so teams or projects can consume them by
 reference.
 
-Publishing uses the [**oras**](https://oras.land/) CLI, a small, standalone binary purpose-built
-for pushing and pulling arbitrary files to OCI registries.
+`kapitan publish` packs and pushes a directory in one step. The [**oras**](https://oras.land/) CLI
+is the alternative when you need a different artifact layout, such as several layers.
 
 ---
 
@@ -35,14 +35,44 @@ input type.
 
 ## Prerequisites
 
-Install the `oras` CLI by following the [official installation guide](https://oras.land/docs/installation).
+`kapitan publish` needs the optional `oras` Python package (`pip install kapitan[oci]`). To push
+with the `oras` CLI instead, install it by following the [official installation guide](https://oras.land/docs/installation).
 
 You also need write access to an OCI registry (GHCR, Docker Hub, a private Harbor instance, etc.)
 and your credentials available via `docker login` or environment variables.
 
 ---
 
-## Pushing a generator
+## Pushing with `kapitan publish`
+
+```shell
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+kapitan publish my-generator ghcr.io/<org>/<generator>:1.2.0
+```
+
+The command prints the manifest digest, for example
+`sha256:3ef9422c7178827c3c22129344cbaed868c00c8bbf120f22a51806afb9491eac`. Consumers pin it in
+`source` as described under [Tagging strategy](#tagging-strategy). Pushing to an existing tag moves the tag.
+
+The regular files of the directory become one uncompressed tar layer
+(`application/vnd.oci.image.layer.v1.tar`) whose root is the directory itself, so consumers need no
+`subpath`. Entries are sorted and carry mtime 0, owner 0 and mode 0644, or 0755 for files the owner
+can execute. The same tree therefore gives the same digest on every machine and every run. The
+manifest uses the OCI empty config and the artifact type `application/vnd.kapitan.generator.v1`.
+
+Files and directories whose name starts with a dot, such as `.git`, are not packed.
+`kapitan compile --fetch` skips them when it copies a dependency, so they would not reach
+consumers. A symlink or other special file fails the command, so nothing outside the directory is
+pushed.
+
+Credentials come from the same places as for fetching: `OCI_USERNAME` and `OCI_PASSWORD`, or what
+`docker login` or `oras login` stored. See the `oci` tab under
+[External dependencies](external_dependencies.md#defining-dependencies). Add `--insecure` for a
+registry that only serves plain HTTP.
+
+---
+
+## Pushing with oras
 
 Authenticate with your registry, then push the directory in a single command:
 
