@@ -5,7 +5,7 @@ classes:
 parameters:
   app_name: myapp
 
-  # List override (reclass replaces lists by default)
+  # List extension (reclass appends to lists by default)
   tags:
     - app-tag
 
