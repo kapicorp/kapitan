@@ -25,6 +25,30 @@ from kapitan.inventory.model.input_types import KapitanInputTypeHelmConfig
 TEST_PWD = os.getcwd()
 
 
+def test_render_chart_does_not_mutate_its_inputs(tmp_path, monkeypatch):
+    """render_chart must leave HELM_DEFAULT_FLAGS and the caller's helm_params
+    untouched: both are reused for the next chart in the same process."""
+    from kapitan.inputs import helm
+
+    # isolate the module-level defaults so a regression cannot leak into other tests
+    monkeypatch.setattr(helm, "HELM_DEFAULT_FLAGS", dict(helm.HELM_DEFAULT_FLAGS))
+    defaults_before = dict(helm.HELM_DEFAULT_FLAGS)
+    chart_dir = tmp_path / "chart"
+    (chart_dir / "templates").mkdir(parents=True)
+    (chart_dir / "Chart.yaml").write_text(
+        "apiVersion: v2\nname: demo\nversion: 0.1.0\n"
+    )
+    helm_params = {"name": "demo", "namespace": "team-a"}
+
+    _, error_message = helm.render_chart(
+        str(chart_dir), "-", None, helm_params, None, None
+    )
+
+    assert not error_message
+    assert defaults_before == helm.HELM_DEFAULT_FLAGS
+    assert helm_params == {"name": "demo", "namespace": "team-a"}
+
+
 class HelmInputTest(unittest.TestCase):
     def setUp(self):
         os.chdir(os.path.join("tests", "test_resources"))
