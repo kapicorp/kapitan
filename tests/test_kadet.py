@@ -15,7 +15,14 @@ from unittest import mock
 import kadet
 from kadet import BaseObj, Dict
 
-from kapitan.inputs.kadet import Kadet
+from kapitan import cached
+from kapitan.inputs.kadet import (
+    Kadet,
+    _inventory_global,
+    current_target,
+    inventory,
+    inventory_global,
+)
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
 
 
@@ -171,6 +178,31 @@ class KadetTest(unittest.TestCase):
         output = kobj.dump()
         desired_output = {"this": "that", "list": [1, 2, 3]}
         self.assertEqual(output, desired_output)
+
+
+class KadetInventoryTest(unittest.TestCase):
+    def setUp(self):
+        _inventory_global.cache_clear()
+        self.addCleanup(_inventory_global.cache_clear)
+        inv = {"demo": {"parameters": {"job": {"name": "demo"}}}}
+        patcher = mock.patch.object(cached, "global_inv", inv)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.addCleanup(current_target.reset, current_target.set("demo"))
+
+    def test_lazy_and_strict_inventory_are_separate(self):
+        # --cache calls inventory() for the cache key before the module runs
+        strict = inventory()
+        lazy = inventory(lazy=True)
+        self.assertFalse(lazy.parameters.job.schedule)
+        with self.assertRaises(AttributeError):
+            _ = strict.parameters.job.schedule
+
+    def test_strict_inventory_is_one_dict_however_lazy_is_passed(self):
+        # Test suites seed inventory_global() and read through inventory()
+        inventory_global()["demo"] = {"parameters": {"seeded": True}}
+        self.assertTrue(inventory().parameters.seeded)
+        self.assertIs(inventory_global(lazy=False), inventory_global())
 
 
 class KadetCacheKeyTest(unittest.TestCase):

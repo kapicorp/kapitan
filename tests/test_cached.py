@@ -163,7 +163,6 @@ class TestModuleVariables:
 
         assert isinstance(cached.inv, dict)
         assert isinstance(cached.global_inv, dict)
-        assert isinstance(cached.inventory_global_kadet, dict)
         assert isinstance(cached.inv_cache, dict)
         assert isinstance(cached.dot_kapitan, dict)
         assert isinstance(cached.inv_sources, set)
