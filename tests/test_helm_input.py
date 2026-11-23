@@ -378,6 +378,27 @@ class HelmInputTest(unittest.TestCase):
         self.assertEqual(docs[0]["kind"], "ConfigMap")
         self.assertEqual(docs[1]["kind"], "Secret")
 
+    def test_load_chart_uses_kapitan_yaml_loader(self):
+        """load_chart() parses with kapitan's YamlLoader, which is the libyaml
+        CSafeLoader when available, and keeps the bare '=' value tag working.
+        """
+        from unittest.mock import patch
+
+        from kapitan.utils import YamlLoader
+
+        output = (
+            "# comment\n---\nkind: ConfigMap\nmetadata:\n  name: cm\n"
+            "data:\n  key: =\n---\n---\nkind: Secret\nmetadata:\n  name: s\n"
+        )
+        with (
+            patch("kapitan.inputs.helm.render_chart", return_value=(output, "")),
+            patch("kapitan.inputs.helm.yaml.load_all", wraps=yaml.load_all) as load_all,
+        ):
+            chart = HelmChart(chart_dir="unused")
+        self.assertIs(load_all.call_args.kwargs["Loader"], YamlLoader)
+        self.assertEqual(sorted(chart.root.keys()), ["cm-configmap", "s-secret"])
+        self.assertEqual(chart.root["cm-configmap"].root.data.key, "=")
+
     def tearDown(self):
         os.chdir(TEST_PWD)
         reset_cache()
@@ -478,7 +499,7 @@ class HelmChartCacheTest(unittest.TestCase):
                     "kapitan.inputs.helm.render_chart", return_value=("", "")
                 ) as mock_render,
                 patch(
-                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    "kapitan.inputs.helm.yaml.load_all",
                     side_effect=lambda *_a, **_kw: iter(docs),
                 ),
             ):
@@ -511,7 +532,7 @@ class HelmChartCacheTest(unittest.TestCase):
                     "kapitan.inputs.helm.render_chart", return_value=("", "")
                 ) as mock_render,
                 patch(
-                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    "kapitan.inputs.helm.yaml.load_all",
                     side_effect=lambda *_a, **_kw: iter(docs),
                 ),
             ):
@@ -542,7 +563,7 @@ class HelmChartCacheTest(unittest.TestCase):
                     "kapitan.inputs.helm.render_chart", return_value=("", "")
                 ) as mock_render,
                 patch(
-                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    "kapitan.inputs.helm.yaml.load_all",
                     side_effect=lambda *_a, **_kw: iter(docs),
                 ),
             ):
@@ -579,7 +600,7 @@ class HelmChartCacheTest(unittest.TestCase):
                     "kapitan.inputs.helm.render_chart", return_value=("", "")
                 ) as mock_render,
                 patch(
-                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    "kapitan.inputs.helm.yaml.load_all",
                     side_effect=lambda *_a, **_kw: iter(docs),
                 ),
                 patch("kapitan.inputs.helm.helm_version", return_value="v3.18.0+gabc"),
@@ -593,7 +614,7 @@ class HelmChartCacheTest(unittest.TestCase):
                     "kapitan.inputs.helm.render_chart", return_value=("", "")
                 ) as mock_render_v2,
                 patch(
-                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    "kapitan.inputs.helm.yaml.load_all",
                     side_effect=lambda *_a, **_kw: iter(docs),
                 ),
                 patch("kapitan.inputs.helm.helm_version", return_value="v3.19.5+gdef"),
@@ -624,7 +645,7 @@ class HelmChartCacheTest(unittest.TestCase):
                     "kapitan.inputs.helm.render_chart", return_value=("", "")
                 ) as mock_render,
                 patch(
-                    "kapitan.inputs.helm.yaml.safe_load_all",
+                    "kapitan.inputs.helm.yaml.load_all",
                     side_effect=lambda *_a, **_kw: iter(docs),
                 ),
             ):
