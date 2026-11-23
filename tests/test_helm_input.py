@@ -632,3 +632,43 @@ class HelmChartCacheTest(unittest.TestCase):
                 HelmChart(chart_dir=str(chart_dir))
                 self.assertEqual(mock_render.call_count, 2)
                 self.assertIsNone(_cached.kapitan_input_helm)
+
+
+def test_kube_version_sets_capabilities_kube_version(tmp_path, monkeypatch):
+    """``kube_version`` must reach helm as ``--kube-version``, so charts that
+    branch on ``.Capabilities.KubeVersion`` render for that version."""
+    from argparse import Namespace
+
+    from kapitan import cached
+    from kapitan.refs.base import RefController
+
+    monkeypatch.setattr(cached, "inv", {"test": {"parameters": {}}})
+
+    chart_dir = tmp_path / "chart"
+    (chart_dir / "templates").mkdir(parents=True)
+    (chart_dir / "Chart.yaml").write_text(
+        "apiVersion: v2\nname: kube-version\nversion: 0.1.0\n"
+    )
+    (chart_dir / "templates" / "configmap.yaml").write_text(
+        "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: kube-version\n"
+        "data:\n  version: {{ .Capabilities.KubeVersion.Version }}\n"
+    )
+    compile_path = tmp_path / "compiled"
+    config = KapitanInputTypeHelmConfig(
+        input_paths=[str(chart_dir)],
+        output_path=".",
+        helm_params={"name": "test"},
+        kube_version="1.25.0",
+    )
+    helm = Helm(
+        str(compile_path),
+        [],
+        RefController(str(tmp_path / "refs")),
+        "test",
+        Namespace(reveal=False, indent=2),
+    )
+
+    helm.compile_file(config, str(chart_dir), str(compile_path))
+
+    rendered = compile_path / "kube-version" / "templates" / "configmap.yaml"
+    assert yaml.safe_load(rendered.read_text())["data"]["version"] == "v1.25.0"

@@ -61,7 +61,7 @@ class Helm(InputType):
         helm_flags = dict(HELM_DEFAULT_FLAGS)
         # add to flags if set
         if config.kube_version:
-            helm_flags["--api-versions"] = config.kube_version
+            helm_flags["--kube-version"] = config.kube_version
 
         temp_dir = tempfile.mkdtemp()
         # save the template output to temp dir first
