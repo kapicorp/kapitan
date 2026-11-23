@@ -67,6 +67,37 @@ Use the `force-fetch` option to force overwrite your local files in the `output_
           force-fetch: true
         ```
 
+### Fetching classes
+
+A dependency can fetch inventory classes. With `--fetch`, Kapitan loads the inventory without the classes that are still missing, fetches the dependencies, and reloads the inventory, so a fetched class takes effect in the same run:
+
+```yaml
+# inventory/targets/cert-manager.yml
+classes:
+  - recipes.cert-manager # fetched below
+parameters:
+  kapitan:
+    dependencies:
+      - type: git
+        source: https://github.com/example/recipes.git
+        ref: v1.0.0
+        subdir: cert-manager
+        output_path: inventory/classes/recipes/cert-manager
+```
+
+A fetched class can declare dependencies of its own, including further classes. Kapitan repeats fetch and reload until a round adds no new or changed dependency. After 5 rounds that still add dependencies, the compile fails and names the classes still missing.
+
+Until the last reload, references that point into a class that isn't fetched yet are skipped, and only the last load reports errors. A dependency entry can't use values that only the class it fetches provides. With the `reclass-rs` backend, a load that reclass-rs can't render because of such references is rendered with `reclass`.
+
+`--fetch` keeps existing files, so after raising the pin of a fetched class use `--force-fetch`, or `force_fetch: true` on the entry. Plain `kapitan compile` also reloads after fetching `force_fetch: true` entries, but it loads the inventory before fetching, so a class that isn't there yet needs `--fetch`.
+
+With `--labels`, targets are matched on the labels known in each round. A target whose labels come only from a class it fetches isn't matched before that class is there.
+
+Fetched classes usually come from someone else, so Kapitan limits what they can do:
+
+- A dependency declared in a fetched class must write below that class's own `output_path`. A fetched class is a class file at or below the `output_path` of a dependency inside `inventory/classes`. Its `parameters.kapitan.dependencies` list and each `output_path` in it must be literal values, because interpolations can't be checked before the class is loaded.
+- Two dependencies that fetch different sources into the same `output_path` fail, and the error names both.
+
 ### Caching
 
 Kapitan also supports caching Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
