@@ -15,8 +15,11 @@ from unittest import mock
 import kadet
 from kadet import BaseObj, Dict
 
+from kapitan import cached
+from kapitan.inputs import kadet as kadet_input
 from kapitan.inputs.kadet import Kadet
 from kapitan.inventory.model.input_types import KapitanInputTypeKadetConfig
+from kapitan.topics import current_target
 
 
 class KadetTestObj(BaseObj):
@@ -356,3 +359,51 @@ class KadetCacheKeyTest(unittest.TestCase):
             Path("component"),
             {},
         )
+
+
+class KadetInventoryTest(unittest.TestCase):
+    def setUp(self):
+        cached.reset_cache()
+        cached.inventory_global_kadet = {}
+        cached.global_inv = {
+            "a": {"parameters": {"name": "a", "nested": {"key": 1}}},
+            "b": {"parameters": {"name": "b"}},
+        }
+        self.token = current_target.set("a")
+
+    def tearDown(self):
+        current_target.reset(self.token)
+        cached.reset_cache()
+        cached.inventory_global_kadet = {}
+
+    def test_inventory_returns_current_target(self):
+        inv = kadet_input.inventory()
+        self.assertIsInstance(inv, Dict)
+        self.assertEqual(inv.parameters.name, "a")
+        self.assertEqual(inv.parameters.nested.key, 1)
+
+    def test_inventory_converts_only_current_target(self):
+        kadet_input.inventory()
+        self.assertEqual(cached.inventory_global_kadet, {})
+        self.assertEqual(list(cached.inventory_kadet), ["a"])
+
+    def test_inventory_returns_same_object_per_target(self):
+        self.assertIs(kadet_input.inventory(), kadet_input.inventory())
+        token = current_target.set("b")
+        try:
+            self.assertEqual(kadet_input.inventory().parameters.name, "b")
+        finally:
+            current_target.reset(token)
+
+    def test_inventory_lazy_returns_default_box(self):
+        inv = kadet_input.inventory(lazy=True)
+        self.assertEqual(inv.parameters.missing, {})
+
+    def test_inventory_uses_global_kadet_inventory_once_built(self):
+        cached.inventory_global_kadet = Dict(cached.global_inv)
+        self.assertIs(kadet_input.inventory(), cached.inventory_global_kadet["a"])
+
+    def test_from_dict_clears_target_inventories(self):
+        kadet_input.inventory()
+        cached.from_dict(cached.as_dict())
+        self.assertEqual(cached.inventory_kadet, {})

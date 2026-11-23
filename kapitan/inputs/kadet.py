@@ -44,7 +44,20 @@ def inventory_global(lazy=False):
 
 
 def inventory(lazy=False):
-    return inventory_global(lazy)[current_target.get()]
+    """Return the current target's inventory as a kadet Dict.
+
+    Only the current target is converted. Converting the global inventory
+    costs time proportional to every target, once per worker process.
+    """
+    target = current_target.get()
+    if cached.inventory_global_kadet:
+        # keep returning the same object as inventory_global() once it exists
+        return cached.inventory_global_kadet[target]
+    if target not in cached.inventory_kadet:
+        cached.inventory_kadet[target] = Dict(
+            cached.global_inv[target], default_box=lazy
+        )
+    return cached.inventory_kadet[target]
 
 
 def topics(name=None, lazy=False):
