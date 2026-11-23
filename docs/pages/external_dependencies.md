@@ -43,11 +43,19 @@ You can use the `fetch` option to explicitly fetch the dependencies:
 
 This will download the dependencies and store them at their respective `output_path`.
 
-### Overwrite local changes
+### Updating dependencies
 
-When fetching a dependency, **Kapitan** will refuse to overwrite existing files to preserve your local modifications.
+`--fetch` records what it wrote to an `output_path` in a file next to it, named `.<name>.kapitan-fetch`. For `output_path: charts/prometheus` that is `charts/.prometheus.kapitan-fetch`. If you commit fetched dependencies, commit the record with them.
 
-Use the `force-fetch` option to force overwrite your local files in the `output_path`.
+On the next `--fetch`, a dependency whose definition has not changed is skipped, and local changes to its files stay. The definition is every field except `output_path` and `force_fetch`.
+
+When the definition changes, for example a new `ref` or `version`, **Kapitan** fetches the dependency into a temporary path next to `output_path` and swaps it in. `output_path` then holds exactly the new version: files the new version no longer has are removed, and local changes are lost.
+
+A `ref` that moves, such as a branch name, a helm chart without `version` or a URL whose content changes, is not updated by `--fetch`. Use the `force-fetch` option, or `force_fetch: true` on the dependency, to fetch it again and replace `output_path` even if the definition has not changed.
+
+An `output_path` that exists without a record was written by an older **Kapitan** version or by hand, and **Kapitan** does not delete it. It updates it in place as before: `--fetch` only adds missing files, `--force-fetch` overwrites files, and a helm chart is only fetched with `--force-fetch`. Files the pinned version no longer has stay, so **Kapitan** logs a warning. Delete the `output_path` once to let **Kapitan** manage it.
+
+Each dependency needs its own `output_path`. The fetch fails if two dependencies write to the same path or one path is inside another. The same dependency declared by several targets is fetched once.
 
 
 === "cli"
