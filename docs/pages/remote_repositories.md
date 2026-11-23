@@ -5,6 +5,10 @@ description: "Configure Kapitan to recursively fetch remote inventory classes an
 
 # :kapitan-logo: Remote Inventories
 
+!!! warning
+
+    Kapitan no longer reads `parameters.kapitan.inventory`. To fetch classes, declare them as `parameters.kapitan.dependencies`, see [Fetching classes](external_dependencies.md#fetching-classes).
+
 Kapitan is capable of recursively fetching inventory items stored in remote locations and copy it to the specified output path. This feature can be used by specifying those inventory items in classes or targets under `parameters.kapitan.inventory`. Supported types are:
 
 - [git type](#git-type)

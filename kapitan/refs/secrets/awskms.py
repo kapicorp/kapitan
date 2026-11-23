@@ -6,6 +6,7 @@
 "awskms secrets module"
 
 import base64
+import functools
 
 import boto3
 
@@ -20,10 +21,16 @@ class AWSKMSError(KapitanError):
     """Generic AWS KMS errors"""
 
 
+@functools.cache
+def _awskms_client():
+    return boto3.session.Session().client("kms")
+
+
 def awskms_obj():
-    if not cached.awskms_obj:
-        cached.awskms_obj = boto3.session.Session().client("kms")
-    return cached.awskms_obj
+    return _awskms_client()
+
+
+cached.register_handler_cache_clearer(_awskms_client.cache_clear)
 
 
 class AWSKMSSecret(Base64Ref):

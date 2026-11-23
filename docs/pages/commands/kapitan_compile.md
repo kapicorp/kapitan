@@ -92,18 +92,13 @@ kapitan compile --fetch
 ```
 
 This will download the dependencies according to their configurations
+and reload the inventory, so classes fetched as dependencies take effect in the same run (see [Fetching classes](../external_dependencies.md#fetching-classes)).
 By default, kapitan does not overwrite an existing item with the same name as that of the fetched inventory items.
 
-Use the `--force-fetch` flag to force fetch (update cache with freshly fetched items) and overwrite inventory items of the same name in the `output_path`.
+Use the `--force-fetch` flag to force fetch and overwrite inventory items of the same name in the `output_path`.
 
 ```shell
 kapitan compile --force-fetch
-```
-
-Use the `--cache` flag to cache the fetched items in the `.dependency_cache` directory in the root project directory.
-
-```shell
-kapitan compile --cache --fetch
 ```
 
 ## Embed references
@@ -176,6 +171,36 @@ library), enabled with `--yaml-use-rapidyaml`.
     * Documents containing ASCII control characters automatically fall
       back to PyYAML for that single document (rapidyaml does not escape
       them in double-quoted scalars).
+
+## Restrict file access outside the inventory
+
+Generators resolve file paths against the configured `--search-paths`. A path
+that climbs out with `..` (or a symlink) can read files outside your inventory,
+such as an SSH key. This affects jsonnet `import` and the `file_read`,
+`yaml_load`, `dir_files_*` and `jinja2_render_file` native callbacks, as well as
+input path globbing.
+
+`--path-traversal-mode` controls what happens when a resolved path escapes every
+search path:
+
+| Mode | Behaviour |
+| --- | --- |
+| `warn` (default) | Log a warning and continue compiling. |
+| `error` | Abort the compile with an error. |
+| `off` | Disable the check entirely. |
+
+!!! example ""
+
+    ```shell
+    kapitan compile --path-traversal-mode error
+    ```
+
+To apply it on every run, set it in the [`.kapitan`](kapitan_dotfile.md) dotfile:
+
+```yaml
+compile:
+  path-traversal-mode: error
+```
 
 ## Flags
 

@@ -6,6 +6,7 @@
 "gkms secrets module"
 
 import base64
+import functools
 import logging
 import warnings
 
@@ -30,14 +31,20 @@ class GoogleKMSError(KapitanError):
     """Generic Google KMS errors"""
 
 
+@functools.cache
+def _gkms_client():
+    # If --verbose is set, show requests from googleapiclient (which are actually logging.INFO)
+    if logger.getEffectiveLevel() > logging.DEBUG:
+        logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
+    kms_client = gcloud.build("cloudkms", "v1", cache_discovery=False)
+    return kms_client.projects().locations().keyRings().cryptoKeys()
+
+
 def gkms_obj():
-    if not cached.gkms_obj:
-        # If --verbose is set, show requests from googleapiclient (which are actually logging.INFO)
-        if logger.getEffectiveLevel() > logging.DEBUG:
-            logging.getLogger("googleapiclient.discovery").setLevel(logging.ERROR)
-        kms_client = gcloud.build("cloudkms", "v1", cache_discovery=False)
-        cached.gkms_obj = kms_client.projects().locations().keyRings().cryptoKeys()
-    return cached.gkms_obj
+    return _gkms_client()
+
+
+cached.register_handler_cache_clearer(_gkms_client.cache_clear)
 
 
 class GoogleKMSSecret(Base64Ref):

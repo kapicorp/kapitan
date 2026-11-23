@@ -132,9 +132,8 @@ output.
 
 * Duplicates (across exact entries and pattern expansions) are removed,
   preserving the first occurrence.
-* A pattern that matches **no** classes raises an inventory error, unless
-  `--ignore-class-not-found` is set, in which case the unmatched pattern is
-  silently dropped (mirroring the behavior of exact missing class names).
+* A pattern that matches **no** classes raises an inventory error, also with
+  `compile --fetch`.
 
 **Symlink handling:**
 
@@ -155,19 +154,11 @@ paths in the materialized copy so they continue to work.
     Wildcard expansion happens before the inventory backend processes missing
     classes.  If you use `ignore_class_notfound_regexp` in your reclass
     configuration, the regex is evaluated against each **expanded class name**, not
-    against the original pattern string.  If you rely on regex-based skipping of
-    pattern-like entries, you may need to adjust your regex or use
-    `--ignore-class-not-found` instead.
+    against the original pattern string.  A pattern that matches nothing raises
+    an error before the backend runs, so the regex cannot skip it.
 
 Wildcard expansion happens before the backend resolves inheritance, and works
 both in target files and in nested class files.
-
-**Backend-specific notes:**
-
-* The omegaconf backend's class-file resolver currently only looks for `.yml`
-  files (a pre-existing limitation unrelated to wildcards).  Wildcard
-  expansion correctly discovers `.yaml` classes, but omegaconf will fail to
-  load them.
 
 
 ## Definition

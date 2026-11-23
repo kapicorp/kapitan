@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import copy
+import functools
 import inspect
 import logging
 import os
@@ -15,6 +16,7 @@ from typing import Any
 
 import yaml
 
+from kapitan.errors import InventoryError
 from omegaconf import Container, ListMergeMode, Node, OmegaConf
 
 
@@ -185,7 +187,15 @@ def write_to_key(destination: str, origin: str, _root_):
     return "DONE"
 
 
-def from_file(file_path: str):
+def from_file(file_path: str, allowed_roots: tuple[str, ...]):
+    """Return the content of file_path if it resolves below one of allowed_roots."""
+    real_path = os.path.realpath(file_path)
+    if not any(os.path.commonpath([real_path, root]) == root for root in allowed_roots):
+        raise InventoryError(
+            f"from_file: {file_path} resolves to {real_path}, which is outside the "
+            f"project ({', '.join(allowed_roots)}). To read it anyway, register your "
+            f"own from_file resolver in resolvers.py"
+        )
     if os.path.isfile(file_path):
         with open(file_path) as f:
             return f.read()
@@ -194,20 +204,20 @@ def from_file(file_path: str):
     return "FILE NOT EXISTS"
 
 
-def filename(_node_: Node):
-    return _node_._get_flag("filename")
+def unsupported_file_resolver(name: str):
+    """Return a resolver that fails for ${filename:}, ${path:} and their parent_ forms.
 
+    They read file names from OmegaConf node flags, which only hold booleans, so
+    nothing can set them and they resolved to None.
+    """
 
-def parent_filename(_parent_: Node):
-    return _parent_._get_flag("filename")
+    def resolver():
+        raise InventoryError(
+            f"'${{{name}:}}' is not supported by the omegaconf inventory backend: "
+            "it does not record which file a value was loaded from"
+        )
 
-
-def path(_node_: Node):
-    return _node_._get_flag("path")
-
-
-def parent_path(_parent_: Node):
-    return _parent_._get_flag("path")
+    return resolver
 
 
 def condition_if(condition: str, config: dict):
@@ -271,11 +281,13 @@ def register_resolvers(inventory_path: str = None) -> None:
     _register_resolver("add", lambda x, y: x + y, replace=replace)
     _register_resolver("default", default, replace=replace)
     _register_resolver("write", write_to_key, replace=replace)
-    _register_resolver("from_file", from_file, replace=replace)
-    _register_resolver("filename", filename, replace=replace)
-    _register_resolver("parent_filename", parent_filename, replace=replace)
-    _register_resolver("path", path, replace=replace)
-    _register_resolver("parent_path", parent_path, replace=replace)
+    # from_file only reads below the working directory and the inventory path
+    roots = tuple(os.path.realpath(p) for p in (os.getcwd(), inventory_path) if p)
+    _register_resolver(
+        "from_file", functools.partial(from_file, allowed_roots=roots), replace=replace
+    )
+    for name in ("filename", "parent_filename", "path", "parent_path"):
+        _register_resolver(name, unsupported_file_resolver(name), replace=replace)
 
     # boolean algebra
     _register_resolver("if", condition_if, replace=replace)
