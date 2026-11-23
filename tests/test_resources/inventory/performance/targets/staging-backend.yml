@@ -1,0 +1,16 @@
+classes:
+  - common.base
+  - clusters.staging.env
+  - clusters.prod.apps.backend.app
+  - clusters.prod.apps.backend.components.postgres
+  - clusters.prod.apps.backend.components.kafka
+  - mixins.logging
+
+parameters:
+  target_name: staging-backend
+  kapitan:
+    compile:
+      - input_type: jsonnet
+        input_paths:
+          - templates/config.jsonnet
+        output_path: config

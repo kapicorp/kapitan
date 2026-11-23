@@ -1,0 +1,10 @@
+parameters:
+  app: frontend
+  port: 8080
+  health_check:
+    path: /health
+    interval: 10s
+  features:
+    - caching
+    - compression
+    - rate_limiting

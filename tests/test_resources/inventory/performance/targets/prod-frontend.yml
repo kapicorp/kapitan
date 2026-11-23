@@ -1,0 +1,17 @@
+classes:
+  - common.base
+  - clusters.prod.env
+  - clusters.prod.apps.frontend.app
+  - clusters.prod.apps.frontend.components.nginx
+  - clusters.prod.apps.frontend.components.redis
+  - mixins.logging
+  - mixins.monitoring
+
+parameters:
+  target_name: prod-frontend
+  kapitan:
+    compile:
+      - input_type: jsonnet
+        input_paths:
+          - templates/config.jsonnet
+        output_path: config

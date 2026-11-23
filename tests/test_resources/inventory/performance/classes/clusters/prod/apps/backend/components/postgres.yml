@@ -1,0 +1,10 @@
+parameters:
+  component: postgres
+  postgres:
+    version: "15"
+    connections:
+      max: 200
+      shared_buffers: 256MB
+    replication:
+      enabled: true
+      slots: 2

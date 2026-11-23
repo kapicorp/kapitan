@@ -1,0 +1,43 @@
+---
+name: Benchmark PR
+
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+on:
+  pull_request:
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-24.04
+    outputs:
+      benchmark: ${{ steps.filter.outputs.benchmark }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Check changed paths
+        uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3.0.3
+        id: filter
+        with:
+          filters: .github/filters/filters.yml
+
+  benchmark:
+    name: Benchmark with Baseline Comparison
+    needs: changes
+    if: needs.changes.outputs.benchmark == 'true'
+    uses: ./.github/workflows/benchmark-reusable.yml
+    with:
+      compare-baseline: true
+      fail-on-alert: true
+      comment-on-alert: ${{ github.event.pull_request.head.repo.fork == false }}
+      push-charts: false
+      save-baseline: false
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
