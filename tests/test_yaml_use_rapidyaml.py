@@ -70,6 +70,20 @@ class TestRymlDump:
             f"{buf.getvalue()!r}"
         )
 
+    def test_leading_zero_numeric_strings_are_quoted(self):
+        """Leading-zero digit strings must be quoted in the raw output (#1595).
+
+        "08"/"09" are invalid octal, so ``_str_is_ambiguous`` ignores them and
+        only ``is_leading_zero_int_string`` flags them — isolating this fix and
+        covering both the value and key paths. Assert on raw text: PyYAML reads
+        them back as strings quoted or not, so ``safe_load`` cannot detect it.
+        """
+        buf = io.StringIO()
+        yaml_ryml.dump({"08": "09"}, buf)
+        out = buf.getvalue()
+        assert "'08'" in out, out  # key path
+        assert "'09'" in out, out  # value path
+
     def test_keys_are_sorted_alphabetically(self):
         """Mapping keys are emitted in sorted order for deterministic output."""
         buf = io.StringIO()
