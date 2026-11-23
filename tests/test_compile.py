@@ -96,6 +96,56 @@ class CompileTestResourcesTestObjs(unittest.TestCase):
         reset_cache()
 
 
+def test_compile_without_optional_dependencies(tmp_path):
+    """A kadet compile must not import the cloud SDKs, gnupg, hvac, GitPython,
+    copier or yamllint. Only refs, lint, init and dependency fetching need them."""
+    import subprocess
+
+    targets = tmp_path / "inventory" / "targets"
+    targets.mkdir(parents=True)
+    (tmp_path / "inventory" / "classes").mkdir()
+    (targets / "demo.yml").write_text(
+        "parameters:\n"
+        "  kapitan:\n"
+        "    vars:\n"
+        "      target: demo\n"
+        "    compile:\n"
+        "      - input_type: kadet\n"
+        "        output_path: .\n"
+        "        input_paths: [components/demo]\n"
+    )
+    component = tmp_path / "components" / "demo"
+    component.mkdir(parents=True)
+    (component / "__init__.py").write_text(
+        "from kapitan.inputs import kadet\n\n\n"
+        "def main():\n"
+        "    obj = kadet.BaseObj()\n"
+        "    obj.root.kind = 'ConfigMap'\n"
+        "    return {'configmap': obj}\n"
+    )
+    blocked = ["azure", "boto3", "copier", "git", "gnupg", "googleapiclient"]
+    blocked += ["hvac", "yamllint"]
+    # None in sys.modules makes the import fail; fork passes that on to workers
+    script = (
+        "import sys\n"
+        f"sys.modules.update(dict.fromkeys({blocked!r}))\n"
+        "from kapitan.cli import main\n"
+        "main('--mp-method', 'fork', 'compile', '--ignore-version-check')\n"
+    )
+
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "compiled" / "demo" / "configmap.yaml").is_file()
+
+
 class CompileTestResourcesTestKadet(unittest.TestCase):
     def setUp(self):
         os.chdir(TEST_RESOURCES_PATH)
