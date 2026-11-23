@@ -7,11 +7,17 @@
 
 """Tests for kapitan.targets — search_targets, load_target_inventory, compile_target."""
 
+import multiprocessing
+import pickle
 import unittest
+from unittest import mock
 from unittest.mock import MagicMock
 
+from kapitan import cached
+from kapitan.cli import main as kapitan
 from kapitan.errors import CompileError, InventoryError
 from kapitan.targets import (
+    _pool_init,
     compile_target,
     load_target_inventory,
     search_targets,
@@ -234,3 +240,31 @@ class CompileTargetTest(unittest.TestCase):
 
         with self.assertRaises(CompileError):
             compile_target(target_config, [], "/tmp", None, args)
+
+
+def test_pool_initargs_do_not_carry_inventory(isolated_kubernetes_inventory):
+    """With spawn, Process.start() blocks on initargs larger than the pipe
+    buffer until the child has imported kapitan, so workers start one by one.
+    The inventory snapshot has to reach the workers some other way."""
+    real_pool = multiprocessing.Pool
+    initargs = []
+
+    def spy(*args, **kwargs):
+        initargs.append(kwargs.get("initargs"))
+        return real_pool(*args, **kwargs)
+
+    with mock.patch.object(multiprocessing, "Pool", side_effect=spy):
+        kapitan("compile")
+
+    assert len(pickle.dumps(initargs[-1])) < 4096
+
+
+def test_pool_init_restores_snapshot_file(tmp_path, reset_cached_args):
+    cached.inv = {"target": {"parameters": {"key": "value"}}}
+    snapshot = tmp_path / "cached.pickle"
+    snapshot.write_bytes(pickle.dumps(cached.as_dict()))
+    cached.reset_cache()
+
+    _pool_init(str(snapshot), None)
+
+    assert cached.inv == {"target": {"parameters": {"key": "value"}}}

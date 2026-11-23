@@ -10,6 +10,7 @@
 import logging
 import multiprocessing
 import os
+import pickle
 import shutil
 import tempfile
 import time
@@ -30,26 +31,29 @@ from kapitan.utils import available_cpu_count
 logger = logging.getLogger(__name__)
 
 
-def _pool_init(globals_cached, input_cache_metrics):
+def _pool_init(cached_path, input_cache_metrics):
     """Pool initializer: seed each worker's `cached` module from the parent.
 
-    Called once per worker after fork/spawn. ``initargs`` is pickled once per
-    worker process, so the inventory snapshot is paid for at most once per
-    worker rather than once per task.
+    Called once per worker after fork/spawn. ``cached_path`` is a pickle of
+    the parent's `cached` state, written once. Passing the snapshot itself
+    in ``initargs`` made spawn start workers one at a time: Process.start()
+    blocks writing initargs larger than the pipe buffer until the child has
+    imported kapitan.
 
-    On fork the parent's state is already inherited via copy-on-write so the
-    restore is skipped; on spawn the worker's `cached` is empty and gets
-    populated from the snapshot. When ``--inventory-pool-cache=False``
-    (``globals_cached is None``), workers keep whatever state they inherited
-    (the full cache on fork, an empty module on spawn).
+    On fork the parent's state is already inherited via copy-on-write, so no
+    snapshot is written and the restore is skipped. When
+    ``--inventory-pool-cache=False`` (``cached_path is None``), workers keep
+    whatever state they inherited (the full cache on fork, an empty module on
+    spawn).
 
     ``input_cache_metrics`` is a dict mapping input_type_name to a
     ``CacheMetrics`` backed by shared ``multiprocessing.Value`` counters.
     Forwarding it explicitly keeps the spawn start method working, where
     module globals don't cross the process boundary.
     """
-    if globals_cached and not cached.inv:
-        cached.from_dict(globals_cached)
+    if cached_path and not cached.inv:
+        with open(cached_path, "rb") as f:
+            cached.from_dict(pickle.load(f))
     cached.input_cache_metrics = input_cache_metrics
 
 
@@ -192,14 +196,15 @@ def compile_targets(inventory_path, search_paths, ref_controller, args):
                 )
             logger.info("Fetched dependencies (%.2fs)", time.time() - fetching_start)
 
-        # snapshot `cached` once and pass it to the compile pool via
-        # initargs so each worker is seeded a single time. Per-target
-        # mutations (e.g. target_full_path) travel with the target object
-        # itself via imap_unordered.
-        pool_initargs = (
-            cached.as_dict() if args.inventory_pool_cache else None,
-            cached.input_cache_metrics,
-        )
+        # snapshot `cached` once to a file that each worker loads a single
+        # time. Per-target mutations (e.g. target_full_path) travel with the
+        # target object itself via imap_unordered.
+        cached_path = None
+        if args.inventory_pool_cache and multiprocessing.get_start_method() != "fork":
+            cached_path = os.path.join(temp_path, "cached.pickle")
+            with open(cached_path, "wb") as f:
+                pickle.dump(cached.as_dict(), f)
+        pool_initargs = (cached_path, cached.input_cache_metrics)
 
         with multiprocessing.Pool(
             parallelism, initializer=_pool_init, initargs=pool_initargs
