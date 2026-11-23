@@ -424,6 +424,8 @@ For instance, to automatically initialise a reference with a ***random string***
     * If the reference file does not exist, **Kapitan** will use the function to initialise it
     * If the reference file exists, no functions will run.
 
+    Only the first case uses the backend. Without `--reveal`, `kapitan compile` reads existing reference files and writes their hashed tags, so it needs no backend credentials, for example in CI with a committed `refs` directory. Creating a missing reference encrypts the new value and needs the same access as `kapitan refs --write`: the recipients' public keys for gpg, a Vault token, or cloud KMS credentials.
+
     !!! tip "Automate secret rotation with ease"
         You can take advantage of it to implement easy rotation of secrets. Simply delete the reference files, and run `kapitan compile`: let **Kapitan** do the rest.
 
