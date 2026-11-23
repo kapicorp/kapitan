@@ -178,10 +178,13 @@ class VaultServer:
 
     def set_vault_attributes(self):
         logger.info("Setting vault attributes")
-        policy = "test_policy"
+        # Names are per class: CI points the kv and transit servers at one vault,
+        # and a shared policy or user would let the last setup overwrite the other.
+        name = type(self).__name__.lower()
+        policy = f"{name}_policy"
         test_policy = self.get_policy()
         self.vault_client.sys.create_or_update_policy(name=policy, policy=test_policy)
-        self.username = "test_user"
+        self.username = f"{name}_user"
         self.password = "test_password"
         try:
             self.vault_client.sys.enable_auth_method("userpass")
