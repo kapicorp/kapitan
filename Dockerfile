@@ -41,15 +41,19 @@ COPY ./kapitan/version.py ./kapitan/version.py
 ARG KAPITAN_VERSION
 ENV UV_DYNAMIC_VERSIONING_BYPASS=${KAPITAN_VERSION}
 
-RUN uv sync --locked --all-extras
+# Install into ${VIRTUAL_ENV} from uv.lock. Without UV_PROJECT_ENVIRONMENT,
+# uv sync writes to /kapitan/.venv, which the final stage does not copy.
+ENV UV_PROJECT_ENVIRONMENT=${VIRTUAL_ENV}
+RUN uv sync --locked --all-extras --no-default-groups --inexact --no-install-project
 
 COPY ./kapitan ./kapitan
 
-RUN uv pip install .[gojsonnet,omegaconf,reclass-rs,rapidyaml]
+RUN uv sync --locked --all-extras --no-default-groups --inexact --no-editable
 
 ARG PYTHON_VERSION=3.11
 FROM golang:1 AS go-builder
 RUN GOBIN=$(pwd)/ go install cuelang.org/go/cmd/cue@latest
+RUN GOBIN=$(pwd)/ go install sigs.k8s.io/kustomize/kustomize/v5@latest
 
 # Final image with virtualenv built in previous step
 FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-trixie-slim
@@ -88,6 +92,7 @@ RUN apt-get update \
 RUN useradd --create-home --no-log-init --user-group kapitan
 
 COPY --from=go-builder /go/cue /usr/bin/cue
+COPY --from=go-builder /go/kustomize /usr/bin/kustomize
 COPY --from=python-builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 USER kapitan
