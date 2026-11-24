@@ -67,7 +67,7 @@ jobs:
       # path on releases so the docker build/push and multi-arch manifest always run.
       has-code-changes: ${{ steps.filter.outputs.code == 'true' || github.event_name == 'release' }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           filter: blob:none
@@ -83,7 +83,7 @@ jobs:
     outputs:
       version: ${{ steps.compute.outputs.version }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Tags are required for uv-dynamic-versioning to compute distance
           # from the latest release.
@@ -103,7 +103,7 @@ jobs:
     needs: [setup, check-changes]
     runs-on: ${{ needs.setup.outputs.runner }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: needs.check-changes.outputs.has-code-changes == 'true'
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         if: needs.check-changes.outputs.has-code-changes == 'true'
@@ -123,7 +123,7 @@ jobs:
     steps:
       - name: Checkout kapitan recursively
         if: needs.check-changes.outputs.has-code-changes == 'true'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
       - name: Set up Python ${{ matrix.python-version }}
@@ -196,7 +196,7 @@ jobs:
     steps:
       - name: Checkout kapitan recursively
         if: needs.check-changes.outputs.has-code-changes == 'true'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
 
