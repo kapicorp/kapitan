@@ -54,7 +54,7 @@ On Linux, add `-u $(id -u)` to preserve file permissions.
 
 ### Pip
 
-Kapitan requires Python 3.10 or newer.
+Kapitan requires Python 3.11 or newer.
 
 ```shell
 pip3 install --user --upgrade kapitan

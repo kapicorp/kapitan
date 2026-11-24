@@ -79,13 +79,13 @@ body:
     attributes:
       label: Version (Python)
       description: |
-        Which version of Python are you using? Kapitan officially supports versions 3.10 - 3.13.
+        Which version of Python are you using? Kapitan officially supports versions 3.11 - 3.14.
         If you are using an older version of python, please check if the bug still exists with a newer (supported) version.
       options:
+        - "3.14"
         - "3.13"
         - "3.12"
         - "3.11"
-        - "3.10"
         - I use kapitan directly (pip, docker)
       multiple: true
     validations:

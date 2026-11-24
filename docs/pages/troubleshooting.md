@@ -13,7 +13,7 @@ This page lists common errors and their resolutions. If your error is not here, 
 
 **Symptom:** `kapitan` fails to install or run with syntax or import errors.
 
-Kapitan requires **Python 3.10 or newer**. Check your version:
+Kapitan requires **Python 3.11 or newer**. Check your version:
 
 ```shell
 python3 --version

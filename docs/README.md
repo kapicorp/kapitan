@@ -88,7 +88,7 @@ kapitan compile -h
 pip3 install --user --upgrade kapitan
 ```
 
-Kapitan requires Python 3.10 or newer.
+Kapitan requires Python 3.11 or newer.
 
 [:octicons-arrow-right-24: Full installation guide](getting_started.md)
 
